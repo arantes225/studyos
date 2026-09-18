@@ -5,29 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ambientação · DocMap</title>
   <link rel="stylesheet" href="style.css?v=audio3">
-
-  <style>
-    .ambientacao-workspace {
-      margin-top: 16px;
-    }
-
-    .ambientacao-workspace[hidden] {
-      display: none !important;
-    }
-
-    .ambientacao-workspace-frame {
-      display: block;
-      width: 100%;
-      min-height: 620px;
-      border: 0;
-      background: transparent;
-      border-radius: 14px;
-    }
-
-    .ambientacao-workspace .panel-header {
-      margin-bottom: 12px;
-    }
-  </style>
+  <link rel="stylesheet" href="ambientacao.css?v=6.0">
 </head>
 <body data-page="ambientacao">
   <div class="app-shell">
@@ -58,10 +36,115 @@
         </section>
 
         <section class="feature-grid">
-          <article class="feature-card">
-            <span class="badge">Pomodoro</span>
-            <h2>Cronômetro de estudo</h2>
-            <p>Na Fase 6 o Pomodoro passará a registrar o tempo efetivo de estudo no Dashboard.</p>
+          <article class="feature-card pomodoro-card">
+            <div class="pomodoro-head">
+              <div>
+                <span class="badge">Pomodoro</span>
+                <h2>Cronômetro de estudo</h2>
+                <p id="pomodoro-activity-copy">
+                  O tempo efetivo de foco será registrado no Dashboard.
+                </p>
+              </div>
+
+              <span
+                id="pomodoro-session-state"
+                class="pomodoro-state"
+              >
+                pronto
+              </span>
+            </div>
+
+            <div class="pomodoro-modes">
+              <button
+                id="pomodoro-focus-mode"
+                class="pomodoro-mode active"
+                type="button"
+                data-pomodoro-mode="focus"
+              >
+                Foco
+              </button>
+
+              <button
+                id="pomodoro-break-mode"
+                class="pomodoro-mode"
+                type="button"
+                data-pomodoro-mode="break"
+              >
+                Pausa
+              </button>
+            </div>
+
+            <div class="pomodoro-clock-wrap">
+              <div
+                id="pomodoro-clock"
+                class="pomodoro-clock"
+              >
+                25:00
+              </div>
+
+              <div class="pomodoro-progress-track">
+                <div
+                  id="pomodoro-progress-bar"
+                  class="pomodoro-progress-bar"
+                ></div>
+              </div>
+
+              <div class="pomodoro-clock-meta">
+                <span id="pomodoro-mode-copy">
+                  Foco
+                </span>
+
+                <span id="pomodoro-duration-copy">
+                  25 min
+                </span>
+              </div>
+            </div>
+
+            <div class="pomodoro-actions">
+              <button
+                id="pomodoro-start"
+                class="button primary"
+                type="button"
+              >
+                Iniciar
+              </button>
+
+              <button
+                id="pomodoro-pause"
+                class="button secondary"
+                type="button"
+                disabled
+              >
+                Pausar
+              </button>
+
+              <button
+                id="pomodoro-finish"
+                class="button secondary"
+                type="button"
+                disabled
+              >
+                Finalizar sessão
+              </button>
+            </div>
+
+            <div class="pomodoro-summary">
+              <div>
+                <span>Foco nesta sessão</span>
+                <strong id="pomodoro-effective-time">0 min</strong>
+              </div>
+
+              <div>
+                <span>Registrado hoje</span>
+                <strong id="pomodoro-today-time">0 min</strong>
+              </div>
+            </div>
+
+            <div
+              id="pomodoro-status"
+              class="pomodoro-status"
+              aria-live="polite"
+            ></div>
           </article>
 
           <article class="feature-card">
@@ -171,6 +254,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
   <script src="app.js?v=audio3"></script>
-  <script src="ambientacao.js?v=5.3"></script>
+  <script src="ambientacao.js?v=6.0"></script>
 </body>
 </html>

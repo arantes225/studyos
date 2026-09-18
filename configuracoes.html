@@ -172,6 +172,45 @@
       box-shadow: 0 0 0 3px var(--accent-soft);
     }
 
+
+    .pomodoro-settings-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .pomodoro-setting-field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .pomodoro-setting-field span {
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .pomodoro-setting-field small {
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .pomodoro-setting-field input {
+      width: 100%;
+      min-height: 42px;
+      padding: 0 11px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+    }
+
+    .pomodoro-setting-field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
     @media (max-width: 760px) {
       .study-days-row {
         grid-template-columns: 1fr;
@@ -182,6 +221,10 @@
       }
 
       .interval-row {
+        grid-template-columns: 1fr;
+      }
+
+      .pomodoro-settings-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -491,10 +534,64 @@
 
           <article class="setting-row">
             <div>
+              <h2>Pomodoro</h2>
+              <p>
+                Defina a duração padrão dos ciclos de foco e das pausas.
+                O tempo contabilizado no Dashboard considera somente o foco efetivo.
+              </p>
+            </div>
+
+            <div class="pomodoro-settings-grid">
+              <label class="pomodoro-setting-field">
+                <span>Foco</span>
+                <input
+                  id="pomodoro-focus-minutes"
+                  type="number"
+                  min="1"
+                  max="240"
+                  step="1"
+                  value="25"
+                >
+                <small>minutos por ciclo</small>
+              </label>
+
+              <label class="pomodoro-setting-field">
+                <span>Pausa</span>
+                <input
+                  id="pomodoro-break-minutes"
+                  type="number"
+                  min="1"
+                  max="120"
+                  step="1"
+                  value="5"
+                >
+                <small>minutos por pausa</small>
+              </label>
+            </div>
+
+            <div class="settings-actions">
+              <button
+                id="save-pomodoro-settings"
+                class="button primary"
+                type="button"
+              >
+                Salvar Pomodoro
+              </button>
+
+              <span
+                id="pomodoro-settings-status"
+                class="settings-save-status"
+                aria-live="polite"
+              ></span>
+            </div>
+          </article>
+
+          <article class="setting-row">
+            <div>
               <h2>Periodização dos flashcards</h2>
               <p>
                 Defina os intervalos usados nas três primeiras etapas.
-                Depois da terceira etapa, o último intervalo continua sendo usado.
+                Depois da terceira etapa, o intervalo continua crescendo gradativamente.
               </p>
             </div>
 
@@ -674,6 +771,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
   <script src="app.js?v=audio3"></script>
-  <script src="configuracoes.js?v=5.0"></script>
+  <script src="configuracoes.js?v=6.0"></script>
 </body>
 </html>

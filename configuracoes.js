@@ -398,7 +398,9 @@ async function loadStudySettings() {
       max_subject_reviews_per_day,
       flashcard_intervals_hard,
       flashcard_intervals_medium,
-      flashcard_intervals_easy
+      flashcard_intervals_easy,
+      pomodoro_focus_minutes,
+      pomodoro_break_minutes
     `)
     .eq("user_id", settingsUser.id)
     .maybeSingle();
@@ -435,7 +437,155 @@ async function loadStudySettings() {
     "flashcard_intervals_easy",
     settings.flashcard_intervals_easy || [15,45,70]
   );
+
+  const pomodoroFocus =
+    document.getElementById(
+      "pomodoro-focus-minutes"
+    );
+
+  const pomodoroBreak =
+    document.getElementById(
+      "pomodoro-break-minutes"
+    );
+
+  if (pomodoroFocus) {
+    pomodoroFocus.value =
+      settings.pomodoro_focus_minutes
+      ?? 25;
+  }
+
+  if (pomodoroBreak) {
+    pomodoroBreak.value =
+      settings.pomodoro_break_minutes
+      ?? 5;
+  }
 }
+
+
+function setPomodoroSettingsStatus(
+  text,
+  type = ""
+) {
+  const element =
+    document.getElementById(
+      "pomodoro-settings-status"
+    );
+
+  if (!element) return;
+
+  element.textContent =
+    text;
+
+  element.className =
+    `settings-save-status ${type}`
+      .trim();
+}
+
+
+async function savePomodoroSettings() {
+  const focus =
+    Number(
+      document
+        .getElementById(
+          "pomodoro-focus-minutes"
+        )
+        ?.value
+    );
+
+  const pause =
+    Number(
+      document
+        .getElementById(
+          "pomodoro-break-minutes"
+        )
+        ?.value
+    );
+
+
+  if (
+    !Number.isInteger(focus)
+    || focus < 1
+    || focus > 240
+    || !Number.isInteger(pause)
+    || pause < 1
+    || pause > 120
+  ) {
+    setPomodoroSettingsStatus(
+      "Use foco entre 1 e 240 min e pausa entre 1 e 120 min.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      "save-pomodoro-settings"
+    );
+
+  if (button) {
+    button.disabled =
+      true;
+  }
+
+
+  setPomodoroSettingsStatus(
+    "Salvando..."
+  );
+
+
+  const {
+    error
+  } =
+    await settingsSb
+      .from(
+        "user_settings"
+      )
+      .upsert(
+        {
+          user_id:
+            settingsUser.id,
+
+          pomodoro_focus_minutes:
+            focus,
+
+          pomodoro_break_minutes:
+            pause
+        },
+        {
+          onConflict:
+            "user_id"
+        }
+      );
+
+
+  if (button) {
+    button.disabled =
+      false;
+  }
+
+
+  if (error) {
+    console.error(
+      error
+    );
+
+    setPomodoroSettingsStatus(
+      `Não foi possível salvar: ${error.message}`,
+      "error"
+    );
+
+    return;
+  }
+
+
+  setPomodoroSettingsStatus(
+    "Pomodoro salvo.",
+    "success"
+  );
+}
+
 
 async function saveStudySettings() {
   const payload = {};
@@ -520,6 +670,13 @@ async function initStudySettings() {
     ?.addEventListener(
       "click",
       saveFlashcardIntervals
+    );
+
+  document
+    .getElementById("save-pomodoro-settings")
+    ?.addEventListener(
+      "click",
+      savePomodoroSettings
     );
 
   await Promise.all([
