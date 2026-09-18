@@ -115,7 +115,7 @@ async function carregarAulas() {
     item.innerHTML = `
       <div>
         <h3>${aula.tema}</h3>
-<p>${aula.area || "Sem área"} · ${aula.disciplina || "Sem disciplina"} · ${formatarData(aula.data)}</p>        <p>${horario}</p>
+<p>${aula.area || "Sem área"} · ${aula.disciplina || "Sem Subtema"} · ${formatarData(aula.data)}</p>        <p>${horario}</p>
       </div>
       <span class="aula-status ${aula.status}">
         ${aula.status}
