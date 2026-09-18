@@ -30,6 +30,23 @@
   --sidebar: #14171c;
 }
 
+
+:root[data-theme="leila-mood"] {
+  --bg: #fff6fa;
+  --surface: #fffdfd;
+  --surface-2: #fff0f6;
+  --text: #402a36;
+  --muted: #8b6879;
+  --border: #f0d2df;
+  --accent: #e85d9e;
+  --accent-strong: #cb3f83;
+  --accent-soft: #fde2ef;
+  --danger: #d84c6a;
+  --success: #5f9877;
+  --shadow: 0 12px 32px rgba(193, 75, 128, 0.10);
+  --sidebar: #fff9fc;
+}
+
 * { box-sizing: border-box; }
 
 html {
@@ -510,7 +527,7 @@ button:disabled { cursor: not-allowed; opacity: .65; }
 
 .theme-options {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -537,6 +554,33 @@ button:disabled { cursor: not-allowed; opacity: .65; }
   border-color: var(--accent);
   background: var(--accent-soft);
   color: var(--accent);
+}
+
+
+.theme-option.leila-preview span {
+  gap: 2px;
+  background: linear-gradient(135deg, #fff4f9, #fde2ef);
+  border-color: #efbfd4;
+  color: #b63f78;
+}
+
+.theme-option.leila-preview span strong,
+.theme-option.leila-preview span small {
+  display: block;
+  line-height: 1.15;
+}
+
+.theme-option.leila-preview span small {
+  font-size: 10px;
+  font-weight: 650;
+  color: #9c6780;
+}
+
+.theme-option.leila-preview input:checked + span {
+  border-color: #e85d9e;
+  background: #fde2ef;
+  color: #cb3f83;
+  box-shadow: 0 0 0 3px rgba(232, 93, 158, .12);
 }
 
 .inline-status {
