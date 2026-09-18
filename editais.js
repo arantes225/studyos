@@ -1434,10 +1434,207 @@ function wireExams() {
 }
 
 
+
+/* =========================================================
+   CENTRAL DE EDITAIS ARISTO
+   ========================================================= */
+
+let aristoFrameLoaded =
+  false;
+
+
+function activateEditaisSource(
+  source
+) {
+  const own =
+    document.getElementById(
+      "editais-own-content"
+    );
+
+
+  const aristo =
+    document.getElementById(
+      "editais-aristo-content"
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-editais-source]"
+    )
+    .forEach(
+      (button) => {
+        button.classList.toggle(
+          "active",
+          button
+            .dataset
+            .editaisSource
+            === source
+        );
+      }
+    );
+
+
+  if (own) {
+    own.hidden =
+      source
+      !== "mine";
+  }
+
+
+  if (aristo) {
+    aristo.hidden =
+      source
+      !== "aristo";
+  }
+
+
+  if (
+    source
+    === "aristo"
+  ) {
+    loadAristoFrame();
+  }
+
+
+  try {
+    localStorage.setItem(
+      "docmap:editais-source",
+      source
+    );
+  } catch {}
+}
+
+
+function loadAristoFrame() {
+  if (
+    aristoFrameLoaded
+  ) {
+    return;
+  }
+
+
+  const frame =
+    document.getElementById(
+      "aristo-editais-frame"
+    );
+
+
+  const loading =
+    document.getElementById(
+      "aristo-frame-loading"
+    );
+
+
+  if (!frame) {
+    return;
+  }
+
+
+  const src =
+    frame.dataset.src;
+
+
+  if (!src) {
+    return;
+  }
+
+
+  frame.addEventListener(
+    "load",
+    () => {
+      aristoFrameLoaded =
+        true;
+
+
+      loading
+        ?.classList
+        .add(
+          "hidden"
+        );
+    },
+    {
+      once:
+        true
+    }
+  );
+
+
+  frame.src =
+    src;
+}
+
+
+function wireEditaisSources() {
+  document
+    .querySelectorAll(
+      "[data-editais-source]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            activateEditaisSource(
+              button
+                .dataset
+                .editaisSource
+            );
+          }
+        );
+      }
+    );
+
+
+  let initial =
+    "mine";
+
+
+  try {
+    const saved =
+      localStorage.getItem(
+        "docmap:editais-source"
+      );
+
+
+    if (
+      saved === "aristo"
+      || saved === "mine"
+    ) {
+      initial =
+        saved;
+    }
+  } catch {}
+
+
+  /*
+    Quando a Agenda abre uma
+    prova específica, sempre
+    priorizamos "Minhas provas".
+  */
+
+  if (
+    highlightedExamId
+  ) {
+    initial =
+      "mine";
+  }
+
+
+  activateEditaisSource(
+    initial
+  );
+}
+
+
+
+
 async function initExams() {
   examUser =
     window.docmapUser;
 
+
+  wireEditaisSources();
 
   wireExams();
 

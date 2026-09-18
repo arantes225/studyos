@@ -20,7 +20,7 @@
 
   <link
     rel="stylesheet"
-    href="editais.css?v=8.0"
+    href="editais.css?v=8.1"
   >
 </head>
 
@@ -64,6 +64,33 @@
           </div>
 
         </header>
+
+
+        <section class="editais-source-tabs">
+
+          <button
+            class="editais-source-tab active"
+            type="button"
+            data-editais-source="mine"
+          >
+            Minhas provas
+          </button>
+
+          <button
+            class="editais-source-tab"
+            type="button"
+            data-editais-source="aristo"
+          >
+            Central de editais Aristo
+          </button>
+
+        </section>
+
+
+        <div
+          id="editais-own-content"
+          class="editais-own-content"
+        >
 
 
         <section class="exam-metrics">
@@ -174,6 +201,73 @@
             id="exam-list"
             class="exam-list"
           ></div>
+
+        </section>
+
+        </div>
+
+
+        <section
+          id="editais-aristo-content"
+          class="editais-aristo-content"
+          hidden
+        >
+
+          <div class="aristo-embed-head">
+
+            <div>
+              <span class="badge accent">
+                Aristo
+              </span>
+
+              <h2>
+                Central de editais
+              </h2>
+
+              <p>
+                Consulte os editais diretamente sem sair do DocMap.
+              </p>
+            </div>
+
+
+            <a
+              class="button secondary"
+              href="https://aristo.com.br/editais/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Abrir em nova aba
+            </a>
+
+          </div>
+
+
+          <div class="aristo-frame-shell">
+
+            <div
+              id="aristo-frame-loading"
+              class="aristo-frame-loading"
+            >
+              Carregando Central de editais Aristo...
+            </div>
+
+            <iframe
+              id="aristo-editais-frame"
+              class="aristo-editais-frame"
+              title="Central de editais Aristo"
+              src="about:blank"
+              data-src="https://aristo.com.br/editais/"
+              loading="lazy"
+              referrerpolicy="strict-origin-when-cross-origin"
+            ></iframe>
+
+          </div>
+
+
+          <div class="aristo-frame-note">
+            Se o site externo impedir a exibição incorporada no navegador,
+            use “Abrir em nova aba”.
+          </div>
 
         </section>
 
@@ -408,7 +502,7 @@
 
   <script src="app.js?v=audio3"></script>
 
-  <script src="editais.js?v=8.0"></script>
+  <script src="editais.js?v=8.1"></script>
 
 </body>
 

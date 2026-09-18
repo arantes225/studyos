@@ -357,3 +357,135 @@
     margin-left: 0;
   }
 }
+
+/* =========================================================
+   FASE 8.1 — CENTRAL DE EDITAIS ARISTO
+   ========================================================= */
+
+.editais-source-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 16px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-2);
+}
+
+.editais-source-tab {
+  min-height: 38px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.editais-source-tab.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.editais-own-content[hidden],
+.editais-aristo-content[hidden] {
+  display: none !important;
+}
+
+.editais-aristo-content {
+  display: grid;
+  gap: 14px;
+}
+
+.aristo-embed-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.aristo-embed-head h2 {
+  margin: 10px 0 0;
+}
+
+.aristo-embed-head p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.aristo-embed-head .button {
+  flex: 0 0 auto;
+  min-height: 39px;
+  padding: 0 13px;
+  text-decoration: none;
+}
+
+.aristo-frame-shell {
+  position: relative;
+  min-height: 780px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: var(--surface);
+}
+
+.aristo-frame-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+  background: var(--surface);
+}
+
+.aristo-frame-loading.hidden {
+  display: none;
+}
+
+.aristo-editais-frame {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  min-height: 1100px;
+  border: 0;
+  background: #fff;
+}
+
+.aristo-frame-note {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+@media (max-width: 680px) {
+  .editais-source-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .aristo-embed-head {
+    flex-direction: column;
+  }
+
+  .aristo-frame-shell {
+    min-height: 650px;
+  }
+
+  .aristo-editais-frame {
+    min-height: 900px;
+  }
+}
