@@ -1,56 +1,84 @@
-DOCMAP — ESTATÍSTICAS EM PÁGINA PRÓPRIA
+DOCMAP — HUB DE ESTATÍSTICAS EXPANDIDO v10.2
 
 ALTERAÇÃO
-O Hub de Estatísticas saiu do Dashboard e virou uma página própria.
+A página Estatísticas ficou bem mais completa, sem voltar a poluir o Dashboard.
 
-MENU LATERAL
-A nova ordem inclui:
+NOVAS INFORMAÇÕES
 
-...
-Questões e Simulados
-Estatísticas
-Editais / Provas
-Configurações
+VISÃO GERAL
+- Tempo estudado
+- Comparação com o período anterior
+- Média de estudo por dia ativo
+- Número total de sessões
+- Duração média das sessões
+- Consistência
+- Aproveitamento em questões
+- Comparação do aproveitamento em questões
+- Aproveitamento em flashcards
+- Comparação do aproveitamento em flashcards
+- Retenção do Caderno de Erros
+- Aproveitamento histórico dos simulados
 
-Ou seja, Estatísticas fica imediatamente acima de Editais / Provas.
+PENDÊNCIAS ATUAIS
+- Flashcards vencidos / hoje
+- CCQs vencidos / hoje
+- Revisões teóricas vencidas / hoje
+- Aulas programadas até hoje
 
-A PÁGINA ESTATÍSTICAS MANTÉM
-- 14 / 30 / 90 dias
-- tempo estudado
-- consistência
-- aproveitamento em questões
-- aproveitamento em flashcards
-- ritmo diário de estudo
-- distribuição do tempo por atividade
-- memória por matéria
-- erros por área
-- leitura automática dos dados
+GRÁFICOS E DETALHES
+- Ritmo diário de estudo
+- Evolução diária do aproveitamento em questões
+- Evolução diária do aproveitamento em flashcards
+- Distribuição do tempo por tipo de atividade
+- Tempo estudado por dia da semana
+- Memória por matéria
+- Erros por área
 
-DASHBOARD
-O bloco grande de Estatísticas foi removido do Dashboard.
-O restante do Dashboard continua:
-- cards superiores
-- simulados recentes
-- agenda
+CADERNO DE ERROS
+- Registrados
+- Já revisados
+- Atrasados
+- Retenção estimada
+
+CRONOGRAMA
+- Aulas concluídas / total
+- Percentual concluído
+- Aulas programadas
+- Aulas no deck
+- Revisões concluídas / total
+- Revisões pendentes
+
+QUESTÕES / SIMULADOS
+- Simulados concluídos / cadastrados
+- Questões respondidas
+- Acertos e erros
+- Aproveitamento
+- Erros enviados ao Caderno
+
+PROVAS / EDITAIS
+- Próximas provas
+- Inscritas
+- Realizadas
+- Média das provas
+- Inscrições vencendo nos próximos 30 dias
+
+LEITURA DOS DADOS
+- Mais informações automáticas e descritivas
+- Sem inventar dados
+- Só aparece o que o DocMap realmente possui
 
 SQL
 NÃO PRECISA RODAR SQL.
-A Fase 10 já criou as views necessárias.
+Esta versão usa as tabelas e views que já existem após a Fase 10.
 
-ARQUIVOS
-Substitua:
-- app.js
-- dashboard.html
-- dashboard.js
-
-Adicione:
+SUBSTITUA SOMENTE
 - estatisticas.html
 - estatisticas.css
 - estatisticas.js
 
 PUBLICAÇÃO
 git add -A
-git commit -m "Move estatisticas para pagina propria"
+git commit -m "Expande hub de estatisticas"
 git push origin main
 
 Depois:

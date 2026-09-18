@@ -138,6 +138,30 @@ function formatHours(
 }
 
 
+function formatMinutesFromSeconds(
+  seconds
+) {
+  const minutes =
+    Math.round(
+      Number(
+        seconds
+        || 0
+      )
+      / 60
+    );
+
+  if (
+    minutes < 60
+  ) {
+    return `${minutes} min`;
+  }
+
+  return formatHours(
+    seconds
+  );
+}
+
+
 function statsEscape(
   value
 ) {
@@ -200,9 +224,23 @@ function statsDateRange(
       )
     );
 
+  const previousEnd =
+    addDays(
+      start,
+      -1
+    );
+
+  const previousStart =
+    addDays(
+      previousEnd,
+      -(days - 1)
+    );
+
   return {
     start,
     end,
+    previousStart,
+    previousEnd,
 
     startISO:
       toISODate(
@@ -212,6 +250,16 @@ function statsDateRange(
     endISO:
       toISODate(
         end
+      ),
+
+    previousStartISO:
+      toISODate(
+        previousStart
+      ),
+
+    previousEndISO:
+      toISODate(
+        previousEnd
       )
   };
 }
@@ -245,7 +293,8 @@ function statsPercent(
 
 
 function statsPercentLabel(
-  value
+  value,
+  digits = 0
 ) {
   if (
     value === null
@@ -261,7 +310,85 @@ function statsPercentLabel(
 
   return `${Number(
     value
-  ).toFixed(0)}%`;
+  ).toFixed(
+    digits
+  )}%`;
+}
+
+
+function statsDeltaLabel(
+  current,
+  previous,
+  suffix = "%"
+) {
+  const currentNumber =
+    Number(
+      current
+    );
+
+  const previousNumber =
+    Number(
+      previous
+    );
+
+  if (
+    !Number.isFinite(
+      currentNumber
+    )
+    || !Number.isFinite(
+      previousNumber
+    )
+    || previousNumber === 0
+  ) {
+    return "sem comparação anterior";
+  }
+
+  const delta =
+    (
+      (
+        currentNumber
+        - previousNumber
+      )
+      / previousNumber
+    )
+    * 100;
+
+  const sign =
+    delta > 0
+      ? "+"
+      : "";
+
+  return `${sign}${delta.toFixed(0)}${suffix} vs. período anterior`;
+}
+
+
+function statsPointDelta(
+  current,
+  previous
+) {
+  if (
+    current === null
+    || previous === null
+    || current === undefined
+    || previous === undefined
+  ) {
+    return "sem comparação anterior";
+  }
+
+  const delta =
+    Number(
+      current
+    )
+    - Number(
+        previous
+      );
+
+  const sign =
+    delta > 0
+      ? "+"
+      : "";
+
+  return `${sign}${delta.toFixed(1)} p.p. vs. período anterior`;
 }
 
 
@@ -385,6 +512,73 @@ function statsBuildDailySeries(
 }
 
 
+function splitCurrentPrevious(
+  rows,
+  dateField,
+  range
+) {
+  const current =
+    [];
+
+  const previous =
+    [];
+
+
+  for (
+    const row
+    of rows || []
+  ) {
+    const date =
+      row[dateField];
+
+    if (
+      date >= range.startISO
+      && date <= range.endISO
+    ) {
+      current.push(
+        row
+      );
+
+    } else if (
+      date >= range.previousStartISO
+      && date <= range.previousEndISO
+    ) {
+      previous.push(
+        row
+      );
+    }
+  }
+
+
+  return {
+    current,
+    previous
+  };
+}
+
+
+function sumField(
+  rows,
+  field
+) {
+  return (
+    rows || []
+  )
+    .reduce(
+      (
+        sum,
+        row
+      ) =>
+        sum
+        + Number(
+            row[field]
+            || 0
+          ),
+      0
+    );
+}
+
+
 function renderStudyBars(
   studyRows
 ) {
@@ -489,6 +683,137 @@ function renderStudyBars(
                 : ""
             }
 
+          </div>
+        `;
+      }
+    )
+    .join("");
+}
+
+
+function renderPerformanceBars(
+  containerId,
+  rows,
+  dateField,
+  numeratorField,
+  denominatorField
+) {
+  const container =
+    document.getElementById(
+      containerId
+    );
+
+  if (!container) {
+    return;
+  }
+
+
+  const start =
+    statsDateDaysAgo(
+      Math.max(
+        0,
+        statsState.days - 1
+      )
+    );
+
+
+  const map =
+    new Map(
+      (rows || [])
+        .map(
+          (row) => [
+            row[dateField],
+
+            statsPercent(
+              row[numeratorField],
+              row[denominatorField]
+            )
+          ]
+        )
+    );
+
+
+  const series =
+    Array.from(
+      {
+        length:
+          statsState.days
+      },
+
+      (
+        _,
+        index
+      ) => {
+        const date =
+          addDays(
+            start,
+            index
+          );
+
+        const iso =
+          toISODate(
+            date
+          );
+
+        return {
+          date:
+            iso,
+
+          value:
+            map.has(
+              iso
+            )
+              ? map.get(
+                  iso
+                )
+              : null
+        };
+      }
+    );
+
+
+  container.innerHTML =
+    series.map(
+      (item) => {
+        const value =
+          item.value;
+
+        const height =
+          value === null
+            ? 2
+            : Math.max(
+                4,
+                Math.min(
+                  100,
+                  value
+                )
+              );
+
+
+        return `
+          <div
+            class="performance-bar-column"
+            title="${statsEscape(
+              `${statsShortDay(
+                item.date
+              )}: ${
+                value === null
+                  ? "sem dados"
+                  : statsPercentLabel(
+                      value,
+                      0
+                    )
+              }`
+            )}"
+          >
+            <div
+              class="performance-bar ${
+                value === null
+                  ? "empty"
+                  : ""
+              }"
+              style="height:${height}%"
+            ></div>
           </div>
         `;
       }
@@ -637,6 +962,134 @@ function renderActivity(
 }
 
 
+function renderWeekdays(
+  studyRows
+) {
+  const container =
+    document.getElementById(
+      "weekday-study-list"
+    );
+
+  if (!container) {
+    return;
+  }
+
+
+  const labels = [
+    "Dom",
+    "Seg",
+    "Ter",
+    "Qua",
+    "Qui",
+    "Sex",
+    "Sáb"
+  ];
+
+
+  const totals =
+    Array(
+      7
+    )
+    .fill(
+      0
+    );
+
+
+  for (
+    const row
+    of studyRows || []
+  ) {
+    const date =
+      parseISODate(
+        row.study_date
+      );
+
+    totals[
+      date.getDay()
+    ] +=
+      Number(
+        row.total_seconds
+        || 0
+      );
+  }
+
+
+  const ordered =
+    [
+      1,2,3,4,5,6,0
+    ]
+    .map(
+      (dayIndex) => ({
+        label:
+          labels[
+            dayIndex
+          ],
+
+        seconds:
+          totals[
+            dayIndex
+          ]
+      })
+    );
+
+
+  const maxValue =
+    Math.max(
+      1,
+      ...ordered.map(
+        (item) =>
+          item.seconds
+      )
+    );
+
+
+  container.innerHTML =
+    ordered.map(
+      (item) => {
+        const percent =
+          item.seconds
+            ? (
+                item.seconds
+                / maxValue
+              )
+              * 100
+            : 0;
+
+
+        return `
+          <div class="analytics-row">
+
+            <div class="analytics-row-copy">
+              <strong>
+                ${item.label}
+              </strong>
+            </div>
+
+            <div class="analytics-progress">
+              <span
+                style="width:${Math.max(
+                  1,
+                  percent
+                )}%"
+              ></span>
+            </div>
+
+            <div class="analytics-row-value">
+              ${statsEscape(
+                formatHours(
+                  item.seconds
+                )
+              )}
+            </div>
+
+          </div>
+        `;
+      }
+    )
+    .join("");
+}
+
+
 function renderRetention(
   rows
 ) {
@@ -675,7 +1128,7 @@ function renderRetention(
       )
       .slice(
         0,
-        6
+        8
       );
 
 
@@ -868,7 +1321,7 @@ function renderErrors(
       )
       .slice(
         0,
-        6
+        8
       );
 
 
@@ -939,13 +1392,353 @@ function renderErrors(
 }
 
 
+function detailCard(
+  label,
+  value,
+  helper = ""
+) {
+  return `
+    <div class="stat-detail">
+      <span>
+        ${statsEscape(
+          label
+        )}
+      </span>
+
+      <strong>
+        ${statsEscape(
+          value
+        )}
+      </strong>
+
+      ${
+        helper
+          ? `
+            <small>
+              ${statsEscape(
+                helper
+              )}
+            </small>
+          `
+          : ""
+      }
+    </div>
+  `;
+}
+
+
+function renderErrorNotebookOverview(
+  metrics
+) {
+  const container =
+    document.getElementById(
+      "error-notebook-overview"
+    );
+
+  if (!container) {
+    return;
+  }
+
+
+  const data =
+    metrics
+    || {};
+
+
+  container.innerHTML =
+    [
+      detailCard(
+        "Registrados",
+        Number(
+          data.registered_errors
+          || 0
+        ),
+        "CCQs ativos"
+      ),
+
+      detailCard(
+        "Já revisados",
+        Number(
+          data.reviewed_errors
+          || 0
+        ),
+        "ao menos uma leitura"
+      ),
+
+      detailCard(
+        "Atrasados",
+        Number(
+          data.overdue_errors
+          || 0
+        ),
+        "data anterior a hoje"
+      ),
+
+      detailCard(
+        "Retenção",
+        statsPercentLabel(
+          data.retention_percent,
+          0
+        ),
+        "estimativa atual"
+      )
+    ]
+    .join("");
+}
+
+
+function renderScheduleOverview(
+  topics,
+  reviews
+) {
+  const container =
+    document.getElementById(
+      "schedule-overview"
+    );
+
+  if (!container) {
+    return;
+  }
+
+
+  const totalTopics =
+    (topics || [])
+      .length;
+
+
+  const completedTopics =
+    (topics || [])
+      .filter(
+        (item) =>
+          item.status === "completed"
+      )
+      .length;
+
+
+  const scheduledTopics =
+    (topics || [])
+      .filter(
+        (item) =>
+          item.status === "scheduled"
+      )
+      .length;
+
+
+  const deckTopics =
+    (topics || [])
+      .filter(
+        (item) =>
+          item.status === "deck"
+      )
+      .length;
+
+
+  const completedReviews =
+    (reviews || [])
+      .filter(
+        (item) =>
+          Boolean(
+            item.completed_at
+          )
+      )
+      .length;
+
+
+  const pendingReviews =
+    (reviews || [])
+      .filter(
+        (item) =>
+          !item.completed_at
+      )
+      .length;
+
+
+  const progress =
+    totalTopics
+      ? (
+          completedTopics
+          / totalTopics
+        )
+        * 100
+      : null;
+
+
+  container.innerHTML =
+    [
+      detailCard(
+        "Aulas concluídas",
+        `${completedTopics}/${totalTopics}`,
+        progress === null
+          ? "sem temas"
+          : `${progress.toFixed(0)}% do cronograma`
+      ),
+
+      detailCard(
+        "Programadas",
+        scheduledTopics,
+        "aulas com data"
+      ),
+
+      detailCard(
+        "No deck",
+        deckTopics,
+        "ainda sem data"
+      ),
+
+      detailCard(
+        "Revisões",
+        `${completedReviews}/${completedReviews + pendingReviews}`,
+        `${pendingReviews} pendentes`
+      )
+    ]
+    .join("");
+}
+
+
+function renderSimulationOverview(
+  metrics
+) {
+  const container =
+    document.getElementById(
+      "simulations-overview"
+    );
+
+  if (!container) {
+    return;
+  }
+
+
+  const data =
+    metrics
+    || {};
+
+
+  container.innerHTML =
+    [
+      detailCard(
+        "Simulados concluídos",
+        `${Number(
+          data.completed_sets
+          || 0
+        )}/${Number(
+          data.total_sets
+          || 0
+        )}`,
+        "concluídos / cadastrados"
+      ),
+
+      detailCard(
+        "Questões",
+        Number(
+          data.answered_questions
+          || 0
+        ),
+        "respondidas"
+      ),
+
+      detailCard(
+        "Acertos",
+        Number(
+          data.correct_questions
+          || 0
+        ),
+        `${Number(
+          data.wrong_questions
+          || 0
+        )} erros`
+      ),
+
+      detailCard(
+        "Aproveitamento",
+        statsPercentLabel(
+          data.accuracy_percent,
+          1
+        ),
+        `${Number(
+          data.sent_to_error_count
+          || 0
+        )} enviados ao Caderno`
+      )
+    ]
+    .join("");
+}
+
+
+function renderExamOverview(
+  metrics
+) {
+  const container =
+    document.getElementById(
+      "exams-overview"
+    );
+
+  if (!container) {
+    return;
+  }
+
+
+  const data =
+    metrics
+    || {};
+
+
+  container.innerHTML =
+    [
+      detailCard(
+        "Próximas",
+        Number(
+          data.upcoming_exams
+          || 0
+        ),
+        "planejadas ou inscritas"
+      ),
+
+      detailCard(
+        "Inscritas",
+        Number(
+          data.registered_exams
+          || 0
+        ),
+        "status registrado"
+      ),
+
+      detailCard(
+        "Realizadas",
+        Number(
+          data.taken_exams
+          || 0
+        ),
+        "provas concluídas"
+      ),
+
+      detailCard(
+        "Média das provas",
+        statsPercentLabel(
+          data.average_score_percent,
+          1
+        ),
+        `${Number(
+          data.deadlines_next_30_days
+          || 0
+        )} inscrições vencem em até 30 dias`
+      )
+    ]
+    .join("");
+}
+
+
 function renderInsights({
   studyRows,
   questionRows,
   flashRows,
   retentionRows,
   questionAreaRows,
-  errorAreaRows
+  errorAreaRows,
+  errorMetrics,
+  simulationMetrics,
+  examMetrics,
+  topics,
+  reviews
 }) {
   const container =
     document.getElementById(
@@ -979,9 +1772,26 @@ function renderInsights({
     .size;
 
 
-  insights.push(
-    `Estudo registrado em ${activeDays} de ${statsState.days} dias do período.`
-  );
+  const totalStudy =
+    sumField(
+      studyRows,
+      "total_seconds"
+    );
+
+
+  if (
+    activeDays > 0
+  ) {
+    insights.push({
+      title:
+        "Ritmo",
+
+      text:
+        `Você registrou estudo em ${activeDays} de ${statsState.days} dias, somando ${formatHours(
+          totalStudy
+        )}.`
+    });
+  }
 
 
   const retention =
@@ -1010,11 +1820,15 @@ function renderInsights({
 
 
   if (retention) {
-    insights.push(
-      `Menor retenção estimada: ${retention.subject} (${Number(
-        retention.retention_percent
-      ).toFixed(0)}%).`
-    );
+    insights.push({
+      title:
+        "Memória",
+
+      text:
+        `A menor retenção estimada entre matérias com pelo menos 2 evidências é ${retention.subject}, com ${Number(
+          retention.retention_percent
+        ).toFixed(0)}%.`
+    });
   }
 
 
@@ -1029,7 +1843,6 @@ function renderInsights({
     const area =
       row.area
       || "Sem área";
-
 
     errorMap.set(
       area,
@@ -1054,7 +1867,6 @@ function renderInsights({
     const area =
       row.area
       || "Sem área";
-
 
     errorMap.set(
       area,
@@ -1090,66 +1902,194 @@ function renderInsights({
     highestError
     && highestError[1] > 0
   ) {
-    insights.push(
-      `Maior concentração atual de erros: ${highestError[0]} (${highestError[1]} registros somados).`
-    );
+    insights.push({
+      title:
+        "Erros",
+
+      text:
+        `A maior concentração atual está em ${highestError[0]}, com ${highestError[1]} registros somando simulados e Caderno.`
+    });
   }
 
 
   const questionAnswered =
-    (questionRows || [])
-      .reduce(
-        (
-          sum,
-          row
-        ) =>
-          sum
-          + Number(
-              row.answered_questions
-              || 0
-            ),
-        0
-      );
+    sumField(
+      questionRows,
+      "answered_questions"
+    );
 
 
   const flashReviewed =
-    (flashRows || [])
-      .reduce(
-        (
-          sum,
-          row
-        ) =>
-          sum
-          + Number(
-              row.total_reviews
-              || 0
-            ),
-        0
-      );
+    sumField(
+      flashRows,
+      "total_reviews"
+    );
 
 
   if (
     questionAnswered
     || flashReviewed
   ) {
-    insights.push(
-      `No período: ${questionAnswered} questões respondidas e ${flashReviewed} revisões de flashcards.`
+    insights.push({
+      title:
+        "Volume",
+
+      text:
+        `No período foram registradas ${questionAnswered} questões respondidas e ${flashReviewed} revisões de flashcards.`
+    });
+  }
+
+
+  const overdueErrors =
+    Number(
+      errorMetrics
+        ?.overdue_errors
+      || 0
     );
+
+
+  if (
+    overdueErrors > 0
+  ) {
+    insights.push({
+      title:
+        "Caderno de Erros",
+
+      text:
+        `${overdueErrors} CCQ${overdueErrors === 1 ? "" : "s"} está${overdueErrors === 1 ? "" : "o"} atrasado${overdueErrors === 1 ? "" : "s"} neste momento.`
+    });
+  }
+
+
+  const totalTopics =
+    (topics || [])
+      .length;
+
+  const completedTopics =
+    (topics || [])
+      .filter(
+        (item) =>
+          item.status === "completed"
+      )
+      .length;
+
+
+  if (
+    totalTopics > 0
+  ) {
+    insights.push({
+      title:
+        "Cronograma",
+
+      text:
+        `${completedTopics} de ${totalTopics} aulas do cronograma estão concluídas (${(
+          completedTopics
+          / totalTopics
+          * 100
+        ).toFixed(0)}%).`
+    });
+  }
+
+
+  const pendingReviews =
+    (reviews || [])
+      .filter(
+        (item) =>
+          !item.completed_at
+      )
+      .length;
+
+
+  if (
+    pendingReviews > 0
+  ) {
+    insights.push({
+      title:
+        "Revisões teóricas",
+
+      text:
+        `Há ${pendingReviews} revisão${pendingReviews === 1 ? "" : "ões"} teórica${pendingReviews === 1 ? "" : "s"} ainda não concluída${pendingReviews === 1 ? "" : "s"}.`
+    });
+  }
+
+
+  const simAccuracy =
+    simulationMetrics
+      ?.accuracy_percent;
+
+
+  if (
+    simAccuracy !== null
+    && simAccuracy !== undefined
+  ) {
+    insights.push({
+      title:
+        "Simulados",
+
+      text:
+        `O aproveitamento acumulado nos simulados é de ${Number(
+          simAccuracy
+        ).toFixed(1)}%.`
+    });
+  }
+
+
+  const upcoming =
+    Number(
+      examMetrics
+        ?.upcoming_exams
+      || 0
+    );
+
+
+  if (
+    upcoming > 0
+  ) {
+    insights.push({
+      title:
+        "Provas",
+
+      text:
+        `Há ${upcoming} prova${upcoming === 1 ? "" : "s"} futura${upcoming === 1 ? "" : "s"} ou em planejamento no DocMap.`
+    });
+  }
+
+
+  if (
+    !insights.length
+  ) {
+    container.innerHTML =
+      '<div class="analytics-empty">O DocMap ainda precisa de mais dados para gerar uma leitura útil.</div>';
+
+    return;
   }
 
 
   container.innerHTML =
-    insights.map(
-      (text) =>
-        `
-          <div class="analytics-insight">
-            ${statsEscape(
-              text
-            )}
-          </div>
-        `
-    )
-    .join("");
+    insights
+      .slice(
+        0,
+        10
+      )
+      .map(
+        (item) =>
+          `
+            <div class="analytics-insight">
+              <strong>
+                ${statsEscape(
+                  item.title
+                )}
+              </strong>
+
+              <span>
+                ${statsEscape(
+                  item.text
+                )}
+              </span>
+            </div>
+          `
+      )
+      .join("");
 }
 
 
@@ -1157,6 +2097,11 @@ async function loadStatistics() {
   const range =
     statsDateRange(
       statsState.days
+    );
+
+  const today =
+    toISODate(
+      new Date()
     );
 
 
@@ -1167,7 +2112,14 @@ async function loadStatistics() {
     flashResult,
     retentionResult,
     questionAreaResult,
-    errorAreaResult
+    errorAreaResult,
+    errorMetricsResult,
+    simulationMetricsResult,
+    examMetricsResult,
+    topicsResult,
+    reviewsResult,
+    pendingFlashResult,
+    pendingErrorsResult
   ] =
     await Promise.all([
 
@@ -1180,7 +2132,7 @@ async function loadStatistics() {
         )
         .gte(
           "study_date",
-          range.startISO
+          range.previousStartISO
         )
         .lte(
           "study_date",
@@ -1219,7 +2171,7 @@ async function loadStatistics() {
         )
         .gte(
           "answer_date",
-          range.startISO
+          range.previousStartISO
         )
         .lte(
           "answer_date",
@@ -1242,7 +2194,7 @@ async function loadStatistics() {
         )
         .gte(
           "review_date",
-          range.startISO
+          range.previousStartISO
         )
         .lte(
           "review_date",
@@ -1283,7 +2235,7 @@ async function loadStatistics() {
           }
         )
         .limit(
-          20
+          30
         ),
 
       statsSb
@@ -1301,20 +2253,118 @@ async function loadStatistics() {
           }
         )
         .limit(
-          20
+          30
+        ),
+
+      statsSb
+        .from(
+          "error_notebook_metrics"
+        )
+        .select(
+          "registered_errors,reviewed_errors,overdue_errors,retention_percent"
+        )
+        .maybeSingle(),
+
+      statsSb
+        .from(
+          "question_metrics_overall"
+        )
+        .select(
+          "completed_sets,total_sets,answered_questions,correct_questions,wrong_questions,sent_to_error_count,accuracy_percent"
+        )
+        .maybeSingle(),
+
+      statsSb
+        .from(
+          "exam_metrics_overall"
+        )
+        .select(
+          "total_exams,upcoming_exams,registered_exams,taken_exams,deadlines_next_30_days,average_score_percent"
+        )
+        .maybeSingle(),
+
+      statsSb
+        .from(
+          "study_topics"
+        )
+        .select(
+          "id,status,scheduled_date,completed_at,already_done"
+        ),
+
+      statsSb
+        .from(
+          "subject_reviews"
+        )
+        .select(
+          "id,scheduled_date,completed_at,stage"
+        ),
+
+      statsSb
+        .from(
+          "flashcards"
+        )
+        .select(
+          "id",
+          {
+            count:
+              "exact",
+            head:
+              true
+          }
+        )
+        .eq(
+          "active",
+          true
+        )
+        .lte(
+          "due_date",
+          today
+        ),
+
+      statsSb
+        .from(
+          "error_notebook"
+        )
+        .select(
+          "id",
+          {
+            count:
+              "exact",
+            head:
+              true
+          }
+        )
+        .eq(
+          "active",
+          true
+        )
+        .lte(
+          "due_date",
+          today
         )
     ]);
 
 
-  [
-    studyResult,
-    activityResult,
-    questionResult,
-    flashResult,
-    retentionResult,
-    questionAreaResult,
-    errorAreaResult
-  ].forEach(
+  const results =
+    [
+      studyResult,
+      activityResult,
+      questionResult,
+      flashResult,
+      retentionResult,
+      questionAreaResult,
+      errorAreaResult,
+      errorMetricsResult,
+      simulationMetricsResult,
+      examMetricsResult,
+      topicsResult,
+      reviewsResult,
+      pendingFlashResult,
+      pendingErrorsResult
+    ];
+
+
+  results.forEach(
     (result) => {
       if (
         result.error
@@ -1327,21 +2377,51 @@ async function loadStatistics() {
   );
 
 
+  const studySplit =
+    splitCurrentPrevious(
+      studyResult.data || [],
+      "study_date",
+      range
+    );
+
+
+  const questionSplit =
+    splitCurrentPrevious(
+      questionResult.data || [],
+      "answer_date",
+      range
+    );
+
+
+  const flashSplit =
+    splitCurrentPrevious(
+      flashResult.data || [],
+      "review_date",
+      range
+    );
+
+
   const studyRows =
-    studyResult.data
-    || [];
+    studySplit.current;
+
+  const previousStudyRows =
+    studySplit.previous;
 
   const activityRows =
     activityResult.data
     || [];
 
   const questionRows =
-    questionResult.data
-    || [];
+    questionSplit.current;
+
+  const previousQuestionRows =
+    questionSplit.previous;
 
   const flashRows =
-    flashResult.data
-    || [];
+    flashSplit.current;
+
+  const previousFlashRows =
+    flashSplit.previous;
 
   const retentionRows =
     retentionResult.data
@@ -1355,19 +2435,38 @@ async function loadStatistics() {
     errorAreaResult.data
     || [];
 
+  const errorMetrics =
+    errorMetricsResult.data
+    || null;
+
+  const simulationMetrics =
+    simulationMetricsResult.data
+    || null;
+
+  const examMetrics =
+    examMetricsResult.data
+    || null;
+
+  const topics =
+    topicsResult.data
+    || [];
+
+  const reviews =
+    reviewsResult.data
+    || [];
+
 
   const totalStudySeconds =
-    studyRows.reduce(
-      (
-        sum,
-        row
-      ) =>
-        sum
-        + Number(
-            row.total_seconds
-            || 0
-          ),
-      0
+    sumField(
+      studyRows,
+      "total_seconds"
+    );
+
+
+  const previousStudySeconds =
+    sumField(
+      previousStudyRows,
+      "total_seconds"
     );
 
 
@@ -1381,63 +2480,80 @@ async function loadStatistics() {
     ).length;
 
 
+  const totalSessions =
+    sumField(
+      studyRows,
+      "session_count"
+    );
+
+
+  const averageSessionSeconds =
+    totalSessions
+      ? totalStudySeconds
+        / totalSessions
+      : 0;
+
+
+  const averageActiveDaySeconds =
+    activeStudyDays
+      ? totalStudySeconds
+        / activeStudyDays
+      : 0;
+
+
   const totalQuestions =
-    questionRows.reduce(
-      (
-        sum,
-        row
-      ) =>
-        sum
-        + Number(
-            row.answered_questions
-            || 0
-          ),
-      0
+    sumField(
+      questionRows,
+      "answered_questions"
     );
 
 
   const correctQuestions =
-    questionRows.reduce(
-      (
-        sum,
-        row
-      ) =>
-        sum
-        + Number(
-            row.correct_questions
-            || 0
-          ),
-      0
+    sumField(
+      questionRows,
+      "correct_questions"
+    );
+
+
+  const previousQuestions =
+    sumField(
+      previousQuestionRows,
+      "answered_questions"
+    );
+
+
+  const previousCorrectQuestions =
+    sumField(
+      previousQuestionRows,
+      "correct_questions"
     );
 
 
   const totalFlashReviews =
-    flashRows.reduce(
-      (
-        sum,
-        row
-      ) =>
-        sum
-        + Number(
-            row.total_reviews
-            || 0
-          ),
-      0
+    sumField(
+      flashRows,
+      "total_reviews"
     );
 
 
   const correctFlash =
-    flashRows.reduce(
-      (
-        sum,
-        row
-      ) =>
-        sum
-        + Number(
-            row.correct
-            || 0
-          ),
-      0
+    sumField(
+      flashRows,
+      "correct"
+    );
+
+
+  const previousFlashReviews =
+    sumField(
+      previousFlashRows,
+      "total_reviews"
+    );
+
+
+  const previousCorrectFlash =
+    sumField(
+      previousFlashRows,
+      "correct"
     );
 
 
@@ -1448,10 +2564,24 @@ async function loadStatistics() {
     );
 
 
+  const previousQuestionAccuracy =
+    statsPercent(
+      previousCorrectQuestions,
+      previousQuestions
+    );
+
+
   const flashAccuracy =
     statsPercent(
       correctFlash,
       totalFlashReviews
+    );
+
+
+  const previousFlashAccuracy =
+    statsPercent(
+      previousCorrectFlash,
+      previousFlashReviews
     );
 
 
@@ -1470,7 +2600,50 @@ async function loadStatistics() {
       "analytics-study-time-helper"
     )
     .textContent =
-      `${statsState.days} dias selecionados`;
+      statsDeltaLabel(
+        totalStudySeconds,
+        previousStudySeconds
+      );
+
+
+  document
+    .getElementById(
+      "analytics-average-active-day"
+    )
+    .textContent =
+      formatHours(
+        averageActiveDaySeconds
+      );
+
+
+  document
+    .getElementById(
+      "analytics-average-active-day-helper"
+    )
+    .textContent =
+      activeStudyDays
+        ? `${activeStudyDays} dia${activeStudyDays === 1 ? "" : "s"} com estudo`
+        : "sem dias ativos";
+
+
+  document
+    .getElementById(
+      "analytics-sessions"
+    )
+    .textContent =
+      totalSessions;
+
+
+  document
+    .getElementById(
+      "analytics-sessions-helper"
+    )
+    .textContent =
+      totalSessions
+        ? `média de ${formatMinutesFromSeconds(
+            averageSessionSeconds
+          )}`
+        : "sem sessões";
 
 
   document
@@ -1486,9 +2659,11 @@ async function loadStatistics() {
       "analytics-consistency-helper"
     )
     .textContent =
-      activeStudyDays === 1
-        ? "1 dia com estudo"
-        : `${activeStudyDays} dias com estudo`;
+      `${(
+        activeStudyDays
+        / statsState.days
+        * 100
+      ).toFixed(0)}% dos dias`;
 
 
   document
@@ -1507,7 +2682,10 @@ async function loadStatistics() {
     )
     .textContent =
       totalQuestions
-        ? `${totalQuestions} questões`
+        ? `${totalQuestions} questões · ${statsPointDelta(
+            questionAccuracy,
+            previousQuestionAccuracy
+          )}`
         : "sem questões no período";
 
 
@@ -1527,8 +2705,163 @@ async function loadStatistics() {
     )
     .textContent =
       totalFlashReviews
-        ? `${totalFlashReviews} revisões`
+        ? `${totalFlashReviews} revisões · ${statsPointDelta(
+            flashAccuracy,
+            previousFlashAccuracy
+          )}`
         : "sem revisões no período";
+
+
+  document
+    .getElementById(
+      "analytics-error-retention"
+    )
+    .textContent =
+      statsPercentLabel(
+        errorMetrics
+          ?.retention_percent,
+        0
+      );
+
+
+  document
+    .getElementById(
+      "analytics-error-retention-helper"
+    )
+    .textContent =
+      errorMetrics
+        ? `${Number(
+            errorMetrics.registered_errors
+            || 0
+          )} CCQs ativos`
+        : "sem dados";
+
+
+  document
+    .getElementById(
+      "analytics-simulation-accuracy"
+    )
+    .textContent =
+      statsPercentLabel(
+        simulationMetrics
+          ?.accuracy_percent,
+        1
+      );
+
+
+  document
+    .getElementById(
+      "analytics-simulation-helper"
+    )
+    .textContent =
+      simulationMetrics
+        ? `${Number(
+            simulationMetrics.completed_sets
+            || 0
+          )} simulados concluídos`
+        : "sem dados";
+
+
+  document
+    .getElementById(
+      "pending-flashcards"
+    )
+    .textContent =
+      pendingFlashResult.count
+      ?? 0;
+
+
+  document
+    .getElementById(
+      "pending-errors"
+    )
+    .textContent =
+      pendingErrorsResult.count
+      ?? 0;
+
+
+  const pendingReviews =
+    reviews.filter(
+      (item) =>
+        !item.completed_at
+        && item.scheduled_date
+        <= today
+    ).length;
+
+
+  const pendingLessons =
+    topics.filter(
+      (item) =>
+        item.status === "scheduled"
+        && item.scheduled_date
+        && item.scheduled_date
+        <= today
+    ).length;
+
+
+  document
+    .getElementById(
+      "pending-subject-reviews"
+    )
+    .textContent =
+      pendingReviews;
+
+
+  document
+    .getElementById(
+      "pending-lessons"
+    )
+    .textContent =
+      pendingLessons;
+
+
+  const trendCopy =
+    document.getElementById(
+      "study-trend-copy"
+    );
+
+
+  if (trendCopy) {
+    trendCopy.textContent =
+      previousStudySeconds > 0
+        ? `Tempo efetivo por dia · ${statsDeltaLabel(
+            totalStudySeconds,
+            previousStudySeconds
+          )}.`
+        : "Tempo efetivo registrado por dia.";
+  }
+
+
+  const questionTrend =
+    document.getElementById(
+      "question-trend-summary"
+    );
+
+
+  if (questionTrend) {
+    questionTrend.textContent =
+      totalQuestions
+        ? `${statsPercentLabel(
+            questionAccuracy
+          )} · ${totalQuestions} questões`
+        : "sem dados";
+  }
+
+
+  const flashTrend =
+    document.getElementById(
+      "flash-trend-summary"
+    );
+
+
+  if (flashTrend) {
+    flashTrend.textContent =
+      totalFlashReviews
+        ? `${statsPercentLabel(
+            flashAccuracy
+          )} · ${totalFlashReviews} revisões`
+        : "sem dados";
+  }
 
 
   renderStudyBars(
@@ -1536,8 +2869,31 @@ async function loadStatistics() {
   );
 
 
+  renderPerformanceBars(
+    "question-performance-bars",
+    questionRows,
+    "answer_date",
+    "correct_questions",
+    "answered_questions"
+  );
+
+
+  renderPerformanceBars(
+    "flash-performance-bars",
+    flashRows,
+    "review_date",
+    "correct",
+    "total_reviews"
+  );
+
+
   renderActivity(
     activityRows
+  );
+
+
+  renderWeekdays(
+    studyRows
   );
 
 
@@ -1552,13 +2908,39 @@ async function loadStatistics() {
   );
 
 
+  renderErrorNotebookOverview(
+    errorMetrics
+  );
+
+
+  renderScheduleOverview(
+    topics,
+    reviews
+  );
+
+
+  renderSimulationOverview(
+    simulationMetrics
+  );
+
+
+  renderExamOverview(
+    examMetrics
+  );
+
+
   renderInsights({
     studyRows,
     questionRows,
     flashRows,
     retentionRows,
     questionAreaRows,
-    errorAreaRows
+    errorAreaRows,
+    errorMetrics,
+    simulationMetrics,
+    examMetrics,
+    topics,
+    reviews
   });
 }
 

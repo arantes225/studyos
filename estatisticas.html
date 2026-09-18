@@ -17,7 +17,7 @@
 
   <link
     rel="stylesheet"
-    href="estatisticas.css?v=10.1"
+    href="estatisticas.css?v=10.2"
   >
 </head>
 
@@ -71,7 +71,8 @@
               <h2>Hub de estatísticas</h2>
 
               <p>
-                Ritmo de estudo, desempenho, memória e pontos de atenção.
+                Um panorama mais completo de ritmo, desempenho, memória,
+                pendências, cronograma, simulados e provas.
               </p>
             </div>
 
@@ -108,58 +109,104 @@
           </div>
 
 
-          <div class="analytics-summary">
+          <div class="stats-section-label">
+            Visão geral do período
+          </div>
+
+          <div class="analytics-summary expanded">
 
             <article class="analytics-summary-card">
               <span>Tempo estudado</span>
-
-              <strong id="analytics-study-time">
-                —
-              </strong>
-
-              <small id="analytics-study-time-helper">
-                no período
-              </small>
+              <strong id="analytics-study-time">—</strong>
+              <small id="analytics-study-time-helper">no período</small>
             </article>
 
+            <article class="analytics-summary-card">
+              <span>Média por dia ativo</span>
+              <strong id="analytics-average-active-day">—</strong>
+              <small id="analytics-average-active-day-helper">—</small>
+            </article>
+
+            <article class="analytics-summary-card">
+              <span>Sessões</span>
+              <strong id="analytics-sessions">—</strong>
+              <small id="analytics-sessions-helper">—</small>
+            </article>
 
             <article class="analytics-summary-card">
               <span>Consistência</span>
-
-              <strong id="analytics-consistency">
-                —
-              </strong>
-
-              <small id="analytics-consistency-helper">
-                dias com estudo
-              </small>
+              <strong id="analytics-consistency">—</strong>
+              <small id="analytics-consistency-helper">dias com estudo</small>
             </article>
-
 
             <article class="analytics-summary-card">
               <span>Questões</span>
-
-              <strong id="analytics-question-accuracy">
-                —
-              </strong>
-
-              <small id="analytics-question-helper">
-                sem dados
-              </small>
+              <strong id="analytics-question-accuracy">—</strong>
+              <small id="analytics-question-helper">sem dados</small>
             </article>
-
 
             <article class="analytics-summary-card">
               <span>Flashcards</span>
-
-              <strong id="analytics-flash-accuracy">
-                —
-              </strong>
-
-              <small id="analytics-flash-helper">
-                sem dados
-              </small>
+              <strong id="analytics-flash-accuracy">—</strong>
+              <small id="analytics-flash-helper">sem dados</small>
             </article>
+
+            <article class="analytics-summary-card">
+              <span>Caderno de Erros</span>
+              <strong id="analytics-error-retention">—</strong>
+              <small id="analytics-error-retention-helper">retenção estimada</small>
+            </article>
+
+            <article class="analytics-summary-card">
+              <span>Simulados</span>
+              <strong id="analytics-simulation-accuracy">—</strong>
+              <small id="analytics-simulation-helper">histórico</small>
+            </article>
+
+          </div>
+
+
+          <div class="stats-section-label">
+            Pendências atuais
+          </div>
+
+          <div class="pending-grid">
+
+            <a
+              class="pending-card"
+              href="flashcards.html"
+            >
+              <span>Flashcards</span>
+              <strong id="pending-flashcards">—</strong>
+              <small>vencidos ou para hoje</small>
+            </a>
+
+            <a
+              class="pending-card"
+              href="caderno-erros.html"
+            >
+              <span>CCQs</span>
+              <strong id="pending-errors">—</strong>
+              <small>vencidos ou para hoje</small>
+            </a>
+
+            <a
+              class="pending-card"
+              href="cronograma.html"
+            >
+              <span>Revisões teóricas</span>
+              <strong id="pending-subject-reviews">—</strong>
+              <small>vencidas ou para hoje</small>
+            </a>
+
+            <a
+              class="pending-card"
+              href="cronograma.html"
+            >
+              <span>Aulas</span>
+              <strong id="pending-lessons">—</strong>
+              <small>programadas até hoje</small>
+            </a>
 
           </div>
 
@@ -169,24 +216,60 @@
             <article class="analytics-card wide">
 
               <div class="analytics-card-head">
-
                 <div>
                   <h3>Ritmo de estudo</h3>
-
-                  <p>
+                  <p id="study-trend-copy">
                     Tempo efetivo registrado por dia.
                   </p>
                 </div>
-
               </div>
 
-
               <div class="analytics-chart-scroll">
-
                 <div
                   id="analytics-study-bars"
                   class="analytics-bars"
                 ></div>
+              </div>
+
+            </article>
+
+
+            <article class="analytics-card wide">
+
+              <div class="analytics-card-head">
+                <div>
+                  <h3>Evolução do desempenho</h3>
+                  <p>
+                    Acertos em questões e flashcards ao longo do período.
+                  </p>
+                </div>
+              </div>
+
+              <div class="performance-grid">
+
+                <div class="performance-block">
+                  <div class="performance-title">
+                    <span>Questões</span>
+                    <strong id="question-trend-summary">—</strong>
+                  </div>
+
+                  <div
+                    id="question-performance-bars"
+                    class="performance-bars"
+                  ></div>
+                </div>
+
+                <div class="performance-block">
+                  <div class="performance-title">
+                    <span>Flashcards</span>
+                    <strong id="flash-trend-summary">—</strong>
+                  </div>
+
+                  <div
+                    id="flash-performance-bars"
+                    class="performance-bars"
+                  ></div>
+                </div>
 
               </div>
 
@@ -196,17 +279,13 @@
             <article class="analytics-card">
 
               <div class="analytics-card-head">
-
                 <div>
                   <h3>Distribuição do estudo</h3>
-
                   <p>
                     Como o tempo foi dividido entre as atividades.
                   </p>
                 </div>
-
               </div>
-
 
               <div
                 id="analytics-activity-list"
@@ -219,17 +298,32 @@
             <article class="analytics-card">
 
               <div class="analytics-card-head">
-
                 <div>
-                  <h3>Memória por matéria</h3>
-
+                  <h3>Estudo por dia da semana</h3>
                   <p>
-                    Menores retenções estimadas com evidência disponível.
+                    Tempo acumulado em cada dia da semana no período.
                   </p>
                 </div>
-
               </div>
 
+              <div
+                id="weekday-study-list"
+                class="analytics-list"
+              ></div>
+
+            </article>
+
+
+            <article class="analytics-card">
+
+              <div class="analytics-card-head">
+                <div>
+                  <h3>Memória por matéria</h3>
+                  <p>
+                    Matérias com menor retenção estimada.
+                  </p>
+                </div>
+              </div>
 
               <div
                 id="analytics-retention-list"
@@ -242,17 +336,13 @@
             <article class="analytics-card">
 
               <div class="analytics-card-head">
-
                 <div>
                   <h3>Erros por área</h3>
-
                   <p>
-                    Concentração em simulados e no Caderno de Erros.
+                    Simulados + itens ativos do Caderno de Erros.
                   </p>
                 </div>
-
               </div>
-
 
               <div
                 id="analytics-error-list"
@@ -265,17 +355,105 @@
             <article class="analytics-card">
 
               <div class="analytics-card-head">
-
                 <div>
-                  <h3>Leitura dos dados</h3>
-
+                  <h3>Caderno de Erros</h3>
                   <p>
-                    Resumo automático do período selecionado.
+                    Situação atual dos CCQs cadastrados.
                   </p>
                 </div>
-
               </div>
 
+              <div
+                id="error-notebook-overview"
+                class="stat-detail-grid"
+              >
+                <div class="analytics-empty">
+                  Carregando...
+                </div>
+              </div>
+
+            </article>
+
+
+            <article class="analytics-card">
+
+              <div class="analytics-card-head">
+                <div>
+                  <h3>Cronograma</h3>
+                  <p>
+                    Progresso das aulas e revisões teóricas.
+                  </p>
+                </div>
+              </div>
+
+              <div
+                id="schedule-overview"
+                class="stat-detail-grid"
+              >
+                <div class="analytics-empty">
+                  Carregando...
+                </div>
+              </div>
+
+            </article>
+
+
+            <article class="analytics-card">
+
+              <div class="analytics-card-head">
+                <div>
+                  <h3>Questões e simulados</h3>
+                  <p>
+                    Resultado acumulado dos gabaritos salvos.
+                  </p>
+                </div>
+              </div>
+
+              <div
+                id="simulations-overview"
+                class="stat-detail-grid"
+              >
+                <div class="analytics-empty">
+                  Carregando...
+                </div>
+              </div>
+
+            </article>
+
+
+            <article class="analytics-card">
+
+              <div class="analytics-card-head">
+                <div>
+                  <h3>Provas e editais</h3>
+                  <p>
+                    Situação das provas cadastradas.
+                  </p>
+                </div>
+              </div>
+
+              <div
+                id="exams-overview"
+                class="stat-detail-grid"
+              >
+                <div class="analytics-empty">
+                  Carregando...
+                </div>
+              </div>
+
+            </article>
+
+
+            <article class="analytics-card wide">
+
+              <div class="analytics-card-head">
+                <div>
+                  <h3>Leitura dos dados</h3>
+                  <p>
+                    Resumo automático, descritivo e baseado nos dados do DocMap.
+                  </p>
+                </div>
+              </div>
 
               <div
                 id="analytics-insights"
@@ -300,8 +478,8 @@
   ></script>
 
   <script src="supabase.js"></script>
-  <script src="app.js?v=stats10.1"></script>
-  <script src="estatisticas.js?v=10.1"></script>
+  <script src="app.js?v=stats10.2"></script>
+  <script src="estatisticas.js?v=10.2"></script>
 
 </body>
 
