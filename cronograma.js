@@ -5,7 +5,11 @@ const scheduleState = {
   file: null,
   parsedRows: [],
   detected: null,
+  fileType: null,
   topics: [],
+  events: [],
+  existingTopicKeys: new Set(),
+  existingEventKeys: new Set(),
   weekAnchor: startOfDaySchedule(new Date()),
   draggingTopicId: null,
   alreadyDoneTopicId: null,
@@ -70,8 +74,94 @@ const HEADER_ALIASES = {
     "data concluida",
     "data da conclusao",
     "data de conclusao"
+  ],
+
+  type: [
+    "tipo",
+    "tipo de atividade",
+    "atividade",
+    "categoria",
+    "event type"
   ]
 };
+
+
+const SCHEDULE_KIND_LABELS = {
+  lesson: "Aula",
+  simulation: "Simulado programado",
+  smart_simulation: "Simulado inteligente",
+  full_exam: "Prova na íntegra",
+  smart_review: "Revisão inteligente",
+  external_review: "Revisão teórica",
+  final_review: "Reta final",
+  other: "Outro evento"
+};
+
+
+function scheduleKindLabel(kind) {
+  return SCHEDULE_KIND_LABELS[kind]
+    || SCHEDULE_KIND_LABELS.other;
+}
+
+
+function classifyScheduleKind(title, explicitType = "") {
+  const source = normalizeHeader(
+    `${explicitType} ${title}`
+  );
+
+  if (
+    source.includes("simulado inteligente")
+  ) {
+    return "smart_simulation";
+  }
+
+  if (
+    source.includes("simulado programado")
+    || source.includes("simulado diagnostico")
+  ) {
+    return "simulation";
+  }
+
+  if (
+    source.includes("prova na integra")
+  ) {
+    return "full_exam";
+  }
+
+  if (
+    source.includes("revisao inteligente")
+  ) {
+    return "smart_review";
+  }
+
+  if (
+    source.includes("revisao teorica")
+  ) {
+    return "external_review";
+  }
+
+  if (
+    source.includes("reta final")
+  ) {
+    return "final_review";
+  }
+
+  if (
+    source.includes("simulado")
+  ) {
+    return "simulation";
+  }
+
+  if (
+    source.includes("prova")
+    && explicitType
+  ) {
+    return "full_exam";
+  }
+
+  return "lesson";
+}
+
 
 function normalizeHeader(value) {
   return String(value ?? "")
@@ -270,7 +360,8 @@ function parseWorkbookRows(matrix, sheetName) {
     materia: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.materia),
     theme: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.theme),
     done: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.done),
-    studiedDate: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.studiedDate)
+    studiedDate: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.studiedDate),
+    type: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.type)
   };
 
   if (indexes.theme < 0) {
@@ -303,6 +394,7 @@ function parseWorkbookRows(matrix, sheetName) {
     const rawDate = getCell(row, indexes.date);
     const rawDone = getCell(row, indexes.done);
     const rawStudiedDate = getCell(row, indexes.studiedDate);
+    const rawType = getCell(row, indexes.type);
 
     const date = parseExcelDate(rawDate);
     const alreadyDone = indexes.done >= 0
@@ -329,8 +421,17 @@ function parseWorkbookRows(matrix, sheetName) {
       errors.push("Tema ausente");
     }
 
+    const kind =
+      classifyScheduleKind(
+        theme,
+        cleanText(rawType)
+      );
+
     if (
-      mode === "dates"
+      (
+        mode === "dates"
+        || kind !== "lesson"
+      )
       && !alreadyDone
       && !date
     ) {
@@ -347,12 +448,19 @@ function parseWorkbookRows(matrix, sheetName) {
 
     parsed.push({
       rowNumber: rowIndex + 1,
+      sourceLabel:
+        `${sheetName} · linha ${rowIndex + 1}`,
+      sourcePage: null,
       date,
       area,
       materia,
       theme,
+      kind,
       alreadyDone,
       studiedDate,
+      confidence: "high",
+      include: true,
+      duplicate: false,
       errors
     });
   }
@@ -366,132 +474,2148 @@ function parseWorkbookRows(matrix, sheetName) {
   };
 }
 
-function renderPreview() {
-  const preview = document.getElementById("import-preview");
-  const body = document.getElementById("preview-body");
-  const summary = document.getElementById("preview-summary");
-  const mode = currentImportMode();
 
-  const rows = scheduleState.parsedRows;
+function confidenceLabel(value) {
+  const labels = {
+    high: "Alta",
+    medium: "Revisar",
+    low: "Baixa"
+  };
 
-  if (!rows.length) {
-    preview.classList.remove("visible");
-    body.innerHTML = "";
-    summary.textContent = "";
-    return;
+  return labels[value] || "Revisar";
+}
+
+
+function buildTopicKey(row) {
+  return [
+    row.date || "",
+    normalizeHeader(row.theme)
+  ].join("|");
+}
+
+
+function buildEventKey(row) {
+  return [
+    row.date || "",
+    row.kind || "other",
+    normalizeHeader(row.theme)
+  ].join("|");
+}
+
+
+function refreshExistingKeys() {
+  scheduleState.existingTopicKeys =
+    new Set(
+      scheduleState.topics
+        .filter(
+          (topic) =>
+            topic.theme
+            && (
+              topic.scheduled_date
+              || topic.original_date
+            )
+        )
+        .map(
+          (topic) =>
+            [
+              topic.scheduled_date
+                || topic.original_date
+                || "",
+              normalizeHeader(
+                topic.theme
+              )
+            ].join("|")
+        )
+    );
+
+  scheduleState.existingEventKeys =
+    new Set(
+      scheduleState.events
+        .filter(
+          (event) =>
+            event.title
+            && event.event_date
+        )
+        .map(
+          (event) =>
+            [
+              event.event_date,
+              event.event_type,
+              normalizeHeader(
+                event.title
+              )
+            ].join("|")
+        )
+    );
+}
+
+
+function validateImportRow(row) {
+  const errors = [];
+
+  if (
+    !cleanText(
+      row.theme
+    )
+  ) {
+    errors.push(
+      "Conteúdo ausente"
+    );
   }
 
-  const invalid = rows.filter((row) => row.errors.length > 0).length;
-  const done = rows.filter((row) => row.alreadyDone).length;
-  const valid = rows.length - invalid;
+  const mode =
+    currentImportMode();
 
-  summary.textContent =
-    `${valid} válida${valid === 1 ? "" : "s"} · ${done} já feita${done === 1 ? "" : "s"} · ${invalid} com problema`;
+  if (
+    (
+      mode === "dates"
+      || row.kind !== "lesson"
+    )
+    && !row.alreadyDone
+    && !row.date
+  ) {
+    errors.push(
+      "Data obrigatória"
+    );
+  }
 
-  body.innerHTML = rows.slice(0, 15).map((row) => {
-    const status = row.errors.length
-      ? `<span class="row-error">${escapeScheduleHtml(row.errors.join(", "))}</span>`
-      : "Pronta";
+  if (
+    row.studiedDate
+    && !parseExcelDate(
+      row.studiedDate
+    )
+  ) {
+    errors.push(
+      "Data estudada inválida"
+    );
+  }
 
-    const doneCell = row.alreadyDone
-      ? '<span class="done-pill">Sim</span>'
-      : "Não";
+  row.errors =
+    errors;
 
-    return `
-      <tr>
-        <td>${row.rowNumber}</td>
-        <td>${row.alreadyDone ? "—" : (mode === "deck" ? "Ignorada" : escapeScheduleHtml(row.date || "—"))}</td>
-        <td>${escapeScheduleHtml(row.area || "—")}</td>
-        <td>${escapeScheduleHtml(row.materia || "—")}</td>
-        <td>${escapeScheduleHtml(row.theme || "—")}</td>
-        <td>${doneCell}</td>
-        <td>${escapeScheduleHtml(row.studiedDate || "—")}</td>
-        <td>${status}</td>
-      </tr>
-    `;
-  }).join("");
+  row.duplicate =
+    row.kind === "lesson"
+      ? scheduleState
+          .existingTopicKeys
+          .has(
+            buildTopicKey(
+              row
+            )
+          )
+      : scheduleState
+          .existingEventKeys
+          .has(
+            buildEventKey(
+              row
+            )
+          );
 
-  preview.classList.add("visible");
-
-  const confirm = document.getElementById("confirm-import");
-  confirm.disabled = invalid > 0 || valid === 0;
-
-  if (rows.length > 15) {
-    setImportStatus(`Mostrando 15 de ${rows.length} linhas na prévia.`);
-  } else {
-    setImportStatus("");
+  if (
+    row.duplicate
+  ) {
+    row.include =
+      false;
   }
 }
 
-async function parseSelectedFile(file) {
-  if (!file) return;
 
-  scheduleState.file = file;
-  document.getElementById("file-name").textContent = file.name;
-  setImportStatus("Lendo planilha...");
+function applyDuplicateFlags() {
+  refreshExistingKeys();
 
-  try {
-    const buffer = await file.arrayBuffer();
+  for (
+    const row
+    of scheduleState.parsedRows
+  ) {
+    validateImportRow(
+      row
+    );
+  }
+}
 
-    const workbook = XLSX.read(buffer, {
-      type: "array",
-      cellDates: true
-    });
 
-    const sheetName = workbook.SheetNames[0];
+function renderPreview() {
+  const preview =
+    document.getElementById(
+      "import-preview"
+    );
 
-    if (!sheetName) {
-      throw new Error("Não encontrei nenhuma aba na planilha.");
+  const body =
+    document.getElementById(
+      "preview-body"
+    );
+
+  const summary =
+    document.getElementById(
+      "preview-summary"
+    );
+
+  const rows =
+    scheduleState.parsedRows;
+
+
+  if (!rows.length) {
+    preview.classList.remove(
+      "visible"
+    );
+
+    body.innerHTML =
+      "";
+
+    summary.textContent =
+      "";
+
+    return;
+  }
+
+
+  applyDuplicateFlags();
+
+
+  const invalid =
+    rows.filter(
+      (row) =>
+        row.errors.length > 0
+    ).length;
+
+  const duplicate =
+    rows.filter(
+      (row) =>
+        row.duplicate
+    ).length;
+
+  const selected =
+    rows.filter(
+      (row) =>
+        row.include
+        && !row.duplicate
+        && row.errors.length === 0
+    ).length;
+
+
+  summary.textContent =
+    `${selected} selecionado${selected === 1 ? "" : "s"} · ${duplicate} já existente${duplicate === 1 ? "" : "s"} · ${invalid} com problema`;
+
+
+  body.innerHTML =
+    rows.map(
+      (
+        row,
+        index
+      ) => {
+        const status =
+          row.duplicate
+            ? '<span class="duplicate-pill">Já existe</span>'
+            : row.errors.length
+              ? `<span class="row-error">${escapeScheduleHtml(
+                  row.errors.join(
+                    ", "
+                  )
+                )}</span>`
+              : "Pronta";
+
+
+        return `
+          <tr data-preview-row="${index}">
+
+            <td>
+              <input
+                class="preview-check"
+                type="checkbox"
+                data-preview-include="${index}"
+                ${row.include && !row.duplicate ? "checked" : ""}
+                ${row.duplicate ? "disabled" : ""}
+                aria-label="Importar linha"
+              >
+            </td>
+
+            <td>
+              ${escapeScheduleHtml(
+                row.sourceLabel
+                || `Linha ${row.rowNumber || index + 1}`
+              )}
+            </td>
+
+            <td>
+              <input
+                class="preview-input"
+                type="date"
+                value="${escapeScheduleHtml(
+                  row.date
+                  || ""
+                )}"
+                data-preview-field="date"
+                data-preview-index="${index}"
+              >
+            </td>
+
+            <td>
+              <select
+                class="preview-select"
+                data-preview-field="kind"
+                data-preview-index="${index}"
+              >
+                ${Object
+                  .entries(
+                    SCHEDULE_KIND_LABELS
+                  )
+                  .map(
+                    (
+                      [
+                        value,
+                        label
+                      ]
+                    ) => `
+                      <option
+                        value="${value}"
+                        ${row.kind === value ? "selected" : ""}
+                      >
+                        ${escapeScheduleHtml(label)}
+                      </option>
+                    `
+                  )
+                  .join("")}
+              </select>
+            </td>
+
+            <td>
+              <input
+                class="preview-input"
+                type="text"
+                value="${escapeScheduleHtml(
+                  row.area
+                  || ""
+                )}"
+                placeholder="Opcional"
+                data-preview-field="area"
+                data-preview-index="${index}"
+              >
+            </td>
+
+            <td>
+              <input
+                class="preview-input"
+                type="text"
+                value="${escapeScheduleHtml(
+                  row.materia
+                  || ""
+                )}"
+                placeholder="Opcional"
+                data-preview-field="materia"
+                data-preview-index="${index}"
+              >
+            </td>
+
+            <td>
+              <input
+                class="preview-input title-input"
+                type="text"
+                value="${escapeScheduleHtml(
+                  row.theme
+                  || ""
+                )}"
+                data-preview-field="theme"
+                data-preview-index="${index}"
+              >
+            </td>
+
+            <td>
+              <input
+                class="preview-check"
+                type="checkbox"
+                data-preview-field="alreadyDone"
+                data-preview-index="${index}"
+                ${row.alreadyDone ? "checked" : ""}
+                ${row.kind !== "lesson" ? "disabled" : ""}
+                aria-label="Aula já feita"
+              >
+            </td>
+
+            <td>
+              <input
+                class="preview-input"
+                type="date"
+                value="${escapeScheduleHtml(
+                  row.studiedDate
+                  || ""
+                )}"
+                data-preview-field="studiedDate"
+                data-preview-index="${index}"
+                ${row.kind !== "lesson" ? "disabled" : ""}
+              >
+            </td>
+
+            <td>
+              <span class="confidence-pill ${escapeScheduleHtml(
+                row.confidence
+                || "medium"
+              )}">
+                ${escapeScheduleHtml(
+                  confidenceLabel(
+                    row.confidence
+                  )
+                )}
+              </span>
+            </td>
+
+            <td>
+              ${status}
+            </td>
+
+          </tr>
+        `;
+      }
+    )
+    .join("");
+
+
+  preview.classList.add(
+    "visible"
+  );
+
+
+  const confirm =
+    document.getElementById(
+      "confirm-import"
+    );
+
+  confirm.disabled =
+    selected === 0;
+
+
+  wirePreviewEditor();
+}
+
+
+function wirePreviewEditor() {
+  document
+    .querySelectorAll(
+      "[data-preview-include]"
+    )
+    .forEach(
+      (input) => {
+        input.addEventListener(
+          "change",
+          () => {
+            const index =
+              Number(
+                input.dataset
+                  .previewInclude
+              );
+
+            const row =
+              scheduleState
+                .parsedRows[index];
+
+            if (!row) return;
+
+            row.include =
+              input.checked;
+
+            renderPreview();
+          }
+        );
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-preview-field]"
+    )
+    .forEach(
+      (input) => {
+        input.addEventListener(
+          "change",
+          () => {
+            const index =
+              Number(
+                input.dataset
+                  .previewIndex
+              );
+
+            const field =
+              input.dataset
+                .previewField;
+
+            const row =
+              scheduleState
+                .parsedRows[index];
+
+            if (
+              !row
+              || !field
+            ) {
+              return;
+            }
+
+
+            if (
+              field ===
+              "alreadyDone"
+            ) {
+              row.alreadyDone =
+                input.checked;
+
+            } else {
+              row[field] =
+                input.value;
+            }
+
+
+            if (
+              field === "kind"
+              && row.kind
+              !== "lesson"
+            ) {
+              row.alreadyDone =
+                false;
+
+              row.studiedDate =
+                null;
+            }
+
+
+            if (
+              row.duplicate
+            ) {
+              row.include =
+                true;
+            }
+
+
+            validateImportRow(
+              row
+            );
+
+            renderPreview();
+          }
+        );
+      }
+    );
+}
+
+
+function setPdfModeState(
+  enabled
+) {
+  const dates =
+    document.querySelector(
+      'input[name="import-mode"][value="dates"]'
+    );
+
+  const deck =
+    document.querySelector(
+      'input[name="import-mode"][value="deck"]'
+    );
+
+  if (
+    enabled
+    && dates
+  ) {
+    dates.checked =
+      true;
+  }
+
+  if (deck) {
+    deck.disabled =
+      enabled;
+  }
+}
+
+
+function isPdfFile(
+  file
+) {
+  return (
+    file?.type ===
+      "application/pdf"
+    || /\.pdf$/i.test(
+      file?.name
+      || ""
+    )
+  );
+}
+
+
+function parseYearRangeText(
+  text
+) {
+  const normalized =
+    String(
+      text
+      || ""
+    );
+
+  const match =
+    normalized.match(
+      /(20\d{2})\D{0,12}(20\d{2})/
+    );
+
+  if (match) {
+    return {
+      startYear:
+        Number(
+          match[1]
+        ),
+
+      endYear:
+        Number(
+          match[2]
+        )
+    };
+  }
+
+  const single =
+    normalized.match(
+      /(20\d{2})/
+    );
+
+  const year =
+    single
+      ? Number(
+          single[1]
+        )
+      : new Date()
+          .getFullYear();
+
+  return {
+    startYear:
+      year,
+
+    endYear:
+      year
+  };
+}
+
+
+function pdfTokenTopY(
+  item,
+  viewport
+) {
+  return (
+    viewport.height
+    - Number(
+        item.transform?.[5]
+        || 0
+      )
+  );
+}
+
+
+function groupPdfTokensByY(
+  tokens,
+  tolerance = 3.8
+) {
+  const groups =
+    [];
+
+  const ordered =
+    [...tokens]
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a.y - b.y
+          || a.x - b.x
+      );
+
+
+  for (
+    const token
+    of ordered
+  ) {
+    const last =
+      groups[
+        groups.length - 1
+      ];
+
+    if (
+      !last
+      || Math.abs(
+        token.y
+        - last.y
+      ) > tolerance
+    ) {
+      groups.push({
+        y:
+          token.y,
+
+        tokens:
+          [token]
+      });
+
+      continue;
     }
 
-    const worksheet = workbook.Sheets[sheetName];
 
-    const matrix = XLSX.utils.sheet_to_json(worksheet, {
-      header: 1,
-      defval: "",
-      raw: true
+    last.tokens.push(
+      token
+    );
+
+    last.y =
+      last.tokens.reduce(
+        (
+          total,
+          current
+        ) =>
+          total
+          + current.y,
+        0
+      )
+      / last.tokens.length;
+  }
+
+
+  return groups;
+}
+
+
+function pdfLineText(
+  group
+) {
+  return cleanText(
+    [...group.tokens]
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a.x - b.x
+      )
+      .map(
+        (token) =>
+          token.text
+      )
+      .join(" ")
+  );
+}
+
+
+function shouldIgnorePdfLine(
+  text
+) {
+  const normalized =
+    normalizeHeader(
+      text
+    );
+
+  if (!normalized) {
+    return true;
+  }
+
+  if (
+    normalized.startsWith(
+      "se estiver em atraso"
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    [
+      "segunda",
+      "terca",
+      "quarta",
+      "quinta",
+      "sexta",
+      "sabado",
+      "domingo"
+    ].includes(
+      normalized
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    /^(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\/\d{2}$/
+      .test(
+        normalized
+      )
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+
+function isoFromPlannerDate(
+  shortDate,
+  pageMonth,
+  pageYear
+) {
+  const match =
+    String(
+      shortDate
+    )
+      .match(
+        /^(\d{1,2})\/(\d{1,2})$/
+      );
+
+  if (!match) {
+    return null;
+  }
+
+  const day =
+    Number(
+      match[1]
+    );
+
+  const month =
+    Number(
+      match[2]
+    );
+
+  let year =
+    pageYear;
+
+  if (
+    month
+    < pageMonth - 6
+  ) {
+    year += 1;
+
+  } else if (
+    month
+    > pageMonth + 6
+  ) {
+    year -= 1;
+  }
+
+
+  return [
+    String(year)
+      .padStart(
+        4,
+        "0"
+      ),
+
+    String(month)
+      .padStart(
+        2,
+        "0"
+      ),
+
+    String(day)
+      .padStart(
+        2,
+        "0"
+      )
+  ].join("-");
+}
+
+
+function makePdfRow({
+  date,
+  title,
+  kind,
+  pageNumber,
+  confidence
+}) {
+  return {
+    rowNumber:
+      pageNumber,
+
+    sourceLabel:
+      `PDF · pág. ${pageNumber}`,
+
+    sourcePage:
+      pageNumber,
+
+    date:
+      date
+      || null,
+
+    area:
+      "",
+
+    materia:
+      "",
+
+    theme:
+      cleanText(
+        title
+      ),
+
+    kind:
+      kind
+      || classifyScheduleKind(
+        title
+      ),
+
+    alreadyDone:
+      false,
+
+    studiedDate:
+      null,
+
+    confidence:
+      confidence
+      || "medium",
+
+    include:
+      true,
+
+    duplicate:
+      false,
+
+    errors:
+      []
+  };
+}
+
+
+function dedupeParsedRows(
+  rows
+) {
+  const seen =
+    new Set();
+
+  return (
+    rows || []
+  )
+    .filter(
+      (row) => {
+        const key =
+          [
+            row.date
+              || "",
+            row.kind
+              || "",
+            normalizeHeader(
+              row.theme
+            )
+          ].join("|");
+
+
+        if (
+          seen.has(
+            key
+          )
+        ) {
+          return false;
+        }
+
+
+        seen.add(
+          key
+        );
+
+        return Boolean(
+          row.theme
+        );
+      }
+    );
+}
+
+
+async function extractPdfPageTokens(
+  page
+) {
+  const viewport =
+    page.getViewport({
+      scale:
+        1
     });
 
-    const detected = parseWorkbookRows(matrix, sheetName);
+  const content =
+    await page
+      .getTextContent();
 
-    scheduleState.detected = detected;
-    scheduleState.parsedRows = detected.rows;
+  return {
+    width:
+      viewport.width,
+
+    height:
+      viewport.height,
+
+    tokens:
+      content.items
+        .map(
+          (item) => ({
+            text:
+              cleanText(
+                item.str
+              ),
+
+            x:
+              Number(
+                item.transform?.[4]
+                || 0
+              ),
+
+            y:
+              pdfTokenTopY(
+                item,
+                viewport
+              ),
+
+            width:
+              Number(
+                item.width
+                || 0
+              )
+          })
+        )
+        .filter(
+          (item) =>
+            item.text
+        )
+  };
+}
+
+
+function parseMonthlyPlannerPage({
+  tokens,
+  width,
+  height,
+  pageNumber,
+  calendarIndex,
+  startYear
+}) {
+  const pageMonth =
+    (
+      calendarIndex
+      % 12
+    )
+    + 1;
+
+  const pageYear =
+    startYear
+    + Math.floor(
+        calendarIndex
+        / 12
+      );
+
+
+  const dateTokens =
+    tokens.filter(
+      (token) =>
+        /^\d{1,2}\/\d{1,2}$/
+          .test(
+            token.text
+          )
+        && token.y
+          > height * .18
+        && token.y
+          < height * .94
+        && token.x
+          > width * .08
+        && token.x
+          < width * .92
+    );
+
+
+  const dateGroups =
+    groupPdfTokensByY(
+      dateTokens,
+      4.2
+    )
+      .filter(
+        (group) =>
+          group.tokens.length
+          >= 5
+      )
+      .map(
+        (group) => ({
+          y:
+            group.y,
+
+          tokens:
+            [...group.tokens]
+              .sort(
+                (
+                  a,
+                  b
+                ) =>
+                  a.x - b.x
+              )
+        })
+      )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a.y - b.y
+      );
+
+
+  if (
+    dateGroups.length
+    < 3
+  ) {
+    return [];
+  }
+
+
+  const rows =
+    [];
+
+  const rightThreshold =
+    width * .66;
+
+
+  for (
+    let index = 0;
+    index < dateGroups.length;
+    index += 1
+  ) {
+    const dateGroup =
+      dateGroups[index];
+
+    const nextY =
+      index + 1
+        < dateGroups.length
+          ? dateGroups[
+              index + 1
+            ].y
+          : Math.min(
+              height * .94,
+              dateGroup.y
+              + height * .15
+            );
+
+
+    const dates =
+      dateGroup.tokens
+        .slice(
+          0,
+          7
+        )
+        .map(
+          (token) =>
+            isoFromPlannerDate(
+              token.text,
+              pageMonth,
+              pageYear
+            )
+        );
+
+
+    if (
+      dates.length
+      < 7
+    ) {
+      continue;
+    }
+
+
+    const bandTokens =
+      tokens.filter(
+        (token) =>
+          token.y
+            > dateGroup.y + 7
+          && token.y
+            < nextY - 3
+          && !/^\d{1,2}\/\d{1,2}$/
+              .test(
+                token.text
+              )
+      );
+
+
+    const leftGroups =
+      groupPdfTokensByY(
+        bandTokens.filter(
+          (token) =>
+            token.x
+            < rightThreshold
+        )
+      )
+        .map(
+          (group) =>
+            pdfLineText(
+              group
+            )
+        )
+        .filter(
+          (text) =>
+            !shouldIgnorePdfLine(
+              text
+            )
+        );
+
+
+    const rightGroups =
+      groupPdfTokensByY(
+        bandTokens.filter(
+          (token) =>
+            token.x
+            >= rightThreshold
+        )
+      )
+        .map(
+          (group) =>
+            pdfLineText(
+              group
+            )
+        )
+        .filter(
+          (text) =>
+            !shouldIgnorePdfLine(
+              text
+            )
+        );
+
+
+    const left =
+      leftGroups
+        .filter(
+          (text) =>
+            !normalizeHeader(
+              text
+            ).startsWith(
+              "se estiver"
+            )
+        );
+
+
+    const rightTitle =
+      cleanText(
+        rightGroups.join(
+          " "
+        )
+      );
+
+
+    const rightKind =
+      rightTitle
+        ? classifyScheduleKind(
+            rightTitle
+          )
+        : null;
+
+
+    if (
+      rightKind ===
+      "simulation"
+    ) {
+      const leftSlots =
+        [0, 3];
+
+      left
+        .slice(
+          0,
+          2
+        )
+        .forEach(
+          (
+            title,
+            leftIndex
+          ) => {
+            rows.push(
+              makePdfRow({
+                date:
+                  dates[
+                    leftSlots[
+                      leftIndex
+                    ]
+                  ],
+
+                title,
+                kind:
+                  classifyScheduleKind(
+                    title
+                  ),
+
+                pageNumber,
+                confidence:
+                  "high"
+              })
+            );
+          }
+        );
+
+
+      rows.push(
+        makePdfRow({
+          date:
+            dates[2],
+
+          title:
+            rightTitle,
+
+          kind:
+            rightKind,
+
+          pageNumber,
+          confidence:
+            "high"
+        })
+      );
+
+      continue;
+    }
+
+
+    if (
+      rightKind ===
+      "smart_simulation"
+    ) {
+      const leftSlots =
+        [0, 2];
+
+      left
+        .slice(
+          0,
+          2
+        )
+        .forEach(
+          (
+            title,
+            leftIndex
+          ) => {
+            rows.push(
+              makePdfRow({
+                date:
+                  dates[
+                    leftSlots[
+                      leftIndex
+                    ]
+                  ],
+
+                title,
+                kind:
+                  classifyScheduleKind(
+                    title
+                  ),
+
+                pageNumber,
+                confidence:
+                  "high"
+              })
+            );
+          }
+        );
+
+
+      rows.push(
+        makePdfRow({
+          date:
+            dates[1],
+
+          title:
+            rightTitle,
+
+          kind:
+            rightKind,
+
+          pageNumber,
+          confidence:
+            "high"
+        })
+      );
+
+      continue;
+    }
+
+
+    if (
+      rightKind ===
+      "full_exam"
+    ) {
+      const hasReview =
+        left.some(
+          (title) =>
+            [
+              "smart_review",
+              "external_review"
+            ].includes(
+              classifyScheduleKind(
+                title
+              )
+            )
+        );
+
+
+      if (hasReview) {
+        left
+          .slice(
+            0,
+            2
+          )
+          .forEach(
+            (
+              title,
+              leftIndex
+            ) => {
+              rows.push(
+                makePdfRow({
+                  date:
+                    dates[
+                      2 + leftIndex
+                    ],
+
+                  title,
+
+                  kind:
+                    classifyScheduleKind(
+                      title
+                    ),
+
+                  pageNumber,
+                  confidence:
+                    "medium"
+                })
+              );
+            }
+          );
+
+      } else {
+        left
+          .slice(
+            0,
+            1
+          )
+          .forEach(
+            (title) => {
+              rows.push(
+                makePdfRow({
+                  date:
+                    dates[0],
+
+                  title,
+
+                  kind:
+                    classifyScheduleKind(
+                      title
+                    ),
+
+                  pageNumber,
+                  confidence:
+                    "medium"
+                })
+              );
+            }
+          );
+      }
+
+
+      rows.push(
+        makePdfRow({
+          date:
+            dates[5],
+
+          title:
+            rightTitle,
+
+          kind:
+            rightKind,
+
+          pageNumber,
+          confidence:
+            "medium"
+        })
+      );
+
+      continue;
+    }
+
+
+    left
+      .slice(
+        0,
+        3
+      )
+      .forEach(
+        (
+          title,
+          leftIndex
+        ) => {
+          rows.push(
+            makePdfRow({
+              date:
+                dates[
+                  Math.min(
+                    leftIndex * 2,
+                    4
+                  )
+                ],
+
+              title,
+
+              kind:
+                classifyScheduleKind(
+                  title
+                ),
+
+              pageNumber,
+              confidence:
+                "low"
+            })
+          );
+        }
+      );
+
+
+    if (rightTitle) {
+      rows.push(
+        makePdfRow({
+          date:
+            dates[5],
+
+          title:
+            rightTitle,
+
+          kind:
+            rightKind
+            || "other",
+
+          pageNumber,
+          confidence:
+            "low"
+        })
+      );
+    }
+  }
+
+
+  return rows;
+}
+
+
+function parseGenericPdfLines({
+  tokens,
+  pageNumber
+}) {
+  const groups =
+    groupPdfTokensByY(
+      tokens,
+      4.5
+    );
+
+  const rows =
+    [];
+
+
+  for (
+    const group
+    of groups
+  ) {
+    const text =
+      pdfLineText(
+        group
+      );
+
+    const dateMatch =
+      text.match(
+        /(?:^|\s)((?:\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})|(?:20\d{2}-\d{1,2}-\d{1,2}))(?:\s|$)/
+      );
+
+
+    if (!dateMatch) {
+      continue;
+    }
+
+
+    const date =
+      parseExcelDate(
+        dateMatch[1]
+      );
+
+    const title =
+      cleanText(
+        text.replace(
+          dateMatch[1],
+          ""
+        )
+      );
+
+
+    if (
+      !date
+      || !title
+    ) {
+      continue;
+    }
+
+
+    rows.push(
+      makePdfRow({
+        date,
+        title,
+        kind:
+          classifyScheduleKind(
+            title
+          ),
+
+        pageNumber,
+        confidence:
+          "medium"
+      })
+    );
+  }
+
+
+  return rows;
+}
+
+
+async function parsePdfFile(
+  file
+) {
+  if (
+    !window.pdfjsLib
+  ) {
+    throw new Error(
+      "O leitor de PDF não carregou. Atualize a página e tente novamente."
+    );
+  }
+
+
+  window.pdfjsLib
+    .GlobalWorkerOptions
+    .workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+
+  const buffer =
+    await file
+      .arrayBuffer();
+
+  const pdf =
+    await window
+      .pdfjsLib
+      .getDocument({
+        data:
+          buffer
+      })
+      .promise;
+
+
+  const firstPagesText =
+    [];
+
+
+  for (
+    let pageNumber = 1;
+    pageNumber
+      <= Math.min(
+        2,
+        pdf.numPages
+      );
+    pageNumber += 1
+  ) {
+    const page =
+      await pdf.getPage(
+        pageNumber
+      );
+
+    const content =
+      await page
+        .getTextContent();
+
+    firstPagesText.push(
+      content.items
+        .map(
+          (item) =>
+            item.str
+        )
+        .join(
+          " "
+        )
+    );
+  }
+
+
+  const yearRange =
+    parseYearRangeText(
+      `${file.name} ${firstPagesText.join(" ")}`
+    );
+
+
+  const rows =
+    [];
+
+  let calendarIndex =
+    0;
+
+  let plannerPages =
+    0;
+
+
+  for (
+    let pageNumber = 1;
+    pageNumber
+      <= pdf.numPages;
+    pageNumber += 1
+  ) {
+    setImportStatus(
+      `Lendo PDF: página ${pageNumber} de ${pdf.numPages}...`
+    );
+
+
+    const page =
+      await pdf.getPage(
+        pageNumber
+      );
+
+    const pageData =
+      await extractPdfPageTokens(
+        page
+      );
+
+
+    const normalizedText =
+      normalizeHeader(
+        pageData.tokens
+          .map(
+            (token) =>
+              token.text
+          )
+          .join(
+            " "
+          )
+      );
+
+
+    const shortDateCount =
+      pageData.tokens
+        .filter(
+          (token) =>
+            /^\d{1,2}\/\d{1,2}$/
+              .test(
+                token.text
+              )
+        )
+        .length;
+
+
+    const looksLikePlanner =
+      normalizedText.includes(
+        "segunda"
+      )
+      && normalizedText.includes(
+        "terca"
+      )
+      && normalizedText.includes(
+        "quarta"
+      )
+      && shortDateCount
+        >= 14;
+
+
+    if (
+      looksLikePlanner
+    ) {
+      plannerPages += 1;
+
+      rows.push(
+        ...parseMonthlyPlannerPage({
+          ...pageData,
+          pageNumber,
+          calendarIndex,
+          startYear:
+            yearRange
+              .startYear
+        })
+      );
+
+      calendarIndex += 1;
+
+      continue;
+    }
+
+
+    rows.push(
+      ...parseGenericPdfLines({
+        ...pageData,
+        pageNumber
+      })
+    );
+  }
+
+
+  const deduped =
+    dedupeParsedRows(
+      rows
+    );
+
+
+  if (
+    deduped.length
+    < 2
+  ) {
+    throw new Error(
+      "Não consegui reconstruir este PDF automaticamente. Tente Excel/CSV ou outro PDF com texto selecionável."
+    );
+  }
+
+
+  return {
+    rows:
+      deduped,
+
+    detected: {
+      parser:
+        plannerPages
+          ? "monthly-planner"
+          : "generic-pdf",
+
+      plannerPages,
+
+      pageCount:
+        pdf.numPages,
+
+      startYear:
+        yearRange
+          .startYear,
+
+      endYear:
+        yearRange
+          .endYear
+    }
+  };
+}
+
+
+async function parseWorkbookFile(
+  file
+) {
+  const buffer =
+    await file
+      .arrayBuffer();
+
+  const workbook =
+    XLSX.read(
+      buffer,
+      {
+        type:
+          "array",
+
+        cellDates:
+          true
+      }
+    );
+
+
+  if (
+    !workbook
+      .SheetNames
+      .length
+  ) {
+    throw new Error(
+      "Não encontrei nenhuma aba na planilha."
+    );
+  }
+
+
+  const accepted =
+    [];
+
+  const skipped =
+    [];
+
+
+  for (
+    const sheetName
+    of workbook
+      .SheetNames
+  ) {
+    const worksheet =
+      workbook
+        .Sheets[
+          sheetName
+        ];
+
+    const matrix =
+      XLSX.utils
+        .sheet_to_json(
+          worksheet,
+          {
+            header:
+              1,
+
+            defval:
+              "",
+
+            raw:
+              true
+          }
+        );
+
+
+    try {
+      const detected =
+        parseWorkbookRows(
+          matrix,
+          sheetName
+        );
+
+      if (
+        detected.rows.length
+      ) {
+        accepted.push(
+          detected
+        );
+      }
+
+    } catch (error) {
+      skipped.push({
+        sheetName,
+        message:
+          error.message
+      });
+    }
+  }
+
+
+  if (
+    !accepted.length
+  ) {
+    throw new Error(
+      skipped[0]
+        ?.message
+      || "Não encontrei uma aba com colunas reconhecíveis."
+    );
+  }
+
+
+  return {
+    rows:
+      dedupeParsedRows(
+        accepted.flatMap(
+          (item) =>
+            item.rows
+        )
+      ),
+
+    detected: {
+      parser:
+        "spreadsheet",
+
+      sheets:
+        accepted.map(
+          (item) => ({
+            sheetName:
+              item.sheetName,
+
+            headerRowIndex:
+              item.headerRowIndex,
+
+            rawHeaders:
+              item.rawHeaders
+          })
+        ),
+
+      skippedSheets:
+        skipped
+    }
+  };
+}
+
+
+async function parseSelectedFile(
+  file
+) {
+  if (!file) {
+    return;
+  }
+
+
+  scheduleState.file =
+    file;
+
+  scheduleState.fileType =
+    isPdfFile(
+      file
+    )
+      ? "pdf"
+      : "spreadsheet";
+
+
+  document
+    .getElementById(
+      "file-name"
+    )
+    .textContent =
+      file.name;
+
+
+  setPdfModeState(
+    scheduleState.fileType
+      === "pdf"
+  );
+
+
+  setImportStatus(
+    scheduleState.fileType
+      === "pdf"
+        ? "Analisando estrutura do PDF..."
+        : "Lendo planilha..."
+  );
+
+
+  try {
+    const result =
+      scheduleState.fileType
+        === "pdf"
+          ? await parsePdfFile(
+              file
+            )
+          : await parseWorkbookFile(
+              file
+            );
+
+
+    scheduleState.detected =
+      result.detected;
+
+    scheduleState.parsedRows =
+      result.rows;
+
+
+    applyDuplicateFlags();
 
     renderPreview();
 
+
+    const counts =
+      scheduleState.parsedRows
+        .reduce(
+          (
+            acc,
+            row
+          ) => {
+            acc[
+              row.kind
+            ] =
+              (
+                acc[
+                  row.kind
+                ]
+                || 0
+              )
+              + 1;
+
+            return acc;
+          },
+          {}
+        );
+
+
+    const lessons =
+      counts.lesson
+      || 0;
+
+    const events =
+      scheduleState.parsedRows.length
+      - lessons;
+
+
     setImportStatus(
-      `Aba "${sheetName}" reconhecida. Confira a prévia antes de importar.`,
+      `${scheduleState.parsedRows.length} itens reconhecidos · ${lessons} aulas · ${events} eventos. Confira a prévia antes de importar.`,
       "success"
     );
+
   } catch (error) {
-    console.error(error);
-    scheduleState.parsedRows = [];
-    scheduleState.detected = null;
+    console.error(
+      error
+    );
+
+    scheduleState
+      .parsedRows =
+        [];
+
+    scheduleState
+      .detected =
+        null;
+
     renderPreview();
+
     setImportStatus(
-      error.message || "Não foi possível ler a planilha.",
+      error.message
+      || "Não foi possível ler o arquivo.",
       "error"
     );
   }
 }
 
-function resetImport() {
-  scheduleState.file = null;
-  scheduleState.parsedRows = [];
-  scheduleState.detected = null;
 
-  document.getElementById("schedule-file").value = "";
-  document.getElementById("file-name").textContent = "Selecione uma planilha";
-  document.getElementById("import-preview").classList.remove("visible");
-  document.getElementById("preview-body").innerHTML = "";
-  document.getElementById("preview-summary").textContent = "";
-  setImportStatus("");
+function resetImport() {
+  scheduleState.file =
+    null;
+
+  scheduleState.fileType =
+    null;
+
+  scheduleState.parsedRows =
+    [];
+
+  scheduleState.detected =
+    null;
+
+
+  setPdfModeState(
+    false
+  );
+
+
+  document
+    .getElementById(
+      "schedule-file"
+    )
+    .value =
+      "";
+
+  document
+    .getElementById(
+      "file-name"
+    )
+    .textContent =
+      "Selecione um cronograma";
+
+  document
+    .getElementById(
+      "import-preview"
+    )
+    .classList
+    .remove(
+      "visible"
+    );
+
+  document
+    .getElementById(
+      "preview-body"
+    )
+    .innerHTML =
+      "";
+
+  document
+    .getElementById(
+      "preview-summary"
+    )
+    .textContent =
+      "";
+
+  const confirm =
+    document.getElementById(
+      "confirm-import"
+    );
+
+  if (confirm) {
+    confirm.disabled =
+      true;
+  }
+
+  setImportStatus(
+    ""
+  );
 }
 
 async function createImportRecord(mode) {
   const metadata = {
-    sheet_name: scheduleState.detected?.sheetName || null,
-    detected_headers: scheduleState.detected?.rawHeaders || []
+    file_type:
+      scheduleState.fileType,
+    parser:
+      scheduleState.detected?.parser
+      || null,
+    detected:
+      scheduleState.detected
+      || null
   };
 
   const { data, error } = await scheduleSb
@@ -560,60 +2684,287 @@ async function insertAlreadyDoneRow(row, importRecord, mode) {
   if (doneError) throw doneError;
 }
 
-async function confirmImport() {
-  const mode = currentImportMode();
-  const rows = scheduleState.parsedRows;
 
-  if (!scheduleState.file || !rows.length) {
-    setImportStatus("Selecione uma planilha primeiro.", "error");
-    return;
+async function insertAlreadyDoneRow(
+  row,
+  importRecord,
+  mode
+) {
+  const {
+    data:
+      topic,
+
+    error:
+      insertError
+  } =
+    await scheduleSb
+      .from(
+        "study_topics"
+      )
+      .insert({
+        user_id:
+          scheduleState.user.id,
+
+        import_id:
+          importRecord.id,
+
+        area:
+          row.area
+          || null,
+
+        materia:
+          row.materia
+          || null,
+
+        theme:
+          row.theme,
+
+        original_date:
+          row.date
+          || null,
+
+        scheduled_date:
+          mode === "dates"
+            ? row.date
+            : null,
+
+        status:
+          mode === "dates"
+          && row.date
+            ? "scheduled"
+            : "deck"
+      })
+      .select()
+      .single();
+
+
+  if (insertError) {
+    throw insertError;
   }
 
-  const invalid = rows.filter((row) => row.errors.length > 0);
 
-  if (invalid.length) {
+  const {
+    error:
+      doneError
+  } =
+    await scheduleSb
+      .rpc(
+        "mark_topic_already_done",
+        {
+          p_topic_id:
+            topic.id,
+
+          p_studied_on:
+            row.studiedDate
+            || null
+        }
+      );
+
+
+  if (doneError) {
+    throw doneError;
+  }
+}
+
+
+async function confirmImport() {
+  const mode =
+    currentImportMode();
+
+  const rows =
+    scheduleState
+      .parsedRows;
+
+
+  if (
+    !scheduleState.file
+    || !rows.length
+  ) {
     setImportStatus(
-      "Corrija as linhas marcadas na planilha antes de importar.",
+      "Selecione um arquivo primeiro.",
       "error"
     );
+
     return;
   }
 
-  const button = document.getElementById("confirm-import");
-  button.disabled = true;
-  setImportStatus("Importando cronograma...");
 
-  let importRecord = null;
+  applyDuplicateFlags();
+
+
+  const selectedRows =
+    rows.filter(
+      (row) =>
+        row.include
+        && !row.duplicate
+    );
+
+
+  const invalid =
+    selectedRows.filter(
+      (row) =>
+        row.errors.length
+        > 0
+    );
+
+
+  if (
+    invalid.length
+  ) {
+    setImportStatus(
+      "Há itens selecionados com problema. Corrija a prévia ou desmarque esses itens.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  if (
+    !selectedRows.length
+  ) {
+    setImportStatus(
+      "Nenhum item novo selecionado.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      "confirm-import"
+    );
+
+  button.disabled =
+    true;
+
+  setImportStatus(
+    "Importando cronograma..."
+  );
+
+
+  let importRecord =
+    null;
+
 
   try {
-    importRecord = await createImportRecord(mode);
+    importRecord =
+      await createImportRecord(
+        mode
+      );
 
-    const regularRows = rows.filter((row) => !row.alreadyDone);
-    const alreadyDoneRows = rows.filter((row) => row.alreadyDone);
 
-    const payload = regularRows.map((row, index) => ({
-      user_id: scheduleState.user.id,
-      import_id: importRecord.id,
-      area: row.area || null,
-      materia: row.materia || null,
-      theme: row.theme,
-      original_date: row.date || null,
-      scheduled_date: mode === "dates" ? row.date : null,
-      deck_order: mode === "deck" ? index + 1 : null,
-      status: mode === "dates" ? "scheduled" : "deck"
-    }));
+    const lessonRows =
+      selectedRows.filter(
+        (row) =>
+          row.kind ===
+          "lesson"
+      );
 
-    for (const chunk of chunkArray(payload, 200)) {
-      if (!chunk.length) continue;
 
-      const { error } = await scheduleSb
-        .from("study_topics")
-        .insert(chunk);
+    const eventRows =
+      selectedRows.filter(
+        (row) =>
+          row.kind !==
+          "lesson"
+      );
 
-      if (error) throw error;
+
+    const regularLessons =
+      lessonRows.filter(
+        (row) =>
+          !row.alreadyDone
+      );
+
+
+    const alreadyDoneRows =
+      lessonRows.filter(
+        (row) =>
+          row.alreadyDone
+      );
+
+
+    const lessonPayload =
+      regularLessons.map(
+        (
+          row,
+          index
+        ) => ({
+          user_id:
+            scheduleState.user.id,
+
+          import_id:
+            importRecord.id,
+
+          area:
+            row.area
+            || null,
+
+          materia:
+            row.materia
+            || null,
+
+          theme:
+            row.theme,
+
+          original_date:
+            row.date
+            || null,
+
+          scheduled_date:
+            mode === "dates"
+              ? row.date
+              : null,
+
+          deck_order:
+            mode === "deck"
+              ? index + 1
+              : null,
+
+          status:
+            mode === "dates"
+              ? "scheduled"
+              : "deck"
+        })
+      );
+
+
+    for (
+      const chunk
+      of chunkArray(
+        lessonPayload,
+        200
+      )
+    ) {
+      if (!chunk.length) {
+        continue;
+      }
+
+
+      const {
+        error
+      } =
+        await scheduleSb
+          .from(
+            "study_topics"
+          )
+          .insert(
+            chunk
+          );
+
+
+      if (error) {
+        throw error;
+      }
     }
 
-    for (const row of alreadyDoneRows) {
+
+    for (
+      const row
+      of alreadyDoneRows
+    ) {
       await insertAlreadyDoneRow(
         row,
         importRecord,
@@ -621,48 +2972,267 @@ async function confirmImport() {
       );
     }
 
-    await updateImportRecord(importRecord.id, {
-      status: "completed",
-      row_count: rows.length,
-      metadata: {
-        ...importRecord.metadata,
-        imported_rows: rows.length,
-        already_done_rows: alreadyDoneRows.length
+
+    const eventPayload =
+      eventRows.map(
+        (row) => ({
+          user_id:
+            scheduleState.user.id,
+
+          import_id:
+            importRecord.id,
+
+          title:
+            row.theme,
+
+          event_type:
+            row.kind,
+
+          event_date:
+            row.date,
+
+          area:
+            row.area
+            || null,
+
+          materia:
+            row.materia
+            || null,
+
+          source:
+            scheduleState.file
+              ?.name
+            || null,
+
+          source_page:
+            row.sourcePage
+            || null,
+
+          confidence:
+            row.confidence
+            || "medium",
+
+          metadata: {
+            source_label:
+              row.sourceLabel
+              || null,
+
+            parser:
+              scheduleState
+                .detected
+                ?.parser
+              || null
+          }
+        })
+      );
+
+
+    for (
+      const chunk
+      of chunkArray(
+        eventPayload,
+        200
+      )
+    ) {
+      if (!chunk.length) {
+        continue;
       }
-    });
 
-    const doneCount = alreadyDoneRows.length;
 
-    resetImport();
+      const {
+        error
+      } =
+        await scheduleSb
+          .from(
+            "schedule_events"
+          )
+          .insert(
+            chunk
+          );
 
-    setImportStatus(
-      `${rows.length} tema${rows.length === 1 ? "" : "s"} importado${rows.length === 1 ? "" : "s"} com sucesso` +
-      (doneCount ? ` · ${doneCount} já distribuído${doneCount === 1 ? "" : "s"} para revisão.` : "."),
-      "success"
-    );
 
-    await loadTopics();
-  } catch (error) {
-    console.error(error);
-
-    if (importRecord?.id) {
-      try {
-        await updateImportRecord(importRecord.id, {
-          status: "failed",
-          error_message: error.message || "Erro desconhecido"
-        });
-      } catch (secondaryError) {
-        console.error(secondaryError);
+      if (error) {
+        throw error;
       }
     }
 
+
+    await updateImportRecord(
+      importRecord.id,
+      {
+        status:
+          "completed",
+
+        row_count:
+          selectedRows.length,
+
+        metadata: {
+          ...importRecord.metadata,
+
+          imported_rows:
+            selectedRows.length,
+
+          imported_lessons:
+            lessonRows.length,
+
+          imported_events:
+            eventRows.length,
+
+          already_done_rows:
+            alreadyDoneRows.length,
+
+          skipped_existing:
+            rows.filter(
+              (row) =>
+                row.duplicate
+            ).length
+        }
+      }
+    );
+
+
+    const lessonCount =
+      lessonRows.length;
+
+    const eventCount =
+      eventRows.length;
+
+
+    resetImport();
+
+
     setImportStatus(
-      error.message || "Não foi possível importar o cronograma.",
+      `${lessonCount} aula${lessonCount === 1 ? "" : "s"} e ${eventCount} evento${eventCount === 1 ? "" : "s"} importado${lessonCount + eventCount === 1 ? "" : "s"} com sucesso.`,
+      "success"
+    );
+
+
+    await loadTopics();
+
+  } catch (error) {
+    console.error(
+      error
+    );
+
+
+    if (
+      importRecord?.id
+    ) {
+      try {
+        await updateImportRecord(
+          importRecord.id,
+          {
+            status:
+              "failed",
+
+            error_message:
+              error.message
+              || "Erro desconhecido"
+          }
+        );
+
+      } catch (
+        secondaryError
+      ) {
+        console.error(
+          secondaryError
+        );
+      }
+    }
+
+
+    setImportStatus(
+      error.message
+      || "Não foi possível importar o cronograma.",
       "error"
     );
 
-    button.disabled = false;
+
+    button.disabled =
+      false;
   }
+}
+
+
+function renderScheduleEventCard(
+  event
+) {
+  const meta =
+    [
+      event.area,
+      event.materia
+    ]
+      .filter(
+        Boolean
+      )
+      .join(
+        " · "
+      );
+
+
+  return `
+    <article
+      class="schedule-event-card"
+      data-schedule-event-id="${escapeScheduleHtml(
+        event.id
+      )}"
+    >
+      <h3>
+        ${escapeScheduleHtml(
+          event.title
+        )}
+      </h3>
+
+      <span class="schedule-event-type">
+        ${escapeScheduleHtml(
+          scheduleKindLabel(
+            event.event_type
+          )
+        )}
+      </span>
+
+      ${
+        meta
+          ? `
+            <div class="topic-meta">
+              ${escapeScheduleHtml(
+                meta
+              )}
+            </div>
+          `
+          : ""
+      }
+
+      <div class="topic-actions">
+        <button
+          class="topic-action danger"
+          type="button"
+          data-delete-schedule-event="${escapeScheduleHtml(
+            event.id
+          )}"
+        >
+          Excluir
+        </button>
+      </div>
+    </article>
+  `;
+}
+
+
+function eventsOnDate(
+  date
+) {
+  const iso =
+    toISODateSchedule(
+      date
+    );
+
+  return scheduleState.events
+    .filter(
+      (event) =>
+        event.event_date
+        === iso
+    );
 }
 
 function topicMeta(topic) {
@@ -814,9 +3384,19 @@ function renderSummary() {
     (topic) => Boolean(topic.completed_at)
   ).length;
 
+  const events =
+    scheduleState.events.length;
+
   document.getElementById("summary-deck").textContent = deck;
   document.getElementById("summary-scheduled").textContent = scheduled;
   document.getElementById("summary-completed").textContent = completed;
+
+  const eventSummary =
+    document.getElementById("summary-events");
+
+  if (eventSummary) {
+    eventSummary.textContent = events;
+  }
 }
 
 function renderPlanner() {
@@ -835,6 +3415,7 @@ function renderPlanner() {
 
   planner.innerHTML = days.map((date) => {
     const topics = topicsOnDate(date);
+    const events = eventsOnDate(date);
 
     const weekday = new Intl.DateTimeFormat("pt-BR", {
       weekday: "short"
@@ -852,8 +3433,20 @@ function renderPlanner() {
 
         <div class="planner-day-body">
           ${
-            topics.length
-              ? topics.map((topic) => renderTopicCard(topic, true)).join("")
+            topics.length || events.length
+              ? [
+                  ...topics.map(
+                    (topic) =>
+                      renderTopicCard(
+                        topic,
+                        true
+                      )
+                  ),
+
+                  ...events.map(
+                    renderScheduleEventCard
+                  )
+                ].join("")
               : '<div class="empty-planner">Solte uma aula aqui</div>'
           }
         </div>
@@ -1409,24 +4002,63 @@ function wireDynamicInteractions() {
       await deleteTopic(button.dataset.deleteTopic);
     });
   });
+
+  document
+    .querySelectorAll("[data-delete-schedule-event]")
+    .forEach((button) => {
+      button.addEventListener("click", async () => {
+        await deleteScheduleEvent(
+          button.dataset.deleteScheduleEvent
+        );
+      });
+    });
 }
 
 async function loadTopics() {
-  const { data, error } = await scheduleSb
-    .from("study_topics")
-    .select("*")
-    .order("created_at", { ascending: true });
+  const [
+    topicsResult,
+    eventsResult
+  ] = await Promise.all([
+    scheduleSb
+      .from("study_topics")
+      .select("*")
+      .order("created_at", { ascending: true }),
 
-  if (error) {
-    console.error(error);
+    scheduleSb
+      .from("schedule_events")
+      .select("*")
+      .order("event_date", { ascending: true })
+      .order("created_at", { ascending: true })
+  ]);
+
+  if (topicsResult.error) {
+    console.error(topicsResult.error);
     setImportStatus(
-      `Não foi possível carregar os temas: ${error.message}`,
+      `Não foi possível carregar os temas: ${topicsResult.error.message}`,
       "error"
     );
     return;
   }
 
-  scheduleState.topics = data || [];
+  if (eventsResult.error) {
+    console.error(eventsResult.error);
+    setImportStatus(
+      `Não foi possível carregar os eventos: ${eventsResult.error.message}`,
+      "error"
+    );
+    return;
+  }
+
+  scheduleState.topics =
+    topicsResult.data
+    || [];
+
+  scheduleState.events =
+    eventsResult.data
+    || [];
+
+  refreshExistingKeys();
+
   renderSchedule();
 }
 
@@ -1574,6 +4206,65 @@ async function deleteTopic(topicId) {
 
   await loadTopics();
 }
+
+
+async function deleteScheduleEvent(
+  eventId
+) {
+  const event =
+    scheduleState.events
+      .find(
+        (item) =>
+          item.id
+          === eventId
+      );
+
+  if (!event) {
+    return;
+  }
+
+
+  const confirmed =
+    window.confirm(
+      `Excluir "${event.title}" do cronograma?`
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  const {
+    error
+  } =
+    await scheduleSb
+      .from(
+        "schedule_events"
+      )
+      .delete()
+      .eq(
+        "id",
+        eventId
+      );
+
+
+  if (error) {
+    console.error(
+      error
+    );
+
+    alert(
+      `Não foi possível excluir: ${error.message}`
+    );
+
+    return;
+  }
+
+
+  await loadTopics();
+}
+
 
 function wireImportControls() {
   const fileInput = document.getElementById("schedule-file");

@@ -125,6 +125,13 @@ function kindMeta(kind) {
     subject_review: { label: "Revisão", className: "subject-review" },
     flashcards_batch: { label: "Flashcards", className: "flashcards" },
     errors_batch: { label: "Caderno de erros", className: "errors" },
+    simulation: { label: "Simulado", className: "exam" },
+    smart_simulation: { label: "Simulado inteligente", className: "exam" },
+    full_exam: { label: "Prova na íntegra", className: "exam" },
+    smart_review: { label: "Revisão inteligente", className: "subject-review" },
+    external_review: { label: "Revisão teórica", className: "subject-review" },
+    final_review: { label: "Reta final", className: "lesson" },
+    other: { label: "Evento", className: "default" },
     exam: { label: "Prova", className: "exam" },
     registration_deadline: { label: "Inscrição", className: "registration" }
   };

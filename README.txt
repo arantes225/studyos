@@ -1,85 +1,96 @@
-DOCMAP — HUB DE ESTATÍSTICAS EXPANDIDO v10.2
+DOCMAP — FASE 11.1
+IMPORTADOR INTELIGENTE DE CRONOGRAMAS
 
-ALTERAÇÃO
-A página Estatísticas ficou bem mais completa, sem voltar a poluir o Dashboard.
+O QUE ENTROU
 
-NOVAS INFORMAÇÕES
+1. IMPORTAÇÃO DE PDF
+- aceita PDF com texto selecionável
+- usa PDF.js no navegador
+- lê texto + posição dos elementos
+- reconhece planners mensais semelhantes ao Aristo
+- tenta reconstruir cada semana
 
-VISÃO GERAL
-- Tempo estudado
-- Comparação com o período anterior
-- Média de estudo por dia ativo
-- Número total de sessões
-- Duração média das sessões
-- Consistência
-- Aproveitamento em questões
-- Comparação do aproveitamento em questões
-- Aproveitamento em flashcards
-- Comparação do aproveitamento em flashcards
-- Retenção do Caderno de Erros
-- Aproveitamento histórico dos simulados
+2. ARISTO 2026/2027
+O parser foi testado contra o planner enviado nesta conversa.
+Na validação local ele reconheceu:
+- 128 aulas
+- 37 simulados programados/diagnóstico
+- 36 simulados inteligentes
+- 20 provas na íntegra
+- 14 blocos de reta final
+- 11 revisões inteligentes
+- 11 revisões teóricas
+TOTAL: 257 itens
 
-PENDÊNCIAS ATUAIS
-- Flashcards vencidos / hoje
-- CCQs vencidos / hoje
-- Revisões teóricas vencidas / hoje
-- Aulas programadas até hoje
+3. EXCEL / CSV MELHORADOS
+- continua aceitando XLSX / XLS / CSV
+- tenta ler mais de uma aba
+- aliases de cabeçalho continuam funcionando
+- detecta Tipo/Categoria quando existe
+- também identifica simulados pelo nome
 
-GRÁFICOS E DETALHES
-- Ritmo diário de estudo
-- Evolução diária do aproveitamento em questões
-- Evolução diária do aproveitamento em flashcards
-- Distribuição do tempo por tipo de atividade
-- Tempo estudado por dia da semana
-- Memória por matéria
-- Erros por área
+4. PRÉVIA EDITÁVEL
+Antes de importar você pode alterar:
+- data
+- tipo
+- área
+- matéria
+- conteúdo
+- aula já feita
+- data estudada
 
-CADERNO DE ERROS
-- Registrados
-- Já revisados
-- Atrasados
-- Retenção estimada
+Confiança:
+- Alta = padrão bem reconhecido
+- Revisar = heurística provável
+- Baixa = confira antes de importar
 
-CRONOGRAMA
-- Aulas concluídas / total
-- Percentual concluído
-- Aulas programadas
-- Aulas no deck
-- Revisões concluídas / total
-- Revisões pendentes
+5. DUPLICADOS
+O DocMap compara o arquivo com o que já existe.
+Itens já existentes ficam desmarcados automaticamente.
 
-QUESTÕES / SIMULADOS
-- Simulados concluídos / cadastrados
-- Questões respondidas
-- Acertos e erros
-- Aproveitamento
-- Erros enviados ao Caderno
+6. EVENTOS NÃO VIRAM AULAS
+Simulados, provas externas, revisões do planner e reta final são gravados
+em public.schedule_events. Assim eles aparecem na Agenda sem gerar
+revisões automáticas de matéria.
 
-PROVAS / EDITAIS
-- Próximas provas
-- Inscritas
-- Realizadas
-- Média das provas
-- Inscrições vencendo nos próximos 30 dias
+7. CRONOGRAMA
+Eventos importados também aparecem no planejador semanal.
 
-LEITURA DOS DADOS
-- Mais informações automáticas e descritivas
-- Sem inventar dados
-- Só aparece o que o DocMap realmente possui
+ARQUIVOS
 
-SQL
-NÃO PRECISA RODAR SQL.
-Esta versão usa as tabelas e views que já existem após a Fase 10.
+RODE PRIMEIRO:
+- fase11_importador_inteligente.sql
 
-SUBSTITUA SOMENTE
-- estatisticas.html
-- estatisticas.css
-- estatisticas.js
+SUBSTITUA:
+- cronograma.html
+- cronograma.js
+- dashboard.js
+
+NÃO RODE SQL MESTRE / RESET.
 
 PUBLICAÇÃO
+
 git add -A
-git commit -m "Expande hub de estatisticas"
+git commit -m "Fase 11 importador inteligente de cronogramas"
 git push origin main
 
 Depois:
 Ctrl + F5
+
+TESTE RECOMENDADO
+
+1. Abra Cronograma.
+2. Importe o PDF do Planner Aristo 2026/2027.
+3. Aguarde a leitura das páginas.
+4. Confira a prévia.
+5. Itens de baixa/média confiança podem ser corrigidos ali mesmo.
+6. Clique em "Importar selecionados".
+7. Verifique Cronograma e Dashboard/Agenda.
+
+LIMITAÇÃO INTENCIONAL
+
+O PDF Aristo não informa explicitamente a Grande Área de cada aula.
+O DocMap NÃO inventa a área. Ela fica vazia, a menos que você preencha
+na prévia ou o arquivo original traga essa coluna.
+
+PDF escaneado como imagem, sem camada de texto, ainda não usa OCR.

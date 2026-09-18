@@ -837,6 +837,141 @@
       }
     }
 
+  
+    .schedule-summary {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .import-help {
+      display: flex;
+      gap: 8px 14px;
+      align-items: baseline;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      padding: 11px 13px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: var(--surface-2);
+      font-size: 11px;
+    }
+
+    .import-help span {
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .smart-preview-wrap {
+      max-height: 540px;
+      overflow: auto;
+    }
+
+    .smart-preview-table {
+      min-width: 1450px;
+    }
+
+    .preview-input,
+    .preview-select {
+      width: 100%;
+      min-width: 110px;
+      min-height: 34px;
+      padding: 5px 7px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      font-size: 11px;
+    }
+
+    .preview-input.title-input {
+      min-width: 270px;
+    }
+
+    .preview-check {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--accent);
+    }
+
+    .confidence-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 9px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .confidence-pill.high {
+      background: rgba(42, 157, 99, .12);
+      color: var(--success);
+    }
+
+    .confidence-pill.medium {
+      background: rgba(204, 139, 26, .14);
+      color: #a86c06;
+    }
+
+    .confidence-pill.low {
+      background: rgba(211, 74, 74, .10);
+      color: var(--danger);
+    }
+
+    .duplicate-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .schedule-event-card {
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-left: 4px solid #7f8da6;
+      border-radius: 10px;
+      background: var(--surface-2);
+    }
+
+    .schedule-event-card h3 {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .schedule-event-type {
+      display: inline-flex;
+      margin-top: 6px;
+      min-height: 22px;
+      align-items: center;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    @media (max-width: 900px) {
+      .schedule-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 700px) {
+      .schedule-summary {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 </head>
 
@@ -873,16 +1008,21 @@
               <span>Concluídas / já feitas</span>
               <strong id="summary-completed">—</strong>
             </article>
+
+            <article class="summary-card">
+              <span>Eventos externos</span>
+              <strong id="summary-events">—</strong>
+            </article>
           </section>
 
           <section class="import-box">
             <div class="import-header">
               <div>
-                <span class="badge accent">Excel</span>
-                <h2>Importar cronograma</h2>
+                <span class="badge accent">Excel · CSV · PDF</span>
+                <h2>Importador inteligente</h2>
                 <p>
-                  Além de Data, Área, Matéria e Tema, você pode usar as colunas
-                  “Aula já feita” e “Data estudada”.
+                  O DocMap tenta reconhecer datas, aulas, simulados e revisões.
+                  Antes de salvar, você pode corrigir tudo na prévia.
                 </p>
               </div>
             </div>
@@ -890,14 +1030,18 @@
             <div class="import-grid">
               <div id="file-drop" class="drop-file">
                 <div>
-                  <strong id="file-name">Selecione uma planilha</strong>
+                  <strong id="file-name">Selecione um cronograma</strong>
                   <small>
-                    Aceita .xlsx, .xls e .csv.<br>
-                    As colunas podem estar em qualquer ordem.
+                    Aceita .xlsx, .xls, .csv e .pdf.<br>
+                    PDFs em formato de planner mensal também são reconhecidos.
                   </small>
 
                   <label class="button secondary" for="schedule-file">Escolher arquivo</label>
-                  <input id="schedule-file" type="file" accept=".xlsx,.xls,.csv">
+                  <input
+                    id="schedule-file"
+                    type="file"
+                    accept=".xlsx,.xls,.csv,.pdf,application/pdf"
+                  >
                 </div>
               </div>
 
@@ -907,7 +1051,7 @@
                   <span>
                     <strong>Importar datas</strong>
                     <small>
-                      Aulas novas entram exatamente na data da planilha.
+                      Mantém as datas encontradas no arquivo.
                     </small>
                   </span>
                 </label>
@@ -915,32 +1059,43 @@
                 <label class="mode-option">
                   <input type="radio" name="import-mode" value="deck">
                   <span>
-                    <strong>Importar como deck</strong>
+                    <strong>Importar aulas como deck</strong>
                     <small>
-                      Aulas novas ficam sem data para você distribuir manualmente.
+                      Só as aulas ficam sem data. Eventos como simulados precisam de data.
                     </small>
                   </span>
                 </label>
               </div>
             </div>
 
+            <div class="import-help">
+              <strong>Como funciona com PDF?</strong>
+              <span>
+                O leitor usa texto + posição na página para reconstruir semanas.
+                Linhas com menor confiança ficam marcadas para revisão.
+              </span>
+            </div>
+
             <div id="import-preview" class="import-preview">
               <div class="preview-toolbar">
-                <strong>Prévia da importação</strong>
+                <strong>Prévia editável</strong>
                 <span id="preview-summary"></span>
               </div>
 
-              <div class="preview-table-wrap">
-                <table class="preview-table">
+              <div class="preview-table-wrap smart-preview-wrap">
+                <table class="preview-table smart-preview-table">
                   <thead>
                     <tr>
-                      <th>Linha</th>
+                      <th>Importar</th>
+                      <th>Origem</th>
                       <th>Data</th>
+                      <th>Tipo</th>
                       <th>Área</th>
                       <th>Matéria</th>
-                      <th>Tema</th>
+                      <th>Conteúdo</th>
                       <th>Já feita?</th>
                       <th>Data estudada</th>
+                      <th>Confiança</th>
                       <th>Status</th>
                     </tr>
                   </thead>
@@ -950,7 +1105,7 @@
 
               <div class="import-actions">
                 <button id="cancel-import" class="button secondary" type="button">Cancelar</button>
-                <button id="confirm-import" class="button primary" type="button">Importar</button>
+                <button id="confirm-import" class="button primary" type="button">Importar selecionados</button>
               </div>
             </div>
 
@@ -1127,8 +1282,9 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="supabase.js"></script>
   <script src="app.js"></script>
-  <script src="cronograma.js?v=4.4"></script>
+  <script src="cronograma.js?v=11.1"></script>
 </body>
 </html>
