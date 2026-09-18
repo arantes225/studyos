@@ -1,11 +1,17 @@
 const supabaseUrl = "https://kkyqgcirishgqjyqafzd.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtreXFtY2lyaXNoZ3FqeXFhZnpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5NzU3NzMsImV4cCI6MjA3MzU1MTc3M30.1iHkYq8JtX3r9XqJqGqJqGqJqGqJqGqJqGqJqGqJqGg";
+
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 let usuarioAtual = null;
 
+let flashcardsParaEstudar = [];
+let indiceFlashcardAtual = 0;
+
 async function verificarLogin() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   if (!session) {
     window.location.href = "index.html";
@@ -15,12 +21,24 @@ async function verificarLogin() {
   usuarioAtual = session.user;
 
   const nomeElement = document.getElementById("nome-usuario");
+
   if (nomeElement) {
     nomeElement.textContent = usuarioAtual.email.split("@")[0];
   }
 
   return session;
 }
+
+function formatarData(dataISO) {
+  if (!dataISO) return "";
+
+  const [ano, mes, dia] = dataISO.split("-");
+  return `${dia}/${mes}/${ano}`;
+}
+
+/* =========================
+   DASHBOARD
+========================= */
 
 async function carregarEstatisticas() {
   const totalAulasEl = document.getElementById("total-aulas");
@@ -51,6 +69,7 @@ async function carregarEstatisticas() {
 
 async function carregarAgendaSemanal() {
   const grade = document.getElementById("grade-semanal");
+
   if (!grade) return;
 
   grade.innerHTML = "<p>Carregando agenda…</p>";
@@ -70,7 +89,7 @@ async function carregarAgendaSemanal() {
   const inicioStr = segunda.toISOString().split("T")[0];
   const fimStr = domingo.toISOString().split("T")[0];
 
-  const { data: aulas, error: errorAulas } = await supabase
+  const { data: aulas, error } = await supabase
     .from("cronograma_aulas")
     .select("*")
     .eq("user_id", usuarioAtual.id)
@@ -78,53 +97,57 @@ async function carregarAgendaSemanal() {
     .lte("data", fimStr)
     .order("data", { ascending: true });
 
-  if (errorAulas) {
+  if (error) {
     grade.innerHTML = "<p>Erro ao carregar agenda.</p>";
     return;
   }
 
-  renderizarAgendaSemanal(aulas || [], [], segunda);
+  renderizarAgendaSemanal(aulas || [], segunda);
 }
 
-function renderizarAgendaSemanal(aulas, _eventosIgnorados, dataSegunda) {
+function renderizarAgendaSemanal(aulas, dataSegunda) {
   const grade = document.getElementById("grade-semanal");
+
   if (!grade) return;
 
   const diasSemana = [
     "Segunda",
-    "Ter&ccedil;a",
+    "Terça",
     "Quarta",
     "Quinta",
     "Sexta",
-    "S&aacute;bado",
+    "Sábado",
     "Domingo",
   ];
 
-  const porDia = Array.from({ length: 7 }, () => ({
-    aulas: [],
-  }));
+  const porDia = Array.from({ length: 7 }, () => []);
 
   aulas.forEach((aula) => {
-    const dataAula = new Date(aula.data + "T00:00:00");
-    const diffDias = Math.round(
+    const dataAula = new Date(`${aula.data}T00:00:00`);
+
+    const diferencaDias = Math.round(
       (dataAula - dataSegunda) / (1000 * 60 * 60 * 24)
     );
-    if (diffDias >= 0 && diffDias <= 6) {
-      porDia[diffDias].aulas.push(aula);
+
+    if (diferencaDias >= 0 && diferencaDias <= 6) {
+      porDia[diferencaDias].push(aula);
     }
   });
 
   grade.innerHTML = diasSemana
-    .map((dia, idx) => {
-      const itens = porDia[idx].aulas;
+    .map((dia, indice) => {
+      const aulasDoDia = porDia[indice];
 
-      const aulasHtml = porDia[idx].aulas
+      const aulasHtml = aulasDoDia
         .map(
           (aula) => `
             <div class="agenda-item aula">
-              <strong>${aula.area || "Sem &aacute;rea"}</strong><br>
-              ${aula.disciplina || "Sem subtema"} &middot; ${aula.tema}<br>
-              <small>${aula.horario_inicio || ""} ${aula.horario_fim ? "&ndash; " + aula.horario_fim : ""}</small>
+              <strong>${aula.area || "Sem área"}</strong><br>
+              ${aula.disciplina || "Sem subtema"} · ${aula.tema}<br>
+              <small>
+                ${aula.horario_inicio || ""}
+                ${aula.horario_fim ? `– ${aula.horario_fim}` : ""}
+              </small>
             </div>
           `
         )
@@ -134,18 +157,20 @@ function renderizarAgendaSemanal(aulas, _eventosIgnorados, dataSegunda) {
         <div class="dia-coluna">
           <h4>${dia}</h4>
           ${aulasHtml}
-          ${itens.length === 0 ? '<p class="sem-item">Nada agendado</p>' : ""}
+          ${
+            aulasDoDia.length === 0
+              ? '<p class="sem-item">Nada agendado</p>'
+              : ""
+          }
         </div>
       `;
     })
     .join("");
 }
 
-function formatarData(dataISO) {
-  if (!dataISO) return "";
-  const [ano, mes, dia] = dataISO.split("-");
-  return `${dia}/${mes}/${ano}`;
-}
+/* =========================
+   CRONOGRAMA
+========================= */
 
 async function salvarAula() {
   const dataInput = document.getElementById("aula-data");
@@ -156,7 +181,17 @@ async function salvarAula() {
   const horarioFimInput = document.getElementById("aula-horario-fim");
   const mensagem = document.getElementById("mensagem-aula");
 
-  if (!dataInput || !areaInput || !temaInput || !mensagem) return;
+  if (
+    !dataInput ||
+    !areaInput ||
+    !disciplinaInput ||
+    !temaInput ||
+    !horarioInicioInput ||
+    !horarioFimInput ||
+    !mensagem
+  ) {
+    return;
+  }
 
   const data = dataInput.value;
   const area = areaInput.value;
@@ -166,7 +201,8 @@ async function salvarAula() {
   const horarioFim = horarioFimInput.value || null;
 
   if (!data || !area || !tema) {
-    mensagem.textContent = "Escolha a &aacute;rea, preencha a data e o tema da aula.";
+    mensagem.textContent =
+      "Escolha a área e preencha a data e o tema da aula.";
     return;
   }
 
@@ -183,11 +219,13 @@ async function salvarAula() {
   });
 
   if (error) {
-    mensagem.textContent = "Erro ao salvar aula.";
+    console.error(error);
+    mensagem.textContent = `Erro ao salvar aula: ${error.message}`;
     return;
   }
 
   mensagem.textContent = "Aula salva com sucesso.";
+
   dataInput.value = "";
   areaInput.value = "";
   disciplinaInput.value = "";
@@ -195,13 +233,16 @@ async function salvarAula() {
   horarioInicioInput.value = "";
   horarioFimInput.value = "";
 
-  document.querySelectorAll(".area-option").forEach((b) => b.classList.remove("selected"));
+  document.querySelectorAll(".area-option").forEach((botao) => {
+    botao.classList.remove("selected");
+  });
 
   carregarAulas();
 }
 
 async function carregarAulas() {
   const lista = document.getElementById("cronograma-lista");
+
   if (!lista) return;
 
   lista.innerHTML = "<p>Carregando aulas…</p>";
@@ -213,11 +254,12 @@ async function carregarAulas() {
     .order("data", { ascending: false });
 
   if (error) {
+    console.error(error);
     lista.innerHTML = "<p>Erro ao carregar aulas.</p>";
     return;
   }
 
-  if (aulas.length === 0) {
+  if (!aulas || aulas.length === 0) {
     lista.innerHTML = "<p>Nenhuma aula salva ainda.</p>";
     return;
   }
@@ -226,16 +268,22 @@ async function carregarAulas() {
     .map(
       (aula) => `
         <div class="cronograma-item">
-          <div>
-            <p><strong>${aula.area || "Sem &aacute;rea"}</strong></p>
-            <p>${aula.disciplina || "Sem subtema"} &middot; ${aula.tema}</p>
-            <p>${formatarData(aula.data)} ${aula.horario_inicio ? "&middot; " + aula.horario_inicio : ""} ${aula.horario_fim ? "&ndash; " + aula.horario_fim : ""}</p>
-          </div>
+          <p><strong>${aula.area || "Sem área"}</strong></p>
+          <p>${aula.disciplina || "Sem subtema"} · ${aula.tema}</p>
+          <p>
+            ${formatarData(aula.data)}
+            ${aula.horario_inicio ? `· ${aula.horario_inicio}` : ""}
+            ${aula.horario_fim ? `– ${aula.horario_fim}` : ""}
+          </p>
         </div>
       `
     )
     .join("");
 }
+
+/* =========================
+   EDITAIS E PROVAS
+========================= */
 
 async function salvarProva() {
   const nomeInput = document.getElementById("prova-nome");
@@ -250,10 +298,10 @@ async function salvarProva() {
 
   const prova = nomeInput.value.trim();
   const dataProva = dataInput.value;
-  const valor = valorInput.value ? Number(valorInput.value) : null;
-  const local = localInput.value.trim() || null;
-  const limite = limiteInput.value || null;
-  const gabarito = gabaritoInput.value || null;
+  const valor = valorInput?.value ? Number(valorInput.value) : null;
+  const local = localInput?.value.trim() || null;
+  const limite = limiteInput?.value || null;
+  const gabarito = gabaritoInput?.value || null;
 
   if (!prova || !dataProva) {
     mensagem.textContent = "Preencha pelo menos o nome e a data da prova.";
@@ -273,7 +321,8 @@ async function salvarProva() {
   });
 
   if (error) {
-    mensagem.textContent = "Erro ao salvar prova.";
+    console.error(error);
+    mensagem.textContent = `Erro ao salvar prova: ${error.message}`;
     return;
   }
 
@@ -281,16 +330,18 @@ async function salvarProva() {
 
   nomeInput.value = "";
   dataInput.value = "";
-  valorInput.value = "";
-  localInput.value = "";
-  limiteInput.value = "";
-  gabaritoInput.value = "";
+
+  if (valorInput) valorInput.value = "";
+  if (localInput) localInput.value = "";
+  if (limiteInput) limiteInput.value = "";
+  if (gabaritoInput) gabaritoInput.value = "";
 
   carregarProvas();
 }
 
 async function carregarProvas() {
   const lista = document.getElementById("provas-lista");
+
   if (!lista) return;
 
   lista.innerHTML = "<p>Carregando provas…</p>";
@@ -302,71 +353,98 @@ async function carregarProvas() {
     .order("data_prova", { ascending: false });
 
   if (error) {
+    console.error(error);
     lista.innerHTML = "<p>Erro ao carregar provas.</p>";
     return;
   }
 
-  if (provas.length === 0) {
+  if (!provas || provas.length === 0) {
     lista.innerHTML = "<p>Nenhuma prova cadastrada ainda.</p>";
     return;
   }
 
   lista.innerHTML = provas
     .map(
-      (p) => `
+      (prova) => `
         <div class="cronograma-item">
-          <div>
-            <p><strong>${p.prova}</strong></p>
-            <p>Data da prova: ${formatarData(p.data_prova)}</p>
-            ${p.valor ? `<p>Valor: R$ ${Number(p.valor).toFixed(2)}</p>` : ""}
-            ${p.local ? `<p>Local: ${p.local}</p>` : ""}
-            ${p.data_limite_inscricao ? `<p>Inscri&ccedil;&atilde;o at&eacute;: ${formatarData(p.data_limite_inscricao)}</p>` : ""}
-            ${p.data_divulgacao_gabarito ? `<p>Gabarito em: ${formatarData(p.data_divulgacao_gabarito)}</p>` : ""}
-          </div>
+          <p><strong>${prova.prova}</strong></p>
+          <p>Data da prova: ${formatarData(prova.data_prova)}</p>
+          ${
+            prova.valor !== null
+              ? `<p>Valor: R$ ${Number(prova.valor).toFixed(2)}</p>`
+              : ""
+          }
+          ${prova.local ? `<p>Local: ${prova.local}</p>` : ""}
+          ${
+            prova.data_limite_inscricao
+              ? `<p>Inscrição até: ${formatarData(
+                  prova.data_limite_inscricao
+                )}</p>`
+              : ""
+          }
+          ${
+            prova.data_divulgacao_gabarito
+              ? `<p>Gabarito em: ${formatarData(
+                  prova.data_divulgacao_gabarito
+                )}</p>`
+              : ""
+          }
         </div>
       `
     )
     .join("");
 }
 
-// ========== FLASHCARDS ==========
+/* =========================
+   FLASHCARDS
+========================= */
 
 function comprimirImagem(file, qualidade = 0.7) {
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.src = URL.createObjectURL(file);
-    img.onload = () => {
+    const imagem = new Image();
+    const urlTemporaria = URL.createObjectURL(file);
+
+    imagem.onload = () => {
       const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
+      const contexto = canvas.getContext("2d");
 
-      let largura = img.width;
-      let altura = img.height;
-      const maxLargura = 1200;
+      let largura = imagem.width;
+      let altura = imagem.height;
+      const larguraMaxima = 1200;
 
-      if (largura > maxLargura) {
-        const razao = maxLargura / largura;
-        largura = maxLargura;
-        altura = Math.floor(altura * razao);
+      if (largura > larguraMaxima) {
+        const proporcao = larguraMaxima / largura;
+        largura = larguraMaxima;
+        altura = Math.round(altura * proporcao);
       }
 
       canvas.width = largura;
       canvas.height = altura;
 
-      ctx.drawImage(img, 0, 0, largura, altura);
+      contexto.drawImage(imagem, 0, 0, largura, altura);
 
       canvas.toBlob(
         (blob) => {
+          URL.revokeObjectURL(urlTemporaria);
+
           if (!blob) {
-            reject(new Error("Falha ao comprimir imagem"));
+            reject(new Error("Não foi possível comprimir a imagem."));
             return;
           }
+
           resolve(blob);
         },
         "image/jpeg",
         qualidade
       );
     };
-    img.onerror = () => reject(new Error("Erro ao carregar imagem"));
+
+    imagem.onerror = () => {
+      URL.revokeObjectURL(urlTemporaria);
+      reject(new Error("Não foi possível abrir a imagem."));
+    };
+
+    imagem.src = urlTemporaria;
   });
 }
 
@@ -377,57 +455,74 @@ async function salvarFlashcard() {
   const areaInput = document.getElementById("fc-area");
   const mensagem = document.getElementById("mensagem-flashcard");
 
-  if (!frenteInput || !versoInput || !mensagem) return;
+  if (!frenteInput || !versoInput || !imagemInput || !mensagem) {
+    return;
+  }
 
   const frente = frenteInput.value.trim();
   const verso = versoInput.value.trim();
-  const area = areaInput.value || null;
+  const area = areaInput?.value || "";
 
   if (!frente || !verso) {
     mensagem.textContent = "Preencha a frente e o verso do flashcard.";
     return;
   }
 
-  mensagem.textContent = "Salvando…";
+  mensagem.textContent = "Salvando flashcard…";
 
   let imagemPath = null;
 
   if (imagemInput.files && imagemInput.files[0]) {
     try {
-      const blobComprimido = await comprimirImagem(imagemInput.files[0], 0.7);
+      mensagem.textContent = "Comprimindo e enviando imagem…";
 
-      const fileName = `${usuarioAtual.id}/${Date.now()}_flashcard.jpg`;
+      const imagemComprimida = await comprimirImagem(
+        imagemInput.files[0],
+        0.7
+      );
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const nomeArquivo = `${usuarioAtual.id}/${Date.now()}-flashcard.jpg`;
+
+      const { error: erroUpload } = await supabase.storage
         .from("studyos")
-        .upload(fileName, blobComprimido, {
+        .upload(nomeArquivo, imagemComprimida, {
           contentType: "image/jpeg",
           upsert: false,
         });
 
-      if (!uploadError) {
-        imagemPath = fileName;
+      if (erroUpload) {
+        console.error(erroUpload);
+        mensagem.textContent = `Erro ao enviar imagem: ${erroUpload.message}`;
+        return;
       }
-    } catch (e) {
-      console.error(e);
+
+      imagemPath = nomeArquivo;
+    } catch (erroImagem) {
+      console.error(erroImagem);
+      mensagem.textContent = "Erro ao comprimir a imagem.";
+      return;
     }
   }
 
+  /*
+    A coluna "area" não existe na sua tabela original.
+    Para manter a área, usamos o campo "tags".
+  */
   const { error } = await supabase.from("flashcards").insert({
     user_id: usuarioAtual.id,
     frente,
     verso,
     imagem_path: imagemPath,
-    area,
     deck: null,
-    tags: null,
+    tags: area || null,
     intervalo_dias: 0,
     facilidade: 2.5,
     proxima_revisao: new Date().toISOString().split("T")[0],
   });
 
   if (error) {
-    mensagem.textContent = "Erro ao salvar flashcard.";
+    console.error(error);
+    mensagem.textContent = `Erro ao salvar flashcard: ${error.message}`;
     return;
   }
 
@@ -436,13 +531,33 @@ async function salvarFlashcard() {
   frenteInput.value = "";
   versoInput.value = "";
   imagemInput.value = "";
-  areaInput.value = "";
 
-  carregarFlashcards();
+  if (areaInput) {
+    areaInput.value = "";
+  }
+
+  await carregarFlashcards();
+  await prepararEstudoFlashcards();
+}
+
+async function obterUrlImagemPrivada(imagemPath) {
+  if (!imagemPath) return null;
+
+  const { data, error } = await supabase.storage
+    .from("studyos")
+    .createSignedUrl(imagemPath, 3600);
+
+  if (error) {
+    console.error(error);
+    return null;
+  }
+
+  return data.signedUrl;
 }
 
 async function carregarFlashcards() {
   const lista = document.getElementById("flashcards-lista");
+
   if (!lista) return;
 
   lista.innerHTML = "<p>Carregando flashcards…</p>";
@@ -454,40 +569,47 @@ async function carregarFlashcards() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    lista.innerHTML = "<p>Erro ao carregar flashcards.</p>";
+    console.error(error);
+    lista.innerHTML = `<p>Erro ao carregar flashcards: ${error.message}</p>`;
     return;
   }
 
-  if (flashcards.length === 0) {
+  if (!flashcards || flashcards.length === 0) {
     lista.innerHTML = "<p>Nenhum flashcard criado ainda.</p>";
     return;
   }
 
-  lista.innerHTML = flashcards
-    .map((fc) => {
-      const imagemHtml = fc.imagem_path
-        ? `<p><img src="${supabase.storage.from("studyos").getPublicUrl(fc.imagem_path).data.publicUrl}" class="fc-imagem" alt="Imagem do flashcard" /></p>`
-        : "";
+  const itensHtml = await Promise.all(
+    flashcards.map(async (flashcard) => {
+      const urlImagem = await obterUrlImagemPrivada(flashcard.imagem_path);
 
       return `
         <div class="cronograma-item">
-          <div>
-            <p><strong>Frente:</strong> ${fc.frente}</p>
-            <p><strong>Verso:</strong> ${fc.verso}</p>
-            ${fc.area ? `<p><strong>&Aacute;rea:</strong> ${fc.area}</p>` : ""}
-            ${imagemHtml}
-          </div>
+          <p><strong>Frente:</strong> ${flashcard.frente}</p>
+          <p><strong>Verso:</strong> ${flashcard.verso}</p>
+          ${
+            flashcard.tags
+              ? `<p><strong>Área:</strong> ${flashcard.tags}</p>`
+              : ""
+          }
+          ${
+            urlImagem
+              ? `<img src="${urlImagem}" class="fc-imagem" alt="Imagem do flashcard">`
+              : ""
+          }
         </div>
       `;
     })
-    .join("");
+  );
+
+  lista.innerHTML = itensHtml.join("");
 }
 
-let flashcardsParaEstudar = [];
-let indiceFlashcardAtual = 0;
-let flashcardVirado = false;
-
 async function prepararEstudoFlashcards() {
+  const frenteEl = document.getElementById("fc-estudo-frente");
+
+  if (!frenteEl) return;
+
   const hoje = new Date().toISOString().split("T")[0];
 
   const { data: flashcards, error } = await supabase
@@ -497,19 +619,19 @@ async function prepararEstudoFlashcards() {
     .lte("proxima_revisao", hoje)
     .order("proxima_revisao", { ascending: true });
 
-  if (error || !flashcards || flashcards.length === 0) {
-    flashcardsParaEstudar = [];
-    atualizarTelaEstudo();
+  if (error) {
+    console.error(error);
+    frenteEl.textContent = "Não foi possível carregar os cards para revisão.";
     return;
   }
 
-  flashcardsParaEstudar = flashcards;
+  flashcardsParaEstudar = flashcards || [];
   indiceFlashcardAtual = 0;
-  flashcardVirado = false;
-  atualizarTelaEstudo();
+
+  await atualizarTelaEstudo();
 }
 
-function atualizarTelaEstudo() {
+async function atualizarTelaEstudo() {
   const containerEstudo = document.getElementById("flashcard-estudo");
   const containerResposta = document.getElementById("flashcard-resposta");
   const frenteEl = document.getElementById("fc-estudo-frente");
@@ -517,109 +639,142 @@ function atualizarTelaEstudo() {
   const imagemEl = document.getElementById("fc-estudo-imagem");
   const botaoVirar = document.getElementById("botao-virar");
 
-  if (!containerEstudo || !containerResposta || !frenteEl || !versoEl || !imagemEl) return;
-
-  if (flashcardsParaEstudar.length === 0) {
-    containerEstudo.style.display = "none";
-    containerResposta.style.display = "none";
-    frenteEl.textContent = "Nenhum flashcard para revisar agora.";
+  if (
+    !containerEstudo ||
+    !containerResposta ||
+    !frenteEl ||
+    !versoEl ||
+    !imagemEl ||
+    !botaoVirar
+  ) {
     return;
   }
 
-  containerEstudo.style.display = "block";
-  containerResposta.style.display = "none";
-  flashcardVirado = false;
+  if (
+    flashcardsParaEstudar.length === 0 ||
+    !flashcardsParaEstudar[indiceFlashcardAtual]
+  ) {
+    containerEstudo.style.display = "block";
+    containerResposta.style.display = "none";
 
-  const fc = flashcardsParaEstudar[indiceFlashcardAtual];
-
-  frenteEl.textContent = fc.frente;
-
-  if (fc.imagem_path) {
-    const url = supabase.storage.from("studyos").getPublicUrl(fc.imagem_path).data.publicUrl;
-    imagemEl.src = url;
-    imagemEl.style.display = "block";
-  } else {
+    frenteEl.textContent = "Nenhum flashcard para revisar agora.";
+    versoEl.textContent = "";
     imagemEl.style.display = "none";
+    botaoVirar.style.display = "none";
+
+    return;
   }
 
-  if (botaoVirar) botaoVirar.style.display = "inline-block";
+  const flashcard = flashcardsParaEstudar[indiceFlashcardAtual];
+
+  containerEstudo.style.display = "block";
+  containerResposta.style.display = "none";
+
+  frenteEl.textContent = flashcard.frente;
+  versoEl.textContent = "";
+  botaoVirar.style.display = "inline-block";
+
+  const urlImagem = await obterUrlImagemPrivada(flashcard.imagem_path);
+
+  if (urlImagem) {
+    imagemEl.src = urlImagem;
+    imagemEl.style.display = "block";
+  } else {
+    imagemEl.removeAttribute("src");
+    imagemEl.style.display = "none";
+  }
 }
 
 function virarFlashcard() {
-  if (flashcardsParaEstudar.length === 0) return;
+  if (
+    flashcardsParaEstudar.length === 0 ||
+    !flashcardsParaEstudar[indiceFlashcardAtual]
+  ) {
+    return;
+  }
 
   const containerEstudo = document.getElementById("flashcard-estudo");
   const containerResposta = document.getElementById("flashcard-resposta");
   const versoEl = document.getElementById("fc-estudo-verso");
-  const botaoVirar = document.getElementById("botao-virar");
 
-  const fc = flashcardsParaEstudar[indiceFlashcardAtual];
-  versoEl.textContent = fc.verso;
+  if (!containerEstudo || !containerResposta || !versoEl) return;
+
+  const flashcard = flashcardsParaEstudar[indiceFlashcardAtual];
+
+  versoEl.textContent = flashcard.verso;
 
   containerEstudo.style.display = "none";
   containerResposta.style.display = "block";
-  flashcardVirado = true;
-  if (botaoVirar) botaoVirar.style.display = "none";
 }
 
 async function registrarDificuldade(dificuldade) {
-  if (flashcardsParaEstudar.length === 0) return;
+  const flashcard = flashcardsParaEstudar[indiceFlashcardAtual];
 
-  const fc = flashcardsParaEstudar[indiceFlashcardAtual];
+  if (!flashcard) return;
 
-  let dias = 1;
-  let fatorFacilidade = 0;
+  let dias;
+  let novaFacilidade = Number(flashcard.facilidade || 2.5);
 
   if (dificuldade === "facil") {
-    dias = Math.max(4, Math.floor((fc.facilidade || 2.5) * 2 + 3));
-    fatorFacilidade = 0.5;
+    dias = Math.max(
+      4,
+      Math.round((flashcard.intervalo_dias || 1) * novaFacilidade)
+    );
+    novaFacilidade += 0.15;
   } else if (dificuldade === "regular") {
-    dias = Math.max(2, Math.floor((fc.facilidade || 2.5) + 1));
-    fatorFacilidade = 0.25;
-  } else if (dificuldade === "dificil") {
+    dias = Math.max(2, Math.round((flashcard.intervalo_dias || 1) * 1.8));
+  } else {
     dias = 1;
-    fatorFacilidade = 0;
+    novaFacilidade = Math.max(1.3, novaFacilidade - 0.2);
   }
 
-  const novaFacilidade = Math.max(1.3, (fc.facilidade || 2.5) + fatorFacilidade);
+  const proximaRevisao = new Date();
+  proximaRevisao.setDate(proximaRevisao.getDate() + dias);
 
-  const hoje = new Date();
-  hoje.setDate(hoje.getDate() + dias);
-  const novaRevisao = hoje.toISOString().split("T")[0];
-
-  await supabase
+  const { error } = await supabase
     .from("flashcards")
     .update({
+      intervalo_dias: dias,
       facilidade: novaFacilidade,
-      proxima_revisao: novaRevisao,
+      proxima_revisao: proximaRevisao.toISOString().split("T")[0],
     })
-    .eq("id", fc.id);
+    .eq("id", flashcard.id)
+    .eq("user_id", usuarioAtual.id);
 
-  indiceFlashcardAtual++;
-
-  if (indiceFlashcardAtual >= flashcardsParaEstudar.length) {
-    flashcardsParaEstudar = [];
-    atualizarTelaEstudo();
+  if (error) {
+    console.error(error);
+    alert(`Erro ao registrar revisão: ${error.message}`);
     return;
   }
 
-  const containerEstudo = document.getElementById("flashcard-estudo");
-  const containerResposta = document.getElementById("flashcard-resposta");
+  indiceFlashcardAtual += 1;
 
-  containerResposta.style.display = "none";
-  containerEstudo.style.display = "block";
-
-  atualizarTelaEstudo();
+  await atualizarTelaEstudo();
+  await carregarFlashcards();
 }
 
-function iniciarPaginaCronograma() {
+/* =========================
+   INICIALIZAÇÃO DAS PÁGINAS
+========================= */
+
+function iniciarAplicacao() {
   const caminho = window.location.pathname;
+
+  if (caminho.includes("dashboard.html")) {
+    verificarLogin().then((session) => {
+      if (!session) return;
+
+      carregarEstatisticas();
+      carregarAgendaSemanal();
+    });
+  }
 
   if (caminho.includes("cronograma.html")) {
     verificarLogin().then((session) => {
       if (!session) return;
 
       const botaoSalvarAula = document.getElementById("botao-salvar-aula");
+
       if (botaoSalvarAula) {
         botaoSalvarAula.addEventListener("click", salvarAula);
       }
@@ -634,7 +789,10 @@ function iniciarPaginaCronograma() {
           });
 
           botao.classList.add("selected");
-          campoArea.value = botao.dataset.area;
+
+          if (campoArea) {
+            campoArea.value = botao.dataset.area;
+          }
         });
       });
 
@@ -647,24 +805,20 @@ function iniciarPaginaCronograma() {
       if (!session) return;
 
       const botaoSalvarProva = document.getElementById("botao-salvar-prova");
+
       if (botaoSalvarProva) {
         botaoSalvarProva.addEventListener("click", salvarProva);
       }
 
-      carregarProvas();
-
       const botaoAbrirAristo = document.getElementById("botao-abrir-aristo");
+
       if (botaoAbrirAristo) {
         botaoAbrirAristo.addEventListener("click", () => {
           window.open("https://aristo.com.br/editais/", "_blank");
         });
       }
 
-      const msgIframe = document.getElementById("mensagem-iframe");
-      if (msgIframe) {
-        msgIframe.textContent =
-          "Se a &aacute;rea abaixo ficar em branco, o site da Aristo n&atilde;o permite ser exibido dentro de outras p&aacute;ginas. Nesse caso, use o bot&atilde;o para abrir em outra aba.";
-      }
+      carregarProvas();
     });
   }
 
@@ -672,36 +826,30 @@ function iniciarPaginaCronograma() {
     verificarLogin().then((session) => {
       if (!session) return;
 
-      const botaoSalvarFlashcard = document.getElementById("botao-salvar-flashcard");
+      const botaoSalvarFlashcard = document.getElementById(
+        "botao-salvar-flashcard"
+      );
+
+      const botaoVirar = document.getElementById("botao-virar");
+
       if (botaoSalvarFlashcard) {
         botaoSalvarFlashcard.addEventListener("click", salvarFlashcard);
       }
 
-      carregarFlashcards();
-
-      const botaoVirar = document.getElementById("botao-virar");
       if (botaoVirar) {
         botaoVirar.addEventListener("click", virarFlashcard);
       }
-
-      prepararEstudoFlashcards();
 
       document.querySelectorAll(".botao-dificuldade").forEach((botao) => {
         botao.addEventListener("click", () => {
           registrarDificuldade(botao.dataset.dificuldade);
         });
       });
-    });
-  }
 
-  if (caminho.includes("dashboard.html")) {
-    verificarLogin().then((session) => {
-      if (!session) return;
-
-      carregarEstatisticas();
-      carregarAgendaSemanal();
+      carregarFlashcards();
+      prepararEstudoFlashcards();
     });
   }
 }
 
-iniciarPaginaCronograma();
+iniciarAplicacao();

@@ -1,22 +1,25 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Flashcards - StudyOS</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <div class="container">
     <aside class="menu-lateral">
       <h2>StudyOS</h2>
+
       <nav>
         <a href="dashboard.html">Dashboard</a>
         <a href="cronograma.html">Cronograma</a>
-        <a href="ambientacao.html">Ambienta&ccedil;&atilde;o</a>
+        <a href="ambientacao.html">Ambientação</a>
         <a href="flashcards.html">Flashcards</a>
         <a href="caderno-erros.html">Caderno de erros</a>
         <a href="editais-provas.html">Editais e provas</a>
-        <a href="configuracoes.html">Configura&ccedil;&otilde;es</a>
+        <a href="configuracoes.html">Configurações</a>
         <a href="index.html" class="botao-sair">Sair</a>
       </nav>
     </aside>
@@ -27,13 +30,13 @@
       <h2 class="cronograma-titulo">Novo flashcard</h2>
 
       <div class="cronograma-conteudo">
-        <div class="cronograma-form">
+        <section class="cronograma-form">
           <h3>Criar flashcard</h3>
 
           <label for="fc-frente">Frente</label>
           <textarea
             id="fc-frente"
-            placeholder="Ex.: Qual a tr&iacute;ade cl&aacute;ssica da insufici&ecirc;ncia card&iacute;aca?"
+            placeholder="Ex.: Qual a tríade clássica da insuficiência cardíaca?"
             rows="3"
             required
           ></textarea>
@@ -46,20 +49,22 @@
             required
           ></textarea>
 
-          <label for="fc-imagem">Imagem (opcional)</label>
+          <label for="fc-imagem">Imagem opcional</label>
           <input
             id="fc-imagem"
             type="file"
             accept="image/*"
           >
 
-          <label for="fc-area">&Aacute;rea (opcional)</label>
+          <label for="fc-area">Área opcional</label>
           <select id="fc-area">
-            <option value="">Sem &aacute;rea</option>
-            <option value="Cl&iacute;nica M&eacute;dica">Cl&iacute;nica M&eacute;dica</option>
+            <option value="">Sem área</option>
+            <option value="Clínica Médica">Clínica Médica</option>
             <option value="Cirurgia Geral">Cirurgia Geral</option>
             <option value="Pediatria">Pediatria</option>
-            <option value="Ginecologia e Obstetr&iacute;cia">Ginecologia e Obstetr&iacute;cia</option>
+            <option value="Ginecologia e Obstetrícia">
+              Ginecologia e Obstetrícia
+            </option>
             <option value="Preventiva">Preventiva</option>
           </select>
 
@@ -72,34 +77,79 @@
           </button>
 
           <p id="mensagem-flashcard" class="mensagem"></p>
-        </div>
+        </section>
 
-        <div class="cronograma-lista-wrapper">
+        <section class="cronograma-lista-wrapper">
           <h3>Seus flashcards</h3>
-          <div id="flashcards-lista" class="cronograma-lista"></div>
-        </div>
+
+          <div id="flashcards-lista" class="cronograma-lista">
+            <p>Carregando flashcards…</p>
+          </div>
+        </section>
       </div>
 
       <h2 class="cronograma-titulo">Estudar agora</h2>
 
-      <div class="flashcard-estudo-wrapper">
+      <section class="flashcard-estudo-wrapper">
         <div id="flashcard-estudo" class="flashcard-estudo">
-          <p id="fc-estudo-frente" class="fc-frente"></p>
-          <img id="fc-estudo-imagem" class="fc-imagem" alt="" style="display:none;" />
-          <button id="botao-virar" class="botao-primario" type="button">
-            Virar
+          <p id="fc-estudo-frente" class="fc-frente">
+            Carregando flashcards para revisão…
+          </p>
+
+          <img
+            id="fc-estudo-imagem"
+            class="fc-imagem"
+            alt="Imagem do flashcard"
+            style="display: none;"
+          >
+
+          <button
+            id="botao-virar"
+            class="botao-primario"
+            type="button"
+          >
+            Virar card
           </button>
         </div>
 
-        <div id="flashcard-resposta" class="flashcard-resposta" style="display:none;">
+        <div
+          id="flashcard-resposta"
+          class="flashcard-resposta"
+          style="display: none;"
+        >
           <p id="fc-estudo-verso" class="fc-verso"></p>
+
+          <p class="mensagem">
+            Como foi lembrar a resposta?
+          </p>
+
           <div class="botoes-dificuldade">
-            <button class="botao-dificuldade facil" data-dificuldade="facil">F&aacute;cil</button>
-            <button class="botao-dificuldade regular" data-dificuldade="regular">Regular</button>
-            <button class="botao-dificuldade dificil" data-dificuldade="dificil">Dif&iacute;cil</button>
+            <button
+              class="botao-dificuldade facil"
+              data-dificuldade="facil"
+              type="button"
+            >
+              Fácil
+            </button>
+
+            <button
+              class="botao-dificuldade regular"
+              data-dificuldade="regular"
+              type="button"
+            >
+              Regular
+            </button>
+
+            <button
+              class="botao-dificuldade dificil"
+              data-dificuldade="dificil"
+              type="button"
+            >
+              Difícil
+            </button>
           </div>
         </div>
-      </div>
+      </section>
     </main>
   </div>
 
