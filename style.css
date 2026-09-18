@@ -118,16 +118,6 @@ button:disabled { cursor: not-allowed; opacity: .65; }
   font-weight: 800;
 }
 
-.brand-logo {
-  width: 46px;
-  height: 46px;
-  object-fit: contain;
-  border-radius: 14px;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
-  background: transparent;
-  flex-shrink: 0;
-}
-
 .auth-form { display: grid; gap: 16px; }
 
 .auth-form label {
@@ -907,3 +897,204 @@ body.app-ready .app-shell .main { opacity: 1; }
   font-size: 9px;
 }
 
+
+
+/* =========================================================
+   RESIBULANDO — BRANDING FINAL
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   MENU LATERAL — LOGO POR TEMA
+   --------------------------------------------------------- */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.brand-logo-stack {
+  position: relative;
+  display: block;
+  width: 62px;
+  height: 62px;
+  flex: 0 0 62px;
+}
+
+.brand-logo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  transition:
+    transform .18s ease,
+    opacity .18s ease;
+}
+
+/* Claro / padrão */
+.brand-logo-light {
+  display: block;
+}
+
+.brand-logo-dark,
+.brand-logo-pink {
+  display: none;
+}
+
+/* Escuro */
+:root[data-theme="dark"] .brand-logo-light,
+:root[data-theme="dark"] .brand-logo-pink {
+  display: none;
+}
+
+:root[data-theme="dark"] .brand-logo-dark {
+  display: block;
+  filter:
+    drop-shadow(
+      0 4px 13px
+      rgba(45, 160, 255, .22)
+    );
+}
+
+/* Rosa / Leila Mood */
+:root[data-theme="leila-mood"] .brand-logo-light,
+:root[data-theme="leila-mood"] .brand-logo-dark {
+  display: none;
+}
+
+:root[data-theme="leila-mood"] .brand-logo-pink {
+  display: block;
+  filter:
+    drop-shadow(
+      0 4px 13px
+      rgba(232, 93, 158, .22)
+    );
+}
+
+.brand:hover .brand-logo {
+  transform: scale(1.05);
+}
+
+.brand-copy {
+  display: grid;
+  min-width: 0;
+}
+
+.brand-copy strong {
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 850;
+  line-height: 1.1;
+  letter-spacing: -.02em;
+}
+
+.brand-copy small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* ---------------------------------------------------------
+   LOGIN
+   --------------------------------------------------------- */
+
+.auth-card {
+  width: min(100%, 440px);
+  padding: 34px;
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.auth-brand-logo {
+  width: 96px;
+  height: 96px;
+  display: block;
+  flex: 0 0 96px;
+  object-fit: contain;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.auth-brand-copy {
+  min-width: 0;
+}
+
+.auth-brand h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: 28px;
+  font-weight: 850;
+  line-height: 1.05;
+  letter-spacing: -.025em;
+}
+
+.auth-brand p {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* ---------------------------------------------------------
+   TELA DE CARREGAMENTO
+   --------------------------------------------------------- */
+
+.loading-logo {
+  width: 125px;
+  height: 125px;
+  display: block;
+  margin: 0 auto 14px;
+  object-fit: contain;
+  background: transparent;
+  border: 0;
+}
+
+.loading-card strong {
+  display: block;
+  color: var(--text);
+  font-size: 25px;
+  font-weight: 850;
+  letter-spacing: -.02em;
+}
+
+/* ---------------------------------------------------------
+   RESPONSIVO
+   --------------------------------------------------------- */
+
+@media (max-width: 700px) {
+  .brand-logo-stack {
+    width: 54px;
+    height: 54px;
+    flex-basis: 54px;
+  }
+
+  .brand-copy strong {
+    font-size: 17px;
+  }
+
+  .auth-brand-logo {
+    width: 82px;
+    height: 82px;
+    flex-basis: 82px;
+  }
+
+  .auth-brand h1 {
+    font-size: 24px;
+  }
+}

@@ -1,42 +1,105 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
   <title>Entrar · Resibulando</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="icon" type="image/png" href="favicon.png">
+
+  <link
+    rel="icon"
+    type="image/png"
+    href="favicon.png"
+  >
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
 </head>
+
 <body class="auth-page">
+
   <main class="auth-card">
+
     <div class="auth-brand">
-      <img class="brand-logo" src="logo-resibulando.png" alt="Logo Resibulando">
-      <div>
+
+      <img
+        class="auth-brand-logo"
+        src="logo-principal.png"
+        alt="Logo Resibulando"
+      >
+
+      <div class="auth-brand-copy">
         <h1>Resibulando</h1>
         <p>Seu mapa até a residência.</p>
       </div>
+
     </div>
 
-    <form id="login-form" class="auth-form">
+    <form
+      id="login-form"
+      class="auth-form"
+    >
+
       <label>
         E-mail
-        <input id="email" type="email" autocomplete="email" placeholder="voce@email.com" required>
+
+        <input
+          id="email"
+          type="email"
+          autocomplete="email"
+          placeholder="voce@email.com"
+          required
+        >
       </label>
 
       <label>
         Senha
-        <input id="senha" type="password" autocomplete="current-password" placeholder="Sua senha" required>
+
+        <input
+          id="senha"
+          type="password"
+          autocomplete="current-password"
+          placeholder="Sua senha"
+          required
+        >
       </label>
 
-      <button id="entrar" class="button primary" type="submit">Entrar</button>
-      <button id="criar-conta" class="button secondary" type="button">Criar conta</button>
+      <button
+        id="entrar"
+        class="button primary"
+        type="submit"
+      >
+        Entrar
+      </button>
 
-      <p id="mensagem" class="auth-message" aria-live="polite"></p>
+      <button
+        id="criar-conta"
+        class="button secondary"
+        type="button"
+      >
+        Criar conta
+      </button>
+
+      <p
+        id="mensagem"
+        class="auth-message"
+        aria-live="polite"
+      ></p>
+
     </form>
+
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
   <script src="auth.js"></script>
+
 </body>
 </html>

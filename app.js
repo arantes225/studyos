@@ -7,6 +7,7 @@ const PAGE_INFO = {
   flashcards: { title: "Flashcards", eyebrow: "Estudar" },
   erros: { title: "Caderno de erros", eyebrow: "Estudar" },
   questoes: { title: "Questões e Simulados", eyebrow: "Estudar" },
+  estatisticas: { title: "Estatísticas", eyebrow: "Desempenho" },
   editais: { title: "Editais / Provas", eyebrow: "Planejamento" },
   configuracoes: { title: "Configurações", eyebrow: "Conta e preferências" }
 };
@@ -101,7 +102,24 @@ function sidebarMarkup(user, profile = null) {
   return `
     <div class="sidebar-top">
       <a class="brand" href="dashboard.html">
-        <img class="brand-logo" src="logo-resibulando.png" alt="Logo Resibulando">
+        <span class="brand-logo-stack" aria-hidden="true">
+          <img
+            class="brand-logo brand-logo-light"
+            src="logo-icone-original.png"
+            alt=""
+          >
+          <img
+            class="brand-logo brand-logo-dark"
+            src="logo-icone-azul-claro.png"
+            alt=""
+          >
+          <img
+            class="brand-logo brand-logo-pink"
+            src="logo-icone-rosa-escuro.png"
+            alt=""
+          >
+        </span>
+
         <span class="brand-copy">
           <strong>Resibulando</strong>
           <small>Mapa até a residência</small>
@@ -131,6 +149,10 @@ function sidebarMarkup(user, profile = null) {
           <a class="nav-sublink ${page === "questoes" ? "active" : ""}" href="questoes-simulados.html">Questões e Simulados</a>
         </div>
       </div>
+
+      <a class="nav-link ${page === "estatisticas" ? "active" : ""}" href="estatisticas.html">
+        <span class="nav-icon">▥</span><span>Estatísticas</span>
+      </a>
 
       <a class="nav-link ${page === "editais" ? "active" : ""}" href="editais.html">
         <span class="nav-icon">▤</span><span>Editais / Provas</span>
@@ -466,7 +488,7 @@ function updateLofiControls(manager) {
     select.innerHTML = manager.tracks.length
       ? manager.tracks.map((track) => `
           <option value="${track.id}">
-            ${escapeHtml(track.title)}
+            ${track.title}
           </option>
         `).join("")
       : '<option value="">Nenhum som disponível</option>';
@@ -804,7 +826,6 @@ async function iniciarLofiGlobal(userId) {
         writeLofiState(
           userId,
           {
-            trackId: manager.track?.id || null,
             volume: manager.audio.volume,
             currentTime:
               manager.audio.currentTime || 0
