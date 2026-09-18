@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrar · DocMap</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+  <main class="auth-card">
+    <div class="auth-brand">
+      <div class="brand-mark">D</div>
+      <div>
+        <h1>DocMap</h1>
+        <p>Seu ambiente de estudo.</p>
+      </div>
+    </div>
+
+    <form id="login-form" class="auth-form">
+      <label>
+        E-mail
+        <input id="email" type="email" autocomplete="email" placeholder="voce@email.com" required>
+      </label>
+
+      <label>
+        Senha
+        <input id="senha" type="password" autocomplete="current-password" placeholder="Sua senha" required>
+      </label>
+
+      <button id="entrar" class="button primary" type="submit">Entrar</button>
+      <button id="criar-conta" class="button secondary" type="button">Criar conta</button>
+
+      <p id="mensagem" class="auth-message" aria-live="polite"></p>
+    </form>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <script src="auth.js"></script>
+</body>
+</html>

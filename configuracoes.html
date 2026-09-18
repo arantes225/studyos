@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurações · DocMap</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="configuracoes">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar"></aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <main class="main">
+      <div class="page">
+        <header class="topbar">
+          <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
+          <div class="page-heading">
+            <span class="eyebrow" data-page-eyebrow></span>
+            <h1 data-page-title></h1>
+          </div>
+        </header>
+
+        
+<section class="settings-section">
+  <article class="setting-row">
+    <div>
+      <h2>Aparência</h2>
+      <p>O tema já fica salvo na sua conta do Supabase.</p>
+    </div>
+
+    <form id="theme-form" class="theme-options">
+      <label class="theme-option">
+        <input type="radio" name="theme" value="light">
+        <span>Claro</span>
+      </label>
+
+      <label class="theme-option">
+        <input type="radio" name="theme" value="dark">
+        <span>Escuro</span>
+      </label>
+
+      <label class="theme-option">
+        <input type="radio" name="theme" value="system">
+        <span>Sistema</span>
+      </label>
+    </form>
+
+    <div id="theme-status" class="inline-status"></div>
+  </article>
+
+  <article class="setting-row">
+    <div>
+      <h2>Periodização dos flashcards</h2>
+      <p>Difícil: 1 · 3 · 7 dias<br>Intermediário: 7 · 21 · 45 dias<br>Fácil: 15 · 45 · 70 dias</p>
+    </div>
+    <span class="badge">Fase 9</span>
+  </article>
+
+  <article class="setting-row">
+    <div>
+      <h2>Caderno de erros</h2>
+      <p>Padrão atual: revisão a cada 21 dias.</p>
+    </div>
+    <span class="badge">Fase 9</span>
+  </article>
+
+  <article class="setting-row">
+    <div>
+      <h2>Revisão de matérias</h2>
+      <p>Padrão atual: 7 · 14 · 30 dias.</p>
+    </div>
+    <span class="badge">Fase 9</span>
+  </article>
+
+  <article class="setting-row">
+    <div>
+      <h2>Conta</h2>
+      <p>Alteração de senha e demais controles da conta entram nesta seção.</p>
+    </div>
+    <span class="badge">Fase 9</span>
+  </article>
+</section>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

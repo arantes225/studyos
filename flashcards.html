@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flashcards · DocMap</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="flashcards">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar"></aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <main class="main">
+      <div class="page">
+        <header class="topbar">
+          <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
+          <div class="page-heading">
+            <span class="eyebrow" data-page-eyebrow></span>
+            <h1 data-page-title></h1>
+          </div>
+        </header>
+
+        
+<section class="metric-grid">
+  <article class="metric-card">
+    <span class="metric-label">Para revisar</span>
+    <strong class="metric-value">—</strong>
+  </article>
+  <article class="metric-card">
+    <span class="metric-label">Atrasados</span>
+    <strong class="metric-value">—</strong>
+  </article>
+  <article class="metric-card">
+    <span class="metric-label">Revisados hoje</span>
+    <strong class="metric-value">—</strong>
+  </article>
+  <article class="metric-card">
+    <span class="metric-label">Acerto</span>
+    <strong class="metric-value">—</strong>
+  </article>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>Áreas</h2>
+      <p>Os cards serão separados pelas cinco áreas principais.</p>
+    </div>
+    <span class="badge accent">Fase 5</span>
+  </div>
+
+  <div class="area-list">
+    <div class="area-row"><strong>Clínica Médica</strong><span>—</span></div>
+    <div class="area-row"><strong>Pediatria</strong><span>—</span></div>
+    <div class="area-row"><strong>Ginecologia e Obstetrícia</strong><span>—</span></div>
+    <div class="area-row"><strong>Cirurgia Geral</strong><span>—</span></div>
+    <div class="area-row"><strong>Preventiva</strong><span>—</span></div>
+  </div>
+</section>
+
+<section class="feature-grid" style="margin-top:16px">
+  <article class="feature-card">
+    <span class="badge">Criar</span>
+    <h2>Novo flashcard</h2>
+    <p>Frente, verso e imagens da frente e do verso.</p>
+  </article>
+
+  <article class="feature-card">
+    <span class="badge">Importar</span>
+    <h2>Excel · PDF · Anki</h2>
+    <p>A importação será adicionada progressivamente.</p>
+  </article>
+</section>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocMap</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="loading-page">
+  <div class="loading-card">
+    <div class="brand-mark">D</div>
+    <strong>DocMap</strong>
+    <span>Carregando...</span>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <script>
+    (async () => {
+      const { data } = await window.supabaseClient.auth.getSession();
+      window.location.replace(data.session ? "dashboard.html" : "login.html");
+    })();
+  </script>
+</body>
+</html>
