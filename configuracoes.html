@@ -127,6 +127,111 @@
         grid-template-columns: repeat(4, minmax(48px, 1fr));
       }
     }
+  
+    .profile-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .profile-field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .profile-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .profile-field span {
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .profile-field input,
+    .profile-field select {
+      width: 100%;
+      min-height: 44px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+    }
+
+    .profile-field input:focus,
+    .profile-field select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .profile-preview {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-2);
+    }
+
+    .profile-preview-avatar {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .profile-preview strong,
+    .profile-preview small {
+      display: block;
+    }
+
+    .profile-preview small {
+      margin-top: 3px;
+      color: var(--muted);
+    }
+
+    .profile-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .profile-actions .button {
+      min-height: 42px;
+      padding: 0 15px;
+    }
+
+    .profile-status {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .profile-status.error {
+      color: var(--danger);
+    }
+
+    .profile-status.success {
+      color: var(--success);
+    }
+
+    @media (max-width: 700px) {
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .profile-field.full {
+        grid-column: auto;
+      }
+    }
+
   </style>
 </head>
 
@@ -147,6 +252,74 @@
         </header>
 
         <section class="settings-section">
+
+          <article class="setting-row">
+            <div>
+              <h2>Perfil</h2>
+              <p>
+                Essas informações aparecem no menu lateral do DocMap.
+              </p>
+            </div>
+
+            <div class="profile-grid">
+              <label class="profile-field full">
+                <span>Nome de usuário</span>
+                <input
+                  id="profile-name"
+                  type="text"
+                  maxlength="80"
+                  placeholder="Ex.: Luiz Arantes"
+                  autocomplete="name"
+                >
+              </label>
+
+              <label class="profile-field">
+                <span>Sexo</span>
+                <select id="profile-gender">
+                  <option value="">Selecione</option>
+                  <option value="male">Masculino</option>
+                  <option value="female">Feminino</option>
+                  <option value="other">Outro</option>
+                  <option value="prefer_not_to_say">Prefiro não informar</option>
+                </select>
+              </label>
+
+              <label class="profile-field">
+                <span>Especialidade</span>
+                <input
+                  id="profile-specialty"
+                  type="text"
+                  maxlength="100"
+                  list="specialty-options"
+                  placeholder="Ex.: Cirurgia Geral"
+                >
+
+                <datalist id="specialty-options">
+                  <option value="Clínica Médica">
+                  <option value="Pediatria">
+                  <option value="Ginecologia e Obstetrícia">
+                  <option value="Cirurgia Geral">
+                  <option value="Medicina Preventiva">
+                </datalist>
+              </label>
+            </div>
+
+            <div class="profile-preview">
+              <div id="profile-preview-avatar" class="profile-preview-avatar">U</div>
+              <div>
+                <strong id="profile-preview-name">Seu nome</strong>
+                <small id="profile-preview-specialty">Sua especialidade</small>
+              </div>
+            </div>
+
+            <div class="profile-actions">
+              <button id="save-profile" class="button primary" type="button">
+                Salvar perfil
+              </button>
+
+              <span id="profile-status" class="profile-status" aria-live="polite"></span>
+            </div>
+          </article>
 
           <article class="setting-row">
             <div>
@@ -283,8 +456,8 @@
 
           <article class="setting-row">
             <div>
-              <h2>Conta</h2>
-              <p>Alteração de senha e demais controles entram aqui.</p>
+              <h2>Login e segurança</h2>
+              <p>Alteração de senha e demais controles da conta entram aqui.</p>
             </div>
             <span class="badge">Fase 9</span>
           </article>

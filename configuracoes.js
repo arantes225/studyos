@@ -20,6 +20,148 @@ const SETTINGS_FIELDS = [
 
 let settingsUser = null;
 
+
+function profileTitle(gender) {
+  if (gender === "male") return "Dr.";
+  if (gender === "female") return "Dra.";
+  return "";
+}
+
+function setProfileStatus(text, type = "") {
+  const element = document.getElementById("profile-status");
+  element.textContent = text;
+  element.className = `profile-status ${type}`.trim();
+}
+
+function updateProfilePreview() {
+  const name =
+    document.getElementById("profile-name").value.trim()
+    || "Seu nome";
+
+  const gender =
+    document.getElementById("profile-gender").value;
+
+  const specialty =
+    document.getElementById("profile-specialty").value.trim()
+    || "Sua especialidade";
+
+  const title = profileTitle(gender);
+
+  document.getElementById("profile-preview-name").textContent =
+    title ? `${title} ${name}` : name;
+
+  document.getElementById("profile-preview-specialty").textContent =
+    specialty;
+
+  document.getElementById("profile-preview-avatar").textContent =
+    name.charAt(0).toUpperCase() || "U";
+}
+
+async function loadProfileSettings() {
+  const { data, error } = await settingsSb
+    .from("profiles")
+    .select("display_name, gender, specialty")
+    .eq("user_id", settingsUser.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error(error);
+    setProfileStatus(
+      `Não foi possível carregar o perfil: ${error.message}`,
+      "error"
+    );
+    return;
+  }
+
+  document.getElementById("profile-name").value =
+    data?.display_name || "";
+
+  document.getElementById("profile-gender").value =
+    data?.gender || "";
+
+  document.getElementById("profile-specialty").value =
+    data?.specialty || "";
+
+  updateProfilePreview();
+}
+
+async function saveProfileSettings() {
+  const name =
+    document.getElementById("profile-name").value.trim();
+
+  const gender =
+    document.getElementById("profile-gender").value || null;
+
+  const specialty =
+    document.getElementById("profile-specialty").value.trim();
+
+  if (!name) {
+    setProfileStatus(
+      "Informe o nome que deve aparecer no DocMap.",
+      "error"
+    );
+    return;
+  }
+
+  const button = document.getElementById("save-profile");
+  button.disabled = true;
+  setProfileStatus("Salvando...");
+
+  const { error } = await settingsSb
+    .from("profiles")
+    .update({
+      display_name: name,
+      gender,
+      specialty: specialty || null
+    })
+    .eq("user_id", settingsUser.id);
+
+  button.disabled = false;
+
+  if (error) {
+    console.error(error);
+    setProfileStatus(
+      `Não foi possível salvar o perfil: ${error.message}`,
+      "error"
+    );
+    return;
+  }
+
+  setProfileStatus(
+    "Perfil salvo. Atualizando menu lateral...",
+    "success"
+  );
+
+  updateProfilePreview();
+
+  setTimeout(() => {
+    window.location.reload();
+  }, 450);
+}
+
+function wireProfileSettings() {
+  [
+    "profile-name",
+    "profile-gender",
+    "profile-specialty"
+  ].forEach((id) => {
+    const element = document.getElementById(id);
+
+    element.addEventListener(
+      id === "profile-gender" ? "change" : "input",
+      updateProfilePreview
+    );
+  });
+
+  document
+    .getElementById("save-profile")
+    .addEventListener(
+      "click",
+      saveProfileSettings
+    );
+}
+
+
 function renderWeekdayGroups() {
   document.querySelectorAll("[data-weekday-group]").forEach((container) => {
     const field = container.dataset.weekdayGroup;
@@ -163,12 +305,16 @@ async function initStudySettings() {
   settingsUser = window.docmapUser;
 
   renderWeekdayGroups();
+  wireProfileSettings();
 
   document
     .getElementById("save-study-days")
     .addEventListener("click", saveStudySettings);
 
-  await loadStudySettings();
+  await Promise.all([
+    loadProfileSettings(),
+    loadStudySettings()
+  ]);
 }
 
 if (window.docmapUser) {

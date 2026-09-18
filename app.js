@@ -23,8 +23,34 @@ function escapeHtml(text) {
     .replaceAll("'", "&#039;");
 }
 
-function sidebarMarkup(user) {
-  const email = escapeHtml(user.email || "Usuário");
+function getProfileTitle(gender) {
+  if (gender === "male") return "Dr.";
+  if (gender === "female") return "Dra.";
+  return "";
+}
+
+function sidebarMarkup(user, profile = null) {
+  const fallbackName = user.email
+    ? user.email.split("@")[0]
+    : "Usuário";
+
+  const rawName =
+    profile?.display_name?.trim()
+    || fallbackName;
+
+  const specialty =
+    profile?.specialty?.trim()
+    || "Especialidade não definida";
+
+  const title = getProfileTitle(profile?.gender);
+
+  const sidebarName =
+    title
+      ? `${title} ${rawName}`
+      : rawName;
+
+  const initial =
+    rawName.charAt(0).toUpperCase() || "U";
 
   return `
     <div class="sidebar-top">
@@ -78,16 +104,32 @@ function sidebarMarkup(user) {
       </div>
 
       <div class="user-mini">
-        <div class="user-avatar">${escapeHtml((user.email || "U")[0].toUpperCase())}</div>
+        <div class="user-avatar">${escapeHtml(initial)}</div>
+
         <div class="user-copy">
-          <strong>${email}</strong>
-          <small>Conta DocMap</small>
+          <strong>${escapeHtml(sidebarName)}</strong>
+          <small>${escapeHtml(specialty)}</small>
         </div>
       </div>
 
       <button id="logout" class="logout-button" type="button">Sair</button>
     </div>
   `;
+}
+
+async function carregarPerfil(userId) {
+  const { data, error } = await sb
+    .from("profiles")
+    .select("display_name, gender, specialty")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    console.warn("Não foi possível carregar o perfil:", error.message);
+    return null;
+  }
+
+  return data || null;
 }
 
 function applyResolvedTheme(theme) {
@@ -215,9 +257,13 @@ async function iniciarApp() {
 
   const user = data.session.user;
 
-  await carregarTema(user.id);
+  const [profile] = await Promise.all([
+    carregarPerfil(user.id),
+    carregarTema(user.id)
+  ]);
 
-  document.getElementById("sidebar").innerHTML = sidebarMarkup(user);
+  document.getElementById("sidebar").innerHTML =
+    sidebarMarkup(user, profile);
 
   const info = PAGE_INFO[page] || PAGE_INFO.dashboard;
 
@@ -242,6 +288,7 @@ async function iniciarApp() {
 
   window.docmapUser = user;
   window.docmapSession = data.session;
+  window.docmapProfile = profile;
 
   window.dispatchEvent(
     new CustomEvent("docmap:ready", {
