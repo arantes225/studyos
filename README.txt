@@ -1,60 +1,64 @@
-DOCMAP — FASE 11.9
-MENU DE SIMULADOS
+DOCMAP — FASE 11.10
+CRONOGRAMA — ADICIONAR AULAS + EXCLUSÃO EM GRUPO
 
-NOVO MENU SUPERIOR
-- Meus simulados
-- Adicionar simulado
-- Biblioteca
+1. ADICIONAR AULAS
 
-MEUS SIMULADOS
-- mantém o minidashboard de desempenho
-- mostra seus simulados
-- botão Abrir para preencher/revisar o gabarito
-- sem botões de excluir poluindo os cards
+O Importador inteligente e o cadastro manual agora ficam juntos
+em um único fluxo visual chamado "Adicionar aulas".
 
-ADICIONAR SIMULADO
+Menu:
+- Automaticamente
+- Manualmente
 
-1. AUTOMATICAMENTE
-- envia PDF
-- DocMap extrai as questões
-- cria o gabarito rápido
-- comportamento já existente preservado
+AUTOMATICAMENTE
+- mantém o Importador inteligente
+- Excel
+- CSV
+- PDF
+- prévia editável
+- importação com datas ou como deck
 
-2. MANUALMENTE
-- informa nome do simulado
-- informa quantidade de questões
-- DocMap cria automaticamente as questões numeradas
-- depois abre direto o gabarito rápido
-- quantidade permitida: 1 a 500
+MANUALMENTE
+- Área
+- Matéria
+- Tema
+- Data
+- botão Adicionar aula
 
-BIBLIOTECA
-- lista todos os simulados
-- checkbox por simulado
-- selecionar todos
-- excluir vários em grupo
-- menu ⋯ em cada simulado:
-  - Editar
-  - Excluir
+Nada foi removido do funcionamento anterior;
+apenas a organização da página foi melhorada.
 
-EDIÇÃO
-- nesta etapa permite alterar com segurança o nome do simulado
-- quantidade de questões não é alterada pela edição para não quebrar
-  gabaritos já respondidos
+2. LISTA DE TEMAS
 
-EXCLUSÃO
-- continua removendo o PDF privado associado quando existir
-- exclusão pede confirmação
+Agora cada aula possui checkbox.
 
-INSTALAÇÃO
+Também foi adicionado:
+- Selecionar visíveis
+- quantidade de aulas selecionadas
+- Excluir selecionadas
+
+A exclusão em grupo:
+- pede confirmação
+- apaga permanentemente os registros selecionados
+- respeita os filtros atuais para "Selecionar visíveis"
+
+As ações existentes da Lista de temas continuam:
+- Ver na semana / Ir para deck
+- Remover para o deck
+- Já feita
+
+3. INSTALAÇÃO
+
 NÃO PRECISA RODAR SQL.
 
 SUBSTITUA:
-- questoes-simulados.html
-- questoes-simulados.js
+- cronograma.html
+- cronograma.js
 
 PUBLICAÇÃO:
+
 git add -A
-git commit -m "Fase 11.9 menu e biblioteca de simulados"
+git commit -m "Fase 11.10 menu adicionar aulas e exclusao em grupo"
 git push origin main
 
 Depois:

@@ -14,7 +14,13 @@ const scheduleState = {
   draggingTopicId: null,
   alreadyDoneTopicId: null,
   themeSearch: "",
-  themeAreaFilter: ""
+  themeAreaFilter: "",
+
+  addMode:
+    "automatic",
+
+  selectedThemeIds:
+    new Set()
 };
 
 const HEADER_ALIASES = {
@@ -3912,6 +3918,159 @@ function filteredLibraryTopics() {
     });
 }
 
+
+function visibleThemeIds() {
+  return filteredLibraryTopics()
+    .map(
+      (topic) =>
+        topic.id
+    );
+}
+
+
+function updateThemeBulkToolbar() {
+  const visibleIds =
+    visibleThemeIds();
+
+
+  const selectedVisible =
+    visibleIds.filter(
+      (id) =>
+        scheduleState
+          .selectedThemeIds
+          .has(
+            id
+          )
+    ).length;
+
+
+  const count =
+    document.getElementById(
+      "theme-selected-count"
+    );
+
+
+  const button =
+    document.getElementById(
+      "theme-delete-selected"
+    );
+
+
+  const selectAll =
+    document.getElementById(
+      "theme-select-all"
+    );
+
+
+  if (count) {
+    count.textContent =
+      `${scheduleState.selectedThemeIds.size} selecionada${scheduleState.selectedThemeIds.size === 1 ? "" : "s"}`;
+  }
+
+
+  if (button) {
+    button.disabled =
+      scheduleState
+        .selectedThemeIds
+        .size === 0;
+  }
+
+
+  if (selectAll) {
+    selectAll.checked =
+      visibleIds.length > 0
+      && selectedVisible
+        === visibleIds.length;
+
+
+    selectAll.indeterminate =
+      selectedVisible > 0
+      && selectedVisible
+        < visibleIds.length;
+  }
+}
+
+
+async function deleteSelectedThemes() {
+  const ids =
+    Array.from(
+      scheduleState
+        .selectedThemeIds
+    );
+
+
+  if (!ids.length) {
+    return;
+  }
+
+
+  const confirmed =
+    window.confirm(
+      `Excluir ${ids.length} aula${ids.length === 1 ? "" : "s"} permanentemente do cronograma?`
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      "theme-delete-selected"
+    );
+
+
+  if (button) {
+    button.disabled =
+      true;
+  }
+
+
+  const {
+    error
+  } =
+    await scheduleSb
+      .from(
+        "study_topics"
+      )
+      .delete()
+      .in(
+        "id",
+        ids
+      );
+
+
+  if (button) {
+    button.disabled =
+      false;
+  }
+
+
+  if (error) {
+    console.error(
+      error
+    );
+
+
+    window.alert(
+      `Não foi possível excluir as aulas selecionadas: ${error.message}`
+    );
+
+
+    return;
+  }
+
+
+  scheduleState
+    .selectedThemeIds
+    .clear();
+
+
+  await loadTopics();
+}
+
+
 function renderThemeLibrary() {
   const container =
     document.getElementById("theme-library-list");
@@ -3939,6 +4098,9 @@ function renderThemeLibrary() {
         Nenhuma aula encontrada com esse filtro.
       </div>
     `;
+
+    updateThemeBulkToolbar();
+
     return;
   }
 
@@ -3949,7 +4111,22 @@ function renderThemeLibrary() {
         || !topic.scheduled_date;
 
       return `
-        <article class="theme-library-row">
+        <article class="theme-library-row with-selection">
+
+          <label
+            class="theme-library-select"
+            aria-label="Selecionar aula"
+          >
+            <input
+              class="theme-library-select-check"
+              type="checkbox"
+              data-theme-select="${escapeScheduleHtml(
+                topic.id
+              )}"
+              ${scheduleState.selectedThemeIds.has(topic.id) ? "checked" : ""}
+            >
+          </label>
+
           <div class="theme-library-title">
             <strong>${escapeScheduleHtml(topic.theme)}</strong>
             <small>
@@ -4016,6 +4193,46 @@ function renderThemeLibrary() {
         </article>
       `;
     }).join("");
+
+  container
+    .querySelectorAll(
+      "[data-theme-select]"
+    )
+    .forEach(
+      (input) => {
+        input.addEventListener(
+          "change",
+          () => {
+            const id =
+              input.dataset
+                .themeSelect;
+
+
+            if (input.checked) {
+              scheduleState
+                .selectedThemeIds
+                .add(
+                  id
+                );
+
+            } else {
+              scheduleState
+                .selectedThemeIds
+                .delete(
+                  id
+                );
+            }
+
+
+            updateThemeBulkToolbar();
+          }
+        );
+      }
+    );
+
+
+  updateThemeBulkToolbar();
+
 
   document
     .querySelectorAll("[data-library-topic]")
@@ -4123,6 +4340,79 @@ function focusLibraryTopic(topicId) {
     });
 }
 
+
+function switchScheduleAddMode(
+  mode
+) {
+  if (
+    ![
+      "automatic",
+      "manual"
+    ].includes(
+      mode
+    )
+  ) {
+    mode =
+      "automatic";
+  }
+
+
+  scheduleState.addMode =
+    mode;
+
+
+  document
+    .querySelectorAll(
+      "[data-schedule-add-mode]"
+    )
+    .forEach(
+      (button) => {
+        button.classList.toggle(
+          "active",
+          button.dataset
+            .scheduleAddMode === mode
+        );
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-schedule-add-section]"
+    )
+    .forEach(
+      (section) => {
+        section.classList.toggle(
+          "active",
+          section.dataset
+            .scheduleAddSection === mode
+        );
+      }
+    );
+}
+
+
+function wireScheduleAddMode() {
+  document
+    .querySelectorAll(
+      "[data-schedule-add-mode]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            switchScheduleAddMode(
+              button.dataset
+                .scheduleAddMode
+            );
+          }
+        );
+      }
+    );
+}
+
+
 function wireManualTopicForm() {
   document
     .getElementById("manual-topic-form")
@@ -4131,6 +4421,58 @@ function wireManualTopicForm() {
       addManualTopic
     );
 }
+
+
+function wireThemeLibraryBulkActions() {
+  document
+    .getElementById(
+      "theme-select-all"
+    )
+    ?.addEventListener(
+      "change",
+      (event) => {
+        const ids =
+          visibleThemeIds();
+
+
+        for (
+          const id
+          of ids
+        ) {
+          if (
+            event.target.checked
+          ) {
+            scheduleState
+              .selectedThemeIds
+              .add(
+                id
+              );
+
+          } else {
+            scheduleState
+              .selectedThemeIds
+              .delete(
+                id
+              );
+          }
+        }
+
+
+        renderThemeLibrary();
+      }
+    );
+
+
+  document
+    .getElementById(
+      "theme-delete-selected"
+    )
+    ?.addEventListener(
+      "click",
+      deleteSelectedThemes
+    );
+}
+
 
 function wireThemeLibraryFilters() {
   const search =
@@ -5102,8 +5444,14 @@ async function initCronograma() {
   wireDeckDropzone();
   wireAlreadyDoneDialog();
   wireManualTopicForm();
+  wireScheduleAddMode();
   wireThemeLibraryFilters();
+  wireThemeLibraryBulkActions();
   wireOverdueOrganizer();
+
+  switchScheduleAddMode(
+    "automatic"
+  );
 
   document.addEventListener(
     "click",
