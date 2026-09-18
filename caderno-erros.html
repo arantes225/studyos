@@ -20,7 +20,7 @@
 
   <link
     rel="stylesheet"
-    href="caderno-erros.css?v=7.0"
+    href="caderno-erros.css?v=7.1"
   >
 </head>
 
@@ -65,73 +65,259 @@
         </header>
 
 
-        <section class="feature-grid error-intro">
+        <!-- ================================================
+             MINIDASHBOARD
+             ================================================ -->
 
-          <article class="feature-card">
+        <section class="error-metrics">
 
-            <span class="badge">
-              CCQ
-            </span>
-
-            <h2>
-              Ideia central
-            </h2>
-
-            <p>
-              Revise o conceito-chave,
-              a questão e o raciocínio
-              que levou ao erro.
-            </p>
-
+          <article class="error-metric-card">
+            <span>Erros registrados</span>
+            <strong id="error-metric-registered">—</strong>
+            <small>total no caderno</small>
           </article>
 
+          <article class="error-metric-card">
+            <span>Feitos</span>
+            <strong id="error-metric-reviewed">—</strong>
+            <small>com pelo menos 1 revisão</small>
+          </article>
 
-          <article class="feature-card">
+          <article class="error-metric-card">
+            <span>Atrasados</span>
+            <strong id="error-metric-overdue">—</strong>
+            <small>revisão antes de hoje</small>
+          </article>
 
-            <span class="badge">
-              Revisão
-            </span>
-
-            <h2>
-              Caderno de erros
-            </h2>
-
-            <p>
-              As revisões respeitam a
-              periodicidade definida em
-              Configurações.
-            </p>
-
+          <article class="error-metric-card">
+            <span>Retenção</span>
+            <strong id="error-metric-retention">—</strong>
+            <small>estimativa média atual</small>
           </article>
 
         </section>
 
 
+        <!-- ================================================
+             NOVO ERRO
+             ================================================ -->
+
+        <section class="panel error-create-panel">
+
+          <div class="panel-header error-create-head">
+
+            <div>
+              <h2>Adicionar novo erro</h2>
+
+              <p>
+                Registre manualmente um erro para entrar
+                no seu ciclo de revisões.
+              </p>
+            </div>
+
+            <button
+              id="toggle-error-form"
+              class="button secondary"
+              type="button"
+            >
+              Adicionar
+            </button>
+
+          </div>
+
+
+          <div
+            id="error-create-form"
+            class="error-create-form"
+            hidden
+          >
+
+            <div class="error-form-grid">
+
+              <label class="error-field">
+                <span>Área</span>
+
+                <input
+                  id="new-error-area"
+                  type="text"
+                  list="error-medical-areas"
+                  placeholder="Ex.: Clínica Médica"
+                >
+              </label>
+
+
+              <label class="error-field">
+                <span>Matéria</span>
+
+                <input
+                  id="new-error-materia"
+                  type="text"
+                  placeholder="Ex.: Cardiologia"
+                >
+              </label>
+
+
+              <label class="error-field full">
+                <span>Tema</span>
+
+                <input
+                  id="new-error-theme"
+                  type="text"
+                  placeholder="Ex.: Insuficiência cardíaca"
+                >
+              </label>
+
+
+              <label class="error-field full">
+                <span>CCQ *</span>
+
+                <textarea
+                  id="new-error-ccq"
+                  rows="3"
+                  placeholder="Conceito central que você quer lembrar..."
+                ></textarea>
+              </label>
+
+
+              <label class="error-field full">
+                <span>Questão *</span>
+
+                <textarea
+                  id="new-error-question"
+                  rows="6"
+                  placeholder="Cole a questão ou descreva o erro..."
+                ></textarea>
+              </label>
+
+
+              <label class="error-field full">
+                <span>Resposta correta *</span>
+
+                <textarea
+                  id="new-error-answer"
+                  rows="4"
+                  placeholder="Resposta correta e explicação essencial..."
+                ></textarea>
+              </label>
+
+
+              <label class="error-field full">
+                <span>
+                  O que eu pensei
+                  <small>(opcional)</small>
+                </span>
+
+                <textarea
+                  id="new-error-thought"
+                  rows="4"
+                  placeholder="Qual foi o raciocínio que levou ao erro?"
+                ></textarea>
+              </label>
+
+
+              <label class="error-field full">
+                <span>
+                  Imagem da questão
+                  <small>(opcional)</small>
+                </span>
+
+                <input
+                  id="new-error-image"
+                  type="file"
+                  accept="image/*"
+                >
+              </label>
+
+            </div>
+
+
+            <datalist id="error-medical-areas">
+              <option value="Clínica Médica"></option>
+              <option value="Pediatria"></option>
+              <option value="Ginecologia e Obstetrícia"></option>
+              <option value="Cirurgia Geral"></option>
+              <option value="Preventiva"></option>
+            </datalist>
+
+
+            <div class="error-create-actions">
+
+              <button
+                id="save-new-error"
+                class="button primary"
+                type="button"
+              >
+                Salvar no Caderno de Erros
+              </button>
+
+              <button
+                id="cancel-new-error"
+                class="button secondary"
+                type="button"
+              >
+                Cancelar
+              </button>
+
+              <span
+                id="new-error-status"
+                class="error-status"
+                aria-live="polite"
+              ></span>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- ================================================
+             REVISÃO
+             ================================================ -->
+
         <section class="panel error-review-panel">
 
-          <div class="panel-header">
+          <div class="panel-header error-review-header">
 
             <div>
               <h2 id="error-review-title">
-                Revisão do caderno de erros
+                Revisão do Caderno de Erros
               </h2>
 
               <p id="error-review-copy">
-                Reveja a questão antes de mostrar
-                a resposta correta.
+                Leia o CCQ. Abra os detalhes se precisar
+                rever a questão.
               </p>
             </div>
 
 
-            <div class="error-progress">
+            <div class="error-review-tools">
 
-              <strong id="error-position">
-                0 / 0
-              </strong>
+              <label
+                id="error-area-filter-wrap"
+                class="error-area-filter"
+              >
+                <span>Revisar por área</span>
 
-              <small id="error-progress-copy">
-                carregando...
-              </small>
+                <select id="error-area-filter">
+                  <option value="">
+                    Todas as áreas
+                  </option>
+                </select>
+              </label>
+
+
+              <div class="error-progress">
+
+                <strong id="error-position">
+                  0 / 0
+                </strong>
+
+                <small id="error-progress-copy">
+                  carregando...
+                </small>
+
+              </div>
 
             </div>
 
@@ -145,12 +331,11 @@
           >
 
             <strong>
-              Caderno de erros em dia.
+              Revisões em dia.
             </strong>
 
-            <span>
-              Não há itens programados
-              para revisão neste momento.
+            <span id="error-empty-copy">
+              Não há itens programados para esta seleção.
             </span>
 
           </div>
@@ -162,34 +347,7 @@
             hidden
           >
 
-            <div class="error-taxonomy">
-
-              <span
-                id="error-area"
-                class="error-chip"
-                hidden
-              ></span>
-
-              <span
-                id="error-materia"
-                class="error-chip"
-                hidden
-              ></span>
-
-              <span
-                id="error-theme"
-                class="error-chip accent"
-                hidden
-              ></span>
-
-            </div>
-
-
-            <article class="error-card">
-
-              <div class="error-label">
-                CCQ
-              </div>
+            <article class="error-ccq-card">
 
               <div
                 id="error-ccq"
@@ -197,42 +355,46 @@
               ></div>
 
 
-              <div class="error-divider"></div>
-
-
-              <div class="error-label">
-                Questão
-              </div>
-
               <div
-                id="error-question"
-                class="error-question"
+                id="error-meta"
+                class="error-meta"
               ></div>
 
-              <img
-                id="error-question-image"
-                class="error-image"
-                alt="Imagem da questão"
-                hidden
-              >
-
 
               <div
-                id="error-answer"
-                class="error-answer"
+                id="error-details"
+                class="error-details"
                 hidden
               >
 
-                <div class="error-divider"></div>
+                <div class="error-detail-block">
+
+                  <span class="error-detail-label">
+                    Questão
+                  </span>
+
+                  <div
+                    id="error-question"
+                    class="error-question"
+                  ></div>
+
+                  <img
+                    id="error-question-image"
+                    class="error-image"
+                    alt="Imagem da questão"
+                    hidden
+                  >
+
+                </div>
 
 
-                <div class="error-answer-grid">
+                <div class="error-detail-grid">
 
-                  <div class="error-answer-block">
+                  <div class="error-detail-block">
 
-                    <div class="error-label">
+                    <span class="error-detail-label">
                       Resposta correta
-                    </div>
+                    </span>
 
                     <div
                       id="error-correct-answer"
@@ -244,12 +406,12 @@
 
                   <div
                     id="error-thought-block"
-                    class="error-answer-block"
+                    class="error-detail-block"
                   >
 
-                    <div class="error-label">
+                    <span class="error-detail-label">
                       O que eu pensei
-                    </div>
+                    </span>
 
                     <div
                       id="error-thought"
@@ -262,26 +424,28 @@
 
               </div>
 
+
+              <div class="error-card-actions">
+
+                <button
+                  id="open-error"
+                  class="button secondary"
+                  type="button"
+                >
+                  Abrir
+                </button>
+
+                <button
+                  id="mark-error-read"
+                  class="button primary"
+                  type="button"
+                >
+                  Lido
+                </button>
+
+              </div>
+
             </article>
-
-
-            <button
-              id="show-error-answer"
-              class="button primary error-main-button"
-              type="button"
-            >
-              Mostrar resposta
-            </button>
-
-
-            <button
-              id="complete-error-review"
-              class="button primary error-main-button"
-              type="button"
-              hidden
-            >
-              Revisado
-            </button>
 
 
             <div
@@ -307,9 +471,9 @@
 
   <script src="supabase.js"></script>
 
-  <script src="app.js?v=audio3"></script>
+  <script src="app.js?v=7.1"></script>
 
-  <script src="caderno-erros.js?v=7.0"></script>
+  <script src="caderno-erros.js?v=7.1"></script>
 
 </body>
 

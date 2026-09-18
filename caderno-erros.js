@@ -1,6 +1,7 @@
 const errorSb =
   window.supabaseClient;
 
+
 let errorUser =
   null;
 
@@ -9,6 +10,9 @@ let errorQueue =
 
 let errorIndex =
   0;
+
+let allErrorAreas =
+  [];
 
 
 const errorParams =
@@ -29,9 +33,14 @@ const errorAgendaArea =
   );
 
 
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
 function errorTodayISO() {
   const d =
     new Date();
+
 
   return `${d.getFullYear()}-${String(
     d.getMonth() + 1
@@ -47,10 +56,13 @@ function errorTodayISO() {
 }
 
 
-function formatErrorDate(value) {
+function formatErrorDate(
+  value
+) {
   if (!value) {
     return "—";
   }
+
 
   const [
     year,
@@ -95,12 +107,15 @@ function setErrorStatus(
       "error-status"
     );
 
+
   if (!element) {
     return;
   }
 
+
   element.textContent =
     text;
+
 
   element.className =
     `error-status ${type}`
@@ -108,26 +123,291 @@ function setErrorStatus(
 }
 
 
-function setErrorChip(
-  id,
-  value
+function setNewErrorStatus(
+  text,
+  type = ""
 ) {
   const element =
     document.getElementById(
-      id
+      "new-error-status"
     );
+
 
   if (!element) {
     return;
   }
 
-  element.textContent =
-    value || "";
 
-  element.hidden =
-    !value;
+  element.textContent =
+    text;
+
+
+  element.className =
+    `error-status ${type}`
+      .trim();
 }
 
+
+function currentAreaFilter() {
+  if (
+    errorAgendaDate
+  ) {
+    return (
+      errorAgendaArea
+      || ""
+    );
+  }
+
+
+  return (
+    document
+      .getElementById(
+        "error-area-filter"
+      )
+      ?.value
+    || ""
+  );
+}
+
+
+function safeFileBase(
+  name
+) {
+  return String(
+    name
+    || "imagem"
+  )
+    .replace(
+      /\.[^.]+$/,
+      ""
+    )
+    .replace(
+      /[^a-zA-Z0-9_-]+/g,
+      "-"
+    )
+    .replace(
+      /-+/g,
+      "-"
+    )
+    .replace(
+      /^-|-$/g,
+      ""
+    )
+    || "imagem";
+}
+
+
+/* =========================================================
+   MÉTRICAS
+   ========================================================= */
+
+async function loadErrorMetrics() {
+  const {
+    data,
+    error
+  } =
+    await errorSb
+      .from(
+        "error_notebook_metrics"
+      )
+      .select(
+        "registered_errors,reviewed_errors,overdue_errors,retention_percent"
+      )
+      .maybeSingle();
+
+
+  if (error) {
+    console.warn(
+      "Não foi possível carregar as métricas do Caderno de Erros:",
+      error.message
+    );
+
+    return;
+  }
+
+
+  const metrics =
+    data || {
+      registered_errors:
+        0,
+
+      reviewed_errors:
+        0,
+
+      overdue_errors:
+        0,
+
+      retention_percent:
+        null
+    };
+
+
+  document
+    .getElementById(
+      "error-metric-registered"
+    )
+    .textContent =
+      Number(
+        metrics
+          .registered_errors
+        || 0
+      );
+
+
+  document
+    .getElementById(
+      "error-metric-reviewed"
+    )
+    .textContent =
+      Number(
+        metrics
+          .reviewed_errors
+        || 0
+      );
+
+
+  document
+    .getElementById(
+      "error-metric-overdue"
+    )
+    .textContent =
+      Number(
+        metrics
+          .overdue_errors
+        || 0
+      );
+
+
+  const retention =
+    metrics
+      .retention_percent;
+
+
+  document
+    .getElementById(
+      "error-metric-retention"
+    )
+    .textContent =
+      retention === null
+      || retention === undefined
+        ? "—"
+        : `${Number(
+            retention
+          )
+            .toFixed(1)
+            .replace(
+              ".",
+              ","
+            )}%`;
+}
+
+
+/* =========================================================
+   FILTRO POR ÁREA
+   ========================================================= */
+
+async function loadErrorAreas() {
+  const {
+    data,
+    error
+  } =
+    await errorSb
+      .from(
+        "error_notebook"
+      )
+      .select(
+        "area"
+      )
+      .eq(
+        "active",
+        true
+      );
+
+
+  if (error) {
+    console.warn(
+      "Não foi possível carregar as áreas:",
+      error.message
+    );
+
+    return;
+  }
+
+
+  allErrorAreas =
+    Array.from(
+      new Set(
+        (data || [])
+          .map(
+            (row) =>
+              row.area
+          )
+          .filter(
+            Boolean
+          )
+      )
+    )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a.localeCompare(
+            b,
+            "pt-BR"
+          )
+      );
+
+
+  const select =
+    document.getElementById(
+      "error-area-filter"
+    );
+
+
+  if (!select) {
+    return;
+  }
+
+
+  select.innerHTML =
+    `
+      <option value="">
+        Todas as áreas
+      </option>
+    `
+    + allErrorAreas
+        .map(
+          (area) => `
+            <option value="${String(area)
+              .replaceAll("&", "&amp;")
+              .replaceAll('"', "&quot;")}">
+              ${String(area)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")}
+            </option>
+          `
+        )
+        .join("");
+
+
+  if (
+    errorAgendaDate
+  ) {
+    select.value =
+      errorAgendaArea
+      || "";
+
+    select.disabled =
+      true;
+  }
+}
+
+
+/* =========================================================
+   IMAGEM — VISUALIZAÇÃO
+   ========================================================= */
 
 async function signedErrorImage(
   path
@@ -158,11 +438,6 @@ async function signedErrorImage(
 
 
   if (error) {
-    console.warn(
-      "Imagem do caderno de erros indisponível:",
-      error.message
-    );
-
     return null;
   }
 
@@ -181,6 +456,11 @@ async function showErrorImage(
     document.getElementById(
       "error-question-image"
     );
+
+
+  if (!image) {
+    return;
+  }
 
 
   image.hidden =
@@ -250,11 +530,717 @@ async function showErrorImage(
 }
 
 
+/* =========================================================
+   IMAGEM — COMPRESSÃO
+   ========================================================= */
+
+function readImageDataUrl(
+  file
+) {
+  return new Promise(
+    (
+      resolve,
+      reject
+    ) => {
+      const reader =
+        new FileReader();
+
+
+      reader.onload =
+        () =>
+          resolve(
+            reader.result
+          );
+
+
+      reader.onerror =
+        () =>
+          reject(
+            new Error(
+              "Não foi possível ler a imagem."
+            )
+          );
+
+
+      reader.readAsDataURL(
+        file
+      );
+    }
+  );
+}
+
+
+function loadImageElement(
+  dataUrl
+) {
+  return new Promise(
+    (
+      resolve,
+      reject
+    ) => {
+      const image =
+        new Image();
+
+
+      image.onload =
+        () =>
+          resolve(
+            image
+          );
+
+
+      image.onerror =
+        () =>
+          reject(
+            new Error(
+              "Não foi possível abrir a imagem."
+            )
+          );
+
+
+      image.src =
+        dataUrl;
+    }
+  );
+}
+
+
+function canvasToWebp(
+  canvas,
+  quality
+) {
+  return new Promise(
+    (
+      resolve,
+      reject
+    ) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(
+              blob
+            );
+          } else {
+            reject(
+              new Error(
+                "Falha na compressão."
+              )
+            );
+          }
+        },
+
+        "image/webp",
+
+        quality
+      );
+    }
+  );
+}
+
+
+async function compressErrorImage(
+  file
+) {
+  if (
+    !file
+    || !file.type
+      ?.startsWith(
+        "image/"
+      )
+  ) {
+    return file;
+  }
+
+
+  try {
+    const dataUrl =
+      await readImageDataUrl(
+        file
+      );
+
+
+    const source =
+      await loadImageElement(
+        dataUrl
+      );
+
+
+    const maxDimension =
+      1400;
+
+
+    const scale =
+      Math.min(
+        1,
+        maxDimension
+          / source.width,
+        maxDimension
+          / source.height
+      );
+
+
+    const width =
+      Math.max(
+        1,
+        Math.round(
+          source.width
+          * scale
+        )
+      );
+
+
+    const height =
+      Math.max(
+        1,
+        Math.round(
+          source.height
+          * scale
+        )
+      );
+
+
+    const canvas =
+      document.createElement(
+        "canvas"
+      );
+
+
+    canvas.width =
+      width;
+
+    canvas.height =
+      height;
+
+
+    const context =
+      canvas.getContext(
+        "2d",
+        {
+          alpha:
+            false
+        }
+      );
+
+
+    context.fillStyle =
+      "#ffffff";
+
+
+    context.fillRect(
+      0,
+      0,
+      width,
+      height
+    );
+
+
+    context.drawImage(
+      source,
+      0,
+      0,
+      width,
+      height
+    );
+
+
+    let blob =
+      await canvasToWebp(
+        canvas,
+        0.72
+      );
+
+
+    if (
+      blob.size
+      > 650 * 1024
+    ) {
+      blob =
+        await canvasToWebp(
+          canvas,
+          0.62
+        );
+    }
+
+
+    if (
+      blob.size
+      >= file.size
+    ) {
+      return file;
+    }
+
+
+    return new File(
+      [
+        blob
+      ],
+
+      `${safeFileBase(
+        file.name
+      )}.webp`,
+
+      {
+        type:
+          "image/webp",
+
+        lastModified:
+          Date.now()
+      }
+    );
+
+
+  } catch (error) {
+    console.warn(
+      "Compressão da imagem falhou; usando original.",
+      error
+    );
+
+
+    return file;
+  }
+}
+
+
+async function uploadErrorImage(
+  file
+) {
+  if (!file) {
+    return null;
+  }
+
+
+  const finalFile =
+    await compressErrorImage(
+      file
+    );
+
+
+  const extension =
+    finalFile.name
+      ?.includes(".")
+      ? finalFile
+          .name
+          .split(".")
+          .pop()
+          .toLowerCase()
+      : "bin";
+
+
+  const path =
+    `${errorUser.id}/errors/${crypto.randomUUID()}-${safeFileBase(
+      finalFile.name
+      || file.name
+    )}.${extension}`;
+
+
+  const {
+    error
+  } =
+    await errorSb
+      .storage
+      .from(
+        "docmap"
+      )
+      .upload(
+        path,
+        finalFile,
+        {
+          cacheControl:
+            "3600",
+
+          upsert:
+            false,
+
+          contentType:
+            finalFile.type
+            || file.type
+            || undefined
+        }
+      );
+
+
+  if (error) {
+    throw error;
+  }
+
+
+  return path;
+}
+
+
+/* =========================================================
+   ADICIONAR NOVO ERRO
+   ========================================================= */
+
+function toggleNewErrorForm(
+  forceOpen = null
+) {
+  const form =
+    document.getElementById(
+      "error-create-form"
+    );
+
+
+  const button =
+    document.getElementById(
+      "toggle-error-form"
+    );
+
+
+  if (
+    !form
+    || !button
+  ) {
+    return;
+  }
+
+
+  const open =
+    forceOpen === null
+      ? form.hidden
+      : Boolean(
+          forceOpen
+        );
+
+
+  form.hidden =
+    !open;
+
+
+  button.textContent =
+    open
+      ? "Fechar"
+      : "Adicionar";
+}
+
+
+function clearNewErrorForm() {
+  [
+    "new-error-area",
+    "new-error-materia",
+    "new-error-theme",
+    "new-error-ccq",
+    "new-error-question",
+    "new-error-answer",
+    "new-error-thought"
+  ].forEach(
+    (id) => {
+      const element =
+        document.getElementById(
+          id
+        );
+
+
+      if (element) {
+        element.value =
+          "";
+      }
+    }
+  );
+
+
+  const image =
+    document.getElementById(
+      "new-error-image"
+    );
+
+
+  if (image) {
+    image.value =
+      "";
+  }
+
+
+  setNewErrorStatus(
+    ""
+  );
+}
+
+
+async function saveNewError() {
+  const button =
+    document.getElementById(
+      "save-new-error"
+    );
+
+
+  const area =
+    document
+      .getElementById(
+        "new-error-area"
+      )
+      .value
+      .trim();
+
+
+  const materia =
+    document
+      .getElementById(
+        "new-error-materia"
+      )
+      .value
+      .trim();
+
+
+  const theme =
+    document
+      .getElementById(
+        "new-error-theme"
+      )
+      .value
+      .trim();
+
+
+  const ccq =
+    document
+      .getElementById(
+        "new-error-ccq"
+      )
+      .value
+      .trim();
+
+
+  const question =
+    document
+      .getElementById(
+        "new-error-question"
+      )
+      .value
+      .trim();
+
+
+  const answer =
+    document
+      .getElementById(
+        "new-error-answer"
+      )
+      .value
+      .trim();
+
+
+  const thought =
+    document
+      .getElementById(
+        "new-error-thought"
+      )
+      .value
+      .trim();
+
+
+  const imageFile =
+    document
+      .getElementById(
+        "new-error-image"
+      )
+      .files[0]
+    || null;
+
+
+  if (
+    !ccq
+    || !question
+    || !answer
+  ) {
+    setNewErrorStatus(
+      "Preencha CCQ, questão e resposta correta.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  button.disabled =
+    true;
+
+
+  setNewErrorStatus(
+    imageFile
+      ? "Comprimindo imagem e salvando..."
+      : "Salvando..."
+  );
+
+
+  let imagePath =
+    null;
+
+
+  try {
+    imagePath =
+      await uploadErrorImage(
+        imageFile
+      );
+
+
+    const {
+      error
+    } =
+      await errorSb.rpc(
+        "create_error_entry",
+        {
+          p_area:
+            area
+            || null,
+
+          p_materia:
+            materia
+            || null,
+
+          p_theme:
+            theme
+            || null,
+
+          p_ccq:
+            ccq,
+
+          p_question_text:
+            question,
+
+          p_correct_answer:
+            answer,
+
+          p_what_i_thought:
+            thought
+            || null,
+
+          p_question_image_path:
+            imagePath
+        }
+      );
+
+
+    if (error) {
+      throw error;
+    }
+
+
+    clearNewErrorForm();
+
+
+    setNewErrorStatus(
+      "Erro adicionado ao Caderno.",
+      "success"
+    );
+
+
+    await Promise.all([
+      loadErrorMetrics(),
+      loadErrorAreas(),
+      loadErrorQueue()
+    ]);
+
+
+  } catch (error) {
+    console.error(
+      error
+    );
+
+
+    if (imagePath) {
+      await errorSb
+        .storage
+        .from(
+          "docmap"
+        )
+        .remove([
+          imagePath
+        ]);
+    }
+
+
+    setNewErrorStatus(
+      `Não foi possível salvar: ${error.message}`,
+      "error"
+    );
+
+
+  } finally {
+    button.disabled =
+      false;
+  }
+}
+
+
+function wireNewError() {
+  document
+    .getElementById(
+      "toggle-error-form"
+    )
+    ?.addEventListener(
+      "click",
+      () =>
+        toggleNewErrorForm()
+    );
+
+
+  document
+    .getElementById(
+      "cancel-new-error"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+        clearNewErrorForm();
+
+        toggleNewErrorForm(
+          false
+        );
+      }
+    );
+
+
+  document
+    .getElementById(
+      "save-new-error"
+    )
+    ?.addEventListener(
+      "click",
+      saveNewError
+    );
+}
+
+
+/* =========================================================
+   REVISÃO
+   ========================================================= */
+
+function renderErrorMeta(
+  item
+) {
+  const pieces =
+    [
+      item.area,
+      item.materia,
+      item.theme
+    ]
+      .filter(
+        Boolean
+      );
+
+
+  const element =
+    document.getElementById(
+      "error-meta"
+    );
+
+
+  if (element) {
+    element.textContent =
+      pieces.length
+        ? pieces.join(
+            " · "
+          )
+        : "Sem área definida";
+  }
+}
+
+
 async function renderCurrentError() {
   const empty =
     document.getElementById(
       "error-empty"
     );
+
 
   const stage =
     document.getElementById(
@@ -268,6 +1254,7 @@ async function renderCurrentError() {
   ) {
     stage.hidden =
       true;
+
 
     empty.hidden =
       false;
@@ -292,12 +1279,14 @@ async function renderCurrentError() {
           ? "sessão concluída"
           : "nenhum item pendente";
 
+
     return;
   }
 
 
   empty.hidden =
     true;
+
 
   stage.hidden =
     false;
@@ -334,24 +1323,6 @@ async function renderCurrentError() {
       }`;
 
 
-  setErrorChip(
-    "error-area",
-    item.area
-  );
-
-
-  setErrorChip(
-    "error-materia",
-    item.materia
-  );
-
-
-  setErrorChip(
-    "error-theme",
-    item.theme
-  );
-
-
   document
     .getElementById(
       "error-ccq"
@@ -359,6 +1330,11 @@ async function renderCurrentError() {
     .textContent =
       item.ccq
       || "Sem CCQ";
+
+
+  renderErrorMeta(
+    item
+  );
 
 
   const question =
@@ -403,40 +1379,37 @@ async function renderCurrentError() {
     thoughtBlock.hidden =
       false;
 
+
     thought.textContent =
       item.what_i_thought;
+
 
   } else {
     thoughtBlock.hidden =
       true;
+
 
     thought.textContent =
       "";
   }
 
 
-  document
-    .getElementById(
-      "error-answer"
-    )
-    .hidden =
-      true;
+  const details =
+    document.getElementById(
+      "error-details"
+    );
+
+
+  details.hidden =
+    true;
 
 
   document
     .getElementById(
-      "show-error-answer"
+      "open-error"
     )
-    .hidden =
-      false;
-
-
-  document
-    .getElementById(
-      "complete-error-review"
-    )
-    .hidden =
-      true;
+    .textContent =
+      "Abrir";
 
 
   setErrorStatus(
@@ -457,7 +1430,7 @@ async function loadErrorQueue() {
         "error_notebook"
       )
       .select(
-        "id,area,materia,theme,ccq,question_text,question_image_path,correct_answer,what_i_thought,due_date,current_interval_days,review_count,created_at"
+        "id,area,materia,theme,ccq,question_text,question_image_path,correct_answer,what_i_thought,due_date,current_interval_days,stability_days,review_count,last_reviewed_at,created_at"
       )
       .eq(
         "active",
@@ -467,12 +1440,12 @@ async function loadErrorQueue() {
 
   /*
     Pela Agenda:
-    carrega exatamente o lote
-    da data + área.
+    exatamente data + área.
 
-    Pela página normal:
-    carrega tudo que venceu
-    até hoje.
+    Página normal:
+    itens vencidos até hoje,
+    opcionalmente filtrados
+    por área.
   */
 
   if (
@@ -494,6 +1467,7 @@ async function loadErrorQueue() {
           errorAgendaArea
         );
 
+
     } else {
       query =
         query.is(
@@ -502,12 +1476,26 @@ async function loadErrorQueue() {
         );
     }
 
+
   } else {
     query =
       query.lte(
         "due_date",
         errorTodayISO()
       );
+
+
+    const area =
+      currentAreaFilter();
+
+
+    if (area) {
+      query =
+        query.eq(
+          "area",
+          area
+        );
+    }
   }
 
 
@@ -540,10 +1528,12 @@ async function loadErrorQueue() {
       error
     );
 
+
     setErrorStatus(
-      `Não foi possível carregar o caderno de erros: ${error.message}`,
+      `Não foi possível carregar o Caderno de Erros: ${error.message}`,
       "error"
     );
+
 
     return;
   }
@@ -552,8 +1542,27 @@ async function loadErrorQueue() {
   errorQueue =
     data || [];
 
+
   errorIndex =
     0;
+
+
+  const selectedArea =
+    currentAreaFilter();
+
+
+  const emptyCopy =
+    document.getElementById(
+      "error-empty-copy"
+    );
+
+
+  if (emptyCopy) {
+    emptyCopy.textContent =
+      selectedArea
+        ? `Não há revisões pendentes em ${selectedArea}.`
+        : "Não há itens programados para esta seleção.";
+  }
 
 
   if (
@@ -563,6 +1572,7 @@ async function loadErrorQueue() {
       document.getElementById(
         "error-review-title"
       );
+
 
     const copy =
       document.getElementById(
@@ -589,119 +1599,203 @@ async function loadErrorQueue() {
 }
 
 
+function toggleErrorDetails() {
+  const details =
+    document.getElementById(
+      "error-details"
+    );
+
+
+  const button =
+    document.getElementById(
+      "open-error"
+    );
+
+
+  if (
+    !details
+    || !button
+  ) {
+    return;
+  }
+
+
+  const shouldOpen =
+    details.hidden;
+
+
+  details.hidden =
+    !shouldOpen;
+
+
+  button.textContent =
+    shouldOpen
+      ? "Fechar"
+      : "Abrir";
+}
+
+
+async function markCurrentErrorRead() {
+  const item =
+    errorQueue[
+      errorIndex
+    ];
+
+
+  if (!item) {
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      "mark-error-read"
+    );
+
+
+  button.disabled =
+    true;
+
+
+  document
+    .getElementById(
+      "open-error"
+    )
+    .disabled =
+      true;
+
+
+  setErrorStatus(
+    "Agendando próxima revisão..."
+  );
+
+
+  const {
+    data,
+    error
+  } =
+    await errorSb.rpc(
+      "review_error_entry",
+      {
+        p_error_id:
+          item.id
+      }
+    );
+
+
+  button.disabled =
+    false;
+
+
+  document
+    .getElementById(
+      "open-error"
+    )
+    .disabled =
+      false;
+
+
+  if (error) {
+    console.error(
+      error
+    );
+
+
+    setErrorStatus(
+      `Não foi possível salvar: ${error.message}`,
+      "error"
+    );
+
+
+    return;
+  }
+
+
+  const reviewed =
+    Array.isArray(
+      data
+    )
+      ? data[0]
+      : data;
+
+
+  setErrorStatus(
+    reviewed?.due_date
+      ? `Lido. Próxima revisão em ${formatErrorDate(
+          reviewed.due_date
+        )}.`
+      : "Lido. Próxima revisão agendada.",
+    "success"
+  );
+
+
+  /*
+    O item atual já foi movido
+    para a próxima revisão.
+    Agora entra o próximo.
+  */
+
+  errorIndex +=
+    1;
+
+
+  await Promise.all([
+    loadErrorMetrics(),
+    renderCurrentError()
+  ]);
+}
+
+
 function wireErrorReview() {
   document
     .getElementById(
-      "show-error-answer"
+      "open-error"
     )
-    .addEventListener(
+    ?.addEventListener(
       "click",
-      () => {
-        document
-          .getElementById(
-            "error-answer"
-          )
-          .hidden =
-            false;
-
-
-        document
-          .getElementById(
-            "show-error-answer"
-          )
-          .hidden =
-            true;
-
-
-        document
-          .getElementById(
-            "complete-error-review"
-          )
-          .hidden =
-            false;
-      }
+      toggleErrorDetails
     );
 
 
   document
     .getElementById(
-      "complete-error-review"
+      "mark-error-read"
     )
-    .addEventListener(
+    ?.addEventListener(
       "click",
-      async () => {
-        const item =
-          errorQueue[
-            errorIndex
-          ];
+      markCurrentErrorRead
+    );
 
 
-        if (!item) {
-          return;
-        }
-
-
-        const button =
-          document.getElementById(
-            "complete-error-review"
-          );
-
-
-        button.disabled =
-          true;
-
-
-        setErrorStatus(
-          "Salvando revisão..."
-        );
-
-
-        const {
-          error
-        } =
-          await errorSb.rpc(
-            "review_error_entry",
-            {
-              p_error_id:
-                item.id
-            }
-          );
-
-
-        button.disabled =
-          false;
-
-
-        if (error) {
-          console.error(
-            error
-          );
-
-          setErrorStatus(
-            `Não foi possível salvar: ${error.message}`,
-            "error"
-          );
-
-          return;
-        }
-
-
-        errorIndex +=
-          1;
-
-
-        await renderCurrentError();
-      }
+  document
+    .getElementById(
+      "error-area-filter"
+    )
+    ?.addEventListener(
+      "change",
+      loadErrorQueue
     );
 }
 
+
+/* =========================================================
+   INICIALIZAÇÃO
+   ========================================================= */
 
 async function initErrorNotebook() {
   errorUser =
     window.docmapUser;
 
 
+  wireNewError();
+
   wireErrorReview();
+
+
+  await Promise.all([
+    loadErrorMetrics(),
+    loadErrorAreas()
+  ]);
 
 
   await loadErrorQueue();
@@ -713,12 +1807,14 @@ if (
 ) {
   initErrorNotebook();
 
+
 } else {
   window.addEventListener(
     "docmap:ready",
     initErrorNotebook,
     {
-      once: true
+      once:
+        true
     }
   );
 }
