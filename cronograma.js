@@ -8,7 +8,9 @@ const scheduleState = {
   topics: [],
   weekAnchor: startOfDaySchedule(new Date()),
   draggingTopicId: null,
-  alreadyDoneTopicId: null
+  alreadyDoneTopicId: null,
+  themeSearch: "",
+  themeAreaFilter: ""
 };
 
 const HEADER_ALIASES = {
@@ -873,10 +875,401 @@ function renderDeck() {
       : '<div class="empty-deck">Nenhum tema aguardando programação.</div>';
 }
 
+
+function setManualStatus(text, type = "") {
+  const element =
+    document.getElementById("manual-topic-status");
+
+  if (!element) return;
+
+  element.textContent = text;
+  element.className =
+    `manual-status ${type}`.trim();
+}
+
+async function addManualTopic(event) {
+  event.preventDefault();
+
+  const area =
+    document.getElementById("manual-area").value.trim();
+
+  const materia =
+    document.getElementById("manual-materia").value.trim();
+
+  const theme =
+    document.getElementById("manual-theme").value.trim();
+
+  const date =
+    document.getElementById("manual-date").value || null;
+
+  if (!theme) {
+    setManualStatus(
+      "Informe o tema da aula.",
+      "error"
+    );
+    return;
+  }
+
+  const button =
+    document.getElementById("manual-add-topic");
+
+  button.disabled = true;
+  setManualStatus("Adicionando...");
+
+  const { error } = await scheduleSb.rpc(
+    "create_study_topic",
+    {
+      p_area: area || null,
+      p_materia: materia || null,
+      p_theme: theme,
+      p_original_date: date,
+      p_scheduled_date: date,
+      p_import_id: null,
+      p_deck_order: null
+    }
+  );
+
+  button.disabled = false;
+
+  if (error) {
+    console.error(error);
+
+    setManualStatus(
+      `Não foi possível adicionar: ${error.message}`,
+      "error"
+    );
+
+    return;
+  }
+
+  document.getElementById("manual-topic-form").reset();
+
+  setManualStatus(
+    date
+      ? "Aula adicionada ao cronograma."
+      : "Aula adicionada ao deck.",
+    "success"
+  );
+
+  await loadTopics();
+}
+
+function getActiveTopicsForLibrary() {
+  return scheduleState.topics.filter(
+    (topic) => !topic.completed_at
+  );
+}
+
+function populateAreaFilter() {
+  const select =
+    document.getElementById("theme-area-filter");
+
+  if (!select) return;
+
+  const current =
+    scheduleState.themeAreaFilter;
+
+  const areas =
+    Array.from(
+      new Set(
+        getActiveTopicsForLibrary()
+          .map((topic) => topic.area?.trim())
+          .filter(Boolean)
+      )
+    ).sort((a, b) =>
+      a.localeCompare(
+        b,
+        "pt-BR",
+        { sensitivity: "base" }
+      )
+    );
+
+  select.innerHTML = `
+    <option value="">Todas as áreas</option>
+    ${areas.map((area) => `
+      <option value="${escapeScheduleHtml(area)}">
+        ${escapeScheduleHtml(area)}
+      </option>
+    `).join("")}
+  `;
+
+  select.value = areas.includes(current)
+    ? current
+    : "";
+}
+
+function normalizeSearchText(value) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function formatTopicDate(topic) {
+  if (
+    topic.status === "deck"
+    || !topic.scheduled_date
+  ) {
+    return "No deck";
+  }
+
+  return new Intl.DateTimeFormat(
+    "pt-BR",
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    }
+  ).format(
+    parseISODateForLibrary(
+      topic.scheduled_date
+    )
+  );
+}
+
+function parseISODateForLibrary(value) {
+  const [year, month, day] =
+    String(value).split("-").map(Number);
+
+  return new Date(
+    year,
+    month - 1,
+    day
+  );
+}
+
+function filteredLibraryTopics() {
+  const search =
+    normalizeSearchText(
+      scheduleState.themeSearch
+    );
+
+  const areaFilter =
+    scheduleState.themeAreaFilter;
+
+  return getActiveTopicsForLibrary()
+    .filter((topic) => {
+      if (
+        areaFilter
+        && topic.area !== areaFilter
+      ) {
+        return false;
+      }
+
+      if (!search) return true;
+
+      const haystack =
+        normalizeSearchText(
+          [
+            topic.theme,
+            topic.materia,
+            topic.area
+          ]
+            .filter(Boolean)
+            .join(" ")
+        );
+
+      return haystack.includes(search);
+    })
+    .sort((a, b) => {
+      const aDeck =
+        !a.scheduled_date ? 1 : 0;
+
+      const bDeck =
+        !b.scheduled_date ? 1 : 0;
+
+      if (aDeck !== bDeck) {
+        return aDeck - bDeck;
+      }
+
+      if (
+        a.scheduled_date
+        && b.scheduled_date
+        && a.scheduled_date !== b.scheduled_date
+      ) {
+        return a.scheduled_date.localeCompare(
+          b.scheduled_date
+        );
+      }
+
+      return String(a.theme).localeCompare(
+        String(b.theme),
+        "pt-BR",
+        { sensitivity: "base" }
+      );
+    });
+}
+
+function renderThemeLibrary() {
+  const container =
+    document.getElementById("theme-library-list");
+
+  const count =
+    document.getElementById("theme-list-count");
+
+  if (!container || !count) return;
+
+  populateAreaFilter();
+
+  const topics =
+    filteredLibraryTopics();
+
+  count.textContent =
+    `${topics.length} ${
+      topics.length === 1
+        ? "aula"
+        : "aulas"
+    }`;
+
+  if (!topics.length) {
+    container.innerHTML = `
+      <div class="theme-library-empty">
+        Nenhuma aula encontrada com esse filtro.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML =
+    topics.map((topic) => {
+      const isDeck =
+        topic.status === "deck"
+        || !topic.scheduled_date;
+
+      return `
+        <article class="theme-library-row">
+          <div class="theme-library-title">
+            <strong>${escapeScheduleHtml(topic.theme)}</strong>
+            <small>
+              ${escapeScheduleHtml(
+                topic.materia
+                || "Sem matéria"
+              )}
+            </small>
+          </div>
+
+          <div class="theme-library-cell hide-medium">
+            ${escapeScheduleHtml(
+              topic.area
+              || "Sem área"
+            )}
+          </div>
+
+          <div class="theme-library-cell hide-medium">
+            ${escapeScheduleHtml(
+              topic.materia
+              || "—"
+            )}
+          </div>
+
+          <div class="theme-library-date ${isDeck ? "deck" : ""}">
+            ${escapeScheduleHtml(
+              formatTopicDate(topic)
+            )}
+          </div>
+
+          <button
+            class="theme-library-action"
+            type="button"
+            data-library-topic="${escapeScheduleHtml(topic.id)}"
+          >
+            ${isDeck ? "Ir para deck" : "Ver na semana"}
+          </button>
+        </article>
+      `;
+    }).join("");
+
+  document
+    .querySelectorAll("[data-library-topic]")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        focusLibraryTopic(
+          button.dataset.libraryTopic
+        );
+      });
+    });
+}
+
+function focusLibraryTopic(topicId) {
+  const topic =
+    scheduleState.topics.find(
+      (item) => item.id === topicId
+    );
+
+  if (!topic) return;
+
+  if (
+    topic.status === "deck"
+    || !topic.scheduled_date
+  ) {
+    document
+      .getElementById("deck-dropzone")
+      ?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+    return;
+  }
+
+  scheduleState.weekAnchor =
+    parseISODateForLibrary(
+      topic.scheduled_date
+    );
+
+  renderSchedule();
+
+  document
+    .getElementById("week-planner")
+    ?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+}
+
+function wireManualTopicForm() {
+  document
+    .getElementById("manual-topic-form")
+    ?.addEventListener(
+      "submit",
+      addManualTopic
+    );
+}
+
+function wireThemeLibraryFilters() {
+  const search =
+    document.getElementById("theme-search");
+
+  const area =
+    document.getElementById("theme-area-filter");
+
+  search?.addEventListener(
+    "input",
+    () => {
+      scheduleState.themeSearch =
+        search.value;
+
+      renderThemeLibrary();
+    }
+  );
+
+  area?.addEventListener(
+    "change",
+    () => {
+      scheduleState.themeAreaFilter =
+        area.value;
+
+      renderThemeLibrary();
+    }
+  );
+}
+
 function renderSchedule() {
   renderSummary();
   renderPlanner();
   renderDeck();
+  renderThemeLibrary();
   wireDynamicInteractions();
 }
 
@@ -1245,6 +1638,8 @@ async function initCronograma() {
   wirePlannerNavigation();
   wireDeckDropzone();
   wireAlreadyDoneDialog();
+  wireManualTopicForm();
+  wireThemeLibraryFilters();
 
   await loadTopics();
 }

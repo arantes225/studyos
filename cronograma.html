@@ -598,6 +598,245 @@
         justify-content: space-between;
       }
     }
+
+    .manual-panel,
+    .theme-library-panel {
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+    }
+
+    .manual-head,
+    .theme-library-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .manual-head h2,
+    .theme-library-head h2 {
+      margin: 0;
+    }
+
+    .manual-head p,
+    .theme-library-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 12px;
+    }
+
+    .manual-form {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .manual-field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .manual-field.theme {
+      grid-column: span 2;
+    }
+
+    .manual-field span {
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .manual-field small {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .manual-field input,
+    .manual-field select {
+      width: 100%;
+      min-height: 42px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+    }
+
+    .manual-field input:focus,
+    .manual-field select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .manual-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .manual-actions .button {
+      min-height: 42px;
+      padding: 0 14px;
+    }
+
+    .manual-status {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .manual-status.success {
+      color: var(--success);
+    }
+
+    .manual-status.error {
+      color: var(--danger);
+    }
+
+    .theme-library-controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 220px;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .theme-library-controls input,
+    .theme-library-controls select {
+      min-height: 42px;
+      padding: 0 11px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+    }
+
+    .theme-library-controls input:focus,
+    .theme-library-controls select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .theme-library-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .theme-library-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .theme-library-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(120px, .8fr) minmax(120px, .8fr) 120px auto;
+      gap: 10px;
+      align-items: center;
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: var(--surface);
+    }
+
+    .theme-library-title strong {
+      display: block;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .theme-library-title small,
+    .theme-library-cell {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
+    .theme-library-date {
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .theme-library-date.deck {
+      color: var(--accent);
+    }
+
+    .theme-library-action {
+      min-height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0 9px;
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 9px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .theme-library-empty {
+      padding: 20px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 11px;
+    }
+
+    @media (max-width: 1000px) {
+      .manual-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .manual-field.theme {
+        grid-column: 1 / -1;
+      }
+
+      .theme-library-row {
+        grid-template-columns: minmax(0, 1fr) 120px auto;
+      }
+
+      .theme-library-cell.hide-medium {
+        display: none;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .manual-form {
+        grid-template-columns: 1fr;
+      }
+
+      .manual-field.theme {
+        grid-column: auto;
+      }
+
+      .theme-library-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .theme-library-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+
+      .theme-library-cell,
+      .theme-library-date {
+        display: none;
+      }
+
+      .manual-head,
+      .theme-library-head {
+        flex-direction: column;
+      }
+    }
+
   </style>
 </head>
 
@@ -718,6 +957,74 @@
             <div id="import-status" class="import-status" aria-live="polite"></div>
           </section>
 
+
+          <section class="manual-panel">
+            <div class="manual-head">
+              <div>
+                <span class="badge accent">Manual</span>
+                <h2>Adicionar nova aula</h2>
+                <p>
+                  Cadastre uma aula sem precisar importar planilha. Se deixar a data vazia,
+                  ela entra no deck.
+                </p>
+              </div>
+            </div>
+
+            <form id="manual-topic-form" class="manual-form">
+              <label class="manual-field">
+                <span>Área</span>
+                <input
+                  id="manual-area"
+                  type="text"
+                  maxlength="100"
+                  list="manual-area-options"
+                  placeholder="Ex.: Clínica Médica"
+                >
+                <datalist id="manual-area-options">
+                  <option value="Clínica Médica">
+                  <option value="Pediatria">
+                  <option value="Ginecologia e Obstetrícia">
+                  <option value="Cirurgia Geral">
+                  <option value="Preventiva">
+                </datalist>
+              </label>
+
+              <label class="manual-field">
+                <span>Matéria <small>(opcional)</small></span>
+                <input
+                  id="manual-materia"
+                  type="text"
+                  maxlength="120"
+                  placeholder="Ex.: Cardiologia"
+                >
+              </label>
+
+              <label class="manual-field theme">
+                <span>Tema da aula *</span>
+                <input
+                  id="manual-theme"
+                  type="text"
+                  maxlength="180"
+                  required
+                  placeholder="Ex.: Insuficiência cardíaca"
+                >
+              </label>
+
+              <label class="manual-field">
+                <span>Data <small>(opcional)</small></span>
+                <input id="manual-date" type="date">
+              </label>
+
+              <div class="manual-actions">
+                <button id="manual-add-topic" class="button primary" type="submit">
+                  Adicionar aula
+                </button>
+
+                <span id="manual-topic-status" class="manual-status" aria-live="polite"></span>
+              </div>
+            </form>
+          </section>
+
           <section class="planner-panel">
             <div class="planner-header">
               <div>
@@ -752,6 +1059,39 @@
               <div id="deck-list" class="deck-list"></div>
             </div>
           </section>
+
+
+          <section class="theme-library-panel">
+            <div class="theme-library-head">
+              <div>
+                <h2>Lista de temas</h2>
+                <p>
+                  Pesquise qualquer aula do cronograma, inclusive as que estão em semanas mais distantes.
+                </p>
+              </div>
+            </div>
+
+            <div class="theme-library-controls">
+              <input
+                id="theme-search"
+                type="search"
+                placeholder="Pesquisar tema, matéria ou área..."
+                autocomplete="off"
+              >
+
+              <select id="theme-area-filter">
+                <option value="">Todas as áreas</option>
+              </select>
+            </div>
+
+            <div class="theme-library-meta">
+              <span id="theme-list-count">0 aulas</span>
+              <span>Somente aulas ainda não concluídas</span>
+            </div>
+
+            <div id="theme-library-list" class="theme-library-list"></div>
+          </section>
+
 
         </div>
       </div>
@@ -789,6 +1129,6 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="supabase.js"></script>
   <script src="app.js"></script>
-  <script src="cronograma.js?v=4.1"></script>
+  <script src="cronograma.js?v=4.3"></script>
 </body>
 </html>
