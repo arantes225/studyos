@@ -3235,6 +3235,52 @@ function eventsOnDate(
     );
 }
 
+
+function todayScheduleISO() {
+  return toISODateSchedule(
+    new Date()
+  );
+}
+
+
+function isTopicOverdue(
+  topic
+) {
+  return (
+    topic?.status ===
+      "scheduled"
+    && !topic?.completed_at
+    && Boolean(
+      topic?.scheduled_date
+    )
+    && topic.scheduled_date
+      < todayScheduleISO()
+  );
+}
+
+
+function setReorganizeStatus(
+  text,
+  type = ""
+) {
+  const element =
+    document.getElementById(
+      "reorganize-overdue-status"
+    );
+
+  if (!element) {
+    return;
+  }
+
+  element.textContent =
+    text;
+
+  element.className =
+    `manual-status ${type}`
+      .trim();
+}
+
+
 function topicMeta(topic) {
   return [topic.area, topic.materia].filter(Boolean).join(" · ");
 }
@@ -3254,13 +3300,19 @@ function renderTopicCard(topic, compact = false) {
 
   return `
     <article
-      class="topic-card"
+      class="topic-card ${isTopicOverdue(topic) ? "is-overdue" : ""}"
       draggable="true"
       data-topic-id="${escapeScheduleHtml(topic.id)}"
     >
       <h3>${escapeScheduleHtml(topic.theme)}</h3>
 
       ${meta ? `<div class="topic-meta">${escapeScheduleHtml(meta)}</div>` : ""}
+
+      ${
+        isTopicOverdue(topic)
+          ? '<span class="topic-overdue-label">Atrasada</span>'
+          : ""
+      }
 
       <div class="topic-actions">
         <a
@@ -3384,11 +3436,29 @@ function renderSummary() {
     (topic) => Boolean(topic.completed_at)
   ).length;
 
+  const overdue =
+    scheduleState.topics
+      .filter(
+        isTopicOverdue
+      )
+      .length;
+
   const events =
     scheduleState.events.length;
 
   document.getElementById("summary-deck").textContent = deck;
   document.getElementById("summary-scheduled").textContent = scheduled;
+
+  const overdueSummary =
+    document.getElementById(
+      "summary-overdue"
+    );
+
+  if (overdueSummary) {
+    overdueSummary.textContent =
+      overdue;
+  }
+
   document.getElementById("summary-completed").textContent = completed;
 
   const eventSummary =
@@ -3790,13 +3860,39 @@ function renderThemeLibrary() {
             )}
           </div>
 
-          <button
-            class="theme-library-action"
-            type="button"
-            data-library-topic="${escapeScheduleHtml(topic.id)}"
-          >
-            ${isDeck ? "Ir para deck" : "Ver na semana"}
-          </button>
+          <div class="theme-library-actions">
+
+            <button
+              class="theme-library-action"
+              type="button"
+              data-library-topic="${escapeScheduleHtml(topic.id)}"
+            >
+              ${isDeck ? "Ir para deck" : "Ver na semana"}
+            </button>
+
+            ${
+              isDeck
+                ? ""
+                : `
+                  <button
+                    class="theme-library-action to-deck"
+                    type="button"
+                    data-library-to-deck="${escapeScheduleHtml(topic.id)}"
+                  >
+                    Remover para o deck
+                  </button>
+                `
+            }
+
+            <button
+              class="theme-library-action done"
+              type="button"
+              data-library-done="${escapeScheduleHtml(topic.id)}"
+            >
+              Já feita
+            </button>
+
+          </div>
         </article>
       `;
     }).join("");
@@ -3809,6 +3905,64 @@ function renderThemeLibrary() {
           button.dataset.libraryTopic
         );
       });
+    });
+
+
+  document
+    .querySelectorAll("[data-library-to-deck]")
+    .forEach((button) => {
+      button.addEventListener(
+        "click",
+        async () => {
+          const topicId =
+            button.dataset
+              .libraryToDeck;
+
+          const topic =
+            scheduleState
+              .topics
+              .find(
+                (item) =>
+                  item.id
+                  === topicId
+              );
+
+          if (!topic) {
+            return;
+          }
+
+
+          const confirmed =
+            window.confirm(
+              `Remover "${topic.theme}" da data atual e enviar para o Deck não programado?`
+            );
+
+
+          if (!confirmed) {
+            return;
+          }
+
+
+          await returnTopicToDeck(
+            topicId
+          );
+        }
+      );
+    });
+
+
+  document
+    .querySelectorAll("[data-library-done]")
+    .forEach((button) => {
+      button.addEventListener(
+        "click",
+        () => {
+          openAlreadyDoneDialog(
+            button.dataset
+              .libraryDone
+          );
+        }
+      );
     });
 }
 
@@ -4266,6 +4420,115 @@ async function deleteScheduleEvent(
 }
 
 
+
+async function reorganizeOverdueLessons() {
+  const overdue =
+    scheduleState.topics
+      .filter(
+        isTopicOverdue
+      );
+
+
+  if (!overdue.length) {
+    setReorganizeStatus(
+      "Não há aulas atrasadas para reorganizar.",
+      "success"
+    );
+
+    return;
+  }
+
+
+  const confirmed =
+    window.confirm(
+      `Reorganizar ${overdue.length} aula${overdue.length === 1 ? "" : "s"} atrasada${overdue.length === 1 ? "" : "s"} em semanas futuras, com 1 aula por semana?`
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      "reorganize-overdue"
+    );
+
+
+  if (button) {
+    button.disabled =
+      true;
+  }
+
+
+  setReorganizeStatus(
+    "Reorganizando aulas atrasadas..."
+  );
+
+
+  const {
+    data,
+    error
+  } =
+    await scheduleSb.rpc(
+      "reorganize_overdue_lessons_weekly",
+      {
+        p_start_date:
+          todayScheduleISO()
+      }
+    );
+
+
+  if (button) {
+    button.disabled =
+      false;
+  }
+
+
+  if (error) {
+    console.error(
+      error
+    );
+
+    setReorganizeStatus(
+      `Não foi possível reorganizar: ${error.message}`,
+      "error"
+    );
+
+    return;
+  }
+
+
+  const moved =
+    Number(
+      data
+      || 0
+    );
+
+
+  setReorganizeStatus(
+    `${moved} aula${moved === 1 ? "" : "s"} reorganizada${moved === 1 ? "" : "s"}.`,
+    "success"
+  );
+
+
+  await loadTopics();
+}
+
+
+function wireOverdueOrganizer() {
+  document
+    .getElementById(
+      "reorganize-overdue"
+    )
+    ?.addEventListener(
+      "click",
+      reorganizeOverdueLessons
+    );
+}
+
+
 function wireImportControls() {
   const fileInput = document.getElementById("schedule-file");
   const fileDrop = document.getElementById("file-drop");
@@ -4380,6 +4643,7 @@ async function initCronograma() {
   wireAlreadyDoneDialog();
   wireManualTopicForm();
   wireThemeLibraryFilters();
+  wireOverdueOrganizer();
 
   await loadTopics();
 }

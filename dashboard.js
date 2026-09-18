@@ -551,47 +551,411 @@ async function loadStudyHours() {
 }
 
 async function loadRetention() {
-  const { data, error } = await dashboardSb
-    .from("retention_by_subject")
-    .select("retention_percent,total_evidence")
-    .gt("total_evidence", 0);
+  const value =
+    document.getElementById(
+      "metric-retention"
+    );
+
+  const helper =
+    document.getElementById(
+      "metric-retention-helper"
+    );
+
+
+  const {
+    data,
+    error
+  } =
+    await dashboardSb
+      .from(
+        "flashcard_retention_overall"
+      )
+      .select(
+        "reviewed_cards,retention_percent"
+      )
+      .maybeSingle();
+
 
   if (error) {
-    console.warn(error);
+    console.warn(
+      error
+    );
+
+    if (value) {
+      value.textContent =
+        "—";
+    }
+
+    if (helper) {
+      helper.textContent =
+        "Sem dados suficientes";
+    }
+
     return;
   }
 
-  const valid = (data || []).filter(
-    (row) =>
-      row.retention_percent !== null &&
-      Number(row.total_evidence) > 0
-  );
 
-  const value = document.getElementById("metric-retention");
-  const helper = document.getElementById("metric-retention-helper");
+  if (
+    !data
+    || data.retention_percent
+      === null
+  ) {
+    if (value) {
+      value.textContent =
+        "—";
+    }
 
-  if (!valid.length) {
-    value.textContent = "—";
-    helper.textContent = "Sem dados suficientes";
+    if (helper) {
+      helper.textContent =
+        "Revise flashcards para estimar";
+    }
+
     return;
   }
 
-  const totalEvidence = valid.reduce(
-    (sum, row) => sum + Number(row.total_evidence),
-    0
+
+  const retention =
+    Number(
+      data.retention_percent
+      || 0
+    );
+
+  const reviewed =
+    Number(
+      data.reviewed_cards
+      || 0
+    );
+
+
+  if (value) {
+    value.textContent =
+      `${retention.toFixed(0)}%`;
+  }
+
+
+  if (helper) {
+    helper.textContent =
+      `${reviewed} card${reviewed === 1 ? "" : "s"} com memória estimada`;
+  }
+}
+
+
+async function loadLessonMetrics() {
+  const today =
+    toISODate(
+      new Date()
+    );
+
+
+  const [
+    totalResult,
+    completedResult,
+    overdueResult
+  ] =
+    await Promise.all([
+
+      dashboardSb
+        .from(
+          "study_topics"
+        )
+        .select(
+          "id",
+          {
+            count:
+              "exact",
+
+            head:
+              true
+          }
+        ),
+
+      dashboardSb
+        .from(
+          "study_topics"
+        )
+        .select(
+          "id",
+          {
+            count:
+              "exact",
+
+            head:
+              true
+          }
+        )
+        .eq(
+          "status",
+          "completed"
+        ),
+
+      dashboardSb
+        .from(
+          "study_topics"
+        )
+        .select(
+          "id",
+          {
+            count:
+              "exact",
+
+            head:
+              true
+          }
+        )
+        .eq(
+          "status",
+          "scheduled"
+        )
+        .is(
+          "completed_at",
+          null
+        )
+        .lt(
+          "scheduled_date",
+          today
+        )
+    ]);
+
+
+  [
+    totalResult,
+    completedResult,
+    overdueResult
+  ].forEach(
+    (result) => {
+      if (result.error) {
+        console.warn(
+          result.error
+        );
+      }
+    }
   );
 
-  const weighted = valid.reduce(
-    (sum, row) =>
-      sum +
-      Number(row.retention_percent) *
-      Number(row.total_evidence),
-    0
-  ) / totalEvidence;
 
-  value.textContent = `${weighted.toFixed(0)}%`;
-  helper.textContent =
-    `${totalEvidence} evidência${totalEvidence === 1 ? "" : "s"} de memória`;
+  const total =
+    totalResult.count
+    ?? 0;
+
+  const completed =
+    completedResult.count
+    ?? 0;
+
+  const overdue =
+    overdueResult.count
+    ?? 0;
+
+  const progress =
+    total > 0
+      ? (
+          completed
+          / total
+        )
+        * 100
+      : 0;
+
+
+  const overdueValue =
+    document.getElementById(
+      "metric-overdue-lessons"
+    );
+
+  const overdueHelper =
+    document.getElementById(
+      "metric-overdue-lessons-helper"
+    );
+
+
+  if (overdueValue) {
+    overdueValue.textContent =
+      overdue;
+  }
+
+
+  if (overdueHelper) {
+    overdueHelper.textContent =
+      overdue === 0
+        ? "Cronograma em dia"
+        : `${overdue} aula${overdue === 1 ? "" : "s"} com data anterior a hoje`;
+  }
+
+
+  const progressValue =
+    document.getElementById(
+      "metric-lessons-progress"
+    );
+
+  const progressCopy =
+    document.getElementById(
+      "metric-lessons-progress-copy"
+    );
+
+  const progressHelper =
+    document.getElementById(
+      "metric-lessons-progress-helper"
+    );
+
+  const progressRing =
+    document.getElementById(
+      "lesson-progress-ring"
+    );
+
+
+  if (progressValue) {
+    progressValue.textContent =
+      `${progress.toFixed(0)}%`;
+  }
+
+
+  if (progressCopy) {
+    progressCopy.textContent =
+      `${completed}/${total}`;
+  }
+
+
+  if (progressHelper) {
+    progressHelper.textContent =
+      total
+        ? "Aulas feitas / aulas totais"
+        : "Nenhuma aula cadastrada";
+  }
+
+
+  if (progressRing) {
+    progressRing.style
+      .setProperty(
+        "--metric-ring-value",
+        Math.max(
+          0,
+          Math.min(
+            100,
+            progress
+          )
+        )
+      );
+  }
+}
+
+
+async function loadErrorMetrics() {
+  const value =
+    document.getElementById(
+      "metric-errors"
+    );
+
+  const helper =
+    document.getElementById(
+      "metric-errors-helper"
+    );
+
+  const retentionValue =
+    document.getElementById(
+      "metric-error-retention"
+    );
+
+  const ring =
+    document.getElementById(
+      "error-retention-ring"
+    );
+
+
+  const {
+    data,
+    error
+  } =
+    await dashboardSb
+      .from(
+        "error_notebook_metrics"
+      )
+      .select(
+        "registered_errors,reviewed_errors,overdue_errors,retention_percent"
+      )
+      .maybeSingle();
+
+
+  if (error) {
+    console.warn(
+      error
+    );
+
+    if (value) {
+      value.textContent =
+        "—";
+    }
+
+    if (helper) {
+      helper.textContent =
+        "Sem dados do Caderno";
+    }
+
+    if (retentionValue) {
+      retentionValue.textContent =
+        "—";
+    }
+
+    return;
+  }
+
+
+  const overdue =
+    Number(
+      data?.overdue_errors
+      || 0
+    );
+
+  const total =
+    Number(
+      data?.registered_errors
+      || 0
+    );
+
+  const retention =
+    data?.retention_percent
+      === null
+      || data?.retention_percent
+        === undefined
+        ? null
+        : Number(
+            data.retention_percent
+          );
+
+
+  if (value) {
+    value.textContent =
+      overdue === 1
+        ? "1 atrasado"
+        : `${overdue} atrasados`;
+  }
+
+
+  if (helper) {
+    helper.textContent =
+      `${total} CCQ${total === 1 ? "" : "s"} ativo${total === 1 ? "" : "s"}`;
+  }
+
+
+  if (retentionValue) {
+    retentionValue.textContent =
+      retention === null
+        ? "—"
+        : `${retention.toFixed(0)}%`;
+  }
+
+
+  if (ring) {
+    ring.style
+      .setProperty(
+        "--metric-ring-value",
+        retention === null
+          ? 0
+          : Math.max(
+              0,
+              Math.min(
+                100,
+                retention
+              )
+            )
+      );
+  }
 }
 
 async function loadFlashcardMetrics() {
@@ -722,6 +1086,16 @@ async function loadSimulationMetrics() {
       "metric-simulations-helper"
     );
 
+  const accuracyElement =
+    document.getElementById(
+      "metric-simulations-accuracy"
+    );
+
+  const accuracyRing =
+    document.getElementById(
+      "simulation-accuracy-ring"
+    );
+
   const recent =
     document.getElementById(
       "simulations-recent"
@@ -742,11 +1116,29 @@ async function loadSimulationMetrics() {
   }
 
 
+  const start30 =
+    new Date();
+
+  start30.setDate(
+    start30.getDate()
+    - 29
+  );
+
+  start30.setHours(
+    0,
+    0,
+    0,
+    0
+  );
+
+
   const [
     overallResult,
-    recentResult
+    recentResult,
+    last30Result
   ] =
     await Promise.all([
+
       dashboardSb
         .from(
           "question_metrics_overall"
@@ -770,12 +1162,31 @@ async function loadSimulationMetrics() {
         .order(
           "last_answered_at",
           {
-            ascending: false,
-            nullsFirst: false
+            ascending:
+              false,
+
+            nullsFirst:
+              false
           }
         )
         .limit(
           4
+        ),
+
+      dashboardSb
+        .from(
+          "question_set_metrics"
+        )
+        .select(
+          "set_id,answered_count,correct_count,last_answered_at"
+        )
+        .gt(
+          "answered_count",
+          0
+        )
+        .gte(
+          "last_answered_at",
+          start30.toISOString()
         )
     ]);
 
@@ -786,23 +1197,128 @@ async function loadSimulationMetrics() {
     console.warn(
       overallResult.error
     );
-
-    value.textContent =
-      "—";
-
-    helper.textContent =
-      "Sem dados de simulados";
-
-  } else {
-    const overall =
-      overallResult.data
-      || {
-        completed_sets: 0,
-        answered_questions: 0,
-        accuracy_percent: null
-      };
+  }
 
 
+  if (
+    recentResult.error
+  ) {
+    console.warn(
+      recentResult.error
+    );
+  }
+
+
+  if (
+    last30Result.error
+  ) {
+    console.warn(
+      last30Result.error
+    );
+  }
+
+
+  const last30 =
+    last30Result.data
+    || [];
+
+  const setCount =
+    last30.length;
+
+  const answered30 =
+    last30.reduce(
+      (
+        sum,
+        row
+      ) =>
+        sum
+        + Number(
+            row.answered_count
+            || 0
+          ),
+      0
+    );
+
+  const correct30 =
+    last30.reduce(
+      (
+        sum,
+        row
+      ) =>
+        sum
+        + Number(
+            row.correct_count
+            || 0
+          ),
+      0
+    );
+
+  const accuracy30 =
+    answered30 > 0
+      ? (
+          correct30
+          / answered30
+        )
+        * 100
+      : null;
+
+
+  value.textContent =
+    setCount;
+
+
+  helper.textContent =
+    setCount
+      ? `${setCount} simulado${setCount === 1 ? "" : "s"} com respostas nos últimos 30 dias`
+      : "Nenhum simulado com respostas nos últimos 30 dias";
+
+
+  if (
+    accuracyElement
+  ) {
+    accuracyElement.textContent =
+      accuracy30 === null
+        ? "—"
+        : `${accuracy30.toFixed(0)}%`;
+  }
+
+
+  if (
+    accuracyRing
+  ) {
+    accuracyRing.style
+      .setProperty(
+        "--metric-ring-value",
+        accuracy30 === null
+          ? 0
+          : Math.max(
+              0,
+              Math.min(
+                100,
+                accuracy30
+              )
+            )
+      );
+  }
+
+
+  const overall =
+    overallResult.data
+    || {
+      completed_sets:
+        0,
+
+      answered_questions:
+        0,
+
+      accuracy_percent:
+        null
+    };
+
+
+  if (
+    overviewCopy
+  ) {
     const completed =
       Number(
         overall.completed_sets
@@ -815,33 +1331,24 @@ async function loadSimulationMetrics() {
         || 0
       );
 
+    const accuracy =
+      overall.accuracy_percent;
 
-    value.textContent =
-      completed;
 
-
-    helper.textContent =
-      answered
-        ? `${answered} questões · ${formatSimulationAccuracy(
-            overall.accuracy_percent
-          )} de acerto`
-        : "Nenhum gabarito salvo";
+    overviewCopy.textContent =
+      completed
+        ? `${completed} simulado${completed === 1 ? "" : "s"} concluído${completed === 1 ? "" : "s"} · ${answered} questões · ${formatSimulationAccuracy(
+            accuracy
+          )} de acerto geral.`
+        : "Acompanhe seus últimos gabaritos e o aproveitamento geral.";
   }
 
 
   if (
     recentResult.error
   ) {
-    console.warn(
-      recentResult.error
-    );
-
     recent.innerHTML =
-      `
-        <div class="simulations-empty">
-          Não foi possível carregar os simulados recentes.
-        </div>
-      `;
+      '<div class="simulations-empty">Não foi possível carregar os simulados recentes.</div>';
 
     return;
   }
@@ -856,44 +1363,9 @@ async function loadSimulationMetrics() {
     !rows.length
   ) {
     recent.innerHTML =
-      `
-        <div class="simulations-empty">
-          Seus últimos simulados aparecerão aqui depois que você salvar um gabarito.
-        </div>
-      `;
-
-    if (overviewCopy) {
-      overviewCopy.textContent =
-        "Ainda não há gabaritos salvos.";
-    }
+      '<div class="simulations-empty">Nenhum simulado respondido ainda.</div>';
 
     return;
-  }
-
-
-  const totalAnswered =
-    rows.reduce(
-      (sum, row) =>
-        sum
-        + Number(
-            row.answered_count
-            || 0
-          ),
-      0
-    );
-
-
-  if (overviewCopy) {
-    overviewCopy.textContent =
-      `${rows.length} simulado${
-        rows.length === 1
-          ? ""
-          : "s"
-      } recente${
-        rows.length === 1
-          ? ""
-          : "s"
-      } · ${totalAnswered} questões respondidas`;
   }
 
 
@@ -912,21 +1384,9 @@ async function loadSimulationMetrics() {
             || 0
           );
 
-        const correct =
-          Number(
-            row.correct_count
-            || 0
-          );
-
-        const wrong =
-          Number(
-            row.wrong_count
-            || 0
-          );
-
-
         return `
           <article class="simulation-mini-card">
+
             <strong>
               ${dashboardEscapeHtml(
                 row.title
@@ -935,31 +1395,39 @@ async function loadSimulationMetrics() {
             </strong>
 
             <span class="simulation-mini-score">
-              ${formatSimulationAccuracy(
-                row.accuracy_percent
+              ${dashboardEscapeHtml(
+                formatSimulationAccuracy(
+                  row.accuracy_percent
+                )
               )}
             </span>
 
             <small>
               ${answered}/${total || answered} respondidas
-              · ${correct} acertos
-              · ${wrong} erros
+              · ${Number(
+                row.correct_count
+                || 0
+              )} acertos
+              · ${Number(
+                row.wrong_count
+                || 0
+              )} erros
             </small>
+
           </article>
         `;
       }
-    ).join("");
+    )
+    .join("");
 }
-
-
-
-
 
 async function loadDashboardMetrics() {
   await Promise.all([
     loadStudyHours(),
+    loadLessonMetrics(),
     loadRetention(),
     loadFlashcardMetrics(),
+    loadErrorMetrics(),
     loadQuestionDifficulty(),
     loadSimulationMetrics()
   ]);

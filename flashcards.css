@@ -457,3 +457,114 @@
     padding: 20px;
   }
 }
+
+/* =========================================================
+   FASE 11.2 — IMPORTAÇÃO ANKI
+   ========================================================= */
+
+.anki-deck-map {
+  margin-top: 14px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface-2);
+}
+
+.anki-deck-map-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.anki-deck-map-head strong,
+.anki-deck-map-head small {
+  display: block;
+}
+
+.anki-deck-map-head small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.anki-deck-map-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.anki-deck-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, .9fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.anki-deck-source strong,
+.anki-deck-source small {
+  display: block;
+}
+
+.anki-deck-source strong {
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.anki-deck-source small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.anki-deck-row input {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.anki-deck-row input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  outline: 0;
+}
+
+.anki-deck-count {
+  min-width: 54px;
+  text-align: right;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.anki-media-note {
+  margin: 12px 0 0;
+  padding: 9px 10px;
+  border-radius: 9px;
+  background: rgba(204, 139, 26, .10);
+  color: #9b6709;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.import-preview {
+  min-width: 900px;
+}
+
+@media (max-width: 720px) {
+  .anki-deck-row {
+    grid-template-columns: 1fr;
+  }
+
+  .anki-deck-count {
+    text-align: left;
+  }
+}

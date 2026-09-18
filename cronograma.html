@@ -972,7 +972,125 @@
       }
     }
 
-  </style>
+  
+/* =========================================================
+   FASE 11.2 — CRONOGRAMA
+   ========================================================= */
+
+.schedule-summary {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.overdue-summary-card strong {
+  color: var(--danger);
+}
+
+.overdue-organizer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px 18px;
+  padding: 15px 16px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface);
+}
+
+.overdue-organizer strong {
+  display: block;
+  font-size: 13px;
+}
+
+.overdue-organizer p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.overdue-organizer .manual-status {
+  grid-column: 1 / -1;
+}
+
+.theme-library-row {
+  grid-template-columns:
+    minmax(0, 1.7fr)
+    minmax(110px, .7fr)
+    minmax(110px, .7fr)
+    110px
+    minmax(235px, auto);
+}
+
+.theme-library-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.theme-library-action.to-deck {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.theme-library-action.done {
+  border-color: rgba(47, 155, 114, .35);
+  color: var(--success);
+}
+
+.topic-card.is-overdue {
+  border-color: rgba(211, 79, 79, .45);
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+.topic-overdue-label {
+  display: inline-flex;
+  margin-top: 6px;
+  min-height: 21px;
+  align-items: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: rgba(211, 79, 79, .10);
+  color: var(--danger);
+  font-size: 8px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1100px) {
+  .schedule-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .theme-library-row {
+    grid-template-columns: minmax(0, 1fr) 115px minmax(230px, auto);
+  }
+}
+
+@media (max-width: 760px) {
+  .schedule-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .overdue-organizer {
+    grid-template-columns: 1fr;
+  }
+
+  .overdue-organizer .manual-status {
+    grid-column: auto;
+  }
+
+  .theme-library-row {
+    grid-template-columns: 1fr;
+  }
+
+  .theme-library-actions {
+    justify-content: flex-start;
+  }
+}
+
+</style>
 </head>
 
 <body data-page="cronograma">
@@ -1004,6 +1122,11 @@
               <strong id="summary-scheduled">—</strong>
             </article>
 
+            <article class="summary-card overdue-summary-card">
+              <span>Aulas atrasadas</span>
+              <strong id="summary-overdue">—</strong>
+            </article>
+
             <article class="summary-card">
               <span>Concluídas / já feitas</span>
               <strong id="summary-completed">—</strong>
@@ -1013,6 +1136,30 @@
               <span>Eventos externos</span>
               <strong id="summary-events">—</strong>
             </article>
+          </section>
+
+          <section class="overdue-organizer">
+            <div>
+              <strong>Reorganizar aulas atrasadas</strong>
+              <p>
+                Distribui as aulas atrasadas em semanas futuras,
+                com 1 aula por semana, respeitando seus dias de estudo teórico.
+              </p>
+            </div>
+
+            <button
+              id="reorganize-overdue"
+              class="button secondary"
+              type="button"
+            >
+              Reorganizar atrasadas
+            </button>
+
+            <span
+              id="reorganize-overdue-status"
+              class="manual-status"
+              aria-live="polite"
+            ></span>
           </section>
 
           <section class="import-box">
@@ -1285,6 +1432,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="supabase.js"></script>
   <script src="app.js"></script>
-  <script src="cronograma.js?v=11.1"></script>
+  <script src="cronograma.js?v=11.2"></script>
 </body>
 </html>

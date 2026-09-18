@@ -462,9 +462,8 @@
               <div>
                 <h2>Importar em lote</h2>
                 <p>
-                  Aceita Excel ou CSV.
-                  Use as colunas Área, Matéria, Tema,
-                  Frente e Verso.
+                  Aceita Excel, CSV e pacotes do Anki
+                  (.apkg e .colpkg).
                 </p>
               </div>
             </div>
@@ -474,16 +473,51 @@
               <input
                 id="import-file"
                 type="file"
-                accept=".xlsx,.xls,.csv"
+                accept=".xlsx,.xls,.csv,.apkg,.colpkg,application/zip"
               >
 
               <div>
-                <strong>Modelo de colunas</strong>
+                <strong>Formatos aceitos</strong>
                 <code>
-                  Área | Matéria | Tema | Frente | Verso
+                  Excel/CSV: Área | Matéria | Tema | Frente | Verso
+                  <br>
+                  Anki: lê os decks e permite escolher a Área de destino.
                 </code>
               </div>
 
+            </div>
+
+            <div
+              id="anki-deck-map"
+              class="anki-deck-map"
+              hidden
+            >
+              <div class="anki-deck-map-head">
+                <div>
+                  <strong>Organizar decks do Anki</strong>
+                  <small>
+                    Escolha em qual Área do DocMap cada deck deve entrar.
+                  </small>
+                </div>
+
+                <span
+                  id="anki-import-format"
+                  class="badge"
+                >
+                  Anki
+                </span>
+              </div>
+
+              <div
+                id="anki-deck-map-list"
+                class="anki-deck-map-list"
+              ></div>
+
+              <p
+                id="anki-media-note"
+                class="anki-media-note"
+                hidden
+              ></p>
             </div>
 
             <div
@@ -501,6 +535,7 @@
               <table class="import-preview">
                 <thead>
                   <tr>
+                    <th>Origem</th>
                     <th>Área</th>
                     <th>Matéria</th>
                     <th>Tema</th>
@@ -626,9 +661,21 @@
     src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"
   ></script>
 
+  <script
+    src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"
+  ></script>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/sql.js@1.11.0/dist/sql-wasm.js"
+  ></script>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/fzstd@0.1.1/umd/index.js"
+  ></script>
+
   <script src="supabase.js"></script>
   <script src="app.js?v=audio3"></script>
-  <script src="flashcards.js?v=5.0"></script>
+  <script src="flashcards.js?v=11.2"></script>
 
 </body>
 </html>

@@ -653,6 +653,119 @@
 
   
 
+
+/* =========================================================
+   FASE 11.2 — DASHBOARD EXPANDIDO
+   ========================================================= */
+
+.dashboard-metrics-expanded {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dashboard-metrics-expanded .metric-card {
+  min-height: 128px;
+}
+
+.visual-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+}
+
+.metric-visual-copy {
+  min-width: 0;
+}
+
+.metric-value.compact-value {
+  font-size: 24px;
+  line-height: 1.05;
+}
+
+.metric-ring {
+  --metric-ring-value: 0;
+  --metric-ring-size: 78px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--metric-ring-size);
+  height: var(--metric-ring-size);
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      var(--accent) calc(var(--metric-ring-value) * 1%),
+      var(--surface-2) 0
+    );
+}
+
+.metric-ring::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.metric-ring-center {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.metric-ring-center strong {
+  font-size: 17px;
+  line-height: 1;
+}
+
+.metric-ring-center span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.secondary-ring {
+  background:
+    conic-gradient(
+      #d48b36 calc(var(--metric-ring-value) * 1%),
+      var(--surface-2) 0
+    );
+}
+
+.simulation-ring {
+  background:
+    conic-gradient(
+      #4f7bd9 calc(var(--metric-ring-value) * 1%),
+      var(--surface-2) 0
+    );
+}
+
+.overdue-card .metric-value {
+  color: var(--danger);
+}
+
+@media (max-width: 1180px) {
+  .dashboard-metrics-expanded {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-metrics-expanded {
+    grid-template-columns: 1fr;
+  }
+
+  .visual-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
 </style>
 </head>
 <body data-page="dashboard">
@@ -671,23 +784,108 @@
           </div>
         </header>
 
-        <section class="metric-grid">
+        <section class="metric-grid dashboard-metrics-expanded">
+
           <article class="metric-card">
             <span class="metric-label">Horas de estudo</span>
             <strong id="metric-hours" class="metric-value">—</strong>
             <span class="metric-helper">Nesta semana</span>
           </article>
 
-          <article class="metric-card">
-            <span class="metric-label">Retenção estimada</span>
-            <strong id="metric-retention" class="metric-value">—</strong>
-            <span id="metric-retention-helper" class="metric-helper">Sem dados suficientes</span>
+
+          <article class="metric-card overdue-card">
+            <span class="metric-label">Aulas atrasadas</span>
+            <strong id="metric-overdue-lessons" class="metric-value">—</strong>
+            <span id="metric-overdue-lessons-helper" class="metric-helper">
+              Carregando cronograma...
+            </span>
           </article>
 
+
+          <article class="metric-card visual-card">
+            <div class="metric-visual-copy">
+              <span class="metric-label">Progresso das aulas</span>
+              <strong id="metric-lessons-progress-copy" class="metric-value compact-value">—</strong>
+              <span id="metric-lessons-progress-helper" class="metric-helper">
+                Concluídas / total
+              </span>
+            </div>
+
+            <div
+              id="lesson-progress-ring"
+              class="metric-ring"
+              style="--metric-ring-value:0"
+              aria-label="Progresso das aulas"
+            >
+              <div class="metric-ring-center">
+                <strong id="metric-lessons-progress">—</strong>
+                <span>feito</span>
+              </div>
+            </div>
+          </article>
+
+
           <article class="metric-card">
-            <span class="metric-label">Flashcards hoje</span>
+            <span class="metric-label">Retenção dos flashcards</span>
+            <strong id="metric-retention" class="metric-value">—</strong>
+            <span id="metric-retention-helper" class="metric-helper">
+              Sem revisões suficientes
+            </span>
+          </article>
+
+
+          <article class="metric-card">
+            <span class="metric-label">Flashcards para revisar</span>
             <strong id="metric-flashcards" class="metric-value">—</strong>
-            <span id="metric-flashcards-helper" class="metric-helper">Carregando...</span>
+            <span id="metric-flashcards-helper" class="metric-helper">
+              Carregando...
+            </span>
+          </article>
+
+
+          <article class="metric-card visual-card">
+            <div class="metric-visual-copy">
+              <span class="metric-label">Caderno de erros</span>
+              <strong id="metric-errors" class="metric-value compact-value">—</strong>
+              <span id="metric-errors-helper" class="metric-helper">
+                Carregando...
+              </span>
+            </div>
+
+            <div
+              id="error-retention-ring"
+              class="metric-ring secondary-ring"
+              style="--metric-ring-value:0"
+              aria-label="Retenção do Caderno de Erros"
+            >
+              <div class="metric-ring-center">
+                <strong id="metric-error-retention">—</strong>
+                <span>retenção</span>
+              </div>
+            </div>
+          </article>
+
+
+          <article class="metric-card visual-card simulation-metric-card">
+            <div class="metric-visual-copy">
+              <span class="metric-label">Simulados · 30 dias</span>
+              <strong id="metric-simulations" class="metric-value compact-value">—</strong>
+              <span id="metric-simulations-helper" class="metric-helper">
+                Sem simulados no período
+              </span>
+            </div>
+
+            <div
+              id="simulation-accuracy-ring"
+              class="metric-ring simulation-ring"
+              style="--metric-ring-value:0"
+              aria-label="Aproveitamento dos simulados nos últimos 30 dias"
+            >
+              <div class="metric-ring-center">
+                <strong id="metric-simulations-accuracy">—</strong>
+                <span>acerto</span>
+              </div>
+            </div>
           </article>
 
 
@@ -699,19 +897,17 @@
             </span>
           </article>
 
-          <article class="metric-card">
-            <span class="metric-label">Simulados</span>
-            <strong id="metric-simulations" class="metric-value">—</strong>
-            <span id="metric-simulations-helper" class="metric-helper">
-              Sem simulados concluídos
-            </span>
-          </article>
 
           <article class="metric-card">
             <span class="metric-label">Ofensiva</span>
-            <strong class="metric-value"><span data-streak-value>—</span> dias</strong>
-            <span class="metric-helper">Recorde: <span data-longest-streak>—</span> dias</span>
+            <strong class="metric-value">
+              <span data-streak-value>—</span> dias
+            </strong>
+            <span class="metric-helper">
+              Recorde: <span data-longest-streak>—</span> dias
+            </span>
           </article>
+
         </section>
 
         <section class="panel simulations-panel">
@@ -799,6 +995,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
   <script src="app.js?v=7.0"></script>
-  <script src="dashboard.js?v=10.1"></script>
+  <script src="dashboard.js?v=11.2"></script>
 </body>
 </html>

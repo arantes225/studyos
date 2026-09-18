@@ -1,96 +1,154 @@
-DOCMAP — FASE 11.1
-IMPORTADOR INTELIGENTE DE CRONOGRAMAS
+DOCMAP — FASE 11.2
+DASHBOARD + CRONOGRAMA + IMPORTAÇÃO ANKI
 
-O QUE ENTROU
+=========================================================
+1. DASHBOARD INICIAL
+=========================================================
 
-1. IMPORTAÇÃO DE PDF
-- aceita PDF com texto selecionável
-- usa PDF.js no navegador
-- lê texto + posição dos elementos
-- reconhece planners mensais semelhantes ao Aristo
-- tenta reconstruir cada semana
+NOVOS QUADRADOS:
 
-2. ARISTO 2026/2027
-O parser foi testado contra o planner enviado nesta conversa.
-Na validação local ele reconheceu:
-- 128 aulas
-- 37 simulados programados/diagnóstico
-- 36 simulados inteligentes
-- 20 provas na íntegra
-- 14 blocos de reta final
-- 11 revisões inteligentes
-- 11 revisões teóricas
-TOTAL: 257 itens
+- Aulas atrasadas
+  Mostra quantas aulas do cronograma estão com data anterior a hoje
+  e ainda não foram concluídas.
 
-3. EXCEL / CSV MELHORADOS
-- continua aceitando XLSX / XLS / CSV
-- tenta ler mais de uma aba
-- aliases de cabeçalho continuam funcionando
-- detecta Tipo/Categoria quando existe
-- também identifica simulados pelo nome
+- Progresso das aulas
+  Mostra aulas feitas / aulas totais e uma porcentagem em gráfico circular.
 
-4. PRÉVIA EDITÁVEL
-Antes de importar você pode alterar:
-- data
-- tipo
-- área
-- matéria
-- conteúdo
-- aula já feita
-- data estudada
+- Retenção dos flashcards
+  Agora usa uma métrica específica de flashcards.
+  O título foi ajustado para não confundir com retenção geral.
 
-Confiança:
-- Alta = padrão bem reconhecido
-- Revisar = heurística provável
-- Baixa = confira antes de importar
+- Caderno de erros
+  Mostra:
+  * quantidade de CCQs atrasados
+  * quantidade total ativa
+  * retenção estimada em gráfico circular
 
-5. DUPLICADOS
-O DocMap compara o arquivo com o que já existe.
-Itens já existentes ficam desmarcados automaticamente.
+- Simulados · 30 dias
+  Mostra:
+  * quantidade de simulados respondidos nos últimos 30 dias
+  * % de acerto ponderada pelas questões respondidas
+  * gráfico circular
 
-6. EVENTOS NÃO VIRAM AULAS
-Simulados, provas externas, revisões do planner e reta final são gravados
-em public.schedule_events. Assim eles aparecem na Agenda sem gerar
-revisões automáticas de matéria.
+A área "Simulados recentes" continua abaixo.
 
-7. CRONOGRAMA
-Eventos importados também aparecem no planejador semanal.
+=========================================================
+2. CRONOGRAMA
+=========================================================
 
-ARQUIVOS
+- Novo card "Aulas atrasadas" no topo.
 
-RODE PRIMEIRO:
-- fase11_importador_inteligente.sql
+- Novo botão:
+  "Reorganizar atrasadas"
 
-SUBSTITUA:
+  Ele distribui TODAS as aulas atrasadas:
+  * 1 aula por semana
+  * começando de hoje em diante
+  * respeitando os dias permitidos em
+    Configurações > Dias de estudo > Estudo teórico
+
+- Lista de temas agora tem:
+  * Ver na semana / Ir para deck
+  * Remover para o deck
+  * Já feita
+
+- Aulas atrasadas ficam visualmente destacadas.
+
+- No planejador semanal, o botão "Remover" passou a se chamar
+  "Remover para o deck".
+
+=========================================================
+3. FLASHCARDS — ANKI
+=========================================================
+
+O importador agora aceita:
+
+- .xlsx
+- .xls
+- .csv
+- .apkg
+- .colpkg
+
+Para pacotes Anki:
+
+1. O DocMap abre o pacote no próprio navegador.
+2. Lê collection.anki2 / collection.anki21.
+3. Também tenta abrir o formato moderno collection.anki21b
+   comprimido com Zstandard.
+4. Identifica os decks existentes.
+5. Mostra cada deck com um campo "Área no DocMap".
+6. Você pode, por exemplo:
+   Anki: Cirurgia
+   -> Área no DocMap: Cirurgia Geral
+7. Só depois os flashcards são importados.
+
+Decks hierárquicos do Anki, como:
+Residência::Cirurgia::Trauma
+recebem por padrão a última parte:
+Trauma
+
+Você pode alterar antes de importar.
+
+OBSERVAÇÃO SOBRE ANKI:
+- O DocMap importa o conteúdo textual.
+- Referências a imagens e áudios são detectadas,
+  mas a mídia ainda não é copiada nesta etapa.
+- Notas do tipo Cloze são convertidas para uma versão textual
+  de frente/verso.
+- Uma nota do Anki vira um flashcard no DocMap.
+
+=========================================================
+4. INSTALAÇÃO
+=========================================================
+
+PASSO 1 — SUPABASE
+
+Rode UMA VEZ:
+
+fase11_2_dashboard_cronograma_anki.sql
+
+NÃO rode SQL mestre/reset.
+
+PASSO 2 — SUBSTITUA
+
+- dashboard.html
+- dashboard.js
 - cronograma.html
 - cronograma.js
-- dashboard.js
+- flashcards.html
+- flashcards.js
+- flashcards.css
 
-NÃO RODE SQL MESTRE / RESET.
-
-PUBLICAÇÃO
+PASSO 3 — PUBLICAR
 
 git add -A
-git commit -m "Fase 11 importador inteligente de cronogramas"
+git commit -m "Fase 11.2 dashboard cronograma e importacao Anki"
 git push origin main
 
 Depois:
 Ctrl + F5
 
-TESTE RECOMENDADO
+=========================================================
+5. TESTES RECOMENDADOS
+=========================================================
 
-1. Abra Cronograma.
-2. Importe o PDF do Planner Aristo 2026/2027.
-3. Aguarde a leitura das páginas.
-4. Confira a prévia.
-5. Itens de baixa/média confiança podem ser corrigidos ali mesmo.
-6. Clique em "Importar selecionados".
-7. Verifique Cronograma e Dashboard/Agenda.
+DASHBOARD:
+- confira aulas atrasadas
+- confira progresso
+- confira Caderno de Erros
+- confira simulados 30 dias
 
-LIMITAÇÃO INTENCIONAL
+CRONOGRAMA:
+- deixe uma aula em data anterior
+- clique em Reorganizar atrasadas
+- veja se ela foi movida para semana futura
+- teste Remover para o deck na Lista de temas
+- teste Já feita
 
-O PDF Aristo não informa explicitamente a Grande Área de cada aula.
-O DocMap NÃO inventa a área. Ela fica vazia, a menos que você preencha
-na prévia ou o arquivo original traga essa coluna.
-
-PDF escaneado como imagem, sem camada de texto, ainda não usa OCR.
+ANKI:
+- importe primeiro um .apkg pequeno
+- confira os decks detectados
+- escolha a Área de destino
+- importe
+- abra Biblioteca e confira a Área
+- depois teste .colpkg
