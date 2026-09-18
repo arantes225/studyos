@@ -879,6 +879,15 @@ function loadAccountSecurity() {
 
 
 async function savePassword() {
+  const currentPassword =
+    document
+      .getElementById(
+        "current-password"
+      )
+      ?.value
+    || "";
+
+
   const password =
     document
       .getElementById(
@@ -897,6 +906,23 @@ async function savePassword() {
     || "";
 
 
+  const email =
+    settingsUser?.email
+    || "";
+
+
+  if (
+    !currentPassword
+  ) {
+    setPasswordStatus(
+      "Digite sua senha atual.",
+      "error"
+    );
+
+    return;
+  }
+
+
   if (
     password.length < 8
   ) {
@@ -913,7 +939,29 @@ async function savePassword() {
     password !== confirm
   ) {
     setPasswordStatus(
-      "As senhas não coincidem.",
+      "As novas senhas não coincidem.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  if (
+    currentPassword === password
+  ) {
+    setPasswordStatus(
+      "A nova senha deve ser diferente da senha atual.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  if (!email) {
+    setPasswordStatus(
+      "Não foi possível identificar o e-mail da conta.",
       "error"
     );
 
@@ -930,6 +978,73 @@ async function savePassword() {
   if (button) {
     button.disabled =
       true;
+  }
+
+
+  setPasswordStatus(
+    "Confirmando senha atual..."
+  );
+
+
+  /*
+    O Supabase não exige a senha atual diretamente no updateUser.
+    Para o DocMap exigir essa confirmação, fazemos uma nova
+    autenticação com o e-mail da sessão + senha atual antes de
+    permitir a troca.
+  */
+
+  const {
+    data:
+      reauthData,
+
+    error:
+      reauthError
+  } =
+    await settingsSb.auth
+      .signInWithPassword({
+        email,
+        password:
+          currentPassword
+      });
+
+
+  if (reauthError) {
+    if (button) {
+      button.disabled =
+        false;
+    }
+
+
+    console.error(
+      reauthError
+    );
+
+
+    setPasswordStatus(
+      "Senha atual incorreta.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  if (
+    reauthData?.user?.id
+    !== settingsUser.id
+  ) {
+    if (button) {
+      button.disabled =
+        false;
+    }
+
+
+    setPasswordStatus(
+      "Não foi possível confirmar esta conta.",
+      "error"
+    );
+
+    return;
   }
 
 
@@ -967,20 +1082,24 @@ async function savePassword() {
   }
 
 
-  document
-    .getElementById(
-      "new-password"
-    )
-    .value =
-      "";
+  [
+    "current-password",
+    "new-password",
+    "confirm-password"
+  ].forEach(
+    (id) => {
+      const element =
+        document.getElementById(
+          id
+        );
 
 
-  document
-    .getElementById(
-      "confirm-password"
-    )
-    .value =
-      "";
+      if (element) {
+        element.value =
+          "";
+      }
+    }
+  );
 
 
   setPasswordStatus(
@@ -988,8 +1107,6 @@ async function savePassword() {
     "success"
   );
 }
-
-
 
 async function saveStudySettings() {
   const payload = {};
