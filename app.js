@@ -193,7 +193,6 @@ async function salvarAula() {
   horarioInicioInput.value = "";
   horarioFimInput.value = "";
 
-  // Limpar seleção visual das áreas
   document.querySelectorAll(".area-option").forEach((b) => b.classList.remove("selected"));
 
   carregarAulas();
@@ -329,49 +328,54 @@ async function carregarProvas() {
 
 function iniciarPaginaCronograma() {
   const caminho = window.location.pathname;
-  if (!caminho.includes("cronograma.html")) return;
 
-  verificarLoginNoDashboard();
+  if (caminho.includes("cronograma.html")) {
+    verificarLoginNoDashboard();
 
-  const botaoSalvarAula = document.getElementById("botao-salvar-aula");
-  if (botaoSalvarAula) {
-    botaoSalvarAula.addEventListener("click", salvarAula);
-  }
+    const botaoSalvarAula = document.getElementById("botao-salvar-aula");
+    if (botaoSalvarAula) {
+      botaoSalvarAula.addEventListener("click", salvarAula);
+    }
 
-  const botoesArea = document.querySelectorAll(".area-option");
-  const campoArea = document.getElementById("aula-area");
+    const botoesArea = document.querySelectorAll(".area-option");
+    const campoArea = document.getElementById("aula-area");
 
-  botoesArea.forEach((botao) => {
-    botao.addEventListener("click", () => {
-      botoesArea.forEach((outroBotao) => {
-        outroBotao.classList.remove("selected");
+    botoesArea.forEach((botao) => {
+      botao.addEventListener("click", () => {
+        botoesArea.forEach((outroBotao) => {
+          outroBotao.classList.remove("selected");
+        });
+
+        botao.classList.add("selected");
+        campoArea.value = botao.dataset.area;
       });
-
-      botao.classList.add("selected");
-      campoArea.value = botao.dataset.area;
     });
-  });
 
-  carregarAulas();
-
-  const botaoSalvarProva = document.getElementById("botao-salvar-prova");
-  if (botaoSalvarProva) {
-    botaoSalvarProva.addEventListener("click", salvarProva);
+    carregarAulas();
   }
 
-  carregarProvas();
+  if (caminho.includes("editais-provas.html")) {
+    verificarLoginNoDashboard();
 
-  const botaoAbrirAristo = document.getElementById("botao-abrir-aristo");
-  if (botaoAbrirAristo) {
-    botaoAbrirAristo.addEventListener("click", () => {
-      window.open("https://aristo.com.br/editais/", "_blank");
-    });
-  }
+    const botaoSalvarProva = document.getElementById("botao-salvar-prova");
+    if (botaoSalvarProva) {
+      botaoSalvarProva.addEventListener("click", salvarProva);
+    }
 
-  const msgIframe = document.getElementById("mensagem-iframe");
-  if (msgIframe) {
-    msgIframe.textContent =
-      "Se a área abaixo ficar em branco, o site da Aristo não permite ser exibido dentro de outras páginas. Nesse caso, use o botão para abrir em outra aba.";
+    carregarProvas();
+
+    const botaoAbrirAristo = document.getElementById("botao-abrir-aristo");
+    if (botaoAbrirAristo) {
+      botaoAbrirAristo.addEventListener("click", () => {
+        window.open("https://aristo.com.br/editais/", "_blank");
+      });
+    }
+
+    const msgIframe = document.getElementById("mensagem-iframe");
+    if (msgIframe) {
+      msgIframe.textContent =
+        "Se a área abaixo ficar em branco, o site da Aristo não permite ser exibido dentro de outras páginas. Nesse caso, use o botão para abrir em outra aba.";
+    }
   }
 }
 
