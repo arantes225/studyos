@@ -1,13 +1,16 @@
 const flashSb = window.supabaseClient;
 
 let flashUser = null;
-
 let reviewQueue = [];
 let reviewIndex = 0;
-
 let importRows = [];
-
 let libraryCards = [];
+
+const REVIEW_GROWTH = {
+  hard: 1.25,
+  medium: 1.5,
+  easy: 1.8
+};
 
 let flashSettings = {
   flashcard_intervals_hard: [1, 3, 7],
@@ -15,100 +18,128 @@ let flashSettings = {
   flashcard_intervals_easy: [15, 45, 70]
 };
 
+
 function todayISO() {
-  const now = new Date();
+  const d = new Date();
 
-  const year = now.getFullYear();
-  const month = String(
-    now.getMonth() + 1
-  ).padStart(2, "0");
-
-  const day = String(
-    now.getDate()
-  ).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
+  return `${d.getFullYear()}-${String(
+    d.getMonth() + 1
+  ).padStart(2, "0")}-${String(
+    d.getDate()
+  ).padStart(2, "0")}`;
 }
 
-function startOfTodayISO() {
-  const date = new Date();
-  date.setHours(0, 0, 0, 0);
 
-  return date.toISOString();
-}
+function dayStartISO(offset = 0) {
+  const d = new Date();
 
-function startOfTomorrowISO() {
-  const date = new Date();
-  date.setHours(0, 0, 0, 0);
-  date.setDate(
-    date.getDate() + 1
+  d.setHours(
+    0,
+    0,
+    0,
+    0
   );
 
-  return date.toISOString();
+  d.setDate(
+    d.getDate() + offset
+  );
+
+  return d.toISOString();
 }
 
-function escapeFlashHtml(value) {
+
+function esc(value) {
   return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
 }
+
 
 function normalizeHeader(value) {
   return String(value ?? "")
     .trim()
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, " ")
+    .replace(
+      /[\u0300-\u036f]/g,
+      ""
+    )
+    .replace(
+      /[^a-z0-9]+/g,
+      " "
+    )
     .trim();
 }
 
-function setFlashStatus(
+
+function setStatus(
   id,
   text,
   type = ""
 ) {
-  const element =
-    document.getElementById(id);
+  const el =
+    document.getElementById(
+      id
+    );
 
-  if (!element) return;
+  if (!el) return;
 
-  element.textContent =
+  el.textContent =
     text;
 
-  element.className =
+  el.className =
     `flash-status ${type}`
       .trim();
 }
 
-function truncateText(
+
+function truncate(
   text,
   max = 160
 ) {
   const value =
     String(text ?? "");
 
-  if (value.length <= max) {
-    return value;
-  }
-
-  return (
-    value.slice(
-      0,
-      max - 1
-    )
-    + "…"
-  );
+  return value.length <= max
+    ? value
+    : `${value.slice(
+        0,
+        max - 1
+      )}…`;
 }
 
-function formatDueDate(value) {
-  if (!value) return "—";
 
-  const [year, month, day] =
-    value.split("-").map(Number);
+function formatDate(value) {
+  if (!value) {
+    return "—";
+  }
+
+  const [
+    y,
+    m,
+    d
+  ] =
+    value
+      .split("-")
+      .map(Number);
 
   return new Intl.DateTimeFormat(
     "pt-BR",
@@ -119,42 +150,43 @@ function formatDueDate(value) {
     }
   ).format(
     new Date(
-      year,
-      month - 1,
-      day
+      y,
+      m - 1,
+      d
     )
   );
 }
 
-function setTaxonomyChip(
+
+function setChip(
   id,
   value
 ) {
-  const element =
-    document.getElementById(id);
+  const el =
+    document.getElementById(
+      id
+    );
 
-  if (!element) return;
+  if (!el) return;
 
-  if (!value) {
-    element.hidden = true;
-    element.textContent = "";
-    return;
-  }
+  el.textContent =
+    value || "";
 
-  element.hidden = false;
-  element.textContent = value;
+  el.hidden =
+    !value;
 }
 
-function switchFlashTab(tabName) {
+
+function switchTab(name) {
   document
     .querySelectorAll(
       "[data-flash-tab]"
     )
-    .forEach((button) => {
-      button.classList.toggle(
+    .forEach((btn) => {
+      btn.classList.toggle(
         "active",
-        button.dataset.flashTab
-          === tabName
+        btn.dataset.flashTab
+          === name
       );
     });
 
@@ -165,44 +197,72 @@ function switchFlashTab(tabName) {
     .forEach((section) => {
       section.classList.toggle(
         "active",
-        section.dataset.flashSection
-          === tabName
+        section.dataset
+          .flashSection
+          === name
       );
     });
 
-  if (tabName === "library") {
+  if (
+    name === "library"
+  ) {
     loadLibrary();
   }
 }
 
-function wireTabs() {
-  document
-    .querySelectorAll(
-      "[data-flash-tab]"
-    )
-    .forEach((button) => {
-      button.addEventListener(
-        "click",
-        () => {
-          switchFlashTab(
-            button.dataset.flashTab
-          );
-        }
-      );
-    });
+
+/* =========================================================
+   REMOVE O CONCEITO DE ARQUIVAMENTO
+   ========================================================= */
+
+function prepareLibraryWithoutArchive() {
+  const archivedFilter =
+    document.getElementById(
+      "library-active"
+    );
+
+  if (archivedFilter) {
+    archivedFilter.remove();
+  }
+
+  const filters =
+    document.querySelector(
+      '[data-flash-section="library"] .library-filters'
+    );
+
+  if (filters) {
+    filters.style
+      .gridTemplateColumns =
+        "minmax(220px, 1fr) minmax(150px, .5fr)";
+  }
+
+  const description =
+    document.querySelector(
+      '[data-flash-section="library"] .panel-header p'
+    );
+
+  if (description) {
+    description.textContent =
+      "Pesquise todos os seus flashcards. Nenhum card é arquivado.";
+  }
 }
 
-async function loadFlashSettings() {
+
+/* =========================================================
+   CONFIGURAÇÕES
+   ========================================================= */
+
+async function loadSettings() {
   const {
     data,
     error
   } = await flashSb
-    .from("user_settings")
-    .select(`
-      flashcard_intervals_hard,
-      flashcard_intervals_medium,
-      flashcard_intervals_easy
-    `)
+    .from(
+      "user_settings"
+    )
+    .select(
+      "flashcard_intervals_hard,flashcard_intervals_medium,flashcard_intervals_easy"
+    )
     .eq(
       "user_id",
       flashUser.id
@@ -211,7 +271,7 @@ async function loadFlashSettings() {
 
   if (error) {
     console.warn(
-      "Não foi possível carregar os intervalos:",
+      "Intervalos não carregados:",
       error.message
     );
 
@@ -226,24 +286,25 @@ async function loadFlashSettings() {
   }
 }
 
-function intervalForCard(
+
+/* =========================================================
+   INTERVALO PROGRESSIVO
+   ========================================================= */
+
+function nextInterval(
   card,
   rating
 ) {
-  const field =
+  const key =
     rating === "hard"
       ? "flashcard_intervals_hard"
       : rating === "medium"
         ? "flashcard_intervals_medium"
         : "flashcard_intervals_easy";
 
-  const list =
-    flashSettings[field]
+  const sequence =
+    flashSettings[key]
     || [];
-
-  if (!list.length) {
-    return null;
-  }
 
   const stage =
     Number(
@@ -251,197 +312,323 @@ function intervalForCard(
       || 0
     ) + 1;
 
-  const index =
-    Math.min(
-      stage,
-      list.length
-    ) - 1;
+  /*
+    Nas três primeiras etapas
+    usa os valores definidos
+    nas Configurações.
+  */
 
-  return list[index];
+  if (
+    stage <= sequence.length
+  ) {
+    return Number(
+      sequence[
+        stage - 1
+      ]
+    );
+  }
+
+  /*
+    Depois disso continua
+    aumentando sobre o
+    intervalo anterior.
+  */
+
+  const current =
+    Math.max(
+      1,
+      Number(
+        card
+          ?.current_interval_days
+        || 1
+      )
+    );
+
+  return Math.min(
+    3650,
+    Math.max(
+      current + 1,
+      Math.round(
+        current
+        * REVIEW_GROWTH[
+            rating
+          ]
+      )
+    )
+  );
 }
 
-function updateRatingLabels(card) {
-  ["hard", "medium", "easy"]
-    .forEach((rating) => {
-      const element =
+
+function updateRatingLabels(
+  card
+) {
+  [
+    "hard",
+    "medium",
+    "easy"
+  ].forEach(
+    (rating) => {
+      const el =
         document.querySelector(
           `[data-rating-days="${rating}"]`
         );
 
-      if (!element) return;
+      if (!el) return;
 
       const days =
-        intervalForCard(
+        nextInterval(
           card,
           rating
         );
 
-      element.textContent =
-        days
-          ? `≈ ${days} dia${days === 1 ? "" : "s"}`
-          : "—";
-    });
+      el.textContent =
+        `≈ ${days} dia${
+          days === 1
+            ? ""
+            : "s"
+        }`;
+    }
+  );
 }
+
+
+/* =========================================================
+   MÉTRICAS
+   ========================================================= */
 
 async function loadMetrics() {
   const today =
     todayISO();
 
   const [
-    dueResult,
-    overdueResult,
-    reviewResult
-  ] = await Promise.all([
-    flashSb
-      .from("flashcards")
-      .select(
-        "id",
-        {
-          count: "exact",
-          head: true
-        }
-      )
-      .eq(
-        "active",
-        true
-      )
-      .lte(
-        "due_date",
-        today
-      ),
+    due,
+    overdue,
+    reviews
+  ] =
+    await Promise.all([
+      flashSb
+        .from(
+          "flashcards"
+        )
+        .select(
+          "id",
+          {
+            count: "exact",
+            head: true
+          }
+        )
+        .lte(
+          "due_date",
+          today
+        ),
 
-    flashSb
-      .from("flashcards")
-      .select(
-        "id",
-        {
-          count: "exact",
-          head: true
-        }
-      )
-      .eq(
-        "active",
-        true
-      )
-      .lt(
-        "due_date",
-        today
-      ),
+      flashSb
+        .from(
+          "flashcards"
+        )
+        .select(
+          "id",
+          {
+            count: "exact",
+            head: true
+          }
+        )
+        .lt(
+          "due_date",
+          today
+        ),
 
-    flashSb
-      .from("flashcard_reviews")
-      .select(
-        "was_correct"
-      )
-      .gte(
-        "reviewed_at",
-        startOfTodayISO()
-      )
-      .lt(
-        "reviewed_at",
-        startOfTomorrowISO()
-      )
-  ]);
+      flashSb
+        .from(
+          "flashcard_reviews"
+        )
+        .select(
+          "was_correct"
+        )
+        .gte(
+          "reviewed_at",
+          dayStartISO(0)
+        )
+        .lt(
+          "reviewed_at",
+          dayStartISO(1)
+        )
+    ]);
 
   document
     .getElementById(
       "metric-due"
     )
     .textContent =
-      dueResult.count ?? 0;
+      due.count ?? 0;
 
   document
     .getElementById(
       "metric-overdue"
     )
     .textContent =
-      overdueResult.count ?? 0;
+      overdue.count ?? 0;
 
-  const reviews =
-    reviewResult.data || [];
+  const rows =
+    reviews.data
+    || [];
+
+  const correct =
+    rows.filter(
+      (r) =>
+        r.was_correct
+        === true
+    ).length;
 
   document
     .getElementById(
       "metric-reviewed"
     )
     .textContent =
-      reviews.length;
-
-  const correct =
-    reviews.filter(
-      (row) =>
-        row.was_correct
-          === true
-    ).length;
+      rows.length;
 
   document
     .getElementById(
       "metric-accuracy"
     )
     .textContent =
-      reviews.length
+      rows.length
         ? `${Math.round(
-            100
-            * correct
-            / reviews.length
+            (
+              correct
+              / rows.length
+            )
+            * 100
           )}%`
         : "—";
 }
 
-async function signedFlashImage(path) {
-  if (!path) {
+
+/* =========================================================
+   IMAGENS DE REVISÃO
+   ========================================================= */
+
+async function signedImage(path) {
+  if (
+    !path
+    || typeof path
+      !== "string"
+    || !path.trim()
+  ) {
     return null;
   }
 
   const {
     data,
     error
-  } = await flashSb
-    .storage
-    .from("docmap")
-    .createSignedUrl(
-      path,
-      60 * 60
-    );
+  } =
+    await flashSb
+      .storage
+      .from(
+        "docmap"
+      )
+      .createSignedUrl(
+        path,
+        3600
+      );
 
   if (error) {
-    console.warn(
-      "Imagem do flashcard indisponível:",
-      error.message
-    );
-
     return null;
   }
 
-  return data?.signedUrl || null;
+  return (
+    data?.signedUrl
+    || null
+  );
 }
 
-async function setReviewImage(
-  imageId,
+
+async function showImage(
+  id,
   path
 ) {
-  const image =
+  const img =
     document.getElementById(
-      imageId
+      id
     );
 
-  image.hidden = true;
-  image.removeAttribute("src");
+  if (!img) return;
 
-  if (!path) return;
+  /*
+    Sempre começa escondida.
+  */
+
+  img.hidden = true;
+  img.style.display =
+    "none";
+
+  img.removeAttribute(
+    "src"
+  );
+
+  img.onload = null;
+  img.onerror = null;
+
+  /*
+    Sem caminho = não existe
+    imagem. Não mostra nada.
+  */
+
+  if (
+    !path
+    || typeof path
+      !== "string"
+    || !path.trim()
+  ) {
+    return;
+  }
 
   const url =
-    await signedFlashImage(
+    await signedImage(
       path
     );
 
-  if (!url) return;
+  if (!url) {
+    return;
+  }
 
-  image.src = url;
-  image.hidden = false;
+  /*
+    Só mostra depois que o
+    navegador confirmar que
+    carregou.
+  */
+
+  img.onload = () => {
+    img.hidden = false;
+    img.style.display =
+      "block";
+  };
+
+  /*
+    Se houver qualquer erro,
+    simplesmente esconde.
+  */
+
+  img.onerror = () => {
+    img.hidden = true;
+    img.style.display =
+      "none";
+
+    img.removeAttribute(
+      "src"
+    );
+  };
+
+  img.src =
+    url;
 }
 
-async function renderCurrentReview() {
+
+/* =========================================================
+   REVISÃO
+   ========================================================= */
+
+async function renderReview() {
   const empty =
     document.getElementById(
       "review-empty"
@@ -456,8 +643,11 @@ async function renderCurrentReview() {
     reviewIndex
     >= reviewQueue.length
   ) {
-    stage.hidden = true;
-    empty.hidden = false;
+    stage.hidden =
+      true;
+
+    empty.hidden =
+      false;
 
     document
       .getElementById(
@@ -480,13 +670,20 @@ async function renderCurrentReview() {
     return;
   }
 
-  empty.hidden = true;
-  stage.hidden = false;
+  empty.hidden =
+    true;
+
+  stage.hidden =
+    false;
 
   const card =
     reviewQueue[
       reviewIndex
     ];
+
+  const remaining =
+    reviewQueue.length
+    - reviewIndex;
 
   document
     .getElementById(
@@ -500,19 +697,23 @@ async function renderCurrentReview() {
       "review-session-copy"
     )
     .textContent =
-      `${reviewQueue.length - reviewIndex} restante${reviewQueue.length - reviewIndex === 1 ? "" : "s"}`;
+      `${remaining} restante${
+        remaining === 1
+          ? ""
+          : "s"
+      }`;
 
-  setTaxonomyChip(
+  setChip(
     "review-area",
     card.area
   );
 
-  setTaxonomyChip(
+  setChip(
     "review-materia",
     card.materia
   );
 
-  setTaxonomyChip(
+  setChip(
     "review-theme",
     card.theme
   );
@@ -535,21 +736,24 @@ async function renderCurrentReview() {
     .getElementById(
       "review-answer"
     )
-    .hidden = true;
+    .hidden =
+      true;
 
   document
     .getElementById(
       "rating-actions"
     )
-    .hidden = true;
+    .hidden =
+      true;
 
   document
     .getElementById(
       "show-answer"
     )
-    .hidden = false;
+    .hidden =
+      false;
 
-  setFlashStatus(
+  setStatus(
     "review-status",
     ""
   );
@@ -559,61 +763,57 @@ async function renderCurrentReview() {
   );
 
   await Promise.all([
-    setReviewImage(
+    showImage(
       "review-front-image",
       card.front_image_path
     ),
-    setReviewImage(
+
+    showImage(
       "review-back-image",
       card.back_image_path
     )
   ]);
 }
 
+
 async function loadReviewQueue() {
   const {
     data,
     error
-  } = await flashSb
-    .from("flashcards")
-    .select(`
-      id,
-      area,
-      materia,
-      theme,
-      front_text,
-      back_text,
-      front_image_path,
-      back_image_path,
-      due_date,
-      review_count
-    `)
-    .eq(
-      "active",
-      true
-    )
-    .lte(
-      "due_date",
-      todayISO()
-    )
-    .order(
-      "due_date",
-      {
-        ascending: true
-      }
-    )
-    .order(
-      "created_at",
-      {
-        ascending: true
-      }
-    )
-    .limit(250);
+  } =
+    await flashSb
+      .from(
+        "flashcards"
+      )
+      .select(
+        "id,area,materia,theme,front_text,back_text,front_image_path,back_image_path,due_date,current_interval_days,review_count,created_at"
+      )
+      .lte(
+        "due_date",
+        todayISO()
+      )
+      .order(
+        "due_date",
+        {
+          ascending: true
+        }
+      )
+      .order(
+        "created_at",
+        {
+          ascending: true
+        }
+      )
+      .limit(
+        250
+      );
 
   if (error) {
-    console.error(error);
+    console.error(
+      error
+    );
 
-    setFlashStatus(
+    setStatus(
       "review-status",
       `Não foi possível carregar os cards: ${error.message}`,
       "error"
@@ -625,10 +825,12 @@ async function loadReviewQueue() {
   reviewQueue =
     data || [];
 
-  reviewIndex = 0;
+  reviewIndex =
+    0;
 
-  await renderCurrentReview();
+  await renderReview();
 }
+
 
 function wireReview() {
   document
@@ -642,19 +844,22 @@ function wireReview() {
           .getElementById(
             "review-answer"
           )
-          .hidden = false;
+          .hidden =
+            false;
 
         document
           .getElementById(
             "rating-actions"
           )
-          .hidden = false;
+          .hidden =
+            false;
 
         document
           .getElementById(
             "show-answer"
           )
-          .hidden = true;
+          .hidden =
+            true;
       }
     );
 
@@ -662,112 +867,523 @@ function wireReview() {
     .querySelectorAll(
       "[data-rating]"
     )
-    .forEach((button) => {
-      button.addEventListener(
-        "click",
-        async () => {
-          const card =
-            reviewQueue[
-              reviewIndex
-            ];
+    .forEach(
+      (button) => {
+        button
+          .addEventListener(
+            "click",
+            async () => {
+              const card =
+                reviewQueue[
+                  reviewIndex
+                ];
 
-          if (!card) return;
+              if (!card) {
+                return;
+              }
 
-          const rating =
-            button.dataset.rating;
+              const rating =
+                button
+                  .dataset
+                  .rating;
 
-          document
-            .querySelectorAll(
-              "[data-rating]"
-            )
-            .forEach((item) => {
-              item.disabled = true;
-            });
+              document
+                .querySelectorAll(
+                  "[data-rating]"
+                )
+                .forEach(
+                  (b) =>
+                    b.disabled =
+                      true
+                );
 
-          setFlashStatus(
-            "review-status",
-            "Salvando revisão..."
-          );
+              setStatus(
+                "review-status",
+                "Salvando revisão..."
+              );
 
-          const {
-            error
-          } = await flashSb.rpc(
-            "review_flashcard",
-            {
-              p_flashcard_id:
-                card.id,
+              const {
+                error
+              } =
+                await flashSb.rpc(
+                  "review_flashcard",
+                  {
+                    p_flashcard_id:
+                      card.id,
 
-              p_rating:
-                rating,
+                    p_rating:
+                      rating,
 
-              p_was_correct:
-                rating !== "hard"
+                    p_was_correct:
+                      rating
+                      !== "hard"
+                  }
+                );
+
+              document
+                .querySelectorAll(
+                  "[data-rating]"
+                )
+                .forEach(
+                  (b) =>
+                    b.disabled =
+                      false
+                );
+
+              if (error) {
+                console.error(
+                  error
+                );
+
+                setStatus(
+                  "review-status",
+                  `Não foi possível salvar: ${error.message}`,
+                  "error"
+                );
+
+                return;
+              }
+
+              reviewIndex +=
+                1;
+
+              await Promise.all([
+                renderReview(),
+                loadMetrics()
+              ]);
             }
           );
-
-          document
-            .querySelectorAll(
-              "[data-rating]"
-            )
-            .forEach((item) => {
-              item.disabled = false;
-            });
-
-          if (error) {
-            console.error(error);
-
-            setFlashStatus(
-              "review-status",
-              `Não foi possível salvar: ${error.message}`,
-              "error"
-            );
-
-            return;
-          }
-
-          reviewIndex += 1;
-
-          await Promise.all([
-            renderCurrentReview(),
-            loadMetrics()
-          ]);
-        }
-      );
-    });
+      }
+    );
 }
 
-async function uploadFlashImage(
+
+/* =========================================================
+   COMPRESSÃO DAS IMAGENS
+   ========================================================= */
+
+function safeBase(name) {
+  return String(
+    name
+    || "imagem"
+  )
+    .replace(
+      /\.[^.]+$/,
+      ""
+    )
+    .replace(
+      /[^a-zA-Z0-9_-]+/g,
+      "-"
+    )
+    .replace(
+      /-+/g,
+      "-"
+    )
+    .replace(
+      /^-|-$/g,
+      ""
+    )
+    || "imagem";
+}
+
+
+function readAsDataUrl(file) {
+  return new Promise(
+    (
+      resolve,
+      reject
+    ) => {
+      const reader =
+        new FileReader();
+
+      reader.onload =
+        () =>
+          resolve(
+            reader.result
+          );
+
+      reader.onerror =
+        () =>
+          reject(
+            new Error(
+              "Não foi possível ler a imagem."
+            )
+          );
+
+      reader.readAsDataURL(
+        file
+      );
+    }
+  );
+}
+
+
+function loadImage(dataUrl) {
+  return new Promise(
+    (
+      resolve,
+      reject
+    ) => {
+      const img =
+        new Image();
+
+      img.onload =
+        () =>
+          resolve(
+            img
+          );
+
+      img.onerror =
+        () =>
+          reject(
+            new Error(
+              "Não foi possível abrir a imagem."
+            )
+          );
+
+      img.src =
+        dataUrl;
+    }
+  );
+}
+
+
+function toWebp(
+  canvas,
+  quality
+) {
+  return new Promise(
+    (
+      resolve,
+      reject
+    ) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(
+              blob
+            );
+          } else {
+            reject(
+              new Error(
+                "Falha na compressão."
+              )
+            );
+          }
+        },
+
+        "image/webp",
+
+        quality
+      );
+    }
+  );
+}
+
+
+async function compressImage(file) {
+  if (
+    !file
+    || !file.type
+      ?.startsWith(
+        "image/"
+      )
+  ) {
+    return file;
+  }
+
+  try {
+    const dataUrl =
+      await readAsDataUrl(
+        file
+      );
+
+    const source =
+      await loadImage(
+        dataUrl
+      );
+
+    /*
+      Dimensão máxima inicial:
+      1400px.
+    */
+
+    const max =
+      1400;
+
+    const scale =
+      Math.min(
+        1,
+        max
+          / source.width,
+        max
+          / source.height
+      );
+
+    const width =
+      Math.max(
+        1,
+        Math.round(
+          source.width
+          * scale
+        )
+      );
+
+    const height =
+      Math.max(
+        1,
+        Math.round(
+          source.height
+          * scale
+        )
+      );
+
+    const canvas =
+      document.createElement(
+        "canvas"
+      );
+
+    canvas.width =
+      width;
+
+    canvas.height =
+      height;
+
+    const ctx =
+      canvas.getContext(
+        "2d",
+        {
+          alpha: false
+        }
+      );
+
+    /*
+      Fundo branco evita
+      problemas de transparência
+      em screenshots.
+    */
+
+    ctx.fillStyle =
+      "#ffffff";
+
+    ctx.fillRect(
+      0,
+      0,
+      width,
+      height
+    );
+
+    ctx.drawImage(
+      source,
+      0,
+      0,
+      width,
+      height
+    );
+
+    /*
+      Primeira compressão:
+      WebP 72%.
+    */
+
+    let blob =
+      await toWebp(
+        canvas,
+        0.72
+      );
+
+    /*
+      Se ainda estiver pesada,
+      reduz a qualidade.
+    */
+
+    if (
+      blob.size
+      > 650 * 1024
+    ) {
+      blob =
+        await toWebp(
+          canvas,
+          0.62
+        );
+    }
+
+    /*
+      Se continuar muito pesada,
+      limita a 1050px.
+    */
+
+    if (
+      blob.size
+        > 900 * 1024
+      && (
+        width > 1050
+        || height > 1050
+      )
+    ) {
+      const smallScale =
+        Math.min(
+          1,
+          1050 / width,
+          1050 / height
+        );
+
+      const w =
+        Math.max(
+          1,
+          Math.round(
+            width
+            * smallScale
+          )
+        );
+
+      const h =
+        Math.max(
+          1,
+          Math.round(
+            height
+            * smallScale
+          )
+        );
+
+      const small =
+        document.createElement(
+          "canvas"
+        );
+
+      small.width =
+        w;
+
+      small.height =
+        h;
+
+      const smallCtx =
+        small.getContext(
+          "2d",
+          {
+            alpha: false
+          }
+        );
+
+      smallCtx.fillStyle =
+        "#ffffff";
+
+      smallCtx.fillRect(
+        0,
+        0,
+        w,
+        h
+      );
+
+      smallCtx.drawImage(
+        canvas,
+        0,
+        0,
+        w,
+        h
+      );
+
+      blob =
+        await toWebp(
+          small,
+          0.60
+        );
+    }
+
+    /*
+      Se o original já for
+      menor, mantém o original.
+    */
+
+    if (
+      blob.size
+      >= file.size
+    ) {
+      return file;
+    }
+
+    return new File(
+      [
+        blob
+      ],
+
+      `${safeBase(
+        file.name
+      )}.webp`,
+
+      {
+        type:
+          "image/webp",
+
+        lastModified:
+          Date.now()
+      }
+    );
+
+  } catch (error) {
+    console.warn(
+      "Compressão falhou; usando original:",
+      error
+    );
+
+    return file;
+  }
+}
+
+
+async function uploadImage(
   file,
   side
 ) {
-  if (!file) return null;
+  if (!file) {
+    return null;
+  }
 
-  const safeName =
-    String(file.name)
-      .replace(
-        /[^a-zA-Z0-9._-]+/g,
-        "-"
-      );
+  const finalFile =
+    await compressImage(
+      file
+    );
+
+  const name =
+    finalFile.name
+    || file.name
+    || "imagem";
+
+  const extension =
+    name.includes(".")
+      ? name
+          .split(".")
+          .pop()
+          .toLowerCase()
+      : "bin";
 
   const path =
-    `${flashUser.id}/flashcards/${crypto.randomUUID()}-${side}-${safeName}`;
+    `${flashUser.id}/flashcards/${crypto.randomUUID()}-${side}-${safeBase(name)}.${extension}`;
 
   const {
     error
-  } = await flashSb
-    .storage
-    .from("docmap")
-    .upload(
-      path,
-      file,
-      {
-        cacheControl: "3600",
-        upsert: false,
-        contentType:
-          file.type
-          || undefined
-      }
-    );
+  } =
+    await flashSb
+      .storage
+      .from(
+        "docmap"
+      )
+      .upload(
+        path,
+        finalFile,
+        {
+          cacheControl:
+            "3600",
+
+          upsert:
+            false,
+
+          contentType:
+            finalFile.type
+            || file.type
+            || undefined
+        }
+      );
 
   if (error) {
     throw error;
@@ -776,36 +1392,49 @@ async function uploadFlashImage(
   return path;
 }
 
-function clearCreateForm() {
+
+/* =========================================================
+   CRIAR FLASHCARD
+   ========================================================= */
+
+function clearCreate() {
   [
     "create-area",
     "create-materia",
     "create-theme",
     "create-front",
     "create-back"
-  ].forEach((id) => {
-    document
-      .getElementById(id)
-      .value = "";
-  });
+  ].forEach(
+    (id) => {
+      document
+        .getElementById(
+          id
+        )
+        .value =
+          "";
+    }
+  );
 
   document
     .getElementById(
       "create-front-image"
     )
-    .value = "";
+    .value =
+      "";
 
   document
     .getElementById(
       "create-back-image"
     )
-    .value = "";
+    .value =
+      "";
 
-  setFlashStatus(
+  setStatus(
     "create-status",
     ""
   );
 }
+
 
 function wireCreate() {
   document
@@ -814,7 +1443,7 @@ function wireCreate() {
     )
     .addEventListener(
       "click",
-      clearCreateForm
+      clearCreate
     );
 
   document
@@ -830,44 +1459,66 @@ function wireCreate() {
           );
 
         const area =
-          document.getElementById(
-            "create-area"
-          ).value.trim();
+          document
+            .getElementById(
+              "create-area"
+            )
+            .value
+            .trim();
 
         const materia =
-          document.getElementById(
-            "create-materia"
-          ).value.trim();
+          document
+            .getElementById(
+              "create-materia"
+            )
+            .value
+            .trim();
 
         const theme =
-          document.getElementById(
-            "create-theme"
-          ).value.trim();
+          document
+            .getElementById(
+              "create-theme"
+            )
+            .value
+            .trim();
 
         const front =
-          document.getElementById(
-            "create-front"
-          ).value.trim();
+          document
+            .getElementById(
+              "create-front"
+            )
+            .value
+            .trim();
 
         const back =
-          document.getElementById(
-            "create-back"
-          ).value.trim();
+          document
+            .getElementById(
+              "create-back"
+            )
+            .value
+            .trim();
 
         const frontFile =
-          document.getElementById(
-            "create-front-image"
-          ).files[0]
+          document
+            .getElementById(
+              "create-front-image"
+            )
+            .files[0]
           || null;
 
         const backFile =
-          document.getElementById(
-            "create-back-image"
-          ).files[0]
+          document
+            .getElementById(
+              "create-back-image"
+            )
+            .files[0]
           || null;
 
-        if (!front || !back) {
-          setFlashStatus(
+        if (
+          !front
+          || !back
+        ) {
+          setStatus(
             "create-status",
             "Preencha a frente e o verso.",
             "error"
@@ -876,77 +1527,89 @@ function wireCreate() {
           return;
         }
 
-        button.disabled = true;
+        button.disabled =
+          true;
 
-        setFlashStatus(
+        setStatus(
           "create-status",
-          "Criando flashcard..."
+          "Comprimindo imagens e criando flashcard..."
         );
 
-        const uploadedPaths = [];
+        const uploaded =
+          [];
 
         try {
           const [
-            frontImagePath,
-            backImagePath
-          ] = await Promise.all([
-            uploadFlashImage(
-              frontFile,
-              "front"
-            ),
-            uploadFlashImage(
-              backFile,
-              "back"
-            )
-          ]);
+            frontPath,
+            backPath
+          ] =
+            await Promise.all([
+              uploadImage(
+                frontFile,
+                "front"
+              ),
 
-          if (frontImagePath) {
-            uploadedPaths.push(
-              frontImagePath
+              uploadImage(
+                backFile,
+                "back"
+              )
+            ]);
+
+          if (
+            frontPath
+          ) {
+            uploaded.push(
+              frontPath
             );
           }
 
-          if (backImagePath) {
-            uploadedPaths.push(
-              backImagePath
+          if (
+            backPath
+          ) {
+            uploaded.push(
+              backPath
             );
           }
 
           const {
             error
-          } = await flashSb.rpc(
-            "create_flashcard_v2",
-            {
-              p_area:
-                area || null,
+          } =
+            await flashSb.rpc(
+              "create_flashcard_v2",
+              {
+                p_area:
+                  area
+                  || null,
 
-              p_materia:
-                materia || null,
+                p_materia:
+                  materia
+                  || null,
 
-              p_theme:
-                theme || null,
+                p_theme:
+                  theme
+                  || null,
 
-              p_front_text:
-                front,
+                p_front_text:
+                  front,
 
-              p_back_text:
-                back,
+                p_back_text:
+                  back,
 
-              p_front_image_path:
-                frontImagePath,
+                p_front_image_path:
+                  frontPath,
 
-              p_back_image_path:
-                backImagePath
-            }
-          );
+                p_back_image_path:
+                  backPath
+              }
+            );
 
           if (error) {
             throw error;
           }
 
-          clearCreateForm();
+          clearCreate();
 
-          setFlashStatus(
+          setStatus(
             "create-status",
             "Flashcard criado.",
             "success"
@@ -958,47 +1621,60 @@ function wireCreate() {
           ]);
 
         } catch (error) {
-          console.error(error);
+          console.error(
+            error
+          );
 
-          if (uploadedPaths.length) {
+          if (
+            uploaded.length
+          ) {
             await flashSb
               .storage
-              .from("docmap")
+              .from(
+                "docmap"
+              )
               .remove(
-                uploadedPaths
+                uploaded
               );
           }
 
-          setFlashStatus(
+          setStatus(
             "create-status",
             `Não foi possível criar: ${error.message}`,
             "error"
           );
 
         } finally {
-          button.disabled = false;
+          button.disabled =
+            false;
         }
       }
     );
 }
 
-function valueFromRow(
+
+/* =========================================================
+   IMPORTAÇÃO
+   ========================================================= */
+
+function rowValue(
   row,
   aliases
 ) {
-  const entries =
-    Object.entries(row);
-
   for (
-    const [key, value]
-    of entries
+    const [
+      key,
+      value
+    ]
+    of Object.entries(
+      row
+    )
   ) {
-    const normalized =
-      normalizeHeader(key);
-
     if (
       aliases.includes(
-        normalized
+        normalizeHeader(
+          key
+        )
       )
     ) {
       return String(
@@ -1010,10 +1686,11 @@ function valueFromRow(
   return "";
 }
 
-function normalizeImportedRow(row) {
+
+function normalizeRow(row) {
   return {
     area:
-      valueFromRow(
+      rowValue(
         row,
         [
           "area"
@@ -1021,7 +1698,7 @@ function normalizeImportedRow(row) {
       ),
 
     materia:
-      valueFromRow(
+      rowValue(
         row,
         [
           "materia",
@@ -1030,7 +1707,7 @@ function normalizeImportedRow(row) {
       ),
 
     theme:
-      valueFromRow(
+      rowValue(
         row,
         [
           "tema",
@@ -1040,7 +1717,7 @@ function normalizeImportedRow(row) {
       ),
 
     front_text:
-      valueFromRow(
+      rowValue(
         row,
         [
           "frente",
@@ -1051,7 +1728,7 @@ function normalizeImportedRow(row) {
       ),
 
     back_text:
-      valueFromRow(
+      rowValue(
         row,
         [
           "verso",
@@ -1063,15 +1740,16 @@ function normalizeImportedRow(row) {
   };
 }
 
+
 function renderImportPreview() {
   const valid =
     importRows.filter(
-      (row) =>
-        row.front_text
-        && row.back_text
+      (r) =>
+        r.front_text
+        && r.back_text
     );
 
-  const invalidCount =
+  const invalid =
     importRows.length
     - valid.length;
 
@@ -1080,17 +1758,34 @@ function renderImportPreview() {
       "import-summary"
     );
 
-  summary.hidden = false;
+  summary.hidden =
+    false;
 
   summary.textContent =
-    `${valid.length} card${valid.length === 1 ? "" : "s"} válido${valid.length === 1 ? "" : "s"}`
+    `${valid.length} card${
+      valid.length === 1
+        ? ""
+        : "s"
+    } válido${
+      valid.length === 1
+        ? ""
+        : "s"
+    }`
     + (
-      invalidCount
-        ? ` · ${invalidCount} linha${invalidCount === 1 ? "" : "s"} ignorada${invalidCount === 1 ? "" : "s"} por falta de frente/verso`
+      invalid
+        ? ` · ${invalid} linha${
+            invalid === 1
+              ? ""
+              : "s"
+          } ignorada${
+            invalid === 1
+              ? ""
+              : "s"
+          }`
         : ""
     );
 
-  const previewWrap =
+  const wrap =
     document.getElementById(
       "import-preview-wrap"
     );
@@ -1100,74 +1795,79 @@ function renderImportPreview() {
       "import-preview-body"
     );
 
-  if (!valid.length) {
-    previewWrap.hidden = true;
-    body.innerHTML = "";
-
-    document
-      .getElementById(
-        "import-cards"
-      )
-      .disabled = true;
-
-    return;
-  }
-
-  previewWrap.hidden = false;
-
-  body.innerHTML =
-    valid
-      .slice(0, 8)
-      .map((row) => `
-        <tr>
-          <td>${escapeFlashHtml(row.area || "—")}</td>
-          <td>${escapeFlashHtml(row.materia || "—")}</td>
-          <td>${escapeFlashHtml(row.theme || "—")}</td>
-          <td>${escapeFlashHtml(truncateText(row.front_text, 100))}</td>
-          <td>${escapeFlashHtml(truncateText(row.back_text, 100))}</td>
-        </tr>
-      `)
-      .join("");
-
   document
     .getElementById(
       "import-cards"
     )
-    .disabled = false;
+    .disabled =
+      !valid.length;
+
+  if (!valid.length) {
+    wrap.hidden =
+      true;
+
+    body.innerHTML =
+      "";
+
+    return;
+  }
+
+  wrap.hidden =
+    false;
+
+  body.innerHTML =
+    valid
+      .slice(
+        0,
+        8
+      )
+      .map(
+        (r) => `
+          <tr>
+            <td>
+              ${esc(
+                r.area
+                || "—"
+              )}
+            </td>
+
+            <td>
+              ${esc(
+                r.materia
+                || "—"
+              )}
+            </td>
+
+            <td>
+              ${esc(
+                r.theme
+                || "—"
+              )}
+            </td>
+
+            <td>
+              ${esc(
+                truncate(
+                  r.front_text,
+                  100
+                )
+              )}
+            </td>
+
+            <td>
+              ${esc(
+                truncate(
+                  r.back_text,
+                  100
+                )
+              )}
+            </td>
+          </tr>
+        `
+      )
+      .join("");
 }
 
-async function parseImportFile(file) {
-  const buffer =
-    await file.arrayBuffer();
-
-  const workbook =
-    XLSX.read(
-      buffer,
-      {
-        type: "array"
-      }
-    );
-
-  const sheet =
-    workbook.Sheets[
-      workbook.SheetNames[0]
-    ];
-
-  const raw =
-    XLSX.utils.sheet_to_json(
-      sheet,
-      {
-        defval: ""
-      }
-    );
-
-  importRows =
-    raw.map(
-      normalizeImportedRow
-    );
-
-  renderImportPreview();
-}
 
 function wireImport() {
   document
@@ -1176,46 +1876,86 @@ function wireImport() {
     )
     .addEventListener(
       "change",
-      async (event) => {
+      async (
+        event
+      ) => {
         const file =
-          event.target.files[0];
+          event
+            .target
+            .files[0];
 
-        importRows = [];
+        importRows =
+          [];
 
         document
           .getElementById(
             "import-cards"
           )
-          .disabled = true;
+          .disabled =
+            true;
 
         document
           .getElementById(
             "import-summary"
           )
-          .hidden = true;
+          .hidden =
+            true;
 
         document
           .getElementById(
             "import-preview-wrap"
           )
-          .hidden = true;
+          .hidden =
+            true;
 
-        setFlashStatus(
+        setStatus(
           "import-status",
           ""
         );
 
-        if (!file) return;
+        if (!file) {
+          return;
+        }
 
         try {
-          await parseImportFile(
-            file
-          );
+          const workbook =
+            XLSX.read(
+              await file
+                .arrayBuffer(),
+
+              {
+                type:
+                  "array"
+              }
+            );
+
+          const sheet =
+            workbook.Sheets[
+              workbook
+                .SheetNames[0]
+            ];
+
+          importRows =
+            XLSX.utils
+              .sheet_to_json(
+                sheet,
+                {
+                  defval:
+                    ""
+                }
+              )
+              .map(
+                normalizeRow
+              );
+
+          renderImportPreview();
 
         } catch (error) {
-          console.error(error);
+          console.error(
+            error
+          );
 
-          setFlashStatus(
+          setStatus(
             "import-status",
             "Não foi possível ler esse arquivo.",
             "error"
@@ -1233,18 +1973,14 @@ function wireImport() {
       async () => {
         const valid =
           importRows.filter(
-            (row) =>
-              row.front_text
-              && row.back_text
+            (r) =>
+              r.front_text
+              && r.back_text
           );
 
-        if (!valid.length) {
-          setFlashStatus(
-            "import-status",
-            "Nenhum flashcard válido para importar.",
-            "error"
-          );
-
+        if (
+          !valid.length
+        ) {
           return;
         }
 
@@ -1253,85 +1989,102 @@ function wireImport() {
             "import-cards"
           );
 
-        button.disabled = true;
+        const file =
+          document
+            .getElementById(
+              "import-file"
+            )
+            .files[0];
 
-        setFlashStatus(
+        button.disabled =
+          true;
+
+        setStatus(
           "import-status",
           "Importando..."
         );
 
-        const file =
-          document.getElementById(
-            "import-file"
-          ).files[0];
-
         const {
-          data: importEntry,
-          error: importError
-        } = await flashSb
-          .from("flashcard_imports")
-          .insert({
-            user_id:
-              flashUser.id,
+          data: entry,
+          error: entryError
+        } =
+          await flashSb
+            .from(
+              "flashcard_imports"
+            )
+            .insert({
+              user_id:
+                flashUser.id,
 
-            source_type:
-              "excel",
+              source_type:
+                "excel",
 
-            file_name:
-              file?.name
-              || null,
+              file_name:
+                file?.name
+                || null,
 
-            status:
-              "processing"
-          })
-          .select("id")
-          .single();
+              status:
+                "processing"
+            })
+            .select(
+              "id"
+            )
+            .single();
 
-        if (importError) {
-          console.error(
-            importError
-          );
-
-          setFlashStatus(
+        if (entryError) {
+          setStatus(
             "import-status",
-            `Não foi possível iniciar a importação: ${importError.message}`,
+            entryError.message,
             "error"
           );
 
-          button.disabled = false;
+          button.disabled =
+            false;
+
           return;
         }
 
         const {
           data: created,
           error
-        } = await flashSb.rpc(
-          "bulk_create_flashcards",
-          {
-            p_cards:
-              valid,
+        } =
+          await flashSb.rpc(
+            "bulk_create_flashcards",
+            {
+              p_cards:
+                valid,
 
-            p_import_id:
-              importEntry.id
-          }
-        );
+              p_import_id:
+                entry.id
+            }
+          );
 
         if (error) {
-          console.error(error);
-
-          setFlashStatus(
+          setStatus(
             "import-status",
             `Importação falhou: ${error.message}`,
             "error"
           );
 
-          button.disabled = false;
+          button.disabled =
+            false;
+
           return;
         }
 
-        setFlashStatus(
+        setStatus(
           "import-status",
-          `${created} flashcard${created === 1 ? "" : "s"} importado${created === 1 ? "" : "s"}.`,
+
+          `${created} flashcard${
+            created === 1
+              ? ""
+              : "s"
+          } importado${
+            created === 1
+              ? ""
+              : "s"
+          }.`,
+
           "success"
         );
 
@@ -1339,21 +2092,25 @@ function wireImport() {
           .getElementById(
             "import-file"
           )
-          .value = "";
+          .value =
+            "";
 
-        importRows = [];
+        importRows =
+          [];
 
         document
           .getElementById(
             "import-summary"
           )
-          .hidden = true;
+          .hidden =
+            true;
 
         document
           .getElementById(
             "import-preview-wrap"
           )
-          .hidden = true;
+          .hidden =
+            true;
 
         await Promise.all([
           loadMetrics(),
@@ -1363,7 +2120,12 @@ function wireImport() {
     );
 }
 
-function populateLibraryAreas() {
+
+/* =========================================================
+   BIBLIOTECA
+   ========================================================= */
+
+function populateAreas() {
   const select =
     document.getElementById(
       "library-area"
@@ -1373,17 +2135,22 @@ function populateLibraryAreas() {
     select.value;
 
   const areas =
-    Array.from(
-      new Set(
+    [
+      ...new Set(
         libraryCards
           .map(
-            (card) =>
-              card.area
+            (c) =>
+              c.area
           )
-          .filter(Boolean)
+          .filter(
+            Boolean
+          )
       )
-    ).sort(
-      (a, b) =>
+    ].sort(
+      (
+        a,
+        b
+      ) =>
         a.localeCompare(
           b,
           "pt-BR"
@@ -1391,12 +2158,18 @@ function populateLibraryAreas() {
     );
 
   select.innerHTML =
-    `<option value="">Todas as áreas</option>`
+    `
+      <option value="">
+        Todas as áreas
+      </option>
+    `
     + areas
         .map(
           (area) => `
-            <option value="${escapeFlashHtml(area)}">
-              ${escapeFlashHtml(area)}
+            <option
+              value="${esc(area)}"
+            >
+              ${esc(area)}
             </option>
           `
         )
@@ -1412,7 +2185,8 @@ function populateLibraryAreas() {
   }
 }
 
-function filteredLibraryCards() {
+
+function filteredLibrary() {
   const search =
     document
       .getElementById(
@@ -1429,65 +2203,44 @@ function filteredLibraryCards() {
       )
       .value;
 
-  const activeFilter =
-    document
-      .getElementById(
-        "library-active"
-      )
-      .value;
+  return libraryCards
+    .filter(
+      (card) => {
+        if (
+          area
+          && card.area
+            !== area
+        ) {
+          return false;
+        }
 
-  return libraryCards.filter(
-    (card) => {
-      if (
-        area
-        && card.area
-          !== area
-      ) {
-        return false;
-      }
+        if (!search) {
+          return true;
+        }
 
-      if (
-        activeFilter
-          === "active"
-        && !card.active
-      ) {
-        return false;
-      }
-
-      if (
-        activeFilter
-          === "archived"
-        && card.active
-      ) {
-        return false;
-      }
-
-      if (!search) {
-        return true;
-      }
-
-      const haystack =
-        [
+        return [
           card.area,
           card.materia,
           card.theme,
           card.front_text,
           card.back_text
         ]
-          .filter(Boolean)
+          .filter(
+            Boolean
+          )
           .join(" ")
-          .toLowerCase();
-
-      return haystack.includes(
-        search
-      );
-    }
-  );
+          .toLowerCase()
+          .includes(
+            search
+          );
+      }
+    );
 }
+
 
 function renderLibrary() {
   const cards =
-    filteredLibraryCards();
+    filteredLibrary();
 
   const list =
     document.getElementById(
@@ -1504,15 +2257,26 @@ function renderLibrary() {
       "library-count"
     )
     .textContent =
-      `${cards.length} card${cards.length === 1 ? "" : "s"}`;
+      `${cards.length} card${
+        cards.length === 1
+          ? ""
+          : "s"
+      }`;
 
-  if (!cards.length) {
-    list.innerHTML = "";
-    empty.hidden = false;
+  if (
+    !cards.length
+  ) {
+    list.innerHTML =
+      "";
+
+    empty.hidden =
+      false;
+
     return;
   }
 
-  empty.hidden = true;
+  empty.hidden =
+    true;
 
   list.innerHTML =
     cards
@@ -1520,7 +2284,7 @@ function renderLibrary() {
         (card) => `
           <article
             class="library-card"
-            data-library-card="${card.id}"
+            style="grid-template-columns:1fr"
           >
 
             <div class="library-card-main">
@@ -1529,59 +2293,92 @@ function renderLibrary() {
 
                 ${
                   card.area
-                    ? `<span class="taxonomy-chip">${escapeFlashHtml(card.area)}</span>`
+                    ? `
+                      <span class="taxonomy-chip">
+                        ${esc(card.area)}
+                      </span>
+                    `
                     : ""
                 }
 
                 ${
                   card.materia
-                    ? `<span class="taxonomy-chip">${escapeFlashHtml(card.materia)}</span>`
+                    ? `
+                      <span class="taxonomy-chip">
+                        ${esc(card.materia)}
+                      </span>
+                    `
                     : ""
                 }
 
                 ${
                   card.theme
-                    ? `<span class="taxonomy-chip accent">${escapeFlashHtml(card.theme)}</span>`
+                    ? `
+                      <span class="taxonomy-chip accent">
+                        ${esc(card.theme)}
+                      </span>
+                    `
                     : ""
                 }
 
               </div>
 
               <div class="library-card-front">
-                ${escapeFlashHtml(truncateText(card.front_text, 220))}
+                ${esc(
+                  truncate(
+                    card.front_text,
+                    220
+                  )
+                )}
               </div>
 
               <div class="library-card-back">
-                ${escapeFlashHtml(truncateText(card.back_text, 220))}
+                ${esc(
+                  truncate(
+                    card.back_text,
+                    220
+                  )
+                )}
               </div>
 
               <div class="library-card-meta">
 
                 <span>
-                  Próxima: ${formatDueDate(card.due_date)}
+                  Próxima:
+                  ${formatDate(
+                    card.due_date
+                  )}
                 </span>
 
                 <span>
-                  ${card.review_count || 0} revisão${Number(card.review_count || 0) === 1 ? "" : "ões"}
+                  Intervalo:
+                  ${Number(
+                    card.current_interval_days
+                    || 1
+                  )}
+                  dia${
+                    Number(
+                      card.current_interval_days
+                      || 1
+                    ) === 1
+                      ? ""
+                      : "s"
+                  }
                 </span>
 
                 <span>
-                  ${card.active ? "Ativo" : "Arquivado"}
+                  ${card.review_count || 0}
+                  revisão${
+                    Number(
+                      card.review_count
+                      || 0
+                    ) === 1
+                      ? ""
+                      : "ões"
+                  }
                 </span>
 
               </div>
-
-            </div>
-
-            <div class="library-card-actions">
-
-              <button
-                type="button"
-                data-toggle-card="${card.id}"
-                data-next-active="${card.active ? "false" : "true"}"
-              >
-                ${card.active ? "Arquivar" : "Restaurar"}
-              </button>
 
             </div>
 
@@ -1589,117 +2386,105 @@ function renderLibrary() {
         `
       )
       .join("");
-
-  document
-    .querySelectorAll(
-      "[data-toggle-card]"
-    )
-    .forEach((button) => {
-      button.addEventListener(
-        "click",
-        async () => {
-          button.disabled = true;
-
-          const nextActive =
-            button.dataset.nextActive
-              === "true";
-
-          const {
-            error
-          } = await flashSb
-            .from("flashcards")
-            .update({
-              active:
-                nextActive
-            })
-            .eq(
-              "id",
-              button.dataset.toggleCard
-            );
-
-          if (error) {
-            console.error(error);
-            button.disabled = false;
-            return;
-          }
-
-          await Promise.all([
-            loadLibrary(),
-            loadMetrics(),
-            loadReviewQueue()
-          ]);
-        }
-      );
-    });
 }
+
 
 async function loadLibrary() {
   const {
     data,
     error
-  } = await flashSb
-    .from("flashcards")
-    .select(`
-      id,
-      area,
-      materia,
-      theme,
-      front_text,
-      back_text,
-      due_date,
-      review_count,
-      active,
-      created_at
-    `)
-    .order(
-      "created_at",
-      {
-        ascending: false
-      }
-    )
-    .limit(500);
+  } =
+    await flashSb
+      .from(
+        "flashcards"
+      )
+      .select(
+        "id,area,materia,theme,front_text,back_text,due_date,current_interval_days,review_count,created_at"
+      )
+      .order(
+        "created_at",
+        {
+          ascending:
+            false
+        }
+      )
+      .limit(
+        500
+      );
 
   if (error) {
-    console.error(error);
+    console.error(
+      error
+    );
+
     return;
   }
 
   libraryCards =
     data || [];
 
-  populateLibraryAreas();
+  populateAreas();
+
   renderLibrary();
 }
 
-function wireLibrary() {
-  [
-    "library-search",
-    "library-area",
-    "library-active"
-  ].forEach((id) => {
-    const element =
-      document.getElementById(id);
 
-    element.addEventListener(
-      id === "library-search"
-        ? "input"
-        : "change",
+function wireLibrary() {
+  document
+    .getElementById(
+      "library-search"
+    )
+    .addEventListener(
+      "input",
       renderLibrary
     );
-  });
+
+  document
+    .getElementById(
+      "library-area"
+    )
+    .addEventListener(
+      "change",
+      renderLibrary
+    );
 }
+
+
+/* =========================================================
+   INICIALIZAÇÃO
+   ========================================================= */
 
 async function initFlashcards() {
   flashUser =
     window.docmapUser;
 
-  wireTabs();
+  prepareLibraryWithoutArchive();
+
+  document
+    .querySelectorAll(
+      "[data-flash-tab]"
+    )
+    .forEach(
+      (button) => {
+        button
+          .addEventListener(
+            "click",
+            () =>
+              switchTab(
+                button
+                  .dataset
+                  .flashTab
+              )
+          );
+      }
+    );
+
   wireReview();
   wireCreate();
   wireImport();
   wireLibrary();
 
-  await loadFlashSettings();
+  await loadSettings();
 
   await Promise.all([
     loadMetrics(),
@@ -1707,7 +2492,10 @@ async function initFlashcards() {
   ]);
 }
 
-if (window.docmapUser) {
+
+if (
+  window.docmapUser
+) {
   initFlashcards();
 
 } else {
