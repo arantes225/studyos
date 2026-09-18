@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyOS | Cronograma</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="dashboard.html">StudyOS</a>
+  <nav class="nav">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="flashcards.html">Flashcards</a>
+    <a href="cronograma.html">Cronograma</a>
+    <a href="caderno-erros.html">Caderno de erros</a>
+    <a href="editais.html">Editais</a>
+    <a href="configuracoes.html">Configurações</a>
+  </nav>
+  <button class="btn small secondary" data-logout>Sair</button>
+</header>
+
+<main class="page">
+  <section class="page-header">
+    <div>
+      <p class="eyebrow">Planejamento</p>
+      <h1>Cronograma</h1>
+      <p class="muted">Cadastre aulas e matérias novas.</p>
+    </div>
+  </section>
+
+  <section class="two-columns">
+    <div class="card">
+      <h2>Nova aula</h2>
+
+      <div class="field">
+        <label for="cr-materia">Matéria</label>
+        <input id="cr-materia" placeholder="Ex.: Cardiologia">
+      </div>
+
+      <div class="field">
+        <label for="cr-tema">Tema</label>
+        <input id="cr-tema" placeholder="Ex.: Insuficiência cardíaca">
+      </div>
+
+      <div class="field">
+        <label for="cr-data">Data</label>
+        <input id="cr-data" type="date">
+      </div>
+
+      <button id="cr-salvar" class="btn primary">Salvar aula</button>
+      <p id="cr-msg" class="message"></p>
+    </div>
+
+    <div class="card">
+      <h2>Próximas aulas</h2>
+      <div id="cr-lista" class="list"></div>
+    </div>
+  </section>
+</main>
+<script src="supabase.js"></script>
+<script src="cronograma.js"></script>
+</body>
+</html>

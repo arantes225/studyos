@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyOS | Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="dashboard.html">StudyOS</a>
+  <nav class="nav">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="flashcards.html">Flashcards</a>
+    <a href="cronograma.html">Cronograma</a>
+    <a href="caderno-erros.html">Caderno de erros</a>
+    <a href="editais.html">Editais</a>
+    <a href="configuracoes.html">Configurações</a>
+  </nav>
+  <button class="btn small secondary" data-logout>Sair</button>
+</header>
+
+<main class="page">
+  <section class="page-header">
+    <div>
+      <p class="eyebrow">Hoje</p>
+      <h1>Dashboard</h1>
+      <p class="muted" id="usuario-email">Carregando usuário...</p>
+    </div>
+  </section>
+
+  <section id="resumo" class="stats-grid"></section>
+
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2>Pendências</h2>
+        <p class="muted">Tudo que precisa ser feito hoje ou está atrasado.</p>
+      </div>
+    </div>
+    <div id="pendencias" class="list">
+      <p class="muted">Carregando...</p>
+    </div>
+  </section>
+</main>
+<script src="supabase.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>
