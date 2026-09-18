@@ -115,8 +115,7 @@ async function carregarAulas() {
     item.innerHTML = `
       <div>
         <h3>${aula.tema}</h3>
-        <p>${aula.disciplina || "Sem disciplina"} · ${formatarData(aula.data)}</p>
-        <p>${horario}</p>
+<p>${aula.area || "Sem área"} · ${aula.disciplina || "Sem disciplina"} · ${formatarData(aula.data)}</p>        <p>${horario}</p>
       </div>
       <span class="aula-status ${aula.status}">
         ${aula.status}
@@ -132,17 +131,18 @@ async function salvarAula(event) {
 
   const mensagem = document.getElementById("aula-msg");
   const data = document.getElementById("aula-data").value;
-  const disciplina = document.getElementById("aula-disciplina").value.trim();
-  const tema = document.getElementById("aula-tema").value.trim();
+const area = document.getElementById("aula-area").value;
+const disciplina = document.getElementById("aula-disciplina").value.trim();
+const tema = document.getElementById("aula-tema").value.trim();;
   const horarioInicio = document.getElementById("aula-inicio").value || null;
   const horarioFim = document.getElementById("aula-fim").value || null;
 
   mensagem.textContent = "";
 
-  if (!data || !tema) {
-    mensagem.textContent = "Preencha a data e o tema da aula.";
-    return;
-  }
+if (!data || !area || !tema) {
+  mensagem.textContent = "Escolha a área, preencha a data e o tema da aula.";
+  return;
+}
 
   const {
     data: { user }
@@ -161,6 +161,7 @@ async function salvarAula(event) {
       {
         user_id: user.id,
         data,
+        área
         disciplina: disciplina || null,
         tema,
         horario_inicio: horarioInicio,
@@ -183,7 +184,19 @@ async function salvarAula(event) {
 
 function iniciarPaginaCronograma() {
   verificarLoginNoDashboard();
+  const botoesArea = document.querySelectorAll(".area-option");
+  const campoArea = document.getElementById("aula-area");
 
+  botoesArea.forEach((botao) => {
+    botao.addEventListener("click", () => {
+      botoesArea.forEach((outroBotao) => {
+        outroBotao.classList.remove("selected");
+      });
+
+      botao.classList.add("selected");
+      campoArea.value = botao.dataset.area;
+    });
+  });
   const formulario = document.getElementById("aula-form");
   const botaoAtualizar = document.getElementById("atualizar-aulas-btn");
 

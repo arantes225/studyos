@@ -541,3 +541,35 @@ body {
     grid-template-columns: 1fr;
   }
 }
+/* Opções de área no cronograma */
+
+.area-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 7px 0 16px;
+}
+
+.area-option {
+  width: auto;
+  margin: 0;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.area-option:hover {
+  border-color: var(--primary);
+  background: var(--surface-light);
+  color: var(--text);
+}
+
+.area-option.selected {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #10131b;
+}
