@@ -7,7 +7,6 @@ const PAGE_INFO = {
   flashcards: { title: "Flashcards", eyebrow: "Estudar" },
   erros: { title: "Caderno de erros", eyebrow: "Estudar" },
   questoes: { title: "Questões e Simulados", eyebrow: "Estudar" },
-  estatisticas: { title: "Estatísticas", eyebrow: "Desempenho" },
   editais: { title: "Editais / Provas", eyebrow: "Planejamento" },
   configuracoes: { title: "Configurações", eyebrow: "Conta e preferências" }
 };
@@ -102,10 +101,10 @@ function sidebarMarkup(user, profile = null) {
   return `
     <div class="sidebar-top">
       <a class="brand" href="dashboard.html">
-        <span class="brand-mark">D</span>
+        <img class="brand-logo" src="logo-resibulando.png" alt="Logo Resibulando">
         <span class="brand-copy">
-          <strong>DocMap</strong>
-          <small>Study workspace</small>
+          <strong>Resibulando</strong>
+          <small>Mapa até a residência</small>
         </span>
       </a>
       <button class="sidebar-close" id="sidebar-close" type="button" aria-label="Fechar menu">×</button>
@@ -133,10 +132,6 @@ function sidebarMarkup(user, profile = null) {
         </div>
       </div>
 
-      <a class="nav-link ${page === "estatisticas" ? "active" : ""}" href="estatisticas.html">
-        <span class="nav-icon">▥</span><span>Estatísticas</span>
-      </a>
-
       <a class="nav-link ${page === "editais" ? "active" : ""}" href="editais.html">
         <span class="nav-icon">▤</span><span>Editais / Provas</span>
       </a>
@@ -159,7 +154,7 @@ function sidebarMarkup(user, profile = null) {
           </button>
 
           <div class="sidebar-lofi-copy">
-            <strong data-lofi-title>Lo-fi DocMap</strong>
+            <strong data-lofi-title>Lofi 1</strong>
             <small data-lofi-status>carregando...</small>
           </div>
         </div>
@@ -377,7 +372,7 @@ async function carregarAudioTracks() {
 
   if (error) {
     console.warn(
-      "Não foi possível carregar os sons do DocMap:",
+      "Não foi possível carregar os sons do Resibulando:",
       error.message
     );
     return [];
@@ -430,7 +425,7 @@ function updateLofiControls(manager) {
 
   document.querySelectorAll("[data-lofi-title]").forEach((el) => {
     el.textContent =
-      manager.track?.title || "Lo-fi DocMap";
+      manager.track?.title || "Lofi 1";
   });
 
   document.querySelectorAll("[data-lofi-status]").forEach((el) => {
@@ -471,7 +466,7 @@ function updateLofiControls(manager) {
     select.innerHTML = manager.tracks.length
       ? manager.tracks.map((track) => `
           <option value="${track.id}">
-            ${track.title}
+            ${escapeHtml(track.title)}
           </option>
         `).join("")
       : '<option value="">Nenhum som disponível</option>';
@@ -809,6 +804,7 @@ async function iniciarLofiGlobal(userId) {
         writeLofiState(
           userId,
           {
+            trackId: manager.track?.id || null,
             volume: manager.audio.volume,
             currentTime:
               manager.audio.currentTime || 0

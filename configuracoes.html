@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Configurações · DocMap</title>
+  <title>Configurações · Resibulando</title>
+  <link rel="icon" type="image/png" href="favicon.png">
   <link rel="stylesheet" href="style.css?v=audio3">
 
   <style>
@@ -427,23 +428,6 @@
       }
     }
 
-  
-    .capacity-grid {
-      display: grid;
-      gap: 10px;
-    }
-
-    .capacity-row label {
-      display: grid;
-      gap: 3px;
-      flex: 1 1 240px;
-    }
-
-    .capacity-row label small {
-      color: var(--muted);
-      font-size: 10px;
-      font-weight: 500;
-    }
   </style>
 </head>
 
@@ -469,7 +453,7 @@
             <div>
               <h2>Perfil</h2>
               <p>
-                Essas informações aparecem no menu lateral do DocMap.
+                Essas informações aparecem no menu lateral do Resibulando.
               </p>
             </div>
 
@@ -620,41 +604,18 @@
 
             </div>
 
-            <div class="capacity-grid">
-
-              <div class="capacity-row">
-                <label for="max-lessons-per-day">
-                  <strong>Máximo de aulas teóricas por dia</strong>
-                  <small>
-                    Usado ao reorganizar aulas atrasadas no Cronograma.
-                  </small>
-                </label>
-
-                <input
-                  id="max-lessons-per-day"
-                  type="number"
-                  min="1"
-                  max="50"
-                  step="1"
-                  value="1"
-                >
-              </div>
-
-              <div class="capacity-row">
-                <label for="max-subject-reviews">
-                  <strong>Máximo de revisões teóricas por dia</strong>
-                </label>
-
-                <input
-                  id="max-subject-reviews"
-                  type="number"
-                  min="1"
-                  max="50"
-                  step="1"
-                  value="3"
-                >
-              </div>
-
+            <div class="capacity-row">
+              <label for="max-subject-reviews">
+                <strong>Máximo de revisões teóricas por dia</strong>
+              </label>
+              <input
+                id="max-subject-reviews"
+                type="number"
+                min="1"
+                max="50"
+                step="1"
+                value="3"
+              >
             </div>
 
             <div class="settings-actions">
@@ -993,7 +954,7 @@
             <div>
               <h2>Login e segurança</h2>
               <p>
-                Veja a conta conectada e altere sua senha de acesso ao DocMap.
+                Veja a conta conectada e altere sua senha de acesso ao Resibulando.
               </p>
             </div>
 
@@ -1069,6 +1030,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
   <script src="app.js?v=audio3"></script>
-  <script src="configuracoes.js?v=11.7"></script>
+  <script src="configuracoes.js?v=9.1"></script>
 </body>
 </html>
