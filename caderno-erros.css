@@ -1002,3 +1002,43 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* =========================================================
+   FASE 11.5 — OCR / EXTRAÇÃO DE TEXTO
+   ========================================================= */
+
+.error-image-tools,
+.error-edit-image-tools {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 9px;
+}
+
+.error-image-info {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.error-image-info.success {
+  color: var(--success);
+}
+
+.error-image-info.error {
+  color: var(--danger);
+}
+
+.error-image-tools .button[disabled],
+.error-edit-image-tools .button[disabled] {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.ocr-progress {
+  min-width: 150px;
+  color: var(--muted);
+  font-size: 10px;
+}

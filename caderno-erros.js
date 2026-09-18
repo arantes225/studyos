@@ -26,6 +26,12 @@ const selectedErrorIds =
 let importedErrorRows =
   [];
 
+let preparedNewErrorImage =
+  null;
+
+let preparedNewErrorOriginalSize =
+  null;
+
 
 const errorParams =
   new URLSearchParams(
@@ -813,8 +819,581 @@ async function compressErrorImage(
 }
 
 
-async function uploadErrorImage(
+
+function formatErrorFileSize(
+  bytes
+) {
+  const value =
+    Number(
+      bytes
+      || 0
+    );
+
+
+  if (
+    value < 1024
+  ) {
+    return `${value} B`;
+  }
+
+
+  if (
+    value < 1024 * 1024
+  ) {
+    return `${(
+      value
+      / 1024
+    ).toFixed(0)} KB`;
+  }
+
+
+  return `${(
+    value
+    / (
+      1024
+      * 1024
+    )
+  ).toFixed(1)} MB`;
+}
+
+
+function setNewErrorImageInfo(
+  text,
+  type = ""
+) {
+  const element =
+    document.getElementById(
+      "new-error-image-info"
+    );
+
+
+  if (!element) {
+    return;
+  }
+
+
+  element.textContent =
+    text;
+
+
+  element.className =
+    `error-image-info ${type}`
+      .trim();
+}
+
+
+async function prepareNewErrorImage(
   file
+) {
+  preparedNewErrorImage =
+    null;
+
+  preparedNewErrorOriginalSize =
+    null;
+
+
+  const extractButton =
+    document.getElementById(
+      "extract-error-image-text"
+    );
+
+
+  if (!file) {
+    setNewErrorImageInfo(
+      ""
+    );
+
+
+    if (extractButton) {
+      extractButton.disabled =
+        true;
+    }
+
+
+    return;
+  }
+
+
+  if (
+    !file.type
+      ?.startsWith(
+        "image/"
+      )
+  ) {
+    setNewErrorImageInfo(
+      "Selecione um arquivo de imagem.",
+      "error"
+    );
+
+
+    if (extractButton) {
+      extractButton.disabled =
+        true;
+    }
+
+
+    return;
+  }
+
+
+  if (extractButton) {
+    extractButton.disabled =
+      false;
+  }
+
+
+  preparedNewErrorOriginalSize =
+    file.size;
+
+
+  setNewErrorImageInfo(
+    "Preparando e comprimindo imagem..."
+  );
+
+
+  try {
+    preparedNewErrorImage =
+      await compressErrorImage(
+        file
+      );
+
+
+    const finalFile =
+      preparedNewErrorImage
+      || file;
+
+
+    if (
+      finalFile === file
+      || (
+        finalFile.size
+        >= file.size
+      )
+    ) {
+      setNewErrorImageInfo(
+        `Imagem já otimizada: ${formatErrorFileSize(
+          file.size
+        )}. O arquivo original será mantido.`,
+        "success"
+      );
+
+      return;
+    }
+
+
+    const reduction =
+      Math.max(
+        0,
+        (
+          1
+          - (
+            finalFile.size
+            / file.size
+          )
+        )
+        * 100
+      );
+
+
+    setNewErrorImageInfo(
+      `Comprimida: ${formatErrorFileSize(
+        file.size
+      )} → ${formatErrorFileSize(
+        finalFile.size
+      )} (${reduction.toFixed(0)}% menor).`,
+      "success"
+    );
+
+
+  } catch (error) {
+    console.warn(
+      error
+    );
+
+
+    preparedNewErrorImage =
+      file;
+
+
+    setNewErrorImageInfo(
+      "Não foi possível comprimir; o original será usado.",
+      "error"
+    );
+  }
+}
+
+
+function normalizeOcrText(
+  value
+) {
+  return String(
+    value
+    || ""
+  )
+    .replace(
+      /\r/g,
+      ""
+    )
+    .replace(
+      /[ \t]+\n/g,
+      "\n"
+    )
+    .replace(
+      /\n{3,}/g,
+      "\n\n"
+    )
+    .replace(
+      /[ \t]{2,}/g,
+      " "
+    )
+    .trim();
+}
+
+
+async function extractTextFromErrorImage(
+  imageSource,
+  onProgress
+) {
+  if (
+    !window.Tesseract
+  ) {
+    throw new Error(
+      "O extrator de texto não carregou. Atualize a página e tente novamente."
+    );
+  }
+
+
+  const worker =
+    await window
+      .Tesseract
+      .createWorker(
+        "por",
+        1,
+        {
+          logger:
+            (message) => {
+              if (
+                typeof onProgress
+                !== "function"
+              ) {
+                return;
+              }
+
+
+              if (
+                message.status
+                === "recognizing text"
+              ) {
+                onProgress(
+                  Math.round(
+                    Number(
+                      message.progress
+                      || 0
+                    )
+                    * 100
+                  )
+                );
+              }
+            }
+        }
+      );
+
+
+  try {
+    const {
+      data
+    } =
+      await worker
+        .recognize(
+          imageSource
+        );
+
+
+    const text =
+      normalizeOcrText(
+        data?.text
+        || ""
+      );
+
+
+    if (!text) {
+      throw new Error(
+        "Nenhum texto legível foi identificado na imagem."
+      );
+    }
+
+
+    return text;
+
+  } finally {
+    await worker
+      .terminate();
+  }
+}
+
+
+function applyExtractedText(
+  textarea,
+  text
+) {
+  if (!textarea) {
+    return false;
+  }
+
+
+  if (
+    textarea.value
+      .trim()
+  ) {
+    const replace =
+      window.confirm(
+        "O campo Questão já possui texto. Deseja substituir pelo texto extraído da imagem?"
+      );
+
+
+    if (!replace) {
+      return false;
+    }
+  }
+
+
+  textarea.value =
+    text;
+
+
+  textarea.focus();
+
+
+  return true;
+}
+
+
+async function extractNewErrorImageText() {
+  const input =
+    document.getElementById(
+      "new-error-image"
+    );
+
+
+  const button =
+    document.getElementById(
+      "extract-error-image-text"
+    );
+
+
+  const file =
+    input?.files?.[0]
+    || null;
+
+
+  if (!file) {
+    setNewErrorImageInfo(
+      "Selecione uma imagem primeiro.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  button.disabled =
+    true;
+
+
+  try {
+    setNewErrorImageInfo(
+      "Extraindo texto: 0%..."
+    );
+
+
+    const text =
+      await extractTextFromErrorImage(
+        file,
+        (progress) => {
+          setNewErrorImageInfo(
+            `Extraindo texto: ${progress}%...`
+          );
+        }
+      );
+
+
+    const applied =
+      applyExtractedText(
+        document.getElementById(
+          "new-error-question"
+        ),
+        text
+      );
+
+
+    setNewErrorImageInfo(
+      applied
+        ? `Texto extraído. ${text.length} caracteres adicionados à Questão.`
+        : "Extração concluída; o texto existente foi mantido.",
+      "success"
+    );
+
+
+  } catch (error) {
+    console.error(
+      error
+    );
+
+
+    setNewErrorImageInfo(
+      error.message
+      || "Não foi possível extrair o texto.",
+      "error"
+    );
+
+
+  } finally {
+    button.disabled =
+      false;
+  }
+}
+
+
+async function downloadStoredErrorImage(
+  path
+) {
+  if (!path) {
+    throw new Error(
+      "Este item não possui imagem salva."
+    );
+  }
+
+
+  const {
+    data,
+    error
+  } =
+    await errorSb
+      .storage
+      .from(
+        "docmap"
+      )
+      .download(
+        path
+      );
+
+
+  if (error) {
+    throw error;
+  }
+
+
+  return data;
+}
+
+
+async function extractStoredErrorImageText() {
+  if (!editingErrorId) {
+    return;
+  }
+
+
+  const item =
+    errorLibraryItems
+      .find(
+        (entry) =>
+          entry.id === editingErrorId
+      )
+    || errorQueue.find(
+      (entry) =>
+        entry.id === editingErrorId
+    );
+
+
+  if (
+    !item
+    || !item.question_image_path
+  ) {
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      "error-edit-extract-image"
+    );
+
+  const status =
+    document.getElementById(
+      "error-edit-ocr-status"
+    );
+
+
+  button.disabled =
+    true;
+
+
+  try {
+    status.textContent =
+      "Baixando imagem...";
+
+    status.className =
+      "error-status";
+
+
+    const blob =
+      await downloadStoredErrorImage(
+        item.question_image_path
+      );
+
+
+    const text =
+      await extractTextFromErrorImage(
+        blob,
+        (progress) => {
+          status.textContent =
+            `Extraindo texto: ${progress}%...`;
+        }
+      );
+
+
+    const applied =
+      applyExtractedText(
+        document.getElementById(
+          "error-edit-question"
+        ),
+        text
+      );
+
+
+    status.textContent =
+      applied
+        ? "Texto extraído e inserido no campo Questão."
+        : "Texto extraído; conteúdo existente mantido.";
+
+    status.className =
+      "error-status success";
+
+
+  } catch (error) {
+    console.error(
+      error
+    );
+
+
+    status.textContent =
+      error.message
+      || "Não foi possível extrair o texto.";
+
+    status.className =
+      "error-status error";
+
+
+  } finally {
+    button.disabled =
+      false;
+  }
+}
+
+
+async function uploadErrorImage(
+  file,
+  preparedFile = null
 ) {
   if (!file) {
     return null;
@@ -822,7 +1401,8 @@ async function uploadErrorImage(
 
 
   const finalFile =
-    await compressErrorImage(
+    preparedFile
+    || await compressErrorImage(
       file
     );
 
@@ -963,6 +1543,30 @@ function clearNewErrorForm() {
   }
 
 
+  preparedNewErrorImage =
+    null;
+
+  preparedNewErrorOriginalSize =
+    null;
+
+
+  const extractButton =
+    document.getElementById(
+      "extract-error-image-text"
+    );
+
+
+  if (extractButton) {
+    extractButton.disabled =
+      true;
+  }
+
+
+  setNewErrorImageInfo(
+    ""
+  );
+
+
   setNewErrorStatus(
     ""
   );
@@ -1076,7 +1680,8 @@ async function saveNewError() {
   try {
     imagePath =
       await uploadErrorImage(
-        imageFile
+        imageFile,
+        preparedNewErrorImage
       );
 
 
@@ -1197,6 +1802,31 @@ function wireNewError() {
           false
         );
       }
+    );
+
+
+  document
+    .getElementById(
+      "new-error-image"
+    )
+    ?.addEventListener(
+      "change",
+      (event) =>
+        prepareNewErrorImage(
+          event.target
+            .files?.[0]
+          || null
+        )
+    );
+
+
+  document
+    .getElementById(
+      "extract-error-image-text"
+    )
+    ?.addEventListener(
+      "click",
+      extractNewErrorImageText
     );
 
 
@@ -2118,6 +2748,33 @@ function openErrorEditDialog(
         }
       }
     );
+
+
+  const imageTools =
+    document.getElementById(
+      "error-edit-image-tools"
+    );
+
+
+  const imageOcrStatus =
+    document.getElementById(
+      "error-edit-ocr-status"
+    );
+
+
+  if (imageTools) {
+    imageTools.hidden =
+      !item.question_image_path;
+  }
+
+
+  if (imageOcrStatus) {
+    imageOcrStatus.textContent =
+      "";
+
+    imageOcrStatus.className =
+      "error-status";
+  }
 
 
   const status =
@@ -3845,6 +4502,16 @@ function wireErrorLibrary() {
     ?.addEventListener(
       "click",
       saveEditedError
+    );
+
+
+  document
+    .getElementById(
+      "error-edit-extract-image"
+    )
+    ?.addEventListener(
+      "click",
+      extractStoredErrorImageText
     );
 
 

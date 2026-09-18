@@ -1,130 +1,58 @@
-DOCMAP — FASE 11.4
-GESTÃO DE CARDS, CADERNO, SIMULADOS E PROVAS
+DOCMAP — FASE 11.5
+OCR / EXTRAÇÃO DE TEXTO NO CADERNO DE ERROS
 
-=========================================================
-FLASHCARDS
-=========================================================
+O QUE ENTROU
 
-Tanto na REVISÃO quanto na BIBLIOTECA:
-- menu ⋯ no canto superior direito
-- Editar
-- Excluir
+1. NOVO ERRO
+Ao selecionar uma imagem:
+- o DocMap prepara/comprime a imagem
+- mostra o tamanho original e o tamanho final
+- habilita o botão "Extrair texto da imagem"
+- o OCR reconhece português
+- o texto extraído vai direto para o campo "Questão"
 
-Na Biblioteca:
-- seleção por checkbox
-- Selecionar visíveis
-- Excluir selecionados em grupo
+Se o campo Questão já tiver texto, o DocMap pergunta antes de substituir.
 
-A edição permite:
-Área, Matéria, Tema, Frente e Verso.
+2. EDIÇÃO
+Se um item já possui imagem salva:
+- Editar pelo menu ⋯
+- aparece "Extrair texto da imagem salva"
+- o arquivo é baixado do bucket privado
+- o OCR insere o resultado no campo Questão
 
-=========================================================
-CADERNO DE ERROS
-=========================================================
+3. COMPRESSÃO CONFERIDA
+A rotina já existente foi mantida e agora o resultado fica visível.
 
-Novo minimenu superior:
-- Revisar
-- Novo erro
-- Biblioteca
-- Importar
+Regras atuais:
+- redimensiona para no máximo 1400 px no maior lado
+- converte para WebP com qualidade 0.72
+- se ainda passar de ~650 KB, tenta qualidade 0.62
+- se o arquivo comprimido ficar MAIOR que o original,
+  mantém o original em vez de piorar o tamanho
 
-Tanto na REVISÃO quanto na BIBLIOTECA:
-- menu ⋯ no canto superior direito
-- Editar
-- Excluir
+Ou seja: a imagem é comprimida quando isso realmente reduz o arquivo.
 
-Na Biblioteca:
-- seleção por checkbox
-- Selecionar visíveis
-- Excluir selecionados em grupo
+4. OCR
+Foi adicionado Tesseract.js no navegador.
+Idioma padrão: português.
 
-Importação:
-- .xlsx
-- .xls
-- .csv
-- apenas CCQ é obrigatório
-- reconhece Área, Matéria, Tema, CCQ, Questão,
-  Resposta correta e O que eu pensei
+Nenhum texto OCR é salvo automaticamente:
+ele entra no campo Questão e você ainda pode revisar antes de salvar.
 
-=========================================================
-EDITAIS / PROVAS
-=========================================================
-
-A opção individual de Excluir continua disponível.
-
-Também foi adicionado:
-- seleção de provas
-- selecionar visíveis
-- excluir várias provas em grupo
-
-Simulados vinculados NÃO são apagados ao apagar uma prova;
-eles apenas deixam de ficar vinculados à prova.
-
-=========================================================
-QUESTÕES E SIMULADOS
-=========================================================
-
-A opção individual de excluir simulado continua disponível.
-
-Também foi adicionado:
-- seleção por checkbox
-- selecionar todos
-- excluir vários simulados em grupo
-
-Ao excluir, o PDF privado associado também é removido do Storage
-quando possível.
-
-=========================================================
-CRONOGRAMA
-=========================================================
-
-Mantida a regra da Fase 11.3:
-
-No PLANNER:
-- somente "Iniciar" fica sempre visível
-
-No menu ⋯:
-- Concluir
-- Aula já feita
-- Remover para o deck
-
-=========================================================
 INSTALAÇÃO
-=========================================================
 
 NÃO PRECISA RODAR SQL.
 
-SUBSTITUA:
-
-flashcards.html
-flashcards.css
-flashcards.js
-
-caderno-erros.html
-caderno-erros.css
-caderno-erros.js
-
-editais.html
-editais.css
-editais.js
-
-questoes-simulados.html
-questoes-simulados.js
-
-cronograma.html
-cronograma.js
+SUBSTITUA SOMENTE:
+- caderno-erros.html
+- caderno-erros.css
+- caderno-erros.js
 
 PUBLICAÇÃO:
 
 git add -A
-git commit -m "Fase 11.4 gestao de bibliotecas e exclusao em grupo"
+git commit -m "Fase 11.5 OCR no caderno de erros"
 git push origin main
 
 Depois:
 Ctrl + F5
-
-=========================================================
-OBSERVAÇÃO
-=========================================================
-
-Exclusão em grupo é permanente e sempre pede confirmação.

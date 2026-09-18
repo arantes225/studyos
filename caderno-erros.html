@@ -20,7 +20,7 @@
 
   <link
     rel="stylesheet"
-    href="caderno-erros.css?v=11.4"
+    href="caderno-erros.css?v=11.5"
   >
 </head>
 
@@ -264,6 +264,25 @@
                   type="file"
                   accept="image/*"
                 >
+
+                <div class="error-image-tools">
+
+                  <button
+                    id="extract-error-image-text"
+                    class="button secondary"
+                    type="button"
+                    disabled
+                  >
+                    Extrair texto da imagem
+                  </button>
+
+                  <span
+                    id="new-error-image-info"
+                    class="error-image-info"
+                    aria-live="polite"
+                  ></span>
+
+                </div>
               </label>
 
             </div>
@@ -814,6 +833,29 @@
 
       </div>
 
+      <div
+        id="error-edit-image-tools"
+        class="error-edit-image-tools"
+        hidden
+      >
+
+        <button
+          id="error-edit-extract-image"
+          class="button secondary"
+          type="button"
+        >
+          Extrair texto da imagem salva
+        </button>
+
+        <span
+          id="error-edit-ocr-status"
+          class="error-status"
+          aria-live="polite"
+        ></span>
+
+      </div>
+
+
       <div class="error-edit-actions">
 
         <button
@@ -851,11 +893,15 @@
     src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"
   ></script>
 
+  <script
+    src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"
+  ></script>
+
   <script src="supabase.js"></script>
 
   <script src="app.js?v=7.4"></script>
 
-  <script src="caderno-erros.js?v=11.4"></script>
+  <script src="caderno-erros.js?v=11.5"></script>
 
 </body>
 
