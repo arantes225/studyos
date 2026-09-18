@@ -1,9 +1,12 @@
-const SUPABASE_URL = "https://ietitoxjojsdiuridrfk.supabase.com";
-const SUPABASE_KEY = "sb_publishable_ReynfGuOnOGco0kf7NO_Jw__frEPrb0";
+const STUDYOS_SUPABASE_URL =
+  "https://kkyqgcirishgqjyqafzd.supabase.co";
 
-const clientesupabase = window.supabase.createClient(
-    supabaseUrl, 
-    supabaseKey
+const STUDYOS_SUPABASE_KEY =
+  "COLE_AQUI_A_MESMA_CHAVE_ANON_QUE_VOCE_JA_USAVA";
+
+const clienteSupabase = window.supabase.createClient(
+  STUDYOS_SUPABASE_URL,
+  STUDYOS_SUPABASE_KEY
 );
 
 let usuarioAtual = null;
