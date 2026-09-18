@@ -1,76 +1,137 @@
-const supabase = window.studyos.supabase;
+const SUPABASE_URL =
+  "https://sxdsfklllilhdyuamvvg.supabase.co";
 
-const typeMeta = {
-  flashcard: { label: "Flashcards", icon: "FC" },
-  caderno_erros: { label: "Caderno de erros", icon: "CE" },
-  revisao_materia: { label: "Revisão de matéria", icon: "RM" },
-  aula: { label: "Aulas", icon: "AU" },
-  edital: { label: "Editais", icon: "ED" }
-};
+const SUPABASE_KEY =
+  "sb_publishable_AQ5-Pn1knmBhSFyt5aMtjQ_XQynLJ_L";
 
-async function init() {
-  const session = await window.studyos.requireAuth();
-  if (!session) return;
 
-  document.getElementById("usuario-email").textContent = session.user.email;
-  document.querySelector("[data-logout]").addEventListener("click", window.studyos.signOut);
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
-  await window.studyos.ensureDefaultSettings();
-  await loadDashboard();
-}
 
-async function loadDashboard() {
-  const resumo = document.getElementById("resumo");
-  const pendenciasEl = document.getElementById("pendencias");
+const emailUsuario =
+  document.getElementById(
+    "email-usuario"
+  );
 
-  const { data, error } = await supabase
-    .from("dashboard_pendencias")
-    .select("*")
-    .order("data", { ascending: true });
+const status =
+  document.getElementById(
+    "status"
+  );
+
+const botaoSair =
+  document.getElementById(
+    "sair"
+  );
+
+
+/* =====================================================
+   CARREGAR DASHBOARD
+===================================================== */
+
+async function iniciarDashboard() {
+
+  const {
+    data: {
+      session
+    },
+    error
+  } =
+    await supabaseClient.auth
+      .getSession();
+
 
   if (error) {
-    pendenciasEl.innerHTML = `<p class="message error">${window.studyos.escapeHtml(error.message)}</p>`;
+
+    console.error(
+      error
+    );
+
+
+    status.textContent =
+      "Erro ao verificar sessão.";
+
     return;
+
   }
 
-  const items = data || [];
-  const counts = {
-    flashcard: 0,
-    caderno_erros: 0,
-    revisao_materia: 0,
-    aula: 0,
-    edital: 0
-  };
 
-  items.forEach(item => {
-    if (Object.hasOwn(counts, item.tipo)) counts[item.tipo] += 1;
-  });
+  /*
+    Não está logado.
+  */
 
-  resumo.innerHTML = Object.entries(counts).map(([type, count]) => `
-    <div class="stat-card">
-      <span class="stat-label">${typeMeta[type].label}</span>
-      <strong>${count}</strong>
-    </div>
-  `).join("");
+  if (
+    !session
+  ) {
 
-  if (!items.length) {
-    pendenciasEl.innerHTML = `<div class="empty">Nenhuma pendência para hoje.</div>`;
+    window.location.href =
+      "login.html";
+
     return;
+
   }
 
-  pendenciasEl.innerHTML = items.map(item => `
-    <article class="list-item">
-      <div>
-        <div class="list-meta">
-          <span class="badge">${typeMeta[item.tipo]?.label || item.tipo}</span>
-          ${item.status === "atrasado" ? '<span class="badge danger">Atrasado</span>' : '<span class="badge success">Hoje</span>'}
-        </div>
-        <h3>${window.studyos.escapeHtml(item.titulo || "")}</h3>
-        <p>${window.studyos.escapeHtml(item.categoria || "")}</p>
-      </div>
-      <time>${window.studyos.formatDate(item.data)}</time>
-    </article>
-  `).join("");
+
+  emailUsuario.textContent =
+    session.user.email;
+
+
+  status.textContent =
+    "Sessão autenticada.";
+
 }
 
-init();
+
+/* =====================================================
+   SAIR
+===================================================== */
+
+async function sair() {
+
+  botaoSair.disabled =
+    true;
+
+
+  const {
+    error
+  } =
+    await supabaseClient.auth
+      .signOut();
+
+
+  if (error) {
+
+    console.error(
+      error
+    );
+
+
+    alert(
+      error.message
+    );
+
+
+    botaoSair.disabled =
+      false;
+
+    return;
+
+  }
+
+
+  window.location.href =
+    "login.html";
+
+}
+
+
+botaoSair.addEventListener(
+  "click",
+  sair
+);
+
+
+iniciarDashboard();

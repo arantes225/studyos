@@ -1,7 +1,16 @@
-console.log("auth.js carregado");
+const SUPABASE_URL =
+  "https://sxdsfklllilhdyuamvvg.supabase.co";
 
-const supabase =
-  window.supabaseClient;
+const SUPABASE_KEY =
+  "sb_publishable_AQ5-Pn1knmBhSFyt5aMtjQ_XQynLJ_L";
+
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
 
 const emailInput =
   document.getElementById("email");
@@ -21,16 +30,35 @@ const mensagem =
 
 function mostrarMensagem(
   texto,
-  erro = false
+  tipo = ""
 ) {
 
   mensagem.textContent =
     texto;
 
-  mensagem.style.color =
-    erro
-      ? "red"
-      : "green";
+
+  if (tipo === "erro") {
+
+    mensagem.style.color =
+      "#dc2626";
+
+  }
+
+  else if (
+    tipo === "sucesso"
+  ) {
+
+    mensagem.style.color =
+      "#16a34a";
+
+  }
+
+  else {
+
+    mensagem.style.color =
+      "#374151";
+
+  }
 
 }
 
@@ -40,11 +68,6 @@ function mostrarMensagem(
 ===================================================== */
 
 async function entrar() {
-
-  console.log(
-    "Botão entrar clicado"
-  );
-
 
   const email =
     emailInput.value.trim();
@@ -60,7 +83,7 @@ async function entrar() {
 
     mostrarMensagem(
       "Preencha e-mail e senha.",
-      true
+      "erro"
     );
 
     return;
@@ -73,18 +96,26 @@ async function entrar() {
   );
 
 
+  botaoEntrar.disabled =
+    true;
+
+
   const {
     data,
     error
   } =
-    await supabase.auth
+    await supabaseClient.auth
       .signInWithPassword({
 
-        email: email,
+        email,
 
         password: senha
 
       });
+
+
+  botaoEntrar.disabled =
+    false;
 
 
   if (error) {
@@ -94,29 +125,41 @@ async function entrar() {
     );
 
 
-    mostrarMensagem(
-      error.message,
-      true
-    );
+    if (
+      error.message.includes(
+        "Invalid login credentials"
+      )
+    ) {
+
+      mostrarMensagem(
+        "E-mail ou senha incorretos.",
+        "erro"
+      );
+
+    }
+
+    else {
+
+      mostrarMensagem(
+        error.message,
+        "erro"
+      );
+
+    }
 
     return;
 
   }
 
 
-  console.log(
-    "Login realizado:",
-    data
-  );
+  if (
+    data.session
+  ) {
 
+    window.location.href =
+      "dashboard.html";
 
-  mostrarMensagem(
-    "Login realizado com sucesso."
-  );
-
-
-  window.location.href =
-    "dashboard.html";
+  }
 
 }
 
@@ -126,11 +169,6 @@ async function entrar() {
 ===================================================== */
 
 async function criarConta() {
-
-  console.log(
-    "Botão criar conta clicado"
-  );
-
 
   const email =
     emailInput.value.trim();
@@ -146,7 +184,7 @@ async function criarConta() {
 
     mostrarMensagem(
       "Preencha e-mail e senha.",
-      true
+      "erro"
     );
 
     return;
@@ -160,7 +198,7 @@ async function criarConta() {
 
     mostrarMensagem(
       "A senha precisa ter pelo menos 6 caracteres.",
-      true
+      "erro"
     );
 
     return;
@@ -173,18 +211,26 @@ async function criarConta() {
   );
 
 
+  botaoCriar.disabled =
+    true;
+
+
   const {
     data,
     error
   } =
-    await supabase.auth
+    await supabaseClient.auth
       .signUp({
 
-        email: email,
+        email,
 
         password: senha
 
       });
+
+
+  botaoCriar.disabled =
+    false;
 
 
   if (error) {
@@ -196,7 +242,7 @@ async function criarConta() {
 
     mostrarMensagem(
       error.message,
-      true
+      "erro"
     );
 
     return;
@@ -204,11 +250,10 @@ async function criarConta() {
   }
 
 
-  console.log(
-    "Conta criada:",
-    data
-  );
-
+  /*
+    Se confirmação de e-mail
+    estiver desativada.
+  */
 
   if (
     data.session
@@ -222,15 +267,42 @@ async function criarConta() {
   }
 
 
+  /*
+    Se confirmação de e-mail
+    estiver ativada.
+  */
+
   mostrarMensagem(
-    "Conta criada. Verifique seu e-mail para confirmar o cadastro."
+    "Conta criada. Verifique seu e-mail para confirmar o cadastro.",
+    "sucesso"
   );
 
 }
 
 
 /* =====================================================
-   EVENTOS
+   ENTER
+===================================================== */
+
+senhaInput.addEventListener(
+  "keydown",
+  function(evento) {
+
+    if (
+      evento.key ===
+      "Enter"
+    ) {
+
+      entrar();
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   BOTÕES
 ===================================================== */
 
 botaoEntrar.addEventListener(
@@ -245,37 +317,31 @@ botaoCriar.addEventListener(
 );
 
 
-senhaInput.addEventListener(
-  "keydown",
-  function(evento) {
-
-    if (
-      evento.key === "Enter"
-    ) {
-
-      entrar();
-
-    }
-
-  }
-);
-
-
 /* =====================================================
-   TESTE
+   SE JÁ ESTIVER LOGADO
 ===================================================== */
 
-console.log(
-  "Botão entrar:",
-  botaoEntrar
-);
+async function verificarSessao() {
 
-console.log(
-  "Botão criar conta:",
-  botaoCriar
-);
+  const {
+    data: {
+      session
+    }
+  } =
+    await supabaseClient.auth
+      .getSession();
 
-console.log(
-  "Cliente Supabase:",
-  supabase
-);
+
+  if (
+    session
+  ) {
+
+    window.location.href =
+      "dashboard.html";
+
+  }
+
+}
+
+
+verificarSessao();
