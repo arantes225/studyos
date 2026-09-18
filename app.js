@@ -1,7 +1,10 @@
-const supabaseUrl = "https://kkyqgcirishgqjyqafzd.supabase.co";
+const supabaseUrl = "https://kkyqgcirishgqjyqafzd.supabase.com";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtreXFtY2lyaXNoZ3FqeXFhZnpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5NzU3NzMsImV4cCI6MjA3MzU1MTc3M30.1iHkYq8JtX3r9XqJqGqJqGqJqGqJqGqJqGqJqGqJqGg";
 
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+const supabase = window.supabase.createClient(
+    supabaseUrl, 
+    supabaseKey
+);
 
 let usuarioAtual = null;
 
