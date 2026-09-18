@@ -16,7 +16,7 @@ let indiceFlashcardAtual = 0;
 async function verificarLogin() {
   const {
     data: { session },
-  } = await supabase.auth.getSession();
+  } = await clientesupabase.auth.getSession();
 
   if (!session) {
     window.location.href = "index.html";
