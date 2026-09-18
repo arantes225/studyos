@@ -1113,15 +1113,487 @@ function renderRecentSimulationResults(
 }
 
 
+
+function qsIsoDateLocal(
+  date
+) {
+  const year =
+    date.getFullYear();
+
+  const month =
+    String(
+      date.getMonth() + 1
+    )
+      .padStart(
+        2,
+        "0"
+      );
+
+  const day =
+    String(
+      date.getDate()
+    )
+      .padStart(
+        2,
+        "0"
+      );
+
+
+  return `${year}-${month}-${day}`;
+}
+
+
+function qsMonthStartISO(
+  date = new Date()
+) {
+  return qsIsoDateLocal(
+    new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      1
+    )
+  );
+}
+
+
+function qsTwelveMonthsStartISO() {
+  const now =
+    new Date();
+
+
+  return qsIsoDateLocal(
+    new Date(
+      now.getFullYear(),
+      now.getMonth() - 11,
+      1
+    )
+  );
+}
+
+
+function qsMonthKey(
+  value
+) {
+  const text =
+    String(
+      value
+      || ""
+    );
+
+
+  return text.slice(
+    0,
+    7
+  );
+}
+
+
+function qsBuildMonthlySeries(
+  rows
+) {
+  const now =
+    new Date();
+
+  const months =
+    [];
+
+
+  for (
+    let offset = 11;
+    offset >= 0;
+    offset -= 1
+  ) {
+    const date =
+      new Date(
+        now.getFullYear(),
+        now.getMonth() - offset,
+        1
+      );
+
+
+    const key =
+      `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(
+        2,
+        "0"
+      )}`;
+
+
+    months.push({
+      key,
+
+      label:
+        new Intl
+          .DateTimeFormat(
+            "pt-BR",
+            {
+              month:
+                "short"
+            }
+          )
+          .format(
+            date
+          )
+          .replace(
+            ".",
+            ""
+          ),
+
+      answered:
+        0,
+
+      correct:
+        0
+    });
+  }
+
+
+  const map =
+    new Map(
+      months.map(
+        (month) => [
+          month.key,
+          month
+        ]
+      )
+    );
+
+
+  for (
+    const row
+    of rows
+    || []
+  ) {
+    const month =
+      map.get(
+        qsMonthKey(
+          row.answer_date
+        )
+      );
+
+
+    if (!month) {
+      continue;
+    }
+
+
+    month.answered +=
+      Number(
+        row.answered_questions
+        || 0
+      );
+
+
+    month.correct +=
+      Number(
+        row.correct_questions
+        || 0
+      );
+  }
+
+
+  return months.map(
+    (month) => ({
+      ...month,
+
+      accuracy:
+        month.answered > 0
+          ? (
+              month.correct
+              / month.answered
+            )
+            * 100
+          : null
+    })
+  );
+}
+
+
+function renderMonthlyAccuracyChart(
+  series
+) {
+  const container =
+    document.getElementById(
+      "qs-monthly-chart"
+    );
+
+
+  const current =
+    document.getElementById(
+      "qs-trend-current"
+    );
+
+
+  if (!container) {
+    return;
+  }
+
+
+  const data =
+    series
+    || [];
+
+
+  const currentMonth =
+    data[
+      data.length - 1
+    ];
+
+
+  if (current) {
+    current.textContent =
+      currentMonth?.accuracy === null
+      || currentMonth?.accuracy === undefined
+        ? "Mês atual · —"
+        : `Mês atual · ${currentMonth.accuracy
+            .toFixed(1)
+            .replace(".", ",")}%`;
+  }
+
+
+  const valid =
+    data.filter(
+      (item) =>
+        item.accuracy !== null
+    );
+
+
+  if (!valid.length) {
+    container.innerHTML =
+      '<div class="qs-empty">Ainda não há dados mensais suficientes para o gráfico.</div>';
+
+    return;
+  }
+
+
+  const width =
+    700;
+
+  const height =
+    220;
+
+  const left =
+    42;
+
+  const right =
+    16;
+
+  const top =
+    22;
+
+  const bottom =
+    36;
+
+  const chartWidth =
+    width
+    - left
+    - right;
+
+  const chartHeight =
+    height
+    - top
+    - bottom;
+
+
+  const xFor =
+    (index) =>
+      left
+      + (
+          data.length === 1
+            ? chartWidth / 2
+            : (
+                index
+                / (
+                  data.length - 1
+                )
+              )
+              * chartWidth
+        );
+
+
+  const yFor =
+    (accuracyValue) =>
+      top
+      + (
+          1
+          - (
+            accuracyValue
+            / 100
+          )
+        )
+        * chartHeight;
+
+
+  const points =
+    data
+      .map(
+        (
+          item,
+          index
+        ) => {
+          if (
+            item.accuracy === null
+          ) {
+            return null;
+          }
+
+
+          return {
+            ...item,
+            index,
+            x:
+              xFor(
+                index
+              ),
+            y:
+              yFor(
+                item.accuracy
+              )
+          };
+        }
+      )
+      .filter(
+        Boolean
+      );
+
+
+  const polyline =
+    points
+      .map(
+        (point) =>
+          `${point.x.toFixed(1)},${point.y.toFixed(1)}`
+      )
+      .join(
+        " "
+      );
+
+
+  const gridValues =
+    [
+      0,
+      25,
+      50,
+      75,
+      100
+    ];
+
+
+  const grid =
+    gridValues.map(
+      (value) => {
+        const y =
+          yFor(
+            value
+          );
+
+
+        return `
+          <line
+            class="qs-chart-grid"
+            x1="${left}"
+            y1="${y}"
+            x2="${width - right}"
+            y2="${y}"
+          ></line>
+
+          <text
+            class="qs-chart-axis-text"
+            x="${left - 7}"
+            y="${y + 3}"
+            text-anchor="end"
+          >
+            ${value}%
+          </text>
+        `;
+      }
+    )
+    .join("");
+
+
+  const months =
+    data.map(
+      (
+        item,
+        index
+      ) => `
+        <text
+          class="qs-chart-month"
+          x="${xFor(index)}"
+          y="${height - 10}"
+          text-anchor="middle"
+        >
+          ${qsEscape(item.label)}
+        </text>
+      `
+    )
+    .join("");
+
+
+  const dots =
+    points.map(
+      (point) => `
+        <circle
+          class="qs-chart-dot"
+          cx="${point.x}"
+          cy="${point.y}"
+          r="4"
+        ></circle>
+
+        <text
+          class="qs-chart-value"
+          x="${point.x}"
+          y="${Math.max(
+            12,
+            point.y - 9
+          )}"
+          text-anchor="middle"
+        >
+          ${point.accuracy.toFixed(0)}%
+        </text>
+      `
+    )
+    .join("");
+
+
+  container.innerHTML = `
+    <svg
+      viewBox="0 0 ${width} ${height}"
+      aria-hidden="true"
+    >
+      ${grid}
+
+      ${
+        points.length > 1
+          ? `
+            <polyline
+              class="qs-chart-line"
+              points="${polyline}"
+            ></polyline>
+          `
+          : ""
+      }
+
+      ${dots}
+      ${months}
+    </svg>
+  `;
+}
+
+
 async function loadQuestionOverview() {
-  const start30 =
-    qsDate30DaysAgoISO();
+  const monthStart =
+    qsMonthStartISO();
+
+
+  const twelveMonthsStart =
+    qsTwelveMonthsStartISO();
 
 
   const [
     overallResult,
-    dailyResult,
-    recentResult
+    monthResult,
+    trendResult
   ] =
     await Promise.all([
 
@@ -1143,41 +1615,156 @@ async function loadQuestionOverview() {
         )
         .gte(
           "answer_date",
-          start30
+          monthStart
         ),
 
       qsSb
         .from(
-          "question_set_metrics"
+          "question_metrics_daily"
         )
         .select(
-          "set_id,title,total_questions,answered_count,correct_count,wrong_count,accuracy_percent,completed,created_at,last_answered_at"
+          "answer_date,answered_questions,correct_questions,wrong_questions,accuracy_percent"
         )
-        .gt(
-          "answered_count",
-          0
+        .gte(
+          "answer_date",
+          twelveMonthsStart
         )
         .order(
-          "last_answered_at",
+          "answer_date",
           {
             ascending:
-              false,
-
-            nullsFirst:
-              false
+              true
           }
-        )
-        .limit(
-          7
         )
     ]);
 
 
-  const {
-    data,
-    error
-  } =
-    overallResult;
+  if (
+    overallResult.error
+  ) {
+    console.warn(
+      overallResult.error
+    );
+  }
+
+
+  if (
+    monthResult.error
+  ) {
+    console.warn(
+      monthResult.error
+    );
+  }
+
+
+  if (
+    trendResult.error
+  ) {
+    console.warn(
+      trendResult.error
+    );
+  }
+
+
+  const metrics =
+    overallResult.data
+    || {
+      completed_sets:
+        0,
+
+      total_sets:
+        0,
+
+      answered_questions:
+        0,
+
+      correct_questions:
+        0,
+
+      wrong_questions:
+        0,
+
+      sent_to_error_count:
+        0,
+
+      accuracy_percent:
+        null
+    };
+
+
+  const answered =
+    Number(
+      metrics.answered_questions
+      || 0
+    );
+
+
+  const correct =
+    Number(
+      metrics.correct_questions
+      || 0
+    );
+
+
+  const wrong =
+    Number(
+      metrics.wrong_questions
+      || 0
+    );
+
+
+  const generalAccuracy =
+    metrics.accuracy_percent === null
+    || metrics.accuracy_percent === undefined
+      ? null
+      : Number(
+          metrics.accuracy_percent
+        );
+
+
+  const monthRows =
+    monthResult.data
+    || [];
+
+
+  const monthAnswered =
+    monthRows.reduce(
+      (
+        sum,
+        row
+      ) =>
+        sum
+        + Number(
+            row.answered_questions
+            || 0
+          ),
+      0
+    );
+
+
+  const monthCorrect =
+    monthRows.reduce(
+      (
+        sum,
+        row
+      ) =>
+        sum
+        + Number(
+            row.correct_questions
+            || 0
+          ),
+      0
+    );
+
+
+  const monthAccuracy =
+    monthAnswered > 0
+      ? (
+          monthCorrect
+          / monthAnswered
+        )
+        * 100
+      : null;
 
 
   const setValue =
@@ -1210,6 +1797,26 @@ async function loadQuestionOverview() {
       "qs-overview-accuracy-helper"
     );
 
+  const monthQuestionValue =
+    document.getElementById(
+      "qs-month-questions"
+    );
+
+  const monthQuestionHelper =
+    document.getElementById(
+      "qs-month-questions-helper"
+    );
+
+  const monthAccuracyValue =
+    document.getElementById(
+      "qs-month-accuracy"
+    );
+
+  const monthAccuracyHelper =
+    document.getElementById(
+      "qs-month-accuracy-helper"
+    );
+
   const errorValue =
     document.getElementById(
       "qs-overview-errors"
@@ -1219,94 +1826,6 @@ async function loadQuestionOverview() {
     document.getElementById(
       "qs-overview-errors-helper"
     );
-
-
-  if (
-    error
-  ) {
-    console.warn(
-      "Não foi possível carregar as métricas de simulados:",
-      error.message
-    );
-
-    if (setValue) setValue.textContent = "—";
-    if (questionValue) questionValue.textContent = "—";
-    if (accuracyValue) accuracyValue.textContent = "—";
-    if (errorValue) errorValue.textContent = "—";
-
-    return;
-  }
-
-
-  if (
-    dailyResult.error
-  ) {
-    console.warn(
-      dailyResult.error
-    );
-  }
-
-
-  if (
-    recentResult.error
-  ) {
-    console.warn(
-      recentResult.error
-    );
-  }
-
-
-  const metrics =
-    data
-    || {
-      completed_sets:
-        0,
-
-      total_sets:
-        0,
-
-      answered_questions:
-        0,
-
-      correct_questions:
-        0,
-
-      wrong_questions:
-        0,
-
-      sent_to_error_count:
-        0,
-
-      accuracy_percent:
-        null
-    };
-
-
-  const answered =
-    Number(
-      metrics.answered_questions
-      || 0
-    );
-
-  const correct =
-    Number(
-      metrics.correct_questions
-      || 0
-    );
-
-  const wrong =
-    Number(
-      metrics.wrong_questions
-      || 0
-    );
-
-  const generalAccuracy =
-    metrics.accuracy_percent === null
-    || metrics.accuracy_percent === undefined
-      ? null
-      : Number(
-          metrics.accuracy_percent
-        );
 
 
   if (setValue) {
@@ -1319,18 +1838,15 @@ async function loadQuestionOverview() {
 
 
   if (setHelper) {
-    const totalSets =
+    const total =
       Number(
         metrics.total_sets
         || 0
       );
 
+
     setHelper.textContent =
-      `${totalSets} ${
-        totalSets === 1
-          ? "simulado importado"
-          : "simulados importados"
-      }`;
+      `${total} simulado${total === 1 ? "" : "s"} cadastrado${total === 1 ? "" : "s"}`;
   }
 
 
@@ -1359,8 +1875,38 @@ async function loadQuestionOverview() {
   if (accuracyHelper) {
     accuracyHelper.textContent =
       answered
-        ? "Aproveitamento de todos os gabaritos"
+        ? "Aproveitamento acumulado"
         : "Sem gabaritos ainda";
+  }
+
+
+  if (monthQuestionValue) {
+    monthQuestionValue.textContent =
+      monthAnswered;
+  }
+
+
+  if (monthQuestionHelper) {
+    monthQuestionHelper.textContent =
+      `${monthCorrect} acertos no mês atual`;
+  }
+
+
+  if (monthAccuracyValue) {
+    monthAccuracyValue.textContent =
+      monthAccuracy === null
+        ? "—"
+        : `${monthAccuracy
+            .toFixed(1)
+            .replace(".", ",")}%`;
+  }
+
+
+  if (monthAccuracyHelper) {
+    monthAccuracyHelper.textContent =
+      monthAnswered
+        ? `${monthAnswered} questões consideradas`
+        : "Sem questões respondidas neste mês";
   }
 
 
@@ -1379,8 +1925,8 @@ async function loadQuestionOverview() {
         metrics.sent_to_error_count
         || 0
       )
-        ? "Erros já transformados em revisão"
-        : "Nenhum erro enviado ainda";
+        ? "Questões enviadas desde sempre"
+        : "Nenhuma questão enviada ainda";
   }
 
 
@@ -1399,8 +1945,7 @@ async function loadQuestionOverview() {
     ringValue.textContent =
       generalAccuracy === null
         ? "—"
-        : `${generalAccuracy
-            .toFixed(0)}%`;
+        : `${generalAccuracy.toFixed(0)}%`;
   }
 
 
@@ -1460,7 +2005,7 @@ async function loadQuestionOverview() {
 
 
   const correctShare =
-    answered
+    answered > 0
       ? (
           correct
           / answered
@@ -1470,7 +2015,7 @@ async function loadQuestionOverview() {
 
 
   const wrongShare =
-    answered
+    answered > 0
       ? (
           wrong
           / answered
@@ -1493,148 +2038,72 @@ async function loadQuestionOverview() {
 
   if (barCopy) {
     barCopy.textContent =
-      answered
-        ? `${correctShare.toFixed(1).replace(".", ",")}% corretas · ${wrongShare.toFixed(1).replace(".", ",")}% erradas`
+      answered > 0
+        ? `${correctShare
+            .toFixed(1)
+            .replace(".", ",")}% corretas · ${wrongShare
+            .toFixed(1)
+            .replace(".", ",")}% erradas`
         : "Sem respostas salvas.";
   }
 
 
-  const dailyRows =
-    dailyResult.data
-    || [];
-
-
-  const answered30 =
-    dailyRows.reduce(
-      (
-        sum,
-        row
-      ) =>
-        sum
-        + Number(
-            row.answered_questions
-            || 0
-          ),
-      0
-    );
-
-
-  const correct30 =
-    dailyRows.reduce(
-      (
-        sum,
-        row
-      ) =>
-        sum
-        + Number(
-            row.correct_questions
-            || 0
-          ),
-      0
-    );
-
-
-  const accuracy30 =
-    answered30
-      ? (
-          correct30
-          / answered30
-        )
-        * 100
-      : null;
-
-
-  const recentRows =
-    recentResult.data
-    || [];
-
-
-  const start30Date =
-    new Date(
-      `${start30}T00:00:00`
-    );
-
-
-  const sets30 =
-    recentRows.filter(
-      (row) => {
-        if (
-          !row.last_answered_at
-        ) {
-          return false;
-        }
-
-
-        const value =
-          new Date(
-            row.last_answered_at
-          );
-
-
-        return (
-          !Number.isNaN(
-            value.getTime()
-          )
-          && value
-            >= start30Date
-        );
-      }
-    ).length;
-
-
-  const sets30Value =
+  const monthCardQuestions =
     document.getElementById(
-      "qs-30-sets"
+      "qs-month-card-questions"
     );
 
-  const questions30Value =
+  const monthCardCorrect =
     document.getElementById(
-      "qs-30-questions"
+      "qs-month-card-correct"
     );
 
-  const accuracy30Value =
+  const monthCardAccuracy =
     document.getElementById(
-      "qs-30-accuracy"
+      "qs-month-card-accuracy"
     );
 
-  const copy30 =
+  const monthCardCopy =
     document.getElementById(
-      "qs-30-copy"
+      "qs-month-card-copy"
     );
 
 
-  if (sets30Value) {
-    sets30Value.textContent =
-      sets30;
+  if (monthCardQuestions) {
+    monthCardQuestions.textContent =
+      monthAnswered;
   }
 
 
-  if (questions30Value) {
-    questions30Value.textContent =
-      answered30;
+  if (monthCardCorrect) {
+    monthCardCorrect.textContent =
+      monthCorrect;
   }
 
 
-  if (accuracy30Value) {
-    accuracy30Value.textContent =
-      accuracy30 === null
+  if (monthCardAccuracy) {
+    monthCardAccuracy.textContent =
+      monthAccuracy === null
         ? "—"
-        : `${accuracy30
+        : `${monthAccuracy
             .toFixed(1)
             .replace(".", ",")}%`;
   }
 
 
-  if (copy30) {
-    copy30.textContent =
-      answered30
-        ? `${correct30} acertos em ${answered30} questões nos últimos 30 dias.`
-        : "Sem atividade nos últimos 30 dias.";
+  if (monthCardCopy) {
+    monthCardCopy.textContent =
+      monthAnswered > 0
+        ? `${monthCorrect} acertos em ${monthAnswered} questões neste mês.`
+        : "Sem atividade no mês.";
   }
 
 
-  renderRecentSimulationResults(
-    recentRows
+  renderMonthlyAccuracyChart(
+    qsBuildMonthlySeries(
+      trendResult.data
+      || []
+    )
   );
 }
 

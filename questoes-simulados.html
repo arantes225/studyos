@@ -1135,6 +1135,159 @@
       }
     }
 
+  
+    /* ======================================================
+       FASE 11.11 — DASHBOARD GERAL DE SIMULADOS
+       ====================================================== */
+
+    /* Em "Meus simulados" não existe seleção nem exclusão. */
+    [data-qs-section="mine"] .qs-bulk-toolbar,
+    [data-qs-section="mine"] .qs-set-select {
+      display: none !important;
+    }
+
+    [data-qs-section="mine"] .qs-set-card {
+      padding-left: 14px;
+    }
+
+    .qs-dashboard-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .qs-stat-card {
+      min-height: 126px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .qs-stat-card::after {
+      content: "";
+      position: absolute;
+      width: 78px;
+      height: 78px;
+      right: -30px;
+      bottom: -32px;
+      border-radius: 50%;
+      background: var(--surface-2);
+      pointer-events: none;
+    }
+
+    .qs-stat-card strong {
+      position: relative;
+      z-index: 1;
+      font-size: 29px;
+    }
+
+    .qs-stat-card small,
+    .qs-stat-card span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .qs-stat-accent {
+      background:
+        linear-gradient(
+          135deg,
+          var(--surface),
+          var(--accent-soft)
+        );
+    }
+
+    .qs-performance-dashboard {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .qs-trend-card {
+      grid-column: 1 / -1;
+      min-height: 330px;
+    }
+
+    .qs-trend-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .qs-trend-head h2 {
+      margin: 5px 0 0;
+    }
+
+    .qs-line-chart {
+      min-height: 235px;
+      margin-top: 14px;
+      padding: 10px 6px 2px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-2);
+      overflow-x: auto;
+    }
+
+    .qs-line-chart svg {
+      width: 100%;
+      min-width: 690px;
+      height: 220px;
+      display: block;
+    }
+
+    .qs-chart-grid {
+      stroke: var(--border);
+      stroke-width: 1;
+    }
+
+    .qs-chart-axis-text,
+    .qs-chart-month {
+      fill: var(--muted);
+      font-size: 9px;
+      font-family: inherit;
+    }
+
+    .qs-chart-line {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .qs-chart-dot {
+      fill: var(--surface);
+      stroke: var(--accent);
+      stroke-width: 3;
+    }
+
+    .qs-chart-value {
+      fill: var(--text);
+      font-size: 9px;
+      font-weight: 800;
+      font-family: inherit;
+    }
+
+    @media (max-width: 1050px) {
+      .qs-dashboard-grid,
+      .qs-performance-dashboard {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .qs-trend-card {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .qs-dashboard-grid,
+      .qs-performance-dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      .qs-trend-card {
+        grid-column: auto;
+      }
+    }
+
   </style>
 </head>
 
@@ -1184,46 +1337,78 @@
         </section>
 
 
-<section class="qs-overview qs-mode-section active" data-qs-section="mine">
-          <article class="qs-overview-card">
+<section
+          class="qs-overview qs-mode-section active qs-dashboard-grid"
+          data-qs-section="mine"
+        >
+
+          <article class="qs-overview-card qs-stat-card">
             <span>Simulados realizados</span>
             <strong id="qs-overview-sets">—</strong>
-            <small id="qs-overview-sets-helper">Carregando...</small>
+            <small id="qs-overview-sets-helper">
+              Concluídos desde sempre
+            </small>
           </article>
 
-          <article class="qs-overview-card">
-            <span>Questões respondidas</span>
+          <article class="qs-overview-card qs-stat-card">
+            <span>Questões totais realizadas</span>
             <strong id="qs-overview-questions">—</strong>
-            <small id="qs-overview-questions-helper">Acertos e erros salvos</small>
+            <small id="qs-overview-questions-helper">
+              Desde o primeiro gabarito
+            </small>
           </article>
 
-          <article class="qs-overview-card">
-            <span>Aproveitamento geral</span>
+          <article class="qs-overview-card qs-stat-card qs-stat-accent">
+            <span>Acerto desde sempre</span>
             <strong id="qs-overview-accuracy">—</strong>
-            <small id="qs-overview-accuracy-helper">Sem gabaritos ainda</small>
+            <small id="qs-overview-accuracy-helper">
+              Aproveitamento acumulado
+            </small>
           </article>
 
-          <article class="qs-overview-card">
-            <span>Erros no caderno</span>
-            <strong id="qs-overview-errors">—</strong>
-            <small id="qs-overview-errors-helper">Enviados ao Caderno de Erros</small>
+          <article class="qs-overview-card qs-stat-card">
+            <span>Questões realizadas no mês</span>
+            <strong id="qs-month-questions">—</strong>
+            <small id="qs-month-questions-helper">
+              Mês atual
+            </small>
           </article>
+
+          <article class="qs-overview-card qs-stat-card qs-stat-accent">
+            <span>Aproveitamento do mês</span>
+            <strong id="qs-month-accuracy">—</strong>
+            <small id="qs-month-accuracy-helper">
+              Acerto ponderado no mês atual
+            </small>
+          </article>
+
+          <article class="qs-overview-card qs-stat-card">
+            <span>Enviadas ao Caderno de Erros</span>
+            <strong id="qs-overview-errors">—</strong>
+            <small id="qs-overview-errors-helper">
+              Questões transformadas em revisão
+            </small>
+          </article>
+
         </section>
 
 
-        <section class="qs-performance-dashboard qs-mode-section active" data-qs-section="mine">
+        <section
+          class="qs-performance-dashboard qs-mode-section active"
+          data-qs-section="mine"
+        >
 
           <article class="qs-performance-card qs-performance-accuracy">
 
             <div>
               <span class="qs-performance-eyebrow">
-                Desempenho geral
+                Desde sempre
               </span>
 
-              <h2>Aproveitamento</h2>
+              <h2>Aproveitamento geral</h2>
 
               <p>
-                Percentual de acertos considerando todos os gabaritos salvos.
+                Percentual de acertos em todas as questões respondidas.
               </p>
             </div>
 
@@ -1245,8 +1430,10 @@
           <article class="qs-performance-card">
 
             <span class="qs-performance-eyebrow">
-              Distribuição das respostas
+              Distribuição acumulada
             </span>
+
+            <h2>Acertos x erros</h2>
 
             <div class="qs-answer-split">
 
@@ -1289,31 +1476,70 @@
           <article class="qs-performance-card">
 
             <span class="qs-performance-eyebrow">
-              Últimos 30 dias
+              Mês atual
             </span>
+
+            <h2>Desempenho do mês</h2>
 
             <div class="qs-30-grid">
 
               <div>
-                <strong id="qs-30-sets">0</strong>
-                <span>simulados</span>
-              </div>
-
-              <div>
-                <strong id="qs-30-questions">0</strong>
+                <strong id="qs-month-card-questions">0</strong>
                 <span>questões</span>
               </div>
 
               <div>
-                <strong id="qs-30-accuracy">—</strong>
+                <strong id="qs-month-card-correct">0</strong>
+                <span>acertos</span>
+              </div>
+
+              <div>
+                <strong id="qs-month-card-accuracy">—</strong>
                 <span>de acerto</span>
               </div>
 
             </div>
 
-            <small id="qs-30-copy">
-              Sem atividade no período.
+            <small id="qs-month-card-copy">
+              Sem atividade no mês.
             </small>
+
+          </article>
+
+
+          <article class="qs-performance-card qs-trend-card">
+
+            <div class="qs-trend-head">
+              <div>
+                <span class="qs-performance-eyebrow">
+                  Evolução
+                </span>
+
+                <h2>Aproveitamento ao longo dos meses</h2>
+
+                <p>
+                  Percentual de acerto mensal nos últimos 12 meses.
+                </p>
+              </div>
+
+              <span
+                id="qs-trend-current"
+                class="badge"
+              >
+                —
+              </span>
+            </div>
+
+            <div
+              id="qs-monthly-chart"
+              class="qs-line-chart"
+              role="img"
+              aria-label="Gráfico de aproveitamento mensal"
+            >
+              <div class="qs-empty">
+                Carregando evolução...
+              </div>
+            </div>
 
           </article>
 
@@ -1508,33 +1734,7 @@
 
               <span id="qs-set-count" class="badge">0 simulados</span>
             </div>
-
-            <div class="qs-bulk-toolbar">
-
-              <label class="qs-bulk-check">
-                <input
-                  id="qs-select-all"
-                  type="checkbox"
-                >
-                <span>Selecionar visíveis</span>
-              </label>
-
-              <span id="qs-selected-count">
-                0 selecionados
-              </span>
-
-              <button
-                id="qs-delete-selected"
-                class="qs-mini-button danger"
-                type="button"
-                disabled
-              >
-                Excluir selecionados
-              </button>
-
-            </div>
-
-            <div id="qs-history" class="qs-history"></div>
+<div id="qs-history" class="qs-history"></div>
           </section>
 
           <section
@@ -1732,6 +1932,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="supabase.js"></script>
   <script src="app.js?v=7.0"></script>
-  <script src="questoes-simulados.js?v=11.9"></script>
+  <script src="questoes-simulados.js?v=11.11"></script>
 </body>
 </html>

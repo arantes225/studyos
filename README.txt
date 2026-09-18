@@ -1,64 +1,59 @@
-DOCMAP — FASE 11.10
-CRONOGRAMA — ADICIONAR AULAS + EXCLUSÃO EM GRUPO
+DOCMAP — FASE 11.11
+DASHBOARD DE QUESTÕES E SIMULADOS
 
-1. ADICIONAR AULAS
+MEUS SIMULADOS
+- removido definitivamente "Selecionar visíveis"
+- removidos checkboxes e exclusão da tela principal
+- a tela principal fica focada em desempenho e em abrir simulados
 
-O Importador inteligente e o cadastro manual agora ficam juntos
-em um único fluxo visual chamado "Adicionar aulas".
+A exclusão continua SOMENTE em:
+Biblioteca
 
-Menu:
-- Automaticamente
-- Manualmente
+NOVO DASHBOARD PRINCIPAL
 
-AUTOMATICAMENTE
-- mantém o Importador inteligente
-- Excel
-- CSV
-- PDF
-- prévia editável
-- importação com datas ou como deck
+Cards:
+1. Simulados realizados
+2. Questões totais realizadas
+3. Porcentagem de acerto desde sempre
+4. Questões realizadas no mês atual
+5. Aproveitamento do mês atual
+6. Questões enviadas ao Caderno de Erros
 
-MANUALMENTE
-- Área
-- Matéria
-- Tema
-- Data
-- botão Adicionar aula
+BLOCOS VISUAIS
+- gráfico circular de aproveitamento geral
+- distribuição de acertos x erros
+- desempenho do mês
+- gráfico linear de aproveitamento ao longo dos últimos 12 meses
 
-Nada foi removido do funcionamento anterior;
-apenas a organização da página foi melhorada.
+GRÁFICO MENSAL
+- usa a view question_metrics_daily já existente
+- calcula o aproveitamento ponderado de cada mês
+- mostra até 12 meses
+- meses sem questões não inventam porcentagem
 
-2. LISTA DE TEMAS
+BIBLIOTECA
+Continua sendo a única área de gestão:
+- selecionar simulados
+- excluir em grupo
+- menu ⋯
+- editar
+- excluir
 
-Agora cada aula possui checkbox.
+ADICIONAR SIMULADO
+Permanece:
+- Automaticamente por PDF
+- Manualmente por quantidade de questões
 
-Também foi adicionado:
-- Selecionar visíveis
-- quantidade de aulas selecionadas
-- Excluir selecionadas
-
-A exclusão em grupo:
-- pede confirmação
-- apaga permanentemente os registros selecionados
-- respeita os filtros atuais para "Selecionar visíveis"
-
-As ações existentes da Lista de temas continuam:
-- Ver na semana / Ir para deck
-- Remover para o deck
-- Já feita
-
-3. INSTALAÇÃO
-
+INSTALAÇÃO
 NÃO PRECISA RODAR SQL.
 
 SUBSTITUA:
-- cronograma.html
-- cronograma.js
+- questoes-simulados.html
+- questoes-simulados.js
 
 PUBLICAÇÃO:
-
 git add -A
-git commit -m "Fase 11.10 menu adicionar aulas e exclusao em grupo"
+git commit -m "Fase 11.11 dashboard geral de simulados"
 git push origin main
 
 Depois:
