@@ -20,8 +20,10 @@
       border-radius: 16px;
     }
 
-    .import-box {
-      padding: 22px;
+    .import-box,
+    .planner-panel,
+    .deck-panel {
+      padding: 20px;
     }
 
     .import-header,
@@ -152,10 +154,6 @@
       margin-bottom: 12px;
     }
 
-    .preview-toolbar strong {
-      font-size: 14px;
-    }
-
     .preview-toolbar span {
       color: var(--muted);
       font-size: 12px;
@@ -169,7 +167,7 @@
 
     .preview-table {
       width: 100%;
-      min-width: 680px;
+      min-width: 820px;
       border-collapse: collapse;
       font-size: 12px;
     }
@@ -197,6 +195,18 @@
     .row-error {
       color: var(--danger);
       font-weight: 700;
+    }
+
+    .done-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 800;
     }
 
     .import-actions {
@@ -252,11 +262,6 @@
       display: block;
       margin-top: 8px;
       font-size: 25px;
-    }
-
-    .planner-panel,
-    .deck-panel {
-      padding: 20px;
     }
 
     .planner-nav {
@@ -404,6 +409,11 @@
       color: #fff;
     }
 
+    .topic-action.done {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
     .topic-action.danger:hover {
       color: var(--danger);
       border-color: var(--danger);
@@ -496,6 +506,63 @@
       font-size: 12px;
     }
 
+    .done-dialog {
+      width: min(calc(100% - 32px), 490px);
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow);
+    }
+
+    .done-dialog::backdrop {
+      background: rgba(0,0,0,.45);
+    }
+
+    .done-dialog form {
+      padding: 22px;
+    }
+
+    .done-dialog h2 {
+      margin: 4px 0 0;
+      font-size: 20px;
+    }
+
+    .done-dialog p {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .done-dialog label {
+      display: grid;
+      gap: 8px;
+      margin-top: 18px;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .done-dialog input {
+      min-height: 44px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .done-dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 9px;
+      margin-top: 20px;
+    }
+
+    .done-dialog-actions .button {
+      min-height: 41px;
+      padding: 0 14px;
+    }
+
     @media (max-width: 1120px) {
       .import-grid {
         grid-template-columns: 1fr;
@@ -564,7 +631,7 @@
             </article>
 
             <article class="summary-card">
-              <span>Concluídas</span>
+              <span>Concluídas / já feitas</span>
               <strong id="summary-completed">—</strong>
             </article>
           </section>
@@ -574,7 +641,10 @@
               <div>
                 <span class="badge accent">Excel</span>
                 <h2>Importar cronograma</h2>
-                <p>O DocMap detecta automaticamente Data, Área, Matéria e Tema.</p>
+                <p>
+                  Além de Data, Área, Matéria e Tema, você pode usar as colunas
+                  “Aula já feita” e “Data estudada”.
+                </p>
               </div>
             </div>
 
@@ -598,7 +668,7 @@
                   <span>
                     <strong>Importar datas</strong>
                     <small>
-                      Cada aula entra exatamente na data da planilha e aparece na agenda.
+                      Aulas novas entram exatamente na data da planilha.
                     </small>
                   </span>
                 </label>
@@ -608,7 +678,7 @@
                   <span>
                     <strong>Importar como deck</strong>
                     <small>
-                      Importa os temas sem agenda. Depois você distribui os cartões pelos dias.
+                      Aulas novas ficam sem data para você distribuir manualmente.
                     </small>
                   </span>
                 </label>
@@ -630,6 +700,8 @@
                       <th>Área</th>
                       <th>Matéria</th>
                       <th>Tema</th>
+                      <th>Já feita?</th>
+                      <th>Data estudada</th>
                       <th>Status</th>
                     </tr>
                   </thead>
@@ -668,7 +740,7 @@
               <div>
                 <h2>Deck não programado</h2>
                 <p>
-                  Arraste um cartão para um dia da semana ou escolha a data pelo próprio cartão.
+                  Arraste para um dia, escolha uma data ou marque como “Aula já feita”.
                 </p>
               </div>
 
@@ -686,10 +758,37 @@
     </main>
   </div>
 
+  <dialog id="already-done-dialog" class="done-dialog">
+    <form id="already-done-form" method="dialog">
+      <span class="badge accent">Aula já feita</span>
+      <h2 id="already-done-title">Marcar aula</h2>
+
+      <p>
+        O DocMap vai distribuir as revisões respeitando seus dias de revisão teórica
+        e o máximo diário definido em Configurações.
+      </p>
+
+      <label>
+        Quando você estudou essa aula? <small>(opcional)</small>
+        <input id="already-done-date" type="date">
+      </label>
+
+      <p>
+        Se não souber a data, deixe em branco. A primeira revisão de recuperação
+        será distribuída a partir dos próximos dias disponíveis.
+      </p>
+
+      <div class="done-dialog-actions">
+        <button id="already-done-cancel" class="button secondary" type="button">Cancelar</button>
+        <button class="button primary" type="submit">Marcar como já feita</button>
+      </div>
+    </form>
+  </dialog>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="supabase.js"></script>
   <script src="app.js"></script>
-  <script src="cronograma.js?v=4.0"></script>
+  <script src="cronograma.js?v=4.1"></script>
 </body>
 </html>

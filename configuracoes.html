@@ -4,8 +4,132 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Configurações · DocMap</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2">
+
+  <style>
+    .settings-section {
+      max-width: 900px;
+    }
+
+    .study-days-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .study-days-row {
+      display: grid;
+      grid-template-columns: 180px minmax(0, 1fr);
+      gap: 16px;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .study-days-row:last-child {
+      border-bottom: 0;
+    }
+
+    .study-days-label strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .study-days-label small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .weekday-options {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(48px, 1fr));
+      gap: 7px;
+    }
+
+    .weekday-option {
+      position: relative;
+    }
+
+    .weekday-option input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .weekday-option span {
+      display: grid;
+      place-items: center;
+      min-height: 42px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .weekday-option input:checked + span {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .capacity-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .capacity-row input {
+      width: 90px;
+      min-height: 42px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .settings-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .settings-actions .button {
+      min-height: 42px;
+      padding: 0 15px;
+    }
+
+    .settings-save-status {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .settings-save-status.error {
+      color: var(--danger);
+    }
+
+    .settings-save-status.success {
+      color: var(--success);
+    }
+
+    @media (max-width: 760px) {
+      .study-days-row {
+        grid-template-columns: 1fr;
+      }
+
+      .weekday-options {
+        grid-template-columns: repeat(4, minmax(48px, 1fr));
+      }
+    }
+  </style>
 </head>
+
 <body data-page="configuracoes">
   <div class="app-shell">
     <aside id="sidebar" class="sidebar"></aside>
@@ -15,73 +139,157 @@
       <div class="page">
         <header class="topbar">
           <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
+
           <div class="page-heading">
             <span class="eyebrow" data-page-eyebrow></span>
             <h1 data-page-title></h1>
           </div>
         </header>
 
-        
-<section class="settings-section">
-  <article class="setting-row">
-    <div>
-      <h2>Aparência</h2>
-      <p>O tema já fica salvo na sua conta do Supabase.</p>
-    </div>
+        <section class="settings-section">
 
-    <form id="theme-form" class="theme-options">
-      <label class="theme-option">
-        <input type="radio" name="theme" value="light">
-        <span>Claro</span>
-      </label>
+          <article class="setting-row">
+            <div>
+              <h2>Aparência</h2>
+              <p>O tema fica salvo na sua conta.</p>
+            </div>
 
-      <label class="theme-option">
-        <input type="radio" name="theme" value="dark">
-        <span>Escuro</span>
-      </label>
+            <form id="theme-form" class="theme-options">
+              <label class="theme-option">
+                <input type="radio" name="theme" value="light">
+                <span>Claro</span>
+              </label>
 
-      <label class="theme-option">
-        <input type="radio" name="theme" value="system">
-        <span>Sistema</span>
-      </label>
-    </form>
+              <label class="theme-option">
+                <input type="radio" name="theme" value="dark">
+                <span>Escuro</span>
+              </label>
 
-    <div id="theme-status" class="inline-status"></div>
-  </article>
+              <label class="theme-option">
+                <input type="radio" name="theme" value="system">
+                <span>Sistema</span>
+              </label>
+            </form>
 
-  <article class="setting-row">
-    <div>
-      <h2>Periodização dos flashcards</h2>
-      <p>Difícil: 1 · 3 · 7 dias<br>Intermediário: 7 · 21 · 45 dias<br>Fácil: 15 · 45 · 70 dias</p>
-    </div>
-    <span class="badge">Fase 9</span>
-  </article>
+            <div id="theme-status" class="inline-status"></div>
+          </article>
 
-  <article class="setting-row">
-    <div>
-      <h2>Caderno de erros</h2>
-      <p>Padrão atual: revisão a cada 21 dias.</p>
-    </div>
-    <span class="badge">Fase 9</span>
-  </article>
+          <article class="setting-row">
+            <div>
+              <h2>Dias de estudo</h2>
+              <p>
+                Revisões automáticas serão deslocadas para o próximo dia permitido.
+                Movimentos manuais na agenda continuam livres.
+              </p>
+            </div>
 
-  <article class="setting-row">
-    <div>
-      <h2>Revisão de matérias</h2>
-      <p>Padrão atual: 7 · 14 · 30 dias.</p>
-    </div>
-    <span class="badge">Fase 9</span>
-  </article>
+            <div class="study-days-grid">
 
-  <article class="setting-row">
-    <div>
-      <h2>Conta</h2>
-      <p>Alteração de senha e demais controles da conta entram nesta seção.</p>
-    </div>
-    <span class="badge">Fase 9</span>
-  </article>
-</section>
+              <div class="study-days-row">
+                <div class="study-days-label">
+                  <strong>Flashcards</strong>
+                  <small>Dias em que revisões de flashcards podem cair.</small>
+                </div>
+                <div class="weekday-options" data-weekday-group="flashcard_weekdays"></div>
+              </div>
 
+              <div class="study-days-row">
+                <div class="study-days-label">
+                  <strong>Estudo teórico</strong>
+                  <small>Dias preferenciais para aulas e distribuição automática futura.</small>
+                </div>
+                <div class="weekday-options" data-weekday-group="theory_study_weekdays"></div>
+              </div>
+
+              <div class="study-days-row">
+                <div class="study-days-label">
+                  <strong>Revisão teórica</strong>
+                  <small>Dias usados para revisões das matérias já estudadas.</small>
+                </div>
+                <div class="weekday-options" data-weekday-group="theory_review_weekdays"></div>
+              </div>
+
+              <div class="study-days-row">
+                <div class="study-days-label">
+                  <strong>Caderno de erros</strong>
+                  <small>Dias permitidos para a revisão dos CCQs.</small>
+                </div>
+                <div class="weekday-options" data-weekday-group="error_weekdays"></div>
+              </div>
+
+              <div class="study-days-row">
+                <div class="study-days-label">
+                  <strong>Questões</strong>
+                  <small>Dias destinados às sessões de questões.</small>
+                </div>
+                <div class="weekday-options" data-weekday-group="question_weekdays"></div>
+              </div>
+
+            </div>
+
+            <div class="capacity-row">
+              <label for="max-subject-reviews">
+                <strong>Máximo de revisões teóricas por dia</strong>
+              </label>
+              <input
+                id="max-subject-reviews"
+                type="number"
+                min="1"
+                max="50"
+                step="1"
+                value="3"
+              >
+            </div>
+
+            <div class="settings-actions">
+              <button id="save-study-days" class="button primary" type="button">
+                Salvar dias de estudo
+              </button>
+
+              <span id="study-days-status" class="settings-save-status" aria-live="polite"></span>
+            </div>
+          </article>
+
+          <article class="setting-row">
+            <div>
+              <h2>Periodização dos flashcards</h2>
+              <p>
+                Difícil: 1 · 3 · 7 dias<br>
+                Intermediário: 7 · 21 · 45 dias<br>
+                Fácil: 15 · 45 · 70 dias
+              </p>
+            </div>
+            <span class="badge">Fase 9</span>
+          </article>
+
+          <article class="setting-row">
+            <div>
+              <h2>Caderno de erros</h2>
+              <p>Padrão atual: revisão a cada 21 dias.</p>
+            </div>
+            <span class="badge">Fase 9</span>
+          </article>
+
+          <article class="setting-row">
+            <div>
+              <h2>Revisão de matérias</h2>
+              <p>
+                Padrão atual: 7 · 14 · 30 dias. A distribuição respeita os dias acima
+                e o limite diário configurado.
+              </p>
+            </div>
+            <span class="badge">Fase 9</span>
+          </article>
+
+          <article class="setting-row">
+            <div>
+              <h2>Conta</h2>
+              <p>Alteração de senha e demais controles entram aqui.</p>
+            </div>
+            <span class="badge">Fase 9</span>
+          </article>
+
+        </section>
       </div>
     </main>
   </div>
@@ -89,5 +297,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
   <script src="app.js"></script>
+  <script src="configuracoes.js?v=4.1"></script>
 </body>
 </html>

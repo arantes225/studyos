@@ -7,7 +7,8 @@ const scheduleState = {
   detected: null,
   topics: [],
   weekAnchor: startOfDaySchedule(new Date()),
-  draggingTopicId: null
+  draggingTopicId: null,
+  alreadyDoneTopicId: null
 };
 
 const HEADER_ALIASES = {
@@ -45,6 +46,28 @@ const HEADER_ALIASES = {
     "topico",
     "titulo",
     "titulo da aula"
+  ],
+
+  done: [
+    "aula ja feita",
+    "ja feita",
+    "feito",
+    "feita",
+    "concluida",
+    "concluido",
+    "aula concluida",
+    "aula concluido",
+    "estudada",
+    "estudado"
+  ],
+
+  studiedDate: [
+    "data estudada",
+    "data em que estudou",
+    "data feita",
+    "data concluida",
+    "data da conclusao",
+    "data de conclusao"
   ]
 };
 
@@ -89,16 +112,6 @@ function toISODateSchedule(date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
-}
-
-function parseISODateSchedule(value) {
-  if (!value) return null;
-
-  const [year, month, day] = value.split("-").map(Number);
-
-  if (!year || !month || !day) return null;
-
-  return new Date(year, month - 1, day);
 }
 
 function sameDateSchedule(a, b) {
@@ -177,14 +190,10 @@ function parseExcelDate(value) {
   if (typeof value === "number") {
     const decoded = window.XLSX?.SSF?.parse_date_code(value);
 
-    if (
-      decoded &&
-      decoded.y &&
-      decoded.m &&
-      decoded.d
-    ) {
-      const date = new Date(decoded.y, decoded.m - 1, decoded.d);
-      return toISODateSchedule(date);
+    if (decoded?.y && decoded?.m && decoded?.d) {
+      return toISODateSchedule(
+        new Date(decoded.y, decoded.m - 1, decoded.d)
+      );
     }
   }
 
@@ -212,6 +221,29 @@ function parseExcelDate(value) {
   return null;
 }
 
+function parseBooleanCell(value) {
+  if (typeof value === "boolean") return value;
+
+  if (typeof value === "number") return value === 1;
+
+  const normalized = normalizeHeader(value);
+
+  return [
+    "sim",
+    "s",
+    "yes",
+    "y",
+    "true",
+    "1",
+    "feito",
+    "feita",
+    "concluido",
+    "concluida",
+    "estudado",
+    "estudada"
+  ].includes(normalized);
+}
+
 function getCell(row, index) {
   if (index < 0) return "";
   return row[index] ?? "";
@@ -234,12 +266,14 @@ function parseWorkbookRows(matrix, sheetName) {
     date: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.date),
     area: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.area),
     materia: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.materia),
-    theme: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.theme)
+    theme: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.theme),
+    done: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.done),
+    studiedDate: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.studiedDate)
   };
 
   if (indexes.theme < 0) {
     throw new Error(
-      'Não encontrei uma coluna de Tema/Assunto/Conteúdo/Aula. Renomeie a coluna e tente novamente.'
+      'Não encontrei uma coluna de Tema/Assunto/Conteúdo/Aula.'
     );
   }
 
@@ -253,24 +287,37 @@ function parseWorkbookRows(matrix, sheetName) {
 
   const parsed = [];
 
-  for (let rowIndex = headerRowIndex + 1; rowIndex < matrix.length; rowIndex += 1) {
+  for (
+    let rowIndex = headerRowIndex + 1;
+    rowIndex < matrix.length;
+    rowIndex += 1
+  ) {
     const row = matrix[rowIndex] || [];
 
-    const rawTheme = getCell(row, indexes.theme);
-    const rawDate = getCell(row, indexes.date);
-    const rawArea = getCell(row, indexes.area);
-    const rawMateria = getCell(row, indexes.materia);
+    const theme = cleanText(getCell(row, indexes.theme));
+    const area = cleanText(getCell(row, indexes.area));
+    const materia = cleanText(getCell(row, indexes.materia));
 
-    const theme = cleanText(rawTheme);
-    const area = cleanText(rawArea);
-    const materia = cleanText(rawMateria);
-    const parsedDate = parseExcelDate(rawDate);
+    const rawDate = getCell(row, indexes.date);
+    const rawDone = getCell(row, indexes.done);
+    const rawStudiedDate = getCell(row, indexes.studiedDate);
+
+    const date = parseExcelDate(rawDate);
+    const alreadyDone = indexes.done >= 0
+      ? parseBooleanCell(rawDone)
+      : false;
+
+    const studiedDate = indexes.studiedDate >= 0
+      ? parseExcelDate(rawStudiedDate)
+      : null;
 
     const fullyBlank =
       !theme &&
       !area &&
       !materia &&
-      !cleanText(rawDate);
+      !cleanText(rawDate) &&
+      !cleanText(rawDone) &&
+      !cleanText(rawStudiedDate);
 
     if (fullyBlank) continue;
 
@@ -280,16 +327,30 @@ function parseWorkbookRows(matrix, sheetName) {
       errors.push("Tema ausente");
     }
 
-    if (mode === "dates" && !parsedDate) {
+    if (
+      mode === "dates"
+      && !alreadyDone
+      && !date
+    ) {
       errors.push("Data inválida/ausente");
+    }
+
+    if (
+      indexes.studiedDate >= 0
+      && cleanText(rawStudiedDate)
+      && !studiedDate
+    ) {
+      errors.push("Data estudada inválida");
     }
 
     parsed.push({
       rowNumber: rowIndex + 1,
-      date: parsedDate,
+      date,
       area,
       materia,
       theme,
+      alreadyDone,
+      studiedDate,
       errors
     });
   }
@@ -319,23 +380,30 @@ function renderPreview() {
   }
 
   const invalid = rows.filter((row) => row.errors.length > 0).length;
+  const done = rows.filter((row) => row.alreadyDone).length;
   const valid = rows.length - invalid;
 
   summary.textContent =
-    `${valid} válida${valid === 1 ? "" : "s"} · ${invalid} com problema`;
+    `${valid} válida${valid === 1 ? "" : "s"} · ${done} já feita${done === 1 ? "" : "s"} · ${invalid} com problema`;
 
   body.innerHTML = rows.slice(0, 15).map((row) => {
     const status = row.errors.length
       ? `<span class="row-error">${escapeScheduleHtml(row.errors.join(", "))}</span>`
       : "Pronta";
 
+    const doneCell = row.alreadyDone
+      ? '<span class="done-pill">Sim</span>'
+      : "Não";
+
     return `
       <tr>
         <td>${row.rowNumber}</td>
-        <td>${mode === "deck" ? "Ignorada" : escapeScheduleHtml(row.date || "—")}</td>
+        <td>${row.alreadyDone ? "—" : (mode === "deck" ? "Ignorada" : escapeScheduleHtml(row.date || "—"))}</td>
         <td>${escapeScheduleHtml(row.area || "—")}</td>
         <td>${escapeScheduleHtml(row.materia || "—")}</td>
         <td>${escapeScheduleHtml(row.theme || "—")}</td>
+        <td>${doneCell}</td>
+        <td>${escapeScheduleHtml(row.studiedDate || "—")}</td>
         <td>${status}</td>
       </tr>
     `;
@@ -398,7 +466,10 @@ async function parseSelectedFile(file) {
     scheduleState.parsedRows = [];
     scheduleState.detected = null;
     renderPreview();
-    setImportStatus(error.message || "Não foi possível ler a planilha.", "error");
+    setImportStatus(
+      error.message || "Não foi possível ler a planilha.",
+      "error"
+    );
   }
 }
 
@@ -458,6 +529,35 @@ function chunkArray(array, size) {
   return chunks;
 }
 
+async function insertAlreadyDoneRow(row, importRecord, mode) {
+  const { data: topic, error: insertError } = await scheduleSb
+    .from("study_topics")
+    .insert({
+      user_id: scheduleState.user.id,
+      import_id: importRecord.id,
+      area: row.area || null,
+      materia: row.materia || null,
+      theme: row.theme,
+      original_date: row.date || null,
+      scheduled_date: mode === "dates" ? row.date : null,
+      status: mode === "dates" && row.date ? "scheduled" : "deck"
+    })
+    .select()
+    .single();
+
+  if (insertError) throw insertError;
+
+  const { error: doneError } = await scheduleSb.rpc(
+    "mark_topic_already_done",
+    {
+      p_topic_id: topic.id,
+      p_studied_on: row.studiedDate || null
+    }
+  );
+
+  if (doneError) throw doneError;
+}
+
 async function confirmImport() {
   const mode = currentImportMode();
   const rows = scheduleState.parsedRows;
@@ -486,7 +586,10 @@ async function confirmImport() {
   try {
     importRecord = await createImportRecord(mode);
 
-    const payload = rows.map((row, index) => ({
+    const regularRows = rows.filter((row) => !row.alreadyDone);
+    const alreadyDoneRows = rows.filter((row) => row.alreadyDone);
+
+    const payload = regularRows.map((row, index) => ({
       user_id: scheduleState.user.id,
       import_id: importRecord.id,
       area: row.area || null,
@@ -498,9 +601,9 @@ async function confirmImport() {
       status: mode === "dates" ? "scheduled" : "deck"
     }));
 
-    const chunks = chunkArray(payload, 200);
+    for (const chunk of chunkArray(payload, 200)) {
+      if (!chunk.length) continue;
 
-    for (const chunk of chunks) {
       const { error } = await scheduleSb
         .from("study_topics")
         .insert(chunk);
@@ -508,21 +611,34 @@ async function confirmImport() {
       if (error) throw error;
     }
 
+    for (const row of alreadyDoneRows) {
+      await insertAlreadyDoneRow(
+        row,
+        importRecord,
+        mode
+      );
+    }
+
     await updateImportRecord(importRecord.id, {
       status: "completed",
-      row_count: payload.length,
+      row_count: rows.length,
       metadata: {
         ...importRecord.metadata,
-        imported_rows: payload.length
+        imported_rows: rows.length,
+        already_done_rows: alreadyDoneRows.length
       }
     });
 
+    const doneCount = alreadyDoneRows.length;
+
+    resetImport();
+
     setImportStatus(
-      `${payload.length} tema${payload.length === 1 ? "" : "s"} importado${payload.length === 1 ? "" : "s"} com sucesso.`,
+      `${rows.length} tema${rows.length === 1 ? "" : "s"} importado${rows.length === 1 ? "" : "s"} com sucesso` +
+      (doneCount ? ` · ${doneCount} já distribuído${doneCount === 1 ? "" : "s"} para revisão.` : "."),
       "success"
     );
 
-    resetImport();
     await loadTopics();
   } catch (error) {
     console.error(error);
@@ -590,6 +706,14 @@ function renderTopicCard(topic, compact = false) {
           Concluir
         </button>
 
+        <button
+          class="topic-action done"
+          type="button"
+          data-already-done-topic="${escapeScheduleHtml(topic.id)}"
+        >
+          Aula já feita
+        </button>
+
         ${!compact ? `
           <button
             class="topic-action danger"
@@ -632,6 +756,14 @@ function renderDeckCard(topic) {
       </div>
 
       <div class="topic-actions">
+        <button
+          class="topic-action done"
+          type="button"
+          data-already-done-topic="${escapeScheduleHtml(topic.id)}"
+        >
+          Aula já feita
+        </button>
+
         <button
           class="topic-action danger"
           type="button"
@@ -745,10 +877,10 @@ function renderSchedule() {
   renderSummary();
   renderPlanner();
   renderDeck();
-  wireTopicInteractions();
+  wireDynamicInteractions();
 }
 
-function wireTopicInteractions() {
+function wireDynamicInteractions() {
   document
     .querySelectorAll("[data-topic-id][draggable='true']")
     .forEach((card) => {
@@ -790,32 +922,11 @@ function wireTopicInteractions() {
 
       if (!topicId) return;
 
-      await scheduleTopic(topicId, day.dataset.plannerDate);
+      await scheduleTopic(
+        topicId,
+        day.dataset.plannerDate
+      );
     });
-  });
-
-  const deckZone = document.getElementById("deck-dropzone");
-
-  deckZone.addEventListener("dragover", (event) => {
-    event.preventDefault();
-    deckZone.classList.add("drop-target");
-  });
-
-  deckZone.addEventListener("dragleave", () => {
-    deckZone.classList.remove("drop-target");
-  });
-
-  deckZone.addEventListener("drop", async (event) => {
-    event.preventDefault();
-    deckZone.classList.remove("drop-target");
-
-    const topicId =
-      event.dataTransfer.getData("text/plain") ||
-      scheduleState.draggingTopicId;
-
-    if (!topicId) return;
-
-    await returnTopicToDeck(topicId);
   });
 
   document.querySelectorAll("[data-schedule-topic]").forEach((button) => {
@@ -840,6 +951,14 @@ function wireTopicInteractions() {
   document.querySelectorAll("[data-complete-topic]").forEach((button) => {
     button.addEventListener("click", async () => {
       await completeTopic(button.dataset.completeTopic);
+    });
+  });
+
+  document.querySelectorAll("[data-already-done-topic]").forEach((button) => {
+    button.addEventListener("click", () => {
+      openAlreadyDoneDialog(
+        button.dataset.alreadyDoneTopic
+      );
     });
   });
 
@@ -912,7 +1031,7 @@ async function completeTopic(topicId) {
   if (!topic) return;
 
   const confirmed = window.confirm(
-    `Concluir "${topic.theme}"? As revisões da matéria serão criadas automaticamente.`
+    `Concluir "${topic.theme}"? As revisões da matéria serão distribuídas automaticamente.`
   );
 
   if (!confirmed) return;
@@ -926,6 +1045,65 @@ async function completeTopic(topicId) {
     alert(`Não foi possível concluir: ${error.message}`);
     return;
   }
+
+  await loadTopics();
+}
+
+function openAlreadyDoneDialog(topicId) {
+  const topic = scheduleState.topics.find((item) => item.id === topicId);
+
+  if (!topic) return;
+
+  scheduleState.alreadyDoneTopicId = topicId;
+
+  document.getElementById("already-done-title").textContent =
+    topic.theme;
+
+  document.getElementById("already-done-date").value = "";
+
+  document.getElementById("already-done-dialog").showModal();
+}
+
+function closeAlreadyDoneDialog() {
+  scheduleState.alreadyDoneTopicId = null;
+
+  const dialog = document.getElementById("already-done-dialog");
+
+  if (dialog.open) {
+    dialog.close();
+  }
+}
+
+async function submitAlreadyDone(event) {
+  event.preventDefault();
+
+  const topicId = scheduleState.alreadyDoneTopicId;
+  const studiedOn =
+    document.getElementById("already-done-date").value || null;
+
+  if (!topicId) return;
+
+  const topic = scheduleState.topics.find((item) => item.id === topicId);
+
+  closeAlreadyDoneDialog();
+
+  const { error } = await scheduleSb.rpc(
+    "mark_topic_already_done",
+    {
+      p_topic_id: topicId,
+      p_studied_on: studiedOn
+    }
+  );
+
+  if (error) {
+    console.error(error);
+    alert(`Não foi possível marcar como já feita: ${error.message}`);
+    return;
+  }
+
+  alert(
+    `"${topic?.theme || "Aula"}" foi marcada como já feita. As revisões foram distribuídas na agenda.`
+  );
 
   await loadTopics();
 }
@@ -1007,24 +1185,57 @@ function wirePlannerNavigation() {
     scheduleState.weekAnchor =
       addDaysSchedule(scheduleState.weekAnchor, -7);
 
-    renderPlanner();
-    wireTopicInteractions();
+    renderSchedule();
   });
 
   document.getElementById("week-next").addEventListener("click", () => {
     scheduleState.weekAnchor =
       addDaysSchedule(scheduleState.weekAnchor, 7);
 
-    renderPlanner();
-    wireTopicInteractions();
+    renderSchedule();
   });
 
   document.getElementById("week-today").addEventListener("click", () => {
     scheduleState.weekAnchor = startOfDaySchedule(new Date());
 
-    renderPlanner();
-    wireTopicInteractions();
+    renderSchedule();
   });
+}
+
+function wireDeckDropzone() {
+  const deckZone = document.getElementById("deck-dropzone");
+
+  deckZone.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    deckZone.classList.add("drop-target");
+  });
+
+  deckZone.addEventListener("dragleave", () => {
+    deckZone.classList.remove("drop-target");
+  });
+
+  deckZone.addEventListener("drop", async (event) => {
+    event.preventDefault();
+    deckZone.classList.remove("drop-target");
+
+    const topicId =
+      event.dataTransfer.getData("text/plain") ||
+      scheduleState.draggingTopicId;
+
+    if (!topicId) return;
+
+    await returnTopicToDeck(topicId);
+  });
+}
+
+function wireAlreadyDoneDialog() {
+  document
+    .getElementById("already-done-form")
+    .addEventListener("submit", submitAlreadyDone);
+
+  document
+    .getElementById("already-done-cancel")
+    .addEventListener("click", closeAlreadyDoneDialog);
 }
 
 async function initCronograma() {
@@ -1032,6 +1243,8 @@ async function initCronograma() {
 
   wireImportControls();
   wirePlannerNavigation();
+  wireDeckDropzone();
+  wireAlreadyDoneDialog();
 
   await loadTopics();
 }
@@ -1041,7 +1254,7 @@ if (window.docmapUser) {
 } else {
   window.addEventListener(
     "docmap:ready",
-    () => initCronograma(),
+    initCronograma,
     { once: true }
   );
 }
