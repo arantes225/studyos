@@ -14,6 +14,9 @@ let errorIndex =
 let allErrorAreas =
   [];
 
+let errorLibraryItems =
+  [];
+
 
 const errorParams =
   new URLSearchParams(
@@ -1126,6 +1129,7 @@ async function saveNewError() {
     await Promise.all([
       loadErrorMetrics(),
       loadErrorAreas(),
+      loadErrorLibrary(),
       loadErrorQueue()
     ]);
 
@@ -1275,9 +1279,7 @@ async function renderCurrentError() {
         "error-progress-copy"
       )
       .textContent =
-        errorQueue.length
-          ? "sessão concluída"
-          : "nenhum item pendente";
+        "sem pendências";
 
 
     return;
@@ -1741,6 +1743,7 @@ async function markCurrentErrorRead() {
 
   await Promise.all([
     loadErrorMetrics(),
+    loadErrorLibrary(),
     renderCurrentError()
   ]);
 }
@@ -1778,6 +1781,589 @@ function wireErrorReview() {
 }
 
 
+
+/* =========================================================
+   BIBLIOTECA
+   ========================================================= */
+
+function errorLibraryEscape(
+  value
+) {
+  return String(
+    value ?? ""
+  )
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
+}
+
+
+function populateLibraryAreas() {
+  const select =
+    document.getElementById(
+      "error-library-area"
+    );
+
+
+  if (!select) {
+    return;
+  }
+
+
+  const current =
+    select.value;
+
+
+  const areas =
+    Array.from(
+      new Set(
+        errorLibraryItems
+          .map(
+            (item) =>
+              item.area
+              || "Sem área"
+          )
+      )
+    )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a.localeCompare(
+            b,
+            "pt-BR"
+          )
+      );
+
+
+  select.innerHTML =
+    `
+      <option value="">
+        Todas as áreas
+      </option>
+    `
+    + areas
+        .map(
+          (area) => `
+            <option value="${errorLibraryEscape(
+              area
+            )}">
+              ${errorLibraryEscape(
+                area
+              )}
+            </option>
+          `
+        )
+        .join("");
+
+
+  if (
+    areas.includes(
+      current
+    )
+  ) {
+    select.value =
+      current;
+  }
+}
+
+
+function filteredErrorLibrary() {
+  const area =
+    document
+      .getElementById(
+        "error-library-area"
+      )
+      ?.value
+    || "";
+
+
+  const search =
+    document
+      .getElementById(
+        "error-library-search"
+      )
+      ?.value
+      .trim()
+      .toLowerCase()
+    || "";
+
+
+  return errorLibraryItems
+    .filter(
+      (item) => {
+        const itemArea =
+          item.area
+          || "Sem área";
+
+
+        if (
+          area
+          && itemArea
+            !== area
+        ) {
+          return false;
+        }
+
+
+        if (!search) {
+          return true;
+        }
+
+
+        return [
+          item.area,
+          item.materia,
+          item.theme,
+          item.ccq,
+          item.question_text,
+          item.correct_answer,
+          item.what_i_thought
+        ]
+          .filter(
+            Boolean
+          )
+          .join(" ")
+          .toLowerCase()
+          .includes(
+            search
+          );
+      }
+    );
+}
+
+
+function renderErrorLibrary() {
+  const container =
+    document.getElementById(
+      "error-library"
+    );
+
+
+  const empty =
+    document.getElementById(
+      "error-library-empty"
+    );
+
+
+  const count =
+    document.getElementById(
+      "error-library-count"
+    );
+
+
+  if (
+    !container
+    || !empty
+    || !count
+  ) {
+    return;
+  }
+
+
+  const items =
+    filteredErrorLibrary();
+
+
+  count.textContent =
+    `${items.length} ${
+      items.length === 1
+        ? "erro"
+        : "erros"
+    }`;
+
+
+  if (
+    !items.length
+  ) {
+    container.innerHTML =
+      "";
+
+    empty.hidden =
+      false;
+
+    return;
+  }
+
+
+  empty.hidden =
+    true;
+
+
+  const groups =
+    new Map();
+
+
+  items.forEach(
+    (item) => {
+      const area =
+        item.area
+        || "Sem área";
+
+
+      if (
+        !groups.has(
+          area
+        )
+      ) {
+        groups.set(
+          area,
+          []
+        );
+      }
+
+
+      groups
+        .get(area)
+        .push(item);
+    }
+  );
+
+
+  const sortedAreas =
+    Array.from(
+      groups.keys()
+    )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a.localeCompare(
+            b,
+            "pt-BR"
+          )
+      );
+
+
+  container.innerHTML =
+    sortedAreas
+      .map(
+        (area) => {
+          const areaItems =
+            groups.get(
+              area
+            );
+
+
+          return `
+            <section class="error-library-group">
+
+              <div class="error-library-group-head">
+
+                <h3>
+                  ${errorLibraryEscape(
+                    area
+                  )}
+                </h3>
+
+                <span>
+                  ${areaItems.length} ${
+                    areaItems.length === 1
+                      ? "erro"
+                      : "erros"
+                  }
+                </span>
+
+              </div>
+
+
+              <div class="error-library-grid">
+
+                ${areaItems
+                  .map(
+                    (item) => {
+                      const meta =
+                        [
+                          item.materia,
+                          item.theme
+                        ]
+                          .filter(
+                            Boolean
+                          )
+                          .join(
+                            " · "
+                          );
+
+
+                      return `
+                        <article
+                          class="error-library-card"
+                          data-library-card="${errorLibraryEscape(
+                            item.id
+                          )}"
+                        >
+
+                          <div class="error-library-card-main">
+
+                            <div class="error-library-card-ccq">
+                              ${errorLibraryEscape(
+                                item.ccq
+                                || "Sem CCQ"
+                              )}
+                            </div>
+
+                            <div class="error-library-card-meta">
+                              ${errorLibraryEscape(
+                                meta
+                                || area
+                              )}
+                            </div>
+
+                            <div class="error-library-card-stats">
+
+                              <span>
+                                Próxima:
+                                ${errorLibraryEscape(
+                                  formatErrorDate(
+                                    item.due_date
+                                  )
+                                )}
+                              </span>
+
+                              <span>
+                                ${Number(
+                                  item.review_count
+                                  || 0
+                                )} ${
+                                  Number(
+                                    item.review_count
+                                    || 0
+                                  ) === 1
+                                    ? "revisão"
+                                    : "revisões"
+                                }
+                              </span>
+
+                            </div>
+
+                          </div>
+
+
+                          <div class="error-library-card-actions">
+
+                            <button
+                              class="button secondary"
+                              type="button"
+                              data-library-open="${errorLibraryEscape(
+                                item.id
+                              )}"
+                            >
+                              Abrir
+                            </button>
+
+                          </div>
+
+
+                          <div
+                            class="error-library-card-details"
+                            data-library-details="${errorLibraryEscape(
+                              item.id
+                            )}"
+                            hidden
+                          >
+
+                            <div class="error-library-detail-block">
+                              <span>Questão</span>
+                              <div>
+                                ${errorLibraryEscape(
+                                  item.question_text
+                                  || "—"
+                                )}
+                              </div>
+                            </div>
+
+
+                            <div class="error-library-detail-block">
+                              <span>Resposta correta</span>
+                              <div>
+                                ${errorLibraryEscape(
+                                  item.correct_answer
+                                  || "—"
+                                )}
+                              </div>
+                            </div>
+
+
+                            ${
+                              item.what_i_thought
+                                ? `
+                                  <div class="error-library-detail-block">
+                                    <span>O que eu pensei</span>
+                                    <div>
+                                      ${errorLibraryEscape(
+                                        item.what_i_thought
+                                      )}
+                                    </div>
+                                  </div>
+                                `
+                                : ""
+                            }
+
+                          </div>
+
+                        </article>
+                      `;
+                    }
+                  )
+                  .join("")}
+
+              </div>
+
+            </section>
+          `;
+        }
+      )
+      .join("");
+
+
+  container
+    .querySelectorAll(
+      "[data-library-open]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            const id =
+              button
+                .dataset
+                .libraryOpen;
+
+
+            const details =
+              container.querySelector(
+                `[data-library-details="${CSS.escape(
+                  id
+                )}"]`
+              );
+
+
+            if (!details) {
+              return;
+            }
+
+
+            const open =
+              details.hidden;
+
+
+            details.hidden =
+              !open;
+
+
+            button.textContent =
+              open
+                ? "Fechar"
+                : "Abrir";
+          }
+        );
+      }
+    );
+}
+
+
+async function loadErrorLibrary() {
+  const {
+    data,
+    error
+  } =
+    await errorSb
+      .from(
+        "error_notebook"
+      )
+      .select(
+        "id,area,materia,theme,ccq,question_text,correct_answer,what_i_thought,due_date,review_count,created_at"
+      )
+      .eq(
+        "active",
+        true
+      )
+      .order(
+        "area",
+        {
+          ascending:
+            true,
+
+          nullsFirst:
+            false
+        }
+      )
+      .order(
+        "created_at",
+        {
+          ascending:
+            false
+        }
+      )
+      .limit(
+        1000
+      );
+
+
+  if (error) {
+    console.warn(
+      "Não foi possível carregar a biblioteca do Caderno de Erros:",
+      error.message
+    );
+
+    return;
+  }
+
+
+  errorLibraryItems =
+    data || [];
+
+
+  populateLibraryAreas();
+
+  renderErrorLibrary();
+}
+
+
+function wireErrorLibrary() {
+  document
+    .getElementById(
+      "error-library-area"
+    )
+    ?.addEventListener(
+      "change",
+      renderErrorLibrary
+    );
+
+
+  document
+    .getElementById(
+      "error-library-search"
+    )
+    ?.addEventListener(
+      "input",
+      renderErrorLibrary
+    );
+}
+
+
+
+
 /* =========================================================
    INICIALIZAÇÃO
    ========================================================= */
@@ -1791,10 +2377,13 @@ async function initErrorNotebook() {
 
   wireErrorReview();
 
+  wireErrorLibrary();
+
 
   await Promise.all([
     loadErrorMetrics(),
-    loadErrorAreas()
+    loadErrorAreas(),
+    loadErrorLibrary()
   ]);
 
 

@@ -20,7 +20,7 @@
 
   <link
     rel="stylesheet"
-    href="caderno-erros.css?v=7.1"
+    href="caderno-erros.css?v=7.3"
   >
 </head>
 
@@ -279,9 +279,13 @@
 
           <div class="panel-header error-review-header">
 
-            <div>
+            <div class="error-review-heading">
+              <span class="error-review-kicker">
+                Revisão
+              </span>
+
               <h2 id="error-review-title">
-                Revisão do Caderno de Erros
+                Caderno de Erros
               </h2>
 
               <p id="error-review-copy">
@@ -329,15 +333,9 @@
             class="error-empty"
             hidden
           >
-
-            <strong>
-              Revisões em dia.
-            </strong>
-
             <span id="error-empty-copy">
-              Não há itens programados para esta seleção.
+              Nenhum CCQ pendente nesta seleção.
             </span>
-
           </div>
 
 
@@ -458,6 +456,79 @@
 
         </section>
 
+
+        <!-- ================================================
+             BIBLIOTECA
+             ================================================ -->
+
+        <section class="panel error-library-panel">
+
+          <div class="panel-header error-library-header">
+
+            <div>
+              <h2>Biblioteca do Caderno de Erros</h2>
+
+              <p>
+                Todos os erros registrados, organizados por área.
+              </p>
+            </div>
+
+            <span
+              id="error-library-count"
+              class="badge accent"
+            >
+              —
+            </span>
+
+          </div>
+
+
+          <div class="error-library-tools">
+
+            <label class="error-library-field">
+
+              <span>Área</span>
+
+              <select id="error-library-area">
+                <option value="">
+                  Todas as áreas
+                </option>
+              </select>
+
+            </label>
+
+
+            <label class="error-library-field error-library-search">
+
+              <span>Buscar</span>
+
+              <input
+                id="error-library-search"
+                type="search"
+                placeholder="CCQ, matéria, tema ou questão..."
+              >
+
+            </label>
+
+          </div>
+
+
+          <div
+            id="error-library-empty"
+            class="error-library-empty"
+            hidden
+          >
+            Nenhum erro encontrado.
+          </div>
+
+
+          <div
+            id="error-library"
+            class="error-library"
+          ></div>
+
+        </section>
+
       </div>
 
     </main>
@@ -471,9 +542,9 @@
 
   <script src="supabase.js"></script>
 
-  <script src="app.js?v=7.1"></script>
+  <script src="app.js?v=7.3"></script>
 
-  <script src="caderno-erros.js?v=7.1"></script>
+  <script src="caderno-erros.js?v=7.3"></script>
 
 </body>
 
