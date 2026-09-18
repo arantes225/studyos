@@ -1,0 +1,20 @@
+PDF DE TESTE
+Teste-18-09-2026---18-53-download.pdf
+
+RESULTADO ESPERADO:
+20 questões detectadas.
+
+FIGURAS ESPERADAS:
+Q1  -> MAPA/gráfico
+Q2  -> ECG
+Q3  -> tabela/figura da questão
+Q4  -> ECG
+Q6  -> tabela de exames
+Q11 -> ECG
+Q13 -> ECG
+Q17 -> ECG
+
+Total esperado: 8 questões com figura.
+
+O rodapé/logo MedCof deve ser ignorado.
+A página do gabarito não deve gerar recortes.

@@ -1,43 +1,50 @@
-RESIBULANDO — IMPORTADOR MEDCOF
+RESIBULANDO — IMPORTADOR MEDCOF + RECORTE AUTOMÁTICO DE IMAGENS
 
-Este patch corrige a leitura de PDFs como:
-Teste-18-09-2026---18-53-download.pdf
+O QUE ESTA VERSÃO FAZ
+- lê as questões do PDF com PDF.js
+- reconhece o formato do MedCof
+- detecta imagens raster embutidas no PDF
+- identifica em qual questão cada imagem está
+- renderiza a página em alta resolução
+- recorta somente a figura
+- salva o recorte como PNG no bucket privado docmap
+- associa o PNG à questão
+- mostra a figura dentro do simulado
+- exclui as imagens do Storage quando o simulado é apagado
 
-O problema principal era que o importador antigo reconhecia:
-1. Questão...
+NO PDF DE TESTE ENVIADO
+O esperado é encontrar imagens nas questões:
+1, 2, 3, 4, 6, 11, 13 e 17.
 
-mas o MedCof usa:
-1) Questão...
+Ou seja: 8 questões com figura.
 
-CORREÇÕES
-- reconhece questões iniciadas por 1) e 1.
-- reconhece alternativas A), B), C), D), E)
-- remove cabeçalhos e rodapés repetidos do MedCof
-- para de anexar texto quando encontra a seção GABARITO
-- reconhece gabarito compacto do MedCof, inclusive X = anulada
-- identifica a fonte como MedCof QBank
-- inclui fallback de leitura quando o agrupamento visual do PDF falhar
-- NÃO usa OCR desnecessariamente quando o PDF já possui camada de texto
-
-IMPORTANTE
-O gabarito oficial é detectado para validar a leitura do PDF,
-mas nesta versão não é gravado automaticamente como resposta do usuário.
-O fluxo atual do Resibulando continua permitindo marcar as questões erradas
-e informar a resposta correta apenas quando necessário.
+OBSERVAÇÃO
+Este sistema funciona especialmente bem quando as figuras são imagens
+raster embutidas no PDF (como ECGs, tabelas e gráficos do PDF do MedCof).
+Se um PDF usar desenhos 100% vetoriais, eles podem não ser identificados
+como uma imagem separada nesta versão.
 
 INSTALAÇÃO
-Substitua na raiz do projeto:
-- questoes-simulados.js
-- questoes-simulados.html
 
-Depois:
+1. PRIMEIRO rode no Supabase SQL Editor SOMENTE:
+   fase11_15_question_images.sql
+
+2. Depois substitua na raiz do projeto:
+   - questoes-simulados.js
+   - questoes-simulados.html
+
+3. Publique:
 
 git add -A
-git commit -m "Corrige importacao de PDFs MedCof"
+git commit -m "Adiciona recorte automatico de imagens dos simulados"
 git pull --rebase origin main
 git push origin main
 
-Depois que o GitHub Pages atualizar:
+4. Quando o GitHub Pages atualizar:
 Ctrl + Shift + R
 
-NÃO PRECISA RODAR SQL.
+ARMAZENAMENTO
+Os recortes ficam em:
+docmap/<usuario>/question_sets/<simulado>/images/
+
+Nenhum bucket novo é necessário.

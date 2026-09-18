@@ -739,6 +739,968 @@ function buildLooseTextLines(
 }
 
 
+function multiplyPdfMatrices(left, right) {
+  const [
+    a1, b1, c1,
+    d1, e1, f1
+  ] = left;
+
+  const [
+    a2, b2, c2,
+    d2, e2, f2
+  ] = right;
+
+  return [
+    a1 * a2 + c1 * b2,
+    b1 * a2 + d1 * b2,
+    a1 * c2 + c1 * d2,
+    b1 * c2 + d1 * d2,
+    a1 * e2 + c1 * f2 + e1,
+    b1 * e2 + d1 * f2 + f1
+  ];
+}
+
+
+function applyPdfMatrix(
+  matrix,
+  x,
+  y
+) {
+  return [
+    matrix[0] * x
+      + matrix[2] * y
+      + matrix[4],
+
+    matrix[1] * x
+      + matrix[3] * y
+      + matrix[5]
+  ];
+}
+
+
+function imageRectFromCtm(
+  ctm,
+  viewport
+) {
+  const corners = [
+    [0, 0],
+    [1, 0],
+    [0, 1],
+    [1, 1]
+  ]
+    .map(
+      ([x, y]) =>
+        applyPdfMatrix(
+          ctm,
+          x,
+          y
+        )
+    )
+    .map(
+      (point) =>
+        window.pdfjsLib
+          .Util
+          .applyTransform(
+            point,
+            viewport.transform
+          )
+    );
+
+  const xs =
+    corners.map(
+      (point) =>
+        point[0]
+    );
+
+  const ys =
+    corners.map(
+      (point) =>
+        point[1]
+    );
+
+  const left =
+    Math.min(...xs);
+
+  const right =
+    Math.max(...xs);
+
+  const top =
+    Math.min(...ys);
+
+  const bottom =
+    Math.max(...ys);
+
+  return {
+    left,
+    top,
+    right,
+    bottom,
+    width:
+      Math.max(
+        0,
+        right - left
+      ),
+    height:
+      Math.max(
+        0,
+        bottom - top
+      )
+  };
+}
+
+
+function isUsefulQuestionImageRect(
+  rect,
+  viewport
+) {
+  if (
+    !rect
+    || rect.width < 110
+    || rect.height < 45
+  ) {
+    return false;
+  }
+
+  if (
+    rect.width * rect.height
+    < 12000
+  ) {
+    return false;
+  }
+
+  /*
+    Ignora cabeçalho/rodapé/logos.
+  */
+  if (
+    rect.top
+    < viewport.height * 0.025
+    || rect.bottom
+    > viewport.height * 0.92
+  ) {
+    return false;
+  }
+
+  /*
+    Evita capturar uma página inteira
+    renderizada como fundo.
+  */
+  if (
+    rect.width
+      > viewport.width * 0.92
+    && rect.height
+      > viewport.height * 0.80
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+async function extractEmbeddedImageRects(
+  page,
+  viewport
+) {
+  const operatorList =
+    await page
+      .getOperatorList();
+
+  const OPS =
+    window.pdfjsLib.OPS;
+
+  const stack = [];
+
+  let ctm =
+    [1, 0, 0, 1, 0, 0];
+
+  const rects = [];
+
+  for (
+    let index = 0;
+    index < operatorList.fnArray.length;
+    index += 1
+  ) {
+    const fn =
+      operatorList.fnArray[index];
+
+    const args =
+      operatorList.argsArray[index]
+      || [];
+
+    if (
+      fn === OPS.save
+    ) {
+      stack.push(
+        ctm.slice()
+      );
+
+      continue;
+    }
+
+    if (
+      fn === OPS.restore
+    ) {
+      ctm =
+        stack.length
+          ? stack.pop()
+          : [1, 0, 0, 1, 0, 0];
+
+      continue;
+    }
+
+    if (
+      fn === OPS.transform
+    ) {
+      ctm =
+        multiplyPdfMatrices(
+          ctm,
+          args
+        );
+
+      continue;
+    }
+
+    const isImage =
+      fn === OPS.paintImageXObject
+      || fn === OPS.paintInlineImageXObject
+      || fn === OPS.paintJpegXObject;
+
+    if (!isImage) {
+      continue;
+    }
+
+    const rect =
+      imageRectFromCtm(
+        ctm,
+        viewport
+      );
+
+    if (
+      isUsefulQuestionImageRect(
+        rect,
+        viewport
+      )
+    ) {
+      rects.push(
+        rect
+      );
+    }
+  }
+
+  /*
+    Remove retângulos praticamente idênticos.
+  */
+  return rects.filter(
+    (rect, index) =>
+      !rects
+        .slice(
+          0,
+          index
+        )
+        .some(
+          (previous) =>
+            Math.abs(
+              previous.left
+              - rect.left
+            ) < 3
+            && Math.abs(
+              previous.top
+              - rect.top
+            ) < 3
+            && Math.abs(
+              previous.width
+              - rect.width
+            ) < 5
+            && Math.abs(
+              previous.height
+              - rect.height
+            ) < 5
+        )
+  );
+}
+
+
+function groupTextItemsIntoLineRecords(
+  items,
+  viewport
+) {
+  const rows = [];
+
+  for (const item of items) {
+    const text =
+      normalizeLine(
+        item.str
+      );
+
+    if (!text) {
+      continue;
+    }
+
+    const tx =
+      window.pdfjsLib
+        .Util
+        .transform(
+          viewport.transform,
+          item.transform
+        );
+
+    const x =
+      Number(
+        tx[4] || 0
+      );
+
+    const baselineY =
+      Number(
+        tx[5] || 0
+      );
+
+    const height =
+      Math.max(
+        1,
+        Math.hypot(
+          tx[2] || 0,
+          tx[3] || 0
+        )
+      );
+
+    const width =
+      Math.max(
+        1,
+        Math.abs(
+          Number(
+            item.width || 0
+          )
+          * viewport.scale
+        )
+      );
+
+    const top =
+      baselineY - height;
+
+    const bottom =
+      baselineY + 2;
+
+    let row =
+      rows.find(
+        (candidate) =>
+          Math.abs(
+            candidate.baselineY
+            - baselineY
+          ) <= 5
+      );
+
+    if (!row) {
+      row = {
+        baselineY,
+        items: []
+      };
+
+      rows.push(
+        row
+      );
+    }
+
+    row.items.push({
+      x,
+      top,
+      bottom,
+      width,
+      text
+    });
+  }
+
+  rows.sort(
+    (a, b) =>
+      a.baselineY
+      - b.baselineY
+  );
+
+  return rows
+    .map(
+      (row) => {
+        row.items.sort(
+          (a, b) =>
+            a.x - b.x
+        );
+
+        const text =
+          normalizeLine(
+            row.items
+              .map(
+                (item) =>
+                  item.text
+              )
+              .join(" ")
+          );
+
+        const left =
+          Math.min(
+            ...row.items
+              .map(
+                (item) =>
+                  item.x
+              )
+          );
+
+        const right =
+          Math.max(
+            ...row.items
+              .map(
+                (item) =>
+                  item.x
+                  + item.width
+              )
+          );
+
+        const top =
+          Math.min(
+            ...row.items
+              .map(
+                (item) =>
+                  item.top
+              )
+          );
+
+        const bottom =
+          Math.max(
+            ...row.items
+              .map(
+                (item) =>
+                  item.bottom
+              )
+          );
+
+        return {
+          text,
+          left,
+          right,
+          top,
+          bottom,
+          baselineY:
+            row.baselineY
+        };
+      }
+    )
+    .filter(
+      (row) =>
+        Boolean(
+          row.text
+        )
+    );
+}
+
+
+function questionStartsForPage(
+  lineRecords
+) {
+  const answerKeyIndex =
+    lineRecords.findIndex(
+      (line) =>
+        isAnswerKeyStart(
+          line.text
+        )
+    );
+
+  if (
+    answerKeyIndex >= 0
+  ) {
+    return [];
+  }
+
+  return lineRecords
+    .map(
+      (line) => {
+        const match =
+          questionStartMatch(
+            line.text
+          );
+
+        if (!match) {
+          return null;
+        }
+
+        return {
+          number:
+            Number(
+              match[1]
+            ),
+          top:
+            line.top,
+          bottom:
+            line.bottom
+        };
+      }
+    )
+    .filter(Boolean)
+    .sort(
+      (a, b) =>
+        a.top - b.top
+    );
+}
+
+
+function matchImageRectToQuestion(
+  rect,
+  questionStarts
+) {
+  if (
+    !questionStarts.length
+  ) {
+    return null;
+  }
+
+  const centerY =
+    rect.top
+    + rect.height / 2;
+
+  let matched =
+    null;
+
+  for (
+    let index = 0;
+    index < questionStarts.length;
+    index += 1
+  ) {
+    const current =
+      questionStarts[index];
+
+    const next =
+      questionStarts[
+        index + 1
+      ];
+
+    const startY =
+      current.top - 8;
+
+    const endY =
+      next
+        ? next.top - 4
+        : Number.POSITIVE_INFINITY;
+
+    if (
+      centerY >= startY
+      && centerY < endY
+    ) {
+      matched =
+        current.number;
+
+      break;
+    }
+  }
+
+  return matched;
+}
+
+
+function canvasToPngBlob(
+  canvas
+) {
+  return new Promise(
+    (resolve, reject) => {
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(
+              new Error(
+                "Não foi possível gerar o recorte PNG."
+              )
+            );
+
+            return;
+          }
+
+          resolve(blob);
+        },
+        "image/png",
+        0.96
+      );
+    }
+  );
+}
+
+
+async function cropRenderedPage(
+  pageCanvas,
+  rect
+) {
+  const padding = 12;
+
+  const left =
+    Math.max(
+      0,
+      Math.floor(
+        rect.left - padding
+      )
+    );
+
+  const top =
+    Math.max(
+      0,
+      Math.floor(
+        rect.top - padding
+      )
+    );
+
+  const right =
+    Math.min(
+      pageCanvas.width,
+      Math.ceil(
+        rect.right + padding
+      )
+    );
+
+  const bottom =
+    Math.min(
+      pageCanvas.height,
+      Math.ceil(
+        rect.bottom + padding
+      )
+    );
+
+  const width =
+    Math.max(
+      1,
+      right - left
+    );
+
+  const height =
+    Math.max(
+      1,
+      bottom - top
+    );
+
+  const crop =
+    document.createElement(
+      "canvas"
+    );
+
+  crop.width =
+    width;
+
+  crop.height =
+    height;
+
+  const context =
+    crop.getContext(
+      "2d",
+      {
+        alpha: false
+      }
+    );
+
+  context.fillStyle =
+    "#ffffff";
+
+  context.fillRect(
+    0,
+    0,
+    width,
+    height
+  );
+
+  context.drawImage(
+    pageCanvas,
+    left,
+    top,
+    width,
+    height,
+    0,
+    0,
+    width,
+    height
+  );
+
+  return canvasToPngBlob(
+    crop
+  );
+}
+
+
+async function mergeQuestionImageBlobs(
+  blobs
+) {
+  if (
+    blobs.length === 1
+  ) {
+    return blobs[0];
+  }
+
+  const images = [];
+
+  for (const blob of blobs) {
+    const bitmap =
+      await createImageBitmap(
+        blob
+      );
+
+    images.push(
+      bitmap
+    );
+  }
+
+  const gap =
+    12;
+
+  const width =
+    Math.max(
+      ...images.map(
+        (image) =>
+          image.width
+      )
+    );
+
+  const height =
+    images.reduce(
+      (
+        total,
+        image
+      ) =>
+        total
+        + image.height,
+      0
+    )
+    + gap
+      * (
+        images.length
+        - 1
+      );
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+  canvas.width =
+    width;
+
+  canvas.height =
+    height;
+
+  const context =
+    canvas.getContext(
+      "2d",
+      {
+        alpha: false
+      }
+    );
+
+  context.fillStyle =
+    "#ffffff";
+
+  context.fillRect(
+    0,
+    0,
+    width,
+    height
+  );
+
+  let y = 0;
+
+  for (const image of images) {
+    const x =
+      Math.floor(
+        (width - image.width)
+        / 2
+      );
+
+    context.drawImage(
+      image,
+      x,
+      y
+    );
+
+    y +=
+      image.height
+      + gap;
+
+    image.close?.();
+  }
+
+  return canvasToPngBlob(
+    canvas
+  );
+}
+
+
+async function extractQuestionImagesFromPage(
+  page,
+  content,
+  pageNumber
+) {
+  const scale =
+    2;
+
+  const viewport =
+    page.getViewport({
+      scale
+    });
+
+  const lineRecords =
+    groupTextItemsIntoLineRecords(
+      content.items,
+      viewport
+    );
+
+  const questionStarts =
+    questionStartsForPage(
+      lineRecords
+    );
+
+  if (
+    !questionStarts.length
+  ) {
+    return [];
+  }
+
+  const imageRects =
+    await extractEmbeddedImageRects(
+      page,
+      viewport
+    );
+
+  if (
+    !imageRects.length
+  ) {
+    return [];
+  }
+
+  const matchedRects =
+    imageRects
+      .map(
+        (rect) => ({
+          rect,
+          question_number:
+            matchImageRectToQuestion(
+              rect,
+              questionStarts
+            )
+        })
+      )
+      .filter(
+        (item) =>
+          Number.isInteger(
+            item.question_number
+          )
+      );
+
+  if (
+    !matchedRects.length
+  ) {
+    return [];
+  }
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+  canvas.width =
+    Math.ceil(
+      viewport.width
+    );
+
+  canvas.height =
+    Math.ceil(
+      viewport.height
+    );
+
+  const context =
+    canvas.getContext(
+      "2d",
+      {
+        alpha: false
+      }
+    );
+
+  await page
+    .render({
+      canvasContext:
+        context,
+      viewport
+    })
+    .promise;
+
+  const results = [];
+
+  for (
+    let index = 0;
+    index < matchedRects.length;
+    index += 1
+  ) {
+    const item =
+      matchedRects[index];
+
+    setImportStatus(
+      `Recortando figura da questão ${item.question_number} — página ${pageNumber}...`
+    );
+
+    const blob =
+      await cropRenderedPage(
+        canvas,
+        item.rect
+      );
+
+    results.push({
+      question_number:
+        item.question_number,
+      blob
+    });
+  }
+
+  return results;
+}
+
+
+async function consolidateQuestionImages(
+  imageEntries
+) {
+  const grouped =
+    new Map();
+
+  for (const entry of imageEntries) {
+    if (
+      !grouped.has(
+        entry.question_number
+      )
+    ) {
+      grouped.set(
+        entry.question_number,
+        []
+      );
+    }
+
+    grouped
+      .get(
+        entry.question_number
+      )
+      .push(
+        entry.blob
+      );
+  }
+
+  const consolidated = [];
+
+  for (
+    const [
+      questionNumber,
+      blobs
+    ]
+    of grouped.entries()
+  ) {
+    consolidated.push({
+      question_number:
+        questionNumber,
+      blob:
+        await mergeQuestionImageBlobs(
+          blobs
+        )
+    });
+  }
+
+  return consolidated;
+}
+
+
 async function extractQuestionsFromPdf(
   file
 ) {
@@ -765,6 +1727,7 @@ async function extractQuestionsFromPdf(
 
   const allLines = [];
   const pagesText = [];
+  const extractedImageEntries = [];
 
   let medCofDetected =
     false;
@@ -825,6 +1788,34 @@ async function extractQuestionsFromPdf(
     allLines.push(
       ...lines
     );
+
+    /*
+      Detecta imagens raster embutidas e recorta
+      diretamente da página renderizada.
+      Cabeçalhos, rodapés e logos são ignorados
+      por tamanho e posição.
+    */
+    try {
+      const pageImages =
+        await extractQuestionImagesFromPage(
+          page,
+          content,
+          pageNumber
+        );
+
+      extractedImageEntries.push(
+        ...pageImages
+      );
+    } catch (imageError) {
+      /*
+        Falhar no recorte nunca deve impedir
+        a importação do texto.
+      */
+      console.warn(
+        `Não foi possível recortar imagens da página ${pageNumber}:`,
+        imageError
+      );
+    }
   }
 
   const defaultSourceLabel =
@@ -843,12 +1834,6 @@ async function extractQuestionsFromPdf(
       defaultSourceLabel
     );
 
-  /*
-    Fallback:
-    se a leitura por coordenadas não conseguiu
-    separar as questões, tenta pelo texto bruto
-    das páginas.
-  */
   if (
     questions.length < 2
   ) {
@@ -883,16 +1868,14 @@ async function extractQuestionsFromPdf(
     );
   }
 
-  /*
-    Detecta o gabarito do MedCof para validar se
-    o PDF foi reconhecido corretamente.
-    Nesta versão ele não grava o gabarito oficial
-    no banco porque a estrutura atual do Resibulando
-    registra o desempenho do usuário separadamente.
-  */
   const answerKey =
     extractMedCofAnswerKey(
       allLines
+    );
+
+  const questionImages =
+    await consolidateQuestionImages(
+      extractedImageEntries
     );
 
   if (
@@ -902,11 +1885,20 @@ async function extractQuestionsFromPdf(
     ).length
   ) {
     setImportStatus(
-      `MedCof reconhecido: ${questions.length} questões e ${Object.keys(answerKey).length} respostas no gabarito detectadas. Salvando simulado...`
+      `MedCof reconhecido: ${questions.length} questões, ${Object.keys(answerKey).length} respostas no gabarito e ${questionImages.length} questão(ões) com figura detectada(s). Salvando...`
+    );
+  } else if (
+    questionImages.length
+  ) {
+    setImportStatus(
+      `${questions.length} questões e ${questionImages.length} figura(s) detectadas. Salvando simulado...`
     );
   }
 
-  return questions;
+  return {
+    questions,
+    questionImages
+  };
 }
 
 
@@ -1183,6 +2175,61 @@ async function uploadQuestionPdf(setId, file) {
   return path;
 }
 
+async function uploadExtractedQuestionImages(
+  setId,
+  questionImages
+) {
+  const paths = {};
+
+  for (
+    let index = 0;
+    index < questionImages.length;
+    index += 1
+  ) {
+    const image =
+      questionImages[index];
+
+    const questionNumber =
+      image.question_number;
+
+    setImportStatus(
+      `Enviando figura da questão ${questionNumber}...`
+    );
+
+    const path =
+      `${qsState.user.id}/question_sets/${setId}/images/question-${questionNumber}.png`;
+
+    const {
+      error
+    } =
+      await qsSb
+        .storage
+        .from("docmap")
+        .upload(
+          path,
+          image.blob,
+          {
+            contentType:
+              "image/png",
+            upsert:
+              true
+          }
+        );
+
+    if (error) {
+      throw error;
+    }
+
+    paths[
+      questionNumber
+    ] =
+      path;
+  }
+
+  return paths;
+}
+
+
 function chunkArray(array, size) {
   const chunks = [];
 
@@ -1221,15 +2268,32 @@ async function importPdf() {
       file
     );
 
-    const [questions, filePath] = await Promise.all([
+    const [extraction, filePath] = await Promise.all([
       extractQuestionsFromPdf(file),
       uploadQuestionPdf(setRecord.id, file)
     ]);
 
+    const {
+      questions,
+      questionImages
+    } =
+      extraction;
+
+    const imagePaths =
+      await uploadExtractedQuestionImages(
+        setRecord.id,
+        questionImages
+      );
+
     const payload = questions.map((question) => ({
       user_id: qsState.user.id,
       set_id: setRecord.id,
-      ...question
+      ...question,
+      image_path:
+        imagePaths[
+          question.question_number
+        ]
+        || null
     }));
 
     for (const chunk of chunkArray(payload, 150)) {
@@ -1253,7 +2317,7 @@ async function importPdf() {
     if (updateError) throw updateError;
 
     setImportStatus(
-      `${questions.length} questões extraídas com sucesso. PDF processado e pronto para o gabarito.`,
+      `${questions.length} questões extraídas com sucesso. ${questionImages.length} questão(ões) com figura(s) recortada(s).`,
       "success"
     );
 
@@ -2511,7 +3575,10 @@ async function loadSets() {
     console.error(attemptsResult.error);
   }
 
-  const items = itemsResult.data || [];
+  const items =
+    await attachQuestionImageUrls(
+      itemsResult.data || []
+    );
   const attempts = attemptsResult.data || [];
 
   const itemToSet = new Map(
@@ -3137,15 +4204,42 @@ async function deleteSelectedSets() {
     );
 
 
-  const paths =
-    selected
+  const {
+    data:
+      imageRows
+  } =
+    await qsSb
+      .from(
+        "question_items"
+      )
+      .select(
+        "image_path"
+      )
+      .in(
+        "set_id",
+        ids
+      );
+
+
+  const paths = [
+    ...selected
       .map(
         (set) =>
           set.source_file_path
       )
       .filter(
         Boolean
-      );
+      ),
+
+    ...(imageRows || [])
+      .map(
+        (item) =>
+          item.image_path
+      )
+      .filter(
+        Boolean
+      )
+  ];
 
 
   if (paths.length) {
@@ -3353,6 +4447,57 @@ function renderSetHistory() {
     );
 }
 
+async function attachQuestionImageUrls(
+  items
+) {
+  return Promise.all(
+    items.map(
+      async (item) => {
+        if (
+          !item.image_path
+        ) {
+          return {
+            ...item,
+            image_url: null
+          };
+        }
+
+        const {
+          data,
+          error
+        } =
+          await qsSb
+            .storage
+            .from("docmap")
+            .createSignedUrl(
+              item.image_path,
+              3600
+            );
+
+        if (error) {
+          console.warn(
+            "Não foi possível abrir a imagem da questão:",
+            error
+          );
+
+          return {
+            ...item,
+            image_url: null
+          };
+        }
+
+        return {
+          ...item,
+          image_url:
+            data?.signedUrl
+            || null
+        };
+      }
+    )
+  );
+}
+
+
 async function openSet(setId) {
   const set =
     qsState.sets.find(
@@ -3477,6 +4622,23 @@ function renderQuestions() {
               <span>Errei</span>
             </label>
           </div>
+
+          ${
+            item.image_url
+              ? `
+                <figure class="qs-extracted-image">
+                  <img
+                    src="${qsEscape(item.image_url)}"
+                    alt="Figura da questão ${item.question_number}"
+                    loading="lazy"
+                  >
+                  <figcaption>
+                    Figura extraída automaticamente do PDF
+                  </figcaption>
+                </figure>
+              `
+              : ""
+          }
 
           <details>
             <summary>Ver questão extraída</summary>
@@ -4033,16 +5195,56 @@ async function deleteSet(setId) {
 
   if (!confirmed) return;
 
-  if (set.source_file_path) {
-    const { error: storageError } =
-      await qsSb.storage
-        .from("docmap")
-        .remove([
-          set.source_file_path
-        ]);
+  const {
+    data:
+      imageRows
+  } =
+    await qsSb
+      .from(
+        "question_items"
+      )
+      .select(
+        "image_path"
+      )
+      .eq(
+        "set_id",
+        setId
+      );
+
+
+  const storagePaths = [
+    set.source_file_path,
+    ...(imageRows || [])
+      .map(
+        (item) =>
+          item.image_path
+      )
+  ]
+    .filter(
+      Boolean
+    );
+
+
+  if (
+    storagePaths.length
+  ) {
+    const {
+      error:
+        storageError
+    } =
+      await qsSb
+        .storage
+        .from(
+          "docmap"
+        )
+        .remove(
+          storagePaths
+        );
 
     if (storageError) {
-      console.warn(storageError);
+      console.warn(
+        storageError
+      );
     }
   }
 
