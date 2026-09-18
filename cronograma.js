@@ -716,7 +716,15 @@ function renderTopicCard(topic, compact = false) {
           Aula já feita
         </button>
 
-        ${!compact ? `
+        ${compact ? `
+          <button
+            class="topic-action danger"
+            type="button"
+            data-remove-from-date="${escapeScheduleHtml(topic.id)}"
+          >
+            Remover
+          </button>
+        ` : `
           <button
             class="topic-action danger"
             type="button"
@@ -724,7 +732,7 @@ function renderTopicCard(topic, compact = false) {
           >
             Excluir
           </button>
-        ` : ""}
+        `}
       </div>
     </article>
   `;
@@ -866,13 +874,27 @@ function renderDeck() {
         (a.deck_order ?? 999999) - (b.deck_order ?? 999999)
     );
 
-  document.getElementById("deck-count").textContent =
+  const panel = document.getElementById("deck-panel");
+  const count = document.getElementById("deck-count");
+  const list = document.getElementById("deck-list");
+
+  if (!panel || !count || !list) return;
+
+  // O Deck só existe visualmente quando há aulas realmente sem data.
+  // Isso acontece ao importar sem datas ou ao usar "Remover" no planejador.
+  panel.hidden = deck.length === 0;
+
+  if (!deck.length) {
+    count.textContent = "0 temas";
+    list.innerHTML = "";
+    return;
+  }
+
+  count.textContent =
     `${deck.length} tema${deck.length === 1 ? "" : "s"}`;
 
-  document.getElementById("deck-list").innerHTML =
-    deck.length
-      ? deck.map(renderDeckCard).join("")
-      : '<div class="empty-deck">Nenhum tema aguardando programação.</div>';
+  list.innerHTML =
+    deck.map(renderDeckCard).join("");
 }
 
 
@@ -905,6 +927,14 @@ async function addManualTopic(event) {
   if (!theme) {
     setManualStatus(
       "Informe o tema da aula.",
+      "error"
+    );
+    return;
+  }
+
+  if (!date) {
+    setManualStatus(
+      "Escolha a data da aula.",
       "error"
     );
     return;
@@ -945,9 +975,7 @@ async function addManualTopic(event) {
   document.getElementById("manual-topic-form").reset();
 
   setManualStatus(
-    date
-      ? "Aula adicionada ao cronograma."
-      : "Aula adicionada ao deck.",
+    "Aula adicionada ao cronograma.",
     "success"
   );
 
@@ -1344,6 +1372,27 @@ function wireDynamicInteractions() {
   document.querySelectorAll("[data-complete-topic]").forEach((button) => {
     button.addEventListener("click", async () => {
       await completeTopic(button.dataset.completeTopic);
+    });
+  });
+
+
+  document.querySelectorAll("[data-remove-from-date]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const topicId = button.dataset.removeFromDate;
+
+      const topic = scheduleState.topics.find(
+        (item) => item.id === topicId
+      );
+
+      if (!topic) return;
+
+      const confirmed = window.confirm(
+        `Remover "${topic.theme}" desta data e enviar para o Deck não programado?`
+      );
+
+      if (!confirmed) return;
+
+      await returnTopicToDeck(topicId);
     });
   });
 

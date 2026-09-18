@@ -964,8 +964,8 @@
                 <span class="badge accent">Manual</span>
                 <h2>Adicionar nova aula</h2>
                 <p>
-                  Cadastre uma aula sem precisar importar planilha. Se deixar a data vazia,
-                  ela entra no deck.
+                  Cadastre uma aula sem precisar importar planilha. A aula manual já entra
+                  diretamente em uma data do cronograma.
                 </p>
               </div>
             </div>
@@ -1011,8 +1011,8 @@
               </label>
 
               <label class="manual-field">
-                <span>Data <small>(opcional)</small></span>
-                <input id="manual-date" type="date">
+                <span>Data *</span>
+                <input id="manual-date" type="date" required>
               </label>
 
               <div class="manual-actions">
@@ -1042,7 +1042,7 @@
             <div id="week-planner" class="week-planner"></div>
           </section>
 
-          <section class="deck-panel">
+          <section id="deck-panel" class="deck-panel" hidden>
             <div class="deck-header">
               <div>
                 <h2>Deck não programado</h2>
@@ -1129,6 +1129,6 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="supabase.js"></script>
   <script src="app.js"></script>
-  <script src="cronograma.js?v=4.3"></script>
+  <script src="cronograma.js?v=4.4"></script>
 </body>
 </html>
