@@ -201,94 +201,197 @@
 }
 
 /* =========================================================
-   FASE 7 — CCQs EM ROTAÇÃO
+   FASE 7.1 — CCQs COMO MOSTRADOR AUTOMÁTICO
    ========================================================= */
 
-.ccq-panel {
+.ccq-showcase-panel {
   overflow: hidden;
 }
 
-.ccq-empty {
-  min-height: 180px;
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 7px;
-  padding: 24px;
+.ccq-showcase-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+.ccq-showcase-head h2 {
+  margin: 10px 0 0;
+}
+
+.ccq-showcase-head p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.ccq-auto-label {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.ccq-showcase {
+  position: relative;
+  min-height: 220px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: var(--surface-2);
+}
+
+.ccq-showcase[hidden] {
+  display: none !important;
+}
+
+.ccq-showcase-empty {
+  padding: 28px;
   border: 1px dashed var(--border);
   border-radius: 14px;
   background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12px;
   text-align: center;
 }
 
-.ccq-empty strong {
-  font-size: 15px;
+.ccq-slide {
+  min-height: 220px;
+  display: grid;
+  align-content: center;
+  gap: 13px;
+  padding: clamp(26px, 5vw, 52px);
+  transform: translateX(0);
+  opacity: 1;
+  transition:
+    transform 420ms ease,
+    opacity 420ms ease;
+  will-change:
+    transform,
+    opacity;
 }
 
-.ccq-empty span {
-  max-width: 560px;
+.ccq-slide.is-leaving {
+  transform: translateX(-70px);
+  opacity: 0;
+}
+
+.ccq-slide.is-entering {
+  transform: translateX(70px);
+  opacity: 0;
+}
+
+.ccq-showcase-text {
+  max-width: 980px;
+  font-size: clamp(25px, 4vw, 42px);
+  line-height: 1.28;
+  font-weight: 850;
+  letter-spacing: -.035em;
+}
+
+.ccq-showcase-meta {
   color: var(--muted);
   font-size: 11px;
-  line-height: 1.5;
+  font-weight: 700;
 }
 
-.ccq-rotation {
-  display: grid;
-  gap: 16px;
-  min-height: 220px;
-  align-content: center;
-  padding: 26px;
+.ccq-showcase-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  overflow: hidden;
+  background: var(--border);
+}
+
+.ccq-showcase-progress-bar {
+  width: 0%;
+  height: 100%;
+  background: var(--accent);
+}
+
+@media (max-width: 680px) {
+  .ccq-showcase-head {
+    flex-direction: column;
+  }
+
+  .ccq-auto-label {
+    white-space: normal;
+  }
+
+  .ccq-slide {
+    min-height: 190px;
+    padding: 24px 20px;
+  }
+
+  .ccq-showcase-text {
+    font-size: clamp(22px, 7vw, 30px);
+  }
+}
+
+/* =========================================================
+   AGENDA → AMBIENTAÇÃO
+   Mostra somente a atividade agendada
+   ========================================================= */
+
+.ambientacao-workspace-frame[hidden],
+.agenda-lesson-activity[hidden] {
+  display: none !important;
+}
+
+.agenda-lesson-activity {
+  padding: clamp(22px, 4vw, 38px);
   border: 1px solid var(--border);
   border-radius: 16px;
   background: var(--surface-2);
 }
 
-.ccq-taxonomy {
-  display: flex;
-  gap: 7px;
-  flex-wrap: wrap;
+.agenda-lesson-activity h3 {
+  margin: 13px 0 0;
+  font-size: clamp(26px, 4vw, 40px);
+  line-height: 1.16;
+  letter-spacing: -.035em;
 }
 
-.ccq-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 0 9px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface);
+.agenda-lesson-meta {
+  margin-top: 11px;
   color: var(--muted);
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 11px;
+  font-weight: 750;
 }
 
-.ccq-chip.accent {
-  border-color: transparent;
-  background: var(--accent-soft);
-  color: var(--accent);
+.agenda-lesson-subtitle {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
 }
 
-.ccq-text {
-  max-width: 900px;
-  font-size: clamp(21px, 3vw, 31px);
-  line-height: 1.4;
-  font-weight: 820;
-  letter-spacing: -.025em;
-}
-
-.ccq-actions {
+.agenda-lesson-actions {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
+  margin-top: 24px;
 }
 
-.ccq-actions .button {
-  min-height: 40px;
-  padding: 0 14px;
+.agenda-lesson-actions .button {
+  min-height: 42px;
+  padding: 0 16px;
 }
 
-@media (max-width: 680px) {
-  .ccq-rotation {
-    padding: 20px;
-  }
+.agenda-lesson-status {
+  min-height: 18px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.agenda-lesson-status.success {
+  color: var(--success);
+}
+
+.agenda-lesson-status.error {
+  color: var(--danger);
 }

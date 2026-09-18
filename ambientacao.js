@@ -1412,7 +1412,7 @@ function resizeStudyFrame(frame) {
 
     const height =
       Math.max(
-        620,
+        280,
         doc.documentElement.scrollHeight,
         doc.body?.scrollHeight || 0
       );
@@ -1497,6 +1497,30 @@ function prepareEmbeddedStudyPage(
 
       page.style.margin =
         "0";
+
+      page.style.padding =
+        "0";
+    }
+
+
+    if (doc.body) {
+      doc.body.style.margin =
+        "0";
+
+      doc.body.style.padding =
+        "0";
+
+      doc.body.style.background =
+        "transparent";
+    }
+
+
+    if (main) {
+      main.style.marginLeft =
+        "0";
+
+      main.style.width =
+        "100%";
     }
 
 
@@ -1510,6 +1534,8 @@ function prepareEmbeddedStudyPage(
       [
         ".flash-metrics",
         ".flash-tabs",
+        ".flash-review-header",
+        "#review-empty",
         '[data-flash-section="create"]',
         '[data-flash-section="import"]',
         '[data-flash-section="library"]'
@@ -1547,6 +1573,18 @@ function prepareEmbeddedStudyPage(
 
         reviewPanel.style.boxShadow =
           "none";
+
+        reviewPanel.style.border =
+          "0";
+
+        reviewPanel.style.background =
+          "transparent";
+
+        reviewPanel.style.padding =
+          "0";
+
+        reviewPanel.style.minHeight =
+          "0";
       }
     }
 
@@ -1558,26 +1596,63 @@ function prepareEmbeddedStudyPage(
     if (
       kind === "errors_batch"
     ) {
-      const intro =
-        doc.querySelector(
-          ".error-intro"
-        );
+      [
+        ".error-intro",
+        ".error-metrics",
+        ".error-create-panel",
+        ".error-library-panel",
+        ".error-review-header",
+        "#error-empty"
+      ].forEach((selector) => {
+        doc
+          .querySelectorAll(
+            selector
+          )
+          .forEach((element) => {
+            element.style.display =
+              "none";
+          });
+      });
 
-      if (intro) {
-        intro.style.display =
-          "none";
-      }
 
       const reviewPanel =
         doc.querySelector(
           ".error-review-panel"
         );
 
+
       if (reviewPanel) {
         reviewPanel.style.marginTop =
           "0";
 
         reviewPanel.style.boxShadow =
+          "none";
+
+        reviewPanel.style.border =
+          "0";
+
+        reviewPanel.style.background =
+          "transparent";
+
+        reviewPanel.style.padding =
+          "0";
+
+        reviewPanel.style.minHeight =
+          "0";
+      }
+
+
+      const stage =
+        doc.querySelector(
+          "#error-stage"
+        );
+
+
+      if (stage) {
+        stage.style.marginTop =
+          "0";
+
+        stage.style.maxWidth =
           "none";
       }
     }
@@ -1627,29 +1702,267 @@ function prepareEmbeddedStudyPage(
 }
 
 
-function openActivityWorkspace(params) {
-  const kind =
-    params.get("kind");
 
-  const workspace =
+function setAgendaLessonStatus(
+  text,
+  type = ""
+) {
+  const element =
     document.getElementById(
-      "ambientacao-workspace"
+      "agenda-lesson-status"
     );
+
+
+  if (!element) {
+    return;
+  }
+
+
+  element.textContent =
+    text;
+
+
+  element.className =
+    `agenda-lesson-status ${type}`
+      .trim();
+}
+
+
+function renderAgendaLesson(
+  params
+) {
+  const container =
+    document.getElementById(
+      "ambientacao-lesson-activity"
+    );
+
 
   const frame =
     document.getElementById(
       "ambientacao-study-frame"
     );
 
+
+  if (!container) {
+    return;
+  }
+
+
+  container.hidden =
+    false;
+
+
+  if (frame) {
+    frame.hidden =
+      true;
+
+    frame.removeAttribute(
+      "src"
+    );
+  }
+
+
+  const title =
+    params.get("title")
+    || "Aula";
+
+
+  const area =
+    params.get("area");
+
+
+  const materia =
+    params.get("materia");
+
+
+  const date =
+    parseAmbientacaoDate(
+      params.get("date")
+    );
+
+
+  const subtitle =
+    params.get("subtitle");
+
+
+  document
+    .getElementById(
+      "agenda-lesson-title"
+    )
+    .textContent =
+      title;
+
+
+  const meta =
+    [
+      area,
+      materia,
+      date
+    ]
+      .filter(
+        Boolean
+      )
+      .join(
+        " · "
+      );
+
+
+  document
+    .getElementById(
+      "agenda-lesson-meta"
+    )
+    .textContent =
+      meta;
+
+
+  const subtitleElement =
+    document.getElementById(
+      "agenda-lesson-subtitle"
+    );
+
+
+  if (subtitleElement) {
+    subtitleElement.textContent =
+      subtitle
+      || "";
+
+    subtitleElement.hidden =
+      !subtitle;
+  }
+
+
+  const button =
+    document.getElementById(
+      "agenda-lesson-complete"
+    );
+
+
+  const itemId =
+    params.get(
+      "item_id"
+    );
+
+
+  if (button) {
+    button.disabled =
+      !isUuid(
+        itemId
+      );
+
+
+    button.textContent =
+      "Concluir aula";
+
+
+    button.onclick =
+      async () => {
+        if (
+          !isUuid(
+            itemId
+          )
+        ) {
+          setAgendaLessonStatus(
+            "Não foi possível identificar esta aula.",
+            "error"
+          );
+
+          return;
+        }
+
+
+        button.disabled =
+          true;
+
+
+        setAgendaLessonStatus(
+          "Concluindo aula..."
+        );
+
+
+        const {
+          error
+        } =
+          await ambientacaoSb.rpc(
+            "complete_study_topic",
+            {
+              p_topic_id:
+                itemId
+            }
+          );
+
+
+        if (error) {
+          console.error(
+            error
+          );
+
+
+          button.disabled =
+            false;
+
+
+          setAgendaLessonStatus(
+            `Não foi possível concluir: ${error.message}`,
+            "error"
+          );
+
+
+          return;
+        }
+
+
+        button.textContent =
+          "Aula concluída";
+
+
+        setAgendaLessonStatus(
+          "Concluída. As revisões teóricas foram agendadas.",
+          "success"
+        );
+      };
+  }
+
+
+  setAgendaLessonStatus(
+    ""
+  );
+}
+
+
+function openActivityWorkspace(params) {
+  const kind =
+    params.get("kind");
+
+
+  const workspace =
+    document.getElementById(
+      "ambientacao-workspace"
+    );
+
+
+  const frame =
+    document.getElementById(
+      "ambientacao-study-frame"
+    );
+
+
+  const lesson =
+    document.getElementById(
+      "ambientacao-lesson-activity"
+    );
+
+
   const title =
     document.getElementById(
       "ambientacao-workspace-title"
     );
 
+
   const copy =
     document.getElementById(
       "ambientacao-workspace-copy"
     );
+
 
   if (
     !workspace
@@ -1660,9 +1973,11 @@ function openActivityWorkspace(params) {
 
 
   const supported = [
+    "lesson",
     "flashcards_batch",
     "errors_batch"
   ];
+
 
   if (
     !supported.includes(
@@ -1672,16 +1987,67 @@ function openActivityWorkspace(params) {
     workspace.hidden =
       true;
 
+
+    frame.hidden =
+      true;
+
+
     frame.removeAttribute(
       "src"
     );
+
+
+    if (lesson) {
+      lesson.hidden =
+        true;
+    }
+
 
     return;
   }
 
 
+  workspace.hidden =
+    false;
+
+
+  if (
+    kind === "lesson"
+  ) {
+    if (title) {
+      title.textContent =
+        "Aula";
+    }
+
+
+    if (copy) {
+      copy.textContent =
+        "Atividade agendada.";
+    }
+
+
+    renderAgendaLesson(
+      params
+    );
+
+
+    return;
+  }
+
+
+  if (lesson) {
+    lesson.hidden =
+      true;
+  }
+
+
+  frame.hidden =
+    false;
+
+
   const activityDate =
     params.get("date");
+
 
   const activityArea =
     params.get("area");
@@ -1690,21 +2056,25 @@ function openActivityWorkspace(params) {
   let pageName =
     "";
 
+
   if (
     kind === "flashcards_batch"
   ) {
     pageName =
       "flashcards.html";
 
+
     if (title) {
       title.textContent =
         "Flashcards";
     }
 
+
     if (copy) {
       copy.textContent =
-        "Revise os flashcards programados na agenda sem sair da Ambientação.";
+        "Flashcards agendados para esta atividade.";
     }
+
 
     frame.title =
       "Revisão de flashcards";
@@ -1717,15 +2087,18 @@ function openActivityWorkspace(params) {
     pageName =
       "caderno-erros.html";
 
+
     if (title) {
       title.textContent =
         "Caderno de erros";
     }
 
+
     if (copy) {
       copy.textContent =
-        "Revise os erros programados na agenda sem sair da Ambientação.";
+        "CCQs agendados para esta atividade.";
     }
+
 
     frame.title =
       "Revisão do caderno de erros";
@@ -1737,6 +2110,7 @@ function openActivityWorkspace(params) {
       pageName,
       window.location.href
     );
+
 
   url.searchParams.set(
     "embed",
@@ -1758,10 +2132,6 @@ function openActivityWorkspace(params) {
       activityArea
     );
   }
-
-
-  workspace.hidden =
-    false;
 
 
   frame.addEventListener(
@@ -1862,6 +2232,12 @@ function initSelectedActivity() {
           );
 
 
+        const lesson =
+          document.getElementById(
+            "ambientacao-lesson-activity"
+          );
+
+
         if (workspace) {
           workspace.hidden =
             true;
@@ -1869,9 +2245,19 @@ function initSelectedActivity() {
 
 
         if (frame) {
+          frame.hidden =
+            true;
+
+
           frame.removeAttribute(
             "src"
           );
+        }
+
+
+        if (lesson) {
+          lesson.hidden =
+            true;
         }
       }
     );
@@ -1909,122 +2295,364 @@ if (window.docmapUser) {
 
 
 /* =========================================================
-   FASE 7 — CCQs EM ROTAÇÃO
+   FASE 7.1 — CCQs COMO MOSTRADOR AUTOMÁTICO
    ========================================================= */
+
+const CCQ_ROTATION_MS =
+  30000;
+
 
 const ccqState = {
   items: [],
-  index: 0,
-  timerId: null
+  currentIndex: -1,
+  bag: [],
+  timerId: null,
+  transitionId: null
 };
 
 
-function setCcqChip(
-  id,
-  value
+function shuffleCcqIndexes(
+  count
 ) {
-  const element =
-    document.getElementById(
-      id
+  const indexes =
+    Array.from(
+      {
+        length:
+          count
+      },
+      (
+        _,
+        index
+      ) =>
+        index
     );
 
-  if (!element) return;
 
-  element.textContent =
-    value || "";
+  for (
+    let i =
+      indexes.length - 1;
 
-  element.hidden =
-    !value;
+    i > 0;
+
+    i -= 1
+  ) {
+    const j =
+      Math.floor(
+        Math.random()
+        * (
+          i + 1
+        )
+      );
+
+
+    [
+      indexes[i],
+      indexes[j]
+    ] =
+      [
+        indexes[j],
+        indexes[i]
+      ];
+  }
+
+
+  return indexes;
 }
 
 
-function renderCcq() {
-  const empty =
-    document.getElementById(
-      "ccq-empty"
+function refillCcqBag() {
+  const count =
+    ccqState.items.length;
+
+
+  ccqState.bag =
+    shuffleCcqIndexes(
+      count
     );
 
-  const rotation =
-    document.getElementById(
-      "ccq-rotation"
-    );
 
-  const counter =
-    document.getElementById(
-      "ccq-counter"
-    );
-
+  /*
+    Evita repetir imediatamente
+    o mesmo CCQ quando começa
+    uma nova rodada.
+  */
 
   if (
-    !empty
-    || !rotation
-    || !counter
+    count > 1
+    && ccqState.currentIndex
+      >= 0
+    && ccqState.bag[
+      ccqState.bag.length - 1
+    ] === ccqState.currentIndex
   ) {
-    return;
+    const swapIndex =
+      0;
+
+
+    [
+      ccqState.bag[
+        swapIndex
+      ],
+      ccqState.bag[
+        ccqState.bag.length - 1
+      ]
+    ] =
+      [
+        ccqState.bag[
+          ccqState.bag.length - 1
+        ],
+        ccqState.bag[
+          swapIndex
+        ]
+      ];
   }
+}
 
 
+function nextRandomCcqIndex() {
   if (
     !ccqState.items.length
   ) {
-    empty.hidden =
-      false;
+    return -1;
+  }
 
-    rotation.hidden =
-      true;
 
-    counter.textContent =
-      "0 CCQs";
+  if (
+    ccqState.items.length
+    === 1
+  ) {
+    return 0;
+  }
 
+
+  if (
+    !ccqState.bag.length
+  ) {
+    refillCcqBag();
+  }
+
+
+  let index =
+    ccqState.bag.pop();
+
+
+  if (
+    index ===
+      ccqState.currentIndex
+    && ccqState.bag.length
+  ) {
+    const alternative =
+      ccqState.bag.pop();
+
+
+    ccqState.bag.push(
+      index
+    );
+
+
+    index =
+      alternative;
+  }
+
+
+  return index;
+}
+
+
+function ccqMetaText(
+  item
+) {
+  return [
+    item.area,
+    item.materia,
+    item.theme
+  ]
+    .filter(
+      Boolean
+    )
+    .join(
+      " · "
+    );
+}
+
+
+function resetCcqProgress() {
+  const bar =
+    document.getElementById(
+      "ccq-progress-bar"
+    );
+
+
+  if (!bar) {
     return;
   }
 
 
-  empty.hidden =
-    true;
-
-  rotation.hidden =
-    false;
+  bar.style.transition =
+    "none";
 
 
-  const item =
-    ccqState.items[
-      ccqState.index
-    ];
+  bar.style.width =
+    "0%";
 
 
-  counter.textContent =
-    `${ccqState.index + 1} / ${ccqState.items.length}`;
+  void bar.offsetWidth;
 
 
-  setCcqChip(
-    "ccq-area",
-    item.area
+  bar.style.transition =
+    `width ${CCQ_ROTATION_MS}ms linear`;
+
+
+  requestAnimationFrame(
+    () => {
+      bar.style.width =
+        "100%";
+    }
   );
+}
 
 
-  setCcqChip(
-    "ccq-materia",
-    item.materia
-  );
-
-
-  setCcqChip(
-    "ccq-theme",
-    item.theme
-  );
-
-
+function writeCcqContent(
+  item
+) {
   const text =
     document.getElementById(
       "ccq-text"
     );
 
 
+  const meta =
+    document.getElementById(
+      "ccq-meta"
+    );
+
+
   if (text) {
     text.textContent =
-      item.ccq;
+      item?.ccq
+      || "";
   }
+
+
+  if (meta) {
+    const metaText =
+      ccqMetaText(
+        item
+      );
+
+
+    meta.textContent =
+      metaText;
+
+
+    meta.hidden =
+      !metaText;
+  }
+}
+
+
+function showRandomCcq(
+  animate = true
+) {
+  if (
+    !ccqState.items.length
+  ) {
+    return;
+  }
+
+
+  const slide =
+    document.getElementById(
+      "ccq-slide"
+    );
+
+
+  const nextIndex =
+    nextRandomCcqIndex();
+
+
+  if (
+    nextIndex < 0
+  ) {
+    return;
+  }
+
+
+  const nextItem =
+    ccqState.items[
+      nextIndex
+    ];
+
+
+  window.clearTimeout(
+    ccqState.transitionId
+  );
+
+
+  if (
+    !animate
+    || !slide
+  ) {
+    ccqState.currentIndex =
+      nextIndex;
+
+
+    writeCcqContent(
+      nextItem
+    );
+
+
+    resetCcqProgress();
+
+    return;
+  }
+
+
+  slide.classList.add(
+    "is-leaving"
+  );
+
+
+  ccqState.transitionId =
+    window.setTimeout(
+      () => {
+        ccqState.currentIndex =
+          nextIndex;
+
+
+        writeCcqContent(
+          nextItem
+        );
+
+
+        slide.classList.remove(
+          "is-leaving"
+        );
+
+
+        slide.classList.add(
+          "is-entering"
+        );
+
+
+        requestAnimationFrame(
+          () => {
+            requestAnimationFrame(
+              () => {
+                slide.classList.remove(
+                  "is-entering"
+                );
+              }
+            );
+          }
+        );
+
+
+        resetCcqProgress();
+
+      },
+      420
+    );
 }
 
 
@@ -2036,9 +2664,15 @@ function stopCcqRotation() {
       ccqState.timerId
     );
 
+
     ccqState.timerId =
       null;
   }
+
+
+  window.clearTimeout(
+    ccqState.transitionId
+  );
 }
 
 
@@ -2063,79 +2697,13 @@ function startCcqRotation() {
           return;
         }
 
-        ccqState.index =
-          (
-            ccqState.index
-            + 1
-          )
-          % ccqState
-              .items
-              .length;
 
-        renderCcq();
+        showRandomCcq(
+          true
+        );
       },
-      30000
+      CCQ_ROTATION_MS
     );
-}
-
-
-function moveCcq(delta) {
-  if (
-    !ccqState.items.length
-  ) {
-    return;
-  }
-
-
-  ccqState.index =
-    (
-      ccqState.index
-      + delta
-      + ccqState.items.length
-    )
-    % ccqState
-        .items
-        .length;
-
-
-  renderCcq();
-
-  startCcqRotation();
-}
-
-
-function dailyCcqStartIndex(
-  count
-) {
-  if (
-    count <= 1
-  ) {
-    return 0;
-  }
-
-
-  const now =
-    new Date();
-
-
-  const daySeed =
-    Number(
-      `${now.getFullYear()}${String(
-        now.getMonth() + 1
-      ).padStart(
-        2,
-        "0"
-      )}${String(
-        now.getDate()
-      ).padStart(
-        2,
-        "0"
-      )}`
-    );
-
-
-  return daySeed
-    % count;
 }
 
 
@@ -2145,6 +2713,18 @@ async function loadCcqRotation() {
   ) {
     return;
   }
+
+
+  const showcase =
+    document.getElementById(
+      "ccq-showcase"
+    );
+
+
+  const empty =
+    document.getElementById(
+      "ccq-empty"
+    );
 
 
   const {
@@ -2167,20 +2747,8 @@ async function loadCcqRotation() {
         "is",
         null
       )
-      .order(
-        "due_date",
-        {
-          ascending: true
-        }
-      )
-      .order(
-        "review_count",
-        {
-          ascending: true
-        }
-      )
       .limit(
-        30
+        100
       );
 
 
@@ -2190,10 +2758,22 @@ async function loadCcqRotation() {
       error.message
     );
 
+
     ccqState.items =
       [];
 
-    renderCcq();
+
+    if (showcase) {
+      showcase.hidden =
+        true;
+    }
+
+
+    if (empty) {
+      empty.hidden =
+        false;
+    }
+
 
     return;
   }
@@ -2210,43 +2790,83 @@ async function loadCcqRotation() {
       );
 
 
-  ccqState.index =
-    dailyCcqStartIndex(
-      ccqState.items.length
-    );
+  ccqState.currentIndex =
+    -1;
 
 
-  renderCcq();
+  ccqState.bag =
+    [];
+
+
+  if (
+    !ccqState.items.length
+  ) {
+    if (showcase) {
+      showcase.hidden =
+        true;
+    }
+
+
+    if (empty) {
+      empty.hidden =
+        false;
+    }
+
+
+    return;
+  }
+
+
+  if (empty) {
+    empty.hidden =
+      true;
+  }
+
+
+  if (showcase) {
+    showcase.hidden =
+      false;
+  }
+
+
+  showRandomCcq(
+    false
+  );
+
 
   startCcqRotation();
 }
 
 
 function wireCcqRotation() {
-  document
-    .getElementById(
-      "ccq-prev"
-    )
-    ?.addEventListener(
-      "click",
-      () =>
-        moveCcq(
-          -1
-        )
-    );
+  /*
+    Sem botões:
+    funciona como um banner de
+    site de compras, passando
+    sozinho a cada 30 segundos.
+  */
 
 
-  document
-    .getElementById(
-      "ccq-next"
-    )
-    ?.addEventListener(
-      "click",
-      () =>
-        moveCcq(
-          1
-        )
-    );
+  document.addEventListener(
+    "visibilitychange",
+    () => {
+      if (
+        document.hidden
+      ) {
+        return;
+      }
+
+
+      /*
+        Ao voltar para a aba,
+        reinicia os 30 segundos.
+      */
+
+      resetCcqProgress();
+
+      startCcqRotation();
+    }
+  );
 
 
   window.addEventListener(
@@ -2259,11 +2879,9 @@ function wireCcqRotation() {
 async function initCcqRotation() {
   wireCcqRotation();
 
+
   await loadCcqRotation();
 }
-
-
-
 
 
 if (window.docmapUser) {

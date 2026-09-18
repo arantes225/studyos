@@ -1,31 +1,49 @@
-DOCMAP — CADERNO DE ERROS NA AMBIENTAÇÃO
+DOCMAP — AGENDA → AMBIENTAÇÃO LIMPA
 
-SEM SQL.
+ALTERAÇÃO
 
-Substitua/adiciona:
+Quando você clicar em "Iniciar" pela Agenda:
+
+FLASHCARDS
+- mostra somente a atividade de revisão
+- esconde métricas
+- esconde abas
+- esconde Criar / Importar / Biblioteca
+- esconde "Revisões em dia"
+- esconde cabeçalho redundante da página
+
+CADERNO DE ERROS
+- mostra somente o CCQ / atividade de revisão
+- esconde minidashboard
+- esconde Adicionar novo erro
+- esconde Biblioteca
+- esconde filtro/cabeçalho redundante
+- esconde qualquer mensagem de "revisões em dia" / sem pendências
+
+AULA
+- agora aparece como atividade própria dentro da Ambientação
+- mostra título + área + matéria + data
+- botão "Concluir aula"
+- ao concluir, usa complete_study_topic
+- as revisões teóricas são agendadas automaticamente
+
+A página normal de Flashcards e a página normal do Caderno de Erros
+NÃO mudam. A limpeza acontece somente quando a atividade é aberta
+pela Agenda dentro da Ambientação.
+
+O Pomodoro, áudio e carrossel aleatório de CCQs da Ambientação
+continuam funcionando normalmente.
+
+NÃO PRECISA SQL.
+
+SUBSTITUA:
 - ambientacao.html
+- ambientacao.css
 - ambientacao.js
-- flashcards.js
-- caderno-erros.html
-- caderno-erros.css
-- caderno-erros.js
 
-FLUXO
-Agenda -> Caderno de erros -> Iniciar -> Ambientação
-                                      -> Pomodoro
-                                      -> Áudio
-                                      -> lote de erros daquela data + área
+PUBLICAÇÃO:
+git add -A
+git commit -m "Limpa atividades da agenda na ambientacao"
+git push origin main
 
-REVISÃO
-1. Mostra CCQ + questão
-2. Clique "Mostrar resposta"
-3. Mostra resposta correta + "o que eu pensei"
-4. Clique "Revisado"
-5. Chama review_error_entry no Supabase
-6. Passa ao próximo item
-
-A página Caderno de erros aberta pelo menu lateral também funciona:
-mostra todos os itens vencidos até hoje.
-
-Também corrige o filtro dos flashcards da Agenda para respeitar
-DATA + ÁREA, exatamente como a agenda agrupa os lotes.
+Depois: Ctrl + F5
