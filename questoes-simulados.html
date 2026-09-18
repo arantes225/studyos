@@ -549,6 +549,54 @@
         grid-column: auto;
       }
     }
+  
+    .qs-set-card {
+      position: relative;
+      padding-left: 48px;
+    }
+
+    .qs-set-select {
+      position: absolute;
+      top: 16px;
+      left: 14px;
+    }
+
+    .qs-set-select input,
+    .qs-bulk-check input {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--accent);
+    }
+
+    .qs-bulk-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 0 0 12px;
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-2);
+    }
+
+    .qs-bulk-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    #qs-selected-count {
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    #qs-delete-selected {
+      margin-left: auto;
+    }
+
   </style>
 </head>
 
@@ -674,6 +722,31 @@
               <span id="qs-set-count" class="badge">0 simulados</span>
             </div>
 
+            <div class="qs-bulk-toolbar">
+
+              <label class="qs-bulk-check">
+                <input
+                  id="qs-select-all"
+                  type="checkbox"
+                >
+                <span>Selecionar visíveis</span>
+              </label>
+
+              <span id="qs-selected-count">
+                0 selecionados
+              </span>
+
+              <button
+                id="qs-delete-selected"
+                class="qs-mini-button danger"
+                type="button"
+                disabled
+              >
+                Excluir selecionados
+              </button>
+
+            </div>
+
             <div id="qs-history" class="qs-history"></div>
           </section>
 
@@ -734,6 +807,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="supabase.js"></script>
   <script src="app.js?v=7.0"></script>
-  <script src="questoes-simulados.js?v=8.0"></script>
+  <script src="questoes-simulados.js?v=11.4"></script>
 </body>
 </html>

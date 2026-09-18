@@ -20,7 +20,7 @@
 
   <link
     rel="stylesheet"
-    href="editais.css?v=8.1"
+    href="editais.css?v=11.4"
   >
 </head>
 
@@ -184,6 +184,32 @@
                 placeholder="Instituição, banca ou observação..."
               >
             </label>
+
+          </div>
+
+
+          <div class="exam-bulk-toolbar">
+
+            <label class="exam-bulk-check">
+              <input
+                id="exam-select-all"
+                type="checkbox"
+              >
+              <span>Selecionar visíveis</span>
+            </label>
+
+            <span id="exam-selected-count">
+              0 selecionadas
+            </span>
+
+            <button
+              id="exam-delete-selected"
+              class="button secondary exam-bulk-danger"
+              type="button"
+              disabled
+            >
+              Excluir selecionadas
+            </button>
 
           </div>
 
@@ -502,7 +528,7 @@
 
   <script src="app.js?v=audio3"></script>
 
-  <script src="editais.js?v=8.1"></script>
+  <script src="editais.js?v=11.4"></script>
 
 </body>
 

@@ -629,3 +629,376 @@
 .error-empty span {
   font-size: 11px;
 }
+
+
+/* =========================================================
+   FASE 11.3 — MENU DA BIBLIOTECA + EDIÇÃO
+   ========================================================= */
+
+#error-library-status {
+  display: block;
+  min-height: 18px;
+  margin: -5px 0 9px;
+}
+
+.error-library-card {
+  position: relative;
+  overflow: visible;
+}
+
+.error-library-card-main {
+  padding-right: 54px;
+}
+
+.error-library-menu-wrap {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+}
+
+.error-library-menu-trigger {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.error-library-menu-trigger:hover,
+.error-library-menu-trigger[aria-expanded="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--surface-2);
+}
+
+.error-library-menu {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  min-width: 145px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  z-index: 30;
+}
+
+.error-library-menu[hidden] {
+  display: none !important;
+}
+
+.error-library-menu button {
+  width: 100%;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 750;
+  text-align: left;
+  cursor: pointer;
+}
+
+.error-library-menu button:hover {
+  background: var(--surface-2);
+}
+
+.error-library-menu button.danger {
+  color: var(--danger);
+}
+
+.error-edit-dialog {
+  width: min(760px, calc(100vw - 28px));
+  max-height: calc(100vh - 36px);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.error-edit-dialog::backdrop {
+  background: rgba(15, 20, 28, .46);
+  backdrop-filter: blur(2px);
+}
+
+.error-edit-form {
+  padding: 20px;
+}
+
+.error-edit-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.error-edit-head h2 {
+  margin: 7px 0 0;
+}
+
+.error-dialog-close {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.error-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.error-edit-grid label {
+  display: grid;
+  gap: 6px;
+}
+
+.error-edit-grid label.full {
+  grid-column: 1 / -1;
+}
+
+.error-edit-grid label > span {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.error-edit-grid input,
+.error-edit-grid textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+}
+
+.error-edit-grid input {
+  min-height: 41px;
+  padding: 0 11px;
+}
+
+.error-edit-grid textarea {
+  padding: 11px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.error-edit-grid input:focus,
+.error-edit-grid textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.error-edit-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+@media (max-width: 680px) {
+  .error-edit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .error-edit-grid label.full {
+    grid-column: auto;
+  }
+}
+
+
+/* =========================================================
+   FASE 11.4 — MENU SUPERIOR, IMPORTAÇÃO E SELEÇÃO
+   ========================================================= */
+
+.error-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 0 16px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.error-tab {
+  min-height: 37px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.error-tab:hover {
+  color: var(--text);
+}
+
+.error-tab.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 5px rgba(20,25,35,.08);
+}
+
+.error-section {
+  display: none;
+}
+
+.error-section.active {
+  display: block;
+}
+
+.error-ccq-card {
+  position: relative;
+}
+
+.error-review-menu-wrap {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 20;
+}
+
+.error-library-bulk {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.error-bulk-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.error-bulk-check input,
+.error-library-select-check {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--accent);
+}
+
+#error-library-selected {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.error-bulk-danger {
+  margin-left: auto;
+  color: var(--danger);
+}
+
+.error-library-select-wrap {
+  position: absolute;
+  top: 15px;
+  left: 12px;
+  z-index: 8;
+}
+
+.error-library-card-main {
+  padding-left: 46px;
+}
+
+.error-import-box {
+  display: grid;
+  grid-template-columns: minmax(220px, .7fr) minmax(260px, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.error-import-box input {
+  width: 100%;
+}
+
+.error-import-box strong,
+.error-import-box code {
+  display: block;
+}
+
+.error-import-box code {
+  margin-top: 5px;
+  white-space: normal;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.error-import-preview {
+  margin-top: 14px;
+}
+
+.error-import-preview-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.error-import-preview-head span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.error-import-table-wrap {
+  max-height: 380px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.error-import-table-wrap table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+}
+
+.error-import-table-wrap th,
+.error-import-table-wrap td {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+@media (max-width: 720px) {
+  .error-import-box {
+    grid-template-columns: 1fr;
+  }
+}

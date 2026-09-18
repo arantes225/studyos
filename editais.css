@@ -489,3 +489,60 @@
     min-height: 900px;
   }
 }
+
+
+/* =========================================================
+   FASE 11.4 — EXCLUSÃO EM GRUPO
+   ========================================================= */
+
+.exam-card {
+  position: relative;
+}
+
+.exam-card-select {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 8;
+}
+
+.exam-card-select input,
+.exam-bulk-check input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--accent);
+}
+
+.exam-card-top {
+  padding-left: 30px;
+}
+
+.exam-bulk-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.exam-bulk-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+#exam-selected-count {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.exam-bulk-danger {
+  margin-left: auto;
+  color: var(--danger);
+}

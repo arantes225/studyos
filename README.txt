@@ -1,154 +1,130 @@
-DOCMAP — FASE 11.2
-DASHBOARD + CRONOGRAMA + IMPORTAÇÃO ANKI
+DOCMAP — FASE 11.4
+GESTÃO DE CARDS, CADERNO, SIMULADOS E PROVAS
 
 =========================================================
-1. DASHBOARD INICIAL
+FLASHCARDS
 =========================================================
 
-NOVOS QUADRADOS:
+Tanto na REVISÃO quanto na BIBLIOTECA:
+- menu ⋯ no canto superior direito
+- Editar
+- Excluir
 
-- Aulas atrasadas
-  Mostra quantas aulas do cronograma estão com data anterior a hoje
-  e ainda não foram concluídas.
+Na Biblioteca:
+- seleção por checkbox
+- Selecionar visíveis
+- Excluir selecionados em grupo
 
-- Progresso das aulas
-  Mostra aulas feitas / aulas totais e uma porcentagem em gráfico circular.
-
-- Retenção dos flashcards
-  Agora usa uma métrica específica de flashcards.
-  O título foi ajustado para não confundir com retenção geral.
-
-- Caderno de erros
-  Mostra:
-  * quantidade de CCQs atrasados
-  * quantidade total ativa
-  * retenção estimada em gráfico circular
-
-- Simulados · 30 dias
-  Mostra:
-  * quantidade de simulados respondidos nos últimos 30 dias
-  * % de acerto ponderada pelas questões respondidas
-  * gráfico circular
-
-A área "Simulados recentes" continua abaixo.
+A edição permite:
+Área, Matéria, Tema, Frente e Verso.
 
 =========================================================
-2. CRONOGRAMA
+CADERNO DE ERROS
 =========================================================
 
-- Novo card "Aulas atrasadas" no topo.
+Novo minimenu superior:
+- Revisar
+- Novo erro
+- Biblioteca
+- Importar
 
-- Novo botão:
-  "Reorganizar atrasadas"
+Tanto na REVISÃO quanto na BIBLIOTECA:
+- menu ⋯ no canto superior direito
+- Editar
+- Excluir
 
-  Ele distribui TODAS as aulas atrasadas:
-  * 1 aula por semana
-  * começando de hoje em diante
-  * respeitando os dias permitidos em
-    Configurações > Dias de estudo > Estudo teórico
+Na Biblioteca:
+- seleção por checkbox
+- Selecionar visíveis
+- Excluir selecionados em grupo
 
-- Lista de temas agora tem:
-  * Ver na semana / Ir para deck
-  * Remover para o deck
-  * Já feita
-
-- Aulas atrasadas ficam visualmente destacadas.
-
-- No planejador semanal, o botão "Remover" passou a se chamar
-  "Remover para o deck".
-
-=========================================================
-3. FLASHCARDS — ANKI
-=========================================================
-
-O importador agora aceita:
-
+Importação:
 - .xlsx
 - .xls
 - .csv
-- .apkg
-- .colpkg
-
-Para pacotes Anki:
-
-1. O DocMap abre o pacote no próprio navegador.
-2. Lê collection.anki2 / collection.anki21.
-3. Também tenta abrir o formato moderno collection.anki21b
-   comprimido com Zstandard.
-4. Identifica os decks existentes.
-5. Mostra cada deck com um campo "Área no DocMap".
-6. Você pode, por exemplo:
-   Anki: Cirurgia
-   -> Área no DocMap: Cirurgia Geral
-7. Só depois os flashcards são importados.
-
-Decks hierárquicos do Anki, como:
-Residência::Cirurgia::Trauma
-recebem por padrão a última parte:
-Trauma
-
-Você pode alterar antes de importar.
-
-OBSERVAÇÃO SOBRE ANKI:
-- O DocMap importa o conteúdo textual.
-- Referências a imagens e áudios são detectadas,
-  mas a mídia ainda não é copiada nesta etapa.
-- Notas do tipo Cloze são convertidas para uma versão textual
-  de frente/verso.
-- Uma nota do Anki vira um flashcard no DocMap.
+- apenas CCQ é obrigatório
+- reconhece Área, Matéria, Tema, CCQ, Questão,
+  Resposta correta e O que eu pensei
 
 =========================================================
-4. INSTALAÇÃO
+EDITAIS / PROVAS
 =========================================================
 
-PASSO 1 — SUPABASE
+A opção individual de Excluir continua disponível.
 
-Rode UMA VEZ:
+Também foi adicionado:
+- seleção de provas
+- selecionar visíveis
+- excluir várias provas em grupo
 
-fase11_2_dashboard_cronograma_anki.sql
+Simulados vinculados NÃO são apagados ao apagar uma prova;
+eles apenas deixam de ficar vinculados à prova.
 
-NÃO rode SQL mestre/reset.
+=========================================================
+QUESTÕES E SIMULADOS
+=========================================================
 
-PASSO 2 — SUBSTITUA
+A opção individual de excluir simulado continua disponível.
 
-- dashboard.html
-- dashboard.js
-- cronograma.html
-- cronograma.js
-- flashcards.html
-- flashcards.js
-- flashcards.css
+Também foi adicionado:
+- seleção por checkbox
+- selecionar todos
+- excluir vários simulados em grupo
 
-PASSO 3 — PUBLICAR
+Ao excluir, o PDF privado associado também é removido do Storage
+quando possível.
+
+=========================================================
+CRONOGRAMA
+=========================================================
+
+Mantida a regra da Fase 11.3:
+
+No PLANNER:
+- somente "Iniciar" fica sempre visível
+
+No menu ⋯:
+- Concluir
+- Aula já feita
+- Remover para o deck
+
+=========================================================
+INSTALAÇÃO
+=========================================================
+
+NÃO PRECISA RODAR SQL.
+
+SUBSTITUA:
+
+flashcards.html
+flashcards.css
+flashcards.js
+
+caderno-erros.html
+caderno-erros.css
+caderno-erros.js
+
+editais.html
+editais.css
+editais.js
+
+questoes-simulados.html
+questoes-simulados.js
+
+cronograma.html
+cronograma.js
+
+PUBLICAÇÃO:
 
 git add -A
-git commit -m "Fase 11.2 dashboard cronograma e importacao Anki"
+git commit -m "Fase 11.4 gestao de bibliotecas e exclusao em grupo"
 git push origin main
 
 Depois:
 Ctrl + F5
 
 =========================================================
-5. TESTES RECOMENDADOS
+OBSERVAÇÃO
 =========================================================
 
-DASHBOARD:
-- confira aulas atrasadas
-- confira progresso
-- confira Caderno de Erros
-- confira simulados 30 dias
-
-CRONOGRAMA:
-- deixe uma aula em data anterior
-- clique em Reorganizar atrasadas
-- veja se ela foi movida para semana futura
-- teste Remover para o deck na Lista de temas
-- teste Já feita
-
-ANKI:
-- importe primeiro um .apkg pequeno
-- confira os decks detectados
-- escolha a Área de destino
-- importe
-- abra Biblioteca e confira a Área
-- depois teste .colpkg
+Exclusão em grupo é permanente e sempre pede confirmação.

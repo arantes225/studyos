@@ -3285,18 +3285,109 @@ function topicMeta(topic) {
   return [topic.area, topic.materia].filter(Boolean).join(" · ");
 }
 
-function renderTopicCard(topic, compact = false) {
-  const meta = topicMeta(topic);
 
-  const startParams = new URLSearchParams({
-    kind: "lesson",
-    item_id: topic.id,
-    title: topic.theme,
-    date: topic.scheduled_date || ""
-  });
+function renderTopicCard(
+  topic,
+  compact = false
+) {
+  const meta =
+    topicMeta(
+      topic
+    );
 
-  if (topic.area) startParams.set("area", topic.area);
-  if (topic.materia) startParams.set("materia", topic.materia);
+
+  const startParams =
+    new URLSearchParams({
+      kind:
+        "lesson",
+
+      item_id:
+        topic.id,
+
+      title:
+        topic.theme,
+
+      date:
+        topic.scheduled_date
+        || ""
+    });
+
+
+  if (topic.area) {
+    startParams.set(
+      "area",
+      topic.area
+    );
+  }
+
+
+  if (topic.materia) {
+    startParams.set(
+      "materia",
+      topic.materia
+    );
+  }
+
+
+  const overflow =
+    compact
+      ? `
+        <div class="topic-overflow-wrap">
+
+          <button
+            class="topic-overflow-trigger"
+            type="button"
+            data-topic-overflow-trigger="${escapeScheduleHtml(
+              topic.id
+            )}"
+            aria-label="Mais opções"
+            aria-expanded="false"
+          >
+            ⋯
+          </button>
+
+          <div
+            class="topic-overflow-menu"
+            data-topic-overflow="${escapeScheduleHtml(
+              topic.id
+            )}"
+            hidden
+          >
+
+            <button
+              type="button"
+              data-complete-topic="${escapeScheduleHtml(
+                topic.id
+              )}"
+            >
+              Concluir
+            </button>
+
+            <button
+              type="button"
+              data-already-done-topic="${escapeScheduleHtml(
+                topic.id
+              )}"
+            >
+              Aula já feita
+            </button>
+
+            <button
+              class="danger"
+              type="button"
+              data-remove-from-date="${escapeScheduleHtml(
+                topic.id
+              )}"
+            >
+              Remover para o deck
+            </button>
+
+          </div>
+
+        </div>
+      `
+      : "";
+
 
   return `
     <article
@@ -3304,9 +3395,24 @@ function renderTopicCard(topic, compact = false) {
       draggable="true"
       data-topic-id="${escapeScheduleHtml(topic.id)}"
     >
-      <h3>${escapeScheduleHtml(topic.theme)}</h3>
 
-      ${meta ? `<div class="topic-meta">${escapeScheduleHtml(meta)}</div>` : ""}
+      ${overflow}
+
+      <div class="topic-card-head">
+        <h3>
+          ${escapeScheduleHtml(topic.theme)}
+        </h3>
+      </div>
+
+      ${
+        meta
+          ? `
+            <div class="topic-meta">
+              ${escapeScheduleHtml(meta)}
+            </div>
+          `
+          : ""
+      }
 
       ${
         isTopicOverdue(topic)
@@ -3314,48 +3420,62 @@ function renderTopicCard(topic, compact = false) {
           : ""
       }
 
-      <div class="topic-actions">
-        <a
-          class="topic-action primary"
-          href="ambientacao.html?${escapeScheduleHtml(startParams.toString())}"
-        >
-          Iniciar
-        </a>
+      ${
+        compact
+          ? `
+            <div class="topic-actions planner-primary-action">
 
-        <button
-          class="topic-action"
-          type="button"
-          data-complete-topic="${escapeScheduleHtml(topic.id)}"
-        >
-          Concluir
-        </button>
+              <a
+                class="topic-action primary"
+                href="ambientacao.html?${escapeScheduleHtml(
+                  startParams.toString()
+                )}"
+              >
+                Iniciar
+              </a>
 
-        <button
-          class="topic-action done"
-          type="button"
-          data-already-done-topic="${escapeScheduleHtml(topic.id)}"
-        >
-          Aula já feita
-        </button>
+            </div>
+          `
+          : `
+            <div class="topic-actions">
 
-        ${compact ? `
-          <button
-            class="topic-action danger"
-            type="button"
-            data-remove-from-date="${escapeScheduleHtml(topic.id)}"
-          >
-            Remover
-          </button>
-        ` : `
-          <button
-            class="topic-action danger"
-            type="button"
-            data-delete-topic="${escapeScheduleHtml(topic.id)}"
-          >
-            Excluir
-          </button>
-        `}
-      </div>
+              <a
+                class="topic-action primary"
+                href="ambientacao.html?${escapeScheduleHtml(
+                  startParams.toString()
+                )}"
+              >
+                Iniciar
+              </a>
+
+              <button
+                class="topic-action"
+                type="button"
+                data-complete-topic="${escapeScheduleHtml(topic.id)}"
+              >
+                Concluir
+              </button>
+
+              <button
+                class="topic-action done"
+                type="button"
+                data-already-done-topic="${escapeScheduleHtml(topic.id)}"
+              >
+                Aula já feita
+              </button>
+
+              <button
+                class="topic-action danger"
+                type="button"
+                data-delete-topic="${escapeScheduleHtml(topic.id)}"
+              >
+                Excluir
+              </button>
+
+            </div>
+          `
+      }
+
     </article>
   `;
 }
@@ -4048,7 +4168,135 @@ function renderSchedule() {
   wireDynamicInteractions();
 }
 
+
+function closeTopicOverflowMenus(
+  exceptId = null
+) {
+  document
+    .querySelectorAll(
+      "[data-topic-overflow]"
+    )
+    .forEach(
+      (menu) => {
+        const id =
+          menu.dataset
+            .topicOverflow;
+
+
+        if (
+          exceptId
+          && id === exceptId
+        ) {
+          return;
+        }
+
+
+        menu.hidden =
+          true;
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-topic-overflow-trigger]"
+    )
+    .forEach(
+      (button) => {
+        const id =
+          button.dataset
+            .topicOverflowTrigger;
+
+
+        if (
+          exceptId
+          && id === exceptId
+        ) {
+          return;
+        }
+
+
+        button.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+      }
+    );
+}
+
+
 function wireDynamicInteractions() {
+
+  document
+    .querySelectorAll(
+      "[data-topic-overflow-trigger]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+
+            const id =
+              button
+                .dataset
+                .topicOverflowTrigger;
+
+
+            const menu =
+              document.querySelector(
+                `[data-topic-overflow="${CSS.escape(
+                  id
+                )}"]`
+              );
+
+
+            if (!menu) {
+              return;
+            }
+
+
+            const willOpen =
+              menu.hidden;
+
+
+            closeTopicOverflowMenus();
+
+
+            menu.hidden =
+              !willOpen;
+
+
+            button.setAttribute(
+              "aria-expanded",
+              willOpen
+                ? "true"
+                : "false"
+            );
+          }
+        );
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-topic-overflow]"
+    )
+    .forEach(
+      (menu) => {
+        menu.addEventListener(
+          "click",
+          (event) =>
+            event.stopPropagation()
+        );
+      }
+    );
+
+
   document
     .querySelectorAll("[data-topic-id][draggable='true']")
     .forEach((card) => {
@@ -4644,6 +4892,24 @@ async function initCronograma() {
   wireManualTopicForm();
   wireThemeLibraryFilters();
   wireOverdueOrganizer();
+
+  document.addEventListener(
+    "click",
+    () =>
+      closeTopicOverflowMenus()
+  );
+
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (
+        event.key ===
+        "Escape"
+      ) {
+        closeTopicOverflowMenus();
+      }
+    }
+  );
 
   await loadTopics();
 }

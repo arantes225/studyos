@@ -7,7 +7,7 @@
   <title>Flashcards · DocMap</title>
 
   <link rel="stylesheet" href="style.css?v=audio3">
-  <link rel="stylesheet" href="flashcards.css?v=5.0">
+  <link rel="stylesheet" href="flashcards.css?v=11.4">
 </head>
 
 <body data-page="flashcards">
@@ -216,6 +216,41 @@
               </div>
 
               <div class="review-card">
+
+                <div class="review-card-menu-wrap">
+
+                  <button
+                    id="review-card-menu-trigger"
+                    class="card-menu-trigger"
+                    type="button"
+                    aria-label="Opções do flashcard"
+                    aria-expanded="false"
+                  >
+                    ⋯
+                  </button>
+
+                  <div
+                    id="review-card-menu"
+                    class="card-menu-popover"
+                    hidden
+                  >
+                    <button
+                      id="review-card-edit"
+                      type="button"
+                    >
+                      Editar
+                    </button>
+
+                    <button
+                      id="review-card-delete"
+                      class="danger"
+                      type="button"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+
+                </div>
 
                 <div class="review-side-label">
                   Frente
@@ -628,6 +663,38 @@
             </div>
 
             <div
+              id="flash-library-bulk"
+              class="library-bulk-toolbar"
+            >
+              <label class="bulk-check">
+                <input
+                  id="flash-library-select-all"
+                  type="checkbox"
+                >
+                <span>Selecionar visíveis</span>
+              </label>
+
+              <span id="flash-library-selected">
+                0 selecionados
+              </span>
+
+              <button
+                id="flash-library-delete-selected"
+                class="button secondary bulk-danger"
+                type="button"
+                disabled
+              >
+                Excluir selecionados
+              </button>
+            </div>
+
+            <span
+              id="library-status"
+              class="flash-status"
+              aria-live="polite"
+            ></span>
+
+            <div
               id="library-list"
               class="library-list"
             ></div>
@@ -653,6 +720,105 @@
 
   </div>
 
+
+  <dialog
+    id="flash-edit-dialog"
+    class="docmap-edit-dialog"
+  >
+    <form
+      id="flash-edit-form"
+      class="docmap-edit-form"
+      method="dialog"
+    >
+      <div class="docmap-edit-head">
+        <div>
+          <span class="badge accent">Biblioteca</span>
+          <h2>Editar flashcard</h2>
+        </div>
+
+        <button
+          id="flash-edit-close"
+          class="docmap-dialog-close"
+          type="button"
+          aria-label="Fechar"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="docmap-edit-grid">
+
+        <label>
+          <span>Área</span>
+          <input
+            id="flash-edit-area"
+            type="text"
+            placeholder="Ex.: Cirurgia Geral"
+          >
+        </label>
+
+        <label>
+          <span>Matéria</span>
+          <input
+            id="flash-edit-materia"
+            type="text"
+            placeholder="Opcional"
+          >
+        </label>
+
+        <label class="full">
+          <span>Tema</span>
+          <input
+            id="flash-edit-theme"
+            type="text"
+            placeholder="Opcional"
+          >
+        </label>
+
+        <label class="full">
+          <span>Frente *</span>
+          <textarea
+            id="flash-edit-front"
+            rows="5"
+          ></textarea>
+        </label>
+
+        <label class="full">
+          <span>Verso *</span>
+          <textarea
+            id="flash-edit-back"
+            rows="7"
+          ></textarea>
+        </label>
+
+      </div>
+
+      <div class="docmap-edit-actions">
+        <button
+          id="flash-edit-save"
+          class="button primary"
+          type="button"
+        >
+          Salvar alterações
+        </button>
+
+        <button
+          id="flash-edit-cancel"
+          class="button secondary"
+          type="button"
+        >
+          Cancelar
+        </button>
+
+        <span
+          id="flash-edit-status"
+          class="flash-status"
+          aria-live="polite"
+        ></span>
+      </div>
+    </form>
+  </dialog>
+
   <script
     src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
   ></script>
@@ -675,7 +841,7 @@
 
   <script src="supabase.js"></script>
   <script src="app.js?v=audio3"></script>
-  <script src="flashcards.js?v=11.2"></script>
+  <script src="flashcards.js?v=11.4"></script>
 
 </body>
 </html>

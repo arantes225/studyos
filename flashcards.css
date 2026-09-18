@@ -568,3 +568,264 @@
     text-align: left;
   }
 }
+
+
+/* =========================================================
+   FASE 11.3 — MENU DA BIBLIOTECA + EDIÇÃO
+   ========================================================= */
+
+.library-card {
+  position: relative;
+  padding-right: 54px;
+}
+
+.library-card-menu-wrap {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 8;
+}
+
+.card-menu-trigger {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.card-menu-trigger:hover,
+.card-menu-trigger[aria-expanded="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--surface-2);
+}
+
+.card-menu-popover {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  min-width: 160px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  z-index: 20;
+}
+
+.card-menu-popover[hidden] {
+  display: none !important;
+}
+
+.card-menu-popover button {
+  width: 100%;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 750;
+  text-align: left;
+  cursor: pointer;
+}
+
+.card-menu-popover button:hover {
+  background: var(--surface-2);
+}
+
+.card-menu-popover button.danger {
+  color: var(--danger);
+}
+
+#library-status {
+  display: block;
+  min-height: 18px;
+  margin-bottom: 8px;
+}
+
+.docmap-edit-dialog {
+  width: min(720px, calc(100vw - 28px));
+  max-height: calc(100vh - 36px);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.docmap-edit-dialog::backdrop {
+  background: rgba(15, 20, 28, .46);
+  backdrop-filter: blur(2px);
+}
+
+.docmap-edit-form {
+  padding: 20px;
+}
+
+.docmap-edit-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.docmap-edit-head h2 {
+  margin: 7px 0 0;
+}
+
+.docmap-dialog-close {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.docmap-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.docmap-edit-grid label {
+  display: grid;
+  gap: 6px;
+}
+
+.docmap-edit-grid label.full {
+  grid-column: 1 / -1;
+}
+
+.docmap-edit-grid label > span {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.docmap-edit-grid input,
+.docmap-edit-grid textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+}
+
+.docmap-edit-grid input {
+  min-height: 41px;
+  padding: 0 11px;
+}
+
+.docmap-edit-grid textarea {
+  padding: 11px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.docmap-edit-grid input:focus,
+.docmap-edit-grid textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.docmap-edit-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+@media (max-width: 680px) {
+  .docmap-edit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .docmap-edit-grid label.full {
+    grid-column: auto;
+  }
+
+  .library-card {
+    padding-right: 48px;
+  }
+}
+
+
+/* =========================================================
+   FASE 11.4 — GESTÃO DE FLASHCARDS
+   ========================================================= */
+
+.review-card {
+  position: relative;
+}
+
+.review-card-menu-wrap {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 15;
+}
+
+.library-bulk-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 10px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.bulk-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.bulk-check input,
+.library-select-check {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--accent);
+}
+
+#flash-library-selected {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.bulk-danger {
+  margin-left: auto;
+  color: var(--danger);
+}
+
+.library-select-wrap {
+  position: absolute;
+  top: 16px;
+  left: 12px;
+  z-index: 8;
+}
+
+.library-card {
+  padding-left: 44px;
+}

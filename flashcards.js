@@ -21,6 +21,12 @@ let ankiImportStats = {
 
 let libraryCards = [];
 
+let editingFlashcardId =
+  null;
+
+const selectedFlashcardIds =
+  new Set();
+
 let flashSettings = {
   flashcard_intervals_hard: [1, 3, 7],
   flashcard_intervals_medium: [7, 21, 45],
@@ -2834,7 +2840,8 @@ function filteredLibraryCards() {
       .getElementById(
         "library-active"
       )
-      .value;
+      ?.value
+    || "active";
 
   return libraryCards.filter(
     (card) => {
@@ -2885,6 +2892,708 @@ function filteredLibraryCards() {
   );
 }
 
+
+function closeFlashcardMenus(
+  exceptId = null
+) {
+  document
+    .querySelectorAll(
+      "[data-flash-menu]"
+    )
+    .forEach(
+      (menu) => {
+        const id =
+          menu.dataset
+            .flashMenu;
+
+        if (
+          exceptId
+          && id === exceptId
+        ) {
+          return;
+        }
+
+        menu.hidden =
+          true;
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-flash-menu-trigger]"
+    )
+    .forEach(
+      (button) => {
+        const id =
+          button.dataset
+            .flashMenuTrigger;
+
+        if (
+          exceptId
+          && id === exceptId
+        ) {
+          return;
+        }
+
+        button.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+      }
+    );
+}
+
+
+function setLibraryStatus(
+  text,
+  type = ""
+) {
+  setFlashStatus(
+    "library-status",
+    text,
+    type
+  );
+}
+
+
+function openFlashEditDialog(
+  cardId
+) {
+  const card =
+    libraryCards.find(
+      (item) =>
+        item.id === cardId
+    )
+    || reviewQueue.find(
+      (item) =>
+        item.id === cardId
+    );
+
+
+  if (!card) {
+    return;
+  }
+
+
+  editingFlashcardId =
+    card.id;
+
+
+  document
+    .getElementById(
+      "flash-edit-area"
+    )
+    .value =
+      card.area
+      || "";
+
+
+  document
+    .getElementById(
+      "flash-edit-materia"
+    )
+    .value =
+      card.materia
+      || "";
+
+
+  document
+    .getElementById(
+      "flash-edit-theme"
+    )
+    .value =
+      card.theme
+      || "";
+
+
+  document
+    .getElementById(
+      "flash-edit-front"
+    )
+    .value =
+      card.front_text
+      || "";
+
+
+  document
+    .getElementById(
+      "flash-edit-back"
+    )
+    .value =
+      card.back_text
+      || "";
+
+
+  setFlashStatus(
+    "flash-edit-status",
+    ""
+  );
+
+
+  const dialog =
+    document.getElementById(
+      "flash-edit-dialog"
+    );
+
+
+  if (
+    typeof dialog.showModal
+      === "function"
+  ) {
+    dialog.showModal();
+
+  } else {
+    dialog.setAttribute(
+      "open",
+      ""
+    );
+  }
+}
+
+
+function closeFlashEditDialog() {
+  const dialog =
+    document.getElementById(
+      "flash-edit-dialog"
+    );
+
+
+  editingFlashcardId =
+    null;
+
+
+  if (!dialog) {
+    return;
+  }
+
+
+  if (
+    typeof dialog.close
+      === "function"
+  ) {
+    dialog.close();
+
+  } else {
+    dialog.removeAttribute(
+      "open"
+    );
+  }
+}
+
+
+async function saveEditedFlashcard() {
+  if (!editingFlashcardId) {
+    return;
+  }
+
+
+  const front =
+    document
+      .getElementById(
+        "flash-edit-front"
+      )
+      .value
+      .trim();
+
+
+  const back =
+    document
+      .getElementById(
+        "flash-edit-back"
+      )
+      .value
+      .trim();
+
+
+  if (
+    !front
+    || !back
+  ) {
+    setFlashStatus(
+      "flash-edit-status",
+      "Frente e verso são obrigatórios.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      "flash-edit-save"
+    );
+
+
+  button.disabled =
+    true;
+
+
+  setFlashStatus(
+    "flash-edit-status",
+    "Salvando..."
+  );
+
+
+  const {
+    error
+  } =
+    await flashSb
+      .from(
+        "flashcards"
+      )
+      .update({
+        area:
+          document
+            .getElementById(
+              "flash-edit-area"
+            )
+            .value
+            .trim()
+          || null,
+
+        materia:
+          document
+            .getElementById(
+              "flash-edit-materia"
+            )
+            .value
+            .trim()
+          || null,
+
+        theme:
+          document
+            .getElementById(
+              "flash-edit-theme"
+            )
+            .value
+            .trim()
+          || null,
+
+        front_text:
+          front,
+
+        back_text:
+          back
+      })
+      .eq(
+        "id",
+        editingFlashcardId
+      );
+
+
+  button.disabled =
+    false;
+
+
+  if (error) {
+    console.error(
+      error
+    );
+
+    setFlashStatus(
+      "flash-edit-status",
+      `Não foi possível salvar: ${error.message}`,
+      "error"
+    );
+
+    return;
+  }
+
+
+  closeFlashEditDialog();
+
+
+  setLibraryStatus(
+    "Flashcard atualizado.",
+    "success"
+  );
+
+
+  await Promise.all([
+    loadLibrary(),
+    loadMetrics(),
+    loadReviewQueue()
+  ]);
+}
+
+
+async function toggleFlashcardActive(
+  cardId,
+  nextActive
+) {
+  const {
+    error
+  } =
+    await flashSb
+      .from(
+        "flashcards"
+      )
+      .update({
+        active:
+          nextActive
+      })
+      .eq(
+        "id",
+        cardId
+      );
+
+
+  if (error) {
+    console.error(
+      error
+    );
+
+    setLibraryStatus(
+      `Não foi possível atualizar: ${error.message}`,
+      "error"
+    );
+
+    return;
+  }
+
+
+  setLibraryStatus(
+    nextActive
+      ? "Flashcard restaurado."
+      : "Flashcard arquivado.",
+    "success"
+  );
+
+
+  await Promise.all([
+    loadLibrary(),
+    loadMetrics(),
+    loadReviewQueue()
+  ]);
+}
+
+
+async function deleteFlashcardFromLibrary(
+  cardId
+) {
+  const card =
+    libraryCards.find(
+      (item) =>
+        item.id === cardId
+    )
+    || reviewQueue.find(
+      (item) =>
+        item.id === cardId
+    );
+
+
+  if (!card) {
+    return;
+  }
+
+
+  const confirmed =
+    window.confirm(
+      "Excluir este flashcard permanentemente? Esta ação não pode ser desfeita."
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  setLibraryStatus(
+    "Excluindo flashcard..."
+  );
+
+
+  const {
+    error
+  } =
+    await flashSb
+      .from(
+        "flashcards"
+      )
+      .delete()
+      .eq(
+        "id",
+        cardId
+      );
+
+
+  if (error) {
+    console.error(
+      error
+    );
+
+    setLibraryStatus(
+      `Não foi possível excluir: ${error.message}`,
+      "error"
+    );
+
+    return;
+  }
+
+
+  const storagePaths =
+    [
+      card.front_image_path,
+      card.back_image_path
+    ]
+      .filter(
+        Boolean
+      );
+
+
+  if (
+    storagePaths.length
+  ) {
+    const {
+      error:
+        storageError
+    } =
+      await flashSb
+        .storage
+        .from(
+          "docmap"
+        )
+        .remove(
+          storagePaths
+        );
+
+
+    if (storageError) {
+      console.warn(
+        "Flashcard excluído, mas a mídia antiga não pôde ser removida:",
+        storageError.message
+      );
+    }
+  }
+
+
+  selectedFlashcardIds.delete(
+    cardId
+  );
+
+  reviewQueue =
+    reviewQueue.filter(
+      (item) =>
+        item.id !== cardId
+    );
+
+  if (
+    reviewIndex
+    >= reviewQueue.length
+  ) {
+    reviewIndex =
+      Math.max(
+        0,
+        reviewQueue.length - 1
+      );
+  }
+
+
+  setLibraryStatus(
+    "Flashcard excluído.",
+    "success"
+  );
+
+
+  await Promise.all([
+    loadLibrary(),
+    loadMetrics(),
+    loadReviewQueue()
+  ]);
+}
+
+
+
+function updateFlashBulkToolbar() {
+  const visibleIds =
+    filteredLibraryCards()
+      .map(
+        (card) =>
+          card.id
+      );
+
+
+  const selectedVisible =
+    visibleIds.filter(
+      (id) =>
+        selectedFlashcardIds.has(
+          id
+        )
+    ).length;
+
+
+  const count =
+    document.getElementById(
+      "flash-library-selected"
+    );
+
+
+  const button =
+    document.getElementById(
+      "flash-library-delete-selected"
+    );
+
+
+  const selectAll =
+    document.getElementById(
+      "flash-library-select-all"
+    );
+
+
+  if (count) {
+    count.textContent =
+      `${selectedFlashcardIds.size} selecionado${selectedFlashcardIds.size === 1 ? "" : "s"}`;
+  }
+
+
+  if (button) {
+    button.disabled =
+      selectedFlashcardIds.size === 0;
+  }
+
+
+  if (selectAll) {
+    selectAll.checked =
+      visibleIds.length > 0
+      && selectedVisible === visibleIds.length;
+
+    selectAll.indeterminate =
+      selectedVisible > 0
+      && selectedVisible < visibleIds.length;
+  }
+}
+
+
+async function deleteSelectedFlashcards() {
+  const ids =
+    Array.from(
+      selectedFlashcardIds
+    );
+
+
+  if (!ids.length) {
+    return;
+  }
+
+
+  const confirmed =
+    window.confirm(
+      `Excluir ${ids.length} flashcard${ids.length === 1 ? "" : "s"} permanentemente?`
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  const cards =
+    libraryCards.filter(
+      (card) =>
+        selectedFlashcardIds.has(
+          card.id
+        )
+    );
+
+
+  setLibraryStatus(
+    "Excluindo selecionados..."
+  );
+
+
+  const {
+    error
+  } =
+    await flashSb
+      .from(
+        "flashcards"
+      )
+      .delete()
+      .in(
+        "id",
+        ids
+      );
+
+
+  if (error) {
+    console.error(
+      error
+    );
+
+
+    setLibraryStatus(
+      `Não foi possível excluir: ${error.message}`,
+      "error"
+    );
+
+    return;
+  }
+
+
+  const paths =
+    cards
+      .flatMap(
+        (card) => [
+          card.front_image_path,
+          card.back_image_path
+        ]
+      )
+      .filter(
+        Boolean
+      );
+
+
+  if (paths.length) {
+    const {
+      error:
+        storageError
+    } =
+      await flashSb
+        .storage
+        .from(
+          "docmap"
+        )
+        .remove(
+          paths
+        );
+
+
+    if (storageError) {
+      console.warn(
+        storageError
+      );
+    }
+  }
+
+
+  reviewQueue =
+    reviewQueue.filter(
+      (card) =>
+        !selectedFlashcardIds.has(
+          card.id
+        )
+    );
+
+
+  selectedFlashcardIds.clear();
+
+
+  setLibraryStatus(
+    `${ids.length} flashcard${ids.length === 1 ? "" : "s"} excluído${ids.length === 1 ? "" : "s"}.`,
+    "success"
+  );
+
+
+  await Promise.all([
+    loadLibrary(),
+    loadMetrics(),
+    loadReviewQueue()
+  ]);
+}
+
+
 function renderLibrary() {
   const cards =
     filteredLibraryCards();
@@ -2899,6 +3608,7 @@ function renderLibrary() {
       "library-empty"
     );
 
+
   document
     .getElementById(
       "library-count"
@@ -2906,13 +3616,23 @@ function renderLibrary() {
     .textContent =
       `${cards.length} card${cards.length === 1 ? "" : "s"}`;
 
+
   if (!cards.length) {
-    list.innerHTML = "";
-    empty.hidden = false;
+    list.innerHTML =
+      "";
+
+    empty.hidden =
+      false;
+
+    updateFlashBulkToolbar();
+
     return;
   }
 
-  empty.hidden = true;
+
+  empty.hidden =
+    true;
+
 
   list.innerHTML =
     cards
@@ -2920,8 +3640,58 @@ function renderLibrary() {
         (card) => `
           <article
             class="library-card"
-            data-library-card="${card.id}"
+            data-library-card="${escapeFlashHtml(card.id)}"
           >
+
+            <label
+              class="library-select-wrap"
+              aria-label="Selecionar flashcard"
+            >
+              <input
+                class="library-select-check"
+                type="checkbox"
+                data-flash-select="${escapeFlashHtml(card.id)}"
+                ${selectedFlashcardIds.has(card.id) ? "checked" : ""}
+              >
+            </label>
+
+            <div class="library-card-menu-wrap">
+
+              <button
+                class="card-menu-trigger"
+                type="button"
+                data-flash-menu-trigger="${escapeFlashHtml(card.id)}"
+                aria-label="Opções do flashcard"
+                aria-expanded="false"
+              >
+                ⋯
+              </button>
+
+              <div
+                class="card-menu-popover"
+                data-flash-menu="${escapeFlashHtml(card.id)}"
+                hidden
+              >
+
+                <button
+                  type="button"
+                  data-flash-edit="${escapeFlashHtml(card.id)}"
+                >
+                  Editar
+                </button>
+
+                <button
+                  class="danger"
+                  type="button"
+                  data-flash-delete="${escapeFlashHtml(card.id)}"
+                >
+                  Excluir
+                </button>
+
+              </div>
+
+            </div>
+
 
             <div class="library-card-main">
 
@@ -2973,64 +3743,156 @@ function renderLibrary() {
 
             </div>
 
-            <div class="library-card-actions">
-
-              <button
-                type="button"
-                data-toggle-card="${card.id}"
-                data-next-active="${card.active ? "false" : "true"}"
-              >
-                ${card.active ? "Arquivar" : "Restaurar"}
-              </button>
-
-            </div>
-
           </article>
         `
       )
       .join("");
 
-  document
+
+  list
     .querySelectorAll(
-      "[data-toggle-card]"
+      "[data-flash-select]"
     )
-    .forEach((button) => {
-      button.addEventListener(
-        "click",
-        async () => {
-          button.disabled = true;
+    .forEach(
+      (input) => {
+        input.addEventListener(
+          "change",
+          () => {
+            const id =
+              input.dataset
+                .flashSelect;
 
-          const nextActive =
-            button.dataset.nextActive
-              === "true";
 
-          const {
-            error
-          } = await flashSb
-            .from("flashcards")
-            .update({
-              active:
-                nextActive
-            })
-            .eq(
-              "id",
-              button.dataset.toggleCard
-            );
+            if (input.checked) {
+              selectedFlashcardIds.add(
+                id
+              );
 
-          if (error) {
-            console.error(error);
-            button.disabled = false;
-            return;
+            } else {
+              selectedFlashcardIds.delete(
+                id
+              );
+            }
+
+
+            updateFlashBulkToolbar();
           }
+        );
+      }
+    );
 
-          await Promise.all([
-            loadLibrary(),
-            loadMetrics(),
-            loadReviewQueue()
-          ]);
-        }
-      );
-    });
+
+  updateFlashBulkToolbar();
+
+
+  list
+    .querySelectorAll(
+      "[data-flash-menu-trigger]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          (event) => {
+            event.stopPropagation();
+
+
+            const id =
+              button.dataset
+                .flashMenuTrigger;
+
+
+            const menu =
+              list.querySelector(
+                `[data-flash-menu="${CSS.escape(id)}"]`
+              );
+
+
+            if (!menu) {
+              return;
+            }
+
+
+            const willOpen =
+              menu.hidden;
+
+
+            closeFlashcardMenus();
+
+
+            menu.hidden =
+              !willOpen;
+
+
+            button.setAttribute(
+              "aria-expanded",
+              willOpen
+                ? "true"
+                : "false"
+            );
+          }
+        );
+      }
+    );
+
+
+  list
+    .querySelectorAll(
+      "[data-flash-menu]"
+    )
+    .forEach(
+      (menu) => {
+        menu.addEventListener(
+          "click",
+          (event) =>
+            event.stopPropagation()
+        );
+      }
+    );
+
+
+  list
+    .querySelectorAll(
+      "[data-flash-edit]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            closeFlashcardMenus();
+
+
+            openFlashEditDialog(
+              button.dataset
+                .flashEdit
+            );
+          }
+        );
+      }
+    );
+
+
+  list
+    .querySelectorAll(
+      "[data-flash-delete]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          async () => {
+            closeFlashcardMenus();
+
+
+            await deleteFlashcardFromLibrary(
+              button.dataset
+                .flashDelete
+            );
+          }
+        );
+      }
+    );
 }
 
 async function loadLibrary() {
@@ -3046,6 +3908,8 @@ async function loadLibrary() {
       theme,
       front_text,
       back_text,
+      front_image_path,
+      back_image_path,
       due_date,
       review_count,
       active,
@@ -3071,22 +3935,263 @@ async function loadLibrary() {
   renderLibrary();
 }
 
-function wireLibrary() {
-  [
-    "library-search",
-    "library-area",
-    "library-active"
-  ].forEach((id) => {
-    const element =
-      document.getElementById(id);
 
-    element.addEventListener(
-      id === "library-search"
-        ? "input"
-        : "change",
+
+function currentReviewCard() {
+  return reviewQueue[
+    reviewIndex
+  ]
+  || null;
+}
+
+
+function closeReviewCardMenu() {
+  const menu =
+    document.getElementById(
+      "review-card-menu"
+    );
+
+  const trigger =
+    document.getElementById(
+      "review-card-menu-trigger"
+    );
+
+
+  if (menu) {
+    menu.hidden =
+      true;
+  }
+
+
+  trigger?.setAttribute(
+    "aria-expanded",
+    "false"
+  );
+}
+
+
+function wireReviewCardMenu() {
+  const trigger =
+    document.getElementById(
+      "review-card-menu-trigger"
+    );
+
+  const menu =
+    document.getElementById(
+      "review-card-menu"
+    );
+
+
+  trigger?.addEventListener(
+    "click",
+    (event) => {
+      event.stopPropagation();
+
+
+      if (!menu) {
+        return;
+      }
+
+
+      const open =
+        menu.hidden;
+
+
+      closeReviewCardMenu();
+
+
+      menu.hidden =
+        !open;
+
+
+      trigger.setAttribute(
+        "aria-expanded",
+        open
+          ? "true"
+          : "false"
+      );
+    }
+  );
+
+
+  menu?.addEventListener(
+    "click",
+    (event) =>
+      event.stopPropagation()
+  );
+
+
+  document
+    .getElementById(
+      "review-card-edit"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+        const card =
+          currentReviewCard();
+
+
+        closeReviewCardMenu();
+
+
+        if (card) {
+          openFlashEditDialog(
+            card.id
+          );
+        }
+      }
+    );
+
+
+  document
+    .getElementById(
+      "review-card-delete"
+    )
+    ?.addEventListener(
+      "click",
+      async () => {
+        const card =
+          currentReviewCard();
+
+
+        closeReviewCardMenu();
+
+
+        if (card) {
+          await deleteFlashcardFromLibrary(
+            card.id
+          );
+
+          await renderCurrentReview();
+        }
+      }
+    );
+}
+
+
+
+function wireLibrary() {
+  document
+    .getElementById(
+      "library-search"
+    )
+    ?.addEventListener(
+      "input",
       renderLibrary
     );
-  });
+
+
+  document
+    .getElementById(
+      "library-area"
+    )
+    ?.addEventListener(
+      "change",
+      renderLibrary
+    );
+
+
+  document
+    .getElementById(
+      "flash-library-select-all"
+    )
+    ?.addEventListener(
+      "change",
+      (event) => {
+        const ids =
+          filteredLibraryCards()
+            .map(
+              (card) =>
+                card.id
+            );
+
+
+        for (
+          const id
+          of ids
+        ) {
+          if (
+            event.target.checked
+          ) {
+            selectedFlashcardIds.add(
+              id
+            );
+
+          } else {
+            selectedFlashcardIds.delete(
+              id
+            );
+          }
+        }
+
+
+        renderLibrary();
+      }
+    );
+
+
+  document
+    .getElementById(
+      "flash-library-delete-selected"
+    )
+    ?.addEventListener(
+      "click",
+      deleteSelectedFlashcards
+    );
+
+
+  document
+    .getElementById(
+      "flash-edit-save"
+    )
+    ?.addEventListener(
+      "click",
+      saveEditedFlashcard
+    );
+
+
+  [
+    "flash-edit-close",
+    "flash-edit-cancel"
+  ].forEach(
+    (id) => {
+      document
+        .getElementById(
+          id
+        )
+        ?.addEventListener(
+          "click",
+          closeFlashEditDialog
+        );
+    }
+  );
+
+
+  wireReviewCardMenu();
+
+
+  document.addEventListener(
+    "click",
+    () => {
+      closeFlashcardMenus();
+      closeReviewCardMenu();
+    }
+  );
+
+
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (
+        event.key ===
+        "Escape"
+      ) {
+        closeFlashcardMenus();
+        closeReviewCardMenu();
+      }
+    }
+  );
 }
 
 async function initFlashcards() {

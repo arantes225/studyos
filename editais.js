@@ -8,6 +8,9 @@ let examUser =
 let examRows =
   [];
 
+const selectedExamIds =
+  new Set();
+
 let examSimulationMetrics =
   new Map();
 
@@ -293,6 +296,127 @@ function examSortValue(
 }
 
 
+
+function updateExamBulkToolbar() {
+  const visible =
+    filteredExams()
+      .map(
+        (exam) =>
+          exam.id
+      );
+
+
+  const selectedVisible =
+    visible.filter(
+      (id) =>
+        selectedExamIds.has(
+          id
+        )
+    ).length;
+
+
+  const count =
+    document.getElementById(
+      "exam-selected-count"
+    );
+
+
+  const button =
+    document.getElementById(
+      "exam-delete-selected"
+    );
+
+
+  const selectAll =
+    document.getElementById(
+      "exam-select-all"
+    );
+
+
+  if (count) {
+    count.textContent =
+      `${selectedExamIds.size} selecionada${selectedExamIds.size === 1 ? "" : "s"}`;
+  }
+
+
+  if (button) {
+    button.disabled =
+      selectedExamIds.size === 0;
+  }
+
+
+  if (selectAll) {
+    selectAll.checked =
+      visible.length > 0
+      && selectedVisible === visible.length;
+
+    selectAll.indeterminate =
+      selectedVisible > 0
+      && selectedVisible < visible.length;
+  }
+}
+
+
+async function deleteSelectedExams() {
+  const ids =
+    Array.from(
+      selectedExamIds
+    );
+
+
+  if (!ids.length) {
+    return;
+  }
+
+
+  const confirmed =
+    window.confirm(
+      `Excluir ${ids.length} prova${ids.length === 1 ? "" : "s"}? Os simulados vinculados não serão apagados.`
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  const {
+    error
+  } =
+    await examSb
+      .from(
+        "exams"
+      )
+      .delete()
+      .in(
+        "id",
+        ids
+      );
+
+
+  if (error) {
+    window.alert(
+      `Não foi possível excluir: ${error.message}`
+    );
+
+    return;
+  }
+
+
+  selectedExamIds.clear();
+
+
+  await Promise.all([
+    loadExams(),
+    loadExamMetrics(),
+    loadExamSimulationMetrics()
+  ]);
+
+
+  renderExams();
+}
+
+
 function renderExams() {
   const list =
     document.getElementById(
@@ -356,6 +480,8 @@ function renderExams() {
 
     empty.hidden =
       false;
+
+    updateExamBulkToolbar();
 
     return;
   }
@@ -424,6 +550,19 @@ function renderExams() {
                 exam.id
               )}"
             >
+
+              <label
+                class="exam-card-select"
+                aria-label="Selecionar prova"
+              >
+                <input
+                  type="checkbox"
+                  data-select-exam="${examEscape(
+                    exam.id
+                  )}"
+                  ${selectedExamIds.has(exam.id) ? "checked" : ""}
+                >
+              </label>
 
               <div class="exam-card-top">
 
@@ -621,6 +760,42 @@ function renderExams() {
         }
       )
       .join("");
+
+
+  list
+    .querySelectorAll(
+      "[data-select-exam]"
+    )
+    .forEach(
+      (input) => {
+        input.addEventListener(
+          "change",
+          () => {
+            const id =
+              input.dataset
+                .selectExam;
+
+
+            if (input.checked) {
+              selectedExamIds.add(
+                id
+              );
+
+            } else {
+              selectedExamIds.delete(
+                id
+              );
+            }
+
+
+            updateExamBulkToolbar();
+          }
+        );
+      }
+    );
+
+
+  updateExamBulkToolbar();
 
 
   list
@@ -1366,6 +1541,56 @@ async function deleteExam(
 
 
 function wireExams() {
+
+  document
+    .getElementById(
+      "exam-select-all"
+    )
+    ?.addEventListener(
+      "change",
+      (event) => {
+        const ids =
+          filteredExams()
+            .map(
+              (exam) =>
+                exam.id
+            );
+
+
+        for (
+          const id
+          of ids
+        ) {
+          if (
+            event.target.checked
+          ) {
+            selectedExamIds.add(
+              id
+            );
+
+          } else {
+            selectedExamIds.delete(
+              id
+            );
+          }
+        }
+
+
+        renderExams();
+      }
+    );
+
+
+  document
+    .getElementById(
+      "exam-delete-selected"
+    )
+    ?.addEventListener(
+      "click",
+      deleteSelectedExams
+    );
+
+
   document
     .getElementById(
       "new-exam"

@@ -5,6 +5,9 @@ const qsState = {
   file: null,
   sets: [],
   currentSet: null,
+
+  selectedSetIds:
+    new Set(),
   items: [],
   attempts: new Map()
 };
@@ -776,6 +779,191 @@ async function loadSets() {
   await loadQuestionOverview();
 }
 
+
+function updateSetBulkToolbar() {
+  const visible =
+    qsState.sets
+      .map(
+        (set) =>
+          set.id
+      );
+
+
+  const selectedVisible =
+    visible.filter(
+      (id) =>
+        qsState
+          .selectedSetIds
+          .has(
+            id
+          )
+    ).length;
+
+
+  const count =
+    document.getElementById(
+      "qs-selected-count"
+    );
+
+
+  const button =
+    document.getElementById(
+      "qs-delete-selected"
+    );
+
+
+  const selectAll =
+    document.getElementById(
+      "qs-select-all"
+    );
+
+
+  if (count) {
+    count.textContent =
+      `${qsState.selectedSetIds.size} selecionado${qsState.selectedSetIds.size === 1 ? "" : "s"}`;
+  }
+
+
+  if (button) {
+    button.disabled =
+      qsState.selectedSetIds.size === 0;
+  }
+
+
+  if (selectAll) {
+    selectAll.checked =
+      visible.length > 0
+      && selectedVisible === visible.length;
+
+    selectAll.indeterminate =
+      selectedVisible > 0
+      && selectedVisible < visible.length;
+  }
+}
+
+
+async function deleteSelectedSets() {
+  const ids =
+    Array.from(
+      qsState
+        .selectedSetIds
+    );
+
+
+  if (!ids.length) {
+    return;
+  }
+
+
+  const confirmed =
+    window.confirm(
+      `Excluir ${ids.length} simulado${ids.length === 1 ? "" : "s"} e seus gabaritos?`
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  const selected =
+    qsState.sets.filter(
+      (set) =>
+        qsState
+          .selectedSetIds
+          .has(
+            set.id
+          )
+    );
+
+
+  const paths =
+    selected
+      .map(
+        (set) =>
+          set.source_file_path
+      )
+      .filter(
+        Boolean
+      );
+
+
+  if (paths.length) {
+    const {
+      error:
+        storageError
+    } =
+      await qsSb
+        .storage
+        .from(
+          "docmap"
+        )
+        .remove(
+          paths
+        );
+
+
+    if (storageError) {
+      console.warn(
+        storageError
+      );
+    }
+  }
+
+
+  const {
+    error
+  } =
+    await qsSb
+      .from(
+        "question_sets"
+      )
+      .delete()
+      .in(
+        "id",
+        ids
+      );
+
+
+  if (error) {
+    console.error(
+      error
+    );
+
+
+    setImportStatus(
+      `Não foi possível excluir: ${error.message}`,
+      "error"
+    );
+
+    return;
+  }
+
+
+  if (
+    qsState.currentSet
+    && qsState
+      .selectedSetIds
+      .has(
+        qsState.currentSet.id
+      )
+  ) {
+    closeCurrentSet();
+  }
+
+
+  qsState
+    .selectedSetIds
+    .clear();
+
+
+  await Promise.all([
+    loadSets(),
+    loadQuestionOverview()
+  ]);
+}
+
+
 function renderSetHistory() {
   const container =
     document.getElementById("qs-history");
@@ -793,6 +981,9 @@ function renderSetHistory() {
   if (!qsState.sets.length) {
     container.innerHTML =
       '<div class="qs-empty">Nenhum simulado importado ainda.</div>';
+
+    updateSetBulkToolbar();
+
     return;
   }
 
@@ -804,6 +995,18 @@ function renderSetHistory() {
 
       return `
         <article class="qs-set-card ${isActive ? "active" : ""}">
+
+          <label
+            class="qs-set-select"
+            aria-label="Selecionar simulado"
+          >
+            <input
+              type="checkbox"
+              data-select-set="${qsEscape(set.id)}"
+              ${qsState.selectedSetIds.has(set.id) ? "checked" : ""}
+            >
+          </label>
+
           <h3>${qsEscape(set.title)}</h3>
           <p>
             ${set.exam_id ? "Vinculado à prova · " : ""}
@@ -846,6 +1049,46 @@ function renderSetHistory() {
         </article>
       `;
     }).join("");
+
+  document
+    .querySelectorAll(
+      "[data-select-set]"
+    )
+    .forEach(
+      (input) => {
+        input.addEventListener(
+          "change",
+          () => {
+            const id =
+              input.dataset
+                .selectSet;
+
+
+            if (input.checked) {
+              qsState
+                .selectedSetIds
+                .add(
+                  id
+                );
+
+            } else {
+              qsState
+                .selectedSetIds
+                .delete(
+                  id
+                );
+            }
+
+
+            updateSetBulkToolbar();
+          }
+        );
+      }
+    );
+
+
+  updateSetBulkToolbar();
+
 
   document
     .querySelectorAll("[data-open-set]")
@@ -1675,7 +1918,57 @@ function wireUpload() {
     );
 }
 
+
+function wireSetBulkActions() {
+  document
+    .getElementById(
+      "qs-select-all"
+    )
+    ?.addEventListener(
+      "change",
+      (event) => {
+        for (
+          const set
+          of qsState.sets
+        ) {
+          if (
+            event.target.checked
+          ) {
+            qsState
+              .selectedSetIds
+              .add(
+                set.id
+              );
+
+          } else {
+            qsState
+              .selectedSetIds
+              .delete(
+                set.id
+              );
+          }
+        }
+
+
+        renderSetHistory();
+      }
+    );
+
+
+  document
+    .getElementById(
+      "qs-delete-selected"
+    )
+    ?.addEventListener(
+      "click",
+      deleteSelectedSets
+    );
+}
+
+
 async function initQuestionSets() {
+  wireSetBulkActions();
+
   qsState.user =
     window.docmapUser;
 

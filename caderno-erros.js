@@ -17,6 +17,15 @@ let allErrorAreas =
 let errorLibraryItems =
   [];
 
+let editingErrorId =
+  null;
+
+const selectedErrorIds =
+  new Set();
+
+let importedErrorRows =
+  [];
+
 
 const errorParams =
   new URLSearchParams(
@@ -1949,6 +1958,1194 @@ function filteredErrorLibrary() {
 }
 
 
+
+function setErrorLibraryStatus(
+  text,
+  type = ""
+) {
+  const element =
+    document.getElementById(
+      "error-library-status"
+    );
+
+
+  if (!element) {
+    return;
+  }
+
+
+  element.textContent =
+    text;
+
+
+  element.className =
+    `error-status ${type}`
+      .trim();
+}
+
+
+function closeErrorLibraryMenus(
+  exceptId = null
+) {
+  document
+    .querySelectorAll(
+      "[data-error-library-menu]"
+    )
+    .forEach(
+      (menu) => {
+        const id =
+          menu.dataset
+            .errorLibraryMenu;
+
+
+        if (
+          exceptId
+          && id === exceptId
+        ) {
+          return;
+        }
+
+
+        menu.hidden =
+          true;
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-error-library-menu-trigger]"
+    )
+    .forEach(
+      (button) => {
+        const id =
+          button.dataset
+            .errorLibraryMenuTrigger;
+
+
+        if (
+          exceptId
+          && id === exceptId
+        ) {
+          return;
+        }
+
+
+        button.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+      }
+    );
+}
+
+
+function openErrorEditDialog(
+  itemId
+) {
+  const item =
+    errorLibraryItems
+      .find(
+        (entry) =>
+          entry.id === itemId
+      )
+    || errorQueue.find(
+      (entry) =>
+        entry.id === itemId
+    );
+
+
+  if (!item) {
+    return;
+  }
+
+
+  editingErrorId =
+    item.id;
+
+
+  const values = {
+    "error-edit-area":
+      item.area
+      || "",
+
+    "error-edit-materia":
+      item.materia
+      || "",
+
+    "error-edit-theme":
+      item.theme
+      || "",
+
+    "error-edit-ccq":
+      item.ccq
+      || "",
+
+    "error-edit-question":
+      item.question_text
+      || "",
+
+    "error-edit-answer":
+      item.correct_answer
+      || "",
+
+    "error-edit-thought":
+      item.what_i_thought
+      || ""
+  };
+
+
+  Object
+    .entries(
+      values
+    )
+    .forEach(
+      (
+        [
+          id,
+          value
+        ]
+      ) => {
+        const element =
+          document.getElementById(
+            id
+          );
+
+
+        if (element) {
+          element.value =
+            value;
+        }
+      }
+    );
+
+
+  const status =
+    document.getElementById(
+      "error-edit-status"
+    );
+
+
+  if (status) {
+    status.textContent =
+      "";
+
+    status.className =
+      "error-status";
+  }
+
+
+  const dialog =
+    document.getElementById(
+      "error-edit-dialog"
+    );
+
+
+  if (
+    typeof dialog?.showModal
+      === "function"
+  ) {
+    dialog.showModal();
+
+  } else {
+    dialog?.setAttribute(
+      "open",
+      ""
+    );
+  }
+}
+
+
+function closeErrorEditDialog() {
+  editingErrorId =
+    null;
+
+
+  const dialog =
+    document.getElementById(
+      "error-edit-dialog"
+    );
+
+
+  if (!dialog) {
+    return;
+  }
+
+
+  if (
+    typeof dialog.close
+      === "function"
+  ) {
+    dialog.close();
+
+  } else {
+    dialog.removeAttribute(
+      "open"
+    );
+  }
+}
+
+
+function setErrorEditStatus(
+  text,
+  type = ""
+) {
+  const element =
+    document.getElementById(
+      "error-edit-status"
+    );
+
+
+  if (!element) {
+    return;
+  }
+
+
+  element.textContent =
+    text;
+
+
+  element.className =
+    `error-status ${type}`
+      .trim();
+}
+
+
+async function saveEditedError() {
+  if (!editingErrorId) {
+    return;
+  }
+
+
+  const ccq =
+    document
+      .getElementById(
+        "error-edit-ccq"
+      )
+      .value
+      .trim();
+
+
+  if (!ccq) {
+    setErrorEditStatus(
+      "O CCQ é obrigatório.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      "error-edit-save"
+    );
+
+
+  button.disabled =
+    true;
+
+
+  setErrorEditStatus(
+    "Salvando..."
+  );
+
+
+  const {
+    error
+  } =
+    await errorSb
+      .from(
+        "error_notebook"
+      )
+      .update({
+        area:
+          document
+            .getElementById(
+              "error-edit-area"
+            )
+            .value
+            .trim()
+          || null,
+
+        materia:
+          document
+            .getElementById(
+              "error-edit-materia"
+            )
+            .value
+            .trim()
+          || null,
+
+        theme:
+          document
+            .getElementById(
+              "error-edit-theme"
+            )
+            .value
+            .trim()
+          || null,
+
+        ccq:
+          ccq,
+
+        question_text:
+          document
+            .getElementById(
+              "error-edit-question"
+            )
+            .value
+            .trim()
+          || null,
+
+        correct_answer:
+          document
+            .getElementById(
+              "error-edit-answer"
+            )
+            .value
+            .trim()
+          || null,
+
+        what_i_thought:
+          document
+            .getElementById(
+              "error-edit-thought"
+            )
+            .value
+            .trim()
+          || null
+      })
+      .eq(
+        "id",
+        editingErrorId
+      );
+
+
+  button.disabled =
+    false;
+
+
+  if (error) {
+    console.error(
+      error
+    );
+
+
+    setErrorEditStatus(
+      `Não foi possível salvar: ${error.message}`,
+      "error"
+    );
+
+    return;
+  }
+
+
+  closeErrorEditDialog();
+
+
+  setErrorLibraryStatus(
+    "Item atualizado.",
+    "success"
+  );
+
+
+  await Promise.all([
+    loadErrorMetrics(),
+    loadErrorAreas(),
+    loadErrorLibrary(),
+    loadErrorQueue()
+  ]);
+}
+
+
+async function deleteErrorFromLibrary(
+  itemId
+) {
+  const item =
+    errorLibraryItems
+      .find(
+        (entry) =>
+          entry.id === itemId
+      )
+    || errorQueue.find(
+      (entry) =>
+        entry.id === itemId
+    );
+
+
+  if (!item) {
+    return;
+  }
+
+
+  const confirmed =
+    window.confirm(
+      "Excluir este item do Caderno de Erros permanentemente? Esta ação não pode ser desfeita."
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  setErrorLibraryStatus(
+    "Excluindo item..."
+  );
+
+
+  const {
+    error
+  } =
+    await errorSb
+      .from(
+        "error_notebook"
+      )
+      .delete()
+      .eq(
+        "id",
+        itemId
+      );
+
+
+  if (error) {
+    console.error(
+      error
+    );
+
+
+    setErrorLibraryStatus(
+      `Não foi possível excluir: ${error.message}`,
+      "error"
+    );
+
+    return;
+  }
+
+
+  if (
+    item.question_image_path
+  ) {
+    const {
+      error:
+        storageError
+    } =
+      await errorSb
+        .storage
+        .from(
+          "docmap"
+        )
+        .remove([
+          item.question_image_path
+        ]);
+
+
+    if (storageError) {
+      console.warn(
+        "Item excluído, mas a imagem antiga não pôde ser removida:",
+        storageError.message
+      );
+    }
+  }
+
+
+  selectedErrorIds.delete(
+    itemId
+  );
+
+  errorQueue =
+    errorQueue.filter(
+      (entry) =>
+        entry.id !== itemId
+    );
+
+  if (
+    errorIndex
+    >= errorQueue.length
+  ) {
+    errorIndex =
+      Math.max(
+        0,
+        errorQueue.length - 1
+      );
+  }
+
+
+  setErrorLibraryStatus(
+    "Item excluído do Caderno.",
+    "success"
+  );
+
+
+  await Promise.all([
+    loadErrorMetrics(),
+    loadErrorAreas(),
+    loadErrorLibrary(),
+    loadErrorQueue()
+  ]);
+}
+
+
+
+function switchErrorTab(
+  name
+) {
+  document
+    .querySelectorAll(
+      "[data-error-tab]"
+    )
+    .forEach(
+      (button) => {
+        button.classList.toggle(
+          "active",
+          button.dataset
+            .errorTab === name
+        );
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-error-section]"
+    )
+    .forEach(
+      (section) => {
+        section.classList.toggle(
+          "active",
+          section.dataset
+            .errorSection === name
+        );
+      }
+    );
+
+
+  if (
+    name === "create"
+  ) {
+    toggleNewErrorForm(
+      true
+    );
+  }
+
+
+  if (
+    name === "library"
+  ) {
+    loadErrorLibrary();
+  }
+}
+
+
+function currentErrorReviewItem() {
+  return errorQueue[
+    errorIndex
+  ]
+  || null;
+}
+
+
+function closeErrorReviewMenu() {
+  const menu =
+    document.getElementById(
+      "error-review-menu"
+    );
+
+  const trigger =
+    document.getElementById(
+      "error-review-menu-trigger"
+    );
+
+
+  if (menu) {
+    menu.hidden =
+      true;
+  }
+
+
+  trigger?.setAttribute(
+    "aria-expanded",
+    "false"
+  );
+}
+
+
+function updateErrorBulkToolbar() {
+  const visible =
+    filteredErrorLibrary()
+      .map(
+        (item) =>
+          item.id
+      );
+
+
+  const selectedVisible =
+    visible.filter(
+      (id) =>
+        selectedErrorIds.has(
+          id
+        )
+    ).length;
+
+
+  const count =
+    document.getElementById(
+      "error-library-selected"
+    );
+
+
+  const button =
+    document.getElementById(
+      "error-library-delete-selected"
+    );
+
+
+  const selectAll =
+    document.getElementById(
+      "error-library-select-all"
+    );
+
+
+  if (count) {
+    count.textContent =
+      `${selectedErrorIds.size} selecionado${selectedErrorIds.size === 1 ? "" : "s"}`;
+  }
+
+
+  if (button) {
+    button.disabled =
+      selectedErrorIds.size === 0;
+  }
+
+
+  if (selectAll) {
+    selectAll.checked =
+      visible.length > 0
+      && selectedVisible === visible.length;
+
+    selectAll.indeterminate =
+      selectedVisible > 0
+      && selectedVisible < visible.length;
+  }
+}
+
+
+async function deleteSelectedErrors() {
+  const ids =
+    Array.from(
+      selectedErrorIds
+    );
+
+
+  if (!ids.length) {
+    return;
+  }
+
+
+  const confirmed =
+    window.confirm(
+      `Excluir ${ids.length} item${ids.length === 1 ? "" : "s"} do Caderno permanentemente?`
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  const items =
+    errorLibraryItems.filter(
+      (item) =>
+        selectedErrorIds.has(
+          item.id
+        )
+    );
+
+
+  setErrorLibraryStatus(
+    "Excluindo selecionados..."
+  );
+
+
+  const {
+    error
+  } =
+    await errorSb
+      .from(
+        "error_notebook"
+      )
+      .delete()
+      .in(
+        "id",
+        ids
+      );
+
+
+  if (error) {
+    console.error(
+      error
+    );
+
+
+    setErrorLibraryStatus(
+      `Não foi possível excluir: ${error.message}`,
+      "error"
+    );
+
+    return;
+  }
+
+
+  const paths =
+    items
+      .map(
+        (item) =>
+          item.question_image_path
+      )
+      .filter(
+        Boolean
+      );
+
+
+  if (paths.length) {
+    const {
+      error:
+        storageError
+    } =
+      await errorSb
+        .storage
+        .from(
+          "docmap"
+        )
+        .remove(
+          paths
+        );
+
+
+    if (storageError) {
+      console.warn(
+        storageError
+      );
+    }
+  }
+
+
+  errorQueue =
+    errorQueue.filter(
+      (item) =>
+        !selectedErrorIds.has(
+          item.id
+        )
+    );
+
+
+  selectedErrorIds.clear();
+
+
+  setErrorLibraryStatus(
+    `${ids.length} item${ids.length === 1 ? "" : "s"} excluído${ids.length === 1 ? "" : "s"}.`,
+    "success"
+  );
+
+
+  await Promise.all([
+    loadErrorMetrics(),
+    loadErrorAreas(),
+    loadErrorLibrary(),
+    loadErrorQueue()
+  ]);
+}
+
+
+function normalizeErrorImportHeader(
+  value
+) {
+  return String(
+    value
+    ?? ""
+  )
+    .trim()
+    .toLowerCase()
+    .normalize(
+      "NFD"
+    )
+    .replace(
+      /[\u0300-\u036f]/g,
+      ""
+    )
+    .replace(
+      /[^a-z0-9]+/g,
+      " "
+    )
+    .trim();
+}
+
+
+function errorImportValue(
+  row,
+  aliases
+) {
+  for (
+    const [
+      key,
+      value
+    ]
+    of Object.entries(
+      row
+    )
+  ) {
+    const normalized =
+      normalizeErrorImportHeader(
+        key
+      );
+
+
+    if (
+      aliases.includes(
+        normalized
+      )
+    ) {
+      return String(
+        value
+        ?? ""
+      )
+        .trim();
+    }
+  }
+
+
+  return "";
+}
+
+
+function parseErrorImportRows(
+  workbook
+) {
+  const rows =
+    [];
+
+
+  for (
+    const sheetName
+    of workbook.SheetNames
+  ) {
+    const sheet =
+      workbook.Sheets[
+        sheetName
+      ];
+
+
+    const data =
+      XLSX.utils
+        .sheet_to_json(
+          sheet,
+          {
+            defval:
+              ""
+          }
+        );
+
+
+    for (
+      const source
+      of data
+    ) {
+      const item = {
+        area:
+          errorImportValue(
+            source,
+            [
+              "area",
+              "grande area"
+            ]
+          ),
+
+        materia:
+          errorImportValue(
+            source,
+            [
+              "materia",
+              "disciplina"
+            ]
+          ),
+
+        theme:
+          errorImportValue(
+            source,
+            [
+              "tema",
+              "assunto"
+            ]
+          ),
+
+        ccq:
+          errorImportValue(
+            source,
+            [
+              "ccq",
+              "conceito",
+              "conceito central"
+            ]
+          ),
+
+        question_text:
+          errorImportValue(
+            source,
+            [
+              "questao",
+              "pergunta"
+            ]
+          ),
+
+        correct_answer:
+          errorImportValue(
+            source,
+            [
+              "resposta",
+              "resposta correta",
+              "gabarito"
+            ]
+          ),
+
+        what_i_thought:
+          errorImportValue(
+            source,
+            [
+              "o que eu pensei",
+              "meu raciocinio",
+              "raciocinio"
+            ]
+          )
+      };
+
+
+      if (
+        item.ccq
+      ) {
+        rows.push(
+          item
+        );
+      }
+    }
+  }
+
+
+  return rows;
+}
+
+
+function renderErrorImportPreview() {
+  const preview =
+    document.getElementById(
+      "error-import-preview"
+    );
+
+  const body =
+    document.getElementById(
+      "error-import-body"
+    );
+
+  const summary =
+    document.getElementById(
+      "error-import-summary"
+    );
+
+  const button =
+    document.getElementById(
+      "error-import-confirm"
+    );
+
+
+  if (
+    !importedErrorRows.length
+  ) {
+    preview.hidden =
+      true;
+
+    body.innerHTML =
+      "";
+
+    summary.textContent =
+      "";
+
+    button.disabled =
+      true;
+
+    return;
+  }
+
+
+  preview.hidden =
+    false;
+
+  button.disabled =
+    false;
+
+  summary.textContent =
+    `${importedErrorRows.length} item${importedErrorRows.length === 1 ? "" : "s"} válido${importedErrorRows.length === 1 ? "" : "s"}`;
+
+
+  body.innerHTML =
+    importedErrorRows
+      .slice(
+        0,
+        20
+      )
+      .map(
+        (row) => `
+          <tr>
+            <td>${errorLibraryEscape(row.area || "—")}</td>
+            <td>${errorLibraryEscape(row.materia || "—")}</td>
+            <td>${errorLibraryEscape(row.theme || "—")}</td>
+            <td>${errorLibraryEscape(row.ccq)}</td>
+            <td>${errorLibraryEscape(row.question_text || "—")}</td>
+            <td>${errorLibraryEscape(row.correct_answer || "—")}</td>
+          </tr>
+        `
+      )
+      .join("");
+}
+
+
+async function importErrorRows() {
+  if (
+    !importedErrorRows.length
+  ) {
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      "error-import-confirm"
+    );
+
+
+  button.disabled =
+    true;
+
+
+  const status =
+    document.getElementById(
+      "error-import-status"
+    );
+
+
+  status.textContent =
+    "Importando...";
+
+  status.className =
+    "error-status";
+
+
+  let created =
+    0;
+
+
+  try {
+    for (
+      const row
+      of importedErrorRows
+    ) {
+      const {
+        error
+      } =
+        await errorSb.rpc(
+          "create_error_entry",
+          {
+            p_area:
+              row.area
+              || null,
+
+            p_materia:
+              row.materia
+              || null,
+
+            p_theme:
+              row.theme
+              || null,
+
+            p_ccq:
+              row.ccq,
+
+            p_question_text:
+              row.question_text
+              || null,
+
+            p_correct_answer:
+              row.correct_answer
+              || null,
+
+            p_what_i_thought:
+              row.what_i_thought
+              || null,
+
+            p_question_image_path:
+              null
+          }
+        );
+
+
+      if (error) {
+        throw error;
+      }
+
+
+      created +=
+        1;
+    }
+
+
+    importedErrorRows =
+      [];
+
+
+    document
+      .getElementById(
+        "error-import-file"
+      )
+      .value =
+        "";
+
+
+    renderErrorImportPreview();
+
+
+    status.textContent =
+      `${created} item${created === 1 ? "" : "s"} importado${created === 1 ? "" : "s"}.`;
+
+    status.className =
+      "error-status success";
+
+
+    await Promise.all([
+      loadErrorMetrics(),
+      loadErrorAreas(),
+      loadErrorLibrary(),
+      loadErrorQueue()
+    ]);
+
+
+  } catch (error) {
+    console.error(
+      error
+    );
+
+
+    status.textContent =
+      `Não foi possível concluir: ${error.message}`;
+
+    status.className =
+      "error-status error";
+
+
+    button.disabled =
+      false;
+  }
+}
+
+
 function renderErrorLibrary() {
   const container =
     document.getElementById(
@@ -1997,6 +3194,8 @@ function renderErrorLibrary() {
 
     empty.hidden =
       false;
+
+    updateErrorBulkToolbar();
 
     return;
   }
@@ -2109,6 +3308,66 @@ function renderErrorLibrary() {
                             item.id
                           )}"
                         >
+
+                          <label
+                            class="error-library-select-wrap"
+                            aria-label="Selecionar item"
+                          >
+                            <input
+                              class="error-library-select-check"
+                              type="checkbox"
+                              data-error-library-select="${errorLibraryEscape(
+                                item.id
+                              )}"
+                              ${selectedErrorIds.has(item.id) ? "checked" : ""}
+                            >
+                          </label>
+
+                          <div class="error-library-menu-wrap">
+
+                            <button
+                              class="error-library-menu-trigger"
+                              type="button"
+                              data-error-library-menu-trigger="${errorLibraryEscape(
+                                item.id
+                              )}"
+                              aria-label="Opções do item"
+                              aria-expanded="false"
+                            >
+                              ⋯
+                            </button>
+
+                            <div
+                              class="error-library-menu"
+                              data-error-library-menu="${errorLibraryEscape(
+                                item.id
+                              )}"
+                              hidden
+                            >
+
+                              <button
+                                type="button"
+                                data-error-library-edit="${errorLibraryEscape(
+                                  item.id
+                                )}"
+                              >
+                                Editar
+                              </button>
+
+                              <button
+                                class="danger"
+                                type="button"
+                                data-error-library-delete="${errorLibraryEscape(
+                                  item.id
+                                )}"
+                              >
+                                Excluir
+                              </button>
+
+                            </div>
+
+                          </div>
+
 
                           <div class="error-library-card-main">
 
@@ -2235,6 +3494,157 @@ function renderErrorLibrary() {
 
   container
     .querySelectorAll(
+      "[data-error-library-select]"
+    )
+    .forEach(
+      (input) => {
+        input.addEventListener(
+          "change",
+          () => {
+            const id =
+              input.dataset
+                .errorLibrarySelect;
+
+
+            if (input.checked) {
+              selectedErrorIds.add(
+                id
+              );
+
+            } else {
+              selectedErrorIds.delete(
+                id
+              );
+            }
+
+
+            updateErrorBulkToolbar();
+          }
+        );
+      }
+    );
+
+
+  updateErrorBulkToolbar();
+
+
+  container
+    .querySelectorAll(
+      "[data-error-library-menu-trigger]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          (event) => {
+            event.stopPropagation();
+
+
+            const id =
+              button
+                .dataset
+                .errorLibraryMenuTrigger;
+
+
+            const menu =
+              container.querySelector(
+                `[data-error-library-menu="${CSS.escape(
+                  id
+                )}"]`
+              );
+
+
+            if (!menu) {
+              return;
+            }
+
+
+            const willOpen =
+              menu.hidden;
+
+
+            closeErrorLibraryMenus();
+
+
+            menu.hidden =
+              !willOpen;
+
+
+            button.setAttribute(
+              "aria-expanded",
+              willOpen
+                ? "true"
+                : "false"
+            );
+          }
+        );
+      }
+    );
+
+
+  container
+    .querySelectorAll(
+      "[data-error-library-menu]"
+    )
+    .forEach(
+      (menu) => {
+        menu.addEventListener(
+          "click",
+          (event) =>
+            event.stopPropagation()
+        );
+      }
+    );
+
+
+  container
+    .querySelectorAll(
+      "[data-error-library-edit]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            closeErrorLibraryMenus();
+
+
+            openErrorEditDialog(
+              button
+                .dataset
+                .errorLibraryEdit
+            );
+          }
+        );
+      }
+    );
+
+
+  container
+    .querySelectorAll(
+      "[data-error-library-delete]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          async () => {
+            closeErrorLibraryMenus();
+
+
+            await deleteErrorFromLibrary(
+              button
+                .dataset
+                .errorLibraryDelete
+            );
+          }
+        );
+      }
+    );
+
+
+  container
+    .querySelectorAll(
       "[data-library-open]"
     )
     .forEach(
@@ -2290,7 +3700,7 @@ async function loadErrorLibrary() {
         "error_notebook"
       )
       .select(
-        "id,area,materia,theme,ccq,question_text,correct_answer,what_i_thought,due_date,review_count,created_at"
+        "id,area,materia,theme,ccq,question_text,question_image_path,correct_answer,what_i_thought,due_date,review_count,created_at"
       )
       .eq(
         "active",
@@ -2338,7 +3748,27 @@ async function loadErrorLibrary() {
 }
 
 
+
+
 function wireErrorLibrary() {
+  document
+    .querySelectorAll(
+      "[data-error-tab]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () =>
+            switchErrorTab(
+              button.dataset
+                .errorTab
+            )
+        );
+      }
+    );
+
+
   document
     .getElementById(
       "error-library-area"
@@ -2357,6 +3787,303 @@ function wireErrorLibrary() {
       "input",
       renderErrorLibrary
     );
+
+
+  document
+    .getElementById(
+      "error-library-select-all"
+    )
+    ?.addEventListener(
+      "change",
+      (event) => {
+        const ids =
+          filteredErrorLibrary()
+            .map(
+              (item) =>
+                item.id
+            );
+
+
+        for (
+          const id
+          of ids
+        ) {
+          if (
+            event.target.checked
+          ) {
+            selectedErrorIds.add(
+              id
+            );
+
+          } else {
+            selectedErrorIds.delete(
+              id
+            );
+          }
+        }
+
+
+        renderErrorLibrary();
+      }
+    );
+
+
+  document
+    .getElementById(
+      "error-library-delete-selected"
+    )
+    ?.addEventListener(
+      "click",
+      deleteSelectedErrors
+    );
+
+
+  document
+    .getElementById(
+      "error-edit-save"
+    )
+    ?.addEventListener(
+      "click",
+      saveEditedError
+    );
+
+
+  [
+    "error-edit-close",
+    "error-edit-cancel"
+  ].forEach(
+    (id) => {
+      document
+        .getElementById(
+          id
+        )
+        ?.addEventListener(
+          "click",
+          closeErrorEditDialog
+        );
+    }
+  );
+
+
+  const reviewTrigger =
+    document.getElementById(
+      "error-review-menu-trigger"
+    );
+
+  const reviewMenu =
+    document.getElementById(
+      "error-review-menu"
+    );
+
+
+  reviewTrigger?.addEventListener(
+    "click",
+    (event) => {
+      event.stopPropagation();
+
+
+      const open =
+        reviewMenu?.hidden;
+
+
+      closeErrorReviewMenu();
+
+
+      if (
+        reviewMenu
+      ) {
+        reviewMenu.hidden =
+          !open;
+      }
+
+
+      reviewTrigger.setAttribute(
+        "aria-expanded",
+        open
+          ? "true"
+          : "false"
+      );
+    }
+  );
+
+
+  reviewMenu?.addEventListener(
+    "click",
+    (event) =>
+      event.stopPropagation()
+  );
+
+
+  document
+    .getElementById(
+      "error-review-edit"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+        const item =
+          currentErrorReviewItem();
+
+
+        closeErrorReviewMenu();
+
+
+        if (item) {
+          openErrorEditDialog(
+            item.id
+          );
+        }
+      }
+    );
+
+
+  document
+    .getElementById(
+      "error-review-delete"
+    )
+    ?.addEventListener(
+      "click",
+      async () => {
+        const item =
+          currentErrorReviewItem();
+
+
+        closeErrorReviewMenu();
+
+
+        if (item) {
+          await deleteErrorFromLibrary(
+            item.id
+          );
+
+          await renderCurrentError();
+        }
+      }
+    );
+
+
+  document
+    .getElementById(
+      "error-import-file"
+    )
+    ?.addEventListener(
+      "change",
+      async (event) => {
+        const file =
+          event.target
+            .files?.[0]
+          || null;
+
+
+        importedErrorRows =
+          [];
+
+
+        renderErrorImportPreview();
+
+
+        if (!file) {
+          return;
+        }
+
+
+        const status =
+          document.getElementById(
+            "error-import-status"
+          );
+
+
+        try {
+          status.textContent =
+            "Lendo planilha...";
+
+          status.className =
+            "error-status";
+
+
+          const workbook =
+            XLSX.read(
+              await file.arrayBuffer(),
+              {
+                type:
+                  "array"
+              }
+            );
+
+
+          importedErrorRows =
+            parseErrorImportRows(
+              workbook
+            );
+
+
+          if (
+            !importedErrorRows.length
+          ) {
+            throw new Error(
+              "Nenhuma linha com CCQ foi encontrada."
+            );
+          }
+
+
+          renderErrorImportPreview();
+
+
+          status.textContent =
+            `${importedErrorRows.length} item${importedErrorRows.length === 1 ? "" : "s"} pronto${importedErrorRows.length === 1 ? "" : "s"} para importar.`;
+
+          status.className =
+            "error-status success";
+
+
+        } catch (error) {
+          console.error(
+            error
+          );
+
+
+          status.textContent =
+            error.message
+            || "Não foi possível ler o arquivo.";
+
+          status.className =
+            "error-status error";
+        }
+      }
+    );
+
+
+  document
+    .getElementById(
+      "error-import-confirm"
+    )
+    ?.addEventListener(
+      "click",
+      importErrorRows
+    );
+
+
+  document.addEventListener(
+    "click",
+    () => {
+      closeErrorLibraryMenus();
+      closeErrorReviewMenu();
+    }
+  );
+
+
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (
+        event.key ===
+        "Escape"
+      ) {
+        closeErrorLibraryMenus();
+        closeErrorReviewMenu();
+      }
+    }
+  );
 }
 
 
