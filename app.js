@@ -92,11 +92,11 @@ function renderizarAgendaSemanal(aulas, _eventosIgnorados, dataSegunda) {
 
   const diasSemana = [
     "Segunda",
-    "Terça",
+    "Ter&ccedil;a",
     "Quarta",
     "Quinta",
     "Sexta",
-    "Sábado",
+    "S&aacute;bado",
     "Domingo",
   ];
 
@@ -122,9 +122,9 @@ function renderizarAgendaSemanal(aulas, _eventosIgnorados, dataSegunda) {
         .map(
           (aula) => `
             <div class="agenda-item aula">
-              <strong>${aula.area || "Sem área"}</strong><br>
-              ${aula.disciplina || "Sem subtema"} · ${aula.tema}<br>
-              <small>${aula.horario_inicio || ""} ${aula.horario_fim ? "– " + aula.horario_fim : ""}</small>
+              <strong>${aula.area || "Sem &aacute;rea"}</strong><br>
+              ${aula.disciplina || "Sem subtema"} &middot; ${aula.tema}<br>
+              <small>${aula.horario_inicio || ""} ${aula.horario_fim ? "&ndash; " + aula.horario_fim : ""}</small>
             </div>
           `
         )
@@ -166,7 +166,7 @@ async function salvarAula() {
   const horarioFim = horarioFimInput.value || null;
 
   if (!data || !area || !tema) {
-    mensagem.textContent = "Escolha a área, preencha a data e o tema da aula.";
+    mensagem.textContent = "Escolha a &aacute;rea, preencha a data e o tema da aula.";
     return;
   }
 
@@ -227,9 +227,9 @@ async function carregarAulas() {
       (aula) => `
         <div class="cronograma-item">
           <div>
-            <p><strong>${aula.area || "Sem área"}</strong></p>
-            <p>${aula.disciplina || "Sem subtema"} · ${aula.tema}</p>
-            <p>${formatarData(aula.data)} ${aula.horario_inicio ? "· " + aula.horario_inicio : ""} ${aula.horario_fim ? "– " + aula.horario_fim : ""}</p>
+            <p><strong>${aula.area || "Sem &aacute;rea"}</strong></p>
+            <p>${aula.disciplina || "Sem subtema"} &middot; ${aula.tema}</p>
+            <p>${formatarData(aula.data)} ${aula.horario_inicio ? "&middot; " + aula.horario_inicio : ""} ${aula.horario_fim ? "&ndash; " + aula.horario_fim : ""}</p>
           </div>
         </div>
       `
@@ -320,7 +320,7 @@ async function carregarProvas() {
             <p>Data da prova: ${formatarData(p.data_prova)}</p>
             ${p.valor ? `<p>Valor: R$ ${Number(p.valor).toFixed(2)}</p>` : ""}
             ${p.local ? `<p>Local: ${p.local}</p>` : ""}
-            ${p.data_limite_inscricao ? `<p>Inscrição até: ${formatarData(p.data_limite_inscricao)}</p>` : ""}
+            ${p.data_limite_inscricao ? `<p>Inscri&ccedil;&atilde;o at&eacute;: ${formatarData(p.data_limite_inscricao)}</p>` : ""}
             ${p.data_divulgacao_gabarito ? `<p>Gabarito em: ${formatarData(p.data_divulgacao_gabarito)}</p>` : ""}
           </div>
         </div>
@@ -329,71 +329,6 @@ async function carregarProvas() {
     .join("");
 }
 
-function iniciarPaginaCronograma() {
-  const caminho = window.location.pathname;
-
-  if (caminho.includes("cronograma.html")) {
-    verificarLogin().then((session) => {
-      if (!session) return;
-
-      const botaoSalvarAula = document.getElementById("botao-salvar-aula");
-      if (botaoSalvarAula) {
-        botaoSalvarAula.addEventListener("click", salvarAula);
-      }
-
-      const botoesArea = document.querySelectorAll(".area-option");
-      const campoArea = document.getElementById("aula-area");
-
-      botoesArea.forEach((botao) => {
-        botao.addEventListener("click", () => {
-          botoesArea.forEach((outroBotao) => {
-            outroBotao.classList.remove("selected");
-          });
-
-          botao.classList.add("selected");
-          campoArea.value = botao.dataset.area;
-        });
-      });
-
-      carregarAulas();
-    });
-  }
-
-  if (caminho.includes("editais-provas.html")) {
-    verificarLogin().then((session) => {
-      if (!session) return;
-
-      const botaoSalvarProva = document.getElementById("botao-salvar-prova");
-      if (botaoSalvarProva) {
-        botaoSalvarProva.addEventListener("click", salvarProva);
-      }
-
-      carregarProvas();
-
-      const botaoAbrirAristo = document.getElementById("botao-abrir-aristo");
-      if (botaoAbrirAristo) {
-        botaoAbrirAristo.addEventListener("click", () => {
-          window.open("https://aristo.com.br/editais/", "_blank");
-        });
-      }
-
-      const msgIframe = document.getElementById("mensagem-iframe");
-      if (msgIframe) {
-        msgIframe.textContent =
-          "Se a área abaixo ficar em branco, o site da Aristo não permite ser exibido dentro de outras páginas. Nesse caso, use o botão para abrir em outra aba.";
-      }
-    });
-  }
-
-  if (caminho.includes("dashboard.html")) {
-    verificarLogin().then((session) => {
-      if (!session) return;
-
-      carregarEstatisticas();
-      carregarAgendaSemanal();
-    });
-  }
-}
 // ========== FLASHCARDS ==========
 
 function comprimirImagem(file, qualidade = 0.7) {
@@ -539,7 +474,7 @@ async function carregarFlashcards() {
           <div>
             <p><strong>Frente:</strong> ${fc.frente}</p>
             <p><strong>Verso:</strong> ${fc.verso}</p>
-            ${fc.area ? `<p><strong>Área:</strong> ${fc.area}</p>` : ""}
+            ${fc.area ? `<p><strong>&Aacute;rea:</strong> ${fc.area}</p>` : ""}
             ${imagemHtml}
           </div>
         </div>
@@ -675,6 +610,98 @@ async function registrarDificuldade(dificuldade) {
   containerEstudo.style.display = "block";
 
   atualizarTelaEstudo();
+}
+
+function iniciarPaginaCronograma() {
+  const caminho = window.location.pathname;
+
+  if (caminho.includes("cronograma.html")) {
+    verificarLogin().then((session) => {
+      if (!session) return;
+
+      const botaoSalvarAula = document.getElementById("botao-salvar-aula");
+      if (botaoSalvarAula) {
+        botaoSalvarAula.addEventListener("click", salvarAula);
+      }
+
+      const botoesArea = document.querySelectorAll(".area-option");
+      const campoArea = document.getElementById("aula-area");
+
+      botoesArea.forEach((botao) => {
+        botao.addEventListener("click", () => {
+          botoesArea.forEach((outroBotao) => {
+            outroBotao.classList.remove("selected");
+          });
+
+          botao.classList.add("selected");
+          campoArea.value = botao.dataset.area;
+        });
+      });
+
+      carregarAulas();
+    });
+  }
+
+  if (caminho.includes("editais-provas.html")) {
+    verificarLogin().then((session) => {
+      if (!session) return;
+
+      const botaoSalvarProva = document.getElementById("botao-salvar-prova");
+      if (botaoSalvarProva) {
+        botaoSalvarProva.addEventListener("click", salvarProva);
+      }
+
+      carregarProvas();
+
+      const botaoAbrirAristo = document.getElementById("botao-abrir-aristo");
+      if (botaoAbrirAristo) {
+        botaoAbrirAristo.addEventListener("click", () => {
+          window.open("https://aristo.com.br/editais/", "_blank");
+        });
+      }
+
+      const msgIframe = document.getElementById("mensagem-iframe");
+      if (msgIframe) {
+        msgIframe.textContent =
+          "Se a &aacute;rea abaixo ficar em branco, o site da Aristo n&atilde;o permite ser exibido dentro de outras p&aacute;ginas. Nesse caso, use o bot&atilde;o para abrir em outra aba.";
+      }
+    });
+  }
+
+  if (caminho.includes("flashcards.html")) {
+    verificarLogin().then((session) => {
+      if (!session) return;
+
+      const botaoSalvarFlashcard = document.getElementById("botao-salvar-flashcard");
+      if (botaoSalvarFlashcard) {
+        botaoSalvarFlashcard.addEventListener("click", salvarFlashcard);
+      }
+
+      carregarFlashcards();
+
+      const botaoVirar = document.getElementById("botao-virar");
+      if (botaoVirar) {
+        botaoVirar.addEventListener("click", virarFlashcard);
+      }
+
+      prepararEstudoFlashcards();
+
+      document.querySelectorAll(".botao-dificuldade").forEach((botao) => {
+        botao.addEventListener("click", () => {
+          registrarDificuldade(botao.dataset.dificuldade);
+        });
+      });
+    });
+  }
+
+  if (caminho.includes("dashboard.html")) {
+    verificarLogin().then((session) => {
+      if (!session) return;
+
+      carregarEstatisticas();
+      carregarAgendaSemanal();
+    });
+  }
 }
 
 iniciarPaginaCronograma();
