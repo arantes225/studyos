@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Configurações · DocMap</title>
-  <link rel="stylesheet" href="style.css?v=leila1">
+  <link rel="stylesheet" href="style.css?v=audio3">
 
   <style>
     .settings-section {
@@ -118,6 +118,60 @@
       color: var(--success);
     }
 
+
+    .interval-editor {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .interval-row {
+      display: grid;
+      grid-template-columns: 150px repeat(3, minmax(72px, 1fr));
+      gap: 9px;
+      align-items: end;
+    }
+
+    .interval-label strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .interval-label small {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .interval-field {
+      display: grid;
+      gap: 5px;
+    }
+
+    .interval-field span {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .interval-field input {
+      width: 100%;
+      min-height: 40px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+    }
+
+    .interval-field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
     @media (max-width: 760px) {
       .study-days-row {
         grid-template-columns: 1fr;
@@ -125,6 +179,10 @@
 
       .weekday-options {
         grid-template-columns: repeat(4, minmax(48px, 1fr));
+      }
+
+      .interval-row {
+        grid-template-columns: 1fr;
       }
     }
   
@@ -435,12 +493,150 @@
             <div>
               <h2>Periodização dos flashcards</h2>
               <p>
-                Difícil: 1 · 3 · 7 dias<br>
-                Intermediário: 7 · 21 · 45 dias<br>
-                Fácil: 15 · 45 · 70 dias
+                Defina os intervalos usados nas três primeiras etapas.
+                Depois da terceira etapa, o último intervalo continua sendo usado.
               </p>
             </div>
-            <span class="badge">Fase 9</span>
+
+            <div class="interval-editor">
+
+              <div class="interval-row">
+                <div class="interval-label">
+                  <strong>Difícil</strong>
+                  <small>Conta como erro.</small>
+                </div>
+
+                <label class="interval-field">
+                  <span>1ª etapa</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="flashcard_intervals_hard"
+                    data-interval-index="0"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>2ª etapa</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="flashcard_intervals_hard"
+                    data-interval-index="1"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>3ª etapa</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="flashcard_intervals_hard"
+                    data-interval-index="2"
+                  >
+                </label>
+              </div>
+
+              <div class="interval-row">
+                <div class="interval-label">
+                  <strong>Intermediário</strong>
+                  <small>Conta como acerto.</small>
+                </div>
+
+                <label class="interval-field">
+                  <span>1ª etapa</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="flashcard_intervals_medium"
+                    data-interval-index="0"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>2ª etapa</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="flashcard_intervals_medium"
+                    data-interval-index="1"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>3ª etapa</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="flashcard_intervals_medium"
+                    data-interval-index="2"
+                  >
+                </label>
+              </div>
+
+              <div class="interval-row">
+                <div class="interval-label">
+                  <strong>Fácil</strong>
+                  <small>Conta como acerto.</small>
+                </div>
+
+                <label class="interval-field">
+                  <span>1ª etapa</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="flashcard_intervals_easy"
+                    data-interval-index="0"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>2ª etapa</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="flashcard_intervals_easy"
+                    data-interval-index="1"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>3ª etapa</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="flashcard_intervals_easy"
+                    data-interval-index="2"
+                  >
+                </label>
+              </div>
+
+            </div>
+
+            <div class="settings-actions">
+              <button
+                id="save-flashcard-intervals"
+                class="button primary"
+                type="button"
+              >
+                Salvar intervalos
+              </button>
+
+              <span
+                id="flashcard-intervals-status"
+                class="settings-save-status"
+                aria-live="polite"
+              ></span>
+            </div>
           </article>
 
           <article class="setting-row">
@@ -477,7 +673,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
-  <script src="app.js?v=4.2.2"></script>
-  <script src="configuracoes.js?v=4.2.2"></script>
+  <script src="app.js?v=audio3"></script>
+  <script src="configuracoes.js?v=5.0"></script>
 </body>
 </html>

@@ -233,6 +233,153 @@ function setSelectedDays(field, days) {
   });
 }
 
+
+function setFlashcardIntervalsStatus(text, type = "") {
+  const element =
+    document.getElementById("flashcard-intervals-status");
+
+  if (!element) return;
+
+  element.textContent = text;
+  element.className =
+    `settings-save-status ${type}`.trim();
+}
+
+function setIntervalInputs(field, values) {
+  const safeValues =
+    Array.isArray(values) && values.length
+      ? values
+      : [1, 1, 1];
+
+  document
+    .querySelectorAll(
+      `[data-interval-field="${field}"]`
+    )
+    .forEach((input) => {
+      const index =
+        Number(input.dataset.intervalIndex);
+
+      input.value =
+        safeValues[
+          Math.min(
+            index,
+            safeValues.length - 1
+          )
+        ] ?? 1;
+    });
+}
+
+function readIntervalInputs(field) {
+  const inputs =
+    Array.from(
+      document.querySelectorAll(
+        `[data-interval-field="${field}"]`
+      )
+    ).sort(
+      (a, b) =>
+        Number(a.dataset.intervalIndex)
+        - Number(b.dataset.intervalIndex)
+    );
+
+  const values =
+    inputs.map(
+      (input) =>
+        Number(input.value)
+    );
+
+  if (
+    values.some(
+      (value) =>
+        !Number.isInteger(value)
+        || value < 1
+        || value > 3650
+    )
+  ) {
+    return null;
+  }
+
+  return values;
+}
+
+async function saveFlashcardIntervals() {
+  const hard =
+    readIntervalInputs(
+      "flashcard_intervals_hard"
+    );
+
+  const medium =
+    readIntervalInputs(
+      "flashcard_intervals_medium"
+    );
+
+  const easy =
+    readIntervalInputs(
+      "flashcard_intervals_easy"
+    );
+
+  if (!hard || !medium || !easy) {
+    setFlashcardIntervalsStatus(
+      "Use apenas dias inteiros entre 1 e 3650.",
+      "error"
+    );
+
+    return;
+  }
+
+  const button =
+    document.getElementById(
+      "save-flashcard-intervals"
+    );
+
+  button.disabled = true;
+
+  setFlashcardIntervalsStatus(
+    "Salvando..."
+  );
+
+  const {
+    error
+  } = await settingsSb
+    .from("user_settings")
+    .upsert(
+      {
+        user_id:
+          settingsUser.id,
+
+        flashcard_intervals_hard:
+          hard,
+
+        flashcard_intervals_medium:
+          medium,
+
+        flashcard_intervals_easy:
+          easy
+      },
+      {
+        onConflict:
+          "user_id"
+      }
+    );
+
+  button.disabled = false;
+
+  if (error) {
+    console.error(error);
+
+    setFlashcardIntervalsStatus(
+      `Não foi possível salvar: ${error.message}`,
+      "error"
+    );
+
+    return;
+  }
+
+  setFlashcardIntervalsStatus(
+    "Intervalos salvos.",
+    "success"
+  );
+}
+
 function setStudyDaysStatus(text, type = "") {
   const el = document.getElementById("study-days-status");
   el.textContent = text;
@@ -248,7 +395,10 @@ async function loadStudySettings() {
       theory_review_weekdays,
       error_weekdays,
       question_weekdays,
-      max_subject_reviews_per_day
+      max_subject_reviews_per_day,
+      flashcard_intervals_hard,
+      flashcard_intervals_medium,
+      flashcard_intervals_easy
     `)
     .eq("user_id", settingsUser.id)
     .maybeSingle();
@@ -270,6 +420,21 @@ async function loadStudySettings() {
 
   document.getElementById("max-subject-reviews").value =
     settings.max_subject_reviews_per_day ?? 3;
+
+  setIntervalInputs(
+    "flashcard_intervals_hard",
+    settings.flashcard_intervals_hard || [1,3,7]
+  );
+
+  setIntervalInputs(
+    "flashcard_intervals_medium",
+    settings.flashcard_intervals_medium || [7,21,45]
+  );
+
+  setIntervalInputs(
+    "flashcard_intervals_easy",
+    settings.flashcard_intervals_easy || [15,45,70]
+  );
 }
 
 async function saveStudySettings() {
@@ -349,6 +514,13 @@ async function initStudySettings() {
   document
     .getElementById("save-study-days")
     .addEventListener("click", saveStudySettings);
+
+  document
+    .getElementById("save-flashcard-intervals")
+    ?.addEventListener(
+      "click",
+      saveFlashcardIntervals
+    );
 
   await Promise.all([
     loadProfileSettings(),

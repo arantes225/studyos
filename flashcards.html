@@ -3,82 +3,632 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Flashcards · DocMap</title>
-  <link rel="stylesheet" href="style.css">
+
+  <link rel="stylesheet" href="style.css?v=audio3">
+  <link rel="stylesheet" href="flashcards.css?v=5.0">
 </head>
+
 <body data-page="flashcards">
+
   <div class="app-shell">
+
     <aside id="sidebar" class="sidebar"></aside>
-    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <div
+      id="sidebar-backdrop"
+      class="sidebar-backdrop"
+    ></div>
 
     <main class="main">
+
       <div class="page">
+
         <header class="topbar">
-          <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
+
+          <button
+            id="menu-open"
+            class="menu-open"
+            type="button"
+            aria-label="Abrir menu"
+          >
+            ☰
+          </button>
+
           <div class="page-heading">
-            <span class="eyebrow" data-page-eyebrow></span>
+            <span
+              class="eyebrow"
+              data-page-eyebrow
+            ></span>
+
             <h1 data-page-title></h1>
           </div>
+
         </header>
 
-        
-<section class="metric-grid">
-  <article class="metric-card">
-    <span class="metric-label">Para revisar</span>
-    <strong class="metric-value">—</strong>
-  </article>
-  <article class="metric-card">
-    <span class="metric-label">Atrasados</span>
-    <strong class="metric-value">—</strong>
-  </article>
-  <article class="metric-card">
-    <span class="metric-label">Revisados hoje</span>
-    <strong class="metric-value">—</strong>
-  </article>
-  <article class="metric-card">
-    <span class="metric-label">Acerto</span>
-    <strong class="metric-value">—</strong>
-  </article>
-</section>
+        <section class="metric-grid flash-metrics">
 
-<section class="panel">
-  <div class="panel-header">
-    <div>
-      <h2>Áreas</h2>
-      <p>Os cards serão separados pelas cinco áreas principais.</p>
-    </div>
-    <span class="badge accent">Fase 5</span>
-  </div>
+          <article class="metric-card">
+            <span class="metric-label">
+              Para revisar
+            </span>
+            <strong
+              id="metric-due"
+              class="metric-value"
+            >
+              —
+            </strong>
+            <span class="metric-helper">
+              vencem até hoje
+            </span>
+          </article>
 
-  <div class="area-list">
-    <div class="area-row"><strong>Clínica Médica</strong><span>—</span></div>
-    <div class="area-row"><strong>Pediatria</strong><span>—</span></div>
-    <div class="area-row"><strong>Ginecologia e Obstetrícia</strong><span>—</span></div>
-    <div class="area-row"><strong>Cirurgia Geral</strong><span>—</span></div>
-    <div class="area-row"><strong>Preventiva</strong><span>—</span></div>
-  </div>
-</section>
+          <article class="metric-card">
+            <span class="metric-label">
+              Atrasados
+            </span>
+            <strong
+              id="metric-overdue"
+              class="metric-value"
+            >
+              —
+            </strong>
+            <span class="metric-helper">
+              antes de hoje
+            </span>
+          </article>
 
-<section class="feature-grid" style="margin-top:16px">
-  <article class="feature-card">
-    <span class="badge">Criar</span>
-    <h2>Novo flashcard</h2>
-    <p>Frente, verso e imagens da frente e do verso.</p>
-  </article>
+          <article class="metric-card">
+            <span class="metric-label">
+              Revisados hoje
+            </span>
+            <strong
+              id="metric-reviewed"
+              class="metric-value"
+            >
+              —
+            </strong>
+            <span class="metric-helper">
+              respostas registradas
+            </span>
+          </article>
 
-  <article class="feature-card">
-    <span class="badge">Importar</span>
-    <h2>Excel · PDF · Anki</h2>
-    <p>A importação será adicionada progressivamente.</p>
-  </article>
-</section>
+          <article class="metric-card">
+            <span class="metric-label">
+              Acerto hoje
+            </span>
+            <strong
+              id="metric-accuracy"
+              class="metric-value"
+            >
+              —
+            </strong>
+            <span class="metric-helper">
+              intermediário + fácil
+            </span>
+          </article>
+
+        </section>
+
+        <section class="flash-tabs" aria-label="Seções de flashcards">
+
+          <button
+            class="flash-tab active"
+            type="button"
+            data-flash-tab="review"
+          >
+            Revisar
+          </button>
+
+          <button
+            class="flash-tab"
+            type="button"
+            data-flash-tab="create"
+          >
+            Criar
+          </button>
+
+          <button
+            class="flash-tab"
+            type="button"
+            data-flash-tab="import"
+          >
+            Importar
+          </button>
+
+          <button
+            class="flash-tab"
+            type="button"
+            data-flash-tab="library"
+          >
+            Biblioteca
+          </button>
+
+        </section>
+
+        <!-- =====================================================
+             REVISAR
+             ===================================================== -->
+        <section
+          class="flash-section active"
+          data-flash-section="review"
+        >
+
+          <article class="panel flash-review-panel">
+
+            <div class="panel-header flash-review-header">
+
+              <div>
+                <h2>Revisão de hoje</h2>
+                <p>
+                  Mostre a resposta e classifique
+                  como difícil, intermediário ou fácil.
+                </p>
+              </div>
+
+              <div class="review-progress-copy">
+                <strong id="review-position">0 / 0</strong>
+                <small id="review-session-copy">
+                  carregando...
+                </small>
+              </div>
+
+            </div>
+
+            <div
+              id="review-empty"
+              class="flash-empty"
+              hidden
+            >
+              <strong>Revisões em dia.</strong>
+              <span>
+                Não há flashcards vencidos neste momento.
+              </span>
+            </div>
+
+            <div
+              id="review-stage"
+              class="review-stage"
+              hidden
+            >
+
+              <div class="review-taxonomy">
+
+                <span
+                  id="review-area"
+                  class="taxonomy-chip"
+                  hidden
+                ></span>
+
+                <span
+                  id="review-materia"
+                  class="taxonomy-chip"
+                  hidden
+                ></span>
+
+                <span
+                  id="review-theme"
+                  class="taxonomy-chip accent"
+                  hidden
+                ></span>
+
+              </div>
+
+              <div class="review-card">
+
+                <div class="review-side-label">
+                  Frente
+                </div>
+
+                <div
+                  id="review-front"
+                  class="review-text"
+                ></div>
+
+                <img
+                  id="review-front-image"
+                  class="review-image"
+                  alt="Imagem da frente do flashcard"
+                  hidden
+                >
+
+                <div
+                  id="review-answer"
+                  class="review-answer"
+                  hidden
+                >
+
+                  <div class="review-divider"></div>
+
+                  <div class="review-side-label">
+                    Verso
+                  </div>
+
+                  <div
+                    id="review-back"
+                    class="review-text"
+                  ></div>
+
+                  <img
+                    id="review-back-image"
+                    class="review-image"
+                    alt="Imagem do verso do flashcard"
+                    hidden
+                  >
+
+                </div>
+
+              </div>
+
+              <button
+                id="show-answer"
+                class="button primary show-answer-button"
+                type="button"
+              >
+                Mostrar resposta
+              </button>
+
+              <div
+                id="rating-actions"
+                class="rating-actions"
+                hidden
+              >
+
+                <button
+                  class="rating-button hard"
+                  type="button"
+                  data-rating="hard"
+                >
+                  <span>Difícil</span>
+                  <small data-rating-days="hard">
+                    —
+                  </small>
+                </button>
+
+                <button
+                  class="rating-button medium"
+                  type="button"
+                  data-rating="medium"
+                >
+                  <span>Intermediário</span>
+                  <small data-rating-days="medium">
+                    —
+                  </small>
+                </button>
+
+                <button
+                  class="rating-button easy"
+                  type="button"
+                  data-rating="easy"
+                >
+                  <span>Fácil</span>
+                  <small data-rating-days="easy">
+                    —
+                  </small>
+                </button>
+
+              </div>
+
+              <div
+                id="review-status"
+                class="flash-status"
+                aria-live="polite"
+              ></div>
+
+            </div>
+
+          </article>
+
+        </section>
+
+        <!-- =====================================================
+             CRIAR
+             ===================================================== -->
+        <section
+          class="flash-section"
+          data-flash-section="create"
+        >
+
+          <article class="panel">
+
+            <div class="panel-header">
+              <div>
+                <h2>Novo flashcard</h2>
+                <p>
+                  Organize em Área → Matéria → Tema.
+                  Imagens são opcionais.
+                </p>
+              </div>
+            </div>
+
+            <div class="flash-form-grid">
+
+              <label class="flash-field">
+                <span>Área</span>
+                <input
+                  id="create-area"
+                  type="text"
+                  list="medical-areas"
+                  placeholder="Ex.: Clínica Médica"
+                >
+              </label>
+
+              <label class="flash-field">
+                <span>Matéria</span>
+                <input
+                  id="create-materia"
+                  type="text"
+                  placeholder="Ex.: Cardiologia"
+                >
+              </label>
+
+              <label class="flash-field full">
+                <span>Tema</span>
+                <input
+                  id="create-theme"
+                  type="text"
+                  placeholder="Ex.: Insuficiência cardíaca"
+                >
+              </label>
+
+              <label class="flash-field full">
+                <span>Frente *</span>
+                <textarea
+                  id="create-front"
+                  rows="5"
+                  placeholder="Pergunta, conceito ou gatilho..."
+                ></textarea>
+              </label>
+
+              <label class="flash-field full">
+                <span>Verso *</span>
+                <textarea
+                  id="create-back"
+                  rows="6"
+                  placeholder="Resposta..."
+                ></textarea>
+              </label>
+
+              <label class="flash-field">
+                <span>Imagem da frente</span>
+                <input
+                  id="create-front-image"
+                  type="file"
+                  accept="image/*"
+                >
+              </label>
+
+              <label class="flash-field">
+                <span>Imagem do verso</span>
+                <input
+                  id="create-back-image"
+                  type="file"
+                  accept="image/*"
+                >
+              </label>
+
+            </div>
+
+            <datalist id="medical-areas">
+              <option value="Clínica Médica"></option>
+              <option value="Pediatria"></option>
+              <option value="Ginecologia e Obstetrícia"></option>
+              <option value="Cirurgia Geral"></option>
+              <option value="Preventiva"></option>
+            </datalist>
+
+            <div class="flash-actions">
+
+              <button
+                id="create-card"
+                class="button primary"
+                type="button"
+              >
+                Criar flashcard
+              </button>
+
+              <button
+                id="clear-create-card"
+                class="button secondary"
+                type="button"
+              >
+                Limpar
+              </button>
+
+              <span
+                id="create-status"
+                class="flash-status"
+                aria-live="polite"
+              ></span>
+
+            </div>
+
+          </article>
+
+        </section>
+
+        <!-- =====================================================
+             IMPORTAR
+             ===================================================== -->
+        <section
+          class="flash-section"
+          data-flash-section="import"
+        >
+
+          <article class="panel">
+
+            <div class="panel-header">
+              <div>
+                <h2>Importar em lote</h2>
+                <p>
+                  Aceita Excel ou CSV.
+                  Use as colunas Área, Matéria, Tema,
+                  Frente e Verso.
+                </p>
+              </div>
+            </div>
+
+            <div class="import-upload-box">
+
+              <input
+                id="import-file"
+                type="file"
+                accept=".xlsx,.xls,.csv"
+              >
+
+              <div>
+                <strong>Modelo de colunas</strong>
+                <code>
+                  Área | Matéria | Tema | Frente | Verso
+                </code>
+              </div>
+
+            </div>
+
+            <div
+              id="import-summary"
+              class="import-summary"
+              hidden
+            ></div>
+
+            <div
+              id="import-preview-wrap"
+              class="import-preview-wrap"
+              hidden
+            >
+
+              <table class="import-preview">
+                <thead>
+                  <tr>
+                    <th>Área</th>
+                    <th>Matéria</th>
+                    <th>Tema</th>
+                    <th>Frente</th>
+                    <th>Verso</th>
+                  </tr>
+                </thead>
+
+                <tbody id="import-preview-body"></tbody>
+              </table>
+
+            </div>
+
+            <div class="flash-actions">
+
+              <button
+                id="import-cards"
+                class="button primary"
+                type="button"
+                disabled
+              >
+                Importar flashcards
+              </button>
+
+              <span
+                id="import-status"
+                class="flash-status"
+                aria-live="polite"
+              ></span>
+
+            </div>
+
+          </article>
+
+        </section>
+
+        <!-- =====================================================
+             BIBLIOTECA
+             ===================================================== -->
+        <section
+          class="flash-section"
+          data-flash-section="library"
+        >
+
+          <article class="panel">
+
+            <div class="panel-header">
+              <div>
+                <h2>Biblioteca</h2>
+                <p>
+                  Pesquise seus flashcards
+                  e arquive o que não estiver usando.
+                </p>
+              </div>
+
+              <span
+                id="library-count"
+                class="badge accent"
+              >
+                —
+              </span>
+            </div>
+
+            <div class="library-filters">
+
+              <input
+                id="library-search"
+                type="search"
+                placeholder="Buscar frente, verso, matéria ou tema..."
+              >
+
+              <select id="library-area">
+                <option value="">
+                  Todas as áreas
+                </option>
+              </select>
+
+              <select id="library-active">
+                <option value="active">
+                  Ativos
+                </option>
+                <option value="archived">
+                  Arquivados
+                </option>
+                <option value="all">
+                  Todos
+                </option>
+              </select>
+
+            </div>
+
+            <div
+              id="library-list"
+              class="library-list"
+            ></div>
+
+            <div
+              id="library-empty"
+              class="flash-empty"
+              hidden
+            >
+              <strong>Nenhum flashcard encontrado.</strong>
+              <span>
+                Ajuste os filtros ou crie um novo card.
+              </span>
+            </div>
+
+          </article>
+
+        </section>
 
       </div>
+
     </main>
+
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"
+  ></script>
+
   <script src="supabase.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=audio3"></script>
+  <script src="flashcards.js?v=5.0"></script>
+
 </body>
 </html>
