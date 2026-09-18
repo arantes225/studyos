@@ -164,3 +164,275 @@ button {
     font-size: 26px;
   }
 }
+/* =========================
+   Dashboard
+========================= */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 238px;
+  min-height: 100vh;
+  padding: 24px 16px;
+  border-right: 1px solid var(--border);
+  background: #11141a;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.menu {
+  display: grid;
+  gap: 5px;
+  margin-top: 42px;
+}
+
+.menu-link {
+  padding: 11px 12px;
+  border-radius: 9px;
+  color: var(--muted);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.menu-link:hover,
+.menu-link.active {
+  background: var(--surface-light);
+  color: var(--text);
+}
+
+.logout-btn {
+  width: 100%;
+  margin-top: auto;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+}
+
+.logout-btn:hover {
+  background: #2a1a20;
+  color: #ffb4b4;
+}
+
+.dashboard {
+  min-height: 100vh;
+  margin-left: 238px;
+  padding: 44px;
+}
+
+.dashboard-header,
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.dashboard-header {
+  margin-bottom: 30px;
+}
+
+.dashboard-header h1 {
+  margin: 4px 0 8px;
+  font-size: 32px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.study-now-btn {
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #10131b;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.study-now-btn:hover {
+  background: var(--primary-dark);
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.metric-card,
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.metric-card {
+  min-height: 140px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-label,
+.metric-note {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.metric-value {
+  margin: auto 0 8px;
+  font-size: 28px;
+  letter-spacing: -0.6px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.9fr);
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.panel {
+  padding: 20px;
+}
+
+.panel h2 {
+  margin: 5px 0 0;
+  font-size: 20px;
+}
+
+.panel-header > a,
+.review-row > a {
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.agenda-semanal {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(105px, 1fr));
+  gap: 10px;
+  margin-top: 22px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.review-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 17px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.review-row:last-child {
+  border-bottom: 0;
+}
+
+.review-row strong {
+  display: block;
+  font-size: 24px;
+}
+
+.review-row span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.quick-action {
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #12151c;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.quick-action:hover {
+  border-color: var(--primary);
+}
+
+.empty-state {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+@media (max-width: 1050px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-actions {
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .sidebar {
+    position: static;
+    width: 100%;
+    min-height: auto;
+    padding: 16px;
+  }
+
+  .menu {
+    grid-template-columns: repeat(2, 1fr);
+    margin-top: 18px;
+  }
+
+  .logout-btn {
+    margin-top: 18px;
+  }
+
+  .dashboard {
+    margin-left: 0;
+    padding: 24px 16px;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+  }
+
+  .metrics-grid,
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+}
