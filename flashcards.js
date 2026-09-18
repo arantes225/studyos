@@ -18,6 +18,11 @@ const flashAgendaDate =
     "agenda_date"
   );
 
+const flashAgendaArea =
+  flashPageParams.get(
+    "agenda_area"
+  );
+
 
 let flashSettings = {
   flashcard_intervals_hard: [1, 3, 7],
@@ -264,6 +269,21 @@ async function loadReviewQueue() {
         "due_date",
         flashAgendaDate
       );
+
+    if (flashAgendaArea) {
+      query =
+        query.eq(
+          "area",
+          flashAgendaArea
+        );
+
+    } else {
+      query =
+        query.is(
+          "area",
+          null
+        );
+    }
 
   } else {
     query =

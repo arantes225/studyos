@@ -22,7 +22,7 @@ function parseAmbientacaoDate(value) {
 }
 
 
-function resizeFlashcardsFrame(frame) {
+function resizeStudyFrame(frame) {
   try {
     const doc =
       frame.contentDocument;
@@ -41,14 +41,17 @@ function resizeFlashcardsFrame(frame) {
 
   } catch (error) {
     console.warn(
-      "Não foi possível ajustar a altura dos flashcards:",
+      "Não foi possível ajustar a altura da sessão de estudo:",
       error
     );
   }
 }
 
 
-function prepareEmbeddedFlashcards(frame) {
+function prepareEmbeddedStudyPage(
+  frame,
+  kind
+) {
   try {
     const doc =
       frame.contentDocument;
@@ -56,21 +59,14 @@ function prepareEmbeddedFlashcards(frame) {
     if (!doc) return;
 
     /*
-      Esconde toda a estrutura duplicada
-      da página de flashcards.
-      Dentro da Ambientação mostramos
-      somente a área de revisão.
+      Remove a navegação duplicada da página
+      carregada dentro da Ambientação.
     */
 
     [
       ".sidebar",
       ".sidebar-backdrop",
-      ".topbar",
-      ".flash-metrics",
-      ".flash-tabs",
-      '[data-flash-section="create"]',
-      '[data-flash-section="import"]',
-      '[data-flash-section="library"]'
+      ".topbar"
     ].forEach((selector) => {
       doc
         .querySelectorAll(selector)
@@ -122,46 +118,112 @@ function prepareEmbeddedFlashcards(frame) {
         "0";
     }
 
-    const review =
-      doc.querySelector(
-        '[data-flash-section="review"]'
-      );
 
-    if (review) {
-      review.classList.add(
-        "active"
-      );
+    /*
+      FLASHCARDS
+    */
 
-      review.style.display =
-        "block";
+    if (
+      kind === "flashcards_batch"
+    ) {
+      [
+        ".flash-metrics",
+        ".flash-tabs",
+        '[data-flash-section="create"]',
+        '[data-flash-section="import"]',
+        '[data-flash-section="library"]'
+      ].forEach((selector) => {
+        doc
+          .querySelectorAll(selector)
+          .forEach((element) => {
+            element.style.display =
+              "none";
+          });
+      });
+
+      const review =
+        doc.querySelector(
+          '[data-flash-section="review"]'
+        );
+
+      if (review) {
+        review.classList.add(
+          "active"
+        );
+
+        review.style.display =
+          "block";
+      }
+
+      const reviewPanel =
+        review?.querySelector(
+          ".panel"
+        );
+
+      if (reviewPanel) {
+        reviewPanel.style.marginTop =
+          "0";
+
+        reviewPanel.style.boxShadow =
+          "none";
+      }
     }
 
-    const reviewPanel =
-      review?.querySelector(
-        ".panel"
-      );
 
-    if (reviewPanel) {
-      reviewPanel.style.marginTop =
-        "0";
+    /*
+      CADERNO DE ERROS
+    */
 
-      reviewPanel.style.boxShadow =
-        "none";
+    if (
+      kind === "errors_batch"
+    ) {
+      const intro =
+        doc.querySelector(
+          ".error-intro"
+        );
+
+      if (intro) {
+        intro.style.display =
+          "none";
+      }
+
+      const reviewPanel =
+        doc.querySelector(
+          ".error-review-panel"
+        );
+
+      if (reviewPanel) {
+        reviewPanel.style.marginTop =
+          "0";
+
+        reviewPanel.style.boxShadow =
+          "none";
+      }
     }
 
-    resizeFlashcardsFrame(
+
+    resizeStudyFrame(
       frame
     );
+
 
     if (
       "ResizeObserver"
       in window
       && doc.body
     ) {
+      if (
+        frame._docmapObserver
+      ) {
+        frame
+          ._docmapObserver
+          .disconnect();
+      }
+
       const observer =
         new ResizeObserver(
           () => {
-            resizeFlashcardsFrame(
+            resizeStudyFrame(
               frame
             );
           }
@@ -177,7 +239,7 @@ function prepareEmbeddedFlashcards(frame) {
 
   } catch (error) {
     console.warn(
-      "Não foi possível preparar os flashcards dentro da Ambientação:",
+      "Não foi possível preparar a atividade dentro da Ambientação:",
       error
     );
   }
@@ -195,7 +257,17 @@ function openActivityWorkspace(params) {
 
   const frame =
     document.getElementById(
-      "ambientacao-flashcards-frame"
+      "ambientacao-study-frame"
+    );
+
+  const title =
+    document.getElementById(
+      "ambientacao-workspace-title"
+    );
+
+  const copy =
+    document.getElementById(
+      "ambientacao-workspace-copy"
     );
 
   if (
@@ -205,8 +277,16 @@ function openActivityWorkspace(params) {
     return;
   }
 
+
+  const supported = [
+    "flashcards_batch",
+    "errors_batch"
+  ];
+
   if (
-    kind !== "flashcards_batch"
+    !supported.includes(
+      kind
+    )
   ) {
     workspace.hidden =
       true;
@@ -218,12 +298,62 @@ function openActivityWorkspace(params) {
     return;
   }
 
+
   const activityDate =
     params.get("date");
 
+  const activityArea =
+    params.get("area");
+
+
+  let pageName =
+    "";
+
+  if (
+    kind === "flashcards_batch"
+  ) {
+    pageName =
+      "flashcards.html";
+
+    if (title) {
+      title.textContent =
+        "Flashcards";
+    }
+
+    if (copy) {
+      copy.textContent =
+        "Revise os flashcards programados na agenda sem sair da Ambientação.";
+    }
+
+    frame.title =
+      "Revisão de flashcards";
+  }
+
+
+  if (
+    kind === "errors_batch"
+  ) {
+    pageName =
+      "caderno-erros.html";
+
+    if (title) {
+      title.textContent =
+        "Caderno de erros";
+    }
+
+    if (copy) {
+      copy.textContent =
+        "Revise os erros programados na agenda sem sair da Ambientação.";
+    }
+
+    frame.title =
+      "Revisão do caderno de erros";
+  }
+
+
   const url =
     new URL(
-      "flashcards.html",
+      pageName,
       window.location.href
     );
 
@@ -232,6 +362,7 @@ function openActivityWorkspace(params) {
     "ambientacao"
   );
 
+
   if (activityDate) {
     url.searchParams.set(
       "agenda_date",
@@ -239,20 +370,32 @@ function openActivityWorkspace(params) {
     );
   }
 
+
+  if (activityArea) {
+    url.searchParams.set(
+      "agenda_area",
+      activityArea
+    );
+  }
+
+
   workspace.hidden =
     false;
+
 
   frame.addEventListener(
     "load",
     () => {
-      prepareEmbeddedFlashcards(
-        frame
+      prepareEmbeddedStudyPage(
+        frame,
+        kind
       );
     },
     {
       once: true
     }
   );
+
 
   frame.src =
     url.toString();
@@ -273,6 +416,7 @@ function initSelectedActivity() {
       "selected-activity"
     );
 
+
   if (title) {
     const titleElement =
       document.getElementById(
@@ -292,6 +436,7 @@ function initSelectedActivity() {
       )
     ].filter(Boolean);
 
+
     titleElement.textContent =
       title;
 
@@ -302,9 +447,11 @@ function initSelectedActivity() {
       false;
   }
 
+
   openActivityWorkspace(
     params
   );
+
 
   document
     .getElementById(
@@ -322,6 +469,7 @@ function initSelectedActivity() {
         container.hidden =
           true;
 
+
         const workspace =
           document.getElementById(
             "ambientacao-workspace"
@@ -329,13 +477,15 @@ function initSelectedActivity() {
 
         const frame =
           document.getElementById(
-            "ambientacao-flashcards-frame"
+            "ambientacao-study-frame"
           );
+
 
         if (workspace) {
           workspace.hidden =
             true;
         }
+
 
         if (frame) {
           frame.removeAttribute(

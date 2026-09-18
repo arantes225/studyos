@@ -1,59 +1,316 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Caderno de erros · DocMap</title>
-  <link rel="stylesheet" href="style.css">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>
+    Caderno de erros · DocMap
+  </title>
+
+  <link
+    rel="stylesheet"
+    href="style.css?v=audio3"
+  >
+
+  <link
+    rel="stylesheet"
+    href="caderno-erros.css?v=7.0"
+  >
 </head>
+
 <body data-page="erros">
+
   <div class="app-shell">
-    <aside id="sidebar" class="sidebar"></aside>
-    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <aside
+      id="sidebar"
+      class="sidebar"
+    ></aside>
+
+    <div
+      id="sidebar-backdrop"
+      class="sidebar-backdrop"
+    ></div>
 
     <main class="main">
+
       <div class="page">
+
         <header class="topbar">
-          <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
+
+          <button
+            id="menu-open"
+            class="menu-open"
+            type="button"
+            aria-label="Abrir menu"
+          >
+            ☰
+          </button>
+
           <div class="page-heading">
-            <span class="eyebrow" data-page-eyebrow></span>
+            <span
+              class="eyebrow"
+              data-page-eyebrow
+            ></span>
+
             <h1 data-page-title></h1>
           </div>
+
         </header>
 
-        
-<section class="feature-grid">
-  <article class="feature-card">
-    <span class="badge">CCQ</span>
-    <h2>Ideia central</h2>
-    <p>O conceito que você quer lembrar será a peça central de cada erro.</p>
-  </article>
 
-  <article class="feature-card">
-    <span class="badge">Revisão</span>
-    <h2>A cada 21 dias</h2>
-    <p>A periodicidade poderá ser alterada em Configurações.</p>
-  </article>
-</section>
+        <section class="feature-grid error-intro">
 
-<section class="panel">
-  <div class="panel-header">
-    <div>
-      <h2>Caderno de erros</h2>
-      <p>Questão, imagem/OCR, resposta correta e “o que pensei”.</p>
-    </div>
-    <span class="badge accent">Fase 7</span>
-  </div>
+          <article class="feature-card">
 
-  <div class="placeholder">O formulário e as revisões entram na Fase 7.</div>
-</section>
+            <span class="badge">
+              CCQ
+            </span>
+
+            <h2>
+              Ideia central
+            </h2>
+
+            <p>
+              Revise o conceito-chave,
+              a questão e o raciocínio
+              que levou ao erro.
+            </p>
+
+          </article>
+
+
+          <article class="feature-card">
+
+            <span class="badge">
+              Revisão
+            </span>
+
+            <h2>
+              Caderno de erros
+            </h2>
+
+            <p>
+              As revisões respeitam a
+              periodicidade definida em
+              Configurações.
+            </p>
+
+          </article>
+
+        </section>
+
+
+        <section class="panel error-review-panel">
+
+          <div class="panel-header">
+
+            <div>
+              <h2 id="error-review-title">
+                Revisão do caderno de erros
+              </h2>
+
+              <p id="error-review-copy">
+                Reveja a questão antes de mostrar
+                a resposta correta.
+              </p>
+            </div>
+
+
+            <div class="error-progress">
+
+              <strong id="error-position">
+                0 / 0
+              </strong>
+
+              <small id="error-progress-copy">
+                carregando...
+              </small>
+
+            </div>
+
+          </div>
+
+
+          <div
+            id="error-empty"
+            class="error-empty"
+            hidden
+          >
+
+            <strong>
+              Caderno de erros em dia.
+            </strong>
+
+            <span>
+              Não há itens programados
+              para revisão neste momento.
+            </span>
+
+          </div>
+
+
+          <div
+            id="error-stage"
+            class="error-stage"
+            hidden
+          >
+
+            <div class="error-taxonomy">
+
+              <span
+                id="error-area"
+                class="error-chip"
+                hidden
+              ></span>
+
+              <span
+                id="error-materia"
+                class="error-chip"
+                hidden
+              ></span>
+
+              <span
+                id="error-theme"
+                class="error-chip accent"
+                hidden
+              ></span>
+
+            </div>
+
+
+            <article class="error-card">
+
+              <div class="error-label">
+                CCQ
+              </div>
+
+              <div
+                id="error-ccq"
+                class="error-ccq"
+              ></div>
+
+
+              <div class="error-divider"></div>
+
+
+              <div class="error-label">
+                Questão
+              </div>
+
+              <div
+                id="error-question"
+                class="error-question"
+              ></div>
+
+              <img
+                id="error-question-image"
+                class="error-image"
+                alt="Imagem da questão"
+                hidden
+              >
+
+
+              <div
+                id="error-answer"
+                class="error-answer"
+                hidden
+              >
+
+                <div class="error-divider"></div>
+
+
+                <div class="error-answer-grid">
+
+                  <div class="error-answer-block">
+
+                    <div class="error-label">
+                      Resposta correta
+                    </div>
+
+                    <div
+                      id="error-correct-answer"
+                      class="error-answer-text"
+                    ></div>
+
+                  </div>
+
+
+                  <div
+                    id="error-thought-block"
+                    class="error-answer-block"
+                  >
+
+                    <div class="error-label">
+                      O que eu pensei
+                    </div>
+
+                    <div
+                      id="error-thought"
+                      class="error-thought"
+                    ></div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </article>
+
+
+            <button
+              id="show-error-answer"
+              class="button primary error-main-button"
+              type="button"
+            >
+              Mostrar resposta
+            </button>
+
+
+            <button
+              id="complete-error-review"
+              class="button primary error-main-button"
+              type="button"
+              hidden
+            >
+              Revisado
+            </button>
+
+
+            <div
+              id="error-status"
+              class="error-status"
+              aria-live="polite"
+            ></div>
+
+          </div>
+
+        </section>
 
       </div>
+
     </main>
+
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
+
   <script src="supabase.js"></script>
-  <script src="app.js"></script>
+
+  <script src="app.js?v=audio3"></script>
+
+  <script src="caderno-erros.js?v=7.0"></script>
+
 </body>
+
 </html>
