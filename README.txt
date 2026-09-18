@@ -1,34 +1,41 @@
-DOCMAP — FASE 11.12
+DOCMAP — FASE 11.13
+QUESTÕES E SIMULADOS — DASHBOARD 3 x 3
 
-CRONOGRAMA
+O dashboard de "Meus simulados" agora tem exatamente 9 blocos no desktop:
 
-Alteração de posição:
-- "Reorganizar aulas atrasadas" foi movido para logo abaixo do Planejador semanal.
-- O funcionamento continua exatamente igual:
-  - solicita data final
-  - distribui de hoje até a data final
-  - respeita dias de estudo teórico
-  - respeita o máximo de aulas por dia definido em Configurações
+LINHA 1
+1. Simulados realizados
+2. Questões totais realizadas
+3. Acerto desde sempre + gráfico circular
 
-A nova ordem fica:
-1. Adicionar aulas
-2. Planejador semanal
-3. Reorganizar aulas atrasadas
-4. Deck não programado
-5. Lista de temas
+LINHA 2
+4. Questões realizadas no mês
+5. Aproveitamento do mês
+6. Questões enviadas ao Caderno de Erros
+
+LINHA 3
+7. Acertos x erros
+8. Desempenho do mês
+9. Gráfico linear de aproveitamento mensal
+
+O gráfico circular foi incorporado ao card "Acerto desde sempre",
+evitando um 10º bloco redundante.
+
+LAYOUT RESPONSIVO
+- Desktop: 3 colunas
+- Tablet: 2 colunas
+- Celular: 1 coluna
 
 INSTALAÇÃO
-
-NÃO PRECISA RODAR SQL.
-NÃO PRECISA TROCAR cronograma.js.
+NÃO PRECISA SQL.
+NÃO PRECISA TROCAR JS.
 
 SUBSTITUA SOMENTE:
-- cronograma.html
+- questoes-simulados.html
 
 PUBLICAÇÃO:
-
 git add -A
-git commit -m "Move reorganizacao de atrasadas para baixo do planner"
+git commit -m "Organiza dashboard de simulados em grade 3x3"
 git push origin main
 
 Depois:

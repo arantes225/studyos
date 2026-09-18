@@ -1288,6 +1288,106 @@
       }
     }
 
+  
+    /* ======================================================
+       FASE 11.13 — DASHBOARD 3 x 3
+       ====================================================== */
+
+    .qs-dashboard-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+
+    .qs-performance-dashboard {
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+
+    .qs-stat-card {
+      min-height: 132px;
+    }
+
+    .qs-stat-ring-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .qs-stat-ring-copy {
+      min-width: 0;
+    }
+
+    .qs-stat-ring-copy > span,
+    .qs-stat-ring-copy > strong,
+    .qs-stat-ring-copy > small {
+      display: block;
+    }
+
+    .qs-donut-small {
+      width: 76px;
+      height: 76px;
+      flex: 0 0 76px;
+    }
+
+    .qs-donut-small::before {
+      inset: 8px;
+    }
+
+    .qs-donut-small strong {
+      font-size: 15px;
+    }
+
+    .qs-donut-small span {
+      font-size: 7px;
+    }
+
+    /* O gráfico linear passa a ocupar somente o 9º bloco. */
+    .qs-trend-card {
+      grid-column: auto !important;
+      min-height: 260px !important;
+    }
+
+    .qs-performance-card {
+      min-height: 260px;
+    }
+
+    .qs-trend-head {
+      display: block;
+    }
+
+    .qs-trend-head .badge {
+      display: inline-flex;
+      margin-top: 8px;
+    }
+
+    .qs-trend-head p {
+      display: none;
+    }
+
+    .qs-line-chart {
+      min-height: 196px;
+      margin-top: 9px;
+      padding: 6px 4px 0;
+    }
+
+    .qs-line-chart svg {
+      min-width: 470px;
+      height: 185px;
+    }
+
+    @media (max-width: 1050px) {
+      .qs-dashboard-grid,
+      .qs-performance-dashboard {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .qs-dashboard-grid,
+      .qs-performance-dashboard {
+        grid-template-columns: 1fr !important;
+      }
+    }
+
   </style>
 </head>
 
@@ -1358,12 +1458,28 @@
             </small>
           </article>
 
-          <article class="qs-overview-card qs-stat-card qs-stat-accent">
-            <span>Acerto desde sempre</span>
-            <strong id="qs-overview-accuracy">—</strong>
-            <small id="qs-overview-accuracy-helper">
-              Aproveitamento acumulado
-            </small>
+          <article class="qs-overview-card qs-stat-card qs-stat-accent qs-stat-ring-card">
+
+            <div class="qs-stat-ring-copy">
+              <span>Acerto desde sempre</span>
+              <strong id="qs-overview-accuracy">—</strong>
+              <small id="qs-overview-accuracy-helper">
+                Aproveitamento acumulado
+              </small>
+            </div>
+
+            <div
+              id="qs-overall-ring"
+              class="qs-donut qs-donut-small"
+              style="--qs-donut-value:0"
+              aria-label="Aproveitamento geral"
+            >
+              <div>
+                <strong id="qs-overall-ring-value">—</strong>
+                <span>acerto</span>
+              </div>
+            </div>
+
           </article>
 
           <article class="qs-overview-card qs-stat-card">
@@ -1398,33 +1514,7 @@
           data-qs-section="mine"
         >
 
-          <article class="qs-performance-card qs-performance-accuracy">
-
-            <div>
-              <span class="qs-performance-eyebrow">
-                Desde sempre
-              </span>
-
-              <h2>Aproveitamento geral</h2>
-
-              <p>
-                Percentual de acertos em todas as questões respondidas.
-              </p>
-            </div>
-
-            <div
-              id="qs-overall-ring"
-              class="qs-donut"
-              style="--qs-donut-value:0"
-              aria-label="Aproveitamento geral"
-            >
-              <div>
-                <strong id="qs-overall-ring-value">—</strong>
-                <span>acerto</span>
-              </div>
-            </div>
-
-          </article>
+          
 
 
           <article class="qs-performance-card">
@@ -1932,6 +2022,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="supabase.js"></script>
   <script src="app.js?v=7.0"></script>
-  <script src="questoes-simulados.js?v=11.11"></script>
+  <script src="questoes-simulados.js?v=11.13"></script>
 </body>
 </html>
