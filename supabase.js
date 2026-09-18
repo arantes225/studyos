@@ -1,12 +1,14 @@
-const SUPABASE_URL = "https://ietitoxjojsdiuridrfk.supabase.co";
-const SUPABASE_KEY = "sb_publishable_4q_xxpp87T5OCPIrkszEng_mLSLGAhP";
+const SUPABASE_URL =
+  "https://sxdsfklllilhdyuamvvg.supabase.co";
 
-window.studyos = {};
+const SUPABASE_KEY =
+  "sb_publishable_AQ5-Pn1knmBhSFyt5aMtjQ_XQynLJ_L";
 
-window.studyos.supabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+window.supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
 window.studyos.getSession = async function () {
   const { data, error } = await window.studyos.supabase.auth.getSession();
