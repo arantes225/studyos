@@ -15,6 +15,51 @@ const page = document.body.dataset.page || "dashboard";
 let currentThemeSetting = "system";
 let systemThemeListener = null;
 
+function profileCacheKey(userId) {
+  return `docmap:profile:${userId}`;
+}
+
+function themeCacheKey(userId) {
+  return `docmap:theme:${userId}`;
+}
+
+function readLocalJson(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || "null");
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalJson(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {}
+}
+
+function readCachedProfile(userId) {
+  return readLocalJson(profileCacheKey(userId));
+}
+
+function writeCachedProfile(userId, profile) {
+  if (!profile) return;
+  writeLocalJson(profileCacheKey(userId), profile);
+}
+
+function readCachedTheme(userId) {
+  try {
+    return localStorage.getItem(themeCacheKey(userId));
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedTheme(userId, theme) {
+  try {
+    localStorage.setItem(themeCacheKey(userId), theme);
+  } catch {}
+}
+
 function escapeHtml(text) {
   return String(text ?? "")
     .replaceAll("&", "&amp;")
@@ -120,6 +165,8 @@ function sidebarMarkup(user, profile = null) {
 }
 
 async function carregarPerfil(userId) {
+  const cached = readCachedProfile(userId);
+
   const { data, error } = await sb
     .from("profiles")
     .select("display_name, gender, specialty")
@@ -128,10 +175,15 @@ async function carregarPerfil(userId) {
 
   if (error) {
     console.warn("Não foi possível carregar o perfil:", error.message);
-    return null;
+    return cached || null;
   }
 
-  return data || null;
+  if (data) {
+    writeCachedProfile(userId, data);
+    return data;
+  }
+
+  return cached || null;
 }
 
 function applyResolvedTheme(theme) {
@@ -163,33 +215,59 @@ function applyThemeSetting(setting) {
 }
 
 async function carregarTema(userId) {
+  const cachedTheme = readCachedTheme(userId);
+
+  if (cachedTheme) {
+    applyThemeSetting(cachedTheme);
+  }
+
   const { data, error } = await sb
     .from("user_settings")
     .select("theme")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
 
   if (!error && data?.theme) {
+    writeCachedTheme(userId, data.theme);
     applyThemeSetting(data.theme);
-  } else {
+    return data.theme;
+  }
+
+  if (!cachedTheme) {
     applyThemeSetting("system");
   }
+
+  return cachedTheme || "system";
 }
 
 async function salvarTema(theme) {
   const { data: sessionData } = await sb.auth.getSession();
   const userId = sessionData.session?.user?.id;
 
-  if (!userId) return;
+  if (!userId) {
+    throw new Error("Usuário não autenticado.");
+  }
 
-  const { error } = await sb
+  const { data, error } = await sb
     .from("user_settings")
-    .update({ theme })
-    .eq("user_id", userId);
+    .upsert(
+      {
+        user_id: userId,
+        theme
+      },
+      {
+        onConflict: "user_id"
+      }
+    )
+    .select("theme")
+    .single();
 
   if (error) throw error;
 
-  applyThemeSetting(theme);
+  const savedTheme = data?.theme || theme;
+
+  writeCachedTheme(userId, savedTheme);
+  applyThemeSetting(savedTheme);
 }
 
 function prepararConfiguracoes() {
@@ -258,6 +336,11 @@ async function iniciarApp() {
   }
 
   const user = data.session.user;
+
+  const cachedTheme = readCachedTheme(user.id);
+  if (cachedTheme) {
+    applyThemeSetting(cachedTheme);
+  }
 
   const [profile] = await Promise.all([
     carregarPerfil(user.id),

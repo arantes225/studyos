@@ -20,6 +20,19 @@ const SETTINGS_FIELDS = [
 
 let settingsUser = null;
 
+function settingsProfileCacheKey(userId) {
+  return `docmap:profile:${userId}`;
+}
+
+function cacheProfile(userId, profile) {
+  try {
+    localStorage.setItem(
+      settingsProfileCacheKey(userId),
+      JSON.stringify(profile)
+    );
+  } catch {}
+}
+
 
 function profileTitle(gender) {
   if (gender === "male") return "Dr.";
@@ -107,14 +120,21 @@ async function saveProfileSettings() {
   button.disabled = true;
   setProfileStatus("Salvando...");
 
-  const { error } = await settingsSb
+  const { data, error } = await settingsSb
     .from("profiles")
-    .update({
-      display_name: name,
-      gender,
-      specialty: specialty || null
-    })
-    .eq("user_id", settingsUser.id);
+    .upsert(
+      {
+        user_id: settingsUser.id,
+        display_name: name,
+        gender,
+        specialty: specialty || null
+      },
+      {
+        onConflict: "user_id"
+      }
+    )
+    .select("display_name, gender, specialty")
+    .single();
 
   button.disabled = false;
 
@@ -126,6 +146,16 @@ async function saveProfileSettings() {
     );
     return;
   }
+
+  if (!data) {
+    setProfileStatus(
+      "O perfil não foi gravado. Atualize a página e tente novamente.",
+      "error"
+    );
+    return;
+  }
+
+  cacheProfile(settingsUser.id, data);
 
   setProfileStatus(
     "Perfil salvo. Atualizando menu lateral...",
@@ -221,7 +251,7 @@ async function loadStudySettings() {
       max_subject_reviews_per_day
     `)
     .eq("user_id", settingsUser.id)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error(error);
@@ -232,12 +262,14 @@ async function loadStudySettings() {
     return;
   }
 
+  const settings = data || {};
+
   SETTINGS_FIELDS.forEach((field) => {
-    setSelectedDays(field, data[field]);
+    setSelectedDays(field, settings[field]);
   });
 
   document.getElementById("max-subject-reviews").value =
-    data.max_subject_reviews_per_day ?? 3;
+    settings.max_subject_reviews_per_day ?? 3;
 }
 
 async function saveStudySettings() {
@@ -281,8 +313,15 @@ async function saveStudySettings() {
 
   const { error } = await settingsSb
     .from("user_settings")
-    .update(payload)
-    .eq("user_id", settingsUser.id);
+    .upsert(
+      {
+        user_id: settingsUser.id,
+        ...payload
+      },
+      {
+        onConflict: "user_id"
+      }
+    );
 
   button.disabled = false;
 
