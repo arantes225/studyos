@@ -1,189 +1,343 @@
-const SUPABASE_URL = "https://ietitoxjojsdiuridr​​fk.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_ReynfGuOnOGco0kf7NO_Jw__frEPrb0";
+const supabaseUrl = "https://kkyqgcirishgqjyqafzd.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtreXFtY2lyaXNoZ3FqeXFhZnpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5NzU3NzMsImV4cCI6MjA3MzU1MTc3M30.1iHkYq8JtX3r9XqJqGqJqGqJqGqJqGqJqGqJqGqJqGg";
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let usuarioAtual = null;
 
-async function criarConta() {
-  const email = document.getElementById("signup-email").value.trim();
-  const senha = document.getElementById("signup-password").value;
-  const mensagem = document.getElementById("signup-msg");
+async function verificarLoginNoDashboard() {
+  const { data: { session } } = await supabase.auth.getSession();
 
-  mensagem.textContent = "";
-
-  if (!email || !senha) {
-    mensagem.textContent = "Preencha o e-mail e a senha.";
+  if (!session) {
+    window.location.href = "index.html";
     return;
   }
 
-  if (senha.length < 6) {
-    mensagem.textContent = "A senha precisa ter pelo menos 6 caracteres.";
-    return;
+  usuarioAtual = session.user;
+  const nomeElement = document.getElementById("nome-usuario");
+  if (nomeElement) {
+    nomeElement.textContent = usuarioAtual.email.split("@")[0];
   }
 
-  try {
-    const { error } = await sb.auth.signUp({
-      email,
-      password: senha
-    });
-
-    if (error) throw error;
-
-    mensagem.textContent =
-      "Conta criada. Verifique seu e-mail se essa opção estiver ativada no Supabase.";
-  } catch (error) {
-    mensagem.textContent = "Erro ao criar conta: " + error.message;
-  }
+  carregarEstatisticas();
+  carregarAgendaSemanal();
 }
 
-async function entrar() {
-  const email = document.getElementById("login-email").value.trim();
-  const senha = document.getElementById("login-password").value;
-  const mensagem = document.getElementById("login-msg");
+async function carregarEstatisticas() {
+  const totalAulasEl = document.getElementById("total-aulas");
+  const totalQuestoesEl = document.getElementById("total-questoes");
+  const totalSimuladosEl = document.getElementById("total-simulados");
 
-  mensagem.textContent = "";
+  if (!totalAulasEl || !totalQuestoesEl || !totalSimuladosEl) return;
 
-  if (!email || !senha) {
-    mensagem.textContent = "Preencha o e-mail e a senha.";
+  const { count: countAulas } = await supabase
+    .from("cronograma_aulas")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", usuarioAtual.id);
+
+  const { count: countQuestoes } = await supabase
+    .from("questoes_respondidas")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", usuarioAtual.id);
+
+  const { count: countSimulados } = await supabase
+    .from("simulados")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", usuarioAtual.id);
+
+  totalAulasEl.textContent = countAulas || 0;
+  totalQuestoesEl.textContent = countQuestoes || 0;
+  totalSimuladosEl.textContent = countSimulados || 0;
+}
+
+async function carregarAgendaSemanal() {
+  const grade = document.getElementById("grade-semanal");
+  if (!grade) return;
+
+  grade.innerHTML = "<p>Carregando agenda…</p>";
+
+  const hoje = new Date();
+  const diaSemana = hoje.getDay();
+  const diferencaSegunda = diaSemana === 0 ? -6 : 1 - diaSemana;
+
+  const segunda = new Date(hoje);
+  segunda.setDate(hoje.getDate() + diferencaSegunda);
+  segunda.setHours(0, 0, 0, 0);
+
+  const domingo = new Date(segunda);
+  domingo.setDate(segunda.getDate() + 6);
+  domingo.setHours(23, 59, 59, 999);
+
+  const inicioStr = segunda.toISOString().split("T")[0];
+  const fimStr = domingo.toISOString().split("T")[0];
+
+  const { data: aulas, error: errorAulas } = await supabase
+    .from("cronograma_aulas")
+    .select("*")
+    .eq("user_id", usuarioAtual.id)
+    .gte("data", inicioStr)
+    .lte("data", fimStr)
+    .order("data", { ascending: true });
+
+  if (errorAulas) {
+    grade.innerHTML = "<p>Erro ao carregar agenda.</p>";
     return;
   }
 
-  try {
-    const { error } = await sb.auth.signInWithPassword({
-      email,
-      password: senha
-    });
-
-    if (error) throw error;
-
-    mensagem.textContent = "Login realizado. Abrindo o dashboard...";
-
-    setTimeout(() => {
-      window.location.href = "index.html";
-    }, 800);
-  } catch (error) {
-    mensagem.textContent = "Erro ao entrar: " + error.message;
-  }
+  renderizarAgendaSemanal(aulas || [], [], segunda);
 }
-function formatarData(dataIso) {
-  const [ano, mes, dia] = dataIso.split("-");
+
+function renderizarAgendaSemanal(aulas, _eventosIgnorados, dataSegunda) {
+  const grade = document.getElementById("grade-semanal");
+  if (!grade) return;
+
+  const diasSemana = [
+    "Segunda",
+    "Terça",
+    "Quarta",
+    "Quinta",
+    "Sexta",
+    "Sábado",
+    "Domingo",
+  ];
+
+  const porDia = Array.from({ length: 7 }, () => ({
+    aulas: [],
+  }));
+
+  aulas.forEach((aula) => {
+    const dataAula = new Date(aula.data + "T00:00:00");
+    const diffDias = Math.round(
+      (dataAula - dataSegunda) / (1000 * 60 * 60 * 24)
+    );
+    if (diffDias >= 0 && diffDias <= 6) {
+      porDia[diffDias].aulas.push(aula);
+    }
+  });
+
+  grade.innerHTML = diasSemana
+    .map((dia, idx) => {
+      const itens = porDia[idx].aulas;
+
+      const aulasHtml = porDia[idx].aulas
+        .map(
+          (aula) => `
+            <div class="agenda-item aula">
+              <strong>${aula.area || "Sem área"}</strong><br>
+              ${aula.disciplina || "Sem subtema"} · ${aula.tema}<br>
+              <small>${aula.horario_inicio || ""} ${aula.horario_fim ? "– " + aula.horario_fim : ""}</small>
+            </div>
+          `
+        )
+        .join("");
+
+      return `
+        <div class="dia-coluna">
+          <h4>${dia}</h4>
+          ${aulasHtml}
+          ${itens.length === 0 ? '<p class="sem-item">Nada agendado</p>' : ""}
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function formatarData(dataISO) {
+  if (!dataISO) return "";
+  const [ano, mes, dia] = dataISO.split("-");
   return `${dia}/${mes}/${ano}`;
 }
 
-async function carregarAulas() {
-  const lista = document.getElementById("lista-aulas");
+async function salvarAula() {
+  const dataInput = document.getElementById("aula-data");
+  const areaInput = document.getElementById("aula-area");
+  const disciplinaInput = document.getElementById("aula-disciplina");
+  const temaInput = document.getElementById("aula-tema");
+  const horarioInicioInput = document.getElementById("aula-horario-inicio");
+  const horarioFimInput = document.getElementById("aula-horario-fim");
+  const mensagem = document.getElementById("mensagem-aula");
 
-  if (!lista) return;
+  const data = dataInput.value;
+  const area = areaInput.value;
+  const disciplina = disciplinaInput.value.trim();
+  const tema = temaInput.value.trim();
+  const horarioInicio = horarioInicioInput.value || null;
+  const horarioFim = horarioFimInput.value || null;
 
-  const {
-    data: { user }
-  } = await sb.auth.getUser();
-
-  if (!user) return;
-
-  lista.innerHTML = '<p class="empty-state">Carregando aulas...</p>';
-
-  const { data: aulas, error } = await sb
-    .from("cronograma_aulas")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("data", { ascending: true })
-    .order("horario_inicio", { ascending: true });
-
-  if (error) {
-    lista.innerHTML = `<p class="empty-state">Erro ao carregar: ${error.message}</p>`;
+  if (!data || !area || !tema) {
+    mensagem.textContent = "Escolha a área, preencha a data e o tema da aula.";
     return;
   }
 
-  if (!aulas || aulas.length === 0) {
-    lista.innerHTML =
-      '<p class="empty-state">Você ainda não cadastrou nenhuma aula.</p>';
-    return;
-  }
+  mensagem.textContent = "Salvando…";
 
-  lista.innerHTML = "";
-
-  aulas.forEach((aula) => {
-    const item = document.createElement("article");
-    item.className = "aula-list-item";
-
-    const horario =
-      aula.horario_inicio
-        ? `${aula.horario_inicio.slice(0, 5)}${aula.horario_fim ? ` – ${aula.horario_fim.slice(0, 5)}` : ""}`
-        : "Horário não definido";
-
-    item.innerHTML = `
-      <div>
-        <h3>${aula.tema}</h3>
-<p>${aula.area || "Sem área"} · ${aula.disciplina || "Sem Subárea"} · ${formatarData(aula.data)}</p>        <p>${horario}</p>
-      </div>
-      <span class="aula-status ${aula.status}">
-        ${aula.status}
-      </span>
-    `;
-
-    lista.appendChild(item);
+  const { error } = await supabase.from("cronograma_aulas").insert({
+    user_id: usuarioAtual.id,
+    data,
+    area,
+    disciplina: disciplina || null,
+    tema,
+    horario_inicio: horarioInicio,
+    horario_fim: horarioFim,
   });
-}
-
-async function salvarAula(event) {
-  event.preventDefault();
-
-  const mensagem = document.getElementById("aula-msg");
-  const data = document.getElementById("aula-data").value;
-const area = document.getElementById("aula-area").value;
-const disciplina = document.getElementById("aula-disciplina").value.trim();
-const tema = document.getElementById("aula-tema").value.trim();;
-  const horarioInicio = document.getElementById("aula-inicio").value || null;
-  const horarioFim = document.getElementById("aula-fim").value || null;
-
-  mensagem.textContent = "";
-
-if (!data || !area || !tema) {
-  mensagem.textContent = "Escolha a área, preencha a data e o tema da aula.";
-  return;
-}
-
-  const {
-    data: { user }
-  } = await sb.auth.getUser();
-
-  if (!user) {
-    window.location.href = "login.html";
-    return;
-  }
-
-  mensagem.textContent = "Salvando aula...";
-
-  const { error } = await sb
-    .from("cronograma_aulas")
-    .insert([
-      {
-        user_id: user.id,
-        data,
-        área
-        disciplina: disciplina || null,
-        tema,
-        horario_inicio: horarioInicio,
-        horario_fim: horarioFim,
-        status: "pendente"
-      }
-    ]);
 
   if (error) {
-    mensagem.textContent = "Erro ao salvar: " + error.message;
+    mensagem.textContent = "Erro ao salvar aula.";
     return;
   }
 
   mensagem.textContent = "Aula salva com sucesso.";
+  dataInput.value = "";
+  areaInput.value = "";
+  disciplinaInput.value = "";
+  temaInput.value = "";
+  horarioInicioInput.value = "";
+  horarioFimInput.value = "";
 
-  document.getElementById("aula-form").reset();
+  // Limpar seleção visual das áreas
+  document.querySelectorAll(".area-option").forEach((b) => b.classList.remove("selected"));
 
   carregarAulas();
 }
 
+async function carregarAulas() {
+  const lista = document.getElementById("cronograma-lista");
+  if (!lista) return;
+
+  lista.innerHTML = "<p>Carregando aulas…</p>";
+
+  const { data: aulas, error } = await supabase
+    .from("cronograma_aulas")
+    .select("*")
+    .eq("user_id", usuarioAtual.id)
+    .order("data", { ascending: false });
+
+  if (error) {
+    lista.innerHTML = "<p>Erro ao carregar aulas.</p>";
+    return;
+  }
+
+  if (aulas.length === 0) {
+    lista.innerHTML = "<p>Nenhuma aula salva ainda.</p>";
+    return;
+  }
+
+  lista.innerHTML = aulas
+    .map(
+      (aula) => `
+        <div class="cronograma-item">
+          <div>
+            <p><strong>${aula.area || "Sem área"}</strong></p>
+            <p>${aula.disciplina || "Sem subtema"} · ${aula.tema}</p>
+            <p>${formatarData(aula.data)} ${aula.horario_inicio ? "· " + aula.horario_inicio : ""} ${aula.horario_fim ? "– " + aula.horario_fim : ""}</p>
+          </div>
+        </div>
+      `
+    )
+    .join("");
+}
+
+async function salvarProva() {
+  const nomeInput = document.getElementById("prova-nome");
+  const dataInput = document.getElementById("prova-data");
+  const valorInput = document.getElementById("prova-valor");
+  const localInput = document.getElementById("prova-local");
+  const limiteInput = document.getElementById("prova-limite");
+  const gabaritoInput = document.getElementById("prova-gabarito");
+  const mensagem = document.getElementById("mensagem-prova");
+
+  const prova = nomeInput.value.trim();
+  const dataProva = dataInput.value;
+  const valor = valorInput.value ? Number(valorInput.value) : null;
+  const local = localInput.value.trim() || null;
+  const limite = limiteInput.value || null;
+  const gabarito = gabaritoInput.value || null;
+
+  if (!prova || !dataProva) {
+    mensagem.textContent = "Preencha pelo menos o nome e a data da prova.";
+    return;
+  }
+
+  mensagem.textContent = "Salvando…";
+
+  const { error } = await supabase.from("provas_editais").insert({
+    user_id: usuarioAtual.id,
+    prova,
+    data_prova: dataProva,
+    valor,
+    local,
+    data_limite_inscricao: limite,
+    data_divulgacao_gabarito: gabarito,
+  });
+
+  if (error) {
+    mensagem.textContent = "Erro ao salvar prova.";
+    return;
+  }
+
+  mensagem.textContent = "Prova salva com sucesso.";
+
+  nomeInput.value = "";
+  dataInput.value = "";
+  valorInput.value = "";
+  localInput.value = "";
+  limiteInput.value = "";
+  gabaritoInput.value = "";
+
+  carregarProvas();
+}
+
+async function carregarProvas() {
+  const lista = document.getElementById("provas-lista");
+
+  if (!lista) return;
+
+  lista.innerHTML = "<p>Carregando provas…</p>";
+
+  const { data: provas, error } = await supabase
+    .from("provas_editais")
+    .select("*")
+    .eq("user_id", usuarioAtual.id)
+    .order("data_prova", { ascending: false });
+
+  if (error) {
+    lista.innerHTML = "<p>Erro ao carregar provas.</p>";
+    return;
+  }
+
+  if (provas.length === 0) {
+    lista.innerHTML = "<p>Nenhuma prova cadastrada ainda.</p>";
+    return;
+  }
+
+  lista.innerHTML = provas
+    .map(
+      (p) => `
+        <div class="cronograma-item">
+          <div>
+            <p><strong>${p.prova}</strong></p>
+            <p>Data da prova: ${formatarData(p.data_prova)}</p>
+            ${p.valor ? `<p>Valor: R$ ${Number(p.valor).toFixed(2)}</p>` : ""}
+            ${p.local ? `<p>Local: ${p.local}</p>` : ""}
+            ${p.data_limite_inscricao ? `<p>Inscrição até: ${formatarData(p.data_limite_inscricao)}</p>` : ""}
+            ${p.data_divulgacao_gabarito ? `<p>Gabarito em: ${formatarData(p.data_divulgacao_gabarito)}</p>` : ""}
+          </div>
+        </div>
+      `
+    )
+    .join("");
+}
+
 function iniciarPaginaCronograma() {
+  const caminho = window.location.pathname;
+  if (!caminho.includes("cronograma.html")) return;
+
   verificarLoginNoDashboard();
+
+  const botaoSalvarAula = document.getElementById("botao-salvar-aula");
+  if (botaoSalvarAula) {
+    botaoSalvarAula.addEventListener("click", salvarAula);
+  }
+
   const botoesArea = document.querySelectorAll(".area-option");
   const campoArea = document.getElementById("aula-area");
 
@@ -197,44 +351,28 @@ function iniciarPaginaCronograma() {
       campoArea.value = botao.dataset.area;
     });
   });
-  const formulario = document.getElementById("aula-form");
-  const botaoAtualizar = document.getElementById("atualizar-aulas-btn");
-
-  if (formulario) {
-    formulario.addEventListener("submit", salvarAula);
-  }
-
-  if (botaoAtualizar) {
-    botaoAtualizar.addEventListener("click", carregarAulas);
-  }
 
   carregarAulas();
+
+  const botaoSalvarProva = document.getElementById("botao-salvar-prova");
+  if (botaoSalvarProva) {
+    botaoSalvarProva.addEventListener("click", salvarProva);
+  }
+
+  carregarProvas();
+
+  const botaoAbrirAristo = document.getElementById("botao-abrir-aristo");
+  if (botaoAbrirAristo) {
+    botaoAbrirAristo.addEventListener("click", () => {
+      window.open("https://aristo.com.br/editais/", "_blank");
+    });
+  }
+
+  const msgIframe = document.getElementById("mensagem-iframe");
+  if (msgIframe) {
+    msgIframe.textContent =
+      "Se a área abaixo ficar em branco, o site da Aristo não permite ser exibido dentro de outras páginas. Nesse caso, use o botão para abrir em outra aba.";
+  }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const estaNoLogin = document.getElementById("login-btn");
-
-  if (estaNoLogin) {
-    const signupBtn = document.getElementById("signup-btn");
-
-    estaNoLogin.addEventListener("click", entrar);
-
-    if (signupBtn) {
-      signupBtn.addEventListener("click", criarConta);
-    }
-
-    return;
-  }
-
-  const estaNoDashboard = document.getElementById("logout-btn");
-
-  if (estaNoDashboard) {
-    verificarLoginNoDashboard();
-  }
-
-  const estaNoCronograma = document.getElementById("aula-form");
-
-  if (estaNoCronograma) {
-    iniciarPaginaCronograma();
-  }
-});
+iniciarPaginaCronograma();

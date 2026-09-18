@@ -1,127 +1,194 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>StudyOS — Cronograma</title>
-
-  <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8" />
+  <title>Cronograma - StudyOS</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-  <aside class="sidebar">
-    <a class="logo" href="index.html">
-      <span class="brand-mark">S</span>
-      <span>StudyOS</span>
-    </a>
+  <div class="container">
+    <aside class="menu-lateral">
+      <h2>StudyOS</h2>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="cronograma.html">Cronograma</a>
+        <a href="materiais.html">Materiais</a>
+        <a href="questoes.html">Questões</a>
+        <a href="anotacoes.html">Anotações</a>
+        <a href="simulados.html">Simulados</a>
+        <a href="index.html" class="botao-sair">Sair</a>
+      </nav>
+    </aside>
 
-    <nav class="menu">
-      <a class="menu-link" href="index.html">Dashboard</a>
-      <a class="menu-link active" href="cronograma.html">Cronograma</a>
-      <a class="menu-link" href="flashcards.html">Flashcards</a>
-      <a class="menu-link" href="caderno-erros.html">Caderno de erros</a>
-      <a class="menu-link" href="ambientacao.html">Ambientação</a>
-      <a class="menu-link" href="editais.html">Editais</a>
-    </nav>
+    <main class="conteudo-principal">
+      <h1>Cronograma de Estudos</h1>
 
-    <button id="logout-btn" class="logout-btn">Sair</button>
-  </aside>
+      <h2 class="cronograma-titulo">Cronograma de aulas</h2>
 
-  <main class="dashboard">
-    <header class="dashboard-header">
-      <div>
-        <p class="eyebrow">PLANEJAMENTO</p>
-        <h1>Cronograma de aulas</h1>
-        <p class="muted">
-          Cadastre as aulas. Depois, elas aparecerão automaticamente na sua agenda semanal.
-        </p>
-      </div>
-    </header>
+      <div class="cronograma-conteudo">
+        <div class="cronograma-form">
+          <h3>Nova aula</h3>
 
-    <section class="schedule-layout">
-      <article class="panel schedule-form-panel">
-        <p class="eyebrow">NOVA AULA</p>
-        <h2>Adicionar ao cronograma</h2>
-
-        <form id="aula-form">
           <label for="aula-data">Data da aula</label>
-          <input id="aula-data" type="date" required>
+          <input
+            id="aula-data"
+            type="date"
+            required
+          >
 
-         <label>Área</label>
+          <label>Área</label>
+          <div class="area-options" id="area-options">
+            <button type="button" class="area-option" data-area="Clínica Médica">
+              Clínica Médica
+            </button>
+            <button type="button" class="area-option" data-area="Cirurgia Geral">
+              Cirurgia Geral
+            </button>
+            <button type="button" class="area-option" data-area="Pediatria">
+              Pediatria
+            </button>
+            <button type="button" class="area-option" data-area="Ginecologia e Obstetrícia">
+              Ginecologia e Obstetrícia
+            </button>
+            <button type="button" class="area-option" data-area="Preventiva">
+              Preventiva
+            </button>
+          </div>
+          <input id="aula-area" type="hidden" required>
 
-<div class="area-options" id="area-options">
-  <button type="button" class="area-option" data-area="Clínica Médica">
-    Clínica Médica
-  </button>
-
-  <button type="button" class="area-option" data-area="Cirurgia Geral">
-    Cirurgia Geral
-  </button>
-
-  <button type="button" class="area-option" data-area="Pediatria">
-    Pediatria
-  </button>
-
-  <button type="button" class="area-option" data-area="Ginecologia e Obstetrícia">
-    Ginecologia e Obstetrícia
-  </button>
-
-  <button type="button" class="area-option" data-area="Preventiva">
-    Preventiva
-  </button>
-</div>
-
-<input id="aula-area" type="hidden" required>
-          <label for="aula-disciplina">Subárea</label>
+          <label for="aula-disciplina">Subtema</label>
           <input
             id="aula-disciplina"
             type="text"
-            placeholder="Ex.: Cardiologia"
+            placeholder="Ex.: Insuficiência cardíaca"
           >
 
           <label for="aula-tema">Tema da aula</label>
           <input
             id="aula-tema"
             type="text"
-            placeholder="Ex.: Insuficiência cardíaca"
+            placeholder="Ex.: Fisiopatologia e tratamento"
             required
           >
 
-          <label for="aula-inicio">Horário de início (opcional)</label>
-          <input id="aula-inicio" type="time">
+          <label for="aula-horario-inicio">Horário de início (opcional)</label>
+          <input
+            id="aula-horario-inicio"
+            type="time"
+          >
 
-          <label for="aula-fim">Horário de fim (opcional)</label>
-          <input id="aula-fim" type="time">
+          <label for="aula-horario-fim">Horário de término (opcional)</label>
+          <input
+            id="aula-horario-fim"
+            type="time"
+          >
 
-          <button class="primary-btn" type="submit">
+          <button
+            id="botao-salvar-aula"
+            class="botao-primario"
+            type="button"
+          >
             Salvar aula
           </button>
 
-          <p id="aula-msg" class="message"></p>
-        </form>
-      </article>
+          <p id="mensagem-aula" class="mensagem"></p>
+        </div>
 
-      <article class="panel schedule-list-panel">
-        <div class="panel-header">
-          <div>
-            <p class="eyebrow">PRÓXIMAS AULAS</p>
-            <h2>Seu planejamento</h2>
-          </div>
+        <div class="cronograma-lista-wrapper">
+          <h3>Seu planejamento</h3>
+          <div id="cronograma-lista" class="cronograma-lista"></div>
+        </div>
+      </div>
 
-          <button id="atualizar-aulas-btn" class="small-btn">
-            Atualizar
+      <h2 class="cronograma-titulo">Editais / Provas</h2>
+
+      <div class="cronograma-conteudo">
+        <div class="cronograma-form">
+          <h3>Nova prova</h3>
+
+          <label for="prova-nome">Prova</label>
+          <input
+            id="prova-nome"
+            type="text"
+            placeholder="Ex.: Residência USP 2026"
+            required
+          >
+
+          <label for="prova-data">Data da prova</label>
+          <input
+            id="prova-data"
+            type="date"
+            required
+          >
+
+          <label for="prova-valor">Valor da taxa</label>
+          <input
+            id="prova-valor"
+            type="number"
+            step="0.01"
+            placeholder="Ex.: 350.00"
+          >
+
+          <label for="prova-local">Local</label>
+          <input
+            id="prova-local"
+            type="text"
+            placeholder="Ex.: São Paulo – SP"
+          >
+
+          <label for="prova-limite">Data limite de inscrição</label>
+          <input
+            id="prova-limite"
+            type="date"
+          >
+
+          <label for="prova-gabarito">Data de divulgação do gabarito</label>
+          <input
+            id="prova-gabarito"
+            type="date"
+          >
+
+          <button
+            id="botao-salvar-prova"
+            class="botao-primario"
+            type="button"
+          >
+            Salvar prova
           </button>
+
+          <p id="mensagem-prova" class="mensagem"></p>
         </div>
 
-        <div id="lista-aulas" class="lista-aulas">
-          <p class="empty-state">Carregando aulas…</p>
+        <div class="cronograma-lista-wrapper">
+          <h3>Suas provas</h3>
+          <div id="provas-lista" class="cronograma-lista"></div>
         </div>
-      </article>
-    </section>
-  </main>
+      </div>
 
+      <h2 class="cronograma-titulo">Editais online</h2>
+
+      <div class="iframe-wrapper">
+        <button
+          id="botao-abrir-aristo"
+          class="botao-primario"
+          type="button"
+          style="margin: 8px 12px;"
+        >
+          Abrir editais da Aristo em outra aba
+        </button>
+
+        <iframe
+          id="iframe-aristo"
+          src="https://aristo.com.br/editais/"
+          title="Editais Aristo"
+        ></iframe>
+
+        <p class="mensagem" id="mensagem-iframe"></p>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
 </body>
 </html>
