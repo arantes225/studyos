@@ -11,6 +11,12 @@ let examRows =
 const selectedExamIds =
   new Set();
 
+let examPageMode =
+  "list";
+
+let examModeBeforeDialog =
+  "list";
+
 let examSimulationMetrics =
   new Map();
 
@@ -417,6 +423,111 @@ async function deleteSelectedExams() {
 }
 
 
+
+function setExamPageMode(
+  mode
+) {
+  if (
+    ![
+      "list",
+      "new",
+      "edit"
+    ].includes(
+      mode
+    )
+  ) {
+    mode =
+      "list";
+  }
+
+
+  examPageMode =
+    mode;
+
+
+  document
+    .querySelectorAll(
+      "[data-exam-mode]"
+    )
+    .forEach(
+      (button) => {
+        button.classList.toggle(
+          "active",
+          button.dataset
+            .examMode === mode
+        );
+      }
+    );
+
+
+  const ownContent =
+    document.getElementById(
+      "editais-own-content"
+    );
+
+
+  ownContent
+    ?.classList
+    .toggle(
+      "exam-management-mode",
+      mode === "edit"
+    );
+
+
+  if (
+    mode !== "edit"
+  ) {
+    selectedExamIds.clear();
+
+
+    const selectAll =
+      document.getElementById(
+        "exam-select-all"
+      );
+
+
+    if (selectAll) {
+      selectAll.checked =
+        false;
+
+      selectAll.indeterminate =
+        false;
+    }
+  }
+
+
+  renderExams();
+}
+
+
+function openNewExamFromMenu() {
+  examModeBeforeDialog =
+    examPageMode === "edit"
+      ? "edit"
+      : "list";
+
+
+  setExamPageMode(
+    "new"
+  );
+
+
+  openExamDialog();
+}
+
+
+function returnFromExamDialog() {
+  if (
+    examPageMode === "new"
+  ) {
+    setExamPageMode(
+      examModeBeforeDialog
+      || "list"
+    );
+  }
+}
+
+
 function renderExams() {
   const list =
     document.getElementById(
@@ -807,6 +918,9 @@ function renderExams() {
         button.addEventListener(
           "click",
           () => {
+            examModeBeforeDialog =
+              examPageMode;
+
             openExamDialog(
               button
                 .dataset
@@ -1261,6 +1375,9 @@ function closeExamDialog() {
       "exam-dialog"
     )
     ?.close();
+
+
+  returnFromExamDialog();
 }
 
 
@@ -1271,6 +1388,10 @@ async function saveExam() {
         "exam-id"
       )
       .value;
+
+
+  const wasCreating =
+    !id;
 
 
   const institution =
@@ -1475,7 +1596,16 @@ async function saveExam() {
   ]);
 
 
-  renderExams();
+  if (
+    wasCreating
+  ) {
+    setExamPageMode(
+      "list"
+    );
+
+  } else {
+    renderExams();
+  }
 }
 
 
@@ -1541,6 +1671,38 @@ async function deleteExam(
 
 
 function wireExams() {
+
+  document
+    .querySelectorAll(
+      "[data-exam-mode]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            const mode =
+              button.dataset
+                .examMode;
+
+
+            if (
+              mode === "new"
+            ) {
+              openNewExamFromMenu();
+
+              return;
+            }
+
+
+            setExamPageMode(
+              mode
+            );
+          }
+        );
+      }
+    );
+
 
   document
     .getElementById(
@@ -1862,6 +2024,7 @@ async function initExams() {
   wireEditaisSources();
 
   wireExams();
+  setExamPageMode("list");
 
 
   await Promise.all([

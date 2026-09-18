@@ -20,7 +20,7 @@
 
   <link
     rel="stylesheet"
-    href="editais.css?v=11.4"
+    href="editais.css?v=11.8"
   >
 </head>
 
@@ -93,6 +93,38 @@
         >
 
 
+        <section
+          class="exam-mode-tabs"
+          aria-label="Seções de Editais e Provas"
+        >
+
+          <button
+            class="exam-mode-tab active"
+            type="button"
+            data-exam-mode="list"
+          >
+            Provas
+          </button>
+
+          <button
+            class="exam-mode-tab"
+            type="button"
+            data-exam-mode="new"
+          >
+            Nova prova
+          </button>
+
+          <button
+            class="exam-mode-tab"
+            type="button"
+            data-exam-mode="edit"
+          >
+            Editar provas
+          </button>
+
+        </section>
+
+
         <section class="exam-metrics">
 
           <article class="exam-metric-card">
@@ -134,14 +166,6 @@
                 resultado e simulados vinculados.
               </p>
             </div>
-
-            <button
-              id="new-exam"
-              class="button primary"
-              type="button"
-            >
-              Nova prova
-            </button>
 
           </div>
 
@@ -528,7 +552,7 @@
 
   <script src="app.js?v=audio3"></script>
 
-  <script src="editais.js?v=11.4"></script>
+  <script src="editais.js?v=11.8"></script>
 
 </body>
 

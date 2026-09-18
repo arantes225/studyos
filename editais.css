@@ -546,3 +546,68 @@
   margin-left: auto;
   color: var(--danger);
 }
+
+
+/* =========================================================
+   FASE 11.8 — MENU EDITAIS / PROVAS
+   ========================================================= */
+
+.exam-mode-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 0 16px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.exam-mode-tab {
+  min-height: 37px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.exam-mode-tab:hover {
+  color: var(--text);
+}
+
+.exam-mode-tab.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 5px rgba(20,25,35,.08);
+}
+
+/* Em "Provas" os cards ficam limpos, sem controles de edição/exclusão. */
+.editais-own-content:not(.exam-management-mode) .exam-bulk-toolbar,
+.editais-own-content:not(.exam-management-mode) .exam-card-select,
+.editais-own-content:not(.exam-management-mode) [data-edit-exam],
+.editais-own-content:not(.exam-management-mode) [data-delete-exam] {
+  display: none !important;
+}
+
+/* Em "Editar provas" aparecem todos os controles de gestão. */
+.editais-own-content.exam-management-mode .exam-create-head h2::after {
+  content: " · modo de edição";
+  color: var(--accent);
+  font-size: .72em;
+  font-weight: 800;
+}
+
+.editais-own-content.exam-management-mode .exam-card {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+}
+
+@media (max-width: 680px) {
+  .exam-mode-tabs {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
