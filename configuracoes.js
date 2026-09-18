@@ -395,6 +395,7 @@ async function loadStudySettings() {
       theory_review_weekdays,
       error_weekdays,
       question_weekdays,
+      max_lessons_per_day,
       max_subject_reviews_per_day,
       flashcard_intervals_hard,
       flashcard_intervals_medium,
@@ -421,6 +422,9 @@ async function loadStudySettings() {
   SETTINGS_FIELDS.forEach((field) => {
     setSelectedDays(field, settings[field]);
   });
+
+  document.getElementById("max-lessons-per-day").value =
+    settings.max_lessons_per_day ?? 1;
 
   document.getElementById("max-subject-reviews").value =
     settings.max_subject_reviews_per_day ?? 3;
@@ -1124,6 +1128,34 @@ async function saveStudySettings() {
 
     payload[field] = days;
   }
+
+  const maxLessons =
+    Number(
+      document
+        .getElementById(
+          "max-lessons-per-day"
+        )
+        .value
+    );
+
+
+  if (
+    !Number.isInteger(maxLessons)
+    || maxLessons < 1
+    || maxLessons > 50
+  ) {
+    setStudyDaysStatus(
+      "O máximo de aulas por dia deve ser um número entre 1 e 50.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  payload.max_lessons_per_day =
+    maxLessons;
+
 
   const maxReviews =
     Number(document.getElementById("max-subject-reviews").value);

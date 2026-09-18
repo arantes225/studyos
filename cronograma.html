@@ -1187,6 +1187,92 @@
   width: 100%;
 }
 
+
+.overdue-dialog {
+  width: min(520px, calc(100vw - 28px));
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.overdue-dialog::backdrop {
+  background: rgba(15, 20, 28, .46);
+  backdrop-filter: blur(2px);
+}
+
+.schedule-dialog-form {
+  padding: 20px;
+}
+
+.schedule-dialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.schedule-dialog-head h2 {
+  margin: 7px 0 0;
+  font-size: 18px;
+}
+
+.schedule-dialog-close {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.overdue-dialog-copy {
+  margin: 16px 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.overdue-dialog-field {
+  display: grid;
+  gap: 7px;
+}
+
+.overdue-dialog-field span {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.overdue-dialog-field input {
+  min-height: 42px;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.overdue-capacity-preview {
+  margin-top: 12px;
+  padding: 10px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.schedule-dialog-actions {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
 </style>
 </head>
 
@@ -1239,8 +1325,9 @@
             <div>
               <strong>Reorganizar aulas atrasadas</strong>
               <p>
-                Distribui as aulas atrasadas em semanas futuras,
-                com 1 aula por semana, respeitando seus dias de estudo teórico.
+                Escolha uma data final. O DocMap distribui as aulas entre hoje
+                e essa data, respeitando os dias de estudo teórico e o máximo
+                diário definido em Configurações.
               </p>
             </div>
 
@@ -1258,6 +1345,75 @@
               aria-live="polite"
             ></span>
           </section>
+
+
+          <dialog
+            id="reorganize-overdue-dialog"
+            class="schedule-dialog overdue-dialog"
+          >
+            <form
+              class="schedule-dialog-form"
+              method="dialog"
+            >
+              <div class="schedule-dialog-head">
+                <div>
+                  <span class="badge accent">Cronograma</span>
+                  <h2>Reorganizar aulas atrasadas</h2>
+                </div>
+
+                <button
+                  id="close-reorganize-overdue"
+                  class="schedule-dialog-close"
+                  type="button"
+                  aria-label="Fechar"
+                >
+                  ×
+                </button>
+              </div>
+
+              <p class="overdue-dialog-copy">
+                As aulas serão distribuídas pelos dias de estudo teórico
+                permitidos, sem ultrapassar o máximo de aulas por dia.
+              </p>
+
+              <label class="overdue-dialog-field">
+                <span>Data final *</span>
+
+                <input
+                  id="reorganize-overdue-end-date"
+                  type="date"
+                  required
+                >
+              </label>
+
+              <div
+                id="reorganize-overdue-capacity"
+                class="overdue-capacity-preview"
+              >
+                Carregando configuração...
+              </div>
+
+              <div class="schedule-dialog-actions">
+
+                <button
+                  id="confirm-reorganize-overdue"
+                  class="button primary"
+                  type="button"
+                >
+                  Reorganizar
+                </button>
+
+                <button
+                  id="cancel-reorganize-overdue"
+                  class="button secondary"
+                  type="button"
+                >
+                  Cancelar
+                </button>
+
+              </div>
+            </form>
+          </dialog>
 
           <section class="import-box">
             <div class="import-header">
@@ -1529,6 +1685,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="supabase.js"></script>
   <script src="app.js"></script>
-  <script src="cronograma.js?v=11.4"></script>
+  <script src="cronograma.js?v=11.7"></script>
 </body>
 </html>

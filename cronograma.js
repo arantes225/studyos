@@ -4669,7 +4669,34 @@ async function deleteScheduleEvent(
 
 
 
-async function reorganizeOverdueLessons() {
+
+function closeReorganizeOverdueDialog() {
+  const dialog =
+    document.getElementById(
+      "reorganize-overdue-dialog"
+    );
+
+
+  if (!dialog) {
+    return;
+  }
+
+
+  if (
+    typeof dialog.close
+      === "function"
+  ) {
+    dialog.close();
+
+  } else {
+    dialog.removeAttribute(
+      "open"
+    );
+  }
+}
+
+
+async function openReorganizeOverdueDialog() {
   const overdue =
     scheduleState.topics
       .filter(
@@ -4687,20 +4714,147 @@ async function reorganizeOverdueLessons() {
   }
 
 
-  const confirmed =
-    window.confirm(
-      `Reorganizar ${overdue.length} aula${overdue.length === 1 ? "" : "s"} atrasada${overdue.length === 1 ? "" : "s"} em semanas futuras, com 1 aula por semana?`
+  const endDate =
+    document.getElementById(
+      "reorganize-overdue-end-date"
     );
 
 
-  if (!confirmed) {
+  const today =
+    todayScheduleISO();
+
+
+  if (endDate) {
+    endDate.min =
+      today;
+
+
+    if (
+      !endDate.value
+      || endDate.value < today
+    ) {
+      endDate.value =
+        toISODateSchedule(
+          addDaysSchedule(
+            new Date(),
+            30
+          )
+        );
+    }
+  }
+
+
+  const capacity =
+    document.getElementById(
+      "reorganize-overdue-capacity"
+    );
+
+
+  if (capacity) {
+    capacity.textContent =
+      "Carregando configuração...";
+  }
+
+
+  const {
+    data,
+    error
+  } =
+    await scheduleSb
+      .from(
+        "user_settings"
+      )
+      .select(
+        "max_lessons_per_day"
+      )
+      .maybeSingle();
+
+
+  if (capacity) {
+    const maxLessons =
+      Number(
+        data?.max_lessons_per_day
+        || 1
+      );
+
+
+    capacity.textContent =
+      error
+        ? `${overdue.length} aula${overdue.length === 1 ? "" : "s"} atrasada${overdue.length === 1 ? "" : "s"}.`
+        : `${overdue.length} aula${overdue.length === 1 ? "" : "s"} atrasada${overdue.length === 1 ? "" : "s"} · máximo de ${maxLessons} aula${maxLessons === 1 ? "" : "s"} teórica${maxLessons === 1 ? "" : "s"} por dia.`;
+  }
+
+
+  const dialog =
+    document.getElementById(
+      "reorganize-overdue-dialog"
+    );
+
+
+  if (
+    typeof dialog?.showModal
+      === "function"
+  ) {
+    dialog.showModal();
+
+  } else {
+    dialog?.setAttribute(
+      "open",
+      ""
+    );
+  }
+}
+
+
+async function reorganizeOverdueLessons() {
+  const overdue =
+    scheduleState.topics
+      .filter(
+        isTopicOverdue
+      );
+
+
+  if (!overdue.length) {
+    closeReorganizeOverdueDialog();
+
+    setReorganizeStatus(
+      "Não há aulas atrasadas para reorganizar.",
+      "success"
+    );
+
+    return;
+  }
+
+
+  const endDate =
+    document
+      .getElementById(
+        "reorganize-overdue-end-date"
+      )
+      ?.value
+    || "";
+
+
+  const today =
+    todayScheduleISO();
+
+
+  if (
+    !endDate
+    || endDate < today
+  ) {
+    setReorganizeStatus(
+      "Escolha uma data final igual ou posterior a hoje.",
+      "error"
+    );
+
     return;
   }
 
 
   const button =
     document.getElementById(
-      "reorganize-overdue"
+      "confirm-reorganize-overdue"
     );
 
 
@@ -4720,10 +4874,13 @@ async function reorganizeOverdueLessons() {
     error
   } =
     await scheduleSb.rpc(
-      "reorganize_overdue_lessons_weekly",
+      "reorganize_overdue_lessons_range",
       {
+        p_end_date:
+          endDate,
+
         p_start_date:
-          todayScheduleISO()
+          today
       }
     );
 
@@ -4748,17 +4905,46 @@ async function reorganizeOverdueLessons() {
   }
 
 
+  closeReorganizeOverdueDialog();
+
+
   const moved =
     Number(
-      data
+      data?.moved
       || 0
     );
 
 
-  setReorganizeStatus(
-    `${moved} aula${moved === 1 ? "" : "s"} reorganizada${moved === 1 ? "" : "s"}.`,
-    "success"
-  );
+  const remaining =
+    Number(
+      data?.remaining
+      || 0
+    );
+
+
+  const maxLessons =
+    Number(
+      data?.max_lessons_per_day
+      || 1
+    );
+
+
+  if (
+    remaining > 0
+  ) {
+    setReorganizeStatus(
+      `${moved} aula${moved === 1 ? "" : "s"} reorganizada${moved === 1 ? "" : "s"}. Restaram ${remaining} atrasada${remaining === 1 ? "" : "s"} porque o intervalo não comporta todas sem ultrapassar ${maxLessons} aula${maxLessons === 1 ? "" : "s"}/dia.`,
+      "error"
+    );
+
+  } else {
+    setReorganizeStatus(
+      `${moved} aula${moved === 1 ? "" : "s"} distribuída${moved === 1 ? "" : "s"} entre hoje e ${formatDateLabelSchedule(
+        endDate
+      )}, respeitando o limite de ${maxLessons}/dia.`,
+      "success"
+    );
+  }
 
 
   await loadTopics();
@@ -4772,10 +4958,36 @@ function wireOverdueOrganizer() {
     )
     ?.addEventListener(
       "click",
+      openReorganizeOverdueDialog
+    );
+
+
+  document
+    .getElementById(
+      "confirm-reorganize-overdue"
+    )
+    ?.addEventListener(
+      "click",
       reorganizeOverdueLessons
     );
-}
 
+
+  [
+    "close-reorganize-overdue",
+    "cancel-reorganize-overdue"
+  ].forEach(
+    (id) => {
+      document
+        .getElementById(
+          id
+        )
+        ?.addEventListener(
+          "click",
+          closeReorganizeOverdueDialog
+        );
+    }
+  );
+}
 
 function wireImportControls() {
   const fileInput = document.getElementById("schedule-file");

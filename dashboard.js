@@ -1096,21 +1096,10 @@ async function loadSimulationMetrics() {
       "simulation-accuracy-ring"
     );
 
-  const recent =
-    document.getElementById(
-      "simulations-recent"
-    );
-
-  const overviewCopy =
-    document.getElementById(
-      "simulations-overview-copy"
-    );
-
 
   if (
     !value
     || !helper
-    || !recent
   ) {
     return;
   }
@@ -1132,101 +1121,66 @@ async function loadSimulationMetrics() {
   );
 
 
-  const [
-    overallResult,
-    recentResult,
-    last30Result
-  ] =
-    await Promise.all([
+  const {
+    data,
+    error
+  } =
+    await dashboardSb
+      .from(
+        "question_set_metrics"
+      )
+      .select(
+        "set_id,answered_count,correct_count,last_answered_at"
+      )
+      .gt(
+        "answered_count",
+        0
+      )
+      .gte(
+        "last_answered_at",
+        start30.toISOString()
+      );
 
-      dashboardSb
-        .from(
-          "question_metrics_overall"
-        )
-        .select(
-          "completed_sets,total_sets,answered_questions,correct_questions,wrong_questions,accuracy_percent"
-        )
-        .maybeSingle(),
 
-      dashboardSb
-        .from(
-          "question_set_metrics"
-        )
-        .select(
-          "set_id,title,total_questions,answered_count,correct_count,wrong_count,accuracy_percent,completed,created_at,last_answered_at"
-        )
-        .gt(
-          "answered_count",
+  if (error) {
+    console.warn(
+      error
+    );
+
+    value.textContent =
+      "—";
+
+    helper.textContent =
+      "Não foi possível carregar";
+
+    if (accuracyElement) {
+      accuracyElement.textContent =
+        "—";
+    }
+
+    if (accuracyRing) {
+      accuracyRing.style
+        .setProperty(
+          "--metric-ring-value",
           0
-        )
-        .order(
-          "last_answered_at",
-          {
-            ascending:
-              false,
+        );
+    }
 
-            nullsFirst:
-              false
-          }
-        )
-        .limit(
-          4
-        ),
-
-      dashboardSb
-        .from(
-          "question_set_metrics"
-        )
-        .select(
-          "set_id,answered_count,correct_count,last_answered_at"
-        )
-        .gt(
-          "answered_count",
-          0
-        )
-        .gte(
-          "last_answered_at",
-          start30.toISOString()
-        )
-    ]);
-
-
-  if (
-    overallResult.error
-  ) {
-    console.warn(
-      overallResult.error
-    );
+    return;
   }
 
 
-  if (
-    recentResult.error
-  ) {
-    console.warn(
-      recentResult.error
-    );
-  }
-
-
-  if (
-    last30Result.error
-  ) {
-    console.warn(
-      last30Result.error
-    );
-  }
-
-
-  const last30 =
-    last30Result.data
+  const rows =
+    data
     || [];
 
+
   const setCount =
-    last30.length;
+    rows.length;
+
 
   const answered30 =
-    last30.reduce(
+    rows.reduce(
       (
         sum,
         row
@@ -1239,8 +1193,9 @@ async function loadSimulationMetrics() {
       0
     );
 
+
   const correct30 =
-    last30.reduce(
+    rows.reduce(
       (
         sum,
         row
@@ -1252,6 +1207,7 @@ async function loadSimulationMetrics() {
           ),
       0
     );
+
 
   const accuracy30 =
     answered30 > 0
@@ -1269,13 +1225,11 @@ async function loadSimulationMetrics() {
 
   helper.textContent =
     setCount
-      ? `${setCount} simulado${setCount === 1 ? "" : "s"} com respostas nos últimos 30 dias`
-      : "Nenhum simulado com respostas nos últimos 30 dias";
+      ? `${setCount} simulado${setCount === 1 ? "" : "s"} nos últimos 30 dias`
+      : "Nenhum simulado nos últimos 30 dias";
 
 
-  if (
-    accuracyElement
-  ) {
+  if (accuracyElement) {
     accuracyElement.textContent =
       accuracy30 === null
         ? "—"
@@ -1283,9 +1237,7 @@ async function loadSimulationMetrics() {
   }
 
 
-  if (
-    accuracyRing
-  ) {
+  if (accuracyRing) {
     accuracyRing.style
       .setProperty(
         "--metric-ring-value",
@@ -1300,125 +1252,6 @@ async function loadSimulationMetrics() {
             )
       );
   }
-
-
-  const overall =
-    overallResult.data
-    || {
-      completed_sets:
-        0,
-
-      answered_questions:
-        0,
-
-      accuracy_percent:
-        null
-    };
-
-
-  if (
-    overviewCopy
-  ) {
-    const completed =
-      Number(
-        overall.completed_sets
-        || 0
-      );
-
-    const answered =
-      Number(
-        overall.answered_questions
-        || 0
-      );
-
-    const accuracy =
-      overall.accuracy_percent;
-
-
-    overviewCopy.textContent =
-      completed
-        ? `${completed} simulado${completed === 1 ? "" : "s"} concluído${completed === 1 ? "" : "s"} · ${answered} questões · ${formatSimulationAccuracy(
-            accuracy
-          )} de acerto geral.`
-        : "Acompanhe seus últimos gabaritos e o aproveitamento geral.";
-  }
-
-
-  if (
-    recentResult.error
-  ) {
-    recent.innerHTML =
-      '<div class="simulations-empty">Não foi possível carregar os simulados recentes.</div>';
-
-    return;
-  }
-
-
-  const rows =
-    recentResult.data
-    || [];
-
-
-  if (
-    !rows.length
-  ) {
-    recent.innerHTML =
-      '<div class="simulations-empty">Nenhum simulado respondido ainda.</div>';
-
-    return;
-  }
-
-
-  recent.innerHTML =
-    rows.map(
-      (row) => {
-        const answered =
-          Number(
-            row.answered_count
-            || 0
-          );
-
-        const total =
-          Number(
-            row.total_questions
-            || 0
-          );
-
-        return `
-          <article class="simulation-mini-card">
-
-            <strong>
-              ${dashboardEscapeHtml(
-                row.title
-                || "Simulado"
-              )}
-            </strong>
-
-            <span class="simulation-mini-score">
-              ${dashboardEscapeHtml(
-                formatSimulationAccuracy(
-                  row.accuracy_percent
-                )
-              )}
-            </span>
-
-            <small>
-              ${answered}/${total || answered} respondidas
-              · ${Number(
-                row.correct_count
-                || 0
-              )} acertos
-              · ${Number(
-                row.wrong_count
-                || 0
-              )} erros
-            </small>
-
-          </article>
-        `;
-      }
-    )
-    .join("");
 }
 
 async function loadDashboardMetrics() {
