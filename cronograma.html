@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>StudyOS — Cronograma</title>
+
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+  <aside class="sidebar">
+    <a class="logo" href="index.html">
+      <span class="brand-mark">S</span>
+      <span>StudyOS</span>
+    </a>
+
+    <nav class="menu">
+      <a class="menu-link" href="index.html">Dashboard</a>
+      <a class="menu-link active" href="cronograma.html">Cronograma</a>
+      <a class="menu-link" href="flashcards.html">Flashcards</a>
+      <a class="menu-link" href="caderno-erros.html">Caderno de erros</a>
+      <a class="menu-link" href="ambientacao.html">Ambientação</a>
+      <a class="menu-link" href="editais.html">Editais</a>
+    </nav>
+
+    <button id="logout-btn" class="logout-btn">Sair</button>
+  </aside>
+
+  <main class="dashboard">
+    <header class="dashboard-header">
+      <div>
+        <p class="eyebrow">PLANEJAMENTO</p>
+        <h1>Cronograma de aulas</h1>
+        <p class="muted">
+          Cadastre as aulas. Depois, elas aparecerão automaticamente na sua agenda semanal.
+        </p>
+      </div>
+    </header>
+
+    <section class="schedule-layout">
+      <article class="panel schedule-form-panel">
+        <p class="eyebrow">NOVA AULA</p>
+        <h2>Adicionar ao cronograma</h2>
+
+        <form id="aula-form">
+          <label for="aula-data">Data da aula</label>
+          <input id="aula-data" type="date" required>
+
+          <label for="aula-disciplina">Disciplina</label>
+          <input
+            id="aula-disciplina"
+            type="text"
+            placeholder="Ex.: Cardiologia"
+          >
+
+          <label for="aula-tema">Tema da aula</label>
+          <input
+            id="aula-tema"
+            type="text"
+            placeholder="Ex.: Insuficiência cardíaca"
+            required
+          >
+
+          <label for="aula-inicio">Horário de início (opcional)</label>
+          <input id="aula-inicio" type="time">
+
+          <label for="aula-fim">Horário de fim (opcional)</label>
+          <input id="aula-fim" type="time">
+
+          <button class="primary-btn" type="submit">
+            Salvar aula
+          </button>
+
+          <p id="aula-msg" class="message"></p>
+        </form>
+      </article>
+
+      <article class="panel schedule-list-panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">PRÓXIMAS AULAS</p>
+            <h2>Seu planejamento</h2>
+          </div>
+
+          <button id="atualizar-aulas-btn" class="small-btn">
+            Atualizar
+          </button>
+        </div>
+
+        <div id="lista-aulas" class="lista-aulas">
+          <p class="empty-state">Carregando aulas…</p>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -452,3 +452,92 @@ body {
   padding-top: 48px;
   padding-bottom: 48px;
 }
+/* =========================
+   Cronograma
+========================= */
+
+.schedule-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.8fr) minmax(380px, 1.2fr);
+  gap: 18px;
+}
+
+.schedule-form-panel h2,
+.schedule-list-panel h2 {
+  margin: 5px 0 10px;
+}
+
+.schedule-form-panel form {
+  margin-top: 20px;
+}
+
+.small-btn {
+  width: auto;
+  margin: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.small-btn:hover {
+  background: var(--surface-light);
+}
+
+.lista-aulas {
+  margin-top: 18px;
+}
+
+.aula-list-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.aula-list-item:last-child {
+  border-bottom: 0;
+}
+
+.aula-list-item h3 {
+  margin: 0 0 5px;
+  font-size: 15px;
+}
+
+.aula-list-item p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.aula-status {
+  align-self: flex-start;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.aula-status.feita {
+  border-color: #2f6d50;
+  color: #92e0b1;
+  background: rgba(47, 109, 80, 0.15);
+}
+
+.aula-status.pendente {
+  border-color: #625a35;
+  color: #e3d18e;
+  background: rgba(98, 90, 53, 0.15);
+}
+
+@media (max-width: 900px) {
+  .schedule-layout {
+    grid-template-columns: 1fr;
+  }
+}
