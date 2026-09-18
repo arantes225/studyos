@@ -1098,3 +1098,69 @@ body.app-ready .app-shell .main { opacity: 1; }
     font-size: 24px;
   }
 }
+
+
+/* =========================================================
+   RESIBULANDO — HOTFIX DE LOGO
+   ========================================================= */
+
+.brand-logo-single {
+  position: static !important;
+  inset: auto !important;
+
+  display: block !important;
+
+  width: 62px !important;
+  height: 62px !important;
+
+  flex: 0 0 62px;
+
+  object-fit: contain;
+
+  background: transparent !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  box-shadow: none !important;
+
+  filter: none;
+
+  transition:
+    transform .18s ease,
+    filter .18s ease;
+}
+
+.brand:hover
+.brand-logo-single {
+  transform: scale(1.05);
+}
+
+:root[data-theme="dark"]
+.brand-logo-single {
+  filter:
+    drop-shadow(
+      0 4px 13px
+      rgba(45, 160, 255, .22)
+    );
+}
+
+:root[data-theme="leila-mood"]
+.brand-logo-single {
+  filter:
+    drop-shadow(
+      0 4px 13px
+      rgba(232, 93, 158, .22)
+    );
+}
+
+@media (max-width: 700px) {
+
+  .brand-logo-single {
+    width: 54px !important;
+    height: 54px !important;
+
+    flex-basis: 54px;
+  }
+
+}

@@ -102,23 +102,12 @@ function sidebarMarkup(user, profile = null) {
   return `
     <div class="sidebar-top">
       <a class="brand" href="dashboard.html">
-        <span class="brand-logo-stack" aria-hidden="true">
-          <img
-            class="brand-logo brand-logo-light"
-            src="logo-icone-original.png"
-            alt=""
-          >
-          <img
-            class="brand-logo brand-logo-dark"
-            src="logo-icone-azul-claro.png"
-            alt=""
-          >
-          <img
-            class="brand-logo brand-logo-pink"
-            src="logo-icone-rosa-escuro.png"
-            alt=""
-          >
-        </span>
+        <img
+          id="resibulando-brand-logo"
+          class="brand-logo-single"
+          src="logo-icone-original.png?v=resibulando2"
+          alt="Logo Resibulando"
+        >
 
         <span class="brand-copy">
           <strong>Resibulando</strong>
@@ -247,8 +236,48 @@ async function carregarPerfil(userId) {
   return cached || null;
 }
 
+function updateResibulandoLogo(theme) {
+  const logo =
+    document.getElementById(
+      "resibulando-brand-logo"
+    );
+
+  if (!logo) {
+    return;
+  }
+
+  let source =
+    "logo-icone-original.png?v=resibulando2";
+
+  if (theme === "dark") {
+    source =
+      "logo-icone-azul-claro.png?v=resibulando2";
+  }
+
+  if (theme === "leila-mood") {
+    source =
+      "logo-icone-rosa-escuro.png?v=resibulando2";
+  }
+
+  if (
+    logo.getAttribute("src")
+    !== source
+  ) {
+    logo.setAttribute(
+      "src",
+      source
+    );
+  }
+}
+
+
 function applyResolvedTheme(theme) {
-  document.documentElement.dataset.theme = theme;
+  document.documentElement.dataset.theme =
+    theme;
+
+  updateResibulandoLogo(
+    theme
+  );
 }
 
 function stopSystemThemeListener() {
@@ -935,6 +964,11 @@ async function iniciarApp() {
 
   document.getElementById("sidebar").innerHTML =
     sidebarMarkup(user, profile);
+
+  updateResibulandoLogo(
+    document.documentElement.dataset.theme
+    || "light"
+  );
 
   iniciarLofiGlobal(user.id).catch((error) => {
     console.warn(

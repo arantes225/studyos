@@ -1,59 +1,45 @@
-RESIBULANDO — CÓDIGOS COMPLETOS DE BRANDING
+RESIBULANDO — HOTFIX LOGOS
 
-Este ZIP contém ARQUIVOS COMPLETOS, não trechos.
+CORRIGE:
+- Cronograma mostrando 3 logos ao mesmo tempo.
+- Dashboard mostrando logo antiga.
 
-INCLUI:
-- app.js completo
-- style.css completo
-- index.html completo
-- login.html completo
-- dashboard.html
-- cronograma.html
-- ambientacao.html
-- flashcards.html
-- caderno-erros.html
-- questoes-simulados.html
-- estatisticas.html
-- editais.html
-- configuracoes.html
+A correção agora usa UMA ÚNICA imagem no menu lateral.
+O app.js troca o arquivo de acordo com o tema:
 
-LOGOS:
-- logo-principal.png
-- logo-icone-original.png
-- logo-icone-azul-claro.png
-- logo-icone-rosa-escuro.png
-- favicon.png
+Claro:
+logo-icone-original.png
 
-COMPORTAMENTO:
-- Tema claro -> logo-icone-original.png
-- Tema escuro -> logo-icone-azul-claro.png
-- Tema rosa (leila-mood) -> logo-icone-rosa-escuro.png
-- Login/loading -> logo-principal.png
-- Marca visível -> Resibulando
-- Slogan -> Mapa até a residência
+Escuro:
+logo-icone-azul-claro.png
 
-IMPORTANTE:
-Os nomes técnicos internos continuam como "docmap":
-- window.docmapUser
-- window.docmapAudio
-- docmap:ready
-- buckets docmap / docmap-assets
+Rosa:
+logo-icone-rosa-escuro.png
 
-NÃO renomeie isso. Eles foram preservados para não quebrar o sistema.
+Também alterei a versão carregada em TODAS as páginas para:
+style.css?v=resibulando2
+app.js?v=resibulando2
 
-COMO INSTALAR:
-1. Faça backup da raiz atual do projeto.
-2. Extraia este ZIP.
-3. Copie TODOS os arquivos para a raiz do projeto.
-4. Quando perguntar, escolha substituir os existentes.
-5. Confira se os 5 PNGs estão na mesma pasta de app.js e style.css.
-6. Publique:
+Isso evita que o navegador use o CSS/JS antigo em cache.
+
+COMO INSTALAR
+
+1. Extraia o ZIP.
+2. Copie TODOS os arquivos para a raiz do projeto.
+3. Escolha substituir quando solicitado.
+4. Confirme que os PNGs continuam na raiz.
+
+Depois:
 
 git add -A
-git commit -m "Finaliza branding Resibulando"
+git commit -m "Corrige logos Resibulando por tema"
 git pull --rebase origin main
 git push origin main
 
-7. Aguarde o GitHub Pages e use Ctrl + F5.
+Depois que o GitHub Pages atualizar:
+Ctrl + Shift + R
+
+Se preferir:
+Ctrl + F5
 
 NÃO PRECISA RODAR SQL.
