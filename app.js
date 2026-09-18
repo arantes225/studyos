@@ -6,7 +6,7 @@ const PAGE_INFO = {
   ambientacao: { title: "Ambientação", eyebrow: "Estudar" },
   flashcards: { title: "Flashcards", eyebrow: "Estudar" },
   erros: { title: "Caderno de erros", eyebrow: "Estudar" },
-  questoes: { title: "Registrar questões", eyebrow: "Estudar" },
+  questoes: { title: "Questões e Simulados", eyebrow: "Estudar" },
   editais: { title: "Editais / Provas", eyebrow: "Planejamento" },
   configuracoes: { title: "Configurações", eyebrow: "Conta e preferências" }
 };
@@ -83,7 +83,7 @@ function sidebarMarkup(user, profile = null) {
           <a class="nav-sublink ${page === "ambientacao" ? "active" : ""}" href="ambientacao.html">Ambientação</a>
           <a class="nav-sublink ${page === "flashcards" ? "active" : ""}" href="flashcards.html">Flashcards</a>
           <a class="nav-sublink ${page === "erros" ? "active" : ""}" href="caderno-erros.html">Caderno de erros</a>
-          <a class="nav-sublink ${page === "questoes" ? "active" : ""}" href="registrar-questoes.html">Registrar questões</a>
+          <a class="nav-sublink ${page === "questoes" ? "active" : ""}" href="questoes-simulados.html">Questões e Simulados</a>
         </div>
       </div>
 

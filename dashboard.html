@@ -520,6 +520,35 @@
   }
 }
 
+
+.metric-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+#metric-difficulty {
+  font-size: 21px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1180px) {
+  .metric-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
   </style>
 </head>
 <body data-page="dashboard">
@@ -555,6 +584,15 @@
             <span class="metric-label">Flashcards hoje</span>
             <strong id="metric-flashcards" class="metric-value">—</strong>
             <span id="metric-flashcards-helper" class="metric-helper">Carregando...</span>
+          </article>
+
+
+          <article class="metric-card">
+            <span class="metric-label">Maior dificuldade</span>
+            <strong id="metric-difficulty" class="metric-value">—</strong>
+            <span id="metric-difficulty-helper" class="metric-helper">
+              Sem erros classificados
+            </span>
           </article>
 
           <article class="metric-card">
@@ -621,7 +659,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
-  <script src="app.js"></script>
-  <script src="dashboard.js?v=3.1"></script>
+  <script src="app.js?v=4.2"></script>
+  <script src="dashboard.js?v=4.2"></script>
 </body>
 </html>

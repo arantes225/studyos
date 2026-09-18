@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questões e Simulados · DocMap</title>
+  <link rel="stylesheet" href="style.css?v=2">
+
+  <style>
+    .qs-stack {
+      display: grid;
+      gap: 16px;
+    }
+
+    .qs-panel {
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+    }
+
+    .qs-panel h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .qs-panel > p,
+    .qs-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 12px;
+    }
+
+    .qs-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .qs-upload-grid {
+      display: grid;
+      grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .qs-drop {
+      min-height: 190px;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      border: 1.5px dashed var(--border);
+      border-radius: 14px;
+      background: var(--surface-2);
+      text-align: center;
+    }
+
+    .qs-drop.dragover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .qs-drop input {
+      display: none;
+    }
+
+    .qs-drop strong,
+    .qs-drop small {
+      display: block;
+    }
+
+    .qs-drop small {
+      margin-top: 7px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .qs-drop .button {
+      min-height: 40px;
+      margin-top: 14px;
+      padding: 0 14px;
+    }
+
+    .qs-import-options {
+      display: grid;
+      align-content: start;
+      gap: 12px;
+    }
+
+    .qs-field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .qs-field span {
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .qs-field small {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .qs-field input,
+    .qs-field select,
+    .qs-field textarea {
+      width: 100%;
+      min-height: 43px;
+      padding: 0 11px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      font: inherit;
+    }
+
+    .qs-field textarea {
+      min-height: 76px;
+      padding-top: 10px;
+      resize: vertical;
+    }
+
+    .qs-field input:focus,
+    .qs-field select:focus,
+    .qs-field textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .qs-import-actions,
+    .qs-answer-actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .qs-import-actions .button,
+    .qs-answer-actions .button {
+      min-height: 42px;
+      padding: 0 14px;
+    }
+
+    .qs-status {
+      min-height: 20px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .qs-status.success {
+      color: var(--success);
+    }
+
+    .qs-status.error {
+      color: var(--danger);
+    }
+
+    .qs-history {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .qs-set-card {
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: var(--surface);
+    }
+
+    .qs-set-card.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .qs-set-card h3 {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .qs-set-card p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .qs-set-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 11px;
+    }
+
+    .qs-set-metrics div {
+      padding: 8px;
+      border-radius: 9px;
+      background: var(--surface-2);
+      text-align: center;
+    }
+
+    .qs-set-metrics span {
+      display: block;
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .qs-set-metrics strong {
+      display: block;
+      margin-top: 3px;
+      font-size: 15px;
+    }
+
+    .qs-set-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .qs-mini-button {
+      min-height: 31px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0 9px;
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .qs-mini-button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .qs-mini-button.danger:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .qs-empty {
+      padding: 20px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .qs-answer-panel[hidden] {
+      display: none;
+    }
+
+    .qs-summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .qs-summary div {
+      padding: 11px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-2);
+    }
+
+    .qs-summary span {
+      display: block;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .qs-summary strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 20px;
+    }
+
+    .qs-question-list {
+      display: grid;
+      gap: 9px;
+      margin-top: 16px;
+    }
+
+    .qs-question {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .qs-question.wrong {
+      border-color: var(--danger);
+    }
+
+    .qs-question.sent {
+      border-color: var(--success);
+    }
+
+    .qs-question-main {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 11px;
+      align-items: center;
+      padding: 12px;
+    }
+
+    .qs-number {
+      display: grid;
+      place-items: center;
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      background: var(--surface-2);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .qs-question-title {
+      min-width: 0;
+    }
+
+    .qs-question-title strong {
+      display: block;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .qs-question-title small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .qs-wrong-toggle {
+      position: relative;
+    }
+
+    .qs-wrong-toggle input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .qs-wrong-toggle span {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 0 10px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .qs-wrong-toggle input:checked + span {
+      border-color: var(--danger);
+      background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+      color: var(--danger);
+    }
+
+    .qs-question details {
+      border-top: 1px solid var(--border);
+    }
+
+    .qs-question summary {
+      padding: 9px 12px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 750;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .qs-question-text {
+      margin: 0;
+      padding: 0 12px 13px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 11px;
+      line-height: 1.55;
+    }
+
+    .qs-error-fields {
+      display: none;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+      padding: 12px;
+      border-top: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+
+    .qs-question.wrong .qs-error-fields {
+      display: grid;
+    }
+
+    .qs-error-fields .full {
+      grid-column: 1 / -1;
+    }
+
+    .qs-sent-badge {
+      display: none;
+      margin: 0 12px 12px;
+      width: fit-content;
+      min-height: 27px;
+      align-items: center;
+      padding: 0 9px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--success) 12%, var(--surface));
+      color: var(--success);
+      font-size: 9px;
+      font-weight: 850;
+    }
+
+    .qs-question.sent .qs-sent-badge {
+      display: inline-flex;
+    }
+
+    @media (max-width: 1050px) {
+      .qs-history {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .qs-upload-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .qs-history,
+      .qs-summary {
+        grid-template-columns: 1fr;
+      }
+
+      .qs-head {
+        flex-direction: column;
+      }
+
+      .qs-question-main {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+
+      .qs-wrong-toggle {
+        grid-column: 1 / -1;
+      }
+
+      .qs-wrong-toggle span {
+        width: 100%;
+      }
+
+      .qs-error-fields {
+        grid-template-columns: 1fr;
+      }
+
+      .qs-error-fields .full {
+        grid-column: auto;
+      }
+    }
+  </style>
+</head>
+
+<body data-page="questoes">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar"></aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <main class="main">
+      <div class="page">
+        <header class="topbar">
+          <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
+
+          <div class="page-heading">
+            <span class="eyebrow" data-page-eyebrow></span>
+            <h1 data-page-title></h1>
+          </div>
+        </header>
+
+        <div class="qs-stack">
+
+          <section class="qs-panel">
+            <div class="qs-head">
+              <div>
+                <span class="badge accent">PDF</span>
+                <h2>Novo simulado</h2>
+                <p>
+                  Envie o PDF. O DocMap extrai as questões e cria um gabarito rápido
+                  para você marcar somente as que errou.
+                </p>
+              </div>
+            </div>
+
+            <div class="qs-upload-grid">
+              <div id="qs-drop" class="qs-drop">
+                <div>
+                  <strong id="qs-file-name">Selecione um PDF</strong>
+                  <small>
+                    PDFs com texto selecionável funcionam melhor.<br>
+                    Se o arquivo for apenas imagem, o DocMap avisará.
+                  </small>
+
+                  <label class="button secondary" for="qs-file">Escolher PDF</label>
+                  <input id="qs-file" type="file" accept="application/pdf,.pdf">
+                </div>
+              </div>
+
+              <div class="qs-import-options">
+                <label class="qs-field">
+                  <span>Nome do simulado</span>
+                  <input
+                    id="qs-title"
+                    type="text"
+                    maxlength="160"
+                    placeholder="Ex.: Simulado Aristo - 18/09/2026"
+                  >
+                </label>
+
+                <div class="qs-import-actions">
+                  <button id="qs-import" class="button primary" type="button">
+                    Extrair questões
+                  </button>
+                </div>
+
+                <div id="qs-import-status" class="qs-status" aria-live="polite"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="qs-panel">
+            <div class="qs-head">
+              <div>
+                <h2>Meus simulados</h2>
+                <p>Abra um simulado para preencher o gabarito rápido.</p>
+              </div>
+
+              <span id="qs-set-count" class="badge">0 simulados</span>
+            </div>
+
+            <div id="qs-history" class="qs-history"></div>
+          </section>
+
+          <section id="qs-answer-panel" class="qs-panel qs-answer-panel" hidden>
+            <div class="qs-head">
+              <div>
+                <span class="badge accent">Gabarito rápido</span>
+                <h2 id="qs-current-title">Simulado</h2>
+                <p>
+                  Marque somente “Errei”. As não marcadas serão consideradas corretas
+                  quando você salvar o gabarito.
+                </p>
+              </div>
+
+              <button id="qs-close-set" class="qs-mini-button" type="button">Fechar</button>
+            </div>
+
+            <div class="qs-summary">
+              <div>
+                <span>Questões</span>
+                <strong id="qs-summary-total">0</strong>
+              </div>
+              <div>
+                <span>Acertos</span>
+                <strong id="qs-summary-correct">0</strong>
+              </div>
+              <div>
+                <span>Erros</span>
+                <strong id="qs-summary-wrong">0</strong>
+              </div>
+              <div>
+                <span>Aproveitamento</span>
+                <strong id="qs-summary-accuracy">—</strong>
+              </div>
+            </div>
+
+            <div class="qs-answer-actions" style="margin-top:14px">
+              <button id="qs-save-key" class="button primary" type="button">
+                Salvar gabarito
+              </button>
+
+              <button id="qs-send-errors" class="button secondary" type="button">
+                Enviar erros ao Caderno de Erros
+              </button>
+
+              <span id="qs-answer-status" class="qs-status" aria-live="polite"></span>
+            </div>
+
+            <div id="qs-question-list" class="qs-question-list"></div>
+          </section>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="supabase.js"></script>
+  <script src="app.js?v=4.2"></script>
+  <script src="questoes-simulados.js?v=4.2"></script>
+</body>
+</html>

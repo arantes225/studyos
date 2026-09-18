@@ -621,11 +621,61 @@ async function loadFlashcardMetrics() {
     `Hoje: ${daily.correct || 0} acertos · ${daily.incorrect || 0} erros`;
 }
 
+
+async function loadQuestionDifficulty() {
+  const value =
+    document.getElementById("metric-difficulty");
+
+  const helper =
+    document.getElementById("metric-difficulty-helper");
+
+  if (!value || !helper) return;
+
+  const { data, error } = await dashboardSb
+    .from("question_area_difficulty")
+    .select("area,wrong_count,set_count,error_share_percent")
+    .order("wrong_count", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.warn(error);
+    value.textContent = "—";
+    helper.textContent = "Sem dados de simulados";
+    return;
+  }
+
+  if (!data) {
+    value.textContent = "—";
+    helper.textContent = "Classifique os erros dos simulados";
+    return;
+  }
+
+  value.textContent = data.area;
+
+  const wrongCount =
+    Number(data.wrong_count || 0);
+
+  const share =
+    Number(data.error_share_percent || 0);
+
+  if (wrongCount < 3) {
+    helper.textContent =
+      `${wrongCount} ${wrongCount === 1 ? "erro classificado" : "erros classificados"} · poucos dados`;
+    return;
+  }
+
+  helper.textContent =
+    `${wrongCount} erros · ${share.toFixed(0)}% dos erros classificados`;
+}
+
+
 async function loadDashboardMetrics() {
   await Promise.all([
     loadStudyHours(),
     loadRetention(),
-    loadFlashcardMetrics()
+    loadFlashcardMetrics(),
+    loadQuestionDifficulty()
   ]);
 }
 
