@@ -67,14 +67,68 @@ async function entrar() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const loginBtn = document.getElementById("login-btn");
-  const signupBtn = document.getElementById("signup-btn");
+  const estaNoLogin = document.getElementById("login-btn");
 
-  if (loginBtn) {
-    loginBtn.addEventListener("click", entrar);
+  // Se existe botão de login, esta é a página login.html
+  if (estaNoLogin) {
+    const signupBtn = document.getElementById("signup-btn");
+
+    estaNoLogin.addEventListener("click", entrar);
+
+    if (signupBtn) {
+      signupBtn.addEventListener("click", criarConta);
+    }
+
+    return;
   }
 
-  if (signupBtn) {
-    signupBtn.addEventListener("click", criarConta);
+  // Se não há botão de login, pode ser o dashboard
+  const estaNoDashboard = document.getElementById("logout-btn");
+
+  if (estaNoDashboard) {
+    verificarLoginNoDashboard();
   }
 });
+async function sairDaConta() {
+  const { error } = await sb.auth.signOut();
+
+  if (error) {
+    alert("Não foi possível sair: " + error.message);
+    return;
+  }
+
+  window.location.href = "login.html";
+}
+
+async function verificarLoginNoDashboard() {
+  const {
+    data: { user }
+  } = await sb.auth.getUser();
+
+  // Se não houver usuário logado, manda a pessoa para login.html
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  // Mostra a data atual no dashboard
+  const dataElemento = document.getElementById("dashboard-date");
+
+  if (dataElemento) {
+    const hoje = new Date();
+
+    dataElemento.textContent = hoje.toLocaleDateString("pt-BR", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric"
+    });
+  }
+
+  // Faz o botão "Sair" funcionar
+  const botaoSair = document.getElementById("logout-btn");
+
+  if (botaoSair) {
+    botaoSair.addEventListener("click", sairDaConta);
+  }
+}
