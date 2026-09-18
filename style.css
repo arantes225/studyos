@@ -436,3 +436,19 @@ button {
     grid-template-columns: 1fr;
   }
 }
+/* Correção: permite rolar a página de login no celular/telas menores */
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  overflow-y: auto;
+}
+
+.auth-page {
+  min-height: 100vh;
+  align-items: flex-start;
+  padding-top: 48px;
+  padding-bottom: 48px;
+}
