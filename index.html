@@ -3,30 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>StudyOS</title>
-
   <link rel="stylesheet" href="style.css">
-
-  <!-- Biblioteca oficial do Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-
-<body>
-
-  <main class="container">
-
+<body class="center-page">
+  <div class="loading-card">
     <h1>StudyOS</h1>
-
-    <p>Etapa 1 — Conexão com o banco</p>
-
-    <div id="status" class="status">
-      Testando conexão com o Supabase...
-    </div>
-
-  </main>
+    <p>Carregando...</p>
+  </div>
 
   <script src="supabase.js"></script>
-
+  <script>
+    (async () => {
+      const session = await window.studyos.getSession();
+      window.location.href = session ? "dashboard.html" : "login.html";
+    })();
+  </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StudyOS | Dashboard</title>
+  <title>StudyOS | Editais</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -25,27 +25,42 @@
 <main class="page">
   <section class="page-header">
     <div>
-      <p class="eyebrow">Hoje</p>
-      <h1>Dashboard</h1>
-      <p class="muted" id="usuario-email">Carregando usuário...</p>
+      <p class="eyebrow">Provas</p>
+      <h1>Editais</h1>
+      <p class="muted">Cadastre provas e temas específicos.</p>
     </div>
   </section>
 
-  <section id="resumo" class="stats-grid"></section>
+  <section class="two-columns">
+    <div class="card">
+      <h2>Novo edital</h2>
 
-  <section class="card">
-    <div class="card-header">
-      <div>
-        <h2>Pendências</h2>
-        <p class="muted">Tudo que precisa ser feito hoje ou está atrasado.</p>
+      <div class="field">
+        <label for="ed-nome">Nome</label>
+        <input id="ed-nome" placeholder="Ex.: ENARE 2027">
       </div>
+
+      <div class="field">
+        <label for="ed-instituicao">Instituição</label>
+        <input id="ed-instituicao" placeholder="Opcional">
+      </div>
+
+      <div class="field">
+        <label for="ed-data">Data da prova</label>
+        <input id="ed-data" type="date">
+      </div>
+
+      <button id="ed-salvar" class="btn primary">Salvar edital</button>
+      <p id="ed-msg" class="message"></p>
     </div>
-    <div id="pendencias" class="list">
-      <p class="muted">Carregando...</p>
+
+    <div class="card">
+      <h2>Seus editais</h2>
+      <div id="ed-lista" class="list"></div>
     </div>
   </section>
 </main>
 <script src="supabase.js"></script>
-<script src="dashboard.js"></script>
+<script src="editais.js"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StudyOS | Dashboard</title>
+  <title>StudyOS | Configurações</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -25,27 +25,34 @@
 <main class="page">
   <section class="page-header">
     <div>
-      <p class="eyebrow">Hoje</p>
-      <h1>Dashboard</h1>
-      <p class="muted" id="usuario-email">Carregando usuário...</p>
+      <p class="eyebrow">Preferências</p>
+      <h1>Configurações</h1>
+      <p class="muted">Defina os intervalos de revisão em dias.</p>
     </div>
   </section>
 
-  <section id="resumo" class="stats-grid"></section>
+  <section class="card narrow">
+    <div class="field">
+      <label for="cfg-flashcard">Flashcards</label>
+      <input id="cfg-flashcard" placeholder="1,3,7,15,30">
+      <small class="muted">Ex.: 1,3,7,15,30</small>
+    </div>
 
-  <section class="card">
-    <div class="card-header">
-      <div>
-        <h2>Pendências</h2>
-        <p class="muted">Tudo que precisa ser feito hoje ou está atrasado.</p>
-      </div>
+    <div class="field">
+      <label for="cfg-erros">Caderno de erros</label>
+      <input id="cfg-erros" placeholder="3,7,15,30">
     </div>
-    <div id="pendencias" class="list">
-      <p class="muted">Carregando...</p>
+
+    <div class="field">
+      <label for="cfg-materia">Revisão de matéria</label>
+      <input id="cfg-materia" placeholder="7,14,30">
     </div>
+
+    <button id="cfg-salvar" class="btn primary">Salvar configurações</button>
+    <p id="cfg-msg" class="message"></p>
   </section>
 </main>
 <script src="supabase.js"></script>
-<script src="dashboard.js"></script>
+<script src="configuracoes.js"></script>
 </body>
 </html>

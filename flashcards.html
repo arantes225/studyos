@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyOS | Flashcards</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="dashboard.html">StudyOS</a>
+  <nav class="nav">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="flashcards.html">Flashcards</a>
+    <a href="cronograma.html">Cronograma</a>
+    <a href="caderno-erros.html">Caderno de erros</a>
+    <a href="editais.html">Editais</a>
+    <a href="configuracoes.html">Configurações</a>
+  </nav>
+  <button class="btn small secondary" data-logout>Sair</button>
+</header>
+
+<main class="page">
+  <section class="page-header">
+    <div>
+      <p class="eyebrow">Memorização</p>
+      <h1>Flashcards</h1>
+      <p class="muted">Crie e revise seus cartões.</p>
+    </div>
+  </section>
+
+  <section class="two-columns">
+    <div class="card">
+      <h2>Novo flashcard</h2>
+
+      <div class="field">
+        <label for="fc-area">Área / matéria</label>
+        <input id="fc-area" type="text" placeholder="Ex.: Cardiologia">
+      </div>
+
+      <div class="field">
+        <label for="fc-frente">Frente</label>
+        <textarea id="fc-frente" rows="4" placeholder="Pergunta"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="fc-verso">Verso</label>
+        <textarea id="fc-verso" rows="6" placeholder="Resposta"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="fc-imagem">Imagem opcional</label>
+        <input id="fc-imagem" type="file" accept="image/*">
+      </div>
+
+      <button id="fc-salvar" class="btn primary">Salvar flashcard</button>
+      <p id="fc-mensagem" class="message"></p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2>Revisar agora</h2>
+          <p class="muted" id="review-count">Carregando...</p>
+        </div>
+      </div>
+
+      <div id="review-card" class="review-card">
+        <p class="muted">Carregando...</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2>Seus flashcards</h2>
+        <p class="muted">Lista completa dos cartões ativos.</p>
+      </div>
+    </div>
+    <div id="flashcards-list" class="list"></div>
+  </section>
+</main>
+<script src="supabase.js"></script>
+<script src="flashcards.js"></script>
+</body>
+</html>

@@ -1,184 +1,35 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <title>StudyOS</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyOS | Login</title>
   <link rel="stylesheet" href="style.css">
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+<body class="auth-page">
+  <main class="auth-card">
+    <div class="brand-mark">S</div>
+    <h1>StudyOS</h1>
+    <p class="muted">Entre para continuar seus estudos.</p>
 
-<body class="login-page">
+    <div class="field">
+      <label for="email">E-mail</label>
+      <input id="email" type="email" autocomplete="email" placeholder="voce@email.com">
+    </div>
 
-  <main class="login-layout">
+    <div class="field">
+      <label for="senha">Senha</label>
+      <input id="senha" type="password" autocomplete="current-password" placeholder="Sua senha">
+    </div>
 
-    <section class="login-brand">
+    <button id="botao-entrar" class="btn primary">Entrar</button>
+    <button id="botao-criar-conta" class="btn secondary">Criar conta</button>
 
-      <div class="brand-logo">
-        S
-      </div>
-
-      <h1>StudyOS</h1>
-
-      <p>
-        Organize seus estudos, revisões e progresso em um só lugar.
-      </p>
-
-      <div class="brand-features">
-
-        <div>
-          <span>✓</span>
-          Revisões programadas
-        </div>
-
-        <div>
-          <span>✓</span>
-          Flashcards
-        </div>
-
-        <div>
-          <span>✓</span>
-          Cronograma de estudos
-        </div>
-
-        <div>
-          <span>✓</span>
-          Caderno de erros
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <section class="login-card">
-
-      <div class="login-card-header">
-
-        <span class="login-eyebrow">
-          Bem-vindo
-        </span>
-
-        <h2>Entre na sua conta</h2>
-
-        <p>
-          Continue de onde parou.
-        </p>
-
-      </div>
-
-
-      <div
-        id="usuario-logado"
-        class="usuario-logado"
-        style="display:none;"
-      >
-
-        <div class="logged-icon">
-          ✓
-        </div>
-
-        <p>
-          Você está conectado como
-        </p>
-
-        <strong id="email-logado"></strong>
-
-        <button
-          id="botao-sair"
-          class="btn btn-secondary"
-        >
-          Sair
-        </button>
-
-      </div>
-
-
-      <div id="form-autenticacao">
-
-        <div class="form-group">
-
-          <label for="email">
-            E-mail
-          </label>
-
-          <input
-            type="email"
-            id="email"
-            placeholder="nome@exemplo.com"
-            autocomplete="email"
-          >
-
-        </div>
-
-
-        <div class="form-group">
-
-          <label for="senha">
-            Senha
-          </label>
-
-          <input
-            type="password"
-            id="senha"
-            placeholder="Digite sua senha"
-            autocomplete="current-password"
-          >
-
-        </div>
-
-
-        <button
-          id="botao-entrar"
-          class="btn btn-primary"
-        >
-          Entrar
-        </button>
-
-
-        <div class="login-divider">
-          <span></span>
-          <p>ou</p>
-          <span></span>
-        </div>
-
-
-        <button
-          id="botao-criar-conta"
-          class="btn btn-secondary"
-        >
-          Criar uma conta
-        </button>
-
-
-        <div
-          id="mensagem-auth"
-          class="mensagem"
-        ></div>
-
-      </div>
-
-
-      <p class="login-footer">
-        StudyOS · Seu sistema de estudos
-      </p>
-
-    </section>
-
+    <p id="mensagem-auth" class="message"></p>
   </main>
-
 
   <script src="supabase.js"></script>
   <script src="auth.js"></script>
-
 </body>
-
 </html>
