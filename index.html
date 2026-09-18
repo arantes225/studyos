@@ -4,162 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>StudyOS — Dashboard</title>
+  <title>StudyOS</title>
 
   <link rel="stylesheet" href="style.css">
 
-  <!-- Biblioteca que permite conectar o site ao Supabase -->
+  <!-- Biblioteca oficial do Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
-  <!-- Menu lateral -->
-  <aside class="sidebar">
-    <a class="logo" href="index.html">
-      <span class="brand-mark">S</span>
-      <span>StudyOS</span>
-    </a>
 
-    <nav class="menu">
-      <a class="menu-link active" href="index.html">Dashboard</a>
-      <a class="menu-link" href="cronograma.html">Cronograma</a>
-      <a class="menu-link" href="flashcards.html">Flashcards</a>
-      <a class="menu-link" href="caderno-erros.html">Caderno de erros</a>
-      <a class="menu-link" href="ambientacao.html">Ambientação</a>
-      <a class="menu-link" href="editais.html">Editais</a>
-    </nav>
+  <main class="container">
 
-    <button id="logout-btn" class="logout-btn">
-      Sair
-    </button>
-  </aside>
+    <h1>StudyOS</h1>
 
-  <!-- Conteúdo principal -->
-  <main class="dashboard">
-    <header class="dashboard-header">
-      <div>
-        <p class="eyebrow">STUDYOS</p>
-        <h1>Seu painel de estudos</h1>
-        <p id="dashboard-date" class="muted"></p>
-      </div>
+    <p>Etapa 1 — Conexão com o banco</p>
 
-      <a class="study-now-btn" href="ambientacao.html">
-        Fazer aula atual
-      </a>
-    </header>
+    <div id="status" class="status">
+      Testando conexão com o Supabase...
+    </div>
 
-    <!-- Métricas -->
-    <section class="metrics-grid">
-      <article class="metric-card">
-        <span class="metric-label">Tempo estudado hoje</span>
-        <strong id="tempo-hoje" class="metric-value">0 min</strong>
-        <span class="metric-note">Registre sessões na Ambientação</span>
-      </article>
-
-      <article class="metric-card">
-        <span class="metric-label">Questões / acertos</span>
-        <strong id="questoes-acertos" class="metric-value">0 / 0</strong>
-        <span class="metric-note">Será integrado ao caderno de erros</span>
-      </article>
-
-      <article class="metric-card">
-        <span class="metric-label">Conteúdos atrasados</span>
-        <strong id="conteudos-atrasados" class="metric-value">0</strong>
-        <span class="metric-note">Aulas anteriores ainda pendentes</span>
-      </article>
-
-      <article class="metric-card">
-        <span class="metric-label">Flashcards para hoje</span>
-        <strong id="flashcards-hoje" class="metric-value">0</strong>
-        <span class="metric-note">Cards programados para revisão</span>
-      </article>
-    </section>
-
-    <section class="dashboard-grid">
-      <!-- Agenda semanal -->
-      <article class="panel agenda-panel">
-        <div class="panel-header">
-          <div>
-            <p class="eyebrow">PLANEJAMENTO</p>
-            <h2>Agenda semanal</h2>
-          </div>
-
-          <a href="cronograma.html">Ver cronograma</a>
-        </div>
-
-        <div id="agenda-semanal" class="agenda-semanal">
-          <p class="empty-state">A agenda aparecerá aqui.</p>
-        </div>
-      </article>
-
-      <!-- Revisões -->
-      <article class="panel revisoes-panel">
-        <div class="panel-header">
-          <div>
-            <p class="eyebrow">REPETIÇÃO ESPAÇADA</p>
-            <h2>Revisões de hoje</h2>
-          </div>
-        </div>
-
-        <div class="review-row">
-          <div>
-            <strong id="revisoes-aulas-hoje">0</strong>
-            <span>revisões de aulas</span>
-          </div>
-
-          <a href="cronograma.html">Abrir</a>
-        </div>
-
-        <div class="review-row">
-          <div>
-            <strong id="revisoes-erros-hoje">0</strong>
-            <span>erros para revisar</span>
-          </div>
-
-          <a href="caderno-erros.html">Abrir</a>
-        </div>
-
-        <div class="review-row">
-          <div>
-            <strong id="flashcards-revisao-hoje">0</strong>
-            <span>flashcards devidos</span>
-          </div>
-
-          <a href="flashcards.html">Abrir</a>
-        </div>
-      </article>
-    </section>
-
-    <!-- Ações rápidas -->
-    <section class="panel quick-panel">
-      <div class="panel-header">
-        <div>
-          <p class="eyebrow">ATALHOS</p>
-          <h2>Começar agora</h2>
-        </div>
-      </div>
-
-      <div class="quick-actions">
-        <a href="cronograma.html" class="quick-action">
-          + Adicionar aula
-        </a>
-
-        <a href="flashcards.html" class="quick-action">
-          + Novo flashcard
-        </a>
-
-        <a href="caderno-erros.html" class="quick-action">
-          + Registrar erro
-        </a>
-
-        <a href="editais.html" class="quick-action">
-          + Nova prova
-        </a>
-      </div>
-    </section>
   </main>
 
-  <!-- Seu JavaScript -->
-  <script src="app.js"></script>
+  <script src="supabase.js"></script>
+
 </body>
 </html>
