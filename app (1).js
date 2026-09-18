@@ -2,7 +2,7 @@ const STUDYOS_SUPABASE_URL =
   "https://ietitoxjojsdiuridrfk.supabase.co";
 
 const STUDYOS_SUPABASE_KEY =
-  "sb_publishable_ReynfGuOnOGco0kf7NO_Jw__frEPrb0   ietitoxjojsdiuridrfk";
+  "sb_publishable_ReynfGuOnOGco0kf7NO_Jw__frEPrb0";
 
 const supabase = window.supabase.createClient(
   STUDYOS_SUPABASE_URL,
