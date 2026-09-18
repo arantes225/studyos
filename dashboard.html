@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard · DocMap</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="dashboard">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar"></aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <main class="main">
+      <div class="page">
+        <header class="topbar">
+          <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
+
+          <div class="page-heading">
+            <span class="eyebrow" data-page-eyebrow></span>
+            <h1 data-page-title></h1>
+          </div>
+        </header>
+
+        <section class="metric-grid">
+          <article class="metric-card">
+            <span class="metric-label">Horas de estudo</span>
+            <strong id="metric-hours" class="metric-value">—</strong>
+            <span class="metric-helper">Nesta semana</span>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Retenção estimada</span>
+            <strong id="metric-retention" class="metric-value">—</strong>
+            <span id="metric-retention-helper" class="metric-helper">Sem dados suficientes</span>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Flashcards hoje</span>
+            <strong id="metric-flashcards" class="metric-value">—</strong>
+            <span id="metric-flashcards-helper" class="metric-helper">Carregando...</span>
+          </article>
+
+          <article class="metric-card">
+            <span class="metric-label">Ofensiva</span>
+            <strong class="metric-value"><span data-streak-value>—</span> dias</strong>
+            <span class="metric-helper">Recorde: <span data-longest-streak>—</span> dias</span>
+          </article>
+        </section>
+
+        <section class="panel calendar-panel">
+          <div class="calendar-toolbar">
+            <div>
+              <h2>Agenda</h2>
+              <p id="calendar-range-label">Carregando agenda...</p>
+            </div>
+
+            <div class="calendar-actions">
+              <div class="segmented-control" aria-label="Visualização da agenda">
+                <button id="view-week" class="active" type="button">Semana</button>
+                <button id="view-month" type="button">Mês</button>
+              </div>
+
+              <div class="calendar-nav">
+                <button id="calendar-prev" type="button" aria-label="Período anterior">‹</button>
+                <button id="calendar-today" type="button">Hoje</button>
+                <button id="calendar-next" type="button" aria-label="Próximo período">›</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="calendar-status" class="calendar-status" aria-live="polite"></div>
+          <div id="calendar" class="calendar" aria-live="polite"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="move-dialog" class="move-dialog">
+    <form id="move-form" method="dialog">
+      <div class="dialog-heading">
+        <div>
+          <span class="metric-label">Remarcar atividade</span>
+          <h2 id="move-title">Mover atividade</h2>
+        </div>
+
+        <button id="move-close" class="dialog-close" type="button" aria-label="Fechar">×</button>
+      </div>
+
+      <label class="field">
+        Nova data
+        <input id="move-date" type="date" required>
+      </label>
+
+      <p class="dialog-note">
+        Ao mover uma revisão, a data real da próxima revisão também será alterada.
+      </p>
+
+      <div class="dialog-actions">
+        <button id="move-cancel" class="button secondary" type="button">Cancelar</button>
+        <button class="button primary" type="submit">Salvar nova data</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <script src="app.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
