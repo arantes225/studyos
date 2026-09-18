@@ -1,59 +1,415 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Editais / Provas · DocMap</title>
-  <link rel="stylesheet" href="style.css">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>
+    Editais / Provas · DocMap
+  </title>
+
+  <link
+    rel="stylesheet"
+    href="style.css?v=audio3"
+  >
+
+  <link
+    rel="stylesheet"
+    href="editais.css?v=8.0"
+  >
 </head>
+
 <body data-page="editais">
+
   <div class="app-shell">
-    <aside id="sidebar" class="sidebar"></aside>
-    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <aside
+      id="sidebar"
+      class="sidebar"
+    ></aside>
+
+    <div
+      id="sidebar-backdrop"
+      class="sidebar-backdrop"
+    ></div>
+
 
     <main class="main">
+
       <div class="page">
+
         <header class="topbar">
-          <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
+
+          <button
+            id="menu-open"
+            class="menu-open"
+            type="button"
+            aria-label="Abrir menu"
+          >
+            ☰
+          </button>
+
           <div class="page-heading">
-            <span class="eyebrow" data-page-eyebrow></span>
+            <span
+              class="eyebrow"
+              data-page-eyebrow
+            ></span>
+
             <h1 data-page-title></h1>
           </div>
+
         </header>
 
-        
-<section class="feature-grid">
-  <article class="feature-card">
-    <span class="badge">Provas</span>
-    <h2>Adicionar prova</h2>
-    <p>Instituição, banca, data, inscrição e valor.</p>
-  </article>
 
-  <article class="feature-card">
-    <span class="badge">Editais</span>
-    <h2>Aristo</h2>
-    <p>Na Fase 8 vamos testar se a página permite incorporação; se não permitir, usaremos abertura externa.</p>
-  </article>
-</section>
+        <section class="exam-metrics">
 
-<section class="panel">
-  <div class="panel-header">
-    <div>
-      <h2>Próximas provas</h2>
-      <p>Alertas de inscrição e datas importantes aparecerão aqui.</p>
-    </div>
-    <span class="badge accent">Fase 8</span>
-  </div>
+          <article class="exam-metric-card">
+            <span>Próximas provas</span>
+            <strong id="exam-metric-upcoming">—</strong>
+            <small>planejadas ou inscritas</small>
+          </article>
 
-  <div class="placeholder">Nenhuma prova cadastrada.</div>
-</section>
+          <article class="exam-metric-card">
+            <span>Inscrições</span>
+            <strong id="exam-metric-registered">—</strong>
+            <small>provas com inscrição feita</small>
+          </article>
+
+          <article class="exam-metric-card">
+            <span>Realizadas</span>
+            <strong id="exam-metric-taken">—</strong>
+            <small>provas já concluídas</small>
+          </article>
+
+          <article class="exam-metric-card">
+            <span>Média</span>
+            <strong id="exam-metric-score">—</strong>
+            <small>resultado das provas realizadas</small>
+          </article>
+
+        </section>
+
+
+        <section class="panel exam-create-panel">
+
+          <div class="panel-header exam-create-head">
+
+            <div>
+              <h2>Minhas provas</h2>
+
+              <p>
+                Organize edital, inscrição, data da prova,
+                resultado e simulados vinculados.
+              </p>
+            </div>
+
+            <button
+              id="new-exam"
+              class="button primary"
+              type="button"
+            >
+              Nova prova
+            </button>
+
+          </div>
+
+
+          <div class="exam-filters">
+
+            <label>
+              <span>Status</span>
+
+              <select id="exam-status-filter">
+                <option value="">
+                  Todos
+                </option>
+
+                <option value="planned">
+                  Planejada
+                </option>
+
+                <option value="registered">
+                  Inscrita
+                </option>
+
+                <option value="taken">
+                  Realizada
+                </option>
+
+                <option value="cancelled">
+                  Cancelada
+                </option>
+              </select>
+            </label>
+
+
+            <label class="exam-search">
+              <span>Buscar</span>
+
+              <input
+                id="exam-search"
+                type="search"
+                placeholder="Instituição, banca ou observação..."
+              >
+            </label>
+
+          </div>
+
+
+          <div
+            id="exam-empty"
+            class="exam-empty"
+            hidden
+          >
+            Nenhuma prova encontrada.
+          </div>
+
+
+          <div
+            id="exam-list"
+            class="exam-list"
+          ></div>
+
+        </section>
 
       </div>
+
     </main>
+
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <dialog
+    id="exam-dialog"
+    class="exam-dialog"
+  >
+
+    <form
+      id="exam-form"
+      method="dialog"
+    >
+
+      <div class="exam-dialog-head">
+
+        <div>
+          <span class="badge accent">
+            Editais / Provas
+          </span>
+
+          <h2 id="exam-dialog-title">
+            Nova prova
+          </h2>
+        </div>
+
+
+        <button
+          id="exam-dialog-close"
+          class="exam-dialog-close"
+          type="button"
+          aria-label="Fechar"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <input
+        id="exam-id"
+        type="hidden"
+      >
+
+
+      <div class="exam-form-grid">
+
+        <label class="exam-field full">
+          <span>Instituição *</span>
+
+          <input
+            id="exam-institution"
+            type="text"
+            maxlength="180"
+            required
+            placeholder="Ex.: Hospital das Clínicas"
+          >
+        </label>
+
+
+        <label class="exam-field">
+          <span>Banca</span>
+
+          <input
+            id="exam-board"
+            type="text"
+            maxlength="160"
+            placeholder="Ex.: ENARE"
+          >
+        </label>
+
+
+        <label class="exam-field">
+          <span>Status</span>
+
+          <select id="exam-status">
+            <option value="planned">
+              Planejada
+            </option>
+
+            <option value="registered">
+              Inscrita
+            </option>
+
+            <option value="taken">
+              Realizada
+            </option>
+
+            <option value="cancelled">
+              Cancelada
+            </option>
+          </select>
+        </label>
+
+
+        <label class="exam-field">
+          <span>Prazo de inscrição</span>
+
+          <input
+            id="exam-registration-deadline"
+            type="date"
+          >
+        </label>
+
+
+        <label class="exam-field">
+          <span>Data da prova</span>
+
+          <input
+            id="exam-date"
+            type="date"
+          >
+        </label>
+
+
+        <label class="exam-field">
+          <span>Taxa</span>
+
+          <input
+            id="exam-fee"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="0,00"
+          >
+        </label>
+
+
+        <label class="exam-field">
+          <span>Resultado (%)</span>
+
+          <input
+            id="exam-score"
+            type="number"
+            min="0"
+            max="100"
+            step="0.1"
+            placeholder="Ex.: 82,5"
+          >
+        </label>
+
+
+        <label class="exam-field full">
+          <span>Link do edital</span>
+
+          <input
+            id="exam-edital-url"
+            type="url"
+            placeholder="https://..."
+          >
+        </label>
+
+
+        <label class="exam-field full">
+          <span>Link de inscrição</span>
+
+          <input
+            id="exam-registration-url"
+            type="url"
+            placeholder="https://..."
+          >
+        </label>
+
+
+        <label class="exam-field full">
+          <span>Observações</span>
+
+          <textarea
+            id="exam-notes"
+            rows="4"
+            placeholder="Informações importantes sobre a prova..."
+          ></textarea>
+        </label>
+
+
+        <label class="exam-field full">
+          <span>Observações do resultado</span>
+
+          <textarea
+            id="exam-result-notes"
+            rows="3"
+            placeholder="Classificação, nota de corte, resultado..."
+          ></textarea>
+        </label>
+
+      </div>
+
+
+      <div class="exam-dialog-actions">
+
+        <button
+          id="exam-cancel"
+          class="button secondary"
+          type="button"
+        >
+          Cancelar
+        </button>
+
+        <button
+          id="exam-save"
+          class="button primary"
+          type="submit"
+        >
+          Salvar prova
+        </button>
+
+      </div>
+
+
+      <div
+        id="exam-form-status"
+        class="exam-status-message"
+        aria-live="polite"
+      ></div>
+
+    </form>
+
+  </dialog>
+
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
+
   <script src="supabase.js"></script>
-  <script src="app.js"></script>
+
+  <script src="app.js?v=audio3"></script>
+
+  <script src="editais.js?v=8.0"></script>
+
 </body>
+
 </html>

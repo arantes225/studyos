@@ -474,6 +474,36 @@
       line-height: 1.35;
     }
 
+
+    .qs-exam-context {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 13px 15px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--accent-soft);
+      color: var(--text);
+    }
+
+    .qs-exam-context strong,
+    .qs-exam-context span {
+      display: block;
+    }
+
+    .qs-exam-context span {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .qs-exam-context a {
+      flex: 0 0 auto;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
     @media (max-width: 1050px) {
       .qs-history {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -565,6 +595,26 @@
         </section>
 
         <div class="qs-stack">
+
+          <div
+            id="qs-exam-context"
+            class="qs-exam-context"
+            hidden
+          >
+            <div>
+              <strong id="qs-exam-context-title">
+                Simulado vinculado à prova
+              </strong>
+
+              <span>
+                O novo PDF será associado automaticamente a esta prova.
+              </span>
+            </div>
+
+            <a href="editais.html">
+              Voltar para provas
+            </a>
+          </div>
 
           <section class="qs-panel">
             <div class="qs-head">
@@ -684,6 +734,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="supabase.js"></script>
   <script src="app.js?v=7.0"></script>
-  <script src="questoes-simulados.js?v=7.0"></script>
+  <script src="questoes-simulados.js?v=8.0"></script>
 </body>
 </html>

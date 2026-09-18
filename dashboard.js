@@ -189,8 +189,13 @@ function renderActivityCard(item) {
       `<a class="agenda-card-action primary-action" href="${escapeDashboardHtml(buildAmbientacaoUrl(item))}">Iniciar</a>`
     );
   } else if (item.kind === "exam" || item.kind === "registration_deadline") {
+    const examUrl =
+      item.item_id
+        ? `editais.html?exam_id=${encodeURIComponent(item.item_id)}`
+        : "editais.html";
+
     actions.push(
-      `<a class="agenda-card-action" href="editais.html">Abrir</a>`
+      `<a class="agenda-card-action" href="${escapeDashboardHtml(examUrl)}">Abrir</a>`
     );
   }
 

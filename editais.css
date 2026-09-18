@@ -1,0 +1,359 @@
+.exam-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 11px;
+  margin-bottom: 16px;
+}
+
+.exam-metric-card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.exam-metric-card span,
+.exam-metric-card strong,
+.exam-metric-card small {
+  display: block;
+}
+
+.exam-metric-card span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.exam-metric-card strong {
+  margin-top: 8px;
+  font-size: 27px;
+}
+
+.exam-metric-card small {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.exam-create-head {
+  align-items: center;
+}
+
+.exam-create-head .button {
+  flex: 0 0 auto;
+  min-height: 41px;
+  padding: 0 15px;
+}
+
+.exam-filters {
+  display: grid;
+  grid-template-columns: minmax(170px, .35fr) minmax(240px, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.exam-filters label,
+.exam-field {
+  display: grid;
+  gap: 6px;
+}
+
+.exam-filters label > span,
+.exam-field > span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.exam-filters select,
+.exam-filters input,
+.exam-field input,
+.exam-field select,
+.exam-field textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+}
+
+.exam-filters select,
+.exam-filters input,
+.exam-field input,
+.exam-field select {
+  min-height: 41px;
+  padding: 0 11px;
+}
+
+.exam-field textarea {
+  padding: 11px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.exam-filters select:focus,
+.exam-filters input:focus,
+.exam-field input:focus,
+.exam-field select:focus,
+.exam-field textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.exam-list {
+  display: grid;
+  gap: 11px;
+}
+
+.exam-card {
+  padding: 17px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.exam-card.highlight {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.exam-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.exam-card-title {
+  min-width: 0;
+}
+
+.exam-card-title h3 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.exam-card-title p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.exam-status-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.exam-status-badge.registered,
+.exam-status-badge.taken {
+  border-color: transparent;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.exam-card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.exam-card-info {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.exam-card-info span,
+.exam-card-info strong {
+  display: block;
+}
+
+.exam-card-info span {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.exam-card-info strong {
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.exam-simulation-summary {
+  margin-top: 12px;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.exam-notes {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.exam-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.exam-card-actions .button,
+.exam-link-button {
+  min-height: 36px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exam-link-button {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.exam-delete {
+  margin-left: auto;
+}
+
+.exam-empty {
+  padding: 24px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--muted);
+  text-align: center;
+  font-size: 11px;
+}
+
+.exam-dialog {
+  width: min(760px, calc(100vw - 28px));
+  max-height: calc(100vh - 40px);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.exam-dialog::backdrop {
+  background: rgba(0, 0, 0, .35);
+}
+
+.exam-dialog form {
+  padding: 22px;
+}
+
+.exam-dialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.exam-dialog-head h2 {
+  margin: 10px 0 0;
+}
+
+.exam-dialog-close {
+  width: 37px;
+  height: 37px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 20px;
+}
+
+.exam-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.exam-field.full {
+  grid-column: 1 / -1;
+}
+
+.exam-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 18px;
+}
+
+.exam-status-message {
+  min-height: 18px;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.exam-status-message.error {
+  color: var(--danger);
+}
+
+.exam-status-message.success {
+  color: var(--success);
+}
+
+@media (max-width: 900px) {
+  .exam-metrics,
+  .exam-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .exam-metrics,
+  .exam-filters,
+  .exam-form-grid,
+  .exam-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .exam-field.full {
+    grid-column: auto;
+  }
+
+  .exam-card-top {
+    flex-direction: column;
+  }
+
+  .exam-delete {
+    margin-left: 0;
+  }
+}

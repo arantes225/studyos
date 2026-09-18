@@ -17,6 +17,92 @@ const AREA_OPTIONS = [
   "Preventiva"
 ];
 
+
+const qsPageParams =
+  new URLSearchParams(
+    window.location.search
+  );
+
+
+const linkedExamId =
+  qsPageParams.get(
+    "exam_id"
+  );
+
+
+const linkedExamTitle =
+  qsPageParams.get(
+    "exam_title"
+  );
+
+
+function qsIsUuid(
+  value
+) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    .test(
+      String(
+        value
+        || ""
+      )
+    );
+}
+
+
+function applyExamContext() {
+  if (
+    !qsIsUuid(
+      linkedExamId
+    )
+  ) {
+    return;
+  }
+
+
+  const context =
+    document.getElementById(
+      "qs-exam-context"
+    );
+
+
+  const title =
+    document.getElementById(
+      "qs-exam-context-title"
+    );
+
+
+  if (context) {
+    context.hidden =
+      false;
+  }
+
+
+  if (title) {
+    title.textContent =
+      linkedExamTitle
+        ? `Simulado vinculado: ${linkedExamTitle}`
+        : "Simulado vinculado à prova";
+  }
+
+
+  const titleInput =
+    document.getElementById(
+      "qs-title"
+    );
+
+
+  if (
+    titleInput
+    && !titleInput.value
+    && linkedExamTitle
+  ) {
+    titleInput.value =
+      `Simulado - ${linkedExamTitle}`;
+  }
+}
+
+
+
 function qsEscape(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -278,7 +364,13 @@ async function createQuestionSet(title, file) {
       user_id: qsState.user.id,
       title,
       source_file_name: file.name,
-      status: "processing"
+      status: "processing",
+      exam_id:
+        qsIsUuid(
+          linkedExamId
+        )
+          ? linkedExamId
+          : null
     })
     .select()
     .single();
@@ -714,6 +806,7 @@ function renderSetHistory() {
         <article class="qs-set-card ${isActive ? "active" : ""}">
           <h3>${qsEscape(set.title)}</h3>
           <p>
+            ${set.exam_id ? "Vinculado à prova · " : ""}
             ${set.total_questions || 0} questões ·
             ${set.status === "ready" ? "pronto" : qsEscape(set.status)}
           </p>
@@ -1585,6 +1678,8 @@ function wireUpload() {
 async function initQuestionSets() {
   qsState.user =
     window.docmapUser;
+
+  applyExamContext();
 
   wireUpload();
 
