@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Estatísticas · DocMap</title>
+
+  <link
+    rel="stylesheet"
+    href="style.css?v=audio3"
+  >
+
+  <link
+    rel="stylesheet"
+    href="estatisticas.css?v=10.1"
+  >
+</head>
+
+<body data-page="estatisticas">
+
+  <div class="app-shell">
+
+    <aside
+      id="sidebar"
+      class="sidebar"
+    ></aside>
+
+    <div
+      id="sidebar-backdrop"
+      class="sidebar-backdrop"
+    ></div>
+
+
+    <main class="main">
+
+      <div class="page">
+
+        <header class="topbar">
+
+          <button
+            id="menu-open"
+            class="menu-open"
+            type="button"
+            aria-label="Abrir menu"
+          >
+            ☰
+          </button>
+
+          <div class="page-heading">
+            <span
+              class="eyebrow"
+              data-page-eyebrow
+            ></span>
+
+            <h1 data-page-title></h1>
+          </div>
+
+        </header>
+
+
+        <section class="panel analytics-panel">
+
+          <div class="analytics-toolbar">
+
+            <div>
+              <h2>Hub de estatísticas</h2>
+
+              <p>
+                Ritmo de estudo, desempenho, memória e pontos de atenção.
+              </p>
+            </div>
+
+
+            <div
+              class="analytics-range"
+              aria-label="Período das estatísticas"
+            >
+
+              <button
+                type="button"
+                data-analytics-days="14"
+              >
+                14 dias
+              </button>
+
+              <button
+                type="button"
+                class="active"
+                data-analytics-days="30"
+              >
+                30 dias
+              </button>
+
+              <button
+                type="button"
+                data-analytics-days="90"
+              >
+                90 dias
+              </button>
+
+            </div>
+
+          </div>
+
+
+          <div class="analytics-summary">
+
+            <article class="analytics-summary-card">
+              <span>Tempo estudado</span>
+
+              <strong id="analytics-study-time">
+                —
+              </strong>
+
+              <small id="analytics-study-time-helper">
+                no período
+              </small>
+            </article>
+
+
+            <article class="analytics-summary-card">
+              <span>Consistência</span>
+
+              <strong id="analytics-consistency">
+                —
+              </strong>
+
+              <small id="analytics-consistency-helper">
+                dias com estudo
+              </small>
+            </article>
+
+
+            <article class="analytics-summary-card">
+              <span>Questões</span>
+
+              <strong id="analytics-question-accuracy">
+                —
+              </strong>
+
+              <small id="analytics-question-helper">
+                sem dados
+              </small>
+            </article>
+
+
+            <article class="analytics-summary-card">
+              <span>Flashcards</span>
+
+              <strong id="analytics-flash-accuracy">
+                —
+              </strong>
+
+              <small id="analytics-flash-helper">
+                sem dados
+              </small>
+            </article>
+
+          </div>
+
+
+          <div class="analytics-grid">
+
+            <article class="analytics-card wide">
+
+              <div class="analytics-card-head">
+
+                <div>
+                  <h3>Ritmo de estudo</h3>
+
+                  <p>
+                    Tempo efetivo registrado por dia.
+                  </p>
+                </div>
+
+              </div>
+
+
+              <div class="analytics-chart-scroll">
+
+                <div
+                  id="analytics-study-bars"
+                  class="analytics-bars"
+                ></div>
+
+              </div>
+
+            </article>
+
+
+            <article class="analytics-card">
+
+              <div class="analytics-card-head">
+
+                <div>
+                  <h3>Distribuição do estudo</h3>
+
+                  <p>
+                    Como o tempo foi dividido entre as atividades.
+                  </p>
+                </div>
+
+              </div>
+
+
+              <div
+                id="analytics-activity-list"
+                class="analytics-list"
+              ></div>
+
+            </article>
+
+
+            <article class="analytics-card">
+
+              <div class="analytics-card-head">
+
+                <div>
+                  <h3>Memória por matéria</h3>
+
+                  <p>
+                    Menores retenções estimadas com evidência disponível.
+                  </p>
+                </div>
+
+              </div>
+
+
+              <div
+                id="analytics-retention-list"
+                class="analytics-list"
+              ></div>
+
+            </article>
+
+
+            <article class="analytics-card">
+
+              <div class="analytics-card-head">
+
+                <div>
+                  <h3>Erros por área</h3>
+
+                  <p>
+                    Concentração em simulados e no Caderno de Erros.
+                  </p>
+                </div>
+
+              </div>
+
+
+              <div
+                id="analytics-error-list"
+                class="analytics-list"
+              ></div>
+
+            </article>
+
+
+            <article class="analytics-card">
+
+              <div class="analytics-card-head">
+
+                <div>
+                  <h3>Leitura dos dados</h3>
+
+                  <p>
+                    Resumo automático do período selecionado.
+                  </p>
+                </div>
+
+              </div>
+
+
+              <div
+                id="analytics-insights"
+                class="analytics-insights"
+              ></div>
+
+            </article>
+
+          </div>
+
+        </section>
+
+      </div>
+
+    </main>
+
+  </div>
+
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
+
+  <script src="supabase.js"></script>
+  <script src="app.js?v=stats10.1"></script>
+  <script src="estatisticas.js?v=10.1"></script>
+
+</body>
+
+</html>

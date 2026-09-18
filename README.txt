@@ -1,49 +1,57 @@
-DOCMAP — AGENDA → AMBIENTAÇÃO LIMPA
+DOCMAP — ESTATÍSTICAS EM PÁGINA PRÓPRIA
 
 ALTERAÇÃO
+O Hub de Estatísticas saiu do Dashboard e virou uma página própria.
 
-Quando você clicar em "Iniciar" pela Agenda:
+MENU LATERAL
+A nova ordem inclui:
 
-FLASHCARDS
-- mostra somente a atividade de revisão
-- esconde métricas
-- esconde abas
-- esconde Criar / Importar / Biblioteca
-- esconde "Revisões em dia"
-- esconde cabeçalho redundante da página
+...
+Questões e Simulados
+Estatísticas
+Editais / Provas
+Configurações
 
-CADERNO DE ERROS
-- mostra somente o CCQ / atividade de revisão
-- esconde minidashboard
-- esconde Adicionar novo erro
-- esconde Biblioteca
-- esconde filtro/cabeçalho redundante
-- esconde qualquer mensagem de "revisões em dia" / sem pendências
+Ou seja, Estatísticas fica imediatamente acima de Editais / Provas.
 
-AULA
-- agora aparece como atividade própria dentro da Ambientação
-- mostra título + área + matéria + data
-- botão "Concluir aula"
-- ao concluir, usa complete_study_topic
-- as revisões teóricas são agendadas automaticamente
+A PÁGINA ESTATÍSTICAS MANTÉM
+- 14 / 30 / 90 dias
+- tempo estudado
+- consistência
+- aproveitamento em questões
+- aproveitamento em flashcards
+- ritmo diário de estudo
+- distribuição do tempo por atividade
+- memória por matéria
+- erros por área
+- leitura automática dos dados
 
-A página normal de Flashcards e a página normal do Caderno de Erros
-NÃO mudam. A limpeza acontece somente quando a atividade é aberta
-pela Agenda dentro da Ambientação.
+DASHBOARD
+O bloco grande de Estatísticas foi removido do Dashboard.
+O restante do Dashboard continua:
+- cards superiores
+- simulados recentes
+- agenda
 
-O Pomodoro, áudio e carrossel aleatório de CCQs da Ambientação
-continuam funcionando normalmente.
+SQL
+NÃO PRECISA RODAR SQL.
+A Fase 10 já criou as views necessárias.
 
-NÃO PRECISA SQL.
+ARQUIVOS
+Substitua:
+- app.js
+- dashboard.html
+- dashboard.js
 
-SUBSTITUA:
-- ambientacao.html
-- ambientacao.css
-- ambientacao.js
+Adicione:
+- estatisticas.html
+- estatisticas.css
+- estatisticas.js
 
-PUBLICAÇÃO:
+PUBLICAÇÃO
 git add -A
-git commit -m "Limpa atividades da agenda na ambientacao"
+git commit -m "Move estatisticas para pagina propria"
 git push origin main
 
-Depois: Ctrl + F5
+Depois:
+Ctrl + F5

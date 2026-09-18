@@ -7,12 +7,12 @@ const PAGE_INFO = {
   flashcards: { title: "Flashcards", eyebrow: "Estudar" },
   erros: { title: "Caderno de erros", eyebrow: "Estudar" },
   questoes: { title: "Questões e Simulados", eyebrow: "Estudar" },
+  estatisticas: { title: "Estatísticas", eyebrow: "Desempenho" },
   editais: { title: "Editais / Provas", eyebrow: "Planejamento" },
   configuracoes: { title: "Configurações", eyebrow: "Conta e preferências" }
 };
 
 const page = document.body.dataset.page || "dashboard";
-
 let currentThemeSetting = "system";
 let systemThemeListener = null;
 
@@ -26,9 +26,7 @@ function themeCacheKey(userId) {
 
 function readLocalJson(key) {
   try {
-    return JSON.parse(
-      localStorage.getItem(key) || "null"
-    );
+    return JSON.parse(localStorage.getItem(key) || "null");
   } catch {
     return null;
   }
@@ -36,33 +34,22 @@ function readLocalJson(key) {
 
 function writeLocalJson(key, value) {
   try {
-    localStorage.setItem(
-      key,
-      JSON.stringify(value)
-    );
+    localStorage.setItem(key, JSON.stringify(value));
   } catch {}
 }
 
 function readCachedProfile(userId) {
-  return readLocalJson(
-    profileCacheKey(userId)
-  );
+  return readLocalJson(profileCacheKey(userId));
 }
 
 function writeCachedProfile(userId, profile) {
   if (!profile) return;
-
-  writeLocalJson(
-    profileCacheKey(userId),
-    profile
-  );
+  writeLocalJson(profileCacheKey(userId), profile);
 }
 
 function readCachedTheme(userId) {
   try {
-    return localStorage.getItem(
-      themeCacheKey(userId)
-    );
+    return localStorage.getItem(themeCacheKey(userId));
   } catch {
     return null;
   }
@@ -70,10 +57,7 @@ function readCachedTheme(userId) {
 
 function writeCachedTheme(userId, theme) {
   try {
-    localStorage.setItem(
-      themeCacheKey(userId),
-      theme
-    );
+    localStorage.setItem(themeCacheKey(userId), theme);
   } catch {}
 }
 
@@ -89,15 +73,13 @@ function escapeHtml(text) {
 function getProfileTitle(gender) {
   if (gender === "male") return "Dr.";
   if (gender === "female") return "Dra.";
-
   return "";
 }
 
 function sidebarMarkup(user, profile = null) {
-  const fallbackName =
-    user.email
-      ? user.email.split("@")[0]
-      : "Usuário";
+  const fallbackName = user.email
+    ? user.email.split("@")[0]
+    : "Usuário";
 
   const rawName =
     profile?.display_name?.trim()
@@ -107,10 +89,7 @@ function sidebarMarkup(user, profile = null) {
     profile?.specialty?.trim()
     || "Especialidade não definida";
 
-  const title =
-    getProfileTitle(
-      profile?.gender
-    );
+  const title = getProfileTitle(profile?.gender);
 
   const sidebarName =
     title
@@ -118,208 +97,71 @@ function sidebarMarkup(user, profile = null) {
       : rawName;
 
   const initial =
-    rawName
-      .charAt(0)
-      .toUpperCase()
-    || "U";
+    rawName.charAt(0).toUpperCase() || "U";
 
   return `
     <div class="sidebar-top">
-
-      <a
-        class="brand"
-        href="dashboard.html"
-      >
-        <span class="brand-mark">
-          D
-        </span>
-
+      <a class="brand" href="dashboard.html">
+        <span class="brand-mark">D</span>
         <span class="brand-copy">
-          <strong>
-            DocMap
-          </strong>
-
-          <small>
-            Study workspace
-          </small>
+          <strong>DocMap</strong>
+          <small>Study workspace</small>
         </span>
       </a>
-
-      <button
-        class="sidebar-close"
-        id="sidebar-close"
-        type="button"
-        aria-label="Fechar menu"
-      >
-        ×
-      </button>
-
+      <button class="sidebar-close" id="sidebar-close" type="button" aria-label="Fechar menu">×</button>
     </div>
 
     <nav class="nav">
-
-      <a
-        class="nav-link ${
-          page === "dashboard"
-            ? "active"
-            : ""
-        }"
-        href="dashboard.html"
-      >
-        <span class="nav-icon">
-          ◫
-        </span>
-
-        <span>
-          Dashboard
-        </span>
+      <a class="nav-link ${page === "dashboard" ? "active" : ""}" href="dashboard.html">
+        <span class="nav-icon">◫</span><span>Dashboard</span>
       </a>
 
-      <a
-        class="nav-link ${
-          page === "cronograma"
-            ? "active"
-            : ""
-        }"
-        href="cronograma.html"
-      >
-        <span class="nav-icon">
-          ▦
-        </span>
-
-        <span>
-          Cronograma
-        </span>
+      <a class="nav-link ${page === "cronograma" ? "active" : ""}" href="cronograma.html">
+        <span class="nav-icon">▦</span><span>Cronograma</span>
       </a>
 
       <div class="nav-group">
-
         <div class="nav-group-label">
-          <span class="nav-icon">
-            ◉
-          </span>
-
-          <span>
-            Estudar
-          </span>
+          <span class="nav-icon">◉</span><span>Estudar</span>
         </div>
 
         <div class="nav-submenu">
-
-          <a
-            class="nav-sublink ${
-              page === "ambientacao"
-                ? "active"
-                : ""
-            }"
-            href="ambientacao.html"
-          >
-            Ambientação
-          </a>
-
-          <a
-            class="nav-sublink ${
-              page === "flashcards"
-                ? "active"
-                : ""
-            }"
-            href="flashcards.html"
-          >
-            Flashcards
-          </a>
-
-          <a
-            class="nav-sublink ${
-              page === "erros"
-                ? "active"
-                : ""
-            }"
-            href="caderno-erros.html"
-          >
-            Caderno de erros
-          </a>
-
-          <a
-            class="nav-sublink ${
-              page === "questoes"
-                ? "active"
-                : ""
-            }"
-            href="questoes-simulados.html"
-          >
-            Questões e Simulados
-          </a>
-
+          <a class="nav-sublink ${page === "ambientacao" ? "active" : ""}" href="ambientacao.html">Ambientação</a>
+          <a class="nav-sublink ${page === "flashcards" ? "active" : ""}" href="flashcards.html">Flashcards</a>
+          <a class="nav-sublink ${page === "erros" ? "active" : ""}" href="caderno-erros.html">Caderno de erros</a>
+          <a class="nav-sublink ${page === "questoes" ? "active" : ""}" href="questoes-simulados.html">Questões e Simulados</a>
         </div>
-
       </div>
 
-      <a
-        class="nav-link ${
-          page === "editais"
-            ? "active"
-            : ""
-        }"
-        href="editais.html"
-      >
-        <span class="nav-icon">
-          ▤
-        </span>
-
-        <span>
-          Editais / Provas
-        </span>
+      <a class="nav-link ${page === "estatisticas" ? "active" : ""}" href="estatisticas.html">
+        <span class="nav-icon">▥</span><span>Estatísticas</span>
       </a>
 
-      <a
-        class="nav-link ${
-          page === "configuracoes"
-            ? "active"
-            : ""
-        }"
-        href="configuracoes.html"
-      >
-        <span class="nav-icon">
-          ⚙
-        </span>
-
-        <span>
-          Configurações
-        </span>
+      <a class="nav-link ${page === "editais" ? "active" : ""}" href="editais.html">
+        <span class="nav-icon">▤</span><span>Editais / Provas</span>
       </a>
 
+      <a class="nav-link ${page === "configuracoes" ? "active" : ""}" href="configuracoes.html">
+        <span class="nav-icon">⚙</span><span>Configurações</span>
+      </a>
     </nav>
 
     <div class="sidebar-footer">
-
-      <div
-        class="sidebar-lofi"
-        data-lofi-shell
-      >
-
+      <div class="sidebar-lofi" data-lofi-shell>
         <div class="sidebar-lofi-head">
-
           <button
             class="sidebar-lofi-toggle"
             type="button"
             data-lofi-toggle
-            aria-label="Tocar som ambiente"
+            aria-label="Tocar lo-fi"
           >
             ▶
           </button>
 
           <div class="sidebar-lofi-copy">
-
-            <strong data-lofi-title>
-              Lo-fi DocMap
-            </strong>
-
-            <small data-lofi-status>
-              carregando...
-            </small>
-
+            <strong data-lofi-title>Lo-fi DocMap</strong>
+            <small data-lofi-status>carregando...</small>
           </div>
-
         </div>
 
         <select
@@ -327,17 +169,11 @@ function sidebarMarkup(user, profile = null) {
           data-lofi-select
           aria-label="Escolher som ambiente"
         >
-          <option value="">
-            Carregando sons...
-          </option>
+          <option value="">Carregando sons...</option>
         </select>
 
         <div class="sidebar-lofi-volume">
-
-          <span>
-            ♫
-          </span>
-
+          <span>♫</span>
           <input
             type="range"
             min="0"
@@ -347,97 +183,47 @@ function sidebarMarkup(user, profile = null) {
             data-lofi-volume
             aria-label="Volume do som ambiente"
           >
-
         </div>
-
       </div>
 
       <div class="streak-mini">
-
-        <span>
-          🔥
-        </span>
-
+        <span>🔥</span>
         <div>
-          <strong>
-            <span data-streak-value>
-              —
-            </span>
-            dias
-          </strong>
-
-          <small>
-            ofensiva atual
-          </small>
+          <strong><span data-streak-value>—</span> dias</strong>
+          <small>ofensiva atual</small>
         </div>
-
       </div>
 
       <div class="user-mini">
-
-        <div class="user-avatar">
-          ${escapeHtml(initial)}
-        </div>
+        <div class="user-avatar">${escapeHtml(initial)}</div>
 
         <div class="user-copy">
-
-          <strong>
-            ${escapeHtml(sidebarName)}
-          </strong>
-
-          <small>
-            ${escapeHtml(specialty)}
-          </small>
-
+          <strong>${escapeHtml(sidebarName)}</strong>
+          <small>${escapeHtml(specialty)}</small>
         </div>
-
       </div>
 
-      <button
-        id="logout"
-        class="logout-button"
-        type="button"
-      >
-        Sair
-      </button>
-
+      <button id="logout" class="logout-button" type="button">Sair</button>
     </div>
   `;
 }
 
 async function carregarPerfil(userId) {
-  const cached =
-    readCachedProfile(userId);
+  const cached = readCachedProfile(userId);
 
-  const {
-    data,
-    error
-  } = await sb
+  const { data, error } = await sb
     .from("profiles")
-    .select(
-      "display_name, gender, specialty"
-    )
-    .eq(
-      "user_id",
-      userId
-    )
+    .select("display_name, gender, specialty")
+    .eq("user_id", userId)
     .maybeSingle();
 
   if (error) {
-    console.warn(
-      "Não foi possível carregar o perfil:",
-      error.message
-    );
-
+    console.warn("Não foi possível carregar o perfil:", error.message);
     return cached || null;
   }
 
   if (data) {
-    writeCachedProfile(
-      userId,
-      data
-    );
-
+    writeCachedProfile(userId, data);
     return data;
   }
 
@@ -445,146 +231,68 @@ async function carregarPerfil(userId) {
 }
 
 function applyResolvedTheme(theme) {
-  document
-    .documentElement
-    .dataset
-    .theme = theme;
+  document.documentElement.dataset.theme = theme;
 }
 
 function stopSystemThemeListener() {
-  if (!systemThemeListener) {
-    return;
+  if (systemThemeListener) {
+    const { media, handler } = systemThemeListener;
+    media.removeEventListener("change", handler);
+    systemThemeListener = null;
   }
-
-  const {
-    media,
-    handler
-  } = systemThemeListener;
-
-  media.removeEventListener(
-    "change",
-    handler
-  );
-
-  systemThemeListener = null;
 }
 
 function applyThemeSetting(setting) {
-  currentThemeSetting =
-    setting || "system";
-
+  currentThemeSetting = setting || "system";
   stopSystemThemeListener();
 
-  if (
-    currentThemeSetting
-    === "system"
-  ) {
-    const media =
-      window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      );
-
-    const apply = () => {
-      applyResolvedTheme(
-        media.matches
-          ? "dark"
-          : "light"
-      );
-    };
-
+  if (currentThemeSetting === "system") {
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const apply = () => applyResolvedTheme(media.matches ? "dark" : "light");
     apply();
-
-    media.addEventListener(
-      "change",
-      apply
-    );
-
-    systemThemeListener = {
-      media,
-      handler: apply
-    };
-
+    media.addEventListener("change", apply);
+    systemThemeListener = { media, handler: apply };
     return;
   }
 
-  applyResolvedTheme(
-    currentThemeSetting
-  );
+  applyResolvedTheme(currentThemeSetting);
 }
 
 async function carregarTema(userId) {
-  const cachedTheme =
-    readCachedTheme(userId);
+  const cachedTheme = readCachedTheme(userId);
 
   if (cachedTheme) {
-    applyThemeSetting(
-      cachedTheme
-    );
+    applyThemeSetting(cachedTheme);
   }
 
-  const {
-    data,
-    error
-  } = await sb
+  const { data, error } = await sb
     .from("user_settings")
     .select("theme")
-    .eq(
-      "user_id",
-      userId
-    )
+    .eq("user_id", userId)
     .maybeSingle();
 
-  if (
-    !error
-    && data?.theme
-  ) {
-    writeCachedTheme(
-      userId,
-      data.theme
-    );
-
-    applyThemeSetting(
-      data.theme
-    );
-
+  if (!error && data?.theme) {
+    writeCachedTheme(userId, data.theme);
+    applyThemeSetting(data.theme);
     return data.theme;
   }
 
   if (!cachedTheme) {
-    applyThemeSetting(
-      "system"
-    );
+    applyThemeSetting("system");
   }
 
-  return (
-    cachedTheme
-    || "system"
-  );
+  return cachedTheme || "system";
 }
 
 async function salvarTema(theme) {
-  const {
-    data: sessionData
-  } = await sb
-    .auth
-    .getSession();
-
-  const userId =
-    sessionData
-      .session
-      ?.user
-      ?.id;
+  const { data: sessionData } = await sb.auth.getSession();
+  const userId = sessionData.session?.user?.id;
 
   if (!userId) {
-    throw new Error(
-      "Usuário não autenticado."
-    );
+    throw new Error("Usuário não autenticado.");
   }
 
-  const {
-    data,
-    error
-  } = await sb
+  const { data, error } = await sb
     .from("user_settings")
     .upsert(
       {
@@ -592,113 +300,54 @@ async function salvarTema(theme) {
         theme
       },
       {
-        onConflict:
-          "user_id"
+        onConflict: "user_id"
       }
     )
     .select("theme")
     .single();
 
-  if (error) {
-    throw error;
-  }
+  if (error) throw error;
 
-  const savedTheme =
-    data?.theme
-    || theme;
+  const savedTheme = data?.theme || theme;
 
-  writeCachedTheme(
-    userId,
-    savedTheme
-  );
-
-  applyThemeSetting(
-    savedTheme
-  );
+  writeCachedTheme(userId, savedTheme);
+  applyThemeSetting(savedTheme);
 }
 
 function prepararConfiguracoes() {
-  const form =
-    document.getElementById(
-      "theme-form"
-    );
+  const form = document.getElementById("theme-form");
+  const status = document.getElementById("theme-status");
 
-  const status =
-    document.getElementById(
-      "theme-status"
-    );
+  if (!form) return;
 
-  if (!form) {
-    return;
-  }
+  const radio = form.querySelector(`input[name="theme"][value="${currentThemeSetting}"]`);
+  if (radio) radio.checked = true;
 
-  const radio =
-    form.querySelector(
-      `input[name="theme"][value="${currentThemeSetting}"]`
-    );
+  form.addEventListener("change", async (event) => {
+    if (event.target.name !== "theme") return;
 
-  if (radio) {
-    radio.checked = true;
-  }
+    status.textContent = "Salvando...";
 
-  form.addEventListener(
-    "change",
-    async (event) => {
-      if (
-        event.target.name
-        !== "theme"
-      ) {
-        return;
-      }
-
-      if (status) {
-        status.textContent =
-          "Salvando...";
-      }
-
-      try {
-        await salvarTema(
-          event.target.value
-        );
-
-        if (status) {
-          status.textContent =
-            "Tema salvo.";
-        }
-
-      } catch (error) {
-        console.error(error);
-
-        if (status) {
-          status.textContent =
-            "Não foi possível salvar o tema.";
-        }
-      }
+    try {
+      await salvarTema(event.target.value);
+      status.textContent = "Tema salvo.";
+    } catch (error) {
+      console.error(error);
+      status.textContent = "Não foi possível salvar o tema.";
     }
-  );
+  });
 }
 
-/* =========================================================
-   ÁUDIO GLOBAL
-   ========================================================= */
 
 function lofiStateKey(userId) {
   return `docmap:lofi:${userId}`;
 }
 
 function readLofiState(userId) {
-  return (
-    readLocalJson(
-      lofiStateKey(userId)
-    )
-    || {}
-  );
+  return readLocalJson(lofiStateKey(userId)) || {};
 }
 
-function writeLofiState(
-  userId,
-  state
-) {
+function writeLofiState(userId, state) {
   writeLocalJson(
     lofiStateKey(userId),
     state
@@ -706,79 +355,42 @@ function writeLofiState(
 }
 
 function formatAudioTime(seconds) {
-  if (
-    !Number.isFinite(seconds)
-    || seconds < 0
-  ) {
+  if (!Number.isFinite(seconds) || seconds < 0) {
     return "0:00";
   }
 
-  const total =
-    Math.floor(seconds);
-
-  const minutes =
-    Math.floor(
-      total / 60
-    );
-
-  const rest =
-    String(
-      total % 60
-    ).padStart(
-      2,
-      "0"
-    );
+  const total = Math.floor(seconds);
+  const minutes = Math.floor(total / 60);
+  const rest = String(total % 60).padStart(2, "0");
 
   return `${minutes}:${rest}`;
 }
 
 async function carregarAudioTracks() {
-  const {
-    data,
-    error
-  } = await sb
+  const { data, error } = await sb
     .from("app_audio_tracks")
     .select(
       "id,title,storage_bucket,storage_path,loop_enabled,active,sort_order"
     )
-    .eq(
-      "active",
-      true
-    )
-    .order(
-      "sort_order",
-      {
-        ascending: true
-      }
-    );
+    .eq("active", true)
+    .order("sort_order", { ascending: true });
 
   if (error) {
     console.warn(
       "Não foi possível carregar os sons do DocMap:",
       error.message
     );
-
     return [];
   }
 
   return data || [];
 }
 
-async function carregarAudioPreferido(
-  userId
-) {
-  const {
-    data,
-    error
-  } = await sb
+async function carregarAudioPreferido(userId) {
+  const { data, error } = await sb
     .from("user_settings")
-    .select(
-      "preferred_audio_track_id"
-    )
-    .eq(
-      "user_id",
-      userId
-    )
+    .select("preferred_audio_track_id")
+    .eq("user_id", userId)
     .maybeSingle();
 
   if (error) {
@@ -786,34 +398,22 @@ async function carregarAudioPreferido(
       "Não foi possível carregar o som preferido:",
       error.message
     );
-
     return null;
   }
 
-  return (
-    data
-      ?.preferred_audio_track_id
-    || null
-  );
+  return data?.preferred_audio_track_id || null;
 }
 
-async function salvarAudioPreferido(
-  userId,
-  trackId
-) {
-  const {
-    error
-  } = await sb
+async function salvarAudioPreferido(userId, trackId) {
+  const { error } = await sb
     .from("user_settings")
     .upsert(
       {
         user_id: userId,
-        preferred_audio_track_id:
-          trackId
+        preferred_audio_track_id: trackId
       },
       {
-        onConflict:
-          "user_id"
+        onConflict: "user_id"
       }
     );
 
@@ -826,253 +426,139 @@ async function salvarAudioPreferido(
 }
 
 function updateLofiControls(manager) {
-  const audio =
-    manager.audio;
+  const audio = manager.audio;
 
-  document
-    .querySelectorAll(
-      "[data-lofi-title]"
-    )
-    .forEach((element) => {
-      element.textContent =
-        manager.track?.title
-        || "Som ambiente";
-    });
+  document.querySelectorAll("[data-lofi-title]").forEach((el) => {
+    el.textContent =
+      manager.track?.title || "Lo-fi DocMap";
+  });
 
-  document
-    .querySelectorAll(
-      "[data-lofi-status]"
-    )
-    .forEach((element) => {
-      if (manager.error) {
-        element.textContent =
-          "áudio indisponível";
+  document.querySelectorAll("[data-lofi-status]").forEach((el) => {
+    if (manager.error) {
+      el.textContent = "áudio indisponível";
+      return;
+    }
 
-        return;
-      }
+    if (!manager.ready) {
+      el.textContent = "carregando...";
+      return;
+    }
 
-      if (!manager.ready) {
-        element.textContent =
-          "carregando...";
+    el.textContent =
+      audio.paused
+        ? "pausado · loop"
+        : "tocando · loop";
+  });
 
-        return;
-      }
+  document.querySelectorAll("[data-lofi-toggle]").forEach((button) => {
+    button.textContent =
+      audio.paused ? "▶" : "❚❚";
 
-      element.textContent =
-        audio.paused
-          ? "pausado · loop"
-          : "tocando · loop";
-    });
-
-  document
-    .querySelectorAll(
-      "[data-lofi-toggle]"
-    )
-    .forEach((button) => {
-      button.textContent =
-        audio.paused
-          ? "▶"
-          : "❚❚";
-
-      button.setAttribute(
-        "aria-label",
-        audio.paused
-          ? "Tocar som ambiente"
-          : "Pausar som ambiente"
-      );
-
-      button.disabled =
-        !manager.track
-        || Boolean(
-          manager.error
-        );
-    });
-
-  document
-    .querySelectorAll(
-      "[data-lofi-select]"
-    )
-    .forEach((select) => {
-      select.innerHTML =
-        manager.tracks.length
-          ? manager.tracks
-              .map(
-                (track) => `
-                  <option value="${escapeHtml(track.id)}">
-                    ${escapeHtml(track.title)}
-                  </option>
-                `
-              )
-              .join("")
-          : `
-            <option value="">
-              Nenhum som disponível
-            </option>
-          `;
-
-      if (
-        manager.track?.id
-      ) {
-        select.value =
-          manager.track.id;
-      }
-
-      select.disabled =
-        !manager.tracks.length
-        || Boolean(
-          manager.error
-        );
-    });
-
-  document
-    .querySelectorAll(
-      "[data-lofi-volume]"
-    )
-    .forEach((input) => {
-      if (
-        document.activeElement
-        !== input
-      ) {
-        input.value =
-          String(
-            audio.volume
-          );
-      }
-    });
-
-  document
-    .querySelectorAll(
-      "[data-lofi-current]"
-    )
-    .forEach((element) => {
-      element.textContent =
-        formatAudioTime(
-          audio.currentTime
-        );
-    });
-
-  document
-    .querySelectorAll(
-      "[data-lofi-duration]"
-    )
-    .forEach((element) => {
-      element.textContent =
-        formatAudioTime(
-          audio.duration
-        );
-    });
-
-  document
-    .querySelectorAll(
-      "[data-lofi-progress]"
-    )
-    .forEach((input) => {
-      input.max =
-        Number.isFinite(
-          audio.duration
-        )
-          ? String(
-              audio.duration
-            )
-          : "0";
-
-      if (
-        document.activeElement
-        !== input
-      ) {
-        input.value =
-          Number.isFinite(
-            audio.currentTime
-          )
-            ? String(
-                audio.currentTime
-              )
-            : "0";
-      }
-
-      input.disabled =
-        !manager.ready
-        || !Number.isFinite(
-          audio.duration
-        );
-    });
-}
-
-async function trocarFaixaLofi(
-  manager,
-  trackId
-) {
-  const nextTrack =
-    manager.tracks.find(
-      (track) =>
-        track.id === trackId
+    button.setAttribute(
+      "aria-label",
+      audio.paused
+        ? "Tocar lo-fi"
+        : "Pausar lo-fi"
     );
 
-  if (!nextTrack) {
-    return;
-  }
+    button.disabled =
+      !manager.track || Boolean(manager.error);
+  });
+
+  document.querySelectorAll("[data-lofi-select]").forEach((select) => {
+    const currentValue = select.value;
+
+    select.innerHTML = manager.tracks.length
+      ? manager.tracks.map((track) => `
+          <option value="${track.id}">
+            ${track.title}
+          </option>
+        `).join("")
+      : '<option value="">Nenhum som disponível</option>';
+
+    if (manager.track?.id) {
+      select.value = manager.track.id;
+    } else if (currentValue) {
+      select.value = currentValue;
+    }
+
+    select.disabled =
+      !manager.tracks.length || Boolean(manager.error);
+  });
+
+  document.querySelectorAll("[data-lofi-volume]").forEach((input) => {
+    if (document.activeElement !== input) {
+      input.value = String(audio.volume);
+    }
+  });
+
+  document.querySelectorAll("[data-lofi-current]").forEach((el) => {
+    el.textContent =
+      formatAudioTime(audio.currentTime);
+  });
+
+  document.querySelectorAll("[data-lofi-duration]").forEach((el) => {
+    el.textContent =
+      formatAudioTime(audio.duration);
+  });
+
+  document.querySelectorAll("[data-lofi-progress]").forEach((input) => {
+    input.max =
+      Number.isFinite(audio.duration)
+        ? String(audio.duration)
+        : "0";
+
+    if (document.activeElement !== input) {
+      input.value =
+        Number.isFinite(audio.currentTime)
+          ? String(audio.currentTime)
+          : "0";
+    }
+
+    input.disabled =
+      !manager.ready
+      || !Number.isFinite(audio.duration);
+  });
+}
+
+
+async function trocarFaixaLofi(manager, trackId) {
+  const nextTrack =
+    manager.tracks.find(
+      (track) => track.id === trackId
+    );
+
+  if (!nextTrack) return;
 
   const wasPlaying =
-    !manager
-      .audio
-      .paused;
+    !manager.audio.paused;
 
-  manager.track =
-    nextTrack;
+  manager.track = nextTrack;
+  manager.ready = false;
+  manager.error = null;
 
-  manager.ready =
-    false;
-
-  manager.error =
-    null;
-
-  manager
-    .audio
-    .pause();
-
-  manager
-    .audio
-    .currentTime = 0;
-
-  manager
-    .audio
-    .loop =
-      nextTrack
-        .loop_enabled
-        !== false;
+  manager.audio.pause();
+  manager.audio.currentTime = 0;
+  manager.audio.loop =
+    nextTrack.loop_enabled !== false;
 
   const publicUrl =
     sb.storage
-      .from(
-        nextTrack
-          .storage_bucket
-      )
-      .getPublicUrl(
-        nextTrack
-          .storage_path
-      )
+      .from(nextTrack.storage_bucket)
+      .getPublicUrl(nextTrack.storage_path)
       .data
       .publicUrl;
 
-  manager.audio.src =
-    publicUrl;
-
+  manager.audio.src = publicUrl;
   manager.audio.load();
 
   writeLofiState(
     manager.userId,
     {
-      ...readLofiState(
-        manager.userId
-      ),
-
-      trackId:
-        nextTrack.id,
-
+      ...readLofiState(manager.userId),
+      trackId: nextTrack.id,
       currentTime: 0,
-
-      volume:
-        manager.audio.volume
+      volume: manager.audio.volume
     }
   );
 
@@ -1081,16 +567,11 @@ async function trocarFaixaLofi(
     nextTrack.id
   );
 
-  updateLofiControls(
-    manager
-  );
+  updateLofiControls(manager);
 
   if (wasPlaying) {
     try {
-      await manager
-        .audio
-        .play();
-
+      await manager.audio.play();
     } catch (error) {
       console.warn(
         "O navegador bloqueou a reprodução após trocar de faixa:",
@@ -1100,223 +581,99 @@ async function trocarFaixaLofi(
   }
 }
 
-function bindLofiControls(
-  manager
-) {
-  document
-    .querySelectorAll(
-      "[data-lofi-select]"
-    )
-    .forEach((select) => {
-      if (
-        select
-          .dataset
-          .lofiBound
-        === "1"
-      ) {
-        return;
-      }
+function bindLofiControls(manager) {
+  document.querySelectorAll("[data-lofi-select]").forEach((select) => {
+    if (select.dataset.lofiBound === "1") return;
+    select.dataset.lofiBound = "1";
 
-      select.dataset.lofiBound =
-        "1";
-
-      select.addEventListener(
-        "change",
-        () => {
-          trocarFaixaLofi(
-            manager,
-            select.value
-          );
-        }
+    select.addEventListener("change", () => {
+      trocarFaixaLofi(
+        manager,
+        select.value
       );
     });
+  });
 
-  document
-    .querySelectorAll(
-      "[data-lofi-toggle]"
-    )
-    .forEach((button) => {
-      if (
-        button
-          .dataset
-          .lofiBound
-        === "1"
-      ) {
-        return;
+  document.querySelectorAll("[data-lofi-toggle]").forEach((button) => {
+    if (button.dataset.lofiBound === "1") return;
+    button.dataset.lofiBound = "1";
+
+    button.addEventListener("click", async () => {
+      if (!manager.track || manager.error) return;
+
+      try {
+        if (manager.audio.paused) {
+          await manager.audio.play();
+        } else {
+          manager.audio.pause();
+        }
+      } catch (error) {
+        console.warn(
+          "O navegador bloqueou a reprodução do áudio:",
+          error
+        );
       }
+    });
+  });
 
-      button.dataset.lofiBound =
-        "1";
+  document.querySelectorAll("[data-lofi-volume]").forEach((input) => {
+    if (input.dataset.lofiBound === "1") return;
+    input.dataset.lofiBound = "1";
 
-      button.addEventListener(
-        "click",
-        async () => {
-          if (
-            !manager.track
-            || manager.error
-          ) {
-            return;
-          }
+    input.addEventListener("input", () => {
+      const volume =
+        Math.max(
+          0,
+          Math.min(
+            1,
+            Number(input.value)
+          )
+        );
 
-          try {
-            if (
-              manager
-                .audio
-                .paused
-            ) {
-              await manager
-                .audio
-                .play();
+      manager.audio.volume = volume;
 
-            } else {
-              manager
-                .audio
-                .pause();
-            }
-
-          } catch (error) {
-            console.warn(
-              "O navegador bloqueou a reprodução do áudio:",
-              error
-            );
-          }
+      writeLofiState(
+        manager.userId,
+        {
+          ...readLofiState(manager.userId),
+          volume,
+          currentTime:
+            manager.audio.currentTime || 0
         }
       );
-    });
 
-  document
-    .querySelectorAll(
-      "[data-lofi-volume]"
-    )
-    .forEach((input) => {
-      if (
-        input
-          .dataset
-          .lofiBound
-        === "1"
-      ) {
-        return;
+      updateLofiControls(manager);
+    });
+  });
+
+  document.querySelectorAll("[data-lofi-progress]").forEach((input) => {
+    if (input.dataset.lofiBound === "1") return;
+    input.dataset.lofiBound = "1";
+
+    input.addEventListener("input", () => {
+      if (!manager.ready) return;
+
+      const target =
+        Number(input.value);
+
+      if (Number.isFinite(target)) {
+        manager.audio.currentTime = target;
       }
-
-      input.dataset.lofiBound =
-        "1";
-
-      input.addEventListener(
-        "input",
-        () => {
-          const volume =
-            Math.max(
-              0,
-              Math.min(
-                1,
-                Number(
-                  input.value
-                )
-              )
-            );
-
-          manager
-            .audio
-            .volume =
-              volume;
-
-          writeLofiState(
-            manager.userId,
-            {
-              ...readLofiState(
-                manager.userId
-              ),
-
-              trackId:
-                manager
-                  .track
-                  ?.id
-                || null,
-
-              volume,
-
-              currentTime:
-                manager
-                  .audio
-                  .currentTime
-                || 0
-            }
-          );
-
-          updateLofiControls(
-            manager
-          );
-        }
-      );
     });
+  });
 
-  document
-    .querySelectorAll(
-      "[data-lofi-progress]"
-    )
-    .forEach((input) => {
-      if (
-        input
-          .dataset
-          .lofiBound
-        === "1"
-      ) {
-        return;
-      }
-
-      input.dataset.lofiBound =
-        "1";
-
-      input.addEventListener(
-        "input",
-        () => {
-          if (
-            !manager.ready
-          ) {
-            return;
-          }
-
-          const target =
-            Number(
-              input.value
-            );
-
-          if (
-            Number.isFinite(
-              target
-            )
-          ) {
-            manager
-              .audio
-              .currentTime =
-                target;
-          }
-        }
-      );
-    });
-
-  updateLofiControls(
-    manager
-  );
+  updateLofiControls(manager);
 }
 
-async function iniciarLofiGlobal(
-  userId
-) {
-  const [
-    tracks,
-    preferredFromDb
-  ] = await Promise.all([
-    carregarAudioTracks(),
-    carregarAudioPreferido(
-      userId
-    )
-  ]);
+async function iniciarLofiGlobal(userId) {
+  const [tracks, preferredFromDb] =
+    await Promise.all([
+      carregarAudioTracks(),
+      carregarAudioPreferido(userId)
+    ]);
 
   const saved =
-    readLofiState(
-      userId
-    );
+    readLofiState(userId);
 
   const preferredId =
     saved.trackId
@@ -1326,9 +683,7 @@ async function iniciarLofiGlobal(
 
   const track =
     tracks.find(
-      (item) =>
-        item.id
-        === preferredId
+      (item) => item.id === preferredId
     )
     || tracks[0]
     || null;
@@ -1337,65 +692,38 @@ async function iniciarLofiGlobal(
     userId,
     tracks,
     track,
-    audio:
-      new Audio(),
-    ready:
-      false,
-    error:
-      null,
-    lastSavedSecond:
-      -1
+    audio: new Audio(),
+    ready: false,
+    error: null,
+    lastSavedSecond: -1
   };
 
-  window.docmapAudio =
-    manager;
+  window.docmapAudio = manager;
 
-  manager
-    .audio
-    .preload =
-      "metadata";
-
-  manager
-    .audio
-    .volume =
-      Number.isFinite(
-        Number(
-          saved.volume
-        )
-      )
-        ? Math.max(
-            0,
-            Math.min(
-              1,
-              Number(
-                saved.volume
-              )
-            )
+  manager.audio.preload = "metadata";
+  manager.audio.volume =
+    Number.isFinite(Number(saved.volume))
+      ? Math.max(
+          0,
+          Math.min(
+            1,
+            Number(saved.volume)
           )
-        : 0.45;
+        )
+      : 0.45;
 
-  manager
-    .audio
-    .loop =
-      track
-        ?.loop_enabled
-        !== false;
+  manager.audio.loop =
+    track?.loop_enabled !== false;
 
   if (!track) {
     manager.error =
       "Nenhuma faixa configurada.";
-
-    bindLofiControls(
-      manager
-    );
+    bindLofiControls(manager);
 
     window.dispatchEvent(
       new CustomEvent(
         "docmap:audio-ready",
-        {
-          detail:
-            manager
-        }
+        { detail: manager }
       )
     );
 
@@ -1406,189 +734,107 @@ async function iniciarLofiGlobal(
     userId,
     {
       ...saved,
-      trackId:
-        track.id
+      trackId: track.id
     }
   );
 
   const publicUrl =
     sb.storage
-      .from(
-        track.storage_bucket
-      )
-      .getPublicUrl(
-        track.storage_path
-      )
+      .from(track.storage_bucket)
+      .getPublicUrl(track.storage_path)
       .data
       .publicUrl;
 
-  manager.audio.src =
-    publicUrl;
+  manager.audio.src = publicUrl;
 
-  manager
-    .audio
-    .addEventListener(
-      "loadedmetadata",
-      () => {
-        manager.ready =
-          true;
+  manager.audio.addEventListener(
+    "loadedmetadata",
+    () => {
+      manager.ready = true;
 
-        const savedTime =
-          saved.trackId
-          === manager
-              .track
-              ?.id
-            ? Number(
-                saved.currentTime
-                || 0
-              )
-            : 0;
+      const savedTime =
+        saved.trackId === manager.track?.id
+          ? Number(saved.currentTime || 0)
+          : 0;
 
-        if (
-          Number.isFinite(
-            savedTime
-          )
-          && savedTime > 0
-          && savedTime
-            < manager
-                .audio
-                .duration
-        ) {
-          manager
-            .audio
-            .currentTime =
-              savedTime;
+      if (
+        Number.isFinite(savedTime)
+        && savedTime > 0
+        && savedTime < manager.audio.duration
+      ) {
+        manager.audio.currentTime =
+          savedTime;
+      }
+
+      updateLofiControls(manager);
+    }
+  );
+
+  manager.audio.addEventListener(
+    "play",
+    () => updateLofiControls(manager)
+  );
+
+  manager.audio.addEventListener(
+    "pause",
+    () => {
+      writeLofiState(
+        userId,
+        {
+          trackId: manager.track?.id || null,
+          volume: manager.audio.volume,
+          currentTime:
+            manager.audio.currentTime || 0
         }
+      );
 
-        updateLofiControls(
-          manager
+      updateLofiControls(manager);
+    }
+  );
+
+  manager.audio.addEventListener(
+    "timeupdate",
+    () => {
+      const second =
+        Math.floor(
+          manager.audio.currentTime || 0
         );
-      }
-    );
 
-  manager
-    .audio
-    .addEventListener(
-      "play",
-      () => {
-        updateLofiControls(
-          manager
-        );
-      }
-    );
+      if (
+        second !== manager.lastSavedSecond
+        && second % 5 === 0
+      ) {
+        manager.lastSavedSecond = second;
 
-  manager
-    .audio
-    .addEventListener(
-      "pause",
-      () => {
         writeLofiState(
           userId,
           {
-            trackId:
-              manager
-                .track
-                ?.id
-              || null,
-
-            volume:
-              manager
-                .audio
-                .volume,
-
+            volume: manager.audio.volume,
             currentTime:
-              manager
-                .audio
-                .currentTime
-              || 0
+              manager.audio.currentTime || 0
           }
         );
-
-        updateLofiControls(
-          manager
-        );
       }
-    );
 
-  manager
-    .audio
-    .addEventListener(
-      "timeupdate",
-      () => {
-        const second =
-          Math.floor(
-            manager
-              .audio
-              .currentTime
-            || 0
-          );
+      updateLofiControls(manager);
+    }
+  );
 
-        if (
-          second
-            !== manager
-              .lastSavedSecond
-          && second % 5 === 0
-        ) {
-          manager
-            .lastSavedSecond =
-              second;
+  manager.audio.addEventListener(
+    "volumechange",
+    () => updateLofiControls(manager)
+  );
 
-          writeLofiState(
-            userId,
-            {
-              trackId:
-                manager
-                  .track
-                  ?.id
-                || null,
+  manager.audio.addEventListener(
+    "error",
+    () => {
+      manager.error =
+        "Arquivo de áudio não encontrado.";
+      manager.ready = false;
 
-              volume:
-                manager
-                  .audio
-                  .volume,
-
-              currentTime:
-                manager
-                  .audio
-                  .currentTime
-                || 0
-            }
-          );
-        }
-
-        updateLofiControls(
-          manager
-        );
-      }
-    );
-
-  manager
-    .audio
-    .addEventListener(
-      "volumechange",
-      () => {
-        updateLofiControls(
-          manager
-        );
-      }
-    );
-
-  manager
-    .audio
-    .addEventListener(
-      "error",
-      () => {
-        manager.error =
-          "Arquivo de áudio não encontrado.";
-
-        manager.ready =
-          false;
-
-        updateLofiControls(
-          manager
-        );
-      }
-    );
+      updateLofiControls(manager);
+    }
+  );
 
   window.addEventListener(
     "pagehide",
@@ -1596,282 +842,119 @@ async function iniciarLofiGlobal(
       writeLofiState(
         userId,
         {
-          trackId:
-            manager
-              .track
-              ?.id
-            || null,
-
-          volume:
-            manager
-              .audio
-              .volume,
-
+          trackId: manager.track?.id || null,
+          volume: manager.audio.volume,
           currentTime:
-            manager
-              .audio
-              .currentTime
-            || 0
+            manager.audio.currentTime || 0
         }
       );
     }
   );
 
-  bindLofiControls(
-    manager
-  );
+  bindLofiControls(manager);
 
   window.dispatchEvent(
     new CustomEvent(
       "docmap:audio-ready",
-      {
-        detail:
-          manager
-      }
+      { detail: manager }
     )
   );
 
   return manager;
 }
 
-/* =========================================================
-   OFENSIVA
-   ========================================================= */
-
 async function registrarAcessoDiario() {
-  const {
-    data,
-    error
-  } = await sb.rpc(
-    "register_daily_access"
-  );
+  const { data, error } = await sb.rpc("register_daily_access");
 
   if (error) {
-    console.warn(
-      "Não foi possível registrar acesso diário:",
-      error.message
-    );
-
+    console.warn("Não foi possível registrar acesso diário:", error.message);
     return;
   }
 
-  const streak =
-    Array.isArray(data)
-      ? data[0]
-      : data;
+  const streak = Array.isArray(data) ? data[0] : data;
+  if (!streak) return;
 
-  if (!streak) {
-    return;
-  }
+  document.querySelectorAll("[data-streak-value]").forEach((el) => {
+    el.textContent = streak.current_streak ?? 0;
+  });
 
-  document
-    .querySelectorAll(
-      "[data-streak-value]"
-    )
-    .forEach((element) => {
-      element.textContent =
-        streak
-          .current_streak
-        ?? 0;
-    });
-
-  document
-    .querySelectorAll(
-      "[data-longest-streak]"
-    )
-    .forEach((element) => {
-      element.textContent =
-        streak
-          .longest_streak
-        ?? 0;
-    });
+  document.querySelectorAll("[data-longest-streak]").forEach((el) => {
+    el.textContent = streak.longest_streak ?? 0;
+  });
 }
 
 function prepararMobileMenu() {
-  const open =
-    document.getElementById(
-      "menu-open"
-    );
+  const open = document.getElementById("menu-open");
+  const close = document.getElementById("sidebar-close");
+  const backdrop = document.getElementById("sidebar-backdrop");
 
-  const close =
-    document.getElementById(
-      "sidebar-close"
-    );
+  const abrir = () => document.body.classList.add("sidebar-open");
+  const fechar = () => document.body.classList.remove("sidebar-open");
 
-  const backdrop =
-    document.getElementById(
-      "sidebar-backdrop"
-    );
-
-  const abrir = () => {
-    document.body
-      .classList
-      .add(
-        "sidebar-open"
-      );
-  };
-
-  const fechar = () => {
-    document.body
-      .classList
-      .remove(
-        "sidebar-open"
-      );
-  };
-
-  open?.addEventListener(
-    "click",
-    abrir
-  );
-
-  close?.addEventListener(
-    "click",
-    fechar
-  );
-
-  backdrop?.addEventListener(
-    "click",
-    fechar
-  );
+  open?.addEventListener("click", abrir);
+  close?.addEventListener("click", fechar);
+  backdrop?.addEventListener("click", fechar);
 }
 
 async function iniciarApp() {
-  const {
-    data,
-    error
-  } = await sb
-    .auth
-    .getSession();
+  const { data, error } = await sb.auth.getSession();
 
-  if (
-    error
-    || !data.session
-  ) {
-    window.location.replace(
-      "login.html"
-    );
-
+  if (error || !data.session) {
+    window.location.replace("login.html");
     return;
   }
 
-  const user =
-    data
-      .session
-      .user;
+  const user = data.session.user;
 
-  const cachedTheme =
-    readCachedTheme(
-      user.id
-    );
-
+  const cachedTheme = readCachedTheme(user.id);
   if (cachedTheme) {
-    applyThemeSetting(
-      cachedTheme
-    );
+    applyThemeSetting(cachedTheme);
   }
 
-  const [
-    profile
-  ] = await Promise.all([
-    carregarPerfil(
-      user.id
-    ),
-
-    carregarTema(
-      user.id
-    )
+  const [profile] = await Promise.all([
+    carregarPerfil(user.id),
+    carregarTema(user.id)
   ]);
 
-  document
-    .getElementById(
-      "sidebar"
-    )
-    .innerHTML =
-      sidebarMarkup(
-        user,
-        profile
-      );
+  document.getElementById("sidebar").innerHTML =
+    sidebarMarkup(user, profile);
 
-  iniciarLofiGlobal(
-    user.id
-  ).catch((error) => {
+  iniciarLofiGlobal(user.id).catch((error) => {
     console.warn(
-      "Não foi possível iniciar o player de áudio:",
+      "Não foi possível iniciar o player de lo-fi:",
       error
     );
   });
 
-  const info =
-    PAGE_INFO[page]
-    || PAGE_INFO.dashboard;
+  const info = PAGE_INFO[page] || PAGE_INFO.dashboard;
 
-  document
-    .querySelectorAll(
-      "[data-page-title]"
-    )
-    .forEach((element) => {
-      element.textContent =
-        info.title;
-    });
+  document.querySelectorAll("[data-page-title]").forEach((el) => {
+    el.textContent = info.title;
+  });
 
-  document
-    .querySelectorAll(
-      "[data-page-eyebrow]"
-    )
-    .forEach((element) => {
-      element.textContent =
-        info.eyebrow;
-    });
+  document.querySelectorAll("[data-page-eyebrow]").forEach((el) => {
+    el.textContent = info.eyebrow;
+  });
 
-  document
-    .getElementById(
-      "logout"
-    )
-    ?.addEventListener(
-      "click",
-      async () => {
-        await sb
-          .auth
-          .signOut();
-
-        window.location.replace(
-          "login.html"
-        );
-      }
-    );
+  document.getElementById("logout")?.addEventListener("click", async () => {
+    await sb.auth.signOut();
+    window.location.replace("login.html");
+  });
 
   prepararMobileMenu();
-
   await registrarAcessoDiario();
-
   prepararConfiguracoes();
 
-  document.body
-    .classList
-    .add(
-      "app-ready"
-    );
+  document.body.classList.add("app-ready");
 
-  window.docmapUser =
-    user;
-
-  window.docmapSession =
-    data.session;
-
-  window.docmapProfile =
-    profile;
+  window.docmapUser = user;
+  window.docmapSession = data.session;
+  window.docmapProfile = profile;
 
   window.dispatchEvent(
-    new CustomEvent(
-      "docmap:ready",
-      {
-        detail: {
-          user,
-          session:
-            data.session
-        }
-      }
-    )
+    new CustomEvent("docmap:ready", {
+      detail: { user, session: data.session }
+    })
   );
 }
 
