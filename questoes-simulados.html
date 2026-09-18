@@ -433,6 +433,47 @@
       display: inline-flex;
     }
 
+
+    .qs-overview {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .qs-overview-card {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+    }
+
+    .qs-overview-card span,
+    .qs-overview-card strong,
+    .qs-overview-card small {
+      display: block;
+    }
+
+    .qs-overview-card span {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .qs-overview-card strong {
+      margin-top: 7px;
+      font-size: 25px;
+      line-height: 1.1;
+    }
+
+    .qs-overview-card small {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
     @media (max-width: 1050px) {
       .qs-history {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -441,11 +482,16 @@
       .qs-upload-grid {
         grid-template-columns: 1fr;
       }
+
+      .qs-overview {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     @media (max-width: 700px) {
       .qs-history,
-      .qs-summary {
+      .qs-summary,
+      .qs-overview {
         grid-template-columns: 1fr;
       }
 
@@ -491,6 +537,32 @@
             <h1 data-page-title></h1>
           </div>
         </header>
+
+        <section class="qs-overview">
+          <article class="qs-overview-card">
+            <span>Simulados realizados</span>
+            <strong id="qs-overview-sets">—</strong>
+            <small id="qs-overview-sets-helper">Carregando...</small>
+          </article>
+
+          <article class="qs-overview-card">
+            <span>Questões respondidas</span>
+            <strong id="qs-overview-questions">—</strong>
+            <small id="qs-overview-questions-helper">Acertos e erros salvos</small>
+          </article>
+
+          <article class="qs-overview-card">
+            <span>Aproveitamento geral</span>
+            <strong id="qs-overview-accuracy">—</strong>
+            <small id="qs-overview-accuracy-helper">Sem gabaritos ainda</small>
+          </article>
+
+          <article class="qs-overview-card">
+            <span>Erros no caderno</span>
+            <strong id="qs-overview-errors">—</strong>
+            <small id="qs-overview-errors-helper">Enviados ao Caderno de Erros</small>
+          </article>
+        </section>
 
         <div class="qs-stack">
 
@@ -611,7 +683,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="supabase.js"></script>
-  <script src="app.js?v=4.2"></script>
-  <script src="questoes-simulados.js?v=4.2"></script>
+  <script src="app.js?v=7.0"></script>
+  <script src="questoes-simulados.js?v=7.0"></script>
 </body>
 </html>

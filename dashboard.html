@@ -521,8 +521,110 @@
 }
 
 
+
+.simulations-panel {
+  margin-top: 16px;
+}
+
+.simulations-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+}
+
+.simulations-overview-copy h2 {
+  margin: 0;
+}
+
+.simulations-overview-copy p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.simulations-link {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.simulations-recent {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 15px;
+}
+
+.simulation-mini-card {
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.simulation-mini-card strong,
+.simulation-mini-card span,
+.simulation-mini-card small {
+  display: block;
+}
+
+.simulation-mini-card strong {
+  min-height: 34px;
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.simulation-mini-score {
+  margin-top: 10px;
+  font-size: 20px;
+  font-weight: 850;
+}
+
+.simulation-mini-card small {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.simulations-empty {
+  grid-column: 1 / -1;
+  padding: 18px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+@media (max-width: 1000px) {
+  .simulations-recent {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .simulations-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .simulations-recent {
+    grid-template-columns: 1fr;
+  }
+}
+
+
 .metric-grid {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
 #metric-difficulty {
@@ -596,10 +698,45 @@
           </article>
 
           <article class="metric-card">
+            <span class="metric-label">Simulados</span>
+            <strong id="metric-simulations" class="metric-value">—</strong>
+            <span id="metric-simulations-helper" class="metric-helper">
+              Sem simulados concluídos
+            </span>
+          </article>
+
+          <article class="metric-card">
             <span class="metric-label">Ofensiva</span>
             <strong class="metric-value"><span data-streak-value>—</span> dias</strong>
             <span class="metric-helper">Recorde: <span data-longest-streak>—</span> dias</span>
           </article>
+        </section>
+
+        <section class="panel simulations-panel">
+          <div class="simulations-overview">
+            <div class="simulations-overview-copy">
+              <h2>Simulados recentes</h2>
+              <p id="simulations-overview-copy">
+                Acompanhe seus últimos gabaritos e o aproveitamento geral.
+              </p>
+            </div>
+
+            <a
+              class="simulations-link"
+              href="questoes-simulados.html"
+            >
+              Ver simulados
+            </a>
+          </div>
+
+          <div
+            id="simulations-recent"
+            class="simulations-recent"
+          >
+            <div class="simulations-empty">
+              Carregando simulados...
+            </div>
+          </div>
         </section>
 
         <section class="panel calendar-panel">
@@ -659,7 +796,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
-  <script src="app.js?v=4.2"></script>
-  <script src="dashboard.js?v=4.2"></script>
+  <script src="app.js?v=7.0"></script>
+  <script src="dashboard.js?v=7.0"></script>
 </body>
 </html>

@@ -670,12 +670,284 @@ async function loadQuestionDifficulty() {
 }
 
 
+
+function dashboardEscapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+
+
+function formatSimulationAccuracy(value) {
+  if (
+    value === null
+    || value === undefined
+    || Number.isNaN(
+      Number(value)
+    )
+  ) {
+    return "—";
+  }
+
+  return `${Number(value)
+    .toFixed(1)
+    .replace(".", ",")}%`;
+}
+
+
+async function loadSimulationMetrics() {
+  const value =
+    document.getElementById(
+      "metric-simulations"
+    );
+
+  const helper =
+    document.getElementById(
+      "metric-simulations-helper"
+    );
+
+  const recent =
+    document.getElementById(
+      "simulations-recent"
+    );
+
+  const overviewCopy =
+    document.getElementById(
+      "simulations-overview-copy"
+    );
+
+
+  if (
+    !value
+    || !helper
+    || !recent
+  ) {
+    return;
+  }
+
+
+  const [
+    overallResult,
+    recentResult
+  ] =
+    await Promise.all([
+      dashboardSb
+        .from(
+          "question_metrics_overall"
+        )
+        .select(
+          "completed_sets,total_sets,answered_questions,correct_questions,wrong_questions,accuracy_percent"
+        )
+        .maybeSingle(),
+
+      dashboardSb
+        .from(
+          "question_set_metrics"
+        )
+        .select(
+          "set_id,title,total_questions,answered_count,correct_count,wrong_count,accuracy_percent,completed,created_at,last_answered_at"
+        )
+        .gt(
+          "answered_count",
+          0
+        )
+        .order(
+          "last_answered_at",
+          {
+            ascending: false,
+            nullsFirst: false
+          }
+        )
+        .limit(
+          4
+        )
+    ]);
+
+
+  if (
+    overallResult.error
+  ) {
+    console.warn(
+      overallResult.error
+    );
+
+    value.textContent =
+      "—";
+
+    helper.textContent =
+      "Sem dados de simulados";
+
+  } else {
+    const overall =
+      overallResult.data
+      || {
+        completed_sets: 0,
+        answered_questions: 0,
+        accuracy_percent: null
+      };
+
+
+    const completed =
+      Number(
+        overall.completed_sets
+        || 0
+      );
+
+    const answered =
+      Number(
+        overall.answered_questions
+        || 0
+      );
+
+
+    value.textContent =
+      completed;
+
+
+    helper.textContent =
+      answered
+        ? `${answered} questões · ${formatSimulationAccuracy(
+            overall.accuracy_percent
+          )} de acerto`
+        : "Nenhum gabarito salvo";
+  }
+
+
+  if (
+    recentResult.error
+  ) {
+    console.warn(
+      recentResult.error
+    );
+
+    recent.innerHTML =
+      `
+        <div class="simulations-empty">
+          Não foi possível carregar os simulados recentes.
+        </div>
+      `;
+
+    return;
+  }
+
+
+  const rows =
+    recentResult.data
+    || [];
+
+
+  if (
+    !rows.length
+  ) {
+    recent.innerHTML =
+      `
+        <div class="simulations-empty">
+          Seus últimos simulados aparecerão aqui depois que você salvar um gabarito.
+        </div>
+      `;
+
+    if (overviewCopy) {
+      overviewCopy.textContent =
+        "Ainda não há gabaritos salvos.";
+    }
+
+    return;
+  }
+
+
+  const totalAnswered =
+    rows.reduce(
+      (sum, row) =>
+        sum
+        + Number(
+            row.answered_count
+            || 0
+          ),
+      0
+    );
+
+
+  if (overviewCopy) {
+    overviewCopy.textContent =
+      `${rows.length} simulado${
+        rows.length === 1
+          ? ""
+          : "s"
+      } recente${
+        rows.length === 1
+          ? ""
+          : "s"
+      } · ${totalAnswered} questões respondidas`;
+  }
+
+
+  recent.innerHTML =
+    rows.map(
+      (row) => {
+        const answered =
+          Number(
+            row.answered_count
+            || 0
+          );
+
+        const total =
+          Number(
+            row.total_questions
+            || 0
+          );
+
+        const correct =
+          Number(
+            row.correct_count
+            || 0
+          );
+
+        const wrong =
+          Number(
+            row.wrong_count
+            || 0
+          );
+
+
+        return `
+          <article class="simulation-mini-card">
+            <strong>
+              ${dashboardEscapeHtml(
+                row.title
+                || "Simulado"
+              )}
+            </strong>
+
+            <span class="simulation-mini-score">
+              ${formatSimulationAccuracy(
+                row.accuracy_percent
+              )}
+            </span>
+
+            <small>
+              ${answered}/${total || answered} respondidas
+              · ${correct} acertos
+              · ${wrong} erros
+            </small>
+          </article>
+        `;
+      }
+    ).join("");
+}
+
+
+
 async function loadDashboardMetrics() {
   await Promise.all([
     loadStudyHours(),
     loadRetention(),
     loadFlashcardMetrics(),
-    loadQuestionDifficulty()
+    loadQuestionDifficulty(),
+    loadSimulationMetrics()
   ]);
 }
 

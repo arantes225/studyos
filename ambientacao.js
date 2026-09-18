@@ -1907,6 +1907,379 @@ if (window.docmapUser) {
 }
 
 
+
+/* =========================================================
+   FASE 7 — CCQs EM ROTAÇÃO
+   ========================================================= */
+
+const ccqState = {
+  items: [],
+  index: 0,
+  timerId: null
+};
+
+
+function setCcqChip(
+  id,
+  value
+) {
+  const element =
+    document.getElementById(
+      id
+    );
+
+  if (!element) return;
+
+  element.textContent =
+    value || "";
+
+  element.hidden =
+    !value;
+}
+
+
+function renderCcq() {
+  const empty =
+    document.getElementById(
+      "ccq-empty"
+    );
+
+  const rotation =
+    document.getElementById(
+      "ccq-rotation"
+    );
+
+  const counter =
+    document.getElementById(
+      "ccq-counter"
+    );
+
+
+  if (
+    !empty
+    || !rotation
+    || !counter
+  ) {
+    return;
+  }
+
+
+  if (
+    !ccqState.items.length
+  ) {
+    empty.hidden =
+      false;
+
+    rotation.hidden =
+      true;
+
+    counter.textContent =
+      "0 CCQs";
+
+    return;
+  }
+
+
+  empty.hidden =
+    true;
+
+  rotation.hidden =
+    false;
+
+
+  const item =
+    ccqState.items[
+      ccqState.index
+    ];
+
+
+  counter.textContent =
+    `${ccqState.index + 1} / ${ccqState.items.length}`;
+
+
+  setCcqChip(
+    "ccq-area",
+    item.area
+  );
+
+
+  setCcqChip(
+    "ccq-materia",
+    item.materia
+  );
+
+
+  setCcqChip(
+    "ccq-theme",
+    item.theme
+  );
+
+
+  const text =
+    document.getElementById(
+      "ccq-text"
+    );
+
+
+  if (text) {
+    text.textContent =
+      item.ccq;
+  }
+}
+
+
+function stopCcqRotation() {
+  if (
+    ccqState.timerId
+  ) {
+    clearInterval(
+      ccqState.timerId
+    );
+
+    ccqState.timerId =
+      null;
+  }
+}
+
+
+function startCcqRotation() {
+  stopCcqRotation();
+
+
+  if (
+    ccqState.items.length
+    < 2
+  ) {
+    return;
+  }
+
+
+  ccqState.timerId =
+    window.setInterval(
+      () => {
+        if (
+          document.hidden
+        ) {
+          return;
+        }
+
+        ccqState.index =
+          (
+            ccqState.index
+            + 1
+          )
+          % ccqState
+              .items
+              .length;
+
+        renderCcq();
+      },
+      30000
+    );
+}
+
+
+function moveCcq(delta) {
+  if (
+    !ccqState.items.length
+  ) {
+    return;
+  }
+
+
+  ccqState.index =
+    (
+      ccqState.index
+      + delta
+      + ccqState.items.length
+    )
+    % ccqState
+        .items
+        .length;
+
+
+  renderCcq();
+
+  startCcqRotation();
+}
+
+
+function dailyCcqStartIndex(
+  count
+) {
+  if (
+    count <= 1
+  ) {
+    return 0;
+  }
+
+
+  const now =
+    new Date();
+
+
+  const daySeed =
+    Number(
+      `${now.getFullYear()}${String(
+        now.getMonth() + 1
+      ).padStart(
+        2,
+        "0"
+      )}${String(
+        now.getDate()
+      ).padStart(
+        2,
+        "0"
+      )}`
+    );
+
+
+  return daySeed
+    % count;
+}
+
+
+async function loadCcqRotation() {
+  if (
+    !window.docmapUser
+  ) {
+    return;
+  }
+
+
+  const {
+    data,
+    error
+  } =
+    await ambientacaoSb
+      .from(
+        "error_notebook"
+      )
+      .select(
+        "id,area,materia,theme,ccq,due_date,review_count,created_at"
+      )
+      .eq(
+        "active",
+        true
+      )
+      .not(
+        "ccq",
+        "is",
+        null
+      )
+      .order(
+        "due_date",
+        {
+          ascending: true
+        }
+      )
+      .order(
+        "review_count",
+        {
+          ascending: true
+        }
+      )
+      .limit(
+        30
+      );
+
+
+  if (error) {
+    console.warn(
+      "Não foi possível carregar os CCQs:",
+      error.message
+    );
+
+    ccqState.items =
+      [];
+
+    renderCcq();
+
+    return;
+  }
+
+
+  ccqState.items =
+    (data || [])
+      .filter(
+        (item) =>
+          String(
+            item.ccq
+            || ""
+          ).trim()
+      );
+
+
+  ccqState.index =
+    dailyCcqStartIndex(
+      ccqState.items.length
+    );
+
+
+  renderCcq();
+
+  startCcqRotation();
+}
+
+
+function wireCcqRotation() {
+  document
+    .getElementById(
+      "ccq-prev"
+    )
+    ?.addEventListener(
+      "click",
+      () =>
+        moveCcq(
+          -1
+        )
+    );
+
+
+  document
+    .getElementById(
+      "ccq-next"
+    )
+    ?.addEventListener(
+      "click",
+      () =>
+        moveCcq(
+          1
+        )
+    );
+
+
+  window.addEventListener(
+    "pagehide",
+    stopCcqRotation
+  );
+}
+
+
+async function initCcqRotation() {
+  wireCcqRotation();
+
+  await loadCcqRotation();
+}
+
+
+
+
+
+if (window.docmapUser) {
+  initCcqRotation();
+
+} else {
+  window.addEventListener(
+    "docmap:ready",
+    initCcqRotation,
+    {
+      once: true
+    }
+  );
+}
+
+
 function bindAmbientacaoLofi() {
   if (!window.docmapAudio) {
     return;

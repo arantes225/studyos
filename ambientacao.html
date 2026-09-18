@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ambientação · DocMap</title>
   <link rel="stylesheet" href="style.css?v=audio3">
-  <link rel="stylesheet" href="ambientacao.css?v=6.0">
+  <link rel="stylesheet" href="ambientacao.css?v=7.0">
 </head>
 <body data-page="ambientacao">
   <div class="app-shell">
@@ -236,16 +236,82 @@
           ></iframe>
         </section>
 
-        <section class="panel">
+        <section class="panel ccq-panel">
           <div class="panel-header">
             <div>
               <h2>CCQs em rotação</h2>
-              <p>Os conceitos centrais do caderno de erros passarão por aqui durante a ambientação.</p>
+              <p>
+                Conceitos centrais do Caderno de Erros para revisão rápida durante a Ambientação.
+              </p>
             </div>
-            <span class="badge accent">Fase 6/7</span>
+
+            <span
+              id="ccq-counter"
+              class="badge accent"
+            >
+              —
+            </span>
           </div>
 
-          <div class="placeholder">Os CCQs aparecerão aqui automaticamente.</div>
+          <div
+            id="ccq-empty"
+            class="ccq-empty"
+            hidden
+          >
+            <strong>Nenhum CCQ disponível.</strong>
+            <span>
+              Quando você enviar erros ao Caderno de Erros, os CCQs começarão a aparecer aqui.
+            </span>
+          </div>
+
+          <div
+            id="ccq-rotation"
+            class="ccq-rotation"
+            hidden
+          >
+            <div class="ccq-taxonomy">
+              <span
+                id="ccq-area"
+                class="ccq-chip"
+                hidden
+              ></span>
+
+              <span
+                id="ccq-materia"
+                class="ccq-chip"
+                hidden
+              ></span>
+
+              <span
+                id="ccq-theme"
+                class="ccq-chip accent"
+                hidden
+              ></span>
+            </div>
+
+            <div
+              id="ccq-text"
+              class="ccq-text"
+            ></div>
+
+            <div class="ccq-actions">
+              <button
+                id="ccq-prev"
+                class="button secondary"
+                type="button"
+              >
+                Anterior
+              </button>
+
+              <button
+                id="ccq-next"
+                class="button primary"
+                type="button"
+              >
+                Próximo CCQ
+              </button>
+            </div>
+          </div>
         </section>
       </div>
     </main>
@@ -253,7 +319,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
-  <script src="app.js?v=audio3"></script>
-  <script src="ambientacao.js?v=6.0"></script>
+  <script src="app.js?v=7.0"></script>
+  <script src="ambientacao.js?v=7.0"></script>
 </body>
 </html>

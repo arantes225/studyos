@@ -408,6 +408,183 @@ async function importPdf() {
   }
 }
 
+
+async function loadQuestionOverview() {
+  const {
+    data,
+    error
+  } = await qsSb
+    .from("question_metrics_overall")
+    .select(
+      "completed_sets,total_sets,answered_questions,correct_questions,wrong_questions,sent_to_error_count,accuracy_percent"
+    )
+    .maybeSingle();
+
+
+  const setValue =
+    document.getElementById(
+      "qs-overview-sets"
+    );
+
+  const setHelper =
+    document.getElementById(
+      "qs-overview-sets-helper"
+    );
+
+  const questionValue =
+    document.getElementById(
+      "qs-overview-questions"
+    );
+
+  const questionHelper =
+    document.getElementById(
+      "qs-overview-questions-helper"
+    );
+
+  const accuracyValue =
+    document.getElementById(
+      "qs-overview-accuracy"
+    );
+
+  const accuracyHelper =
+    document.getElementById(
+      "qs-overview-accuracy-helper"
+    );
+
+  const errorValue =
+    document.getElementById(
+      "qs-overview-errors"
+    );
+
+  const errorHelper =
+    document.getElementById(
+      "qs-overview-errors-helper"
+    );
+
+
+  if (error) {
+    console.warn(
+      "Não foi possível carregar as métricas de simulados:",
+      error.message
+    );
+
+    if (setValue) setValue.textContent = "—";
+    if (questionValue) questionValue.textContent = "—";
+    if (accuracyValue) accuracyValue.textContent = "—";
+    if (errorValue) errorValue.textContent = "—";
+
+    return;
+  }
+
+
+  const metrics =
+    data || {
+      completed_sets: 0,
+      total_sets: 0,
+      answered_questions: 0,
+      correct_questions: 0,
+      wrong_questions: 0,
+      sent_to_error_count: 0,
+      accuracy_percent: null
+    };
+
+
+  if (setValue) {
+    setValue.textContent =
+      Number(
+        metrics.completed_sets
+        || 0
+      );
+  }
+
+
+  if (setHelper) {
+    const totalSets =
+      Number(
+        metrics.total_sets
+        || 0
+      );
+
+    setHelper.textContent =
+      `${totalSets} ${
+        totalSets === 1
+          ? "simulado importado"
+          : "simulados importados"
+      }`;
+  }
+
+
+  if (questionValue) {
+    questionValue.textContent =
+      Number(
+        metrics.answered_questions
+        || 0
+      );
+  }
+
+
+  if (questionHelper) {
+    const correct =
+      Number(
+        metrics.correct_questions
+        || 0
+      );
+
+    const wrong =
+      Number(
+        metrics.wrong_questions
+        || 0
+      );
+
+    questionHelper.textContent =
+      `${correct} acertos · ${wrong} erros`;
+  }
+
+
+  if (accuracyValue) {
+    accuracyValue.textContent =
+      metrics.accuracy_percent === null
+        || metrics.accuracy_percent === undefined
+          ? "—"
+          : `${Number(
+              metrics.accuracy_percent
+            ).toFixed(1)
+             .replace(".", ",")}%`;
+  }
+
+
+  if (accuracyHelper) {
+    accuracyHelper.textContent =
+      Number(
+        metrics.answered_questions
+        || 0
+      )
+        ? "Aproveitamento de todos os gabaritos"
+        : "Sem gabaritos ainda";
+  }
+
+
+  if (errorValue) {
+    errorValue.textContent =
+      Number(
+        metrics.sent_to_error_count
+        || 0
+      );
+  }
+
+
+  if (errorHelper) {
+    errorHelper.textContent =
+      Number(
+        metrics.sent_to_error_count
+        || 0
+      )
+        ? "Erros já transformados em revisão"
+        : "Nenhum erro enviado ainda";
+  }
+}
+
+
 async function loadSets() {
   const [
     setsResult,
@@ -426,7 +603,7 @@ async function loadSets() {
 
     qsSb
       .from("question_attempts")
-      .select("question_item_id,result")
+      .select("question_item_id,result,sent_to_error")
   ]);
 
   if (setsResult.error) {
@@ -462,7 +639,8 @@ async function loadSets() {
     metrics.set(set.id, {
       answered: 0,
       correct: 0,
-      wrong: 0
+      wrong: 0,
+      sent: 0
     });
   }
 
@@ -485,6 +663,10 @@ async function loadSets() {
     if (attempt.result === "wrong") {
       metric.wrong += 1;
     }
+
+    if (attempt.sent_to_error === true) {
+      metric.sent += 1;
+    }
   }
 
   qsState.sets = (setsResult.data || []).map((set) => ({
@@ -492,11 +674,14 @@ async function loadSets() {
     metrics: metrics.get(set.id) || {
       answered: 0,
       correct: 0,
-      wrong: 0
+      wrong: 0,
+      sent: 0
     }
   }));
 
   renderSetHistory();
+
+  await loadQuestionOverview();
 }
 
 function renderSetHistory() {
@@ -746,6 +931,16 @@ function renderQuestions() {
             </label>
 
             <label class="qs-field full">
+              <span>CCQ <small>(obrigatório para enviar ao Caderno de Erros)</small></span>
+              <input
+                type="text"
+                data-error-ccq="${qsEscape(item.id)}"
+                value="${qsEscape(attempt?.ccq || "")}"
+                placeholder="Ex.: Quando indicar sulfato de magnésio na eclâmpsia?"
+              >
+            </label>
+
+            <label class="qs-field full">
               <span>O que pensei <small>(opcional)</small></span>
               <textarea
                 data-thought="${qsEscape(item.id)}"
@@ -829,6 +1024,11 @@ function readWrongMetadata(itemId) {
       `[data-correct-option="${CSS.escape(itemId)}"]`
     )?.value || "";
 
+  const ccq =
+    document.querySelector(
+      `[data-error-ccq="${CSS.escape(itemId)}"]`
+    )?.value?.trim() || "";
+
   const thought =
     document.querySelector(
       `[data-thought="${CSS.escape(itemId)}"]`
@@ -838,6 +1038,7 @@ function readWrongMetadata(itemId) {
     area,
     materia,
     correctOption,
+    ccq,
     thought
   };
 }
@@ -866,6 +1067,7 @@ async function saveAnswerKey() {
           area: null,
           materia: null,
           correct_option: null,
+          ccq: null,
           what_i_thought: null,
           sent_to_error:
             previous?.sent_to_error || false,
@@ -892,6 +1094,8 @@ async function saveAnswerKey() {
         materia: metadata.materia || null,
         correct_option:
           metadata.correctOption || null,
+        ccq:
+          metadata.ccq || null,
         what_i_thought:
           metadata.thought || null,
         sent_to_error:
@@ -953,6 +1157,7 @@ async function saveAnswerKey() {
 async function sendErrorsToNotebook() {
   if (!qsState.currentSet) return;
 
+
   const wrongAttempts =
     Array.from(
       qsState.attempts.values()
@@ -962,110 +1167,278 @@ async function sendErrorsToNotebook() {
         && !attempt.sent_to_error
     );
 
+
   if (!wrongAttempts.length) {
     setAnswerStatus(
       "Não há erros novos para enviar. Salve o gabarito primeiro.",
       "error"
     );
+
     return;
   }
 
+
+  const missingCcq = [];
+
+
+  for (const attempt of wrongAttempts) {
+    const item =
+      qsState.items.find(
+        (question) =>
+          question.id
+          === attempt.question_item_id
+      );
+
+    if (!item) continue;
+
+
+    const metadata =
+      readWrongMetadata(
+        item.id
+      );
+
+
+    if (!metadata.ccq) {
+      missingCcq.push(
+        item.question_number
+      );
+    }
+  }
+
+
+  if (missingCcq.length) {
+    setAnswerStatus(
+      `Preencha o CCQ nas questões: ${missingCcq.join(", ")}.`,
+      "error"
+    );
+
+    return;
+  }
+
+
   const button =
-    document.getElementById("qs-send-errors");
+    document.getElementById(
+      "qs-send-errors"
+    );
 
-  button.disabled = true;
+  button.disabled =
+    true;
 
-  let sent = 0;
+
+  let sent =
+    0;
+
 
   try {
-    for (const attempt of wrongAttempts) {
+    for (
+      const attempt
+      of wrongAttempts
+    ) {
       const item =
         qsState.items.find(
           (question) =>
-            question.id ===
-            attempt.question_item_id
+            question.id
+            === attempt.question_item_id
         );
+
 
       if (!item) continue;
 
-      if (!attempt.area || !attempt.correct_option) {
+
+      const metadata =
+        readWrongMetadata(
+          item.id
+        );
+
+
+      const area =
+        metadata.area
+        || attempt.area
+        || "";
+
+      const materia =
+        metadata.materia
+        || attempt.materia
+        || null;
+
+      const correctOption =
+        metadata.correctOption
+        || attempt.correct_option
+        || "";
+
+      const thought =
+        metadata.thought
+        || attempt.what_i_thought
+        || null;
+
+      const ccq =
+        metadata.ccq;
+
+
+      if (
+        !area
+        || !correctOption
+      ) {
         throw new Error(
           `Questão ${item.question_number}: selecione Área e Resposta correta.`
         );
       }
 
-      const ccq =
-        `Questão ${item.question_number} - ${qsState.currentSet.title}`;
 
-      const { data: errorEntry, error: createError } =
+      /*
+        Salva o CCQ e eventuais
+        ajustes feitos depois do
+        gabarito, antes de criar
+        a entrada no Caderno.
+      */
+
+      const {
+        error: metadataError
+      } =
+        await qsSb
+          .from(
+            "question_attempts"
+          )
+          .update({
+            area,
+            materia,
+            correct_option:
+              correctOption,
+            ccq,
+            what_i_thought:
+              thought
+          })
+          .eq(
+            "id",
+            attempt.id
+          );
+
+
+      if (metadataError) {
+        throw metadataError;
+      }
+
+
+      const {
+        data: errorEntry,
+        error: createError
+      } =
         await qsSb.rpc(
           "create_error_entry",
           {
-            p_area: attempt.area,
+            p_area:
+              area,
+
             p_materia:
-              attempt.materia || null,
+              materia,
+
             p_theme:
-              qsState.currentSet.title,
-            p_ccq: ccq,
+              qsState
+                .currentSet
+                .title,
+
+            p_ccq:
+              ccq,
+
             p_question_text:
               item.raw_text,
+
             p_correct_answer:
-              `Alternativa ${attempt.correct_option}`,
+              `Alternativa ${correctOption}`,
+
             p_what_i_thought:
-              attempt.what_i_thought || null,
+              thought,
+
             p_question_image_path:
               null
           }
         );
 
+
       if (createError) {
         throw createError;
       }
 
+
       const entry =
-        Array.isArray(errorEntry)
+        Array.isArray(
+          errorEntry
+        )
           ? errorEntry[0]
           : errorEntry;
 
-      const { error: updateError } =
+
+      const {
+        error: updateError
+      } =
         await qsSb
-          .from("question_attempts")
+          .from(
+            "question_attempts"
+          )
           .update({
-            sent_to_error: true,
+            sent_to_error:
+              true,
+
             error_entry_id:
-              entry?.id || null
+              entry?.id
+              || null
           })
-          .eq("id", attempt.id);
+          .eq(
+            "id",
+            attempt.id
+          );
+
 
       if (updateError) {
         throw updateError;
       }
 
-      sent += 1;
+
+      sent +=
+        1;
     }
+
 
     setAnswerStatus(
       `${sent} ${
-        sent === 1 ? "erro enviado" : "erros enviados"
+        sent === 1
+          ? "erro enviado"
+          : "erros enviados"
       } ao Caderno de Erros.`,
       "success"
     );
 
+
     await Promise.all([
       loadSets(),
-      openSet(qsState.currentSet.id)
+      openSet(
+        qsState
+          .currentSet
+          .id
+      ),
+      loadQuestionOverview()
     ]);
+
+
   } catch (error) {
-    console.error(error);
+    console.error(
+      error
+    );
+
 
     setAnswerStatus(
-      error.message || "Não foi possível enviar os erros.",
+      error.message
+      || "Não foi possível enviar os erros.",
       "error"
     );
+
+
   } finally {
-    button.disabled = false;
+    button.disabled =
+      false;
   }
 }
+
 
 async function deleteSet(setId) {
   const set =
@@ -1115,7 +1488,10 @@ async function deleteSet(setId) {
     closeCurrentSet();
   }
 
-  await loadSets();
+  await Promise.all([
+    loadSets(),
+    loadQuestionOverview()
+  ]);
 }
 
 function closeCurrentSet() {
