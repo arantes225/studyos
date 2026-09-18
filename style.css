@@ -54,3 +54,89 @@ h1 {
   background: #fef2f2;
   color: #991b1b;
 }
+.login-container {
+  max-width: 440px;
+}
+
+.subtitulo {
+  margin-top: 0;
+  margin-bottom: 30px;
+  color: #6b7280;
+}
+
+label {
+  display: block;
+  margin-top: 18px;
+  margin-bottom: 7px;
+  font-weight: 600;
+}
+
+input {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 9px;
+  font-size: 16px;
+  outline: none;
+}
+
+input:focus {
+  border-color: #374151;
+}
+
+.botao {
+  width: 100%;
+  margin-top: 20px;
+  padding: 13px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: #111827;
+  color: white;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.botao:hover {
+  opacity: 0.9;
+}
+
+.botao:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.botao-secundario {
+  margin-top: 10px;
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.mensagem {
+  margin-top: 20px;
+  min-height: 24px;
+}
+
+.mensagem.erro {
+  color: #b91c1c;
+}
+
+.mensagem.sucesso {
+  color: #166534;
+}
+
+.usuario-logado {
+  padding: 20px;
+  background: #f3f4f6;
+  border-radius: 12px;
+}
+
+.usuario-logado strong {
+  display: block;
+  margin-top: 5px;
+  margin-bottom: 20px;
+}
