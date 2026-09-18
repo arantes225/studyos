@@ -1,35 +1,79 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StudyOS | Login</title>
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>DocMap | Login</title>
+
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
 </head>
-<body class="auth-page">
-  <main class="auth-card">
-    <div class="brand-mark">S</div>
-    <h1>StudyOS</h1>
-    <p class="muted">Entre para continuar seus estudos.</p>
 
-    <div class="field">
-      <label for="email">E-mail</label>
-      <input id="email" type="email" autocomplete="email" placeholder="voce@email.com">
-    </div>
+<body>
 
-    <div class="field">
-      <label for="senha">Senha</label>
-      <input id="senha" type="password" autocomplete="current-password" placeholder="Sua senha">
-    </div>
+  <main class="container">
 
-    <button id="botao-entrar" class="btn primary">Entrar</button>
-    <button id="botao-criar-conta" class="btn secondary">Criar conta</button>
+    <h1>DocMap</h1>
 
-    <p id="mensagem-auth" class="message"></p>
+    <p>Entre na sua conta</p>
+
+
+    <label for="email">
+      E-mail
+    </label>
+
+    <input
+      id="email"
+      type="email"
+      placeholder="seu@email.com"
+    >
+
+
+    <label for="senha">
+      Senha
+    </label>
+
+    <input
+      id="senha"
+      type="password"
+      placeholder="Sua senha"
+    >
+
+
+    <button
+      id="entrar"
+      type="button"
+    >
+      Entrar
+    </button>
+
+
+    <button
+      id="criar-conta"
+      type="button"
+    >
+      Criar conta
+    </button>
+
+
+    <p id="mensagem"></p>
+
   </main>
 
+
+  <!-- ORDEM IMPORTANTE -->
   <script src="supabase.js"></script>
   <script src="auth.js"></script>
+
 </body>
+
 </html>

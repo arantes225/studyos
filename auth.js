@@ -1,97 +1,281 @@
-const supabase = window.studyos.supabase;
+console.log("auth.js carregado");
 
-const emailInput = document.getElementById("email");
-const senhaInput = document.getElementById("senha");
-const botaoEntrar = document.getElementById("botao-entrar");
-const botaoCriarConta = document.getElementById("botao-criar-conta");
-const mensagem = document.getElementById("mensagem-auth");
+const supabase =
+  window.supabaseClient;
 
-function showMessage(text, type = "") {
-  mensagem.textContent = text;
-  mensagem.className = `message ${type}`;
+const emailInput =
+  document.getElementById("email");
+
+const senhaInput =
+  document.getElementById("senha");
+
+const botaoEntrar =
+  document.getElementById("entrar");
+
+const botaoCriar =
+  document.getElementById("criar-conta");
+
+const mensagem =
+  document.getElementById("mensagem");
+
+
+function mostrarMensagem(
+  texto,
+  erro = false
+) {
+
+  mensagem.textContent =
+    texto;
+
+  mensagem.style.color =
+    erro
+      ? "red"
+      : "green";
+
 }
 
-function validate() {
-  const email = emailInput.value.trim();
-  const password = senhaInput.value;
 
-  if (!email) {
-    showMessage("Digite seu e-mail.", "error");
-    return false;
+/* =====================================================
+   LOGIN
+===================================================== */
+
+async function entrar() {
+
+  console.log(
+    "Botão entrar clicado"
+  );
+
+
+  const email =
+    emailInput.value.trim();
+
+  const senha =
+    senhaInput.value;
+
+
+  if (
+    !email ||
+    !senha
+  ) {
+
+    mostrarMensagem(
+      "Preencha e-mail e senha.",
+      true
+    );
+
+    return;
+
   }
 
-  if (!password || password.length < 6) {
-    showMessage("A senha deve ter pelo menos 6 caracteres.", "error");
-    return false;
-  }
 
-  return true;
-}
+  mostrarMensagem(
+    "Entrando..."
+  );
 
-function translateError(message) {
-  if (message.includes("Invalid login credentials")) return "E-mail ou senha incorretos.";
-  if (message.includes("Email not confirmed")) return "Confirme seu e-mail antes de entrar.";
-  if (message.includes("User already registered")) return "Já existe uma conta com este e-mail.";
-  if (message.includes("Password should be")) return "A senha não atende aos requisitos mínimos.";
-  return message;
-}
 
-async function login() {
-  if (!validate()) return;
+  const {
+    data,
+    error
+  } =
+    await supabase.auth
+      .signInWithPassword({
 
-  botaoEntrar.disabled = true;
-  showMessage("Entrando...");
+        email: email,
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: emailInput.value.trim(),
-    password: senhaInput.value
-  });
+        password: senha
 
-  botaoEntrar.disabled = false;
+      });
+
 
   if (error) {
-    showMessage(translateError(error.message), "error");
+
+    console.error(
+      error
+    );
+
+
+    mostrarMensagem(
+      error.message,
+      true
+    );
+
     return;
+
   }
 
-  if (data.session) {
-    window.location.href = "dashboard.html";
-  }
+
+  console.log(
+    "Login realizado:",
+    data
+  );
+
+
+  mostrarMensagem(
+    "Login realizado com sucesso."
+  );
+
+
+  window.location.href =
+    "dashboard.html";
+
 }
 
-async function signUp() {
-  if (!validate()) return;
 
-  botaoCriarConta.disabled = true;
-  showMessage("Criando conta...");
+/* =====================================================
+   CRIAR CONTA
+===================================================== */
 
-  const { data, error } = await supabase.auth.signUp({
-    email: emailInput.value.trim(),
-    password: senhaInput.value
-  });
+async function criarConta() {
 
-  botaoCriarConta.disabled = false;
+  console.log(
+    "Botão criar conta clicado"
+  );
+
+
+  const email =
+    emailInput.value.trim();
+
+  const senha =
+    senhaInput.value;
+
+
+  if (
+    !email ||
+    !senha
+  ) {
+
+    mostrarMensagem(
+      "Preencha e-mail e senha.",
+      true
+    );
+
+    return;
+
+  }
+
+
+  if (
+    senha.length < 6
+  ) {
+
+    mostrarMensagem(
+      "A senha precisa ter pelo menos 6 caracteres.",
+      true
+    );
+
+    return;
+
+  }
+
+
+  mostrarMensagem(
+    "Criando conta..."
+  );
+
+
+  const {
+    data,
+    error
+  } =
+    await supabase.auth
+      .signUp({
+
+        email: email,
+
+        password: senha
+
+      });
+
 
   if (error) {
-    showMessage(translateError(error.message), "error");
+
+    console.error(
+      error
+    );
+
+
+    mostrarMensagem(
+      error.message,
+      true
+    );
+
     return;
+
   }
 
-  if (data.session) {
-    window.location.href = "dashboard.html";
+
+  console.log(
+    "Conta criada:",
+    data
+  );
+
+
+  if (
+    data.session
+  ) {
+
+    window.location.href =
+      "dashboard.html";
+
     return;
+
   }
 
-  showMessage("Conta criada. Verifique seu e-mail para confirmar o cadastro.", "success");
+
+  mostrarMensagem(
+    "Conta criada. Verifique seu e-mail para confirmar o cadastro."
+  );
+
 }
 
-botaoEntrar.addEventListener("click", login);
-botaoCriarConta.addEventListener("click", signUp);
-senhaInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") login();
-});
 
-(async () => {
-  const session = await window.studyos.getSession();
-  if (session) window.location.href = "dashboard.html";
-})();
+/* =====================================================
+   EVENTOS
+===================================================== */
+
+botaoEntrar.addEventListener(
+  "click",
+  entrar
+);
+
+
+botaoCriar.addEventListener(
+  "click",
+  criarConta
+);
+
+
+senhaInput.addEventListener(
+  "keydown",
+  function(evento) {
+
+    if (
+      evento.key === "Enter"
+    ) {
+
+      entrar();
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   TESTE
+===================================================== */
+
+console.log(
+  "Botão entrar:",
+  botaoEntrar
+);
+
+console.log(
+  "Botão criar conta:",
+  botaoCriar
+);
+
+console.log(
+  "Cliente Supabase:",
+  supabase
+);
