@@ -2,7 +2,7 @@ const STUDYOS_SUPABASE_URL =
   "https://kkyqgcirishgqjyqafzd.supabase.co";
 
 const STUDYOS_SUPABASE_KEY =
-  "COLE_AQUI_A_MESMA_CHAVE_ANON_QUE_VOCE_JA_USAVA";
+  "sb_publishable_ReynfGuOnOGco0kf7NO_Jw__frEPrb0   ietitoxjojsdiuridrfk";
 
 const clienteSupabase = window.supabase.createClient(
   STUDYOS_SUPABASE_URL,
