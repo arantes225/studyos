@@ -9,99 +9,169 @@
     content="width=device-width, initial-scale=1.0"
   >
 
-  <title>StudyOS | Login</title>
+  <title>StudyOS</title>
 
-  <link
-    rel="stylesheet"
-    href="style.css"
-  >
+  <link rel="stylesheet" href="style.css">
 
-  <script
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-  ></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
-<body>
+<body class="login-page">
 
-  <main class="container login-container">
+  <main class="login-layout">
 
-    <h1>StudyOS</h1>
+    <section class="login-brand">
 
-    <p class="subtitulo">
-      Entre para continuar seus estudos.
-    </p>
+      <div class="brand-logo">
+        S
+      </div>
 
-
-    <div
-      id="usuario-logado"
-      class="usuario-logado"
-      style="display:none;"
-    >
+      <h1>StudyOS</h1>
 
       <p>
-        Você está conectado como:
+        Organize seus estudos, revisões e progresso em um só lugar.
       </p>
 
-      <strong id="email-logado"></strong>
+      <div class="brand-features">
 
-      <button
-        id="botao-sair"
-        class="botao botao-secundario"
-      >
-        Sair
-      </button>
+        <div>
+          <span>✓</span>
+          Revisões programadas
+        </div>
 
-    </div>
+        <div>
+          <span>✓</span>
+          Flashcards
+        </div>
 
+        <div>
+          <span>✓</span>
+          Cronograma de estudos
+        </div>
 
-    <div id="form-autenticacao">
+        <div>
+          <span>✓</span>
+          Caderno de erros
+        </div>
 
-      <label for="email">
-        E-mail
-      </label>
+      </div>
 
-      <input
-        type="email"
-        id="email"
-        placeholder="seu@email.com"
-        autocomplete="email"
-      >
-
-
-      <label for="senha">
-        Senha
-      </label>
-
-      <input
-        type="password"
-        id="senha"
-        placeholder="Sua senha"
-        autocomplete="current-password"
-      >
+    </section>
 
 
-      <button
-        id="botao-entrar"
-        class="botao"
-      >
-        Entrar
-      </button>
+    <section class="login-card">
 
+      <div class="login-card-header">
 
-      <button
-        id="botao-criar-conta"
-        class="botao botao-secundario"
-      >
-        Criar conta
-      </button>
+        <span class="login-eyebrow">
+          Bem-vindo
+        </span>
+
+        <h2>Entre na sua conta</h2>
+
+        <p>
+          Continue de onde parou.
+        </p>
+
+      </div>
 
 
       <div
-        id="mensagem-auth"
-        class="mensagem"
-      ></div>
+        id="usuario-logado"
+        class="usuario-logado"
+        style="display:none;"
+      >
 
-    </div>
+        <div class="logged-icon">
+          ✓
+        </div>
+
+        <p>
+          Você está conectado como
+        </p>
+
+        <strong id="email-logado"></strong>
+
+        <button
+          id="botao-sair"
+          class="btn btn-secondary"
+        >
+          Sair
+        </button>
+
+      </div>
+
+
+      <div id="form-autenticacao">
+
+        <div class="form-group">
+
+          <label for="email">
+            E-mail
+          </label>
+
+          <input
+            type="email"
+            id="email"
+            placeholder="nome@exemplo.com"
+            autocomplete="email"
+          >
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label for="senha">
+            Senha
+          </label>
+
+          <input
+            type="password"
+            id="senha"
+            placeholder="Digite sua senha"
+            autocomplete="current-password"
+          >
+
+        </div>
+
+
+        <button
+          id="botao-entrar"
+          class="btn btn-primary"
+        >
+          Entrar
+        </button>
+
+
+        <div class="login-divider">
+          <span></span>
+          <p>ou</p>
+          <span></span>
+        </div>
+
+
+        <button
+          id="botao-criar-conta"
+          class="btn btn-secondary"
+        >
+          Criar uma conta
+        </button>
+
+
+        <div
+          id="mensagem-auth"
+          class="mensagem"
+        ></div>
+
+      </div>
+
+
+      <p class="login-footer">
+        StudyOS · Seu sistema de estudos
+      </p>
+
+    </section>
 
   </main>
 
