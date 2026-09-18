@@ -1,57 +1,80 @@
-DOCMAP — FASE 11.5
-OCR / EXTRAÇÃO DE TEXTO NO CADERNO DE ERROS
+DOCMAP — FASE 11.6
+SIMULADOS MAIS VISUAIS + FLASHCARD EM DESTAQUE
 
-O QUE ENTROU
+QUESTÕES E SIMULADOS
 
-1. NOVO ERRO
-Ao selecionar uma imagem:
-- o DocMap prepara/comprime a imagem
-- mostra o tamanho original e o tamanho final
-- habilita o botão "Extrair texto da imagem"
-- o OCR reconhece português
-- o texto extraído vai direto para o campo "Questão"
+1. REMOVIDO DA INTERFACE
+- "Simulado vinculado à prova"
+- "Vinculado à prova" nos cards do histórico
 
-Se o campo Questão já tiver texto, o DocMap pergunta antes de substituir.
+A associação com uma prova continua funcionando silenciosamente quando
+o simulado é aberto a partir de Editais / Provas, para não quebrar os
+dados já existentes. Apenas a informação visual foi removida.
 
-2. EDIÇÃO
-Se um item já possui imagem salva:
-- Editar pelo menu ⋯
-- aparece "Extrair texto da imagem salva"
-- o arquivo é baixado do bucket privado
-- o OCR insere o resultado no campo Questão
+2. MINIDASHBOARD EXPANDIDO
+Além dos 4 cards existentes, agora há:
 
-3. COMPRESSÃO CONFERIDA
-A rotina já existente foi mantida e agora o resultado fica visível.
+- gráfico circular de aproveitamento geral
+- contagem visual de acertos x erros
+- barra proporcional de acertos e erros
+- resumo dos últimos 30 dias:
+  * simulados
+  * questões respondidas
+  * percentual de acerto
+- lista "Últimos resultados":
+  * nome do simulado
+  * questões respondidas
+  * acertos
+  * erros
+  * data
+  * percentual de acerto
+  * barra visual de desempenho
 
-Regras atuais:
-- redimensiona para no máximo 1400 px no maior lado
-- converte para WebP com qualidade 0.72
-- se ainda passar de ~650 KB, tenta qualidade 0.62
-- se o arquivo comprimido ficar MAIOR que o original,
-  mantém o original em vez de piorar o tamanho
+Não precisa SQL: usa as views já existentes da Fase 10.
 
-Ou seja: a imagem é comprimida quando isso realmente reduz o arquivo.
+FLASHCARDS
 
-4. OCR
-Foi adicionado Tesseract.js no navegador.
-Idioma padrão: português.
+1. CORRIGIDO O BLOCO "REVISÕES EM DIA"
+O problema era visual:
+algumas classes CSS possuíam "display" próprio e conseguiam sobrepor
+o atributo HTML hidden.
 
-Nenhum texto OCR é salvo automaticamente:
-ele entra no campo Questão e você ainda pode revisar antes de salvar.
+Agora:
+- se existe flashcard para revisar, o bloco "Revisões em dia" NÃO aparece
+- se não existe flashcard, aparece apenas uma mensagem compacta
+
+2. FLASHCARD EM DESTAQUE
+- card maior
+- largura máxima aumentada
+- altura mínima aumentada
+- texto da frente maior
+- imagem pode ocupar mais espaço
+- melhor aproveitamento da área central da tela
+
+3. ÍCONE DE IMAGEM QUEBRADA
+Corrigido.
+
+Agora a imagem:
+- fica realmente invisível quando não existe path
+- só aparece depois de carregar com sucesso
+- se a URL falhar, volta a ficar escondida
+- não mostra mais o ícone de imagem corrompida
 
 INSTALAÇÃO
 
 NÃO PRECISA RODAR SQL.
 
-SUBSTITUA SOMENTE:
-- caderno-erros.html
-- caderno-erros.css
-- caderno-erros.js
+SUBSTITUA:
+- questoes-simulados.html
+- questoes-simulados.js
+- flashcards.html
+- flashcards.css
+- flashcards.js
 
 PUBLICAÇÃO:
 
 git add -A
-git commit -m "Fase 11.5 OCR no caderno de erros"
+git commit -m "Fase 11.6 simulados visuais e revisao de flashcards"
 git push origin main
 
 Depois:

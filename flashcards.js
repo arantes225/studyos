@@ -443,20 +443,71 @@ async function setReviewImage(
       imageId
     );
 
-  image.hidden = true;
-  image.removeAttribute("src");
 
-  if (!path) return;
+  if (!image) {
+    return;
+  }
+
+
+  image.hidden =
+    true;
+
+  image.style.display =
+    "none";
+
+  image.removeAttribute(
+    "src"
+  );
+
+  image.onload =
+    null;
+
+  image.onerror =
+    null;
+
+
+  if (!path) {
+    return;
+  }
+
 
   const url =
     await signedFlashImage(
       path
     );
 
-  if (!url) return;
 
-  image.src = url;
-  image.hidden = false;
+  if (!url) {
+    return;
+  }
+
+
+  image.onload =
+    () => {
+      image.hidden =
+        false;
+
+      image.style.display =
+        "block";
+    };
+
+
+  image.onerror =
+    () => {
+      image.hidden =
+        true;
+
+      image.style.display =
+        "none";
+
+      image.removeAttribute(
+        "src"
+      );
+    };
+
+
+  image.src =
+    url;
 }
 
 async function renderCurrentReview() {

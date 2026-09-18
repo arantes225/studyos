@@ -829,3 +829,81 @@
 .library-card {
   padding-left: 44px;
 }
+
+
+/* =========================================================
+   FASE 11.6 — REVISÃO EM DESTAQUE
+   ========================================================= */
+
+/*
+  Alguns blocos tinham display definido no CSS e isso podia
+  sobrepor o atributo HTML "hidden". Isso fazia aparecer
+  simultaneamente "Revisões em dia" + o card e também podia
+  revelar <img> sem src como ícone quebrado.
+*/
+.flash-empty[hidden],
+.review-stage[hidden],
+.review-image[hidden],
+.review-answer[hidden],
+.rating-actions[hidden] {
+  display: none !important;
+}
+
+.flash-review-panel {
+  min-height: 0;
+}
+
+.flash-empty {
+  min-height: 96px;
+  margin-top: 10px;
+  padding: 18px 22px;
+}
+
+.flash-empty strong {
+  font-size: 14px;
+}
+
+.flash-empty span {
+  font-size: 11px;
+}
+
+.review-stage {
+  width: 100%;
+  max-width: 1080px;
+  gap: 18px;
+  margin: 12px auto 0;
+}
+
+.review-card {
+  min-height: 410px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 38px 42px;
+  border-radius: 20px;
+}
+
+.review-side-label {
+  font-size: 11px;
+}
+
+.review-text {
+  font-size: clamp(19px, 2.4vw, 25px);
+  line-height: 1.65;
+}
+
+.review-answer .review-text {
+  font-size: clamp(17px, 2vw, 21px);
+}
+
+.review-image {
+  max-width: min(100%, 760px);
+  max-height: 500px;
+}
+
+@media (max-width: 700px) {
+  .review-card {
+    min-height: 330px;
+    padding: 28px 22px;
+  }
+}

@@ -597,6 +597,267 @@
       margin-left: auto;
     }
 
+  
+    /* ======================================================
+       FASE 11.6 — DASHBOARD VISUAL DE SIMULADOS
+       ====================================================== */
+
+    .qs-performance-dashboard {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .qs-performance-card {
+      min-width: 0;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+    }
+
+    .qs-performance-card h2 {
+      margin: 5px 0 0;
+      font-size: 16px;
+    }
+
+    .qs-performance-card p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .qs-performance-card > small {
+      display: block;
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.35;
+    }
+
+    .qs-performance-eyebrow {
+      display: block;
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 850;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .qs-performance-accuracy {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .qs-donut {
+      --qs-donut-value: 0;
+      width: 96px;
+      height: 96px;
+      display: grid;
+      place-items: center;
+      position: relative;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background:
+        conic-gradient(
+          var(--accent) calc(var(--qs-donut-value) * 1%),
+          var(--surface-2) 0
+        );
+    }
+
+    .qs-donut::before {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border-radius: 50%;
+      background: var(--surface);
+      box-shadow: inset 0 0 0 1px var(--border);
+    }
+
+    .qs-donut > div {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      text-align: center;
+    }
+
+    .qs-donut strong {
+      font-size: 19px;
+      line-height: 1;
+    }
+
+    .qs-donut span {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .qs-answer-split,
+    .qs-30-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .qs-30-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .qs-answer-split > div,
+    .qs-30-grid > div {
+      padding: 9px;
+      border-radius: 10px;
+      background: var(--surface-2);
+      text-align: center;
+    }
+
+    .qs-answer-split strong,
+    .qs-answer-split span,
+    .qs-30-grid strong,
+    .qs-30-grid span {
+      display: block;
+    }
+
+    .qs-answer-split strong,
+    .qs-30-grid strong {
+      font-size: 18px;
+    }
+
+    .qs-answer-split span,
+    .qs-30-grid span {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .qs-answer-bar {
+      height: 10px;
+      display: flex;
+      overflow: hidden;
+      margin-top: 11px;
+      border-radius: 999px;
+      background: var(--surface-2);
+    }
+
+    .qs-answer-bar span {
+      height: 100%;
+      transition: width .2s ease;
+    }
+
+    .qs-answer-bar .correct {
+      background: var(--success);
+    }
+
+    .qs-answer-bar .wrong {
+      background: var(--danger);
+    }
+
+    .qs-recent-card {
+      grid-column: 1 / -1;
+    }
+
+    .qs-recent-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .qs-recent-results {
+      display: grid;
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .qs-recent-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(120px, .6fr) 84px;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 11px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-2);
+    }
+
+    .qs-recent-copy strong,
+    .qs-recent-copy small {
+      display: block;
+    }
+
+    .qs-recent-copy strong {
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .qs-recent-copy small {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .qs-recent-progress {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--surface);
+    }
+
+    .qs-recent-progress span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--accent);
+    }
+
+    .qs-recent-score {
+      text-align: right;
+      font-size: 14px;
+      font-weight: 850;
+    }
+
+    @media (max-width: 1050px) {
+      .qs-performance-dashboard {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .qs-recent-card {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .qs-performance-dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      .qs-performance-accuracy {
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+
+      .qs-recent-card {
+        grid-column: auto;
+      }
+
+      .qs-recent-row {
+        grid-template-columns: 1fr;
+      }
+
+      .qs-recent-score {
+        text-align: left;
+      }
+    }
+
   </style>
 </head>
 
@@ -642,27 +903,145 @@
           </article>
         </section>
 
-        <div class="qs-stack">
 
-          <div
-            id="qs-exam-context"
-            class="qs-exam-context"
-            hidden
-          >
+        <section class="qs-performance-dashboard">
+
+          <article class="qs-performance-card qs-performance-accuracy">
+
             <div>
-              <strong id="qs-exam-context-title">
-                Simulado vinculado à prova
-              </strong>
+              <span class="qs-performance-eyebrow">
+                Desempenho geral
+              </span>
 
-              <span>
-                O novo PDF será associado automaticamente a esta prova.
+              <h2>Aproveitamento</h2>
+
+              <p>
+                Percentual de acertos considerando todos os gabaritos salvos.
+              </p>
+            </div>
+
+            <div
+              id="qs-overall-ring"
+              class="qs-donut"
+              style="--qs-donut-value:0"
+              aria-label="Aproveitamento geral"
+            >
+              <div>
+                <strong id="qs-overall-ring-value">—</strong>
+                <span>acerto</span>
+              </div>
+            </div>
+
+          </article>
+
+
+          <article class="qs-performance-card">
+
+            <span class="qs-performance-eyebrow">
+              Distribuição das respostas
+            </span>
+
+            <div class="qs-answer-split">
+
+              <div>
+                <strong id="qs-visual-correct">0</strong>
+                <span>acertos</span>
+              </div>
+
+              <div>
+                <strong id="qs-visual-wrong">0</strong>
+                <span>erros</span>
+              </div>
+
+            </div>
+
+            <div
+              class="qs-answer-bar"
+              aria-label="Proporção de acertos e erros"
+            >
+              <span
+                id="qs-answer-bar-correct"
+                class="correct"
+                style="width:0%"
+              ></span>
+
+              <span
+                id="qs-answer-bar-wrong"
+                class="wrong"
+                style="width:0%"
+              ></span>
+            </div>
+
+            <small id="qs-answer-bar-copy">
+              Sem respostas salvas.
+            </small>
+
+          </article>
+
+
+          <article class="qs-performance-card">
+
+            <span class="qs-performance-eyebrow">
+              Últimos 30 dias
+            </span>
+
+            <div class="qs-30-grid">
+
+              <div>
+                <strong id="qs-30-sets">0</strong>
+                <span>simulados</span>
+              </div>
+
+              <div>
+                <strong id="qs-30-questions">0</strong>
+                <span>questões</span>
+              </div>
+
+              <div>
+                <strong id="qs-30-accuracy">—</strong>
+                <span>de acerto</span>
+              </div>
+
+            </div>
+
+            <small id="qs-30-copy">
+              Sem atividade no período.
+            </small>
+
+          </article>
+
+
+          <article class="qs-performance-card qs-recent-card">
+
+            <div class="qs-recent-head">
+              <div>
+                <span class="qs-performance-eyebrow">
+                  Histórico recente
+                </span>
+
+                <h2>Últimos resultados</h2>
+              </div>
+
+              <span id="qs-recent-count" class="badge">
+                —
               </span>
             </div>
 
-            <a href="editais.html">
-              Voltar para provas
-            </a>
-          </div>
+            <div
+              id="qs-recent-results"
+              class="qs-recent-results"
+            >
+              <div class="qs-empty">
+                Carregando...
+              </div>
+            </div>
+
+          </article>
+
+        </section>
+
+
+        <div class="qs-stack">
 
           <section class="qs-panel">
             <div class="qs-head">
@@ -807,6 +1186,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="supabase.js"></script>
   <script src="app.js?v=7.0"></script>
-  <script src="questoes-simulados.js?v=11.4"></script>
+  <script src="questoes-simulados.js?v=11.6"></script>
 </body>
 </html>

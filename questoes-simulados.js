@@ -62,32 +62,6 @@ function applyExamContext() {
   }
 
 
-  const context =
-    document.getElementById(
-      "qs-exam-context"
-    );
-
-
-  const title =
-    document.getElementById(
-      "qs-exam-context-title"
-    );
-
-
-  if (context) {
-    context.hidden =
-      false;
-  }
-
-
-  if (title) {
-    title.textContent =
-      linkedExamTitle
-        ? `Simulado vinculado: ${linkedExamTitle}`
-        : "Simulado vinculado à prova";
-  }
-
-
   const titleInput =
     document.getElementById(
       "qs-title"
@@ -504,16 +478,254 @@ async function importPdf() {
 }
 
 
+
+function qsDate30DaysAgoISO() {
+  const date =
+    new Date();
+
+  date.setDate(
+    date.getDate()
+    - 29
+  );
+
+  date.setHours(
+    0,
+    0,
+    0,
+    0
+  );
+
+  return date
+    .toISOString()
+    .slice(
+      0,
+      10
+    );
+}
+
+
+function qsFormatRecentDate(
+  value
+) {
+  if (!value) {
+    return "sem data";
+  }
+
+
+  const date =
+    new Date(
+      value
+    );
+
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return "sem data";
+  }
+
+
+  return new Intl
+    .DateTimeFormat(
+      "pt-BR",
+      {
+        day:
+          "2-digit",
+
+        month:
+          "2-digit",
+
+        year:
+          "2-digit"
+      }
+    )
+    .format(
+      date
+    );
+}
+
+
+function renderRecentSimulationResults(
+  rows
+) {
+  const container =
+    document.getElementById(
+      "qs-recent-results"
+    );
+
+  const count =
+    document.getElementById(
+      "qs-recent-count"
+    );
+
+
+  if (!container) {
+    return;
+  }
+
+
+  const data =
+    rows
+    || [];
+
+
+  if (count) {
+    count.textContent =
+      `${data.length} resultado${data.length === 1 ? "" : "s"}`;
+  }
+
+
+  if (!data.length) {
+    container.innerHTML =
+      '<div class="qs-empty">Nenhum gabarito salvo ainda.</div>';
+
+    return;
+  }
+
+
+  container.innerHTML =
+    data.map(
+      (row) => {
+        const accuracyValue =
+          row.accuracy_percent === null
+          || row.accuracy_percent === undefined
+            ? 0
+            : Number(
+                row.accuracy_percent
+              );
+
+
+        return `
+          <div class="qs-recent-row">
+
+            <div class="qs-recent-copy">
+
+              <strong>
+                ${qsEscape(
+                  row.title
+                  || "Simulado"
+                )}
+              </strong>
+
+              <small>
+                ${Number(
+                  row.answered_count
+                  || 0
+                )} respondidas
+                · ${Number(
+                  row.correct_count
+                  || 0
+                )} acertos
+                · ${Number(
+                  row.wrong_count
+                  || 0
+                )} erros
+                · ${qsEscape(
+                  qsFormatRecentDate(
+                    row.last_answered_at
+                    || row.created_at
+                  )
+                )}
+              </small>
+
+            </div>
+
+            <div class="qs-recent-progress">
+              <span
+                style="width:${Math.max(
+                  0,
+                  Math.min(
+                    100,
+                    accuracyValue
+                  )
+                )}%"
+              ></span>
+            </div>
+
+            <div class="qs-recent-score">
+              ${
+                row.accuracy_percent === null
+                || row.accuracy_percent === undefined
+                  ? "—"
+                  : `${accuracyValue.toFixed(1).replace(".", ",")}%`
+              }
+            </div>
+
+          </div>
+        `;
+      }
+    )
+    .join("");
+}
+
+
 async function loadQuestionOverview() {
+  const start30 =
+    qsDate30DaysAgoISO();
+
+
+  const [
+    overallResult,
+    dailyResult,
+    recentResult
+  ] =
+    await Promise.all([
+
+      qsSb
+        .from(
+          "question_metrics_overall"
+        )
+        .select(
+          "completed_sets,total_sets,answered_questions,correct_questions,wrong_questions,sent_to_error_count,accuracy_percent"
+        )
+        .maybeSingle(),
+
+      qsSb
+        .from(
+          "question_metrics_daily"
+        )
+        .select(
+          "answer_date,answered_questions,correct_questions,wrong_questions,accuracy_percent"
+        )
+        .gte(
+          "answer_date",
+          start30
+        ),
+
+      qsSb
+        .from(
+          "question_set_metrics"
+        )
+        .select(
+          "set_id,title,total_questions,answered_count,correct_count,wrong_count,accuracy_percent,completed,created_at,last_answered_at"
+        )
+        .gt(
+          "answered_count",
+          0
+        )
+        .order(
+          "last_answered_at",
+          {
+            ascending:
+              false,
+
+            nullsFirst:
+              false
+          }
+        )
+        .limit(
+          7
+        )
+    ]);
+
+
   const {
     data,
     error
-  } = await qsSb
-    .from("question_metrics_overall")
-    .select(
-      "completed_sets,total_sets,answered_questions,correct_questions,wrong_questions,sent_to_error_count,accuracy_percent"
-    )
-    .maybeSingle();
+  } =
+    overallResult;
 
 
   const setValue =
@@ -557,7 +769,9 @@ async function loadQuestionOverview() {
     );
 
 
-  if (error) {
+  if (
+    error
+  ) {
     console.warn(
       "Não foi possível carregar as métricas de simulados:",
       error.message
@@ -572,16 +786,75 @@ async function loadQuestionOverview() {
   }
 
 
+  if (
+    dailyResult.error
+  ) {
+    console.warn(
+      dailyResult.error
+    );
+  }
+
+
+  if (
+    recentResult.error
+  ) {
+    console.warn(
+      recentResult.error
+    );
+  }
+
+
   const metrics =
-    data || {
-      completed_sets: 0,
-      total_sets: 0,
-      answered_questions: 0,
-      correct_questions: 0,
-      wrong_questions: 0,
-      sent_to_error_count: 0,
-      accuracy_percent: null
+    data
+    || {
+      completed_sets:
+        0,
+
+      total_sets:
+        0,
+
+      answered_questions:
+        0,
+
+      correct_questions:
+        0,
+
+      wrong_questions:
+        0,
+
+      sent_to_error_count:
+        0,
+
+      accuracy_percent:
+        null
     };
+
+
+  const answered =
+    Number(
+      metrics.answered_questions
+      || 0
+    );
+
+  const correct =
+    Number(
+      metrics.correct_questions
+      || 0
+    );
+
+  const wrong =
+    Number(
+      metrics.wrong_questions
+      || 0
+    );
+
+  const generalAccuracy =
+    metrics.accuracy_percent === null
+    || metrics.accuracy_percent === undefined
+      ? null
+      : Number(
+          metrics.accuracy_percent
+        );
 
 
   if (setValue) {
@@ -611,26 +884,11 @@ async function loadQuestionOverview() {
 
   if (questionValue) {
     questionValue.textContent =
-      Number(
-        metrics.answered_questions
-        || 0
-      );
+      answered;
   }
 
 
   if (questionHelper) {
-    const correct =
-      Number(
-        metrics.correct_questions
-        || 0
-      );
-
-    const wrong =
-      Number(
-        metrics.wrong_questions
-        || 0
-      );
-
     questionHelper.textContent =
       `${correct} acertos · ${wrong} erros`;
   }
@@ -638,22 +896,17 @@ async function loadQuestionOverview() {
 
   if (accuracyValue) {
     accuracyValue.textContent =
-      metrics.accuracy_percent === null
-        || metrics.accuracy_percent === undefined
-          ? "—"
-          : `${Number(
-              metrics.accuracy_percent
-            ).toFixed(1)
-             .replace(".", ",")}%`;
+      generalAccuracy === null
+        ? "—"
+        : `${generalAccuracy
+            .toFixed(1)
+            .replace(".", ",")}%`;
   }
 
 
   if (accuracyHelper) {
     accuracyHelper.textContent =
-      Number(
-        metrics.answered_questions
-        || 0
-      )
+      answered
         ? "Aproveitamento de todos os gabaritos"
         : "Sem gabaritos ainda";
   }
@@ -677,6 +930,260 @@ async function loadQuestionOverview() {
         ? "Erros já transformados em revisão"
         : "Nenhum erro enviado ainda";
   }
+
+
+  const ring =
+    document.getElementById(
+      "qs-overall-ring"
+    );
+
+  const ringValue =
+    document.getElementById(
+      "qs-overall-ring-value"
+    );
+
+
+  if (ringValue) {
+    ringValue.textContent =
+      generalAccuracy === null
+        ? "—"
+        : `${generalAccuracy
+            .toFixed(0)}%`;
+  }
+
+
+  if (ring) {
+    ring.style
+      .setProperty(
+        "--qs-donut-value",
+        generalAccuracy === null
+          ? 0
+          : Math.max(
+              0,
+              Math.min(
+                100,
+                generalAccuracy
+              )
+            )
+      );
+  }
+
+
+  const visualCorrect =
+    document.getElementById(
+      "qs-visual-correct"
+    );
+
+  const visualWrong =
+    document.getElementById(
+      "qs-visual-wrong"
+    );
+
+  const correctBar =
+    document.getElementById(
+      "qs-answer-bar-correct"
+    );
+
+  const wrongBar =
+    document.getElementById(
+      "qs-answer-bar-wrong"
+    );
+
+  const barCopy =
+    document.getElementById(
+      "qs-answer-bar-copy"
+    );
+
+
+  if (visualCorrect) {
+    visualCorrect.textContent =
+      correct;
+  }
+
+
+  if (visualWrong) {
+    visualWrong.textContent =
+      wrong;
+  }
+
+
+  const correctShare =
+    answered
+      ? (
+          correct
+          / answered
+        )
+        * 100
+      : 0;
+
+
+  const wrongShare =
+    answered
+      ? (
+          wrong
+          / answered
+        )
+        * 100
+      : 0;
+
+
+  if (correctBar) {
+    correctBar.style.width =
+      `${correctShare}%`;
+  }
+
+
+  if (wrongBar) {
+    wrongBar.style.width =
+      `${wrongShare}%`;
+  }
+
+
+  if (barCopy) {
+    barCopy.textContent =
+      answered
+        ? `${correctShare.toFixed(1).replace(".", ",")}% corretas · ${wrongShare.toFixed(1).replace(".", ",")}% erradas`
+        : "Sem respostas salvas.";
+  }
+
+
+  const dailyRows =
+    dailyResult.data
+    || [];
+
+
+  const answered30 =
+    dailyRows.reduce(
+      (
+        sum,
+        row
+      ) =>
+        sum
+        + Number(
+            row.answered_questions
+            || 0
+          ),
+      0
+    );
+
+
+  const correct30 =
+    dailyRows.reduce(
+      (
+        sum,
+        row
+      ) =>
+        sum
+        + Number(
+            row.correct_questions
+            || 0
+          ),
+      0
+    );
+
+
+  const accuracy30 =
+    answered30
+      ? (
+          correct30
+          / answered30
+        )
+        * 100
+      : null;
+
+
+  const recentRows =
+    recentResult.data
+    || [];
+
+
+  const start30Date =
+    new Date(
+      `${start30}T00:00:00`
+    );
+
+
+  const sets30 =
+    recentRows.filter(
+      (row) => {
+        if (
+          !row.last_answered_at
+        ) {
+          return false;
+        }
+
+
+        const value =
+          new Date(
+            row.last_answered_at
+          );
+
+
+        return (
+          !Number.isNaN(
+            value.getTime()
+          )
+          && value
+            >= start30Date
+        );
+      }
+    ).length;
+
+
+  const sets30Value =
+    document.getElementById(
+      "qs-30-sets"
+    );
+
+  const questions30Value =
+    document.getElementById(
+      "qs-30-questions"
+    );
+
+  const accuracy30Value =
+    document.getElementById(
+      "qs-30-accuracy"
+    );
+
+  const copy30 =
+    document.getElementById(
+      "qs-30-copy"
+    );
+
+
+  if (sets30Value) {
+    sets30Value.textContent =
+      sets30;
+  }
+
+
+  if (questions30Value) {
+    questions30Value.textContent =
+      answered30;
+  }
+
+
+  if (accuracy30Value) {
+    accuracy30Value.textContent =
+      accuracy30 === null
+        ? "—"
+        : `${accuracy30
+            .toFixed(1)
+            .replace(".", ",")}%`;
+  }
+
+
+  if (copy30) {
+    copy30.textContent =
+      answered30
+        ? `${correct30} acertos em ${answered30} questões nos últimos 30 dias.`
+        : "Sem atividade nos últimos 30 dias.";
+  }
+
+
+  renderRecentSimulationResults(
+    recentRows
+  );
 }
 
 
@@ -1009,7 +1516,6 @@ function renderSetHistory() {
 
           <h3>${qsEscape(set.title)}</h3>
           <p>
-            ${set.exam_id ? "Vinculado à prova · " : ""}
             ${set.total_questions || 0} questões ·
             ${set.status === "ready" ? "pronto" : qsEscape(set.status)}
           </p>
