@@ -10,7 +10,6 @@ const clienteSupabase = window.supabase.createClient(
 );
 
 let usuarioAtual = null;
-
 let flashcardsParaEstudar = [];
 let indiceFlashcardAtual = 0;
 
