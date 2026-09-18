@@ -1039,13 +1039,9 @@ async function saveNewError() {
     || null;
 
 
-  if (
-    !ccq
-    || !question
-    || !answer
-  ) {
+  if (!ccq) {
     setNewErrorStatus(
-      "Preencha CCQ, questão e resposta correta.",
+      "Preencha o CCQ.",
       "error"
     );
 
@@ -1097,10 +1093,12 @@ async function saveNewError() {
             ccq,
 
           p_question_text:
-            question,
+            question
+            || null,
 
           p_correct_answer:
-            answer,
+            answer
+            || null,
 
           p_what_i_thought:
             thought
