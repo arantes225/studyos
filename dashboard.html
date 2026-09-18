@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>StudyOS | Dashboard</title>
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
+</head>
+
+<body>
+
+  <main class="container">
+
+    <h1>StudyOS</h1>
+
+    <h2>Dashboard</h2>
+
+    <p>
+      Usuário:
+      <strong id="dashboard-email">
+        carregando...
+      </strong>
+    </p>
+
+    <p id="dashboard-status">
+      Verificando sessão...
+    </p>
+
+    <button
+      id="dashboard-sair"
+      class="btn btn-primary"
+    >
+      Sair
+    </button>
+
+  </main>
+
+
+  <script src="supabase.js"></script>
+  <script src="dashboard.js"></script>
+
+</body>
+
+</html>
