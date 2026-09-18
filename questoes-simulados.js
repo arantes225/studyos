@@ -8,6 +8,16 @@ const qsState = {
 
   selectedSetIds:
     new Set(),
+
+  pageMode:
+    "mine",
+
+  addMode:
+    "automatic",
+
+  editingSetId:
+    null,
+
   items: [],
   attempts: new Map()
 };
@@ -78,6 +88,206 @@ function applyExamContext() {
   }
 }
 
+
+
+
+function switchQsMode(
+  mode
+) {
+  if (
+    ![
+      "mine",
+      "add",
+      "library"
+    ].includes(
+      mode
+    )
+  ) {
+    mode =
+      "mine";
+  }
+
+
+  qsState.pageMode =
+    mode;
+
+
+  document
+    .querySelectorAll(
+      "[data-qs-mode]"
+    )
+    .forEach(
+      (button) => {
+        button.classList.toggle(
+          "active",
+          button.dataset
+            .qsMode === mode
+        );
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-qs-section]"
+    )
+    .forEach(
+      (section) => {
+        section.classList.toggle(
+          "active",
+          section.dataset
+            .qsSection === mode
+        );
+      }
+    );
+
+
+  if (
+    mode === "library"
+  ) {
+    renderSimulationLibrary();
+  }
+
+
+  if (
+    mode !== "library"
+  ) {
+    qsState
+      .selectedSetIds
+      .clear();
+
+    updateSetBulkToolbar();
+  }
+}
+
+
+function switchQsAddMode(
+  mode
+) {
+  if (
+    ![
+      "automatic",
+      "manual"
+    ].includes(
+      mode
+    )
+  ) {
+    mode =
+      "automatic";
+  }
+
+
+  qsState.addMode =
+    mode;
+
+
+  document
+    .querySelectorAll(
+      "[data-qs-add-mode]"
+    )
+    .forEach(
+      (button) => {
+        button.classList.toggle(
+          "active",
+          button.dataset
+            .qsAddMode === mode
+        );
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-qs-add-section]"
+    )
+    .forEach(
+      (section) => {
+        section.classList.toggle(
+          "active",
+          section.dataset
+            .qsAddSection === mode
+        );
+      }
+    );
+}
+
+
+function setManualStatus(
+  text,
+  type = ""
+) {
+  const element =
+    document.getElementById(
+      "qs-manual-status"
+    );
+
+
+  if (!element) {
+    return;
+  }
+
+
+  element.textContent =
+    text;
+
+
+  element.className =
+    `qs-status ${type}`
+      .trim();
+}
+
+
+function setEditStatus(
+  text,
+  type = ""
+) {
+  const element =
+    document.getElementById(
+      "qs-edit-status"
+    );
+
+
+  if (!element) {
+    return;
+  }
+
+
+  element.textContent =
+    text;
+
+
+  element.className =
+    `qs-status ${type}`
+      .trim();
+}
+
+
+function closeSimulationLibraryMenus() {
+  document
+    .querySelectorAll(
+      "[data-qs-library-menu]"
+    )
+    .forEach(
+      (menu) => {
+        menu.hidden =
+          true;
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-qs-library-menu-trigger]"
+    )
+    .forEach(
+      (button) => {
+        button.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+      }
+    );
+}
 
 
 function qsEscape(value) {
@@ -334,6 +544,241 @@ async function extractQuestionsFromPdf(file) {
   return questions;
 }
 
+
+async function createManualSimulation() {
+  const title =
+    document
+      .getElementById(
+        "qs-manual-title"
+      )
+      ?.value
+      .trim()
+    || "";
+
+
+  const total =
+    Number(
+      document
+        .getElementById(
+          "qs-manual-count"
+        )
+        ?.value
+      || 0
+    );
+
+
+  if (!title) {
+    setManualStatus(
+      "Digite o nome do simulado.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  if (
+    !Number.isInteger(total)
+    || total < 1
+    || total > 500
+  ) {
+    setManualStatus(
+      "Informe uma quantidade entre 1 e 500 questões.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      "qs-create-manual"
+    );
+
+
+  button.disabled =
+    true;
+
+
+  setManualStatus(
+    "Criando simulado..."
+  );
+
+
+  let setRecord =
+    null;
+
+
+  try {
+    const {
+      data,
+      error
+    } =
+      await qsSb
+        .from(
+          "question_sets"
+        )
+        .insert({
+          user_id:
+            qsState.user.id,
+
+          title,
+
+          source_file_name:
+            null,
+
+          total_questions:
+            total,
+
+          status:
+            "ready",
+
+          exam_id:
+            qsIsUuid(
+              linkedExamId
+            )
+              ? linkedExamId
+              : null
+        })
+        .select()
+        .single();
+
+
+    if (error) {
+      throw error;
+    }
+
+
+    setRecord =
+      data;
+
+
+    const rows =
+      Array.from(
+        {
+          length:
+            total
+        },
+        (
+          _value,
+          index
+        ) => ({
+          user_id:
+            qsState.user.id,
+
+          set_id:
+            setRecord.id,
+
+          question_number:
+            index + 1,
+
+          order_index:
+            index + 1,
+
+          source_label:
+            "Cadastro manual",
+
+          stem:
+            null,
+
+          alternatives:
+            {},
+
+          raw_text:
+            `Questão ${index + 1}`
+        })
+      );
+
+
+    for (
+      const chunk
+      of chunkArray(
+        rows,
+        150
+      )
+    ) {
+      const {
+        error:
+          itemsError
+      } =
+        await qsSb
+          .from(
+            "question_items"
+          )
+          .insert(
+            chunk
+          );
+
+
+      if (itemsError) {
+        throw itemsError;
+      }
+    }
+
+
+    document
+      .getElementById(
+        "qs-manual-title"
+      )
+      .value =
+        "";
+
+
+    setManualStatus(
+      `${total} questões criadas. Simulado pronto para o gabarito.`,
+      "success"
+    );
+
+
+    await loadSets();
+
+
+    switchQsMode(
+      "mine"
+    );
+
+
+    await openSet(
+      setRecord.id
+    );
+
+
+  } catch (error) {
+    console.error(
+      error
+    );
+
+
+    if (
+      setRecord?.id
+    ) {
+      await qsSb
+        .from(
+          "question_sets"
+        )
+        .delete()
+        .eq(
+          "id",
+          setRecord.id
+        );
+    }
+
+
+    setManualStatus(
+      error.message
+      || "Não foi possível criar o simulado.",
+      "error"
+    );
+
+
+  } finally {
+    button.disabled =
+      false;
+  }
+}
+
+
 async function createQuestionSet(title, file) {
   const { data, error } = await qsSb
     .from("question_sets")
@@ -454,7 +899,14 @@ async function importPdf() {
     document.getElementById("qs-title").value = "";
 
     await loadSets();
-    await openSet(setRecord.id);
+
+    switchQsMode(
+      "mine"
+    );
+
+    await openSet(
+      setRecord.id
+    );
   } catch (error) {
     console.error(error);
 
@@ -1287,6 +1739,473 @@ async function loadSets() {
 }
 
 
+
+function renderSimulationLibrary() {
+  const container =
+    document.getElementById(
+      "qs-library"
+    );
+
+  const count =
+    document.getElementById(
+      "qs-library-count"
+    );
+
+
+  if (!container) {
+    return;
+  }
+
+
+  if (count) {
+    count.textContent =
+      `${qsState.sets.length} ${
+        qsState.sets.length === 1
+          ? "simulado"
+          : "simulados"
+      }`;
+  }
+
+
+  if (
+    !qsState.sets.length
+  ) {
+    container.innerHTML =
+      '<div class="qs-empty">Nenhum simulado na biblioteca.</div>';
+
+    updateSetBulkToolbar();
+
+    return;
+  }
+
+
+  container.innerHTML =
+    qsState.sets.map(
+      (set) => {
+        const m =
+          set.metrics;
+
+
+        return `
+          <article class="qs-library-card">
+
+            <label
+              class="qs-library-check"
+              aria-label="Selecionar simulado"
+            >
+              <input
+                type="checkbox"
+                data-select-set="${qsEscape(
+                  set.id
+                )}"
+                ${qsState.selectedSetIds.has(set.id) ? "checked" : ""}
+              >
+            </label>
+
+
+            <div class="qs-library-main">
+
+              <strong>
+                ${qsEscape(
+                  set.title
+                )}
+              </strong>
+
+              <small>
+                ${Number(
+                  set.total_questions
+                  || 0
+                )} questões
+                · ${Number(
+                  m.answered
+                  || 0
+                )} respondidas
+                · ${accuracy(
+                  m.correct,
+                  m.answered
+                )} de acerto
+              </small>
+
+            </div>
+
+
+            <div class="qs-library-menu-wrap">
+
+              <button
+                class="qs-library-menu-trigger"
+                type="button"
+                data-qs-library-menu-trigger="${qsEscape(
+                  set.id
+                )}"
+                aria-label="Opções do simulado"
+                aria-expanded="false"
+              >
+                ⋯
+              </button>
+
+              <div
+                class="qs-library-menu"
+                data-qs-library-menu="${qsEscape(
+                  set.id
+                )}"
+                hidden
+              >
+
+                <button
+                  type="button"
+                  data-edit-set="${qsEscape(
+                    set.id
+                  )}"
+                >
+                  Editar
+                </button>
+
+                <button
+                  class="danger"
+                  type="button"
+                  data-delete-set-library="${qsEscape(
+                    set.id
+                  )}"
+                >
+                  Excluir
+                </button>
+
+              </div>
+
+            </div>
+
+          </article>
+        `;
+      }
+    )
+    .join("");
+
+
+  container
+    .querySelectorAll(
+      "[data-select-set]"
+    )
+    .forEach(
+      (input) => {
+        input.addEventListener(
+          "change",
+          () => {
+            const id =
+              input.dataset
+                .selectSet;
+
+
+            if (input.checked) {
+              qsState
+                .selectedSetIds
+                .add(
+                  id
+                );
+
+            } else {
+              qsState
+                .selectedSetIds
+                .delete(
+                  id
+                );
+            }
+
+
+            updateSetBulkToolbar();
+          }
+        );
+      }
+    );
+
+
+  container
+    .querySelectorAll(
+      "[data-qs-library-menu-trigger]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          (event) => {
+            event.stopPropagation();
+
+
+            const id =
+              button.dataset
+                .qsLibraryMenuTrigger;
+
+
+            const menu =
+              container.querySelector(
+                `[data-qs-library-menu="${CSS.escape(
+                  id
+                )}"]`
+              );
+
+
+            if (!menu) {
+              return;
+            }
+
+
+            const open =
+              menu.hidden;
+
+
+            closeSimulationLibraryMenus();
+
+
+            menu.hidden =
+              !open;
+
+
+            button.setAttribute(
+              "aria-expanded",
+              open
+                ? "true"
+                : "false"
+            );
+          }
+        );
+      }
+    );
+
+
+  container
+    .querySelectorAll(
+      "[data-qs-library-menu]"
+    )
+    .forEach(
+      (menu) => {
+        menu.addEventListener(
+          "click",
+          (event) =>
+            event.stopPropagation()
+        );
+      }
+    );
+
+
+  container
+    .querySelectorAll(
+      "[data-edit-set]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            closeSimulationLibraryMenus();
+
+
+            openSimulationEditDialog(
+              button.dataset
+                .editSet
+            );
+          }
+        );
+      }
+    );
+
+
+  container
+    .querySelectorAll(
+      "[data-delete-set-library]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          async () => {
+            closeSimulationLibraryMenus();
+
+
+            await deleteSet(
+              button.dataset
+                .deleteSetLibrary
+            );
+
+
+            renderSimulationLibrary();
+          }
+        );
+      }
+    );
+
+
+  updateSetBulkToolbar();
+}
+
+
+function openSimulationEditDialog(
+  setId
+) {
+  const set =
+    qsState.sets.find(
+      (item) =>
+        item.id === setId
+    );
+
+
+  if (!set) {
+    return;
+  }
+
+
+  qsState.editingSetId =
+    setId;
+
+
+  document
+    .getElementById(
+      "qs-edit-title"
+    )
+    .value =
+      set.title
+      || "";
+
+
+  setEditStatus(
+    ""
+  );
+
+
+  const dialog =
+    document.getElementById(
+      "qs-edit-dialog"
+    );
+
+
+  if (
+    typeof dialog?.showModal
+      === "function"
+  ) {
+    dialog.showModal();
+
+  } else {
+    dialog?.setAttribute(
+      "open",
+      ""
+    );
+  }
+}
+
+
+function closeSimulationEditDialog() {
+  qsState.editingSetId =
+    null;
+
+
+  const dialog =
+    document.getElementById(
+      "qs-edit-dialog"
+    );
+
+
+  if (
+    typeof dialog?.close
+      === "function"
+  ) {
+    dialog.close();
+
+  } else {
+    dialog?.removeAttribute(
+      "open"
+    );
+  }
+}
+
+
+async function saveSimulationEdit() {
+  const setId =
+    qsState.editingSetId;
+
+
+  const title =
+    document
+      .getElementById(
+        "qs-edit-title"
+      )
+      ?.value
+      .trim()
+    || "";
+
+
+  if (!setId) {
+    return;
+  }
+
+
+  if (!title) {
+    setEditStatus(
+      "O nome do simulado é obrigatório.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      "qs-edit-save"
+    );
+
+
+  button.disabled =
+    true;
+
+
+  setEditStatus(
+    "Salvando..."
+  );
+
+
+  const {
+    error
+  } =
+    await qsSb
+      .from(
+        "question_sets"
+      )
+      .update({
+        title
+      })
+      .eq(
+        "id",
+        setId
+      );
+
+
+  button.disabled =
+    false;
+
+
+  if (error) {
+    console.error(
+      error
+    );
+
+
+    setEditStatus(
+      `Não foi possível salvar: ${error.message}`,
+      "error"
+    );
+
+    return;
+  }
+
+
+  closeSimulationEditDialog();
+
+
+  await loadSets();
+
+
+  renderSimulationLibrary();
+}
+
+
 function updateSetBulkToolbar() {
   const visible =
     qsState.sets
@@ -1471,150 +2390,133 @@ async function deleteSelectedSets() {
 }
 
 
+
 function renderSetHistory() {
   const container =
-    document.getElementById("qs-history");
+    document.getElementById(
+      "qs-history"
+    );
 
   const count =
-    document.getElementById("qs-set-count");
+    document.getElementById(
+      "qs-set-count"
+    );
 
-  count.textContent =
-    `${qsState.sets.length} ${
-      qsState.sets.length === 1
-        ? "simulado"
-        : "simulados"
-    }`;
 
-  if (!qsState.sets.length) {
+  if (!container) {
+    return;
+  }
+
+
+  if (count) {
+    count.textContent =
+      `${qsState.sets.length} ${
+        qsState.sets.length === 1
+          ? "simulado"
+          : "simulados"
+      }`;
+  }
+
+
+  if (
+    !qsState.sets.length
+  ) {
     container.innerHTML =
-      '<div class="qs-empty">Nenhum simulado importado ainda.</div>';
-
-    updateSetBulkToolbar();
+      '<div class="qs-empty">Nenhum simulado cadastrado ainda.</div>';
 
     return;
   }
 
+
   container.innerHTML =
-    qsState.sets.map((set) => {
-      const m = set.metrics;
-      const isActive =
-        qsState.currentSet?.id === set.id;
+    qsState.sets.map(
+      (set) => {
+        const m =
+          set.metrics;
 
-      return `
-        <article class="qs-set-card ${isActive ? "active" : ""}">
+        const isActive =
+          qsState.currentSet?.id
+          === set.id;
 
-          <label
-            class="qs-set-select"
-            aria-label="Selecionar simulado"
+
+        return `
+          <article
+            class="qs-set-card ${isActive ? "active" : ""}"
           >
-            <input
-              type="checkbox"
-              data-select-set="${qsEscape(set.id)}"
-              ${qsState.selectedSetIds.has(set.id) ? "checked" : ""}
-            >
-          </label>
 
-          <h3>${qsEscape(set.title)}</h3>
-          <p>
-            ${set.total_questions || 0} questões ·
-            ${set.status === "ready" ? "pronto" : qsEscape(set.status)}
-          </p>
+            <h3>
+              ${qsEscape(
+                set.title
+              )}
+            </h3>
 
-          <div class="qs-set-metrics">
-            <div>
-              <span>Acertos</span>
-              <strong>${m.correct}</strong>
+            <p>
+              ${set.total_questions || 0} questões
+              · ${set.status === "ready" ? "pronto" : qsEscape(set.status)}
+            </p>
+
+            <div class="qs-set-metrics">
+
+              <div>
+                <span>Acertos</span>
+                <strong>${m.correct}</strong>
+              </div>
+
+              <div>
+                <span>Erros</span>
+                <strong>${m.wrong}</strong>
+              </div>
+
+              <div>
+                <span>Acerto</span>
+                <strong>
+                  ${accuracy(
+                    m.correct,
+                    m.answered
+                  )}
+                </strong>
+              </div>
+
             </div>
-            <div>
-              <span>Erros</span>
-              <strong>${m.wrong}</strong>
-            </div>
-            <div>
-              <span>Acerto</span>
-              <strong>${accuracy(m.correct, m.answered)}</strong>
-            </div>
-          </div>
 
-          <div class="qs-set-actions">
-            <button
-              class="qs-mini-button primary"
-              type="button"
-              data-open-set="${qsEscape(set.id)}"
-            >
-              Abrir
-            </button>
+            <div class="qs-set-actions">
 
-            <button
-              class="qs-mini-button danger"
-              type="button"
-              data-delete-set="${qsEscape(set.id)}"
-            >
-              Excluir
-            </button>
-          </div>
-        </article>
-      `;
-    }).join("");
+              <button
+                class="qs-mini-button primary"
+                type="button"
+                data-open-set="${qsEscape(
+                  set.id
+                )}"
+              >
+                Abrir
+              </button>
+
+            </div>
+
+          </article>
+        `;
+      }
+    )
+    .join("");
+
 
   document
     .querySelectorAll(
-      "[data-select-set]"
+      "[data-open-set]"
     )
     .forEach(
-      (input) => {
-        input.addEventListener(
-          "change",
+      (button) => {
+        button.addEventListener(
+          "click",
           () => {
-            const id =
-              input.dataset
-                .selectSet;
-
-
-            if (input.checked) {
-              qsState
-                .selectedSetIds
-                .add(
-                  id
-                );
-
-            } else {
-              qsState
-                .selectedSetIds
-                .delete(
-                  id
-                );
-            }
-
-
-            updateSetBulkToolbar();
+            openSet(
+              button.dataset
+                .openSet
+            );
           }
         );
       }
     );
-
-
-  updateSetBulkToolbar();
-
-
-  document
-    .querySelectorAll("[data-open-set]")
-    .forEach((button) => {
-      button.addEventListener("click", () => {
-        openSet(
-          button.dataset.openSet
-        );
-      });
-    });
-
-  document
-    .querySelectorAll("[data-delete-set]")
-    .forEach((button) => {
-      button.addEventListener("click", () => {
-        deleteSet(
-          button.dataset.deleteSet
-        );
-      });
-    });
 }
 
 async function openSet(setId) {
@@ -2334,6 +3236,13 @@ async function deleteSet(setId) {
     loadSets(),
     loadQuestionOverview()
   ]);
+
+
+  if (
+    qsState.pageMode === "library"
+  ) {
+    renderSimulationLibrary();
+  }
 }
 
 function closeCurrentSet() {
@@ -2425,6 +3334,7 @@ function wireUpload() {
 }
 
 
+
 function wireSetBulkActions() {
   document
     .getElementById(
@@ -2456,7 +3366,7 @@ function wireSetBulkActions() {
         }
 
 
-        renderSetHistory();
+        renderSimulationLibrary();
       }
     );
 
@@ -2472,8 +3382,104 @@ function wireSetBulkActions() {
 }
 
 
+function wireSimulationNavigation() {
+  document
+    .querySelectorAll(
+      "[data-qs-mode]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            switchQsMode(
+              button.dataset
+                .qsMode
+            );
+          }
+        );
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-qs-add-mode]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            switchQsAddMode(
+              button.dataset
+                .qsAddMode
+            );
+          }
+        );
+      }
+    );
+
+
+  document
+    .getElementById(
+      "qs-create-manual"
+    )
+    ?.addEventListener(
+      "click",
+      createManualSimulation
+    );
+
+
+  document
+    .getElementById(
+      "qs-edit-save"
+    )
+    ?.addEventListener(
+      "click",
+      saveSimulationEdit
+    );
+
+
+  [
+    "qs-edit-close",
+    "qs-edit-cancel"
+  ].forEach(
+    (id) => {
+      document
+        .getElementById(
+          id
+        )
+        ?.addEventListener(
+          "click",
+          closeSimulationEditDialog
+        );
+    }
+  );
+
+
+  document.addEventListener(
+    "click",
+    closeSimulationLibraryMenus
+  );
+
+
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (
+        event.key === "Escape"
+      ) {
+        closeSimulationLibraryMenus();
+      }
+    }
+  );
+}
+
+
 async function initQuestionSets() {
   wireSetBulkActions();
+  wireSimulationNavigation();
 
   qsState.user =
     window.docmapUser;
@@ -2501,6 +3507,14 @@ async function initQuestionSets() {
     );
 
   await loadSets();
+
+  switchQsMode(
+    "mine"
+  );
+
+  switchQsAddMode(
+    "automatic"
+  );
 }
 
 if (window.docmapUser) {

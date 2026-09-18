@@ -1,46 +1,60 @@
-DOCMAP — FASE 11.7
+DOCMAP — FASE 11.9
+MENU DE SIMULADOS
 
-DASHBOARD
-- Removido o bloco inferior de resultados/simulados recentes.
-- Mantido o quadrado de Simulados dos últimos 30 dias.
-- A Agenda fica mais direta logo após as métricas.
+NOVO MENU SUPERIOR
+- Meus simulados
+- Adicionar simulado
+- Biblioteca
 
-CRONOGRAMA
-Ao clicar em "Reorganizar atrasadas":
-- solicita uma Data final
-- usa o intervalo de hoje até essa data
-- respeita os dias de Estudo teórico
-- respeita o máximo de aulas teóricas por dia
-- considera aulas que já estão agendadas no dia
-- espalha as atrasadas ao longo de todo o intervalo
-- nunca ultrapassa o limite diário
+MEUS SIMULADOS
+- mantém o minidashboard de desempenho
+- mostra seus simulados
+- botão Abrir para preencher/revisar o gabarito
+- sem botões de excluir poluindo os cards
 
-Se o período escolhido não comportar todas as aulas:
-- move apenas as que cabem
-- informa quantas continuaram atrasadas
+ADICIONAR SIMULADO
 
-CONFIGURAÇÕES
-Novo campo:
-- Máximo de aulas teóricas por dia
+1. AUTOMATICAMENTE
+- envia PDF
+- DocMap extrai as questões
+- cria o gabarito rápido
+- comportamento já existente preservado
 
-Padrão: 1 aula/dia.
+2. MANUALMENTE
+- informa nome do simulado
+- informa quantidade de questões
+- DocMap cria automaticamente as questões numeradas
+- depois abre direto o gabarito rápido
+- quantidade permitida: 1 a 500
+
+BIBLIOTECA
+- lista todos os simulados
+- checkbox por simulado
+- selecionar todos
+- excluir vários em grupo
+- menu ⋯ em cada simulado:
+  - Editar
+  - Excluir
+
+EDIÇÃO
+- nesta etapa permite alterar com segurança o nome do simulado
+- quantidade de questões não é alterada pela edição para não quebrar
+  gabaritos já respondidos
+
+EXCLUSÃO
+- continua removendo o PDF privado associado quando existir
+- exclusão pede confirmação
 
 INSTALAÇÃO
+NÃO PRECISA RODAR SQL.
 
-1. Rode UMA VEZ:
-fase11_7_reorganizacao_aulas.sql
+SUBSTITUA:
+- questoes-simulados.html
+- questoes-simulados.js
 
-2. Substitua:
-dashboard.html
-dashboard.js
-cronograma.html
-cronograma.js
-configuracoes.html
-configuracoes.js
-
-3. Publique:
+PUBLICAÇÃO:
 git add -A
-git commit -m "Fase 11.7 reorganizacao de aulas por intervalo"
+git commit -m "Fase 11.9 menu e biblioteca de simulados"
 git push origin main
 
 Depois:

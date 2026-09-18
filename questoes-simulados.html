@@ -858,6 +858,283 @@
       }
     }
 
+  
+    /* ======================================================
+       FASE 11.9 — MENU DE SIMULADOS
+       ====================================================== */
+
+    .qs-mode-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin: 0 0 16px;
+      padding: 5px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-2);
+    }
+
+    .qs-mode-tab {
+      min-height: 37px;
+      padding: 0 14px;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .qs-mode-tab:hover {
+      color: var(--text);
+    }
+
+    .qs-mode-tab.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 5px rgba(20,25,35,.08);
+    }
+
+    .qs-mode-section {
+      display: none !important;
+    }
+
+    .qs-mode-section.active {
+      display: block !important;
+    }
+
+    .qs-performance-dashboard.qs-mode-section.active {
+      display: grid !important;
+    }
+
+    .qs-add-mode-tabs {
+      display: inline-flex;
+      gap: 5px;
+      margin: 0 0 14px;
+      padding: 4px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-2);
+    }
+
+    .qs-add-mode-tab {
+      min-height: 34px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 820;
+      cursor: pointer;
+    }
+
+    .qs-add-mode-tab.active {
+      background: var(--surface);
+      color: var(--accent);
+      box-shadow: 0 1px 4px rgba(20,25,35,.08);
+    }
+
+    .qs-add-section {
+      display: none;
+    }
+
+    .qs-add-section.active {
+      display: block;
+    }
+
+    .qs-manual-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 190px;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .qs-manual-copy {
+      grid-column: 1 / -1;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-2);
+    }
+
+    .qs-manual-copy strong {
+      display: block;
+      font-size: 11px;
+    }
+
+    .qs-manual-copy p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .qs-library {
+      display: grid;
+      gap: 8px;
+    }
+
+    .qs-library-card {
+      position: relative;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: var(--surface-2);
+    }
+
+    .qs-library-check input {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--accent);
+    }
+
+    .qs-library-main strong,
+    .qs-library-main small {
+      display: block;
+    }
+
+    .qs-library-main strong {
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .qs-library-main small {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .qs-library-menu-wrap {
+      position: relative;
+    }
+
+    .qs-library-menu-trigger {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 21px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .qs-library-menu {
+      position: absolute;
+      top: calc(100% + 5px);
+      right: 0;
+      min-width: 145px;
+      padding: 5px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      z-index: 30;
+    }
+
+    .qs-library-menu[hidden] {
+      display: none !important;
+    }
+
+    .qs-library-menu button {
+      width: 100%;
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 750;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .qs-library-menu button:hover {
+      background: var(--surface-2);
+    }
+
+    .qs-library-menu button.danger {
+      color: var(--danger);
+    }
+
+    .qs-edit-dialog {
+      width: min(560px, calc(100vw - 28px));
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow);
+    }
+
+    .qs-edit-dialog::backdrop {
+      background: rgba(15,20,28,.46);
+      backdrop-filter: blur(2px);
+    }
+
+    .qs-edit-form {
+      padding: 20px;
+    }
+
+    .qs-edit-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .qs-edit-head h2 {
+      margin: 7px 0 0;
+      font-size: 18px;
+    }
+
+    .qs-dialog-close {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 22px;
+      cursor: pointer;
+    }
+
+    .qs-edit-actions {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-wrap: wrap;
+      margin-top: 15px;
+    }
+
+    @media (max-width: 700px) {
+      .qs-mode-tabs {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .qs-manual-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .qs-manual-copy {
+        grid-column: auto;
+      }
+    }
+
   </style>
 </head>
 
@@ -877,7 +1154,37 @@
           </div>
         </header>
 
-        <section class="qs-overview">
+                <section
+          class="qs-mode-tabs"
+          aria-label="Seções de Questões e Simulados"
+        >
+          <button
+            class="qs-mode-tab active"
+            type="button"
+            data-qs-mode="mine"
+          >
+            Meus simulados
+          </button>
+
+          <button
+            class="qs-mode-tab"
+            type="button"
+            data-qs-mode="add"
+          >
+            Adicionar simulado
+          </button>
+
+          <button
+            class="qs-mode-tab"
+            type="button"
+            data-qs-mode="library"
+          >
+            Biblioteca
+          </button>
+        </section>
+
+
+<section class="qs-overview qs-mode-section active" data-qs-section="mine">
           <article class="qs-overview-card">
             <span>Simulados realizados</span>
             <strong id="qs-overview-sets">—</strong>
@@ -904,7 +1211,7 @@
         </section>
 
 
-        <section class="qs-performance-dashboard">
+        <section class="qs-performance-dashboard qs-mode-section active" data-qs-section="mine">
 
           <article class="qs-performance-card qs-performance-accuracy">
 
@@ -1015,10 +1322,13 @@
 
         <div class="qs-stack">
 
-          <section class="qs-panel">
+          <section
+            class="qs-panel qs-mode-section"
+            data-qs-section="add"
+          >
             <div class="qs-head">
               <div>
-                <span class="badge accent">PDF</span>
+                <span class="badge accent">Adicionar</span>
                 <h2>Novo simulado</h2>
                 <p>
                   Envie o PDF. O DocMap extrai as questões e cria um gabarito rápido
@@ -1027,43 +1337,169 @@
               </div>
             </div>
 
-            <div class="qs-upload-grid">
-              <div id="qs-drop" class="qs-drop">
-                <div>
-                  <strong id="qs-file-name">Selecione um PDF</strong>
-                  <small>
-                    PDFs com texto selecionável funcionam melhor.<br>
-                    Se o arquivo for apenas imagem, o DocMap avisará.
-                  </small>
+            <div
+              class="qs-add-mode-tabs"
+              aria-label="Forma de adicionar simulado"
+            >
+              <button
+                class="qs-add-mode-tab active"
+                type="button"
+                data-qs-add-mode="automatic"
+              >
+                Automaticamente
+              </button>
 
-                  <label class="button secondary" for="qs-file">Escolher PDF</label>
-                  <input id="qs-file" type="file" accept="application/pdf,.pdf">
+              <button
+                class="qs-add-mode-tab"
+                type="button"
+                data-qs-add-mode="manual"
+              >
+                Manualmente
+              </button>
+            </div>
+
+
+            <div
+              class="qs-add-section active"
+              data-qs-add-section="automatic"
+            >
+              <div class="qs-upload-grid">
+
+                <div
+                  id="qs-drop"
+                  class="qs-drop"
+                >
+                  <div>
+                    <strong id="qs-file-name">
+                      Selecione um PDF
+                    </strong>
+
+                    <small>
+                      O DocMap extrai as questões do PDF e monta o gabarito rápido.<br>
+                      PDFs com texto selecionável funcionam melhor.
+                    </small>
+
+                    <label
+                      class="button secondary"
+                      for="qs-file"
+                    >
+                      Escolher PDF
+                    </label>
+
+                    <input
+                      id="qs-file"
+                      type="file"
+                      accept="application/pdf,.pdf"
+                    >
+                  </div>
                 </div>
-              </div>
 
-              <div class="qs-import-options">
+
+                <div class="qs-import-options">
+
+                  <label class="qs-field">
+                    <span>Nome do simulado</span>
+
+                    <input
+                      id="qs-title"
+                      type="text"
+                      maxlength="160"
+                      placeholder="Ex.: Simulado Aristo - 18/09/2026"
+                    >
+                  </label>
+
+                  <div class="qs-import-actions">
+
+                    <button
+                      id="qs-import"
+                      class="button primary"
+                      type="button"
+                    >
+                      Extrair questões
+                    </button>
+
+                  </div>
+
+                  <div
+                    id="qs-import-status"
+                    class="qs-status"
+                    aria-live="polite"
+                  ></div>
+
+                </div>
+
+              </div>
+            </div>
+
+
+            <div
+              class="qs-add-section"
+              data-qs-add-section="manual"
+            >
+              <div class="qs-manual-grid">
+
                 <label class="qs-field">
-                  <span>Nome do simulado</span>
+                  <span>Nome do simulado *</span>
+
                   <input
-                    id="qs-title"
+                    id="qs-manual-title"
                     type="text"
                     maxlength="160"
-                    placeholder="Ex.: Simulado Aristo - 18/09/2026"
+                    placeholder="Ex.: Simulado Cirurgia 01"
                   >
                 </label>
 
-                <div class="qs-import-actions">
-                  <button id="qs-import" class="button primary" type="button">
-                    Extrair questões
-                  </button>
+
+                <label class="qs-field">
+                  <span>Número de questões *</span>
+
+                  <input
+                    id="qs-manual-count"
+                    type="number"
+                    min="1"
+                    max="500"
+                    step="1"
+                    value="100"
+                  >
+                </label>
+
+
+                <div class="qs-manual-copy">
+                  <strong>Como funciona</strong>
+
+                  <p>
+                    O DocMap cria o simulado com a quantidade de questões escolhida.
+                    Depois você abre o gabarito e marca somente as questões que errou.
+                  </p>
                 </div>
 
-                <div id="qs-import-status" class="qs-status" aria-live="polite"></div>
+
+                <div class="qs-import-actions">
+
+                  <button
+                    id="qs-create-manual"
+                    class="button primary"
+                    type="button"
+                  >
+                    Criar simulado manual
+                  </button>
+
+                  <span
+                    id="qs-manual-status"
+                    class="qs-status"
+                    aria-live="polite"
+                  ></span>
+
+                </div>
+
               </div>
             </div>
           </section>
 
-          <section class="qs-panel">
+          <section
+            class="qs-panel qs-mode-section active"
+            data-qs-section="mine"
+          >
             <div class="qs-head">
               <div>
                 <h2>Meus simulados</h2>
@@ -1101,7 +1537,69 @@
             <div id="qs-history" class="qs-history"></div>
           </section>
 
-          <section id="qs-answer-panel" class="qs-panel qs-answer-panel" hidden>
+          <section
+            class="qs-panel qs-mode-section"
+            data-qs-section="library"
+          >
+
+            <div class="qs-head">
+              <div>
+                <span class="badge accent">Gerenciar</span>
+
+                <h2>Biblioteca de simulados</h2>
+
+                <p>
+                  Edite o nome dos simulados ou exclua um ou vários de uma vez.
+                </p>
+              </div>
+
+              <span
+                id="qs-library-count"
+                class="badge"
+              >
+                0 simulados
+              </span>
+            </div>
+
+
+            <div class="qs-bulk-toolbar">
+
+              <label class="qs-bulk-check">
+                <input
+                  id="qs-select-all"
+                  type="checkbox"
+                >
+
+                <span>
+                  Selecionar visíveis
+                </span>
+              </label>
+
+              <span id="qs-selected-count">
+                0 selecionados
+              </span>
+
+              <button
+                id="qs-delete-selected"
+                class="qs-mini-button danger"
+                type="button"
+                disabled
+              >
+                Excluir selecionados
+              </button>
+
+            </div>
+
+
+            <div
+              id="qs-library"
+              class="qs-library"
+            ></div>
+
+          </section>
+
+
+          <section id="qs-answer-panel" class="qs-panel qs-answer-panel qs-mode-section active" data-qs-section="mine" hidden>
             <div class="qs-head">
               <div>
                 <span class="badge accent">Gabarito rápido</span>
@@ -1154,10 +1652,86 @@
     </main>
   </div>
 
+  <dialog
+    id="qs-edit-dialog"
+    class="qs-edit-dialog"
+  >
+
+    <form
+      class="qs-edit-form"
+      method="dialog"
+    >
+
+      <div class="qs-edit-head">
+
+        <div>
+          <span class="badge accent">
+            Biblioteca
+          </span>
+
+          <h2>
+            Editar simulado
+          </h2>
+        </div>
+
+        <button
+          id="qs-edit-close"
+          class="qs-dialog-close"
+          type="button"
+          aria-label="Fechar"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <label class="qs-field">
+        <span>Nome do simulado *</span>
+
+        <input
+          id="qs-edit-title"
+          type="text"
+          maxlength="160"
+        >
+      </label>
+
+
+      <div class="qs-edit-actions">
+
+        <button
+          id="qs-edit-save"
+          class="button primary"
+          type="button"
+        >
+          Salvar alterações
+        </button>
+
+        <button
+          id="qs-edit-cancel"
+          class="button secondary"
+          type="button"
+        >
+          Cancelar
+        </button>
+
+        <span
+          id="qs-edit-status"
+          class="qs-status"
+          aria-live="polite"
+        ></span>
+
+      </div>
+
+    </form>
+
+  </dialog>
+
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="supabase.js"></script>
   <script src="app.js?v=7.0"></script>
-  <script src="questoes-simulados.js?v=11.8"></script>
+  <script src="questoes-simulados.js?v=11.9"></script>
 </body>
 </html>
