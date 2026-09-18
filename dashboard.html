@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard - StudyOS</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <aside class="menu-lateral">
+      <h2>StudyOS</h2>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="cronograma.html">Cronograma</a>
+        <a href="ambientacao.html">Ambientação</a>
+        <a href="flashcards.html">Flashcards</a>
+        <a href="caderno-erros.html">Caderno de erros</a>
+        <a href="editais-provas.html">Editais e provas</a>
+        <a href="configuracoes.html">Configurações</a>
+        <a href="index.html" class="botao-sair">Sair</a>
+      </nav>
+    </aside>
+
+    <main class="conteudo-principal">
+      <h1>Dashboard</h1>
+
+      <p id="mensagem-login">Olá, <span id="nome-usuario">carregando…</span>!</p>
+
+      <div class="card">
+        <h2>Visão geral</h2>
+        <p>Total de aulas: <span id="total-aulas">0</span></p>
+        <p>Questões respondidas: <span id="total-questoes">0</span></p>
+        <p>Simulados realizados: <span id="total-simulados">0</span></p>
+      </div>
+
+      <div class="card">
+        <h2>Agenda semanal</h2>
+        <div id="grade-semanal"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
