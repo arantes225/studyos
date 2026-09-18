@@ -4,22 +4,22 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 let usuarioAtual = null;
 
-async function verificarLoginNoDashboard() {
+async function verificarLogin() {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
     window.location.href = "index.html";
-    return;
+    return null;
   }
 
   usuarioAtual = session.user;
+
   const nomeElement = document.getElementById("nome-usuario");
   if (nomeElement) {
     nomeElement.textContent = usuarioAtual.email.split("@")[0];
   }
 
-  carregarEstatisticas();
-  carregarAgendaSemanal();
+  return session;
 }
 
 async function carregarEstatisticas() {
@@ -156,6 +156,8 @@ async function salvarAula() {
   const horarioFimInput = document.getElementById("aula-horario-fim");
   const mensagem = document.getElementById("mensagem-aula");
 
+  if (!dataInput || !areaInput || !temaInput || !mensagem) return;
+
   const data = dataInput.value;
   const area = areaInput.value;
   const disciplina = disciplinaInput.value.trim();
@@ -244,6 +246,8 @@ async function salvarProva() {
   const gabaritoInput = document.getElementById("prova-gabarito");
   const mensagem = document.getElementById("mensagem-prova");
 
+  if (!nomeInput || !dataInput || !mensagem) return;
+
   const prova = nomeInput.value.trim();
   const dataProva = dataInput.value;
   const valor = valorInput.value ? Number(valorInput.value) : null;
@@ -287,7 +291,6 @@ async function salvarProva() {
 
 async function carregarProvas() {
   const lista = document.getElementById("provas-lista");
-
   if (!lista) return;
 
   lista.innerHTML = "<p>Carregando provas…</p>";
@@ -330,52 +333,65 @@ function iniciarPaginaCronograma() {
   const caminho = window.location.pathname;
 
   if (caminho.includes("cronograma.html")) {
-    verificarLoginNoDashboard();
+    verificarLogin().then((session) => {
+      if (!session) return;
 
-    const botaoSalvarAula = document.getElementById("botao-salvar-aula");
-    if (botaoSalvarAula) {
-      botaoSalvarAula.addEventListener("click", salvarAula);
-    }
+      const botaoSalvarAula = document.getElementById("botao-salvar-aula");
+      if (botaoSalvarAula) {
+        botaoSalvarAula.addEventListener("click", salvarAula);
+      }
 
-    const botoesArea = document.querySelectorAll(".area-option");
-    const campoArea = document.getElementById("aula-area");
+      const botoesArea = document.querySelectorAll(".area-option");
+      const campoArea = document.getElementById("aula-area");
 
-    botoesArea.forEach((botao) => {
-      botao.addEventListener("click", () => {
-        botoesArea.forEach((outroBotao) => {
-          outroBotao.classList.remove("selected");
+      botoesArea.forEach((botao) => {
+        botao.addEventListener("click", () => {
+          botoesArea.forEach((outroBotao) => {
+            outroBotao.classList.remove("selected");
+          });
+
+          botao.classList.add("selected");
+          campoArea.value = botao.dataset.area;
         });
-
-        botao.classList.add("selected");
-        campoArea.value = botao.dataset.area;
       });
-    });
 
-    carregarAulas();
+      carregarAulas();
+    });
   }
 
   if (caminho.includes("editais-provas.html")) {
-    verificarLoginNoDashboard();
+    verificarLogin().then((session) => {
+      if (!session) return;
 
-    const botaoSalvarProva = document.getElementById("botao-salvar-prova");
-    if (botaoSalvarProva) {
-      botaoSalvarProva.addEventListener("click", salvarProva);
-    }
+      const botaoSalvarProva = document.getElementById("botao-salvar-prova");
+      if (botaoSalvarProva) {
+        botaoSalvarProva.addEventListener("click", salvarProva);
+      }
 
-    carregarProvas();
+      carregarProvas();
 
-    const botaoAbrirAristo = document.getElementById("botao-abrir-aristo");
-    if (botaoAbrirAristo) {
-      botaoAbrirAristo.addEventListener("click", () => {
-        window.open("https://aristo.com.br/editais/", "_blank");
-      });
-    }
+      const botaoAbrirAristo = document.getElementById("botao-abrir-aristo");
+      if (botaoAbrirAristo) {
+        botaoAbrirAristo.addEventListener("click", () => {
+          window.open("https://aristo.com.br/editais/", "_blank");
+        });
+      }
 
-    const msgIframe = document.getElementById("mensagem-iframe");
-    if (msgIframe) {
-      msgIframe.textContent =
-        "Se a área abaixo ficar em branco, o site da Aristo não permite ser exibido dentro de outras páginas. Nesse caso, use o botão para abrir em outra aba.";
-    }
+      const msgIframe = document.getElementById("mensagem-iframe");
+      if (msgIframe) {
+        msgIframe.textContent =
+          "Se a área abaixo ficar em branco, o site da Aristo não permite ser exibido dentro de outras páginas. Nesse caso, use o botão para abrir em outra aba.";
+      }
+    });
+  }
+
+  if (caminho.includes("dashboard.html")) {
+    verificarLogin().then((session) => {
+      if (!session) return;
+
+      carregarEstatisticas();
+      carregarAgendaSemanal();
+    });
   }
 }
 
