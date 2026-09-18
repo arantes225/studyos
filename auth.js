@@ -110,7 +110,7 @@ async function entrar() {
     );
 
     window.location.href =
-      "dashboard.html";
+  "teste-auth.html";
   }
 }
 
