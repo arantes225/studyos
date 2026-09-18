@@ -396,7 +396,13 @@ function groupTextItemsIntoLines(items) {
 }
 
 function isPdfHeaderLine(line) {
-  const normalized = line.toLowerCase();
+  const normalized =
+    normalizeLine(line)
+      .toLowerCase();
+
+  if (!normalized) {
+    return true;
+  }
 
   return (
     normalized === "aristo"
@@ -404,140 +410,499 @@ function isPdfHeaderLine(line) {
       normalized.includes("atividade:")
       && normalized.includes("impresso em:")
     )
+    || normalized.includes(
+      "prova gerada pelo medcof qbank"
+    )
+    || (
+      normalized.includes("| página ")
+      && normalized.includes(" de ")
+    )
+    || /^página\s+\d+\s+de\s+\d+$/i.test(
+      normalized
+    )
   );
 }
 
-function parseQuestionBlock(lines, orderIndex) {
-  const first = lines[0] || "";
 
-  const match = first.match(
-    /^(\d{1,3})\.\s*(?:\[([^\]]+)\])?\s*(.*)$/
+function isAnswerKeyStart(line) {
+  const normalized =
+    normalizeLine(line)
+      .toUpperCase();
+
+  return (
+    normalized === "GABARITO"
+    || normalized.startsWith(
+      "GABARITO "
+    )
   );
+}
 
-  if (!match) return null;
 
-  const number = Number(match[1]);
-  const sourceLabel = (match[2] || "").trim() || null;
-  const firstStem = (match[3] || "").trim();
+function questionStartMatch(line) {
+  return normalizeLine(line).match(
+    /^(\d{1,3})\s*[\.\)]\s*(?:\[([^\]]+)\])?\s*(.*)$/
+  );
+}
+
+
+function alternativeStartMatch(line) {
+  return normalizeLine(line).match(
+    /^([A-E])\s*[\)\.\-:]\s*(.*)$/i
+  );
+}
+
+
+function parseQuestionBlock(
+  lines,
+  orderIndex,
+  defaultSourceLabel = null
+) {
+  const first =
+    normalizeLine(
+      lines[0] || ""
+    );
+
+  const match =
+    questionStartMatch(first);
+
+  if (!match) {
+    return null;
+  }
+
+  const number =
+    Number(match[1]);
+
+  const sourceLabel =
+    (match[2] || "").trim()
+    || defaultSourceLabel
+    || null;
+
+  const firstStem =
+    (match[3] || "").trim();
 
   const contentLines = [
     firstStem,
     ...lines.slice(1)
-  ].filter(Boolean);
+  ]
+    .map(normalizeLine)
+    .filter(Boolean);
 
   const stemLines = [];
   const alternatives = {};
-  let currentAlternative = null;
+
+  let currentAlternative =
+    null;
 
   for (const line of contentLines) {
-    const alternativeMatch = line.match(
-      /^([A-E])(?:[\)\.\-:]|\s)\s*(.*)$/
-    );
+    const alternativeMatch =
+      alternativeStartMatch(line);
 
     if (alternativeMatch) {
-      currentAlternative = alternativeMatch[1];
-      alternatives[currentAlternative] =
-        alternativeMatch[2].trim();
+      currentAlternative =
+        alternativeMatch[1]
+          .toUpperCase();
+
+      alternatives[
+        currentAlternative
+      ] =
+        (
+          alternativeMatch[2]
+          || ""
+        ).trim();
+
       continue;
     }
 
     if (currentAlternative) {
-      alternatives[currentAlternative] =
+      alternatives[
+        currentAlternative
+      ] =
         normalizeLine(
-          `${alternatives[currentAlternative] || ""} ${line}`
+          `${
+            alternatives[
+              currentAlternative
+            ] || ""
+          } ${line}`
         );
-    } else {
-      stemLines.push(line);
+
+      continue;
     }
+
+    stemLines.push(line);
   }
 
   const rawText = [
-    `${number}. ${sourceLabel ? `[${sourceLabel}] ` : ""}${firstStem}`.trim(),
+    `${number}) ${
+      sourceLabel
+        ? `[${sourceLabel}] `
+        : ""
+    }${firstStem}`.trim(),
     ...lines.slice(1)
-  ].join("\n");
+      .map(normalizeLine)
+      .filter(Boolean)
+  ]
+    .join("\n")
+    .trim();
 
   return {
     question_number: number,
     order_index: orderIndex,
     source_label: sourceLabel,
-    stem: stemLines.join(" ").trim() || null,
+    stem:
+      stemLines
+        .join(" ")
+        .trim()
+      || null,
     alternatives,
-    raw_text: rawText.trim()
+    raw_text: rawText
   };
 }
 
-async function extractQuestionsFromPdf(file) {
-  if (!window.pdfjsLib) {
-    throw new Error("Leitor de PDF não carregou. Atualize a página e tente novamente.");
-  }
 
-  window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-
-  const buffer = await file.arrayBuffer();
-
-  const pdf = await window.pdfjsLib
-    .getDocument({ data: buffer })
-    .promise;
-
-  const allLines = [];
-
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-    setImportStatus(
-      `Lendo PDF: página ${pageNumber} de ${pdf.numPages}...`
-    );
-
-    const page = await pdf.getPage(pageNumber);
-    const content = await page.getTextContent();
-
-    const lines = groupTextItemsIntoLines(content.items)
-      .filter((line) => !isPdfHeaderLine(line));
-
-    allLines.push(...lines);
-  }
-
+function extractQuestionBlocks(
+  allLines
+) {
   const blocks = [];
-  let current = null;
 
-  for (const line of allLines) {
-    const startMatch = line.match(
-      /^(\d{1,3})\.\s*(?:\[[^\]]+\])?/
-    );
+  let current =
+    null;
+
+  for (const rawLine of allLines) {
+    const line =
+      normalizeLine(rawLine);
+
+    if (!line) {
+      continue;
+    }
+
+    /*
+      A partir de GABARITO, não anexamos mais
+      conteúdo à última questão.
+    */
+    if (
+      isAnswerKeyStart(line)
+    ) {
+      if (
+        current?.lines?.length
+      ) {
+        blocks.push(
+          current
+        );
+      }
+
+      current =
+        null;
+
+      break;
+    }
+
+    const startMatch =
+      questionStartMatch(line);
 
     if (startMatch) {
-      if (current?.lines?.length) {
-        blocks.push(current);
+      if (
+        current?.lines?.length
+      ) {
+        blocks.push(
+          current
+        );
       }
 
       current = {
-        number: Number(startMatch[1]),
-        lines: [line]
+        number:
+          Number(
+            startMatch[1]
+          ),
+        lines: [
+          line
+        ]
       };
 
       continue;
     }
 
     if (current) {
-      current.lines.push(line);
+      current.lines.push(
+        line
+      );
     }
   }
 
-  if (current?.lines?.length) {
-    blocks.push(current);
+  if (
+    current?.lines?.length
+  ) {
+    blocks.push(
+      current
+    );
   }
 
-  const questions = blocks
-    .map((block, index) =>
-      parseQuestionBlock(
-        block.lines,
-        index + 1
+  return blocks;
+}
+
+
+function extractMedCofAnswerKey(
+  allLines
+) {
+  const answerKey = {};
+
+  const startIndex =
+    allLines.findIndex(
+      (line) =>
+        isAnswerKeyStart(
+          line
+        )
+    );
+
+  if (startIndex < 0) {
+    return answerKey;
+  }
+
+  const answerText =
+    allLines
+      .slice(
+        startIndex + 1
       )
+      .join(" ");
+
+  const regex =
+    /(\d{1,3})\s*\)\s*([A-E]|X)\b/gi;
+
+  let match;
+
+  while (
+    (
+      match =
+        regex.exec(
+          answerText
+        )
+    )
+  ) {
+    answerKey[
+      Number(match[1])
+    ] =
+      match[2]
+        .toUpperCase();
+  }
+
+  return answerKey;
+}
+
+
+function questionsFromBlocks(
+  blocks,
+  defaultSourceLabel
+) {
+  return blocks
+    .map(
+      (block, index) =>
+        parseQuestionBlock(
+          block.lines,
+          index + 1,
+          defaultSourceLabel
+        )
     )
     .filter(Boolean);
+}
 
-  if (questions.length < 2) {
+
+function buildLooseTextLines(
+  pagesText
+) {
+  /*
+    Fallback para PDFs em que a coordenada Y
+    vem fragmentada e o agrupamento visual por
+    linha não funciona bem.
+
+    Junta o texto da página e cria quebras antes
+    de números de questão e alternativas.
+  */
+  const combined =
+    pagesText
+      .join("\n")
+      .replace(
+        /(\d{1,3})\s*\)/g,
+        "\n$1)"
+      )
+      .replace(
+        /\s+([A-E])\s*\)/g,
+        "\n$1)"
+      )
+      .replace(
+        /\s+(GABARITO)\b/gi,
+        "\n$1\n"
+      );
+
+  return combined
+    .split(/\n+/)
+    .map(normalizeLine)
+    .filter(Boolean);
+}
+
+
+async function extractQuestionsFromPdf(
+  file
+) {
+  if (!window.pdfjsLib) {
     throw new Error(
-      "Não consegui identificar as questões. Este PDF pode ser escaneado como imagem; OCR automático entra numa etapa posterior."
+      "Leitor de PDF não carregou. Atualize a página e tente novamente."
+    );
+  }
+
+  window.pdfjsLib
+    .GlobalWorkerOptions
+    .workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+  const buffer =
+    await file.arrayBuffer();
+
+  const pdf =
+    await window.pdfjsLib
+      .getDocument({
+        data: buffer
+      })
+      .promise;
+
+  const allLines = [];
+  const pagesText = [];
+
+  let medCofDetected =
+    false;
+
+  for (
+    let pageNumber = 1;
+    pageNumber <= pdf.numPages;
+    pageNumber += 1
+  ) {
+    setImportStatus(
+      `Lendo PDF: página ${pageNumber} de ${pdf.numPages}...`
+    );
+
+    const page =
+      await pdf.getPage(
+        pageNumber
+      );
+
+    const content =
+      await page
+        .getTextContent();
+
+    const rawPageText =
+      normalizeLine(
+        content.items
+          .map(
+            (item) =>
+              item.str || ""
+          )
+          .join(" ")
+      );
+
+    pagesText.push(
+      rawPageText
+    );
+
+    if (
+      /medcof\s*qbank/i
+        .test(
+          rawPageText
+        )
+    ) {
+      medCofDetected =
+        true;
+    }
+
+    const lines =
+      groupTextItemsIntoLines(
+        content.items
+      )
+        .filter(
+          (line) =>
+            !isPdfHeaderLine(
+              line
+            )
+        );
+
+    allLines.push(
+      ...lines
+    );
+  }
+
+  const defaultSourceLabel =
+    medCofDetected
+      ? "MedCof QBank"
+      : null;
+
+  let blocks =
+    extractQuestionBlocks(
+      allLines
+    );
+
+  let questions =
+    questionsFromBlocks(
+      blocks,
+      defaultSourceLabel
+    );
+
+  /*
+    Fallback:
+    se a leitura por coordenadas não conseguiu
+    separar as questões, tenta pelo texto bruto
+    das páginas.
+  */
+  if (
+    questions.length < 2
+  ) {
+    const looseLines =
+      buildLooseTextLines(
+        pagesText
+      )
+        .filter(
+          (line) =>
+            !isPdfHeaderLine(
+              line
+            )
+        );
+
+    blocks =
+      extractQuestionBlocks(
+        looseLines
+      );
+
+    questions =
+      questionsFromBlocks(
+        blocks,
+        defaultSourceLabel
+      );
+  }
+
+  if (
+    questions.length < 2
+  ) {
+    throw new Error(
+      "Não consegui identificar as questões deste PDF. O arquivo pode estar totalmente escaneado como imagem ou usar uma estrutura ainda não reconhecida."
+    );
+  }
+
+  /*
+    Detecta o gabarito do MedCof para validar se
+    o PDF foi reconhecido corretamente.
+    Nesta versão ele não grava o gabarito oficial
+    no banco porque a estrutura atual do Resibulando
+    registra o desempenho do usuário separadamente.
+  */
+  const answerKey =
+    extractMedCofAnswerKey(
+      allLines
+    );
+
+  if (
+    medCofDetected
+    && Object.keys(
+      answerKey
+    ).length
+  ) {
+    setImportStatus(
+      `MedCof reconhecido: ${questions.length} questões e ${Object.keys(answerKey).length} respostas no gabarito detectadas. Salvando simulado...`
     );
   }
 
@@ -888,7 +1253,7 @@ async function importPdf() {
     if (updateError) throw updateError;
 
     setImportStatus(
-      `${questions.length} questões extraídas com sucesso.`,
+      `${questions.length} questões extraídas com sucesso. PDF processado e pronto para o gabarito.`,
       "success"
     );
 

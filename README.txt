@@ -1,45 +1,43 @@
-RESIBULANDO — HOTFIX LOGOS
+RESIBULANDO — IMPORTADOR MEDCOF
 
-CORRIGE:
-- Cronograma mostrando 3 logos ao mesmo tempo.
-- Dashboard mostrando logo antiga.
+Este patch corrige a leitura de PDFs como:
+Teste-18-09-2026---18-53-download.pdf
 
-A correção agora usa UMA ÚNICA imagem no menu lateral.
-O app.js troca o arquivo de acordo com o tema:
+O problema principal era que o importador antigo reconhecia:
+1. Questão...
 
-Claro:
-logo-icone-original.png
+mas o MedCof usa:
+1) Questão...
 
-Escuro:
-logo-icone-azul-claro.png
+CORREÇÕES
+- reconhece questões iniciadas por 1) e 1.
+- reconhece alternativas A), B), C), D), E)
+- remove cabeçalhos e rodapés repetidos do MedCof
+- para de anexar texto quando encontra a seção GABARITO
+- reconhece gabarito compacto do MedCof, inclusive X = anulada
+- identifica a fonte como MedCof QBank
+- inclui fallback de leitura quando o agrupamento visual do PDF falhar
+- NÃO usa OCR desnecessariamente quando o PDF já possui camada de texto
 
-Rosa:
-logo-icone-rosa-escuro.png
+IMPORTANTE
+O gabarito oficial é detectado para validar a leitura do PDF,
+mas nesta versão não é gravado automaticamente como resposta do usuário.
+O fluxo atual do Resibulando continua permitindo marcar as questões erradas
+e informar a resposta correta apenas quando necessário.
 
-Também alterei a versão carregada em TODAS as páginas para:
-style.css?v=resibulando2
-app.js?v=resibulando2
-
-Isso evita que o navegador use o CSS/JS antigo em cache.
-
-COMO INSTALAR
-
-1. Extraia o ZIP.
-2. Copie TODOS os arquivos para a raiz do projeto.
-3. Escolha substituir quando solicitado.
-4. Confirme que os PNGs continuam na raiz.
+INSTALAÇÃO
+Substitua na raiz do projeto:
+- questoes-simulados.js
+- questoes-simulados.html
 
 Depois:
 
 git add -A
-git commit -m "Corrige logos Resibulando por tema"
+git commit -m "Corrige importacao de PDFs MedCof"
 git pull --rebase origin main
 git push origin main
 
 Depois que o GitHub Pages atualizar:
 Ctrl + Shift + R
-
-Se preferir:
-Ctrl + F5
 
 NÃO PRECISA RODAR SQL.
