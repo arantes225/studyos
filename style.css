@@ -283,3 +283,86 @@ body {
   margin: 8px 12px 12px;
   font-size: 12px;
 }
+/* Flashcards */
+
+.cronograma-form textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 9px 10px;
+  color: var(--text);
+  font-size: 13px;
+  resize: vertical;
+}
+
+.cronograma-form select {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 9px 10px;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.flashcard-estudo-wrapper {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.flashcard-estudo,
+.flashcard-resposta {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+}
+
+.fc-frente,
+.fc-verso {
+  font-size: 16px;
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+}
+
+.fc-imagem {
+  max-width: 100%;
+  max-height: 260px;
+  border-radius: 8px;
+  margin: 10px 0;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.botoes-dificuldade {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.botao-dificuldade {
+  border: none;
+  border-radius: 6px;
+  padding: 9px 14px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+}
+
+.botao-dificuldade.facil {
+  background: var(--success);
+}
+
+.botao-dificuldade.regular {
+  background: var(--primary);
+}
+
+.botao-dificuldade.dificil {
+  background: var(--danger);
+}

@@ -394,5 +394,287 @@ function iniciarPaginaCronograma() {
     });
   }
 }
+// ========== FLASHCARDS ==========
+
+function comprimirImagem(file, qualidade = 0.7) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      let largura = img.width;
+      let altura = img.height;
+      const maxLargura = 1200;
+
+      if (largura > maxLargura) {
+        const razao = maxLargura / largura;
+        largura = maxLargura;
+        altura = Math.floor(altura * razao);
+      }
+
+      canvas.width = largura;
+      canvas.height = altura;
+
+      ctx.drawImage(img, 0, 0, largura, altura);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("Falha ao comprimir imagem"));
+            return;
+          }
+          resolve(blob);
+        },
+        "image/jpeg",
+        qualidade
+      );
+    };
+    img.onerror = () => reject(new Error("Erro ao carregar imagem"));
+  });
+}
+
+async function salvarFlashcard() {
+  const frenteInput = document.getElementById("fc-frente");
+  const versoInput = document.getElementById("fc-verso");
+  const imagemInput = document.getElementById("fc-imagem");
+  const areaInput = document.getElementById("fc-area");
+  const mensagem = document.getElementById("mensagem-flashcard");
+
+  if (!frenteInput || !versoInput || !mensagem) return;
+
+  const frente = frenteInput.value.trim();
+  const verso = versoInput.value.trim();
+  const area = areaInput.value || null;
+
+  if (!frente || !verso) {
+    mensagem.textContent = "Preencha a frente e o verso do flashcard.";
+    return;
+  }
+
+  mensagem.textContent = "Salvando…";
+
+  let imagemPath = null;
+
+  if (imagemInput.files && imagemInput.files[0]) {
+    try {
+      const blobComprimido = await comprimirImagem(imagemInput.files[0], 0.7);
+
+      const fileName = `${usuarioAtual.id}/${Date.now()}_flashcard.jpg`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("studyos")
+        .upload(fileName, blobComprimido, {
+          contentType: "image/jpeg",
+          upsert: false,
+        });
+
+      if (!uploadError) {
+        imagemPath = fileName;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  const { error } = await supabase.from("flashcards").insert({
+    user_id: usuarioAtual.id,
+    frente,
+    verso,
+    imagem_path: imagemPath,
+    area,
+    deck: null,
+    tags: null,
+    intervalo_dias: 0,
+    facilidade: 2.5,
+    proxima_revisao: new Date().toISOString().split("T")[0],
+  });
+
+  if (error) {
+    mensagem.textContent = "Erro ao salvar flashcard.";
+    return;
+  }
+
+  mensagem.textContent = "Flashcard salvo com sucesso.";
+
+  frenteInput.value = "";
+  versoInput.value = "";
+  imagemInput.value = "";
+  areaInput.value = "";
+
+  carregarFlashcards();
+}
+
+async function carregarFlashcards() {
+  const lista = document.getElementById("flashcards-lista");
+  if (!lista) return;
+
+  lista.innerHTML = "<p>Carregando flashcards…</p>";
+
+  const { data: flashcards, error } = await supabase
+    .from("flashcards")
+    .select("*")
+    .eq("user_id", usuarioAtual.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    lista.innerHTML = "<p>Erro ao carregar flashcards.</p>";
+    return;
+  }
+
+  if (flashcards.length === 0) {
+    lista.innerHTML = "<p>Nenhum flashcard criado ainda.</p>";
+    return;
+  }
+
+  lista.innerHTML = flashcards
+    .map((fc) => {
+      const imagemHtml = fc.imagem_path
+        ? `<p><img src="${supabase.storage.from("studyos").getPublicUrl(fc.imagem_path).data.publicUrl}" class="fc-imagem" alt="Imagem do flashcard" /></p>`
+        : "";
+
+      return `
+        <div class="cronograma-item">
+          <div>
+            <p><strong>Frente:</strong> ${fc.frente}</p>
+            <p><strong>Verso:</strong> ${fc.verso}</p>
+            ${fc.area ? `<p><strong>Área:</strong> ${fc.area}</p>` : ""}
+            ${imagemHtml}
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+let flashcardsParaEstudar = [];
+let indiceFlashcardAtual = 0;
+let flashcardVirado = false;
+
+async function prepararEstudoFlashcards() {
+  const hoje = new Date().toISOString().split("T")[0];
+
+  const { data: flashcards, error } = await supabase
+    .from("flashcards")
+    .select("*")
+    .eq("user_id", usuarioAtual.id)
+    .lte("proxima_revisao", hoje)
+    .order("proxima_revisao", { ascending: true });
+
+  if (error || !flashcards || flashcards.length === 0) {
+    flashcardsParaEstudar = [];
+    atualizarTelaEstudo();
+    return;
+  }
+
+  flashcardsParaEstudar = flashcards;
+  indiceFlashcardAtual = 0;
+  flashcardVirado = false;
+  atualizarTelaEstudo();
+}
+
+function atualizarTelaEstudo() {
+  const containerEstudo = document.getElementById("flashcard-estudo");
+  const containerResposta = document.getElementById("flashcard-resposta");
+  const frenteEl = document.getElementById("fc-estudo-frente");
+  const versoEl = document.getElementById("fc-estudo-verso");
+  const imagemEl = document.getElementById("fc-estudo-imagem");
+  const botaoVirar = document.getElementById("botao-virar");
+
+  if (!containerEstudo || !containerResposta || !frenteEl || !versoEl || !imagemEl) return;
+
+  if (flashcardsParaEstudar.length === 0) {
+    containerEstudo.style.display = "none";
+    containerResposta.style.display = "none";
+    frenteEl.textContent = "Nenhum flashcard para revisar agora.";
+    return;
+  }
+
+  containerEstudo.style.display = "block";
+  containerResposta.style.display = "none";
+  flashcardVirado = false;
+
+  const fc = flashcardsParaEstudar[indiceFlashcardAtual];
+
+  frenteEl.textContent = fc.frente;
+
+  if (fc.imagem_path) {
+    const url = supabase.storage.from("studyos").getPublicUrl(fc.imagem_path).data.publicUrl;
+    imagemEl.src = url;
+    imagemEl.style.display = "block";
+  } else {
+    imagemEl.style.display = "none";
+  }
+
+  if (botaoVirar) botaoVirar.style.display = "inline-block";
+}
+
+function virarFlashcard() {
+  if (flashcardsParaEstudar.length === 0) return;
+
+  const containerEstudo = document.getElementById("flashcard-estudo");
+  const containerResposta = document.getElementById("flashcard-resposta");
+  const versoEl = document.getElementById("fc-estudo-verso");
+  const botaoVirar = document.getElementById("botao-virar");
+
+  const fc = flashcardsParaEstudar[indiceFlashcardAtual];
+  versoEl.textContent = fc.verso;
+
+  containerEstudo.style.display = "none";
+  containerResposta.style.display = "block";
+  flashcardVirado = true;
+  if (botaoVirar) botaoVirar.style.display = "none";
+}
+
+async function registrarDificuldade(dificuldade) {
+  if (flashcardsParaEstudar.length === 0) return;
+
+  const fc = flashcardsParaEstudar[indiceFlashcardAtual];
+
+  let dias = 1;
+  let fatorFacilidade = 0;
+
+  if (dificuldade === "facil") {
+    dias = Math.max(4, Math.floor((fc.facilidade || 2.5) * 2 + 3));
+    fatorFacilidade = 0.5;
+  } else if (dificuldade === "regular") {
+    dias = Math.max(2, Math.floor((fc.facilidade || 2.5) + 1));
+    fatorFacilidade = 0.25;
+  } else if (dificuldade === "dificil") {
+    dias = 1;
+    fatorFacilidade = 0;
+  }
+
+  const novaFacilidade = Math.max(1.3, (fc.facilidade || 2.5) + fatorFacilidade);
+
+  const hoje = new Date();
+  hoje.setDate(hoje.getDate() + dias);
+  const novaRevisao = hoje.toISOString().split("T")[0];
+
+  await supabase
+    .from("flashcards")
+    .update({
+      facilidade: novaFacilidade,
+      proxima_revisao: novaRevisao,
+    })
+    .eq("id", fc.id);
+
+  indiceFlashcardAtual++;
+
+  if (indiceFlashcardAtual >= flashcardsParaEstudar.length) {
+    flashcardsParaEstudar = [];
+    atualizarTelaEstudo();
+    return;
+  }
+
+  const containerEstudo = document.getElementById("flashcard-estudo");
+  const containerResposta = document.getElementById("flashcard-resposta");
+
+  containerResposta.style.display = "none";
+  containerEstudo.style.display = "block";
+
+  atualizarTelaEstudo();
+}
 
 iniciarPaginaCronograma();

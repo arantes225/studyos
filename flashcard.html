@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Flashcards - StudyOS</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <aside class="menu-lateral">
+      <h2>StudyOS</h2>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="cronograma.html">Cronograma</a>
+        <a href="ambientacao.html">Ambientação</a>
+        <a href="flashcards.html">Flashcards</a>
+        <a href="caderno-erros.html">Caderno de erros</a>
+        <a href="editais-provas.html">Editais e provas</a>
+        <a href="configuracoes.html">Configurações</a>
+        <a href="index.html" class="botao-sair">Sair</a>
+      </nav>
+    </aside>
+
+    <main class="conteudo-principal">
+      <h1>Flashcards</h1>
+
+      <h2 class="cronograma-titulo">Novo flashcard</h2>
+
+      <div class="cronograma-conteudo">
+        <div class="cronograma-form">
+          <h3>Criar flashcard</h3>
+
+          <label for="fc-frente">Frente</label>
+          <textarea
+            id="fc-frente"
+            placeholder="Ex.: Qual a tríade clássica da insuficiência cardíaca?"
+            rows="3"
+            required
+          ></textarea>
+
+          <label for="fc-verso">Verso</label>
+          <textarea
+            id="fc-verso"
+            placeholder="Ex.: Dispneia, edema e ortopneia"
+            rows="3"
+            required
+          ></textarea>
+
+          <label for="fc-imagem">Imagem (opcional)</label>
+          <input
+            id="fc-imagem"
+            type="file"
+            accept="image/*"
+          >
+
+          <label for="fc-area">Área (opcional)</label>
+          <select id="fc-area">
+            <option value="">Sem área</option>
+            <option value="Clínica Médica">Clínica Médica</option>
+            <option value="Cirurgia Geral">Cirurgia Geral</option>
+            <option value="Pediatria">Pediatria</option>
+            <option value="Ginecologia e Obstetrícia">Ginecologia e Obstetrícia</option>
+            <option value="Preventiva">Preventiva</option>
+          </select>
+
+          <button
+            id="botao-salvar-flashcard"
+            class="botao-primario"
+            type="button"
+          >
+            Salvar flashcard
+          </button>
+
+          <p id="mensagem-flashcard" class="mensagem"></p>
+        </div>
+
+        <div class="cronograma-lista-wrapper">
+          <h3>Seus flashcards</h3>
+          <div id="flashcards-lista" class="cronograma-lista"></div>
+        </div>
+      </div>
+
+      <h2 class="cronograma-titulo">Estudar agora</h2>
+
+      <div class="flashcard-estudo-wrapper">
+        <div id="flashcard-estudo" class="flashcard-estudo">
+          <p id="fc-estudo-frente" class="fc-frente"></p>
+          <img id="fc-estudo-imagem" class="fc-imagem" alt="" style="display:none;" />
+          <button id="botao-virar" class="botao-primario" type="button">
+            Virar
+          </button>
+        </div>
+
+        <div id="flashcard-resposta" class="flashcard-resposta" style="display:none;">
+          <p id="fc-estudo-verso" class="fc-verso"></p>
+          <div class="botoes-dificuldade">
+            <button class="botao-dificuldade facil" data-dificuldade="facil">Fácil</button>
+            <button class="botao-dificuldade regular" data-dificuldade="regular">Regular</button>
+            <button class="botao-dificuldade dificil" data-dificuldade="dificil">Difícil</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
