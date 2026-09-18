@@ -1487,99 +1487,7 @@
             </article>
           </section>
 
-          <section class="overdue-organizer">
-            <div>
-              <strong>Reorganizar aulas atrasadas</strong>
-              <p>
-                Escolha uma data final. O DocMap distribui as aulas entre hoje
-                e essa data, respeitando os dias de estudo teórico e o máximo
-                diário definido em Configurações.
-              </p>
-            </div>
 
-            <button
-              id="reorganize-overdue"
-              class="button secondary"
-              type="button"
-            >
-              Reorganizar atrasadas
-            </button>
-
-            <span
-              id="reorganize-overdue-status"
-              class="manual-status"
-              aria-live="polite"
-            ></span>
-          </section>
-
-
-          <dialog
-            id="reorganize-overdue-dialog"
-            class="schedule-dialog overdue-dialog"
-          >
-            <form
-              class="schedule-dialog-form"
-              method="dialog"
-            >
-              <div class="schedule-dialog-head">
-                <div>
-                  <span class="badge accent">Cronograma</span>
-                  <h2>Reorganizar aulas atrasadas</h2>
-                </div>
-
-                <button
-                  id="close-reorganize-overdue"
-                  class="schedule-dialog-close"
-                  type="button"
-                  aria-label="Fechar"
-                >
-                  ×
-                </button>
-              </div>
-
-              <p class="overdue-dialog-copy">
-                As aulas serão distribuídas pelos dias de estudo teórico
-                permitidos, sem ultrapassar o máximo de aulas por dia.
-              </p>
-
-              <label class="overdue-dialog-field">
-                <span>Data final *</span>
-
-                <input
-                  id="reorganize-overdue-end-date"
-                  type="date"
-                  required
-                >
-              </label>
-
-              <div
-                id="reorganize-overdue-capacity"
-                class="overdue-capacity-preview"
-              >
-                Carregando configuração...
-              </div>
-
-              <div class="schedule-dialog-actions">
-
-                <button
-                  id="confirm-reorganize-overdue"
-                  class="button primary"
-                  type="button"
-                >
-                  Reorganizar
-                </button>
-
-                <button
-                  id="cancel-reorganize-overdue"
-                  class="button secondary"
-                  type="button"
-                >
-                  Cancelar
-                </button>
-
-              </div>
-            </form>
-          </dialog>
 
           <section class="schedule-add-hub">
 
@@ -1805,6 +1713,100 @@
 
             <div id="week-planner" class="week-planner"></div>
           </section>
+
+          <section class="overdue-organizer">
+            <div>
+              <strong>Reorganizar aulas atrasadas</strong>
+              <p>
+                Escolha uma data final. O DocMap distribui as aulas entre hoje
+                e essa data, respeitando os dias de estudo teórico e o máximo
+                diário definido em Configurações.
+              </p>
+            </div>
+
+            <button
+              id="reorganize-overdue"
+              class="button secondary"
+              type="button"
+            >
+              Reorganizar atrasadas
+            </button>
+
+            <span
+              id="reorganize-overdue-status"
+              class="manual-status"
+              aria-live="polite"
+            ></span>
+          </section>
+
+
+          <dialog
+            id="reorganize-overdue-dialog"
+            class="schedule-dialog overdue-dialog"
+          >
+            <form
+              class="schedule-dialog-form"
+              method="dialog"
+            >
+              <div class="schedule-dialog-head">
+                <div>
+                  <span class="badge accent">Cronograma</span>
+                  <h2>Reorganizar aulas atrasadas</h2>
+                </div>
+
+                <button
+                  id="close-reorganize-overdue"
+                  class="schedule-dialog-close"
+                  type="button"
+                  aria-label="Fechar"
+                >
+                  ×
+                </button>
+              </div>
+
+              <p class="overdue-dialog-copy">
+                As aulas serão distribuídas pelos dias de estudo teórico
+                permitidos, sem ultrapassar o máximo de aulas por dia.
+              </p>
+
+              <label class="overdue-dialog-field">
+                <span>Data final *</span>
+
+                <input
+                  id="reorganize-overdue-end-date"
+                  type="date"
+                  required
+                >
+              </label>
+
+              <div
+                id="reorganize-overdue-capacity"
+                class="overdue-capacity-preview"
+              >
+                Carregando configuração...
+              </div>
+
+              <div class="schedule-dialog-actions">
+
+                <button
+                  id="confirm-reorganize-overdue"
+                  class="button primary"
+                  type="button"
+                >
+                  Reorganizar
+                </button>
+
+                <button
+                  id="cancel-reorganize-overdue"
+                  class="button secondary"
+                  type="button"
+                >
+                  Cancelar
+                </button>
+
+              </div>
+            </form>
+          </dialog>
 
           <section id="deck-panel" class="deck-panel" hidden>
             <div class="deck-header">
