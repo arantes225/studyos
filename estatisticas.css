@@ -12,8 +12,21 @@
 .stats-summary-box,.stats-block{padding:16px}.stats-summary-box{display:grid;gap:13px}
 .stats-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .stats-section-head h3{margin:0;font-size:15px}.stats-section-head p{margin:5px 0 0;color:var(--muted);font-size:10px;line-height:1.45}.stats-kicker{display:block;margin-bottom:5px;color:var(--muted);font-size:9px;font-weight:850;letter-spacing:.06em;text-transform:uppercase}
-.stats-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.stats-summary-card{min-width:0;padding:14px;border:1px solid var(--border);border-radius:13px;background:var(--surface-2)}
+.stats-summary-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px
+}
+.stats-summary-card{
+  min-width:0;
+  min-height:104px;
+  display:flex;
+  flex-direction:column;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface-2)
+}
 .stats-summary-card span{display:block;color:var(--muted);font-size:9px;font-weight:850;letter-spacing:.05em;text-transform:uppercase}.stats-summary-card strong{display:block;margin-top:7px;font-size:24px;line-height:1.08;overflow-wrap:anywhere}.stats-summary-card small{display:block;margin-top:5px;min-height:15px;color:var(--muted);font-size:9px;line-height:1.4}
 .stats-summary-viz{margin-top:10px}.stats-mini-track{height:7px;border:1px solid var(--border);border-radius:999px;background:var(--surface);overflow:hidden}.stats-mini-track span{display:block;height:100%;min-width:2px;border-radius:inherit;background:var(--accent)}
 .stats-block-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.stats-block.wide{grid-column:1/-1}
@@ -166,5 +179,37 @@
 @media (max-width: 560px) {
   .stats-summary-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+
+/* v18 — resumo 3 x 3 compacto */
+.stats-summary-card span{
+  font-size:8px
+}
+.stats-summary-card strong{
+  margin-top:6px;
+  font-size:20px;
+  line-height:1.08
+}
+.stats-summary-card small{
+  flex:1;
+  min-height:13px;
+  margin-top:4px;
+  font-size:8px;
+  line-height:1.35
+}
+.stats-summary-viz{
+  margin-top:7px
+}
+
+@media(max-width:850px){
+  .stats-summary-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+}
+@media(max-width:520px){
+  .stats-summary-grid{
+    grid-template-columns:1fr
   }
 }
