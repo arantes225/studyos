@@ -1,417 +1,828 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+/* =========================================================
+   RESIBULANDO — CADERNO
+   ========================================================= */
+
+.notebook-main-shell {
+  min-width: 0;
+}
+
+.notebook-page {
+  max-width: none;
+  padding-bottom: 40px;
+}
+
+/* TOPO */
+
+.notebook-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: color-mix(
+    in srgb,
+    var(--background) 92%,
+    transparent
+  );
+  backdrop-filter: blur(12px);
+}
+
+.notebook-top-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.notebook-back-button {
+  min-height: 38px;
+  padding: 0 12px;
+  text-decoration: none;
+  font-size: 11px;
+}
+
+.notebook-save-status {
+  min-width: 80px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 750;
+  text-align: right;
+}
+
+.notebook-save-status.saving {
+  color: var(--accent);
+}
+
+.notebook-save-status.saved {
+  color: var(--success);
+}
+
+.notebook-save-status.error {
+  color: var(--danger);
+}
+
+/* LAYOUT */
 
-  <title>Caderno · Resibulando</title>
+.notebook-workspace {
+  min-height: calc(100vh - 112px);
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
 
-  <link
-    rel="icon"
-    type="image/png"
-    href="favicon.png?v=resibulando2"
-  >
+/* PAINEL ESQUERDO */
 
-  <link
-    rel="stylesheet"
-    href="style.css?v=12.1"
-  >
+.notebook-topic-panel {
+  position: sticky;
+  top: 84px;
 
-  <link
-    rel="stylesheet"
-    href="caderno.css?v=14.0"
-  >
-</head>
+  max-height: calc(100vh - 104px);
 
-<body data-page="caderno">
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 11px;
 
-  <div class="app-shell">
+  padding: 14px;
 
-    <aside
-      id="sidebar"
-      class="sidebar"
-    ></aside>
+  border: 1px solid var(--border);
+  border-radius: 14px;
 
-    <div
-      id="sidebar-backdrop"
-      class="sidebar-backdrop"
-    ></div>
+  background: var(--surface);
+  box-shadow: var(--shadow);
 
-    <main class="main notebook-main-shell">
+  overflow: hidden;
+}
 
-      <div class="page notebook-page">
+.notebook-topic-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
 
-        <!-- TOPO -->
-        <header class="topbar notebook-topbar">
+.notebook-topic-head h2 {
+  margin: 7px 0 0;
+  font-size: 17px;
+}
 
-          <button
-            id="menu-open"
-            class="menu-open"
-            type="button"
-            aria-label="Abrir menu"
-          >
-            ☰
-          </button>
+.notebook-topic-count {
+  min-width: 27px;
+  height: 27px;
 
-          <div class="page-heading">
+  display: grid;
+  place-items: center;
 
-            <span
-              class="eyebrow"
-              data-page-eyebrow
-            ></span>
+  padding: 0 7px;
 
-            <h1 data-page-title></h1>
+  border-radius: 999px;
 
-          </div>
+  background: var(--surface-2);
+  color: var(--muted);
 
-          <div class="notebook-top-actions">
+  font-size: 9px;
+  font-weight: 850;
+}
 
-            <a
-              href="cronograma.html"
-              class="button secondary notebook-back-button"
-            >
-              ← Cronograma
-            </a>
+/* BUSCA */
 
-            <span
-              id="notebook-save-status"
-              class="notebook-save-status"
-            >
-              Selecione uma aula
-            </span>
+.notebook-search {
+  display: block;
+}
 
-          </div>
+.notebook-search input {
+  width: 100%;
+  min-height: 39px;
 
-        </header>
+  padding: 0 11px;
 
+  border: 1px solid var(--border);
+  border-radius: 9px;
 
-        <!-- ÁREA PRINCIPAL -->
-        <section class="notebook-workspace">
+  background: var(--surface);
+  color: var(--text);
 
+  outline: none;
 
-          <!-- LISTA DE AULAS -->
-          <aside class="notebook-topic-panel">
+  font: inherit;
+  font-size: 10px;
+}
 
-            <div class="notebook-topic-head">
+.notebook-search input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
 
-              <div>
+/* LISTA */
 
-                <span class="badge accent">
-                  Caderno
-                </span>
+.notebook-topic-list {
+  min-height: 0;
 
-                <h2>Aulas</h2>
+  display: grid;
+  align-content: start;
+  gap: 5px;
 
-              </div>
+  overflow-y: auto;
 
-              <span
-                id="notebook-topic-count"
-                class="notebook-topic-count"
-              >
-                0
-              </span>
+  padding-right: 2px;
+}
 
-            </div>
+.notebook-topic-item {
+  width: 100%;
 
+  display: grid;
+  gap: 4px;
 
-            <label class="notebook-search">
+  padding: 10px;
 
-              <span class="sr-only">
-                Buscar aula
-              </span>
+  border: 1px solid transparent;
+  border-radius: 10px;
 
-              <input
-                id="notebook-topic-search"
-                type="search"
-                placeholder="Buscar tema, matéria ou área..."
-                autocomplete="off"
-              >
+  background: transparent;
+  color: var(--text);
 
-            </label>
+  text-align: left;
 
+  cursor: pointer;
 
-            <div
-              id="notebook-topic-list"
-              class="notebook-topic-list"
-            >
+  transition:
+    background .14s ease,
+    border-color .14s ease;
+}
 
-              <div class="notebook-empty-small">
-                Carregando suas aulas...
-              </div>
+.notebook-topic-item:hover {
+  background: var(--surface-2);
+}
 
-            </div>
+.notebook-topic-item.active {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--accent) 35%,
+      var(--border)
+    );
 
-          </aside>
+  background: var(--accent-soft);
+}
 
+.notebook-topic-item strong {
+  font-size: 10.5px;
+  line-height: 1.35;
+}
 
-          <!-- EDITOR -->
-          <section class="notebook-editor-column">
+.notebook-topic-item small {
+  color: var(--muted);
+  font-size: 8.5px;
+  line-height: 1.35;
+}
 
+.notebook-topic-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
 
-            <!-- BARRA DO EDITOR -->
-            <div
-              id="notebook-toolbar"
-              class="notebook-toolbar"
-              aria-label="Ferramentas do caderno"
-            >
+.notebook-topic-flag {
+  width: fit-content;
+  min-height: 19px;
 
-              <select
-                id="notebook-block-style"
-                class="notebook-style-select"
-                aria-label="Estilo do texto"
-                disabled
-              >
+  display: inline-flex;
+  align-items: center;
 
-                <option value="p">
-                  Texto normal
-                </option>
+  padding: 0 6px;
 
-                <option value="h1">
-                  Título 1
-                </option>
+  border-radius: 999px;
 
-                <option value="h2">
-                  Título 2
-                </option>
+  background: var(--surface-2);
+  color: var(--muted);
 
-                <option value="h3">
-                  Subtítulo
-                </option>
+  font-size: 7.5px;
+  font-weight: 850;
+}
 
-              </select>
+.notebook-topic-flag.has-note {
+  background:
+    color-mix(
+      in srgb,
+      var(--accent) 10%,
+      var(--surface)
+    );
 
+  color: var(--accent);
+}
 
-              <span class="notebook-toolbar-divider"></span>
+.notebook-topic-flag.completed {
+  background:
+    color-mix(
+      in srgb,
+      var(--success) 10%,
+      var(--surface)
+    );
 
+  color: var(--success);
+}
 
-              <button
-                id="notebook-bold"
-                class="notebook-tool-button"
-                type="button"
-                title="Negrito"
-                disabled
-              >
-                <strong>B</strong>
-              </button>
+.notebook-empty-small {
+  padding: 18px 8px;
 
+  color: var(--muted);
 
-              <button
-                id="notebook-italic"
-                class="notebook-tool-button"
-                type="button"
-                title="Itálico"
-                disabled
-              >
-                <em>I</em>
-              </button>
+  font-size: 9px;
+  text-align: center;
+}
 
+/* COLUNA EDITOR */
 
-              <button
-                id="notebook-underline"
-                class="notebook-tool-button"
-                type="button"
-                title="Sublinhado"
-                disabled
-              >
-                <u>U</u>
-              </button>
+.notebook-editor-column {
+  min-width: 0;
+}
 
+/* TOOLBAR */
 
-              <span class="notebook-toolbar-divider"></span>
+.notebook-toolbar {
+  position: sticky;
+  top: 80px;
+  z-index: 24;
 
+  min-height: 52px;
 
-              <button
-                id="notebook-list"
-                class="notebook-tool-button notebook-tool-text"
-                type="button"
-                title="Lista"
-                disabled
-              >
-                • Lista
-              </button>
+  display: flex;
+  align-items: center;
 
+  gap: 5px;
 
-              <button
-                id="notebook-numbered-list"
-                class="notebook-tool-button notebook-tool-text"
-                type="button"
-                title="Lista numerada"
-                disabled
-              >
-                1. Lista
-              </button>
+  padding: 8px 10px;
 
+  border: 1px solid var(--border);
+  border-radius: 12px;
 
-              <span class="notebook-toolbar-divider"></span>
+  background:
+    color-mix(
+      in srgb,
+      var(--surface) 96%,
+      transparent
+    );
 
+  box-shadow: var(--shadow);
 
-              <!-- EMOJIS -->
-              <div class="notebook-emoji-wrap">
+  backdrop-filter: blur(12px);
+}
 
-                <button
-                  id="notebook-emoji-toggle"
-                  class="notebook-tool-button"
-                  type="button"
-                  title="Emoji"
-                  aria-expanded="false"
-                  disabled
-                >
-                  ☺
-                </button>
+.notebook-style-select {
+  min-width: 130px;
+  min-height: 34px;
 
-                <div
-                  id="notebook-emoji-menu"
-                  class="notebook-emoji-menu"
-                  hidden
-                ></div>
+  padding: 0 8px;
 
-              </div>
+  border: 1px solid var(--border);
+  border-radius: 8px;
 
+  background: var(--surface);
+  color: var(--text);
 
-              <span class="notebook-toolbar-divider"></span>
+  font: inherit;
+  font-size: 10px;
+  font-weight: 750;
+}
 
+.notebook-toolbar-divider {
+  width: 1px;
+  height: 24px;
 
-              <!-- BLOCOS DE ESTUDO -->
+  margin: 0 2px;
 
-              <button
-                class="notebook-study-tool important"
-                type="button"
-                data-study-block="important"
-                disabled
-              >
-                ★ Importante
-              </button>
+  flex: 0 0 1px;
 
+  background: var(--border);
+}
 
-              <button
-                class="notebook-study-tool warning"
-                type="button"
-                data-study-block="warning"
-                disabled
-              >
-                ⚠ Pegadinha
-              </button>
+.notebook-toolbar-spacer {
+  flex: 1;
+}
 
+.notebook-tool-button {
+  min-width: 34px;
+  height: 34px;
 
-              <button
-                class="notebook-study-tool memory"
-                type="button"
-                data-study-block="memory"
-                disabled
-              >
-                🧠 Decore
-              </button>
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
+  gap: 4px;
 
-              <span class="notebook-toolbar-spacer"></span>
+  padding: 0 9px;
 
+  border: 1px solid transparent;
+  border-radius: 8px;
 
-              <button
-                id="notebook-save-now"
-                class="button secondary compact-button"
-                type="button"
-                disabled
-              >
-                Salvar
-              </button>
+  background: transparent;
+  color: var(--text);
 
-            </div>
+  font-size: 13px;
 
+  cursor: pointer;
+}
 
-            <!-- NENHUMA AULA ESCOLHIDA -->
-            <div
-              id="notebook-empty-state"
-              class="notebook-empty-state"
-            >
+.notebook-tool-text {
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+}
 
-              <div class="notebook-empty-icon">
-                ✎
-              </div>
+.notebook-tool-button:hover:not(:disabled) {
+  border-color: var(--border);
+  background: var(--surface-2);
+}
 
-              <strong>
-                Escolha uma aula
-              </strong>
+.notebook-tool-button:disabled,
+.notebook-study-tool:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+}
 
-              <p>
-                Cada aula do seu cronograma possui um caderno próprio.
-                Se o caderno for aberto diretamente pela aula,
-                o tema será selecionado automaticamente.
-              </p>
+/* BOTÕES DE ESTUDO */
 
-            </div>
+.notebook-study-tool {
+  min-height: 34px;
 
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
-            <!-- DOCUMENTO -->
-            <div
-              id="notebook-document-wrap"
-              class="notebook-document-wrap"
-              hidden
-            >
+  padding: 0 9px;
 
-              <article class="notebook-paper">
+  border: 1px solid var(--border);
+  border-radius: 8px;
 
+  background: var(--surface);
+  color: var(--text);
 
-                <!-- CABEÇALHO DO DOCUMENTO -->
-                <header class="notebook-document-head">
+  font: inherit;
+  font-size: 9px;
+  font-weight: 800;
 
-                  <div
-                    id="notebook-document-breadcrumb"
-                    class="notebook-document-breadcrumb"
-                  ></div>
+  cursor: pointer;
 
-                  <h1
-                    id="notebook-document-title"
-                  >
-                    Tema
-                  </h1>
+  white-space: nowrap;
+}
 
-                  <p
-                    id="notebook-document-meta"
-                  ></p>
+.notebook-study-tool:hover:not(:disabled) {
+  background: var(--surface-2);
+}
 
-                </header>
+.notebook-study-tool.important {
+  color: var(--accent);
+}
 
+.notebook-study-tool.warning {
+  color: #b77709;
+}
 
-                <!-- CAMPO DE TEXTO -->
-                <div
-                  id="notebook-editor"
-                  class="notebook-editor"
-                  contenteditable="true"
-                  role="textbox"
-                  aria-multiline="true"
-                  spellcheck="true"
-                  data-placeholder="Comece a escrever seu resumo..."
-                ></div>
+.notebook-study-tool.memory {
+  color: #7956c6;
+}
 
+/* EMOJI */
 
-              </article>
+.notebook-emoji-wrap {
+  position: relative;
+}
 
-            </div>
+.notebook-emoji-menu {
+  position: absolute;
 
-          </section>
+  top: calc(100% + 8px);
+  left: 0;
 
-        </section>
+  z-index: 80;
 
-      </div>
+  width: 245px;
 
-    </main>
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
 
-  </div>
+  gap: 4px;
 
+  padding: 8px;
 
-  <!-- SUPABASE -->
-  <script
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-  ></script>
+  border: 1px solid var(--border);
+  border-radius: 12px;
 
-  <!-- IMPORTANTE: É supabase.js, NÃO config.js -->
-  <script src="supabase.js"></script>
+  background: var(--surface);
 
-  <!-- ESTRUTURA GERAL DO RESIBULANDO -->
-  <script src="app.js?v=12.1"></script>
+  box-shadow:
+    0
+    18px
+    55px
+    rgba(15, 23, 42, .18);
+}
 
-  <!-- CADERNO -->
-  <script src="caderno.js?v=14.0"></script>
+.notebook-emoji-menu[hidden] {
+  display: none !important;
+}
 
-</body>
-</html>
+.notebook-emoji-button {
+  height: 34px;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+
+  font-size: 18px;
+
+  cursor: pointer;
+}
+
+.notebook-emoji-button:hover {
+  background: var(--surface-2);
+}
+
+/* SEM AULA SELECIONADA */
+
+.notebook-empty-state {
+  min-height: 500px;
+
+  display: grid;
+  place-items: center;
+  align-content: center;
+
+  gap: 9px;
+
+  margin-top: 12px;
+
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+
+  background: var(--surface);
+  color: var(--muted);
+
+  text-align: center;
+}
+
+.notebook-empty-state strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.notebook-empty-state p {
+  max-width: 440px;
+
+  margin: 0;
+  padding: 0 20px;
+
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.notebook-empty-icon {
+  font-size: 30px;
+}
+
+/* ÁREA DA FOLHA */
+
+.notebook-document-wrap {
+  margin-top: 12px;
+
+  padding: 22px 18px 50px;
+
+  border-radius: 14px;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--surface-2) 88%,
+      var(--background)
+    );
+
+  overflow-x: auto;
+}
+
+.notebook-paper {
+  width: min(100%, 850px);
+  min-height: 1060px;
+
+  margin: 0 auto;
+
+  padding: 70px 78px 96px;
+
+  border:
+    1px
+    solid
+    color-mix(
+      in srgb,
+      var(--border) 80%,
+      transparent
+    );
+
+  background: var(--surface);
+
+  box-shadow:
+    0
+    8px
+    28px
+    rgba(15, 23, 42, .10);
+}
+
+/* CABEÇALHO DA NOTA */
+
+.notebook-document-head {
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.notebook-document-breadcrumb {
+  margin-bottom: 10px;
+
+  color: var(--accent);
+
+  font-size: 9px;
+  font-weight: 850;
+
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.notebook-document-head h1 {
+  margin: 0;
+
+  color: var(--text);
+
+  font-size: 31px;
+  line-height: 1.12;
+
+  letter-spacing: -.035em;
+}
+
+.notebook-document-head p {
+  margin: 9px 0 0;
+
+  color: var(--muted);
+
+  font-size: 10px;
+}
+
+/* EDITOR */
+
+.notebook-editor {
+  min-height: 820px;
+
+  padding-top: 27px;
+
+  outline: none;
+
+  color: var(--text);
+
+  font-size: 15px;
+  line-height: 1.7;
+
+  word-break: break-word;
+}
+
+.notebook-editor:empty::before {
+  content: attr(data-placeholder);
+
+  color:
+    color-mix(
+      in srgb,
+      var(--muted) 70%,
+      transparent
+    );
+
+  pointer-events: none;
+}
+
+.notebook-editor p {
+  margin: 0 0 14px;
+}
+
+.notebook-editor h1 {
+  margin: 30px 0 12px;
+
+  font-size: 27px;
+  line-height: 1.2;
+  font-weight: 900;
+
+  letter-spacing: -.025em;
+}
+
+.notebook-editor h2 {
+  margin: 25px 0 10px;
+
+  font-size: 21px;
+  line-height: 1.25;
+  font-weight: 900;
+}
+
+.notebook-editor h3 {
+  margin: 20px 0 9px;
+
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 850;
+}
+
+.notebook-editor ul,
+.notebook-editor ol {
+  margin: 0 0 14px 23px;
+  padding-left: 10px;
+}
+
+.notebook-editor li {
+  margin-bottom: 5px;
+}
+
+/* BLOCOS */
+
+.notebook-study-block {
+  margin: 20px 0;
+
+  padding: 15px 17px;
+
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+
+  border-radius: 9px;
+
+  background: var(--surface-2);
+}
+
+.notebook-study-block > strong {
+  display: block;
+
+  margin-bottom: 6px;
+
+  font-size: 12px;
+}
+
+.notebook-study-block.important {
+  border-left-color: var(--accent);
+}
+
+.notebook-study-block.important > strong {
+  color: var(--accent);
+}
+
+.notebook-study-block.warning {
+  border-left-color: #e7a126;
+
+  background:
+    color-mix(
+      in srgb,
+      #f2b647 9%,
+      var(--surface)
+    );
+}
+
+.notebook-study-block.warning > strong {
+  color: #b77709;
+}
+
+.notebook-study-block.memory {
+  border-left-color: #8768cf;
+
+  background:
+    color-mix(
+      in srgb,
+      #8768cf 8%,
+      var(--surface)
+    );
+}
+
+.notebook-study-block.memory > strong {
+  color: #7956c6;
+}
+
+/* ACESSIBILIDADE */
+
+.sr-only {
+  position: absolute;
+
+  width: 1px;
+  height: 1px;
+
+  padding: 0;
+  margin: -1px;
+
+  overflow: hidden;
+
+  clip: rect(0, 0, 0, 0);
+
+  white-space: nowrap;
+
+  border: 0;
+}
+
+/* RESPONSIVO */
+
+@media (max-width: 1100px) {
+
+  .notebook-workspace {
+    grid-template-columns: 215px minmax(0, 1fr);
+  }
+
+  .notebook-paper {
+    padding: 55px 48px 76px;
+  }
+
+}
+
+@media (max-width: 820px) {
+
+  .notebook-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .notebook-topic-panel {
+    position: static;
+    max-height: 300px;
+  }
+
+  .notebook-toolbar {
+    top: 66px;
+
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .notebook-document-wrap {
+    padding: 10px 0 28px;
+  }
+
+  .notebook-paper {
+    width: 100%;
+    min-height: 760px;
+
+    padding: 38px 24px 60px;
+
+    border-radius: 0;
+  }
+
+  .notebook-document-head h1 {
+    font-size: 25px;
+  }
+
+  .notebook-back-button {
+    display: none;
+  }
+
+}
+
+@media (max-width: 560px) {
+
+  .notebook-paper {
+    padding: 32px 19px 50px;
+  }
+
+  .notebook-editor {
+    font-size: 14px;
+  }
+
+  .notebook-document-head h1 {
+    font-size: 23px;
+  }
+
+}
