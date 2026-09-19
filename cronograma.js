@@ -3868,79 +3868,268 @@ function spreadBaseRowsAcrossDates(rows, dates) {
 }
 
 async function applyBaseSchedule() {
-  const button = document.getElementById("apply-base-schedule");
-  const endValue = document.getElementById("base-schedule-end-date")?.value || "";
-  const today = todayScheduleISO();
+  const button =
+    document.getElementById(
+      "apply-base-schedule"
+    );
 
-  if (!endValue || endValue < today) {
-    setBaseScheduleStatus("Escolha uma data limite igual ou posterior a hoje.", "error");
+  const endInput =
+    document.getElementById(
+      "base-schedule-end-date"
+    );
+
+  const endValue =
+    endInput?.value
+    || "";
+
+  const today =
+    todayScheduleISO();
+
+
+  if (
+    !endValue
+    || endValue < today
+  ) {
+    setBaseScheduleStatus(
+      "Escolha uma data limite igual ou posterior a hoje.",
+      "error"
+    );
+
     return;
   }
 
-  const rows = currentBaseScheduleRows();
-  const existingKeys = new Set(scheduleState.topics.map((topic) => baseTopicKey(topic.area, topic.theme)));
-  const missingRows = rows.filter((row) => !existingKeys.has(baseTopicKey(row.area, row.theme)));
+
+  const rows =
+    currentBaseScheduleRows();
+
+
+  if (!rows.length) {
+    setBaseScheduleStatus(
+      "O cronograma genérico não foi carregado. Atualize a página e tente novamente.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  const existingKeys =
+    new Set(
+      scheduleState.topics
+        .map(
+          (topic) =>
+            baseTopicKey(
+              topic.area,
+              topic.theme
+            )
+        )
+    );
+
+
+  const missingRows =
+    rows.filter(
+      (row) =>
+        !existingKeys.has(
+          baseTopicKey(
+            row.area,
+            row.theme
+          )
+        )
+    );
+
 
   if (!missingRows.length) {
-    setBaseScheduleStatus("Todas as aulas do cronograma genérico já existem no seu cronograma.", "success");
+    setBaseScheduleStatus(
+      "Todas as aulas do cronograma genérico já existem no seu cronograma.",
+      "success"
+    );
+
     return;
   }
 
-  const dates = baseEligibleDates(new Date(), parseISODateForLibrary(endValue));
+
+  const endDate =
+    parseISODateForLibrary(
+      endValue
+    );
+
+
+  const dates =
+    baseEligibleDates(
+      new Date(),
+      endDate
+    );
+
+
   if (!dates.length) {
-    setBaseScheduleStatus("Não há dias de estudo teórico disponíveis até a data limite.", "error");
+    setBaseScheduleStatus(
+      "Não há dias de estudo teórico disponíveis até a data limite.",
+      "error"
+    );
+
     return;
   }
 
-  const distributed = spreadBaseRowsAcrossDates(missingRows, dates);
-  const confirmed = window.confirm(`Adicionar ${distributed.length} aula${distributed.length === 1 ? "" : "s"} do cronograma genérico de ${scheduleState.studyMode === "dentistry" ? "Odontologia" : "Medicina"} até ${formatDateLabelSchedule(endValue)}?`);
-  if (!confirmed) return;
 
-  if (button) button.disabled = true;
-  setBaseScheduleStatus("Criando cronograma genérico...");
+  const distributed =
+    spreadBaseRowsAcrossDates(
+      missingRows,
+      dates
+    );
+
+
+  const modeLabel =
+    scheduleState.studyMode
+    === "dentistry"
+      ? "Odontologia"
+      : "Medicina";
+
+
+  const confirmed =
+    window.confirm(
+      `Adicionar ${distributed.length} aula${distributed.length === 1 ? "" : "s"} do cronograma genérico de ${modeLabel} ao seu cronograma até ${formatDateLabelSchedule(endValue)}?`
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  if (button) {
+    button.disabled =
+      true;
+  }
+
+
+  setBaseScheduleStatus(
+    `Inserindo ${distributed.length} aulas...`
+  );
+
 
   try {
-    const { data: importRecord, error: importError } = await scheduleSb
-      .from("schedule_imports")
-      .insert({
-        user_id: scheduleState.user.id,
-        file_name: scheduleState.studyMode === "dentistry" ? "cronograma genérico ENARE Odontologia" : "cronograma genérico ENARE Medicina",
-        mode: "dates",
-        status: "processing",
-        row_count: distributed.length,
-        metadata: { base_schedule:true, study_mode:scheduleState.studyMode, source:"resibulando", end_date:endValue, weekdays:currentBaseStudyDays() }
-      })
-      .select("*")
-      .single();
+    const payload =
+      distributed.map(
+        (
+          row,
+          index
+        ) => ({
+          user_id:
+            scheduleState.user.id,
 
-    if (importError) throw importError;
+          import_id:
+            null,
 
-    const payload = distributed.map((row, index) => ({
-      user_id: scheduleState.user.id,
-      import_id: importRecord.id,
-      area: row.area || null,
-      materia: null,
-      theme: row.theme,
-      original_date: null,
-      scheduled_date: row.scheduled_date,
-      deck_order: Number(row.aula || index + 1),
-      status: "scheduled"
-    }));
+          area:
+            row.area
+            || null,
 
-    for (const chunk of chunkArray(payload, 100)) {
-      const { error } = await scheduleSb.from("study_topics").insert(chunk);
-      if (error) throw error;
+          materia:
+            null,
+
+          theme:
+            row.theme,
+
+          original_date:
+            null,
+
+          scheduled_date:
+            row.scheduled_date,
+
+          deck_order:
+            Number(
+              row.aula
+              || index + 1
+            ),
+
+          status:
+            "scheduled"
+        })
+      );
+
+
+    let inserted =
+      0;
+
+
+    const chunks =
+      chunkArray(
+        payload,
+        50
+      );
+
+
+    for (
+      let index = 0;
+      index < chunks.length;
+      index += 1
+    ) {
+      const chunk =
+        chunks[index];
+
+
+      setBaseScheduleStatus(
+        `Inserindo aulas... ${inserted}/${payload.length}`
+      );
+
+
+      const {
+        data,
+        error
+      } =
+        await scheduleSb
+          .from(
+            "study_topics"
+          )
+          .insert(
+            chunk
+          )
+          .select(
+            "id"
+          );
+
+
+      if (error) {
+        throw error;
+      }
+
+
+      inserted +=
+        Array.isArray(
+          data
+        )
+          ? data.length
+          : chunk.length;
     }
 
-    await scheduleSb.from("schedule_imports").update({ status:"completed", row_count:payload.length }).eq("id", importRecord.id);
 
-    setBaseScheduleStatus(`${payload.length} aula${payload.length === 1 ? "" : "s"} adicionada${payload.length === 1 ? "" : "s"}. Distribuição feita em no máximo ${currentBaseStudyDays().length} dias por semana até ${formatDateLabelSchedule(endValue)}.`, "success");
+    setBaseScheduleStatus(
+      `${inserted} aula${inserted === 1 ? "" : "s"} do cronograma genérico de ${modeLabel} adicionada${inserted === 1 ? "" : "s"} com sucesso até ${formatDateLabelSchedule(endValue)}.`,
+      "success"
+    );
+
+
     await loadTopics();
+
+
   } catch (error) {
-    console.error(error);
-    setBaseScheduleStatus(`Não foi possível criar o cronograma genérico: ${error.message}`, "error");
+    console.error(
+      "Erro ao inserir cronograma genérico:",
+      error
+    );
+
+
+    setBaseScheduleStatus(
+      `Não foi possível inserir as aulas: ${error.message || "erro desconhecido"}`,
+      "error"
+    );
+
+
   } finally {
-    if (button) button.disabled = false;
+    if (button) {
+      button.disabled =
+        false;
+    }
   }
 }
 

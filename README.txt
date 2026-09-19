@@ -1,59 +1,47 @@
-RESIBULANDO — DASHBOARD QUESTÕES E SIMULADOS 3x3
+RESIBULANDO — FASE 12.3
+CORREÇÃO DO DASHBOARD DE QUESTÕES + CRONOGRAMA GENÉRICO
 
-ALTERAÇÃO
-O dashboard de "Meus simulados" foi reconstruído em uma grade compacta
-de 3 colunas x 3 linhas no desktop.
+QUESTÕES E SIMULADOS
+O problema dos blocos gigantes foi identificado: uma regra antiga do site
+usava "display: block !important" para a seção ativa e estava vencendo o
+novo CSS da grade.
 
-OS 9 QUADRADOS SÃO:
+Agora:
+- desktop = 3 x 3 de verdade;
+- 9 quadrados compactos;
+- largura total aproximada de 860 px;
+- tablet = 2 colunas;
+- celular = 1 coluna;
+- o gráfico quinzenal fica dentro do 9º quadrado.
 
-1. Questões da semana
-   - total
-   - acertos
-   - erros
-   - barra gráfica verde/vermelha
+IMPORTANTE:
+No print enviado, o Chrome também parece estar com zoom reduzido.
+Depois de publicar, pressione Ctrl + 0 para garantir zoom de 100%.
 
-2. Aproveitamento da semana
-   - percentual
-   - indicador circular
+CRONOGRAMA GENÉRICO
+A inserção foi refeita de forma mais simples e robusta.
 
-3. Questões totais realizadas
-   - total desde sempre
+Agora o botão insere DIRETAMENTE na tabela study_topics.
+Ele não depende mais da criação de um registro em schedule_imports.
 
-4. Simulados no mês
-   - quantidade de simulados cadastrados no mês atual
-
-5. Questões no mês
-   - total respondido no mês
-
-6. Aproveitamento do mês
-   - percentual de acerto
-
-7. Acertos x erros
-   - números acumulados
-   - barra gráfica
-
-8. Questões enviadas ao Caderno de Erros
-   - total desde sempre
-
-9. Desempenho quinzenal
-   - gráfico linear dos últimos 14 dias
-
-LAYOUT
-- Desktop: 3 x 3
-- Tablet: 2 colunas
-- Celular: 1 coluna
+Isso corrige casos em que o botão confirmava a operação, mas nenhuma aula
+era criada.
 
 ARQUIVOS PARA SUBSTITUIR
 - questoes-simulados.html
 - questoes-simulados.js
+- cronograma.html
+- cronograma.js
+- cronograma-base-data.js
 
-NÃO PRECISA RODAR SQL.
+NÃO PRECISA RODAR SQL NOVO.
 
-PUBLICAR:
+PUBLICAR
 git add -A
-git commit -m "Corrige dashboard 3x3 de questoes"
+git commit -m "Corrige dashboard e cronograma generico"
 git pull --rebase origin main
 git push origin main
 
 Depois:
 Ctrl + Shift + R
+Ctrl + 0
