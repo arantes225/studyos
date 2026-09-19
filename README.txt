@@ -1,47 +1,44 @@
-RESIBULANDO — FASE 12.3
-CORREÇÃO DO DASHBOARD DE QUESTÕES + CRONOGRAMA GENÉRICO
+RESIBULANDO — FASE 12.4
+CORREÇÃO DO BOTÃO "ADICIONAR CRONOGRAMA GENÉRICO"
 
-QUESTÕES E SIMULADOS
-O problema dos blocos gigantes foi identificado: uma regra antiga do site
-usava "display: block !important" para a seção ativa e estava vencendo o
-novo CSS da grade.
+O botão foi refeito para não depender de insert direto do navegador.
 
-Agora:
-- desktop = 3 x 3 de verdade;
-- 9 quadrados compactos;
-- largura total aproximada de 860 px;
-- tablet = 2 colunas;
-- celular = 1 coluna;
-- o gráfico quinzenal fica dentro do 9º quadrado.
+NOVO FLUXO
+1. Seleciona Medicina ou Odontologia nas Configurações.
+2. Cronograma -> Adicionar aulas -> Utilizar cronograma genérico.
+3. Escolhe a data limite.
+4. Clica "Adicionar cronograma genérico".
+5. O site envia a lista completa para UMA função no Supabase.
+6. A função:
+   - usa no máximo 3 dias de aula por semana;
+   - distribui as aulas até a data limite;
+   - ignora aulas que já existem;
+   - insere tudo em uma única transação;
+   - retorna quantas foram criadas.
+7. A página recarrega o cronograma e rola até o planejador.
 
-IMPORTANTE:
-No print enviado, o Chrome também parece estar com zoom reduzido.
-Depois de publicar, pressione Ctrl + 0 para garantir zoom de 100%.
+FALLBACK
+Se a nova função SQL ainda não existir, o site tenta usar a função
+create_study_topic já existente. Assim o botão não fica completamente
+inutilizado.
 
-CRONOGRAMA GENÉRICO
-A inserção foi refeita de forma mais simples e robusta.
+INSTALAÇÃO
+1. No Supabase SQL Editor, rode SOMENTE:
+   fase12_4_cronograma_generico.sql
 
-Agora o botão insere DIRETAMENTE na tabela study_topics.
-Ele não depende mais da criação de um registro em schedule_imports.
+2. Depois substitua:
+   - cronograma.html
+   - cronograma.js
+   - cronograma-base-data.js
 
-Isso corrige casos em que o botão confirmava a operação, mas nenhuma aula
-era criada.
-
-ARQUIVOS PARA SUBSTITUIR
-- questoes-simulados.html
-- questoes-simulados.js
-- cronograma.html
-- cronograma.js
-- cronograma-base-data.js
-
-NÃO PRECISA RODAR SQL NOVO.
-
-PUBLICAR
+3. Publique:
 git add -A
-git commit -m "Corrige dashboard e cronograma generico"
+git commit -m "Corrige cronograma generico"
 git pull --rebase origin main
 git push origin main
 
-Depois:
+4. Depois:
 Ctrl + Shift + R
-Ctrl + 0
+
+NÃO rode SQL mestre.
+NÃO apague tabelas.
