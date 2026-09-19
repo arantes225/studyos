@@ -308,7 +308,8 @@ async function loadMetrics() {
   const [
     dueResult,
     overdueResult,
-    reviewResult
+    reviewResult,
+    retentionResult
   ] = await Promise.all([
     flashSb
       .from("flashcards")
@@ -349,7 +350,7 @@ async function loadMetrics() {
     flashSb
       .from("flashcard_reviews")
       .select(
-        "was_correct"
+        "id,rating,was_correct,reviewed_at"
       )
       .gte(
         "reviewed_at",
@@ -358,25 +359,81 @@ async function loadMetrics() {
       .lt(
         "reviewed_at",
         startOfTomorrowISO()
+      ),
+
+    flashSb
+      .from(
+        "flashcard_retention_overall"
       )
+      .select(
+        "reviewed_cards,retention_percent"
+      )
+      .maybeSingle()
   ]);
+
+  if (dueResult.error) {
+    console.warn(
+      dueResult.error
+    );
+  }
+
+  if (overdueResult.error) {
+    console.warn(
+      overdueResult.error
+    );
+  }
+
+  if (reviewResult.error) {
+    console.warn(
+      reviewResult.error
+    );
+  }
+
+  const due =
+    Number(
+      dueResult.count
+      || 0
+    );
+
+  const overdue =
+    Number(
+      overdueResult.count
+      || 0
+    );
+
+  const reviews =
+    reviewResult.data
+    || [];
+
+  const correct =
+    reviews.filter(
+      (row) =>
+        row.was_correct
+        === true
+    ).length;
+
+  const accuracy =
+    reviews.length
+      ? (
+          100
+          * correct
+          / reviews.length
+        )
+      : null;
 
   document
     .getElementById(
       "metric-due"
     )
     .textContent =
-      dueResult.count ?? 0;
+      due;
 
   document
     .getElementById(
       "metric-overdue"
     )
     .textContent =
-      overdueResult.count ?? 0;
-
-  const reviews =
-    reviewResult.data || [];
+      overdue;
 
   document
     .getElementById(
@@ -385,25 +442,176 @@ async function loadMetrics() {
     .textContent =
       reviews.length;
 
-  const correct =
-    reviews.filter(
-      (row) =>
-        row.was_correct
-          === true
-    ).length;
-
   document
     .getElementById(
       "metric-accuracy"
     )
     .textContent =
-      reviews.length
-        ? `${Math.round(
-            100
-            * correct
-            / reviews.length
-          )}%`
-        : "—";
+      accuracy === null
+        ? "—"
+        : `${Math.round(
+            accuracy
+          )}%`;
+
+  const dueBase =
+    Math.max(
+      1,
+      due
+    );
+
+  const dueBar =
+    document.getElementById(
+      "flash-due-bar"
+    );
+
+  const overdueBar =
+    document.getElementById(
+      "flash-overdue-bar"
+    );
+
+  const reviewedFill =
+    document.getElementById(
+      "flash-reviewed-fill"
+    );
+
+  if (dueBar) {
+    dueBar.style.width =
+      due
+        ? "100%"
+        : "0%";
+  }
+
+  if (overdueBar) {
+    overdueBar.style.width =
+      `${Math.min(
+        100,
+        100
+        * overdue
+        / dueBase
+      )}%`;
+  }
+
+  if (reviewedFill) {
+    reviewedFill.style.width =
+      `${Math.min(
+        100,
+        reviews.length
+        * 5
+      )}%`;
+  }
+
+  const accuracyRing =
+    document.getElementById(
+      "flash-accuracy-ring"
+    );
+
+  if (accuracyRing) {
+    accuracyRing.style
+      .setProperty(
+        "--accuracy",
+        accuracy === null
+          ? 0
+          : Math.max(
+              0,
+              Math.min(
+                100,
+                accuracy
+              )
+            )
+      );
+  }
+
+  const retentionValue =
+    document.getElementById(
+      "metric-retention"
+    );
+
+  const retentionHelper =
+    document.getElementById(
+      "metric-retention-helper"
+    );
+
+  const retentionRing =
+    document.getElementById(
+      "flash-retention-ring"
+    );
+
+  if (
+    retentionResult.error
+    || !retentionResult.data
+    || retentionResult.data
+      .retention_percent
+      === null
+  ) {
+    if (retentionResult.error) {
+      console.warn(
+        "Retenção dos flashcards indisponível:",
+        retentionResult.error.message
+      );
+    }
+
+    if (retentionValue) {
+      retentionValue.textContent =
+        "—";
+    }
+
+    if (retentionHelper) {
+      retentionHelper.textContent =
+        "Revise flashcards para estimar a retenção do conteúdo.";
+    }
+
+    if (retentionRing) {
+      retentionRing.style
+        .setProperty(
+          "--retention",
+          0
+        );
+    }
+
+    return;
+  }
+
+  const retention =
+    Number(
+      retentionResult.data
+        .retention_percent
+    );
+
+  const reviewedCards =
+    Number(
+      retentionResult.data
+        .reviewed_cards
+      || 0
+    );
+
+  if (retentionValue) {
+    retentionValue.textContent =
+      `${retention
+        .toFixed(1)
+        .replace(
+          ".",
+          ","
+        )}%`;
+  }
+
+  if (retentionHelper) {
+    retentionHelper.textContent =
+      `${reviewedCards} flashcard${reviewedCards === 1 ? "" : "s"} com histórico de revisão.`;
+  }
+
+  if (retentionRing) {
+    retentionRing.style
+      .setProperty(
+        "--retention",
+        Math.max(
+          0,
+          Math.min(
+            100,
+            retention
+          )
+        )
+      );
+  }
 }
 
 async function signedFlashImage(path) {

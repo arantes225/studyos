@@ -528,6 +528,94 @@ function returnFromExamDialog() {
 }
 
 
+async function updateExamStatusInline(
+  examId,
+  status,
+  select
+) {
+  if (
+    ![
+      "planned",
+      "registered",
+      "taken",
+      "cancelled"
+    ].includes(
+      status
+    )
+  ) {
+    return;
+  }
+
+  const exam =
+    examRows.find(
+      (item) =>
+        item.id === examId
+    );
+
+  if (!exam) {
+    return;
+  }
+
+  const previous =
+    exam.status;
+
+  if (
+    previous === status
+  ) {
+    return;
+  }
+
+  if (select) {
+    select.disabled =
+      true;
+  }
+
+  const {
+    error
+  } =
+    await examSb
+      .from(
+        "exams"
+      )
+      .update({
+        status
+      })
+      .eq(
+        "id",
+        examId
+      );
+
+  if (select) {
+    select.disabled =
+      false;
+  }
+
+  if (error) {
+    console.error(
+      error
+    );
+
+    if (select) {
+      select.value =
+        previous;
+    }
+
+    window.alert(
+      `Não foi possível alterar o status: ${error.message}`
+    );
+
+    return;
+  }
+
+  exam.status =
+    status;
+
+  await loadExamMetrics();
+
+  renderExams();
+}
+
+
 function renderExams() {
   const list =
     document.getElementById(
@@ -695,15 +783,30 @@ function renderExams() {
                 </div>
 
 
-                <span class="exam-status-badge ${examEscape(
-                  exam.status
-                )}">
-                  ${examEscape(
-                    examStatusLabel(
-                      exam.status
-                    )
-                  )}
-                </span>
+                <label class="exam-quick-status">
+                  <span>Status</span>
+
+                  <select
+                    data-exam-status-quick="${examEscape(exam.id)}"
+                    aria-label="Alterar status de ${examEscape(exam.institution)}"
+                  >
+                    <option value="planned" ${exam.status === "planned" ? "selected" : ""}>
+                      Planejada
+                    </option>
+
+                    <option value="registered" ${exam.status === "registered" ? "selected" : ""}>
+                      Inscrita
+                    </option>
+
+                    <option value="taken" ${exam.status === "taken" ? "selected" : ""}>
+                      Realizada
+                    </option>
+
+                    <option value="cancelled" ${exam.status === "cancelled" ? "selected" : ""}>
+                      Cancelada
+                    </option>
+                  </select>
+                </label>
 
               </div>
 
@@ -907,6 +1010,29 @@ function renderExams() {
 
 
   updateExamBulkToolbar();
+
+
+  list
+    .querySelectorAll(
+      "[data-exam-status-quick]"
+    )
+    .forEach(
+      (select) => {
+        select.addEventListener(
+          "change",
+          () => {
+            updateExamStatusInline(
+              select.dataset
+                .examStatusQuick,
+
+              select.value,
+
+              select
+            );
+          }
+        );
+      }
+    );
 
 
   list

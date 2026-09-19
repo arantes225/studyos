@@ -919,3 +919,226 @@
 #flash-library-export-selected + #flash-library-delete-selected {
   margin-left: 0;
 }
+
+
+/* =========================================================
+   FASE 12.8 — DASHBOARD VISUAL DE FLASHCARDS
+   ========================================================= */
+
+.flash-dashboard-overview {
+  display: grid;
+  grid-template-columns:
+    minmax(250px, .9fr)
+    minmax(0, 1.8fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.flash-retention-card {
+  min-height: 250px;
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    132px;
+  grid-template-rows:
+    1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.flash-retention-copy h2 {
+  max-width: 360px;
+  margin: 7px 0 0;
+  font-size: 18px;
+  line-height: 1.18;
+}
+
+.flash-retention-copy p {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.flash-retention-ring {
+  --retention: 0;
+  width: 126px;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  justify-self: end;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      var(--accent)
+      calc(var(--retention) * 1%),
+      var(--surface-2) 0
+    );
+}
+
+.flash-retention-ring::before {
+  content: "";
+  grid-area: 1 / 1;
+  width: 74%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: var(--surface);
+}
+
+.flash-retention-ring > div {
+  position: relative;
+  z-index: 1;
+  grid-area: 1 / 1;
+  display: grid;
+  justify-items: center;
+}
+
+.flash-retention-ring strong {
+  font-size: 27px;
+  line-height: 1;
+}
+
+.flash-retention-ring span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.flash-retention-scale {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns:
+    repeat(3, 1fr);
+  gap: 4px;
+}
+
+.flash-retention-scale span {
+  min-height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  text-indent: -9999px;
+}
+
+.flash-retention-scale .low {
+  background: color-mix(in srgb, var(--danger) 65%, var(--surface-2));
+}
+
+.flash-retention-scale .medium {
+  background: color-mix(in srgb, #d39d2a 68%, var(--surface-2));
+}
+
+.flash-retention-scale .high {
+  background: color-mix(in srgb, var(--success) 72%, var(--surface-2));
+}
+
+.flash-visual-metrics {
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+}
+
+.flash-visual-card {
+  min-height: 118px;
+}
+
+.flash-mini-track {
+  height: 7px;
+  margin-top: auto;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.flash-mini-track span,
+.flash-review-visual span {
+  display: block;
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width .25s ease;
+}
+
+.flash-visual-card.danger
+.flash-mini-track span {
+  background: var(--danger);
+}
+
+.flash-review-visual {
+  height: 9px;
+  margin-top: auto;
+  border-radius: 3px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      var(--surface-2) 0 8px,
+      transparent 8px 11px
+    );
+  overflow: hidden;
+}
+
+.flash-review-visual span {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      var(--accent) 0 8px,
+      transparent 8px 11px
+    );
+}
+
+.flash-mini-ring {
+  --accuracy: 0;
+  width: 76px;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  margin-top: auto;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      var(--success)
+      calc(var(--accuracy) * 1%),
+      var(--surface-2) 0
+    );
+}
+
+.flash-mini-ring::before {
+  content: "";
+  grid-area: 1 / 1;
+  width: 72%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: var(--surface);
+}
+
+.flash-mini-ring strong {
+  position: relative;
+  z-index: 1;
+  grid-area: 1 / 1;
+  font-size: 16px;
+}
+
+@media (max-width: 980px) {
+  .flash-dashboard-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .flash-retention-ring {
+    justify-self: center;
+  }
+}
+
+@media (max-width: 620px) {
+  .flash-retention-card {
+    grid-template-columns: 1fr;
+  }
+
+  .flash-retention-ring {
+    justify-self: start;
+  }
+
+  .flash-visual-metrics {
+    grid-template-columns: 1fr;
+  }
+}

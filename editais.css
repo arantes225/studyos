@@ -611,3 +611,45 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* =========================================================
+   FASE 12.8 — STATUS RÁPIDO NA PRIMEIRA PÁGINA
+   ========================================================= */
+
+.exam-quick-status {
+  min-width: 122px;
+  display: grid;
+  gap: 4px;
+}
+
+.exam-quick-status > span {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.exam-quick-status select {
+  min-height: 34px;
+  padding: 0 30px 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 850;
+  outline: none;
+}
+
+.exam-quick-status select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+@media (max-width: 680px) {
+  .exam-quick-status {
+    width: 100%;
+  }
+}

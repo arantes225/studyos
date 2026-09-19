@@ -455,6 +455,31 @@
     .study-mode-option input:checked + span { border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 12%,transparent); }
     @media (max-width:680px) { .study-mode-options { grid-template-columns:1fr; } }
 
+  
+    .error-review-interval-row {
+      grid-template-columns:
+        150px
+        repeat(6, minmax(64px, 1fr));
+    }
+
+    @media (max-width: 1050px) {
+      .error-review-interval-row {
+        grid-template-columns:
+          repeat(3, minmax(90px, 1fr));
+      }
+
+      .error-review-interval-row .interval-label {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .error-review-interval-row {
+        grid-template-columns:
+          repeat(2, minmax(0, 1fr));
+      }
+    }
+
   </style>
   <link rel="stylesheet" href="resibulando-brand-v5.css?v=5">
   <script defer src="resibulando-brand-v5.js?v=5"></script>
@@ -921,29 +946,97 @@
             <div>
               <h2>Caderno de erros</h2>
               <p>
-                Defina em quantos dias um CCQ volta depois de clicar em
-                <strong>Lido</strong>.
+                Configure a sequência de revisões dos CCQs. Cada valor representa
+                quantos dias serão adicionados depois de clicar em <strong>Lido</strong>.
               </p>
             </div>
 
-            <div class="single-setting-grid">
-              <label class="single-setting-field">
-                <span>Intervalo de revisão</span>
-                <input
-                  id="error-review-interval"
-                  type="number"
-                  min="1"
-                  max="3650"
-                  step="1"
-                  value="21"
-                >
-                <small>dias até a próxima revisão</small>
-              </label>
+            <div class="interval-editor">
+              <div class="interval-row error-review-interval-row">
+
+                <div class="interval-label">
+                  <strong>Revisões</strong>
+                  <small>Sequência padrão: 7 + 21 + 21 + 21 + 21 + 21 dias.</small>
+                </div>
+
+                <label class="interval-field">
+                  <span>1ª</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="error_review_intervals"
+                    data-interval-index="0"
+                    value="7"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>2ª</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="error_review_intervals"
+                    data-interval-index="1"
+                    value="21"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>3ª</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="error_review_intervals"
+                    data-interval-index="2"
+                    value="21"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>4ª</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="error_review_intervals"
+                    data-interval-index="3"
+                    value="21"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>5ª</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="error_review_intervals"
+                    data-interval-index="4"
+                    value="21"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>6ª+</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="error_review_intervals"
+                    data-interval-index="5"
+                    value="21"
+                  >
+                </label>
+
+              </div>
             </div>
 
             <p class="settings-note">
-              A alteração vale para novos agendamentos. Itens já programados
-              mantêm a data atual até serem revisados novamente.
+              Depois da 6ª revisão, o último intervalo continua sendo reutilizado.
+              Os dias permitidos para o Caderno de Erros continuam sendo respeitados.
             </p>
 
             <div class="settings-actions">
@@ -1117,6 +1210,6 @@
   <script src="supabase.js"></script>
   <script src="app.js?v=12.1"></script>
   <script src="study-mode.js?v=12.1"></script>
-  <script src="configuracoes.js?v=12"></script>
+  <script src="configuracoes.js?v=12.8"></script>
 </body>
 </html>

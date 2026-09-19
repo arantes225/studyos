@@ -446,6 +446,7 @@ async function loadStudySettings() {
       flashcard_intervals_medium,
       flashcard_intervals_easy,
       error_review_interval_days,
+      error_review_intervals,
       subject_review_intervals,
       pomodoro_focus_minutes,
       pomodoro_break_minutes
@@ -490,16 +491,11 @@ async function loadStudySettings() {
   );
 
 
-  const errorReviewInterval =
-    document.getElementById(
-      "error-review-interval"
-    );
-
-  if (errorReviewInterval) {
-    errorReviewInterval.value =
-      settings.error_review_interval_days
-      ?? 21;
-  }
+  setIntervalInputs(
+    "error_review_intervals",
+    settings.error_review_intervals
+      || [7,21,21,21,21,21]
+  );
 
   setIntervalInputs(
     "subject_review_intervals",
@@ -678,48 +674,36 @@ function setErrorReviewSettingsStatus(
 
 
 async function saveErrorReviewSettings() {
-  const interval =
-    Number(
-      document
-        .getElementById(
-          "error-review-interval"
-        )
-        ?.value
+  const intervals =
+    readIntervalInputs(
+      "error_review_intervals"
     );
 
-
   if (
-    !Number.isInteger(
-      interval
-    )
-    || interval < 1
-    || interval > 3650
+    !intervals
+    || intervals.length !== 6
   ) {
     setErrorReviewSettingsStatus(
-      "Use um intervalo entre 1 e 3650 dias.",
+      "Preencha os 6 intervalos com dias inteiros entre 1 e 3650.",
       "error"
     );
 
     return;
   }
 
-
   const button =
     document.getElementById(
       "save-error-review-settings"
     );
-
 
   if (button) {
     button.disabled =
       true;
   }
 
-
   setErrorReviewSettingsStatus(
     "Salvando..."
   );
-
 
   const {
     error
@@ -733,8 +717,17 @@ async function saveErrorReviewSettings() {
           user_id:
             settingsUser.id,
 
+          error_review_intervals:
+            intervals,
+
+          /*
+            Mantido por compatibilidade com versões antigas.
+            O novo agendamento usa error_review_intervals.
+          */
           error_review_interval_days:
-            interval
+            intervals[
+              intervals.length - 1
+            ]
         },
         {
           onConflict:
@@ -742,12 +735,10 @@ async function saveErrorReviewSettings() {
         }
       );
 
-
   if (button) {
     button.disabled =
       false;
   }
-
 
   if (error) {
     console.error(
@@ -762,13 +753,11 @@ async function saveErrorReviewSettings() {
     return;
   }
 
-
   setErrorReviewSettingsStatus(
-    "Intervalo salvo.",
+    `Sequência salva: ${intervals.join(" + ")} dias.`,
     "success"
   );
 }
-
 
 function setSubjectReviewSettingsStatus(
   text,

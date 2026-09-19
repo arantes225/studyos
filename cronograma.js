@@ -4398,9 +4398,11 @@ function wireBaseSchedule() {
 }
 
 function getActiveTopicsForLibrary() {
-  return scheduleState.topics.filter(
-    (topic) => !topic.completed_at
-  );
+  /*
+    A Biblioteca/Lista de temas mostra também
+    conteúdos já concluídos.
+  */
+  return scheduleState.topics.slice();
 }
 
 function populateAreaFilter() {
@@ -4633,10 +4635,23 @@ function updateThemeBulkToolbar() {
   }
 
   if (doneButton) {
+    const selectedPending =
+      scheduleState.topics
+        .some(
+          (topic) =>
+            scheduleState
+              .selectedThemeIds
+              .has(
+                topic.id
+              )
+            && !topic.completed_at
+            && Boolean(
+              topic.scheduled_date
+            )
+        );
+
     doneButton.disabled =
-      scheduleState
-        .selectedThemeIds
-        .size === 0;
+      !selectedPending;
   }
 
 
@@ -4806,12 +4821,25 @@ function renderThemeLibrary() {
 
   container.innerHTML =
     topics.map((topic) => {
+      const isCompleted =
+        Boolean(
+          topic.completed_at
+        );
+
       const isDeck =
-        topic.status === "deck"
-        || !topic.scheduled_date;
+        !isCompleted
+        && (
+          topic.status === "deck"
+          || !topic.scheduled_date
+        );
+
+      const dateLabel =
+        isCompleted
+          ? `Concluída · ${formatTopicDate(topic)}`
+          : formatTopicDate(topic);
 
       return `
-        <article class="theme-library-row with-selection">
+        <article class="theme-library-row with-selection ${isCompleted ? "completed" : ""}">
 
           <label
             class="theme-library-select"
@@ -4851,43 +4879,53 @@ function renderThemeLibrary() {
             )}
           </div>
 
-          <div class="theme-library-date ${isDeck ? "deck" : ""}">
+          <div class="theme-library-date ${isDeck ? "deck" : ""} ${isCompleted ? "completed" : ""}">
             ${escapeScheduleHtml(
-              formatTopicDate(topic)
+              dateLabel
             )}
           </div>
 
           <div class="theme-library-actions">
 
-            <button
-              class="theme-library-action"
-              type="button"
-              data-library-topic="${escapeScheduleHtml(topic.id)}"
-            >
-              ${isDeck ? "Ir para deck" : "Ver na semana"}
-            </button>
-
             ${
-              isDeck
-                ? ""
+              isCompleted
+                ? `
+                  <span class="theme-library-completed-badge">
+                    Concluída
+                  </span>
+                `
                 : `
                   <button
-                    class="theme-library-action to-deck"
+                    class="theme-library-action"
                     type="button"
-                    data-library-to-deck="${escapeScheduleHtml(topic.id)}"
+                    data-library-topic="${escapeScheduleHtml(topic.id)}"
                   >
-                    Remover para o deck
+                    ${isDeck ? "Ir para deck" : "Ver na semana"}
+                  </button>
+
+                  ${
+                    isDeck
+                      ? ""
+                      : `
+                        <button
+                          class="theme-library-action to-deck"
+                          type="button"
+                          data-library-to-deck="${escapeScheduleHtml(topic.id)}"
+                        >
+                          Remover para o deck
+                        </button>
+                      `
+                  }
+
+                  <button
+                    class="theme-library-action done"
+                    type="button"
+                    data-library-done="${escapeScheduleHtml(topic.id)}"
+                  >
+                    Já feita
                   </button>
                 `
             }
-
-            <button
-              class="theme-library-action done"
-              type="button"
-              data-library-done="${escapeScheduleHtml(topic.id)}"
-            >
-              Já feita
-            </button>
 
           </div>
         </article>
@@ -5838,7 +5876,11 @@ async function openReorganizeOverdueDialog() {
         "user_settings"
       )
       .select(
-        "max_lessons_per_day"
+        "theory_study_weekdays,max_lessons_per_day"
+      )
+      .eq(
+        "user_id",
+        scheduleState.user.id
       )
       .maybeSingle();
 
@@ -5851,10 +5893,38 @@ async function openReorganizeOverdueDialog() {
       );
 
 
+    const weekdays =
+      Array.isArray(
+        data?.theory_study_weekdays
+      )
+        ? data.theory_study_weekdays
+            .map(Number)
+            .filter(
+              (day) =>
+                BASE_WEEKDAY_LABELS[
+                  day
+                ]
+            )
+        : [];
+
+    const daysLabel =
+      weekdays.length
+        ? weekdays
+            .map(
+              (day) =>
+                BASE_WEEKDAY_LABELS[
+                  day
+                ]
+            )
+            .join(
+              " · "
+            )
+        : "todos os dias";
+
     capacity.textContent =
       error
         ? `${overdue.length} aula${overdue.length === 1 ? "" : "s"} atrasada${overdue.length === 1 ? "" : "s"}.`
-        : `${overdue.length} aula${overdue.length === 1 ? "" : "s"} atrasada${overdue.length === 1 ? "" : "s"} · máximo de ${maxLessons} aula${maxLessons === 1 ? "" : "s"} por dia.`;
+        : `${overdue.length} aula${overdue.length === 1 ? "" : "s"} atrasada${overdue.length === 1 ? "" : "s"} · dias: ${daysLabel} · máximo de ${maxLessons} aula${maxLessons === 1 ? "" : "s"} por dia.`;
   }
 
 
