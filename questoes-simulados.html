@@ -2309,6 +2309,95 @@
       }
     }
 
+  
+    /* =====================================================
+       FASE 12.5 — DASHBOARD ALINHADO COM "MEUS SIMULADOS"
+       ===================================================== */
+
+    /*
+      O dashboard agora ocupa exatamente a mesma largura
+      disponível do bloco "Meus simulados" logo abaixo.
+    */
+    .qs-compact-dashboard.qs-mode-section.active {
+      width: 100% !important;
+      max-width: none !important;
+
+      grid-template-columns:
+        repeat(
+          3,
+          minmax(0, 1fr)
+        ) !important;
+
+      gap: 12px !important;
+    }
+
+    /*
+      Mantém os cards compactos mesmo ocupando toda a largura.
+      Assim eles não voltam a ficar gigantes verticalmente.
+    */
+    .qs-compact-dashboard
+    .qs-compact-card {
+      width: 100% !important;
+
+      aspect-ratio: auto !important;
+
+      min-height: 205px !important;
+      height: 205px !important;
+
+      padding: 15px !important;
+    }
+
+    .qs-compact-dashboard
+    .qs-fortnight-card {
+      aspect-ratio: auto !important;
+      height: 205px !important;
+    }
+
+    .qs-compact-dashboard
+    .qs-fortnight-chart {
+      min-height: 70px !important;
+    }
+
+    .qs-compact-dashboard
+    .qs-fortnight-chart svg {
+      width: 100% !important;
+      height: 90px !important;
+
+      min-width: 0 !important;
+      min-height: 0 !important;
+    }
+
+    @media (max-width: 1100px) {
+      .qs-compact-dashboard.qs-mode-section.active {
+        grid-template-columns:
+          repeat(
+            2,
+            minmax(0, 1fr)
+          ) !important;
+      }
+
+      .qs-compact-dashboard
+      .qs-compact-card {
+        min-height: 195px !important;
+        height: 195px !important;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .qs-compact-dashboard.qs-mode-section.active {
+        grid-template-columns:
+          1fr !important;
+      }
+
+      .qs-compact-dashboard
+      .qs-compact-card,
+      .qs-compact-dashboard
+      .qs-fortnight-card {
+        min-height: 190px !important;
+        height: auto !important;
+      }
+    }
+
   </style>
   <link rel="stylesheet" href="resibulando-brand-v5.css?v=5">
   <script defer src="resibulando-brand-v5.js?v=5"></script>
@@ -3099,6 +3188,6 @@
   <script src="supabase.js"></script>
   <script src="app.js?v=12.1"></script>
   <script src="study-mode.js?v=12.1"></script>
-  <script src="questoes-simulados.js?v=12.3-dashboard-fix"></script>
+  <script src="questoes-simulados.js?v=12.5-aligned"></script>
 </body>
 </html>

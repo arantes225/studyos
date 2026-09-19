@@ -1,44 +1,31 @@
-RESIBULANDO — FASE 12.4
-CORREÇÃO DO BOTÃO "ADICIONAR CRONOGRAMA GENÉRICO"
+RESIBULANDO — FASE 12.5
+DASHBOARD DE QUESTÕES ALINHADO COM "MEUS SIMULADOS"
 
-O botão foi refeito para não depender de insert direto do navegador.
+CORREÇÃO
+Os 9 cards do dashboard agora usam 100% da mesma largura disponível
+do retângulo "Meus simulados" logo abaixo.
 
-NOVO FLUXO
-1. Seleciona Medicina ou Odontologia nas Configurações.
-2. Cronograma -> Adicionar aulas -> Utilizar cronograma genérico.
-3. Escolhe a data limite.
-4. Clica "Adicionar cronograma genérico".
-5. O site envia a lista completa para UMA função no Supabase.
-6. A função:
-   - usa no máximo 3 dias de aula por semana;
-   - distribui as aulas até a data limite;
-   - ignora aulas que já existem;
-   - insere tudo em uma única transação;
-   - retorna quantas foram criadas.
-7. A página recarrega o cronograma e rola até o planejador.
+Desktop:
+[ 1 ] [ 2 ] [ 3 ]
+[ 4 ] [ 5 ] [ 6 ]
+[ 7 ] [ 8 ] [ 9 ]
 
-FALLBACK
-Se a nova função SQL ainda não existir, o site tenta usar a função
-create_study_topic já existente. Assim o botão não fica completamente
-inutilizado.
+As bordas esquerda e direita ficam alinhadas ao bloco inferior.
 
-INSTALAÇÃO
-1. No Supabase SQL Editor, rode SOMENTE:
-   fase12_4_cronograma_generico.sql
+Para evitar que os cards voltem a ficar gigantes, eles têm altura compacta
+de aproximadamente 205 px no desktop.
 
-2. Depois substitua:
-   - cronograma.html
-   - cronograma.js
-   - cronograma-base-data.js
+ARQUIVOS PARA SUBSTITUIR
+- questoes-simulados.html
+- questoes-simulados.js
 
-3. Publique:
+NÃO PRECISA RODAR SQL.
+
+PUBLICAR
 git add -A
-git commit -m "Corrige cronograma generico"
+git commit -m "Alinha dashboard de questoes"
 git pull --rebase origin main
 git push origin main
 
-4. Depois:
+Depois:
 Ctrl + Shift + R
-
-NÃO rode SQL mestre.
-NÃO apague tabelas.
