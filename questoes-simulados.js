@@ -19,7 +19,15 @@ const qsState = {
     null,
 
   items: [],
-  attempts: new Map()
+  attempts: new Map(),
+
+  /*
+    Imagem escolhida para cada questão errada.
+    key   = question_item.id
+    value = image_path da galeria
+  */
+  imageSelections:
+    new Map()
 };
 
 const AREA_OPTIONS = [
@@ -4536,7 +4544,20 @@ async function openSet(setId) {
     console.error(attemptsResult.error);
   }
 
-  const items = itemsResult.data || [];
+  const changingSet =
+    qsState.currentSet?.id
+    && qsState.currentSet.id
+      !== setId;
+
+  if (changingSet) {
+    qsState.imageSelections.clear();
+  }
+
+  const items =
+    await attachQuestionImageUrls(
+      itemsResult.data || []
+    );
+
   const itemIds = new Set(
     items.map((item) => item.id)
   );
@@ -4585,6 +4606,265 @@ function questionExcerpt(item) {
   return `${text.slice(0, 142)}...`;
 }
 
+function availableSimulationImages() {
+  return qsState.items
+    .filter(
+      (item) =>
+        item.image_path
+        && item.image_url
+    );
+}
+
+
+function renderErrorImagePicker(
+  item
+) {
+  const images =
+    availableSimulationImages();
+
+  if (!images.length) {
+    return `
+      <div class="qs-error-image-picker full">
+        <div class="qs-error-image-picker-head">
+          <div>
+            <strong>Imagem para o Caderno de Erros</strong>
+            <small>Nenhuma imagem detectada neste simulado.</small>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  const selectedPath =
+    qsState.imageSelections.get(
+      item.id
+    )
+    || "";
+
+  return `
+    <div class="qs-error-image-picker full">
+      <div class="qs-error-image-picker-head">
+        <div>
+          <strong>Imagem para o Caderno de Erros</strong>
+          <small>
+            Opcional. Escolha uma imagem da galeria somente se ela ajudar a revisar este erro.
+          </small>
+        </div>
+
+        ${
+          selectedPath
+            ? `
+              <button
+                class="qs-clear-error-image"
+                type="button"
+                data-clear-error-image="${qsEscape(item.id)}"
+              >
+                Remover seleção
+              </button>
+            `
+            : ""
+        }
+      </div>
+
+      <div
+        class="qs-error-image-gallery"
+        data-error-image-gallery="${qsEscape(item.id)}"
+      >
+        ${
+          images.map(
+            (galleryItem) => {
+              const selected =
+                selectedPath
+                  === galleryItem.image_path;
+
+              return `
+                <button
+                  class="qs-error-image-option ${selected ? "selected" : ""}"
+                  type="button"
+                  data-error-image-select="${qsEscape(item.id)}"
+                  data-image-path="${qsEscape(galleryItem.image_path)}"
+                  aria-pressed="${selected ? "true" : "false"}"
+                  title="Usar imagem detectada na questão ${galleryItem.question_number}"
+                >
+                  <img
+                    src="${qsEscape(galleryItem.image_url)}"
+                    alt="Imagem detectada na questão ${galleryItem.question_number}"
+                    loading="lazy"
+                  >
+
+                  <span>
+                    Questão ${galleryItem.question_number}
+                  </span>
+
+                  <small>
+                    ${selected ? "Selecionada" : "Selecionar"}
+                  </small>
+                </button>
+              `;
+            }
+          ).join("")
+        }
+      </div>
+
+      <p class="qs-error-image-note">
+        Depois que os erros forem enviados ao Caderno, esta galeria do simulado será apagada. Imagens selecionadas serão copiadas para o Caderno antes da limpeza.
+      </p>
+    </div>
+  `;
+}
+
+
+function refreshErrorImagePicker(
+  itemId
+) {
+  const card =
+    document.querySelector(
+      `[data-question-id="${CSS.escape(itemId)}"]`
+    );
+
+  if (!card) {
+    return;
+  }
+
+  const target =
+    card.querySelector(
+      ".qs-error-image-picker"
+    );
+
+  const item =
+    qsState.items.find(
+      (candidate) =>
+        candidate.id === itemId
+    );
+
+  if (
+    !target
+    || !item
+  ) {
+    return;
+  }
+
+  const wrapper =
+    document.createElement(
+      "div"
+    );
+
+  wrapper.innerHTML =
+    renderErrorImagePicker(
+      item
+    );
+
+  target.replaceWith(
+    wrapper.firstElementChild
+  );
+
+  bindErrorImagePickerEvents(
+    card
+  );
+}
+
+
+function bindErrorImagePickerEvents(
+  scope = document
+) {
+  scope
+    .querySelectorAll(
+      "[data-error-image-select]"
+    )
+    .forEach(
+      (button) => {
+        if (
+          button.dataset.boundImagePicker
+          === "1"
+        ) {
+          return;
+        }
+
+        button.dataset.boundImagePicker =
+          "1";
+
+        button.addEventListener(
+          "click",
+          () => {
+            const itemId =
+              button.dataset
+                .errorImageSelect;
+
+            const imagePath =
+              button.dataset
+                .imagePath;
+
+            const current =
+              qsState
+                .imageSelections
+                .get(
+                  itemId
+                );
+
+            if (
+              current === imagePath
+            ) {
+              qsState
+                .imageSelections
+                .delete(
+                  itemId
+                );
+            } else {
+              qsState
+                .imageSelections
+                .set(
+                  itemId,
+                  imagePath
+                );
+            }
+
+            refreshErrorImagePicker(
+              itemId
+            );
+          }
+        );
+      }
+    );
+
+  scope
+    .querySelectorAll(
+      "[data-clear-error-image]"
+    )
+    .forEach(
+      (button) => {
+        if (
+          button.dataset.boundClearImage
+          === "1"
+        ) {
+          return;
+        }
+
+        button.dataset.boundClearImage =
+          "1";
+
+        button.addEventListener(
+          "click",
+          () => {
+            const itemId =
+              button.dataset
+                .clearErrorImage;
+
+            qsState
+              .imageSelections
+              .delete(
+                itemId
+              );
+
+            refreshErrorImagePicker(
+              itemId
+            );
+          }
+        );
+      }
+    );
+}
+
+
 function renderQuestions() {
   const container =
     document.getElementById("qs-question-list");
@@ -4622,23 +4902,6 @@ function renderQuestions() {
               <span>Errei</span>
             </label>
           </div>
-
-          ${
-            item.image_url
-              ? `
-                <figure class="qs-extracted-image">
-                  <img
-                    src="${qsEscape(item.image_url)}"
-                    alt="Figura da questão ${item.question_number}"
-                    loading="lazy"
-                  >
-                  <figcaption>
-                    Figura extraída automaticamente do PDF
-                  </figcaption>
-                </figure>
-              `
-              : ""
-          }
 
           <details>
             <summary>Ver questão extraída</summary>
@@ -4687,6 +4950,8 @@ function renderQuestions() {
                 placeholder="Se quiser, registre rapidamente por que errou."
               >${qsEscape(attempt?.what_i_thought || "")}</textarea>
             </label>
+
+            ${renderErrorImagePicker(item)}
           </div>
 
           <span class="qs-sent-badge">
@@ -4711,6 +4976,10 @@ function renderQuestions() {
         updateLiveSummary();
       });
     });
+
+  bindErrorImagePickerEvents(
+    container
+  );
 
   updateLiveSummary();
 }
@@ -4774,12 +5043,21 @@ function readWrongMetadata(itemId) {
       `[data-thought="${CSS.escape(itemId)}"]`
     )?.value?.trim() || "";
 
+  const imagePath =
+    qsState
+      .imageSelections
+      .get(
+        itemId
+      )
+    || null;
+
   return {
     area,
     materia,
     correctOption,
     ccq,
-    thought
+    thought,
+    imagePath
   };
 }
 
@@ -4893,6 +5171,231 @@ async function saveAnswerKey() {
     qsState.currentSet.id
   );
 }
+
+async function copyGalleryImageToNotebook(
+  sourcePath,
+  errorEntryId
+) {
+  if (
+    !sourcePath
+    || !errorEntryId
+  ) {
+    return null;
+  }
+
+  const {
+    data: imageBlob,
+    error: downloadError
+  } =
+    await qsSb
+      .storage
+      .from(
+        "docmap"
+      )
+      .download(
+        sourcePath
+      );
+
+  if (downloadError) {
+    throw downloadError;
+  }
+
+  const destinationPath =
+    `${qsState.user.id}/error_notebook/${errorEntryId}/question.png`;
+
+  const {
+    error: uploadError
+  } =
+    await qsSb
+      .storage
+      .from(
+        "docmap"
+      )
+      .upload(
+        destinationPath,
+        imageBlob,
+        {
+          contentType:
+            imageBlob.type
+            || "image/png",
+          upsert:
+            true
+        }
+      );
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  return destinationPath;
+}
+
+
+async function attachImageToNotebookEntry(
+  errorEntryId,
+  sourcePath
+) {
+  if (
+    !errorEntryId
+    || !sourcePath
+  ) {
+    return null;
+  }
+
+  const destinationPath =
+    await copyGalleryImageToNotebook(
+      sourcePath,
+      errorEntryId
+    );
+
+  const {
+    error
+  } =
+    await qsSb
+      .from(
+        "error_notebook"
+      )
+      .update({
+        question_image_path:
+          destinationPath
+      })
+      .eq(
+        "id",
+        errorEntryId
+      );
+
+  if (error) {
+    /*
+      Evita deixar cópia órfã no Storage
+      caso o banco não aceite a atualização.
+    */
+    await qsSb
+      .storage
+      .from(
+        "docmap"
+      )
+      .remove([
+        destinationPath
+      ]);
+
+    throw error;
+  }
+
+  return destinationPath;
+}
+
+
+async function clearCurrentSimulationImageGallery() {
+  if (
+    !qsState.currentSet?.id
+  ) {
+    return {
+      removed: 0,
+      storageWarning: false
+    };
+  }
+
+  const {
+    data: rows,
+    error: fetchError
+  } =
+    await qsSb
+      .from(
+        "question_items"
+      )
+      .select(
+        "id,image_path"
+      )
+      .eq(
+        "set_id",
+        qsState.currentSet.id
+      );
+
+  if (fetchError) {
+    throw fetchError;
+  }
+
+  const imageRows =
+    (rows || [])
+      .filter(
+        (row) =>
+          Boolean(
+            row.image_path
+          )
+      );
+
+  if (
+    !imageRows.length
+  ) {
+    qsState.imageSelections.clear();
+
+    return {
+      removed: 0,
+      storageWarning: false
+    };
+  }
+
+  /*
+    Primeiro tira as imagens da galeria no banco.
+    Assim elas somem da interface mesmo se o Storage
+    demorar ou falhar ao apagar um arquivo órfão.
+  */
+  const {
+    error: updateError
+  } =
+    await qsSb
+      .from(
+        "question_items"
+      )
+      .update({
+        image_path: null
+      })
+      .in(
+        "id",
+        imageRows.map(
+          (row) =>
+            row.id
+        )
+      );
+
+  if (updateError) {
+    throw updateError;
+  }
+
+  const paths =
+    Array.from(
+      new Set(
+        imageRows.map(
+          (row) =>
+            row.image_path
+        )
+      )
+    );
+
+  const {
+    error: storageError
+  } =
+    await qsSb
+      .storage
+      .from(
+        "docmap"
+      )
+      .remove(
+        paths
+      );
+
+  qsState.imageSelections.clear();
+
+  return {
+    removed:
+      paths.length,
+    storageWarning:
+      Boolean(
+        storageError
+      )
+  };
+}
+
 
 async function sendErrorsToNotebook() {
   if (!qsState.currentSet) return;
@@ -5014,6 +5517,10 @@ async function sendErrorsToNotebook() {
       const ccq =
         metadata.ccq;
 
+      const selectedImagePath =
+        metadata.imagePath
+        || null;
+
 
       if (
         !area
@@ -5108,6 +5615,21 @@ async function sendErrorsToNotebook() {
           : errorEntry;
 
 
+      if (
+        selectedImagePath
+        && entry?.id
+      ) {
+        setAnswerStatus(
+          `Copiando imagem da questão ${item.question_number} para o Caderno de Erros...`
+        );
+
+        await attachImageToNotebookEntry(
+          entry.id,
+          selectedImagePath
+        );
+      }
+
+
       const {
         error: updateError
       } =
@@ -5140,11 +5662,42 @@ async function sendErrorsToNotebook() {
 
 
     setAnswerStatus(
+      "Limpando galeria temporária de imagens..."
+    );
+
+    let galleryCleanup = {
+      removed: 0,
+      storageWarning: false
+    };
+
+    try {
+      galleryCleanup =
+        await clearCurrentSimulationImageGallery();
+    } catch (cleanupError) {
+      console.warn(
+        "Os erros foram enviados, mas não foi possível limpar toda a galeria:",
+        cleanupError
+      );
+
+      galleryCleanup.storageWarning =
+        true;
+    }
+
+
+    setAnswerStatus(
       `${sent} ${
         sent === 1
           ? "erro enviado"
           : "erros enviados"
-      } ao Caderno de Erros.`,
+      } ao Caderno de Erros.${
+        galleryCleanup.removed
+          ? ` Galeria temporária limpa (${galleryCleanup.removed} imagem${galleryCleanup.removed === 1 ? "" : "s"}).`
+          : ""
+      }${
+        galleryCleanup.storageWarning
+          ? " Algumas imagens antigas podem permanecer no Storage, mas não ficam mais visíveis na galeria."
+          : ""
+      }`,
       "success"
     );
 

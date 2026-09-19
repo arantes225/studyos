@@ -1,50 +1,50 @@
-RESIBULANDO — IMPORTADOR MEDCOF + RECORTE AUTOMÁTICO DE IMAGENS
+RESIBULANDO — GALERIA TEMPORÁRIA DE IMAGENS DOS ERROS
 
-O QUE ESTA VERSÃO FAZ
-- lê as questões do PDF com PDF.js
-- reconhece o formato do MedCof
-- detecta imagens raster embutidas no PDF
-- identifica em qual questão cada imagem está
-- renderiza a página em alta resolução
-- recorta somente a figura
-- salva o recorte como PNG no bucket privado docmap
-- associa o PNG à questão
-- mostra a figura dentro do simulado
-- exclui as imagens do Storage quando o simulado é apagado
+O QUE MUDA
+- As imagens que o importador já detectou e salvou agora aparecem como
+  uma galeria quando você marca uma questão como "Errei".
+- A escolha da imagem é OPCIONAL.
+- Você pode selecionar qualquer imagem detectada no simulado.
+- A imagem escolhida é copiada para a entrada correspondente no
+  Caderno de Erros.
+- Depois que os erros são enviados ao Caderno, a galeria temporária
+  daquele simulado é apagada.
+- A cópia que foi enviada ao Caderno NÃO é apagada.
 
-NO PDF DE TESTE ENVIADO
-O esperado é encontrar imagens nas questões:
-1, 2, 3, 4, 6, 11, 13 e 17.
+FLUXO
+1. Importar PDF.
+2. Abrir o simulado.
+3. Marcar "Errei".
+4. Preencher Área, Resposta correta e CCQ.
+5. Se quiser, escolher uma imagem da galeria.
+6. Salvar gabarito.
+7. Enviar erros ao Caderno.
+8. O Resibulando:
+   - cria o erro;
+   - copia a imagem selecionada para o Caderno;
+   - marca o erro como enviado;
+   - apaga a galeria temporária do simulado.
 
-Ou seja: 8 questões com figura.
+IMPORTANTE
+Este patch parte do princípio de que o SQL anterior já foi rodado:
+question_items.image_path
 
-OBSERVAÇÃO
-Este sistema funciona especialmente bem quando as figuras são imagens
-raster embutidas no PDF (como ECGs, tabelas e gráficos do PDF do MedCof).
-Se um PDF usar desenhos 100% vetoriais, eles podem não ser identificados
-como uma imagem separada nesta versão.
+Como você informou que as imagens já estavam sendo reconhecidas e salvas,
+NÃO há SQL novo nesta versão.
 
-INSTALAÇÃO
+ARQUIVOS PARA SUBSTITUIR
+- questoes-simulados.js
+- questoes-simulados.html
 
-1. PRIMEIRO rode no Supabase SQL Editor SOMENTE:
-   fase11_15_question_images.sql
-
-2. Depois substitua na raiz do projeto:
-   - questoes-simulados.js
-   - questoes-simulados.html
-
-3. Publique:
-
+PUBLICAR
 git add -A
-git commit -m "Adiciona recorte automatico de imagens dos simulados"
+git commit -m "Adiciona galeria de imagens aos erros"
 git pull --rebase origin main
 git push origin main
 
-4. Quando o GitHub Pages atualizar:
+Depois:
 Ctrl + Shift + R
 
-ARMAZENAMENTO
-Os recortes ficam em:
-docmap/<usuario>/question_sets/<simulado>/images/
-
-Nenhum bucket novo é necessário.
+OBSERVAÇÃO
+O PDF original continua salvo normalmente. O que é apagado após o envio
+são apenas os PNGs temporários da galeria.
