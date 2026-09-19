@@ -3059,76 +3059,1110 @@ function medianNotebookNumber(
 }
 
 
-function tableRowsFromOcrWords(
+function notebookTableWordData(
   words
 ) {
-  const usable =
-    (words || [])
-      .filter(
-        word =>
+  return (words || [])
+    .filter(
+      word => {
+        const text =
           String(
             word.text
             || ""
-          ).trim()
-          && word.bbox
-      )
-      .map(
-        word => ({
+          )
+            .replace(
+              /\s+/g,
+              " "
+            )
+            .trim();
+
+        return (
+          text
+          &&
+          word.bbox
+          &&
+          Number.isFinite(
+            Number(
+              word.bbox.x0
+            )
+          )
+          &&
+          Number.isFinite(
+            Number(
+              word.bbox.y0
+            )
+          )
+          &&
+          Number.isFinite(
+            Number(
+              word.bbox.x1
+            )
+          )
+          &&
+          Number.isFinite(
+            Number(
+              word.bbox.y1
+            )
+          )
+        );
+      }
+    )
+    .map(
+      word => {
+        const x0 =
+          Number(
+            word.bbox.x0
+          );
+
+        const y0 =
+          Number(
+            word.bbox.y0
+          );
+
+        const x1 =
+          Number(
+            word.bbox.x1
+          );
+
+        const y1 =
+          Number(
+            word.bbox.y1
+          );
+
+        return {
           text:
             String(
               word.text
               || ""
-            ).trim(),
+            )
+              .replace(
+                /\s+/g,
+                " "
+              )
+              .trim(),
+
+          confidence:
+            Number(
+              word.confidence
+              || 0
+            ),
+
+          x0,
+          y0,
+          x1,
+          y1,
 
           x:
             (
-              Number(
-                word.bbox.x0
-              )
-              + Number(
-                  word.bbox.x1
-                )
+              x0
+              + x1
             ) / 2,
 
           y:
             (
-              Number(
-                word.bbox.y0
-              )
-              + Number(
-                  word.bbox.y1
-                )
+              y0
+              + y1
             ) / 2,
+
+          width:
+            Math.max(
+              1,
+              x1 - x0
+            ),
 
           height:
             Math.max(
               1,
-              Number(
-                word.bbox.y1
-              )
-              - Number(
-                  word.bbox.y0
-                )
+              y1 - y0
             )
-        })
-      );
+        };
+      }
+    )
+    .filter(
+      word =>
+        word.width >= 2
+        &&
+        word.height >= 3
+    );
+}
 
-  if (!usable.length) {
+
+async function prepareNotebookTableCanvas(
+  file
+) {
+  const bitmap =
+    await createImageBitmap(
+      file
+    );
+
+  /*
+    Tabelas de print costumam ter texto pequeno.
+    Sempre ampliamos imagens pequenas, mas limitamos
+    o lado maior para não estourar memória no celular.
+  */
+  const longestSide =
+    Math.max(
+      bitmap.width,
+      bitmap.height
+    );
+
+  const scale =
+    Math.max(
+      1,
+      Math.min(
+        3.2,
+        2400
+        / Math.max(
+            1,
+            longestSide
+          )
+      )
+    );
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+  canvas.width =
+    Math.max(
+      1,
+      Math.round(
+        bitmap.width
+        * scale
+      )
+    );
+
+  canvas.height =
+    Math.max(
+      1,
+      Math.round(
+        bitmap.height
+        * scale
+      )
+    );
+
+  const context =
+    canvas.getContext(
+      "2d",
+      {
+        alpha:
+          false,
+        willReadFrequently:
+          true
+      }
+    );
+
+  context.fillStyle =
+    "#ffffff";
+
+  context.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  context.imageSmoothingEnabled =
+    true;
+
+  context.imageSmoothingQuality =
+    "high";
+
+  context.drawImage(
+    bitmap,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  bitmap.close?.();
+
+  return canvas;
+}
+
+
+function groupNotebookLinePositions(
+  positions,
+  maxGap = 3
+) {
+  if (
+    !positions.length
+  ) {
     return [];
   }
 
-  const rowTolerance =
-    Math.max(
-      8,
-      medianNotebookNumber(
-        usable.map(
-          item =>
-            item.height
+  const groups = [];
+  let current = [
+    positions[0]
+  ];
+
+  for (
+    let index = 1;
+    index < positions.length;
+    index += 1
+  ) {
+    const value =
+      positions[index];
+
+    const previous =
+      positions[index - 1];
+
+    if (
+      value - previous
+      <= maxGap
+    ) {
+      current.push(
+        value
+      );
+    } else {
+      groups.push(
+        current
+      );
+
+      current = [
+        value
+      ];
+    }
+  }
+
+  groups.push(
+    current
+  );
+
+  return groups.map(
+    group =>
+      Math.round(
+        group.reduce(
+          (
+            sum,
+            value
+          ) =>
+            sum + value,
+          0
         )
-      ) * 0.8
+        / group.length
+      )
+  );
+}
+
+
+function longestDarkRunInRow(
+  pixels,
+  width,
+  y,
+  threshold
+) {
+  let longest =
+    0;
+
+  let current =
+    0;
+
+  for (
+    let x = 0;
+    x < width;
+    x += 1
+  ) {
+    const offset =
+      (
+        y * width
+        + x
+      ) * 4;
+
+    const red =
+      pixels[offset];
+
+    const green =
+      pixels[offset + 1];
+
+    const blue =
+      pixels[offset + 2];
+
+    const luminance =
+      (
+        red * 0.299
+        + green * 0.587
+        + blue * 0.114
+      );
+
+    if (
+      luminance
+      <= threshold
+    ) {
+      current +=
+        1;
+
+      if (
+        current > longest
+      ) {
+        longest =
+          current;
+      }
+    } else {
+      current =
+        0;
+    }
+  }
+
+  return longest;
+}
+
+
+function longestDarkRunInColumn(
+  pixels,
+  width,
+  height,
+  x,
+  threshold
+) {
+  let longest =
+    0;
+
+  let current =
+    0;
+
+  for (
+    let y = 0;
+    y < height;
+    y += 1
+  ) {
+    const offset =
+      (
+        y * width
+        + x
+      ) * 4;
+
+    const red =
+      pixels[offset];
+
+    const green =
+      pixels[offset + 1];
+
+    const blue =
+      pixels[offset + 2];
+
+    const luminance =
+      (
+        red * 0.299
+        + green * 0.587
+        + blue * 0.114
+      );
+
+    if (
+      luminance
+      <= threshold
+    ) {
+      current +=
+        1;
+
+      if (
+        current > longest
+      ) {
+        longest =
+          current;
+      }
+    } else {
+      current =
+        0;
+    }
+  }
+
+  return longest;
+}
+
+
+function detectNotebookTableGrid(
+  canvas
+) {
+  const context =
+    canvas.getContext(
+      "2d",
+      {
+        willReadFrequently:
+          true
+      }
     );
 
-  const rows = [];
+  const width =
+    canvas.width;
+
+  const height =
+    canvas.height;
+
+  const image =
+    context.getImageData(
+      0,
+      0,
+      width,
+      height
+    );
+
+  const pixels =
+    image.data;
+
+  /*
+    Linhas cinza-claro também entram. Usamos "maior sequência
+    contínua" de pixels escuros, pois textos não costumam formar
+    traços horizontais/verticais tão longos quanto uma grade.
+  */
+  const thresholds = [
+    205,
+    222,
+    235
+  ];
+
+  let best =
+    {
+      vertical: [],
+      horizontal: []
+    };
+
+  for (
+    const threshold
+    of thresholds
+  ) {
+    const horizontalCandidates =
+      [];
+
+    const verticalCandidates =
+      [];
+
+    const minHorizontalRun =
+      Math.max(
+        70,
+        width * 0.28
+      );
+
+    const minVerticalRun =
+      Math.max(
+        50,
+        height * 0.20
+      );
+
+    for (
+      let y = 0;
+      y < height;
+      y += 1
+    ) {
+      if (
+        longestDarkRunInRow(
+          pixels,
+          width,
+          y,
+          threshold
+        )
+        >= minHorizontalRun
+      ) {
+        horizontalCandidates.push(
+          y
+        );
+      }
+    }
+
+    for (
+      let x = 0;
+      x < width;
+      x += 1
+    ) {
+      if (
+        longestDarkRunInColumn(
+          pixels,
+          width,
+          height,
+          x,
+          threshold
+        )
+        >= minVerticalRun
+      ) {
+        verticalCandidates.push(
+          x
+        );
+      }
+    }
+
+    const horizontal =
+      groupNotebookLinePositions(
+        horizontalCandidates,
+        4
+      );
+
+    const vertical =
+      groupNotebookLinePositions(
+        verticalCandidates,
+        4
+      );
+
+    if (
+      horizontal.length
+      * vertical.length
+      >
+      best.horizontal.length
+      * best.vertical.length
+    ) {
+      best = {
+        horizontal,
+        vertical
+      };
+    }
+
+    if (
+      horizontal.length >= 2
+      &&
+      vertical.length >= 2
+    ) {
+      break;
+    }
+  }
+
+  /*
+    Remove linhas quase duplicadas e grades impossíveis.
+  */
+  const dedupe =
+    values => {
+      const result =
+        [];
+
+      for (
+        const value
+        of values
+          .slice()
+          .sort(
+            (a, b) =>
+              a - b
+          )
+      ) {
+        if (
+          !result.length
+          ||
+          value
+          - result[
+              result.length - 1
+            ]
+          >= 8
+        ) {
+          result.push(
+            value
+          );
+        }
+      }
+
+      return result;
+    };
+
+  best.vertical =
+    dedupe(
+      best.vertical
+    );
+
+  best.horizontal =
+    dedupe(
+      best.horizontal
+    );
+
+  if (
+    best.vertical.length < 2
+    ||
+    best.horizontal.length < 2
+    ||
+    best.vertical.length > 16
+    ||
+    best.horizontal.length > 60
+  ) {
+    return null;
+  }
+
+  return best;
+}
+
+
+function createNotebookTableOcrCanvas(
+  source,
+  grid = null
+) {
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+  canvas.width =
+    source.width;
+
+  canvas.height =
+    source.height;
+
+  const sourceContext =
+    source.getContext(
+      "2d",
+      {
+        willReadFrequently:
+          true
+      }
+    );
+
+  const targetContext =
+    canvas.getContext(
+      "2d",
+      {
+        alpha:
+          false,
+        willReadFrequently:
+          true
+      }
+    );
+
+  const image =
+    sourceContext.getImageData(
+      0,
+      0,
+      source.width,
+      source.height
+    );
+
+  const data =
+    image.data;
+
+  /*
+    Contraste forte, mas sem binarização totalmente rígida.
+    Preserva letras finas e reduz fundos cinza/coloridos.
+  */
+  for (
+    let index = 0;
+    index < data.length;
+    index += 4
+  ) {
+    const luminance =
+      (
+        data[index] * 0.299
+        + data[index + 1] * 0.587
+        + data[index + 2] * 0.114
+      );
+
+    let value;
+
+    if (
+      luminance < 95
+    ) {
+      value =
+        0;
+    } else if (
+      luminance > 225
+    ) {
+      value =
+        255;
+    } else {
+      value =
+        Math.max(
+          0,
+          Math.min(
+            255,
+            Math.round(
+              (
+                luminance - 95
+              )
+              * 1.96
+            )
+          )
+        );
+    }
+
+    data[index] =
+      value;
+
+    data[index + 1] =
+      value;
+
+    data[index + 2] =
+      value;
+
+    data[index + 3] =
+      255;
+  }
+
+  targetContext.putImageData(
+    image,
+    0,
+    0
+  );
+
+  /*
+    Quando existe grade, apagamos as linhas antes do OCR.
+    Isso evita o Tesseract confundir bordas com caracteres
+    ou quebrar palavras encostadas na célula.
+  */
+  if (
+    grid
+  ) {
+    targetContext.fillStyle =
+      "#ffffff";
+
+    for (
+      const x
+      of grid.vertical
+    ) {
+      targetContext.fillRect(
+        Math.max(
+          0,
+          x - 3
+        ),
+        0,
+        7,
+        canvas.height
+      );
+    }
+
+    for (
+      const y
+      of grid.horizontal
+    ) {
+      targetContext.fillRect(
+        0,
+        Math.max(
+          0,
+          y - 3
+        ),
+        canvas.width,
+        7
+      );
+    }
+  }
+
+  return canvas;
+}
+
+
+function rowsFromNotebookGrid(
+  words,
+  grid
+) {
+  if (
+    !grid
+    ||
+    grid.vertical.length < 2
+    ||
+    grid.horizontal.length < 2
+  ) {
+    return [];
+  }
+
+  const vertical =
+    grid.vertical
+      .slice()
+      .sort(
+        (a, b) =>
+          a - b
+      );
+
+  const horizontal =
+    grid.horizontal
+      .slice()
+      .sort(
+        (a, b) =>
+          a - b
+      );
+
+  const rowCount =
+    horizontal.length - 1;
+
+  const colCount =
+    vertical.length - 1;
+
+  if (
+    rowCount < 1
+    ||
+    colCount < 1
+    ||
+    colCount > 15
+    ||
+    rowCount > 50
+  ) {
+    return [];
+  }
+
+  const buckets =
+    Array.from(
+      {
+        length:
+          rowCount
+      },
+      () =>
+        Array.from(
+          {
+            length:
+              colCount
+          },
+          () => []
+        )
+    );
+
+  const normalizedWords =
+    notebookTableWordData(
+      words
+    );
+
+  for (
+    const word
+    of normalizedWords
+  ) {
+    let rowIndex =
+      -1;
+
+    let colIndex =
+      -1;
+
+    for (
+      let row = 0;
+      row < rowCount;
+      row += 1
+    ) {
+      if (
+        word.y
+        > horizontal[row]
+        &&
+        word.y
+        < horizontal[
+            row + 1
+          ]
+      ) {
+        rowIndex =
+          row;
+
+        break;
+      }
+    }
+
+    for (
+      let col = 0;
+      col < colCount;
+      col += 1
+    ) {
+      if (
+        word.x
+        > vertical[col]
+        &&
+        word.x
+        < vertical[
+            col + 1
+          ]
+      ) {
+        colIndex =
+          col;
+
+        break;
+      }
+    }
+
+    if (
+      rowIndex >= 0
+      &&
+      colIndex >= 0
+    ) {
+      buckets[
+        rowIndex
+      ][
+        colIndex
+      ].push(
+        word
+      );
+    }
+  }
+
+  const rows =
+    buckets.map(
+      cells =>
+        cells.map(
+          cellWords => {
+            if (
+              !cellWords.length
+            ) {
+              return "";
+            }
+
+            const lineTolerance =
+              Math.max(
+                6,
+                medianNotebookNumber(
+                  cellWords.map(
+                    word =>
+                      word.height
+                  )
+                ) * 0.65
+              );
+
+            const lines =
+              [];
+
+            for (
+              const word
+              of cellWords
+                .slice()
+                .sort(
+                  (a, b) =>
+                    a.y - b.y
+                    ||
+                    a.x - b.x
+                )
+            ) {
+              let line =
+                lines.find(
+                  candidate =>
+                    Math.abs(
+                      candidate.y
+                      - word.y
+                    )
+                    <= lineTolerance
+                );
+
+              if (
+                !line
+              ) {
+                line = {
+                  y:
+                    word.y,
+                  words: []
+                };
+
+                lines.push(
+                  line
+                );
+              }
+
+              line.words.push(
+                word
+              );
+            }
+
+            return lines
+              .sort(
+                (a, b) =>
+                  a.y - b.y
+              )
+              .map(
+                line =>
+                  line.words
+                    .sort(
+                      (a, b) =>
+                        a.x - b.x
+                    )
+                    .map(
+                      word =>
+                        word.text
+                    )
+                    .join(
+                      " "
+                    )
+              )
+              .join(
+                " "
+              )
+              .replace(
+                /\s+/g,
+                " "
+              )
+              .trim();
+          }
+        )
+    );
+
+  /*
+    Remove linhas/colunas completamente vazias, que podem
+    aparecer quando há uma borda decorativa fora da tabela.
+  */
+  let cleaned =
+    rows.filter(
+      row =>
+        row.some(
+          cell =>
+            String(
+              cell
+              || ""
+            ).trim()
+        )
+    );
+
+  if (
+    !cleaned.length
+  ) {
+    return [];
+  }
+
+  const usedColumns =
+    Array(
+      colCount
+    ).fill(
+      false
+    );
+
+  cleaned.forEach(
+    row =>
+      row.forEach(
+        (
+          cell,
+          index
+        ) => {
+          if (
+            String(
+              cell
+              || ""
+            ).trim()
+          ) {
+            usedColumns[index] =
+              true;
+          }
+        }
+      )
+  );
+
+  cleaned =
+    cleaned.map(
+      row =>
+        row.filter(
+          (
+            _cell,
+            index
+          ) =>
+            usedColumns[index]
+        )
+    );
+
+  return cleaned;
+}
+
+
+function tableRowsFromOcrWords(
+  words
+) {
+  const usable =
+    notebookTableWordData(
+      words
+    );
+
+  if (
+    !usable.length
+  ) {
+    return [];
+  }
+
+  const typicalHeight =
+    Math.max(
+      6,
+      medianNotebookNumber(
+        usable.map(
+          word =>
+            word.height
+        )
+      )
+    );
+
+  const rowTolerance =
+    Math.max(
+      7,
+      typicalHeight * 0.72
+    );
+
+  const visualRows =
+    [];
 
   for (
     const word
@@ -3137,10 +4171,12 @@ function tableRowsFromOcrWords(
       .sort(
         (a, b) =>
           a.y - b.y
+          ||
+          a.x0 - b.x0
       )
   ) {
     let row =
-      rows.find(
+      visualRows.find(
         candidate =>
           Math.abs(
             candidate.y
@@ -3149,15 +4185,16 @@ function tableRowsFromOcrWords(
           <= rowTolerance
       );
 
-    if (!row) {
+    if (
+      !row
+    ) {
       row = {
         y:
           word.y,
-
         words: []
       };
 
-      rows.push(
+      visualRows.push(
         row
       );
     }
@@ -3178,153 +4215,284 @@ function tableRowsFromOcrWords(
       / row.words.length;
   }
 
-  rows.forEach(
+  visualRows.forEach(
     row =>
       row.words.sort(
         (a, b) =>
-          a.x - b.x
+          a.x0 - b.x0
       )
   );
 
   /*
-    Estima as colunas a partir das posições X
-    que se repetem entre as linhas.
+    Primeiro separamos células de cada linha pelos grandes
+    espaços horizontais. Isso é mais confiável que usar cada
+    palavra como uma coluna.
   */
-  const allX =
-    usable
+  const allPositiveGaps =
+    [];
+
+  visualRows.forEach(
+    row => {
+      for (
+        let index = 1;
+        index < row.words.length;
+        index += 1
+      ) {
+        const gap =
+          row.words[index].x0
+          - row.words[
+              index - 1
+            ].x1;
+
+        if (
+          gap > 1
+        ) {
+          allPositiveGaps.push(
+            gap
+          );
+        }
+      }
+    }
+  );
+
+  const normalWordGap =
+    medianNotebookNumber(
+      allPositiveGaps
+        .filter(
+          gap =>
+            gap
+            <= typicalHeight * 3
+        )
+    )
+    ||
+    typicalHeight * 0.6;
+
+  const cellGap =
+    Math.max(
+      typicalHeight * 2.2,
+      normalWordGap * 2.8,
+      22
+    );
+
+  const segmentedRows =
+    visualRows.map(
+      row => {
+        const segments =
+          [];
+
+        let current =
+          [];
+
+        row.words.forEach(
+          (
+            word,
+            index
+          ) => {
+            if (
+              index > 0
+            ) {
+              const previous =
+                row.words[
+                  index - 1
+                ];
+
+              const gap =
+                word.x0
+                - previous.x1;
+
+              if (
+                gap >= cellGap
+                &&
+                current.length
+              ) {
+                segments.push(
+                  current
+                );
+
+                current =
+                  [];
+              }
+            }
+
+            current.push(
+              word
+            );
+          }
+        );
+
+        if (
+          current.length
+        ) {
+          segments.push(
+            current
+          );
+        }
+
+        return segments.map(
+          segment => ({
+            x0:
+              Math.min(
+                ...segment.map(
+                  word =>
+                    word.x0
+                )
+              ),
+
+            x1:
+              Math.max(
+                ...segment.map(
+                  word =>
+                    word.x1
+                )
+              ),
+
+            x:
+              (
+                Math.min(
+                  ...segment.map(
+                    word =>
+                      word.x0
+                  )
+                )
+                +
+                Math.max(
+                  ...segment.map(
+                    word =>
+                      word.x1
+                  )
+                )
+              ) / 2,
+
+            text:
+              segment
+                .map(
+                  word =>
+                    word.text
+                )
+                .join(
+                  " "
+                )
+                .replace(
+                  /\s+/g,
+                  " "
+                )
+                .trim()
+          })
+        );
+      }
+    )
+    .filter(
+      segments =>
+        segments.length
+    );
+
+  if (
+    !segmentedRows.length
+  ) {
+    return [];
+  }
+
+  /*
+    Número provável de colunas = valor mais recorrente entre
+    as linhas, dando preferência às linhas com 2+ células.
+  */
+  const counts =
+    new Map();
+
+  segmentedRows.forEach(
+    segments => {
+      const count =
+        Math.min(
+          10,
+          segments.length
+        );
+
+      counts.set(
+        count,
+        (
+          counts.get(
+            count
+          )
+          || 0
+        )
+        + 1
+      );
+    }
+  );
+
+  const targetColumns =
+    Array.from(
+      counts.entries()
+    )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          b[1] - a[1]
+          ||
+          b[0] - a[0]
+      )[0]?.[0]
+    || 1;
+
+  /*
+    Usa a linha cuja quantidade mais se aproxima do número de
+    colunas esperado para definir os centros-base.
+  */
+  const reference =
+    segmentedRows
+      .slice()
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          Math.abs(
+            a.length
+            - targetColumns
+          )
+          -
+          Math.abs(
+            b.length
+            - targetColumns
+          )
+          ||
+          b.length
+          - a.length
+      )[0];
+
+  const anchors =
+    reference
+      .slice(
+        0,
+        targetColumns
+      )
       .map(
-        item =>
-          item.x
+        segment =>
+          segment.x
       )
       .sort(
         (a, b) =>
           a - b
       );
 
-  const xTolerance =
-    Math.max(
-      28,
-      medianNotebookNumber(
-        usable.map(
-          item =>
-            item.height
-        )
-      ) * 2.4
-    );
-
-  const columns = [];
-
-  for (
-    const x
-    of allX
-  ) {
-    let column =
-      columns.find(
-        candidate =>
-          Math.abs(
-            candidate.x
-            - x
-          )
-          <= xTolerance
-      );
-
-    if (!column) {
-      column = {
-        x,
-        values: []
-      };
-
-      columns.push(
-        column
-      );
-    }
-
-    column.values.push(
-      x
-    );
-
-    column.x =
-      column.values.reduce(
-        (
-          sum,
-          value
-        ) =>
-          sum + value,
-        0
-      )
-      / column.values.length;
-  }
-
-  columns.sort(
-    (a, b) =>
-      a.x - b.x
-  );
-
-  /*
-    Evita grades absurdamente largas causadas por
-    frases corridas. Em tabelas comuns, 2–10 colunas
-    cobre praticamente todos os casos.
-  */
-  const maxColumns =
-    Math.min(
-      10,
-      Math.max(
-        1,
-        Math.round(
-          medianNotebookNumber(
-            rows.map(
-              row =>
-                row.words.length
-            )
-          )
-        )
-      )
-    );
-
-  let normalizedColumns =
-    columns;
-
   if (
-    columns.length > maxColumns
+    !anchors.length
   ) {
-    /*
-      Fallback mais conservador: usa a linha com
-      maior número de palavras como referência.
-    */
-    const referenceRow =
-      rows
-        .slice()
-        .sort(
-          (a, b) =>
-            b.words.length
-            - a.words.length
-        )[0];
-
-    normalizedColumns =
-      referenceRow.words
-        .slice(
-          0,
-          maxColumns
-        )
-        .map(
-          word => ({
-            x:
-              word.x
-          })
-        );
+    return [];
   }
 
-  return rows
+  return segmentedRows
     .map(
-      row => {
+      segments => {
         const cells =
           Array(
-            normalizedColumns.length
+            anchors.length
           ).fill("");
 
         for (
-          const word
-          of row.words
+          const segment
+          of segments
         ) {
           let bestIndex =
             0;
@@ -3332,41 +4500,46 @@ function tableRowsFromOcrWords(
           let bestDistance =
             Number.POSITIVE_INFINITY;
 
-          normalizedColumns
-            .forEach(
-              (
-                column,
-                index
-              ) => {
-                const distance =
-                  Math.abs(
-                    column.x
-                    - word.x
-                  );
+          anchors.forEach(
+            (
+              anchor,
+              index
+            ) => {
+              const distance =
+                Math.abs(
+                  anchor
+                  - segment.x
+                );
 
-                if (
-                  distance < bestDistance
-                ) {
-                  bestDistance =
-                    distance;
+              if (
+                distance
+                < bestDistance
+              ) {
+                bestDistance =
+                  distance;
 
-                  bestIndex =
-                    index;
-                }
+                bestIndex =
+                  index;
               }
-            );
+            }
+          );
 
-          cells[bestIndex] =
+          cells[
+            bestIndex
+          ] =
             [
-              cells[bestIndex],
-              word.text
+              cells[
+                bestIndex
+              ],
+              segment.text
             ]
               .filter(
                 Boolean
               )
               .join(
                 " "
-              );
+              )
+              .trim();
         }
 
         return cells;
@@ -3375,9 +4548,50 @@ function tableRowsFromOcrWords(
     .filter(
       row =>
         row.some(
-          Boolean
+          cell =>
+            String(
+              cell
+              || ""
+            ).trim()
         )
     );
+}
+
+
+function notebookOcrScore(
+  result
+) {
+  const words =
+    notebookTableWordData(
+      result?.data?.words
+      || []
+    );
+
+  if (
+    !words.length
+  ) {
+    return 0;
+  }
+
+  const averageConfidence =
+    words.reduce(
+      (
+        sum,
+        word
+      ) =>
+        sum
+        + Math.max(
+            0,
+            word.confidence
+          ),
+      0
+    )
+    / words.length;
+
+  return (
+    words.length * 3
+    + averageConfidence
+  );
 }
 
 
@@ -3425,31 +4639,123 @@ async function readNotebookTableImage() {
 
   try {
     setNotebookTableStatus(
-      "Lendo a tabela da imagem..."
+      "Preparando a imagem e procurando a grade..."
     );
 
-    const result =
+    const sourceCanvas =
+      await prepareNotebookTableCanvas(
+        file
+      );
+
+    const grid =
+      detectNotebookTableGrid(
+        sourceCanvas
+      );
+
+    const ocrCanvas =
+      createNotebookTableOcrCanvas(
+        sourceCanvas,
+        grid
+      );
+
+    setNotebookTableStatus(
+      grid
+        ? `Grade detectada: ${grid.horizontal.length - 1} linha(s) × ${grid.vertical.length - 1} coluna(s). Lendo o texto...`
+        : "Grade sem bordas claras. Lendo o texto e reconstruindo colunas..."
+    );
+
+    /*
+      Primeira leitura: versão ampliada, com contraste melhorado
+      e linhas da grade apagadas.
+    */
+    const enhancedResult =
       await window.Tesseract
         .recognize(
-          file,
+          ocrCanvas,
           "por"
         );
 
-    let rows =
-      tableRowsFromOcrWords(
-        result?.data?.words
-        || []
+    let bestResult =
+      enhancedResult;
+
+    const enhancedScore =
+      notebookOcrScore(
+        enhancedResult
       );
+
+    /*
+      Segunda passagem somente quando a primeira parece fraca.
+      O original ampliado preserva detalhes que um filtro de
+      contraste pode eventualmente apagar.
+    */
+    if (
+      enhancedScore < 115
+    ) {
+      setNotebookTableStatus(
+        "Refinando a leitura do texto..."
+      );
+
+      const originalResult =
+        await window.Tesseract
+          .recognize(
+            sourceCanvas,
+            "por"
+          );
+
+      if (
+        notebookOcrScore(
+          originalResult
+        )
+        > enhancedScore
+      ) {
+        bestResult =
+          originalResult;
+      }
+    }
+
+    const words =
+      bestResult
+        ?.data
+        ?.words
+      || [];
+
+    let rows =
+      grid
+        ? rowsFromNotebookGrid(
+            words,
+            grid
+          )
+        : [];
+
+    let method =
+      rows.length
+        ? "grade"
+        : "alinhamento";
+
+    /*
+      Se a grade foi detectada mas a leitura caiu fora das
+      células, usa o reconstruidor sem bordas como fallback.
+    */
+    if (
+      rows.length < 2
+    ) {
+      rows =
+        tableRowsFromOcrWords(
+          words
+        );
+
+      method =
+        "alinhamento";
+    }
 
     if (
       rows.length < 2
     ) {
-      /*
-        Fallback: divide o texto em linhas e tabulações.
-      */
       rows =
         String(
-          result?.data?.text
+          bestResult
+            ?.data
+            ?.text
           || ""
         )
           .split(
@@ -3467,7 +4773,7 @@ async function readNotebookTableImage() {
             line =>
               line
                 .split(
-                  /\t+|\s{2,}/
+                  /\t+|\s{3,}/
                 )
                 .map(
                   cell =>
@@ -3481,6 +4787,9 @@ async function readNotebookTableImage() {
             row =>
               row.length
           );
+
+      method =
+        "texto";
     }
 
     if (
@@ -3491,12 +4800,34 @@ async function readNotebookTableImage() {
       );
     }
 
+    const maxColumns =
+      Math.max(
+        ...rows.map(
+          row =>
+            row.length
+        )
+      );
+
+    const normalizedRows =
+      rows.map(
+        row => [
+          ...row,
+          ...Array(
+            Math.max(
+              0,
+              maxColumns
+              - row.length
+            )
+          ).fill("")
+        ]
+      );
+
     renderNotebookTableBuilder(
-      rows
+      normalizedRows
     );
 
     setNotebookTableStatus(
-      "Tabela reconhecida. Revise as células antes de inserir.",
+      `Tabela reconhecida por ${method}: ${normalizedRows.length} linha(s) × ${maxColumns} coluna(s). Revise as células antes de inserir.`,
       "success"
     );
 
