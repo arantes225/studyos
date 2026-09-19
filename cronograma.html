@@ -1480,6 +1480,43 @@
       width: 100%;
     }
   }
+
+  /* ========================================================
+     FASE 12.8 — TEMAS CONCLUÍDOS NA LISTA
+     ======================================================== */
+
+  .theme-library-row.completed {
+    opacity: .72;
+    background:
+      color-mix(
+        in srgb,
+        var(--success) 5%,
+        var(--surface)
+      );
+  }
+
+  .theme-library-date.completed {
+    color: var(--success);
+    font-weight: 850;
+  }
+
+  .theme-library-completed-badge {
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 9px;
+    border-radius: 999px;
+    background:
+      color-mix(
+        in srgb,
+        var(--success) 12%,
+        var(--surface)
+      );
+    color: var(--success);
+    font-size: 9px;
+    font-weight: 900;
+  }
+
 </style>
   <link rel="stylesheet" href="resibulando-brand-v5.css?v=5">
   <script defer src="resibulando-brand-v5.js?v=5"></script>
@@ -2054,6 +2091,6 @@
   <script src="app.js?v=12.1"></script>
   <script src="study-mode.js?v=12.1"></script>
   <script src="cronograma-base-data.js?v=12.6"></script>
-  <script src="cronograma.js?v=12.7-fix-format-date"></script>
+  <script src="cronograma.js?v=12.8"></script>
 </body>
 </html>
