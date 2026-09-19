@@ -1013,344 +1013,42 @@ function wireReview() {
     });
 }
 
-
-const RESIBULANDO_IMAGE_TARGET_BYTES =
-  100 * 1024;
-
-const RESIBULANDO_IMAGE_SOFT_MAX_BYTES =
-  150 * 1024;
-
-const RESIBULANDO_IMAGE_MAX_DIMENSION =
-  1100;
-
-
-async function compressResibulandoImageBlob(
-  sourceBlob
-) {
-  if (
-    !sourceBlob
-    || !sourceBlob.type
-      ?.startsWith(
-        "image/"
-      )
-  ) {
-    return sourceBlob;
-  }
-
-
-  /*
-    Se já estiver abaixo da meta, não recomprime.
-    Evita perda de qualidade desnecessária.
-  */
-  if (
-    sourceBlob.size
-    <= RESIBULANDO_IMAGE_TARGET_BYTES
-  ) {
-    return sourceBlob;
-  }
-
-
-  try {
-    const bitmap =
-      await createImageBitmap(
-        sourceBlob
-      );
-
-
-    const originalWidth =
-      bitmap.width;
-
-    const originalHeight =
-      bitmap.height;
-
-
-    const dimensionSteps =
-      [
-        1100,
-        1000,
-        900,
-        820
-      ];
-
-
-    const qualitySteps =
-      [
-        0.82,
-        0.76,
-        0.70,
-        0.64,
-        0.58
-      ];
-
-
-    let bestReadable =
-      null;
-
-    let smallest =
-      null;
-
-
-    for (
-      const maxDimension
-      of dimensionSteps
-    ) {
-      const scale =
-        Math.min(
-          1,
-          maxDimension
-            / originalWidth,
-          maxDimension
-            / originalHeight
-        );
-
-
-      const width =
-        Math.max(
-          1,
-          Math.round(
-            originalWidth
-            * scale
-          )
-        );
-
-
-      const height =
-        Math.max(
-          1,
-          Math.round(
-            originalHeight
-            * scale
-          )
-        );
-
-
-      const canvas =
-        document.createElement(
-          "canvas"
-        );
-
-
-      canvas.width =
-        width;
-
-      canvas.height =
-        height;
-
-
-      const context =
-        canvas.getContext(
-          "2d",
-          {
-            alpha:
-              false
-          }
-        );
-
-
-      context.imageSmoothingEnabled =
-        true;
-
-      context.imageSmoothingQuality =
-        "high";
-
-      context.fillStyle =
-        "#ffffff";
-
-      context.fillRect(
-        0,
-        0,
-        width,
-        height
-      );
-
-      context.drawImage(
-        bitmap,
-        0,
-        0,
-        width,
-        height
-      );
-
-
-      for (
-        const quality
-        of qualitySteps
-      ) {
-        const candidate =
-          await new Promise(
-            (
-              resolve
-            ) => {
-              canvas.toBlob(
-                resolve,
-                "image/webp",
-                quality
-              );
-            }
-          );
-
-
-        if (!candidate) {
-          continue;
-        }
-
-
-        if (
-          !smallest
-          || candidate.size
-            < smallest.size
-        ) {
-          smallest =
-            candidate;
-        }
-
-
-        /*
-          Preserva um candidato nítido de até 150 KB.
-          Só usamos algo mais agressivo se não houver
-          opção legível nessa faixa.
-        */
-        if (
-          candidate.size
-            <= RESIBULANDO_IMAGE_SOFT_MAX_BYTES
-          && quality >= 0.64
-          && maxDimension >= 900
-        ) {
-          if (
-            !bestReadable
-            || candidate.size
-              < bestReadable.size
-          ) {
-            bestReadable =
-              candidate;
-          }
-        }
-
-
-        if (
-          candidate.size
-          <= RESIBULANDO_IMAGE_TARGET_BYTES
-        ) {
-          bitmap.close?.();
-
-          return candidate;
-        }
-      }
-    }
-
-
-    bitmap.close?.();
-
-
-    /*
-      Se 100 KB exigir perda excessiva,
-      aceita até 150 KB para manter texto/diagramas nítidos.
-    */
-    if (bestReadable) {
-      return bestReadable;
-    }
-
-
-    return smallest
-      || sourceBlob;
-
-
-  } catch (error) {
-    console.warn(
-      "Não foi possível otimizar a imagem:",
-      error
-    );
-
-    return sourceBlob;
-  }
-}
-
-
 async function uploadFlashImage(
   file,
   side
 ) {
-  if (!file) {
-    return null;
-  }
-
-
-  const optimized =
-    await compressResibulandoImageBlob(
-      file
-    );
-
-
-  const isWebp =
-    optimized !== file
-    || optimized.type
-      === "image/webp";
-
-
-  const extension =
-    isWebp
-      ? "webp"
-      : (
-          String(
-            file.name
-            || ""
-          )
-            .split(".")
-            .pop()
-            .toLowerCase()
-          || "bin"
-        );
-
+  if (!file) return null;
 
   const safeName =
-    String(
-      file.name
-      || "image"
-    )
-      .replace(
-        /\.[^.]+$/,
-        ""
-      )
+    String(file.name)
       .replace(
         /[^a-zA-Z0-9._-]+/g,
         "-"
       );
 
-
   const path =
-    `${flashUser.id}/flashcards/${crypto.randomUUID()}-${side}-${safeName}.${extension}`;
-
+    `${flashUser.id}/flashcards/${crypto.randomUUID()}-${side}-${safeName}`;
 
   const {
     error
-  } =
-    await flashSb
-      .storage
-      .from(
-        "docmap"
-      )
-      .upload(
-        path,
-        optimized,
-        {
-          cacheControl:
-            "3600",
-
-          upsert:
-            false,
-
-          contentType:
-            optimized.type
-            || file.type
-            || undefined
-        }
-      );
-
+  } = await flashSb
+    .storage
+    .from("docmap")
+    .upload(
+      path,
+      file,
+      {
+        cacheControl: "3600",
+        upsert: false,
+        contentType:
+          file.type
+          || undefined
+      }
+    );
 
   if (error) {
     throw error;
   }
-
 
   return path;
 }

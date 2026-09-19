@@ -574,13 +574,3 @@
     flex-direction: column;
   }
 }
-
-
-/* FASE 13.3 — CADERNO DA AULA */
-.agenda-lesson-actions {
-  flex-wrap: wrap;
-}
-
-#agenda-lesson-notebook {
-  text-decoration: none;
-}

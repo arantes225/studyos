@@ -4541,6 +4541,7 @@ function filteredLibraryTopics() {
         return false;
       }
 
+
       if (
         completionFilter
         === "pending"
@@ -4548,6 +4549,7 @@ function filteredLibraryTopics() {
       ) {
         return false;
       }
+
 
       if (!search) return true;
 
@@ -4660,25 +4662,30 @@ function updateThemeBulkToolbar() {
       "theme-selected-count"
     );
 
+
   const deleteButton =
     document.getElementById(
       "theme-delete-selected"
     );
+
 
   const doneButton =
     document.getElementById(
       "theme-done-selected"
     );
 
+
   const deckButton =
     document.getElementById(
       "theme-deck-selected"
     );
 
+
   const menuToggle =
     document.getElementById(
       "theme-bulk-menu-toggle"
     );
+
 
   const selectAll =
     document.getElementById(
@@ -4728,11 +4735,172 @@ function updateThemeBulkToolbar() {
       && selectedVisible
         === visibleIds.length;
 
+
     selectAll.indeterminate =
       selectedVisible > 0
       && selectedVisible
         < visibleIds.length;
   }
+}
+
+function closeThemeBulkMenu() {
+  const menu =
+    document.getElementById(
+      "theme-bulk-menu"
+    );
+
+  const toggle =
+    document.getElementById(
+      "theme-bulk-menu-toggle"
+    );
+
+  if (menu) {
+    menu.hidden =
+      true;
+  }
+
+  if (toggle) {
+    toggle.setAttribute(
+      "aria-expanded",
+      "false"
+    );
+  }
+}
+
+
+function toggleThemeBulkMenu() {
+  const menu =
+    document.getElementById(
+      "theme-bulk-menu"
+    );
+
+  const toggle =
+    document.getElementById(
+      "theme-bulk-menu-toggle"
+    );
+
+  if (
+    !menu
+    || !toggle
+    || toggle.disabled
+  ) {
+    return;
+  }
+
+  const open =
+    menu.hidden;
+
+  menu.hidden =
+    !open;
+
+  toggle.setAttribute(
+    "aria-expanded",
+    open
+      ? "true"
+      : "false"
+  );
+}
+
+
+async function returnSelectedThemesToDeck() {
+  const eligible =
+    scheduleState.topics
+      .filter(
+        (topic) =>
+          scheduleState
+            .selectedThemeIds
+            .has(
+              topic.id
+            )
+          && !topic.completed_at
+          && Boolean(
+            topic.scheduled_date
+          )
+      );
+
+  if (!eligible.length) {
+    window.alert(
+      "Nenhuma das aulas selecionadas pode ser removida para o deck."
+    );
+
+    closeThemeBulkMenu();
+
+    return;
+  }
+
+
+  const confirmed =
+    window.confirm(
+      `Remover ${eligible.length} aula${eligible.length === 1 ? "" : "s"} selecionada${eligible.length === 1 ? "" : "s"} das datas atuais e enviar para o Deck não programado?`
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      "theme-deck-selected"
+    );
+
+
+  if (button) {
+    button.disabled =
+      true;
+  }
+
+
+  const {
+    error
+  } =
+    await scheduleSb
+      .from(
+        "study_topics"
+      )
+      .update({
+        scheduled_date:
+          null,
+
+        status:
+          "deck"
+      })
+      .in(
+        "id",
+        eligible.map(
+          (topic) =>
+            topic.id
+        )
+      );
+
+
+  if (error) {
+    console.error(
+      error
+    );
+
+    window.alert(
+      `Não foi possível remover as aulas para o deck: ${error.message}`
+    );
+
+    if (button) {
+      button.disabled =
+        false;
+    }
+
+    return;
+  }
+
+
+  scheduleState
+    .selectedThemeIds
+    .clear();
+
+
+  closeThemeBulkMenu();
+
+  await loadTopics();
 }
 
 
@@ -4761,6 +4929,7 @@ async function markSelectedThemesAlreadyDone() {
     const marked = Number(data?.marked || 0);
     const skipped = Number(data?.skipped || 0);
     scheduleState.selectedThemeIds.clear();
+    closeThemeBulkMenu();
     window.alert(`${marked} aula${marked === 1 ? "" : "s"} marcada${marked === 1 ? "" : "s"} como já feita${marked === 1 ? "" : "s"}.${skipped ? ` ${skipped} selecionada${skipped === 1 ? "" : "s"} não tinham data ou já estavam concluídas.` : ""}`);
     await loadTopics();
   } catch (error) {
@@ -4846,6 +5015,8 @@ async function deleteSelectedThemes() {
     .selectedThemeIds
     .clear();
 
+
+  closeThemeBulkMenu();
 
   await loadTopics();
 }
@@ -5275,6 +5446,7 @@ function wireThemeLibraryBulkActions() {
       "click",
       (event) => {
         event.stopPropagation();
+
         toggleThemeBulkMenu();
       }
     );
@@ -5313,14 +5485,14 @@ function wireThemeLibraryBulkActions() {
   document.addEventListener(
     "click",
     (event) => {
-      const bulkWrap =
+      const wrap =
         document.querySelector(
           ".theme-bulk-menu-wrap"
         );
 
       if (
-        bulkWrap
-        && !bulkWrap.contains(
+        wrap
+        && !wrap.contains(
           event.target
         )
       ) {
@@ -5337,11 +5509,107 @@ function wireThemeLibraryBulkActions() {
         event.key === "Escape"
       ) {
         closeThemeBulkMenu();
-        closeThemeFilterMenu();
       }
     }
   );
 }
+
+function themeFiltersAreActive() {
+  return Boolean(
+    scheduleState.themeAreaFilter
+    || scheduleState.themeDateFrom
+    || scheduleState.themeDateTo
+    || (
+      scheduleState.themeCompletionFilter
+      && scheduleState.themeCompletionFilter
+        !== "all"
+    )
+  );
+}
+
+
+function updateThemeFilterButtonState() {
+  const button =
+    document.getElementById(
+      "theme-filter-menu-toggle"
+    );
+
+  if (!button) {
+    return;
+  }
+
+  const active =
+    themeFiltersAreActive();
+
+  button.classList.toggle(
+    "has-active-filter",
+    active
+  );
+
+  button.title =
+    active
+      ? "Filtros ativos"
+      : "Filtros";
+}
+
+
+function closeThemeFilterMenu() {
+  const menu =
+    document.getElementById(
+      "theme-filter-menu"
+    );
+
+  const toggle =
+    document.getElementById(
+      "theme-filter-menu-toggle"
+    );
+
+  if (menu) {
+    menu.hidden =
+      true;
+  }
+
+  if (toggle) {
+    toggle.setAttribute(
+      "aria-expanded",
+      "false"
+    );
+  }
+}
+
+
+function toggleThemeFilterMenu() {
+  const menu =
+    document.getElementById(
+      "theme-filter-menu"
+    );
+
+  const toggle =
+    document.getElementById(
+      "theme-filter-menu-toggle"
+    );
+
+  if (
+    !menu
+    || !toggle
+  ) {
+    return;
+  }
+
+  const opening =
+    menu.hidden;
+
+  menu.hidden =
+    !opening;
+
+  toggle.setAttribute(
+    "aria-expanded",
+    opening
+      ? "true"
+      : "false"
+  );
+}
+
 
 function wireThemeLibraryFilters() {
   const search =
@@ -5440,6 +5708,7 @@ function wireThemeLibraryFilters() {
       "click",
       (event) => {
         event.stopPropagation();
+
         toggleThemeFilterMenu();
       }
     );
@@ -5518,16 +5787,28 @@ function wireThemeLibraryFilters() {
   document.addEventListener(
     "click",
     (event) => {
-      const filterWrap =
+      const wrap =
         document.querySelector(
           ".theme-filter-menu-wrap"
         );
 
       if (
-        filterWrap
-        && !filterWrap.contains(
+        wrap
+        && !wrap.contains(
           event.target
         )
+      ) {
+        closeThemeFilterMenu();
+      }
+    }
+  );
+
+
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (
+        event.key === "Escape"
       ) {
         closeThemeFilterMenu();
       }
