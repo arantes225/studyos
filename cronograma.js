@@ -224,6 +224,65 @@ function sameDateSchedule(a, b) {
   return toISODateSchedule(a) === toISODateSchedule(b);
 }
 
+function formatDateLabelSchedule(
+  value
+) {
+  if (!value) {
+    return "—";
+  }
+
+  let date;
+
+  if (
+    value instanceof Date
+  ) {
+    date =
+      value;
+  } else {
+    const [
+      year,
+      month,
+      day
+    ] =
+      String(value)
+        .slice(0, 10)
+        .split("-")
+        .map(Number);
+
+    date =
+      new Date(
+        year,
+        month - 1,
+        day
+      );
+  }
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return String(value);
+  }
+
+  return new Intl.DateTimeFormat(
+    "pt-BR",
+    {
+      day:
+        "2-digit",
+
+      month:
+        "2-digit",
+
+      year:
+        "numeric"
+    }
+  ).format(
+    date
+  );
+}
+
+
 function formatShortSchedule(date) {
   return new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",
@@ -4285,7 +4344,21 @@ async function applyBaseSchedule() {
 
 
 window.applyResibulandoGenericSchedule =
-  applyBaseSchedule;
+  async function applyResibulandoGenericScheduleSafe() {
+    try {
+      await applyBaseSchedule();
+    } catch (error) {
+      console.error(
+        "Falha não tratada no cronograma genérico:",
+        error
+      );
+
+      setBaseScheduleStatus(
+        `Erro interno ao adicionar cronograma: ${error.message || "erro desconhecido"}`,
+        "error"
+      );
+    }
+  };
 
 
 function wireBaseSchedule() {
