@@ -494,6 +494,9 @@ function sanitizeHtml(
       let keepStyle =
         "";
 
+      let keepColspan =
+        "";
+
       if (
         child.tagName ===
         "SPAN"
@@ -572,6 +575,34 @@ function sanitizeHtml(
       }
 
 
+      if (
+        (
+          child.tagName ===
+            "TD"
+          ||
+          child.tagName ===
+            "TH"
+        )
+        &&
+        Number(
+          child.colSpan
+        ) > 1
+      ) {
+        keepColspan =
+          String(
+            Math.min(
+              24,
+              Math.max(
+                2,
+                Number(
+                  child.colSpan
+                )
+              )
+            )
+          );
+      }
+
+
       for (
         const attribute
         of
@@ -602,6 +633,15 @@ function sanitizeHtml(
         child.setAttribute(
           "style",
           keepStyle
+        );
+      }
+
+      if (
+        keepColspan
+      ) {
+        child.setAttribute(
+          "colspan",
+          keepColspan
         );
       }
 
@@ -2545,6 +2585,302 @@ function insertDivider() {
 
 
 
+
+function notebookEditorSelectionElement() {
+  const editor =
+    document.getElementById(
+      "notebook-editor"
+    );
+
+  const selection =
+    window.getSelection();
+
+  if (
+    !editor
+    || !selection
+    || !selection.rangeCount
+  ) {
+    return null;
+  }
+
+  let node =
+    selection.anchorNode;
+
+  if (
+    node?.nodeType ===
+      Node.TEXT_NODE
+  ) {
+    node =
+      node.parentElement;
+  }
+
+  if (
+    !(node instanceof Element)
+  ) {
+    return null;
+  }
+
+  if (
+    !editor.contains(
+      node
+    )
+  ) {
+    return null;
+  }
+
+  return node;
+}
+
+
+function notebookEditorCurrentTableRow() {
+  const element =
+    notebookEditorSelectionElement();
+
+  return (
+    element
+      ?.closest(
+        "tr"
+      )
+    || null
+  );
+}
+
+
+function notebookEditorCurrentTable() {
+  return (
+    notebookEditorCurrentTableRow()
+      ?.closest(
+        "table"
+      )
+    || null
+  );
+}
+
+
+function mergeCurrentNotebookEditorTableRow() {
+  if (
+    !notebookState.editorEditable
+  ) {
+    return;
+  }
+
+  restoreSelection();
+
+  const row =
+    notebookEditorCurrentTableRow();
+
+  const table =
+    row
+      ?.closest(
+        "table"
+      );
+
+  if (
+    !row
+    || !table
+  ) {
+    return;
+  }
+
+  const columns =
+    notebookTableLogicalColumnCount(
+      table
+    );
+
+  const text =
+    Array.from(
+      row.cells
+    )
+      .map(
+        cell =>
+          cell.innerText
+            ?.trim()
+          || ""
+      )
+      .filter(
+        Boolean
+      )
+      .join(
+        " "
+      );
+
+  row.innerHTML =
+    "";
+
+  const cell =
+    document.createElement(
+      "th"
+    );
+
+  cell.colSpan =
+    columns;
+
+  cell.textContent =
+    text;
+
+  row.appendChild(
+    cell
+  );
+
+  focusNotebookCell(
+    cell
+  );
+
+  saveSelection();
+  scheduleSave();
+}
+
+
+function splitCurrentNotebookEditorTableRow() {
+  if (
+    !notebookState.editorEditable
+  ) {
+    return;
+  }
+
+  restoreSelection();
+
+  const row =
+    notebookEditorCurrentTableRow();
+
+  const table =
+    row
+      ?.closest(
+        "table"
+      );
+
+  if (
+    !row
+    || !table
+    || row.cells.length !== 1
+    || Number(
+      row.cells[0].colSpan
+      || 1
+    ) <= 1
+  ) {
+    return;
+  }
+
+  const columns =
+    Math.max(
+      2,
+      Number(
+        row.cells[0].colSpan
+        || 1
+      ),
+      notebookTableLogicalColumnCount(
+        table
+      )
+    );
+
+  const text =
+    row.cells[0]
+      .innerText
+      ?.trim()
+    || "";
+
+  row.innerHTML =
+    "";
+
+  for (
+    let index = 0;
+    index < columns;
+    index += 1
+  ) {
+    const cell =
+      document.createElement(
+        "td"
+      );
+
+    if (
+      index === 0
+    ) {
+      cell.textContent =
+        text;
+    }
+
+    row.appendChild(
+      cell
+    );
+  }
+
+  focusNotebookCell(
+    row.cells[0]
+  );
+
+  saveSelection();
+  scheduleSave();
+}
+
+
+function handleNotebookEditorTableEnter(
+  event
+) {
+  if (
+    event.key !== "Enter"
+    || event.shiftKey
+    || !notebookState.editorEditable
+  ) {
+    return;
+  }
+
+  const row =
+    notebookEditorCurrentTableRow();
+
+  const table =
+    row
+      ?.closest(
+        "table"
+      );
+
+  if (
+    !row
+    || !table
+    || row !==
+      table.rows[
+        table.rows.length - 1
+      ]
+  ) {
+    return;
+  }
+
+  event.preventDefault();
+
+  const newRow =
+    document.createElement(
+      "tr"
+    );
+
+  const columns =
+    notebookTableLogicalColumnCount(
+      table
+    );
+
+  for (
+    let index = 0;
+    index < columns;
+    index += 1
+  ) {
+    newRow.appendChild(
+      document.createElement(
+        "td"
+      )
+    );
+  }
+
+  row.after(
+    newRow
+  );
+
+  focusNotebookCell(
+    newRow.cells[0]
+  );
+
+  saveSelection();
+  scheduleSave();
+}
+
+
 /* =========================================================
    CORES E GRIFO
    ========================================================= */
@@ -2681,7 +3017,10 @@ function renderNotebookTableBuilder(
 
   container.innerHTML =
     `
-      <table data-notebook-table-builder>
+      <table
+        data-notebook-table-builder
+        data-base-cols="${width}"
+      >
         <tbody>
           ${
             normalized
@@ -2804,6 +3143,374 @@ function getNotebookTableElement() {
 }
 
 
+
+function notebookTableLogicalColumnCount(
+  table
+) {
+  if (!table) {
+    return 1;
+  }
+
+  const declared =
+    Number(
+      table.dataset
+        ?.baseCols
+      || 0
+    );
+
+  const calculated =
+    Math.max(
+      1,
+      ...Array.from(
+        table.rows
+        || []
+      )
+        .map(
+          row =>
+            Array.from(
+              row.cells
+              || []
+            )
+              .reduce(
+                (
+                  total,
+                  cell
+                ) =>
+                  total
+                  + Math.max(
+                      1,
+                      Number(
+                        cell.colSpan
+                        || 1
+                      )
+                    ),
+                0
+              )
+        )
+    );
+
+  return Math.max(
+    1,
+    declared,
+    calculated
+  );
+}
+
+
+function setNotebookTableBaseColumns(
+  table,
+  count
+) {
+  if (!table) {
+    return;
+  }
+
+  table.dataset.baseCols =
+    String(
+      Math.max(
+        1,
+        Number(
+          count
+          || 1
+        )
+      )
+    );
+}
+
+
+function focusNotebookCell(
+  cell
+) {
+  if (!cell) {
+    return;
+  }
+
+  cell.focus?.();
+
+  const range =
+    document.createRange();
+
+  range.selectNodeContents(
+    cell
+  );
+
+  range.collapse(
+    false
+  );
+
+  const selection =
+    window.getSelection();
+
+  selection.removeAllRanges();
+  selection.addRange(
+    range
+  );
+}
+
+
+function getActiveNotebookTableBuilderRow() {
+  const table =
+    getNotebookTableElement();
+
+  if (!table) {
+    return null;
+  }
+
+  const active =
+    document.activeElement
+      ?.closest
+      ?.(
+        "tr"
+      );
+
+  if (
+    active
+    &&
+    table.contains(
+      active
+    )
+  ) {
+    return active;
+  }
+
+  return (
+    table.querySelector(
+      "tr.notebook-table-row-active"
+    )
+    ||
+    table.rows[
+      table.rows.length - 1
+    ]
+    ||
+    null
+  );
+}
+
+
+function markNotebookTableBuilderRow(
+  row
+) {
+  const table =
+    getNotebookTableElement();
+
+  if (!table) {
+    return;
+  }
+
+  Array.from(
+    table.rows
+  )
+    .forEach(
+      item =>
+        item.classList
+          .toggle(
+            "notebook-table-row-active",
+            item === row
+          )
+    );
+}
+
+
+function mergeNotebookTableBuilderRow() {
+  const table =
+    getNotebookTableElement();
+
+  const row =
+    getActiveNotebookTableBuilderRow();
+
+  if (
+    !table
+    || !row
+  ) {
+    return;
+  }
+
+  const columns =
+    notebookTableLogicalColumnCount(
+      table
+    );
+
+  const text =
+    Array.from(
+      row.cells
+    )
+      .map(
+        cell =>
+          cell.innerText
+            ?.trim()
+          || ""
+      )
+      .filter(
+        Boolean
+      )
+      .join(
+        " "
+      );
+
+  row.innerHTML =
+    "";
+
+  const cell =
+    document.createElement(
+      "th"
+    );
+
+  cell.colSpan =
+    columns;
+
+  cell.contentEditable =
+    "true";
+
+  cell.textContent =
+    text;
+
+  row.appendChild(
+    cell
+  );
+
+  markNotebookTableBuilderRow(
+    row
+  );
+
+  focusNotebookCell(
+    cell
+  );
+}
+
+
+function splitNotebookTableBuilderRow() {
+  const table =
+    getNotebookTableElement();
+
+  const row =
+    getActiveNotebookTableBuilderRow();
+
+  if (
+    !table
+    || !row
+  ) {
+    return;
+  }
+
+  const columns =
+    notebookTableLogicalColumnCount(
+      table
+    );
+
+  if (
+    row.cells.length !== 1
+    || Number(
+      row.cells[0].colSpan
+      || 1
+    ) <= 1
+  ) {
+    return;
+  }
+
+  const previousText =
+    row.cells[0]
+      .innerText
+      ?.trim()
+    || "";
+
+  const useHeader =
+    row.rowIndex === 0;
+
+  row.innerHTML =
+    "";
+
+  for (
+    let index = 0;
+    index < columns;
+    index += 1
+  ) {
+    const cell =
+      document.createElement(
+        useHeader
+          ? "th"
+          : "td"
+      );
+
+    cell.contentEditable =
+      "true";
+
+    if (
+      index === 0
+    ) {
+      cell.textContent =
+        previousText;
+    }
+
+    row.appendChild(
+      cell
+    );
+  }
+
+  markNotebookTableBuilderRow(
+    row
+  );
+
+  focusNotebookCell(
+    row.cells[0]
+  );
+}
+
+
+function appendNotebookTableRow(
+  table,
+  focus = false
+) {
+  if (!table) {
+    return null;
+  }
+
+  const columns =
+    notebookTableLogicalColumnCount(
+      table
+    );
+
+  setNotebookTableBaseColumns(
+    table,
+    columns
+  );
+
+  const row =
+    table.insertRow();
+
+  for (
+    let index = 0;
+    index < columns;
+    index += 1
+  ) {
+    const cell =
+      row.insertCell();
+
+    cell.contentEditable =
+      "true";
+  }
+
+  if (
+    table.hasAttribute(
+      "data-notebook-table-builder"
+    )
+  ) {
+    markNotebookTableBuilderRow(
+      row
+    );
+  }
+
+  if (
+    focus
+  ) {
+    focusNotebookCell(
+      row.cells[0]
+    );
+  }
+
+  return row;
+}
+
+
 function addNotebookTableRow() {
   const table =
     getNotebookTableElement();
@@ -2813,26 +3520,10 @@ function addNotebookTableRow() {
     return;
   }
 
-  const cols =
-    table.rows[0]
-      ?.cells
-      ?.length
-    || 1;
-
-  const row =
-    table.insertRow();
-
-  for (
-    let index = 0;
-    index < cols;
-    index += 1
-  ) {
-    const cell =
-      row.insertCell();
-
-    cell.contentEditable =
-      "true";
-  }
+  appendNotebookTableRow(
+    table,
+    true
+  );
 }
 
 
@@ -2862,6 +3553,14 @@ function addNotebookTableColumn() {
     return;
   }
 
+  const previousColumns =
+    notebookTableLogicalColumnCount(
+      table
+    );
+
+  const newColumns =
+    previousColumns + 1;
+
   Array.from(
     table.rows
   )
@@ -2870,14 +3569,25 @@ function addNotebookTableColumn() {
         row,
         rowIndex
       ) => {
-        const tag =
-          rowIndex === 0
-            ? "th"
-            : "td";
+        if (
+          row.cells.length === 1
+          &&
+          Number(
+            row.cells[0].colSpan
+            || 1
+          ) >= previousColumns
+        ) {
+          row.cells[0].colSpan =
+            newColumns;
+
+          return;
+        }
 
         const cell =
           document.createElement(
-            tag
+            rowIndex === 0
+              ? "th"
+              : "td"
           );
 
         cell.contentEditable =
@@ -2887,7 +3597,7 @@ function addNotebookTableColumn() {
           rowIndex === 0
         ) {
           cell.textContent =
-            `Coluna ${row.cells.length + 1}`;
+            `Coluna ${newColumns}`;
         }
 
         row.appendChild(
@@ -2895,6 +3605,11 @@ function addNotebookTableColumn() {
         );
       }
     );
+
+  setNotebookTableBaseColumns(
+    table,
+    newColumns
+  );
 }
 
 
@@ -2906,27 +3621,56 @@ function removeNotebookTableColumn() {
     return;
   }
 
-  const cols =
-    table.rows[0]
-      ?.cells
-      ?.length
-    || 0;
+  const previousColumns =
+    notebookTableLogicalColumnCount(
+      table
+    );
 
   if (
-    cols <= 1
+    previousColumns <= 1
   ) {
     return;
   }
+
+  const newColumns =
+    previousColumns - 1;
 
   Array.from(
     table.rows
   )
     .forEach(
-      row =>
-        row.deleteCell(
-          cols - 1
-        )
+      row => {
+        if (
+          row.cells.length === 1
+          &&
+          Number(
+            row.cells[0].colSpan
+            || 1
+          ) > 1
+        ) {
+          row.cells[0].colSpan =
+            Math.max(
+              1,
+              newColumns
+            );
+
+          return;
+        }
+
+        if (
+          row.cells.length > newColumns
+        ) {
+          row.deleteCell(
+            row.cells.length - 1
+          );
+        }
+      }
     );
+
+  setNotebookTableBaseColumns(
+    table,
+    newColumns
+  );
 }
 
 
@@ -2953,10 +3697,7 @@ function notebookTableHtmlFromBuilder() {
         ${
           rows
             .map(
-              (
-                row,
-                rowIndex
-              ) =>
+              row =>
                 `
                   <tr>
                     ${
@@ -2966,12 +3707,28 @@ function notebookTableHtmlFromBuilder() {
                         .map(
                           cell => {
                             const tag =
-                              rowIndex === 0
+                              cell.tagName
+                                ?.toLowerCase()
+                              === "th"
                                 ? "th"
                                 : "td";
 
+                            const colspan =
+                              Math.max(
+                                1,
+                                Number(
+                                  cell.colSpan
+                                  || 1
+                                )
+                              );
+
+                            const colspanAttribute =
+                              colspan > 1
+                                ? ` colspan="${colspan}"`
+                                : "";
+
                             return `
-                              <${tag}>
+                              <${tag}${colspanAttribute}>
                                 ${escapeHtml(
                                   cell.innerText
                                     ?.trim()
@@ -7304,6 +8061,13 @@ function wireEvents() {
 
   editor
     ?.addEventListener(
+      "keydown",
+      handleNotebookEditorTableEnter
+    );
+
+
+  editor
+    ?.addEventListener(
       "paste",
       (event) => {
 
@@ -7547,6 +8311,20 @@ function wireEvents() {
 
             closeNotebookToolMenus();
 
+            if (
+              mode === "merge-row"
+            ) {
+              mergeCurrentNotebookEditorTableRow();
+              return;
+            }
+
+            if (
+              mode === "split-row"
+            ) {
+              splitCurrentNotebookEditorTableRow();
+              return;
+            }
+
             openNotebookTableModal(
               mode
             );
@@ -7564,6 +8342,82 @@ function wireEvents() {
       "click",
       () =>
         renderNotebookTableBuilder()
+    );
+
+
+  const tableBuilder =
+    document.getElementById(
+      "notebook-table-editor"
+    );
+
+
+  tableBuilder
+    ?.addEventListener(
+      "focusin",
+      (event) => {
+        const row =
+          event.target
+            ?.closest
+            ?.(
+              "tr"
+            );
+
+        if (
+          row
+        ) {
+          markNotebookTableBuilderRow(
+            row
+          );
+        }
+      }
+    );
+
+
+  tableBuilder
+    ?.addEventListener(
+      "keydown",
+      (event) => {
+        if (
+          event.key !== "Enter"
+          || event.shiftKey
+        ) {
+          return;
+        }
+
+        const cell =
+          event.target
+            ?.closest
+            ?.(
+              "td,th"
+            );
+
+        const table =
+          getNotebookTableElement();
+
+        const row =
+          cell
+            ?.closest(
+              "tr"
+            );
+
+        if (
+          !table
+          || !row
+          || row !==
+            table.rows[
+              table.rows.length - 1
+            ]
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+
+        appendNotebookTableRow(
+          table,
+          true
+        );
+      }
     );
 
 
@@ -7604,6 +8458,26 @@ function wireEvents() {
     ?.addEventListener(
       "click",
       removeNotebookTableColumn
+    );
+
+
+  document
+    .getElementById(
+      "notebook-table-merge-row"
+    )
+    ?.addEventListener(
+      "click",
+      mergeNotebookTableBuilderRow
+    );
+
+
+  document
+    .getElementById(
+      "notebook-table-split-row"
+    )
+    ?.addEventListener(
+      "click",
+      splitNotebookTableBuilderRow
     );
 
 
