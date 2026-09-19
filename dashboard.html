@@ -766,7 +766,8 @@
   position: relative;
   overflow: hidden;
   display: grid;
-  align-content: start;
+  grid-template-rows: auto 1fr;
+  align-items: stretch;
   gap: 10px;
   min-height: 150px;
 }
@@ -785,8 +786,13 @@
 }
 
 .dashboard-passive-ccq-stage {
+  width: 100%;
   min-height: 80px;
+  height: 100%;
+  align-self: stretch;
+  justify-self: stretch;
   display: grid;
+  place-content: center;
   place-items: center;
   gap: 8px;
   text-align: center;
@@ -805,12 +811,13 @@
 
 .dashboard-passive-ccq-text {
   width: 100%;
+  margin: auto;
   display: -webkit-box;
   overflow: hidden;
   color: var(--text);
   font-size: 29px;
   font-weight: 820;
-  line-height: 1.4;
+  line-height: 1.25;
   text-align: center;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
