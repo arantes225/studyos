@@ -6942,14 +6942,51 @@ function analyzeAnswerColorAroundNumber(
 
 
 /* =========================================================
-   FALLBACK DE GABARITO POR ORDEM VISUAL
+   LEITOR DE GABARITO — FORMAS PRIMEIRO
    ---------------------------------------------------------
-   Se o OCR não conseguir ler os números brancos dentro das
-   bolinhas/quadradinhos, detectamos as formas pela cor.
-   Quando a quantidade de formas coincide com a quantidade de
-   questões, a ordem visual define a numeração:
-   esquerda -> direita, de cima -> baixo.
+   Fluxo novo:
+   1. Detecta bolinhas/quadradinhos pela geometria e cor.
+   2. Classifica verde/vermelho/branco/selecionada.
+   3. Recorta CADA forma e tenta OCR somente do número.
+   4. Se o número falhar, deduz a sequência pela ordem visual.
+   5. Não procura A/B/C/D/E em nenhum momento.
    ========================================================= */
+
+
+function answerMedianNumber(
+  values
+) {
+  const clean =
+    (values || [])
+      .map(Number)
+      .filter(
+        value =>
+          Number.isFinite(
+            value
+          )
+      )
+      .sort(
+        (a, b) =>
+          a - b
+      );
+
+  if (!clean.length) {
+    return 0;
+  }
+
+  const middle =
+    Math.floor(
+      clean.length / 2
+    );
+
+  return clean.length % 2
+    ? clean[middle]
+    : (
+        clean[middle - 1]
+        + clean[middle]
+      ) / 2;
+}
+
 
 function answerShapePixelCode(
   red,
@@ -6960,49 +6997,204 @@ function answerShapePixelCode(
   const g = Number(green);
   const b = Number(blue);
 
+  const max =
+    Math.max(
+      r,
+      g,
+      b
+    );
+
+  const min =
+    Math.min(
+      r,
+      g,
+      b
+    );
+
+  const chroma =
+    max - min;
+
   /* Verde = acerto */
   if (
-    g >= 115
-    && g - r >= 24
-    && g - b >= 10
+    g >= 110
+    && (
+      g - r >= 20
+      || g >= r * 1.18
+    )
+    && g - b >= 8
   ) {
     return 1;
   }
 
   /* Vermelho = erro */
   if (
-    r >= 145
-    && r - g >= 32
-    && r - b >= 25
+    r >= 140
+    && r - g >= 28
+    && r - b >= 20
   ) {
     return 2;
   }
 
-  /* Azul da questão selecionada */
+  /* Azul = borda/estado selecionado */
   if (
-    b >= 130
-    && b - r >= 25
-    && b - g >= 10
+    b >= 125
+    && b - r >= 22
+    && b - g >= 8
   ) {
     return 3;
   }
 
-  /* Amarelo/creme da questão selecionada */
+  /* Amarelo/creme = interior selecionado */
   if (
-    r >= 220
-    && g >= 195
-    && b >= 125
-    && b <= 240
-    && r - b >= 12
+    r >= 215
+    && g >= 185
+    && b >= 115
+    && b <= 242
+    && r - b >= 10
   ) {
     return 4;
+  }
+
+  /*
+    Cinza neutro usado nas bordas de bolinhas brancas.
+    Branco puro da página NÃO entra.
+  */
+  if (
+    chroma <= 24
+    && r >= 95
+    && r <= 246
+  ) {
+    return 5;
   }
 
   return 0;
 }
 
 
-function detectAnswerShapesByGeometry(
+function answerShapeInteriorIsWhite(
+  canvas,
+  component
+) {
+  const context =
+    canvas.getContext(
+      "2d",
+      {
+        willReadFrequently:
+          true
+      }
+    );
+
+  const insetX =
+    Math.max(
+      2,
+      Math.round(
+        component.width * 0.20
+      )
+    );
+
+  const insetY =
+    Math.max(
+      2,
+      Math.round(
+        component.height * 0.20
+      )
+    );
+
+  const left =
+    Math.max(
+      0,
+      component.left + insetX
+    );
+
+  const top =
+    Math.max(
+      0,
+      component.top + insetY
+    );
+
+  const right =
+    Math.min(
+      canvas.width - 1,
+      component.right - insetX
+    );
+
+  const bottom =
+    Math.min(
+      canvas.height - 1,
+      component.bottom - insetY
+    );
+
+  if (
+    right <= left
+    || bottom <= top
+  ) {
+    return false;
+  }
+
+  const image =
+    context.getImageData(
+      left,
+      top,
+      right - left + 1,
+      bottom - top + 1
+    );
+
+  let light =
+    0;
+
+  let sampled =
+    0;
+
+  for (
+    let index = 0;
+    index < image.data.length;
+    index += 16
+  ) {
+    const r =
+      image.data[index];
+
+    const g =
+      image.data[index + 1];
+
+    const b =
+      image.data[index + 2];
+
+    const max =
+      Math.max(
+        r,
+        g,
+        b
+      );
+
+    const min =
+      Math.min(
+        r,
+        g,
+        b
+      );
+
+    if (
+      r >= 220
+      && g >= 220
+      && b >= 220
+      && max - min <= 28
+    ) {
+      light +=
+        1;
+    }
+
+    sampled +=
+      1;
+  }
+
+  return (
+    sampled > 0
+    && light / sampled >= 0.42
+  );
+}
+
+
+function detectAnswerShapeComponents(
   canvas
 ) {
   const context =
@@ -7059,19 +7251,20 @@ function detectAnswerShapesByGeometry(
     Math.max(
       10,
       Math.floor(
-        minDimension * 0.014
+        minDimension * 0.012
       )
     );
 
   const maxSide =
     Math.max(
-      80,
+      86,
       Math.floor(
-        minDimension * 0.30
+        minDimension * 0.31
       )
     );
 
-  const components = [];
+  const components =
+    [];
 
   for (
     let start = 0;
@@ -7092,11 +7285,20 @@ function detectAnswerShapesByGeometry(
     mask[start] =
       0;
 
-    let count = 0;
-    let minX = width;
-    let maxX = 0;
-    let minY = height;
-    let maxY = 0;
+    let count =
+      0;
+
+    let minX =
+      width;
+
+    let maxX =
+      0;
+
+    let minY =
+      height;
+
+    let maxY =
+      0;
 
     while (
       stack.length
@@ -7113,17 +7315,14 @@ function detectAnswerShapesByGeometry(
         current
         - y * width;
 
-      count += 1;
+      count +=
+        1;
 
       if (x < minX) minX = x;
       if (x > maxX) maxX = x;
       if (y < minY) minY = y;
       if (y > maxY) maxY = y;
 
-      /*
-        Usa 8 vizinhos para tolerar antialiasing
-        e funcionar com círculos e quadrados.
-      */
       for (
         let dy = -1;
         dy <= 1;
@@ -7196,23 +7395,38 @@ function detectAnswerShapesByGeometry(
           * componentHeight
         );
 
-    /*
-      Remove ícones, barras, textos coloridos e
-      áreas grandes que não têm formato de botão.
-    */
     if (
       componentWidth < minSide
       || componentHeight < minSide
       || componentWidth > maxSide
       || componentHeight > maxSide
-      || ratio < 0.55
-      || ratio > 1.75
-      || fill < 0.16
+      || ratio < 0.52
+      || ratio > 1.90
     ) {
       continue;
     }
 
-    components.push({
+    /*
+      Formas coloridas são preenchidas.
+      A anulada branca aparece principalmente como borda,
+      então aceita preenchimento bem menor.
+    */
+    if (
+      code === 5
+    ) {
+      if (
+        fill < 0.012
+        || fill > 0.48
+      ) {
+        continue;
+      }
+    } else if (
+      fill < 0.14
+    ) {
+      continue;
+    }
+
+    const component = {
       left:
         minX,
 
@@ -7233,41 +7447,126 @@ function detectAnswerShapesByGeometry(
 
       centerX:
         (
-          minX + maxX
+          minX
+          + maxX
         ) / 2,
 
       centerY:
         (
-          minY + maxY
+          minY
+          + maxY
         ) / 2,
 
       code,
 
-      color_status:
-        code === 1
-          ? "green"
-          : code === 2
-            ? "red"
-            : "selected",
+      fill
+    };
 
-      status_hint:
-        code === 1
-          ? "correct"
-          : code === 2
-            ? "wrong"
-            : null
-    });
+    if (
+      code === 5
+      && !answerShapeInteriorIsWhite(
+        canvas,
+        component
+      )
+    ) {
+      continue;
+    }
+
+    component.color_status =
+      code === 1
+        ? "green"
+        : code === 2
+          ? "red"
+          : code === 5
+            ? "white"
+            : "selected";
+
+    component.status_hint =
+      code === 1
+        ? "correct"
+        : code === 2
+          ? "wrong"
+          : code === 5
+            ? "annulled"
+            : null;
+
+    components.push(
+      component
+    );
+  }
+
+  return components;
+}
+
+
+function detectAnswerShapesByGeometry(
+  canvas
+) {
+  const components =
+    detectAnswerShapeComponents(
+      canvas
+    );
+
+  if (
+    !components.length
+  ) {
+    return [];
   }
 
   /*
-    A questão selecionada pode gerar dois componentes
-    sobrepostos: amarelo no centro + azul na borda.
-    Mantém apenas um deles.
+    Primeiro calcula o tamanho típico usando as formas
+    preenchidas, que são muito mais confiáveis.
   */
-  const deduped = [];
+  const strong =
+    components.filter(
+      item =>
+        item.code !== 5
+    );
 
-  const orderedByPriority =
-    components
+  const typicalSide =
+    answerMedianNumber(
+      (
+        strong.length
+          ? strong
+          : components
+      )
+        .map(
+          item =>
+            (
+              item.width
+              + item.height
+            ) / 2
+        )
+    );
+
+  let filtered =
+    components.filter(
+      item => {
+        if (
+          !typicalSide
+        ) {
+          return true;
+        }
+
+        const side =
+          (
+            item.width
+            + item.height
+          ) / 2;
+
+        return (
+          side >= typicalSide * 0.58
+          && side <= typicalSide * 1.55
+        );
+      }
+    );
+
+  /*
+    Azul + amarelo da questão selecionada podem formar
+    dois componentes na mesma bolinha. Remove duplicados.
+  */
+  filtered =
+    filtered
       .slice()
       .sort(
         (a, b) => {
@@ -7276,35 +7575,43 @@ function detectAnswerShapesByGeometry(
               a.code === 3
               || a.code === 4
             )
-              ? 2
-              : 1;
+              ? 3
+              : a.code === 5
+                ? 1
+                : 2;
 
           const priorityB =
             (
               b.code === 3
               || b.code === 4
             )
-              ? 2
-              : 1;
+              ? 3
+              : b.code === 5
+                ? 1
+                : 2;
 
           return (
-            priorityB
-            - priorityA
-            || (
+            priorityB - priorityA
+            ||
+            (
               b.width
               * b.height
             )
-            - (
-                a.width
-                * a.height
-              )
+            -
+            (
+              a.width
+              * a.height
+            )
           );
         }
       );
 
+  const deduped =
+    [];
+
   for (
     const candidate
-    of orderedByPriority
+    of filtered
   ) {
     const duplicate =
       deduped.some(
@@ -7336,50 +7643,18 @@ function detectAnswerShapesByGeometry(
 
           return (
             distance
-            <= reference * 0.55
+            <= reference * 0.52
           );
         }
       );
 
-    if (!duplicate) {
+    if (
+      !duplicate
+    ) {
       deduped.push(
         candidate
       );
     }
-  }
-
-  /*
-    Remove elementos cujo tamanho é muito diferente
-    do tamanho típico da grade.
-  */
-  if (
-    deduped.length >= 3
-  ) {
-    const typical =
-      medianNumber(
-        deduped.map(
-          item =>
-            (
-              item.width
-              + item.height
-            ) / 2
-        )
-      );
-
-    return deduped.filter(
-      item => {
-        const side =
-          (
-            item.width
-            + item.height
-          ) / 2;
-
-        return (
-          side >= typical * 0.58
-          && side <= typical * 1.55
-        );
-      }
-    );
   }
 
   return deduped;
@@ -7389,22 +7664,25 @@ function detectAnswerShapesByGeometry(
 function sortAnswerShapesAsGrid(
   shapes
 ) {
-  if (!shapes.length) {
+  if (
+    !shapes.length
+  ) {
     return [];
   }
 
   const rowTolerance =
     Math.max(
-      9,
-      medianNumber(
+      8,
+      answerMedianNumber(
         shapes.map(
           item =>
             item.height
         )
-      ) * 0.68
+      ) * 0.62
     );
 
-  const rows = [];
+  const rows =
+    [];
 
   for (
     const shape
@@ -7426,12 +7704,15 @@ function sortAnswerShapesAsGrid(
           <= rowTolerance
       );
 
-    if (!row) {
+    if (
+      !row
+    ) {
       row = {
         centerY:
           shape.centerY,
 
-        shapes: []
+        shapes:
+          []
       };
 
       rows.push(
@@ -7446,10 +7727,10 @@ function sortAnswerShapesAsGrid(
     row.centerY =
       row.shapes.reduce(
         (
-          total,
+          sum,
           item
         ) =>
-          total
+          sum
           + item.centerY,
         0
       )
@@ -7464,19 +7745,680 @@ function sortAnswerShapesAsGrid(
 
   return rows.flatMap(
     row =>
-      row.shapes.sort(
-        (a, b) =>
-          a.centerX
-          - b.centerX
-      )
+      row.shapes
+        .sort(
+          (a, b) =>
+            a.centerX
+            - b.centerX
+        )
   );
+}
+
+
+function createAnswerDigitCrop(
+  source,
+  shape
+) {
+  const sourceContext =
+    source.getContext(
+      "2d",
+      {
+        willReadFrequently:
+          true
+      }
+    );
+
+  const cropLeft =
+    Math.max(
+      0,
+      Math.floor(
+        shape.left
+      )
+    );
+
+  const cropTop =
+    Math.max(
+      0,
+      Math.floor(
+        shape.top
+      )
+    );
+
+  const cropRight =
+    Math.min(
+      source.width,
+      Math.ceil(
+        shape.right + 1
+      )
+    );
+
+  const cropBottom =
+    Math.min(
+      source.height,
+      Math.ceil(
+        shape.bottom + 1
+      )
+    );
+
+  const cropWidth =
+    Math.max(
+      1,
+      cropRight - cropLeft
+    );
+
+  const cropHeight =
+    Math.max(
+      1,
+      cropBottom - cropTop
+    );
+
+  const image =
+    sourceContext.getImageData(
+      cropLeft,
+      cropTop,
+      cropWidth,
+      cropHeight
+    );
+
+  const outputSize =
+    Math.max(
+      140,
+      Math.min(
+        260,
+        Math.round(
+          Math.max(
+            cropWidth,
+            cropHeight
+          ) * 4
+        )
+      )
+    );
+
+  const small =
+    document.createElement(
+      "canvas"
+    );
+
+  small.width =
+    cropWidth;
+
+  small.height =
+    cropHeight;
+
+  const smallContext =
+    small.getContext(
+      "2d",
+      {
+        alpha:
+          false
+      }
+    );
+
+  const output =
+    smallContext.createImageData(
+      cropWidth,
+      cropHeight
+    );
+
+  const centerX =
+    cropWidth / 2;
+
+  const centerY =
+    cropHeight / 2;
+
+  const radiusX =
+    Math.max(
+      1,
+      cropWidth * 0.42
+    );
+
+  const radiusY =
+    Math.max(
+      1,
+      cropHeight * 0.42
+    );
+
+  for (
+    let y = 0;
+    y < cropHeight;
+    y += 1
+  ) {
+    for (
+      let x = 0;
+      x < cropWidth;
+      x += 1
+    ) {
+      const index =
+        (
+          y * cropWidth
+          + x
+        ) * 4;
+
+      const r =
+        image.data[index];
+
+      const g =
+        image.data[index + 1];
+
+      const b =
+        image.data[index + 2];
+
+      const max =
+        Math.max(
+          r,
+          g,
+          b
+        );
+
+      const min =
+        Math.min(
+          r,
+          g,
+          b
+        );
+
+      const chroma =
+        max - min;
+
+      const luminance =
+        (
+          r * 0.299
+          + g * 0.587
+          + b * 0.114
+        );
+
+      const normalized =
+        (
+          (
+            x - centerX
+          )
+          / radiusX
+        ) ** 2
+        +
+        (
+          (
+            y - centerY
+          )
+          / radiusY
+        ) ** 2;
+
+      let digit =
+        false;
+
+      /*
+        Só olha para a região central da forma.
+        Assim o fundo branco externo não vira "número".
+      */
+      if (
+        normalized <= 1.15
+      ) {
+        if (
+          shape.color_status === "green"
+          || shape.color_status === "red"
+        ) {
+          /*
+            Números brancos sobre fundo saturado.
+            Pixels quase neutros e claros = algarismo.
+          */
+          digit =
+            luminance >= 145
+            && chroma <= 105;
+        }
+
+        else {
+          /*
+            Número escuro em bolinha branca/amarela.
+          */
+          digit =
+            luminance <= 170
+            && chroma <= 105;
+        }
+      }
+
+      const value =
+        digit
+          ? 0
+          : 255;
+
+      output.data[index] =
+        value;
+
+      output.data[index + 1] =
+        value;
+
+      output.data[index + 2] =
+        value;
+
+      output.data[index + 3] =
+        255;
+    }
+  }
+
+  smallContext.putImageData(
+    output,
+    0,
+    0
+  );
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+  canvas.width =
+    outputSize;
+
+  canvas.height =
+    outputSize;
+
+  const context =
+    canvas.getContext(
+      "2d",
+      {
+        alpha:
+          false
+      }
+    );
+
+  context.fillStyle =
+    "#ffffff";
+
+  context.fillRect(
+    0,
+    0,
+    outputSize,
+    outputSize
+  );
+
+  const margin =
+    Math.round(
+      outputSize * 0.14
+    );
+
+  context.imageSmoothingEnabled =
+    false;
+
+  context.drawImage(
+    small,
+    margin,
+    margin,
+    outputSize - margin * 2,
+    outputSize - margin * 2
+  );
+
+  return canvas;
+}
+
+
+function parseAnswerDigitText(
+  value,
+  expectedNumbers
+) {
+  const cleaned =
+    String(
+      value
+      || ""
+    )
+      .replace(
+        /[^0-9]/g,
+        ""
+      )
+      .slice(
+        0,
+        3
+      );
+
+  if (
+    !cleaned
+  ) {
+    return null;
+  }
+
+  const number =
+    Number(
+      cleaned
+    );
+
+  if (
+    !Number.isInteger(
+      number
+    )
+    || !expectedNumbers.has(
+      number
+    )
+  ) {
+    return null;
+  }
+
+  return number;
+}
+
+
+async function createAnswerDigitWorker() {
+  if (
+    !window.Tesseract
+  ) {
+    return null;
+  }
+
+  try {
+    const worker =
+      await window.Tesseract
+        .createWorker(
+          "eng"
+        );
+
+    await worker
+      .setParameters({
+        tessedit_char_whitelist:
+          "0123456789",
+
+        /*
+          SINGLE_WORD: permite 1, 10, 20, 100 etc.
+        */
+        tessedit_pageseg_mode:
+          "8"
+      });
+
+    return worker;
+
+  } catch (
+    error
+  ) {
+    console.warn(
+      "Não foi possível iniciar OCR local de números:",
+      error
+    );
+
+    return null;
+  }
+}
+
+
+async function readNumberInsideAnswerShape(
+  worker,
+  canvas,
+  shape,
+  expectedNumbers
+) {
+  if (
+    !worker
+  ) {
+    return null;
+  }
+
+  try {
+    const crop =
+      createAnswerDigitCrop(
+        canvas,
+        shape
+      );
+
+    const result =
+      await worker.recognize(
+        crop
+      );
+
+    const number =
+      parseAnswerDigitText(
+        result?.data?.text,
+        expectedNumbers
+      );
+
+    if (
+      !number
+    ) {
+      return null;
+    }
+
+    return {
+      question_number:
+        number,
+
+      confidence:
+        Number(
+          result?.data?.confidence
+          || 0
+        )
+    };
+
+  } catch (
+    error
+  ) {
+    console.warn(
+      "Falha ao ler número dentro da forma:",
+      error
+    );
+
+    return null;
+  }
+}
+
+
+function answerSequenceOffsetFromAnchors(
+  orderedShapes,
+  expectedItems
+) {
+  const expectedIndex =
+    new Map(
+      expectedItems.map(
+        (
+          item,
+          index
+        ) => [
+          Number(
+            item.question_number
+          ),
+          index
+        ]
+      )
+    );
+
+  const scores =
+    new Map();
+
+  orderedShapes.forEach(
+    (
+      shape,
+      shapeIndex
+    ) => {
+      const number =
+        Number(
+          shape.ocr_number
+        );
+
+      if (
+        !expectedIndex.has(
+          number
+        )
+      ) {
+        return;
+      }
+
+      const offset =
+        expectedIndex.get(
+          number
+        )
+        - shapeIndex;
+
+      const weight =
+        Math.max(
+          1,
+          Number(
+            shape.ocr_confidence
+            || 0
+          ) / 20
+        );
+
+      scores.set(
+        offset,
+        (
+          scores.get(
+            offset
+          )
+          || 0
+        )
+        + weight
+      );
+    }
+  );
+
+  if (
+    !scores.size
+  ) {
+    return null;
+  }
+
+  return Array.from(
+    scores.entries()
+  )
+    .sort(
+      (
+        a,
+        b
+      ) =>
+        b[1] - a[1]
+    )[0][0];
+}
+
+
+function buildAnswerDetectionsFromShapes(
+  orderedShapes,
+  expectedItems,
+  sequenceStartIndex
+) {
+  let offset =
+    answerSequenceOffsetFromAnchors(
+      orderedShapes,
+      expectedItems
+    );
+
+  let inferred =
+    false;
+
+  /*
+    Se nenhum número foi legível:
+    - usa o cursor dos prints anteriores;
+    - no primeiro print, começa na primeira questão.
+  */
+  if (
+    offset === null
+  ) {
+    offset =
+      Math.max(
+        0,
+        Number(
+          sequenceStartIndex
+          || 0
+        )
+      );
+
+    inferred =
+      true;
+  }
+
+  const detections =
+    [];
+
+  orderedShapes.forEach(
+    (
+      shape,
+      shapeIndex
+    ) => {
+      const itemIndex =
+        offset
+        + shapeIndex;
+
+      const item =
+        expectedItems[
+          itemIndex
+        ];
+
+      /*
+        Se a sequência estourou o simulado, ainda preserva
+        eventual OCR local válido daquela forma.
+      */
+      const ocrItem =
+        shape.ocr_number
+          ? expectedItems.find(
+              candidate =>
+                Number(
+                  candidate.question_number
+                )
+                === Number(
+                    shape.ocr_number
+                  )
+            )
+          : null;
+
+      const resolved =
+        item
+        || ocrItem;
+
+      if (
+        !resolved
+      ) {
+        return;
+      }
+
+      detections.push({
+        question_number:
+          Number(
+            resolved.question_number
+          ),
+
+        user_answer:
+          null,
+
+        status_hint:
+          shape.status_hint,
+
+        color_status:
+          shape.color_status,
+
+        confidence:
+          shape.status_hint
+            ? 1
+            : 0.75,
+
+        ocr_confidence:
+          Number(
+            shape.ocr_confidence
+            || 0
+          ),
+
+        inferred_from_order:
+          inferred
+          || !shape.ocr_number
+      });
+    }
+  );
+
+  return {
+    detections,
+
+    offset,
+
+    inferred,
+
+    nextSequenceIndex:
+      Math.min(
+        expectedItems.length,
+        Math.max(
+          0,
+          offset
+        )
+        + orderedShapes.length
+      )
+  };
 }
 
 
 async function recognizeAnswerGridByNumber(
   file,
   fileIndex,
-  fileCount
+  fileCount,
+  sequenceStartIndex = 0
 ) {
   if (
     !window.Tesseract
@@ -7487,7 +8429,7 @@ async function recognizeAnswerGridByNumber(
   }
 
   setAnswerImportStatus(
-    `Lendo números — print ${fileIndex + 1} de ${fileCount}...`
+    `Detectando bolinhas/quadradinhos — print ${fileIndex + 1} de ${fileCount}...`
   );
 
   const canvas =
@@ -7495,43 +8437,35 @@ async function recognizeAnswerGridByNumber(
       file
     );
 
+  const expectedItems =
+    [...qsState.items]
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          Number(
+            a.order_index
+            || a.question_number
+            || 0
+          )
+          -
+          Number(
+            b.order_index
+            || b.question_number
+            || 0
+          )
+      );
+
   const expectedNumbers =
     new Set(
-      qsState.items.map(
+      expectedItems.map(
         item =>
           Number(
             item.question_number
           )
       )
     );
-
-
-  /*
-    FALLBACK POR ORDEM VISUAL: se a quantidade de formas
-    detectadas for exatamente a quantidade de questões,
-    não precisamos ler os números pelo OCR.
-
-    Ex.: 20 bolinhas + 20 questões:
-    1ª bolinha = questão 1
-    2ª bolinha = questão 2
-    ...
-    20ª bolinha = questão 20.
-  */
-  const expectedItems =
-    [...qsState.items]
-      .sort(
-        (a, b) =>
-          Number(
-            a.order_index
-            || a.question_number
-            || 0
-          )
-          - Number(
-              b.order_index
-              || b.question_number
-              || 0
-            )
-      );
 
   const orderedShapes =
     sortAnswerShapesAsGrid(
@@ -7540,65 +8474,115 @@ async function recognizeAnswerGridByNumber(
       )
     );
 
+  /*
+    Se encontrou formas, elas passam a ser a fonte principal.
+    OCR global NÃO é necessário para montar a sequência.
+  */
   if (
-    expectedItems.length > 0
-    && orderedShapes.length
-      === expectedItems.length
+    orderedShapes.length
   ) {
     setAnswerImportStatus(
-      `Grade completa reconhecida pela ordem — print ${fileIndex + 1} de ${fileCount}...`
+      `${orderedShapes.length} forma(s) encontrada(s). Tentando ler os números dentro delas...`
+    );
+
+    const worker =
+      await createAnswerDigitWorker();
+
+    if (
+      worker
+    ) {
+      try {
+        for (
+          let index = 0;
+          index < orderedShapes.length;
+          index += 1
+        ) {
+          const shape =
+            orderedShapes[index];
+
+          setAnswerImportStatus(
+            `Lendo número ${index + 1}/${orderedShapes.length} — print ${fileIndex + 1} de ${fileCount}...`
+          );
+
+          const local =
+            await readNumberInsideAnswerShape(
+              worker,
+              canvas,
+              shape,
+              expectedNumbers
+            );
+
+          if (
+            local
+          ) {
+            shape.ocr_number =
+              local.question_number;
+
+            shape.ocr_confidence =
+              local.confidence;
+          }
+        }
+      } finally {
+        try {
+          await worker.terminate();
+        } catch {
+          /* sem ação */
+        }
+      }
+    }
+
+    const mapped =
+      buildAnswerDetectionsFromShapes(
+        orderedShapes,
+        expectedItems,
+        sequenceStartIndex
+      );
+
+    const locallyRead =
+      orderedShapes.filter(
+        shape =>
+          Boolean(
+            shape.ocr_number
+          )
+      ).length;
+
+    setAnswerImportStatus(
+      locallyRead
+        ? `${orderedShapes.length} forma(s) detectada(s); ${locallyRead} número(s) lido(s). Completando a sequência pela posição...`
+        : `${orderedShapes.length} forma(s) detectada(s). Números ilegíveis: sequência deduzida pela ordem visual...`
     );
 
     return {
       detections:
-        orderedShapes.map(
-          (
-            shape,
-            index
-          ) => ({
-            question_number:
-              Number(
-                expectedItems[index]
-                  .question_number
-              ),
-
-            user_answer:
-              null,
-
-            status_hint:
-              shape.status_hint,
-
-            color_status:
-              shape.color_status,
-
-            confidence:
-              1,
-
-            ocr_confidence:
-              0,
-
-            inferred_from_order:
-              true
-          })
-        ),
+        mapped.detections,
 
       numberCount:
-        expectedItems.length,
+        locallyRead,
 
       shapeCount:
         orderedShapes.length,
 
       inferredFromOrder:
-        true
+        mapped.inferred
+        || locallyRead
+          < orderedShapes.length,
+
+      nextSequenceIndex:
+        mapped.nextSequenceIndex
     };
   }
 
+
   /*
-    Primeira leitura no print original.
+    ÚLTIMO fallback: se nem as formas foram detectadas,
+    tenta OCR global apenas dos números e usa a cor ao redor.
   */
+  setAnswerImportStatus(
+    `Não encontrei formas. Tentando OCR global dos números — print ${fileIndex + 1} de ${fileCount}...`
+  );
+
   const originalResult =
-    await window
-      .Tesseract
+    await window.Tesseract
       .recognize(
         canvas,
         "eng"
@@ -7610,39 +8594,22 @@ async function recognizeAnswerGridByNumber(
       expectedNumbers
     );
 
-  /*
-    Números brancos em círculos coloridos podem
-    ter contraste ruim no OCR. Se a primeira
-    leitura não encontrar a maior parte das
-    questões, fazemos uma segunda leitura invertida.
-  */
-  const expectedCount =
-    expectedNumbers.size;
-
-  const secondPassNeeded =
+  if (
     detectedNumbers.length
     < Math.max(
-        3,
+        2,
         Math.ceil(
-          expectedCount * 0.80
+          expectedNumbers.size * 0.60
         )
-      );
-
-  if (
-    secondPassNeeded
+      )
   ) {
-    setAnswerImportStatus(
-      `Reforçando leitura dos números — print ${fileIndex + 1} de ${fileCount}...`
-    );
-
     const inverted =
       createInvertedNumberOcrCanvas(
         canvas
       );
 
     const invertedResult =
-      await window
-        .Tesseract
+      await window.Tesseract
         .recognize(
           inverted,
           "eng"
@@ -7657,10 +8624,6 @@ async function recognizeAnswerGridByNumber(
         )
       );
   }
-
-  setAnswerImportStatus(
-    `Identificando cores — print ${fileIndex + 1} de ${fileCount}...`
-  );
 
   const detections =
     detectedNumbers.map(
@@ -7691,7 +8654,10 @@ async function recognizeAnswerGridByNumber(
             Number(
               numberData.confidence
               || 0
-            )
+            ),
+
+          inferred_from_order:
+            false
         };
       }
     );
@@ -7700,7 +8666,16 @@ async function recognizeAnswerGridByNumber(
     detections,
 
     numberCount:
-      detectedNumbers.length
+      detectedNumbers.length,
+
+    shapeCount:
+      0,
+
+    inferredFromOrder:
+      false,
+
+    nextSequenceIndex:
+      sequenceStartIndex
   };
 }
 
@@ -8197,6 +9172,14 @@ async function readAnswerScreenshots() {
       0;
 
     /*
+      Cursor usado pelo fallback de ordem visual.
+      Se o OCR não lê nenhum número, o primeiro print começa
+      da primeira questão e os próximos continuam a sequência.
+    */
+    let sequenceCursor =
+      0;
+
+    /*
       Não lê alternativas A/B/C/D/E.
       Cada print é processado em duas etapas:
       número primeiro, cor depois.
@@ -8210,8 +9193,25 @@ async function readAnswerScreenshots() {
         await recognizeAnswerGridByNumber(
           files[index],
           index,
-          files.length
+          files.length,
+          sequenceCursor
         );
+
+      if (
+        Number.isFinite(
+          Number(
+            result.nextSequenceIndex
+          )
+        )
+      ) {
+        sequenceCursor =
+          Math.max(
+            sequenceCursor,
+            Number(
+              result.nextSequenceIndex
+            )
+          );
+      }
 
       numbersFound +=
         result.numberCount;
