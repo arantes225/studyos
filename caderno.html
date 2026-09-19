@@ -7,7 +7,7 @@
 
   <link rel="icon" type="image/png" href="favicon.png?v=resibulando2">
   <link rel="stylesheet" href="style.css?v=12.1">
-  <link rel="stylesheet" href="caderno.css?v=18.0">
+  <link rel="stylesheet" href="caderno.css?v=19.0">
 </head>
 
 <body data-page="caderno">
@@ -243,13 +243,40 @@
 
                 <span class="notebook-toolbar-divider"></span>
 
-                <button id="notebook-list" class="notebook-tool-button notebook-tool-text" type="button" title="Lista" disabled>
-                  • Lista
-                </button>
+                <div class="notebook-tool-menu-wrap">
+                  <button
+                    id="notebook-list-toggle"
+                    class="notebook-tool-button notebook-tool-text"
+                    type="button"
+                    title="Listas"
+                    aria-expanded="false"
+                    disabled
+                  >
+                    ☷ Lista
+                  </button>
 
-                <button id="notebook-numbered-list" class="notebook-tool-button notebook-tool-text" type="button" title="Lista numerada" disabled>
-                  1. Lista
-                </button>
+                  <div
+                    id="notebook-list-menu"
+                    class="notebook-tool-menu"
+                    hidden
+                  >
+                    <button
+                      type="button"
+                      data-list-command="insertUnorderedList"
+                    >
+                      <span>•</span>
+                      Lista com marcadores
+                    </button>
+
+                    <button
+                      type="button"
+                      data-list-command="insertOrderedList"
+                    >
+                      <span>1.</span>
+                      Lista numerada
+                    </button>
+                  </div>
+                </div>
 
                 <span class="notebook-toolbar-divider"></span>
 
@@ -283,25 +310,40 @@
                   — Linha
                 </button>
 
-                <button
-                  id="notebook-table-manual"
-                  class="notebook-tool-button notebook-tool-text"
-                  type="button"
-                  title="Adicionar tabela manual"
-                  disabled
-                >
-                  + Tabela
-                </button>
+                <div class="notebook-tool-menu-wrap">
+                  <button
+                    id="notebook-table-toggle"
+                    class="notebook-tool-button notebook-tool-text"
+                    type="button"
+                    title="Tabelas"
+                    aria-expanded="false"
+                    disabled
+                  >
+                    ▦ Tabela
+                  </button>
 
-                <button
-                  id="notebook-table-reader"
-                  class="notebook-tool-button notebook-tool-text"
-                  type="button"
-                  title="Ler tabela de uma imagem"
-                  disabled
-                >
-                  ▦ Ler tabela
-                </button>
+                  <div
+                    id="notebook-table-menu"
+                    class="notebook-tool-menu"
+                    hidden
+                  >
+                    <button
+                      type="button"
+                      data-table-action="manual"
+                    >
+                      <span>＋</span>
+                      Adicionar tabela
+                    </button>
+
+                    <button
+                      type="button"
+                      data-table-action="reader"
+                    >
+                      <span>▦</span>
+                      Ler tabela da imagem
+                    </button>
+                  </div>
+                </div>
 
                 <span class="notebook-toolbar-divider"></span>
 
@@ -326,32 +368,51 @@
 
                 <span class="notebook-toolbar-divider"></span>
 
-                <button
-                  class="notebook-study-tool important"
-                  type="button"
-                  data-study-block="important"
-                  disabled
-                >
-                  ★ Importante
-                </button>
+                <div class="notebook-tool-menu-wrap">
+                  <button
+                    id="notebook-callout-toggle"
+                    class="notebook-tool-button notebook-tool-text"
+                    type="button"
+                    title="Callouts"
+                    aria-expanded="false"
+                    disabled
+                  >
+                    ◈ Callout
+                  </button>
 
-                <button
-                  class="notebook-study-tool warning"
-                  type="button"
-                  data-study-block="warning"
-                  disabled
-                >
-                  ⚠ Pegadinha
-                </button>
+                  <div
+                    id="notebook-callout-menu"
+                    class="notebook-tool-menu"
+                    hidden
+                  >
+                    <button
+                      class="important"
+                      type="button"
+                      data-study-block="important"
+                    >
+                      <span>★</span>
+                      Importante
+                    </button>
 
-                <button
-                  class="notebook-study-tool memory"
-                  type="button"
-                  data-study-block="memory"
-                  disabled
-                >
-                  🧠 Decore
-                </button>
+                    <button
+                      class="warning"
+                      type="button"
+                      data-study-block="warning"
+                    >
+                      <span>⚠</span>
+                      Pegadinha de prova
+                    </button>
+
+                    <button
+                      class="memory"
+                      type="button"
+                      data-study-block="memory"
+                    >
+                      <span>🧠</span>
+                      Decore
+                    </button>
+                  </div>
+                </div>
 
                 <span class="notebook-toolbar-spacer"></span>
 
@@ -808,6 +869,6 @@
 
   <script src="supabase.js"></script>
   <script src="app.js?v=12.1"></script>
-  <script src="caderno.js?v=18.0"></script>
+  <script src="caderno.js?v=19.0"></script>
 </body>
 </html>
