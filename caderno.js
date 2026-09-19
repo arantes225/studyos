@@ -1367,6 +1367,29 @@ function setEditorEnabled(
     );
   }
 
+
+  const editButton =
+    document.getElementById(
+      "notebook-document-edit"
+    );
+
+  if (
+    editButton
+  ) {
+    editButton.textContent =
+      enabled
+        ? "Concluir edição"
+        : "Editar";
+  }
+
+
+  if (
+    !enabled
+  ) {
+    closeNotebookToolMenus();
+    closeEmojiMenu();
+  }
+
 }
 
 
