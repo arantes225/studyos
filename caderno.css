@@ -1,503 +1,417 @@
-/* =========================================================
-   RESIBULANDO — CADERNO DIGITAL 13.3
-   Editor contínuo inspirado em documento
-   ========================================================= */
-
-.notebook-main-shell {
-  min-width: 0;
-}
-
-.notebook-page {
-  max-width: none;
-  padding-bottom: 28px;
-}
-
-.notebook-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 25;
-  background: color-mix(in srgb, var(--background) 92%, transparent);
-  backdrop-filter: blur(12px);
-}
-
-.notebook-save-wrap {
-  margin-left: auto;
-}
-
-.notebook-save-status {
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 750;
-}
-
-.notebook-save-status.saving {
-  color: var(--accent);
-}
-
-.notebook-save-status.saved {
-  color: var(--success);
-}
-
-.notebook-save-status.error {
-  color: var(--danger);
-}
-
-.notebook-workspace {
-  min-height: calc(100vh - 112px);
-  display: grid;
-  grid-template-columns: 250px minmax(0, 1fr);
-  gap: 14px;
-  align-items: start;
-}
-
-.notebook-topic-panel {
-  position: sticky;
-  top: 84px;
-  max-height: calc(100vh - 102px);
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
-  gap: 11px;
-  padding: 14px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-}
-
-.notebook-topic-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.notebook-topic-head h2 {
-  margin: 7px 0 0;
-  font-size: 17px;
-}
-
-.notebook-topic-count {
-  min-width: 26px;
-  height: 26px;
-  display: grid;
-  place-items: center;
-  padding: 0 7px;
-  border-radius: 999px;
-  background: var(--surface-2);
-  color: var(--muted);
-  font-size: 9px;
-  font-weight: 850;
-}
-
-.notebook-search input {
-  width: 100%;
-  min-height: 38px;
-  font-size: 10px;
-}
-
-.notebook-topic-list {
-  min-height: 0;
-  display: grid;
-  align-content: start;
-  gap: 5px;
-  overflow: auto;
-  padding-right: 2px;
-}
-
-.notebook-topic-item {
-  width: 100%;
-  display: grid;
-  gap: 4px;
-  padding: 10px;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--text);
-  text-align: left;
-  cursor: pointer;
-}
-
-.notebook-topic-item:hover {
-  background: var(--surface-2);
-}
-
-.notebook-topic-item.active {
-  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
-  background: var(--accent-soft);
-}
-
-.notebook-topic-item strong {
-  font-size: 10.5px;
-  line-height: 1.35;
-}
-
-.notebook-topic-item small {
-  color: var(--muted);
-  font-size: 8.5px;
-  line-height: 1.35;
-}
-
-.notebook-topic-flags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 2px;
-}
-
-.notebook-topic-flag {
-  display: inline-flex;
-  align-items: center;
-  min-height: 19px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--surface-2);
-  color: var(--muted);
-  font-size: 7.5px;
-  font-weight: 850;
-}
-
-.notebook-topic-flag.has-note {
-  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
-  color: var(--accent);
-}
-
-.notebook-topic-flag.completed {
-  background: color-mix(in srgb, var(--success) 10%, var(--surface));
-  color: var(--success);
-}
-
-.notebook-empty-small {
-  padding: 18px 8px;
-  color: var(--muted);
-  font-size: 9px;
-  text-align: center;
-}
-
-.notebook-editor-column {
-  min-width: 0;
-}
-
-.notebook-toolbar {
-  position: sticky;
-  top: 80px;
-  z-index: 22;
-  min-height: 50px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 10px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--surface) 96%, transparent);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(12px);
-}
-
-.notebook-style-select {
-  min-width: 132px;
-  min-height: 34px;
-  font-size: 10px;
-  font-weight: 750;
-}
-
-.notebook-toolbar-divider {
-  width: 1px;
-  height: 23px;
-  background: var(--border);
-}
-
-.notebook-toolbar-spacer {
-  flex: 1;
-}
-
-.notebook-tool-button {
-  min-width: 34px;
-  height: 34px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 0 9px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text);
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.notebook-tool-button:hover:not(:disabled),
-.notebook-tool-button.active {
-  border-color: var(--border);
-  background: var(--surface-2);
-}
-
-.notebook-tool-button:disabled {
-  opacity: .38;
-  cursor: not-allowed;
-}
-
-.notebook-postit-tool span {
-  font-size: 9px;
-  font-weight: 800;
-}
-
-.notebook-emoji-wrap {
-  position: relative;
-}
-
-.notebook-emoji-menu {
-  position: absolute;
-  top: calc(100% + 7px);
-  left: 0;
-  z-index: 70;
-  width: 244px;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 4px;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-  box-shadow: 0 18px 55px rgba(15, 23, 42, .18);
-}
-
-.notebook-emoji-menu[hidden] {
-  display: none !important;
-}
-
-.notebook-emoji-button {
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.notebook-emoji-button:hover {
-  background: var(--surface-2);
-}
-
-.notebook-empty-state {
-  min-height: 470px;
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 9px;
-  margin-top: 12px;
-  border: 1px dashed var(--border);
-  border-radius: 14px;
-  background: var(--surface);
-  color: var(--muted);
-  text-align: center;
-}
-
-.notebook-empty-state strong {
-  color: var(--text);
-}
-
-.notebook-empty-state p {
-  max-width: 430px;
-  margin: 0;
-  font-size: 10px;
-  line-height: 1.55;
-}
-
-.notebook-empty-icon {
-  font-size: 28px;
-}
-
-.notebook-document-wrap {
-  margin-top: 12px;
-  padding: 22px 18px 48px;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--surface-2) 88%, var(--background));
-  overflow-x: auto;
-}
-
-.notebook-paper {
-  width: min(100%, 850px);
-  min-height: 1060px;
-  margin: 0 auto;
-  padding: 72px 78px 96px;
-  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
-  background: var(--surface);
-  box-shadow: 0 8px 28px rgba(15, 23, 42, .10);
-}
-
-.notebook-document-head {
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--border);
-}
-
-.notebook-document-breadcrumb {
-  margin-bottom: 10px;
-  color: var(--accent);
-  font-size: 9px;
-  font-weight: 850;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-}
-
-.notebook-document-head h1 {
-  margin: 0;
-  color: var(--text);
-  font-size: 31px;
-  line-height: 1.12;
-  letter-spacing: -.035em;
-}
-
-.notebook-document-head p {
-  margin: 9px 0 0;
-  color: var(--muted);
-  font-size: 10px;
-}
-
-.notebook-editor {
-  min-height: 820px;
-  padding-top: 26px;
-  outline: none;
-  color: var(--text);
-  font-size: 15px;
-  line-height: 1.68;
-  white-space: normal;
-  word-break: break-word;
-}
-
-.notebook-editor:empty::before {
-  content: attr(data-placeholder);
-  color: color-mix(in srgb, var(--muted) 70%, transparent);
-  pointer-events: none;
-}
-
-.notebook-editor p {
-  margin: 0 0 14px;
-}
-
-.notebook-editor h1 {
-  margin: 30px 0 12px;
-  font-size: 27px;
-  line-height: 1.2;
-  font-weight: 900;
-  letter-spacing: -.025em;
-}
-
-.notebook-editor h2 {
-  margin: 25px 0 10px;
-  font-size: 21px;
-  line-height: 1.25;
-  font-weight: 900;
-}
-
-.notebook-editor h3 {
-  margin: 20px 0 9px;
-  font-size: 16px;
-  line-height: 1.35;
-  font-weight: 850;
-  color: color-mix(in srgb, var(--text) 88%, var(--muted));
-}
-
-.notebook-editor ul,
-.notebook-editor ol {
-  margin: 0 0 14px 22px;
-}
-
-.notebook-editor li {
-  margin-bottom: 5px;
-}
-
-.notebook-editor blockquote {
-  margin: 16px 0;
-  padding-left: 14px;
-  border-left: 3px solid var(--border);
-  color: var(--muted);
-}
-
-.notebook-editor .notebook-postit {
-  margin: 20px 0;
-  padding: 16px 17px;
-  border: 1px solid rgba(180, 132, 0, .24);
-  border-radius: 5px;
-  background: #fff1a8;
-  color: #4e4010;
-  box-shadow: 0 5px 14px rgba(90, 72, 10, .08);
-}
-
-.notebook-editor .notebook-postit strong {
-  color: #4a3800;
-}
-
-.notebook-editor .notebook-postit p:last-child {
-  margin-bottom: 0;
-}
-
-html[data-theme="dark"] .notebook-editor .notebook-postit {
-  border-color: #77621b;
-  background: #4b421d;
-  color: #f4e8ad;
-}
-
-html[data-theme="dark"] .notebook-editor .notebook-postit strong {
-  color: #fff1ae;
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-@media (max-width: 980px) {
-  .notebook-workspace {
-    grid-template-columns: 210px minmax(0, 1fr);
-  }
-
-  .notebook-paper {
-    padding: 54px 48px 76px;
-  }
-}
-
-@media (max-width: 760px) {
-  .notebook-workspace {
-    grid-template-columns: 1fr;
-  }
-
-  .notebook-topic-panel {
-    position: static;
-    max-height: 290px;
-  }
-
-  .notebook-toolbar {
-    top: 66px;
-    overflow-x: auto;
-  }
-
-  .notebook-document-wrap {
-    padding: 10px 0 28px;
-  }
-
-  .notebook-paper {
-    width: 100%;
-    min-height: 760px;
-    padding: 38px 24px 60px;
-    border-radius: 0;
-  }
-
-  .notebook-document-head h1 {
-    font-size: 25px;
-  }
-
-  .notebook-postit-tool span {
-    display: none;
-  }
-}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Caderno · Resibulando</title>
+
+  <link
+    rel="icon"
+    type="image/png"
+    href="favicon.png?v=resibulando2"
+  >
+
+  <link
+    rel="stylesheet"
+    href="style.css?v=12.1"
+  >
+
+  <link
+    rel="stylesheet"
+    href="caderno.css?v=14.0"
+  >
+</head>
+
+<body data-page="caderno">
+
+  <div class="app-shell">
+
+    <aside
+      id="sidebar"
+      class="sidebar"
+    ></aside>
+
+    <div
+      id="sidebar-backdrop"
+      class="sidebar-backdrop"
+    ></div>
+
+    <main class="main notebook-main-shell">
+
+      <div class="page notebook-page">
+
+        <!-- TOPO -->
+        <header class="topbar notebook-topbar">
+
+          <button
+            id="menu-open"
+            class="menu-open"
+            type="button"
+            aria-label="Abrir menu"
+          >
+            ☰
+          </button>
+
+          <div class="page-heading">
+
+            <span
+              class="eyebrow"
+              data-page-eyebrow
+            ></span>
+
+            <h1 data-page-title></h1>
+
+          </div>
+
+          <div class="notebook-top-actions">
+
+            <a
+              href="cronograma.html"
+              class="button secondary notebook-back-button"
+            >
+              ← Cronograma
+            </a>
+
+            <span
+              id="notebook-save-status"
+              class="notebook-save-status"
+            >
+              Selecione uma aula
+            </span>
+
+          </div>
+
+        </header>
+
+
+        <!-- ÁREA PRINCIPAL -->
+        <section class="notebook-workspace">
+
+
+          <!-- LISTA DE AULAS -->
+          <aside class="notebook-topic-panel">
+
+            <div class="notebook-topic-head">
+
+              <div>
+
+                <span class="badge accent">
+                  Caderno
+                </span>
+
+                <h2>Aulas</h2>
+
+              </div>
+
+              <span
+                id="notebook-topic-count"
+                class="notebook-topic-count"
+              >
+                0
+              </span>
+
+            </div>
+
+
+            <label class="notebook-search">
+
+              <span class="sr-only">
+                Buscar aula
+              </span>
+
+              <input
+                id="notebook-topic-search"
+                type="search"
+                placeholder="Buscar tema, matéria ou área..."
+                autocomplete="off"
+              >
+
+            </label>
+
+
+            <div
+              id="notebook-topic-list"
+              class="notebook-topic-list"
+            >
+
+              <div class="notebook-empty-small">
+                Carregando suas aulas...
+              </div>
+
+            </div>
+
+          </aside>
+
+
+          <!-- EDITOR -->
+          <section class="notebook-editor-column">
+
+
+            <!-- BARRA DO EDITOR -->
+            <div
+              id="notebook-toolbar"
+              class="notebook-toolbar"
+              aria-label="Ferramentas do caderno"
+            >
+
+              <select
+                id="notebook-block-style"
+                class="notebook-style-select"
+                aria-label="Estilo do texto"
+                disabled
+              >
+
+                <option value="p">
+                  Texto normal
+                </option>
+
+                <option value="h1">
+                  Título 1
+                </option>
+
+                <option value="h2">
+                  Título 2
+                </option>
+
+                <option value="h3">
+                  Subtítulo
+                </option>
+
+              </select>
+
+
+              <span class="notebook-toolbar-divider"></span>
+
+
+              <button
+                id="notebook-bold"
+                class="notebook-tool-button"
+                type="button"
+                title="Negrito"
+                disabled
+              >
+                <strong>B</strong>
+              </button>
+
+
+              <button
+                id="notebook-italic"
+                class="notebook-tool-button"
+                type="button"
+                title="Itálico"
+                disabled
+              >
+                <em>I</em>
+              </button>
+
+
+              <button
+                id="notebook-underline"
+                class="notebook-tool-button"
+                type="button"
+                title="Sublinhado"
+                disabled
+              >
+                <u>U</u>
+              </button>
+
+
+              <span class="notebook-toolbar-divider"></span>
+
+
+              <button
+                id="notebook-list"
+                class="notebook-tool-button notebook-tool-text"
+                type="button"
+                title="Lista"
+                disabled
+              >
+                • Lista
+              </button>
+
+
+              <button
+                id="notebook-numbered-list"
+                class="notebook-tool-button notebook-tool-text"
+                type="button"
+                title="Lista numerada"
+                disabled
+              >
+                1. Lista
+              </button>
+
+
+              <span class="notebook-toolbar-divider"></span>
+
+
+              <!-- EMOJIS -->
+              <div class="notebook-emoji-wrap">
+
+                <button
+                  id="notebook-emoji-toggle"
+                  class="notebook-tool-button"
+                  type="button"
+                  title="Emoji"
+                  aria-expanded="false"
+                  disabled
+                >
+                  ☺
+                </button>
+
+                <div
+                  id="notebook-emoji-menu"
+                  class="notebook-emoji-menu"
+                  hidden
+                ></div>
+
+              </div>
+
+
+              <span class="notebook-toolbar-divider"></span>
+
+
+              <!-- BLOCOS DE ESTUDO -->
+
+              <button
+                class="notebook-study-tool important"
+                type="button"
+                data-study-block="important"
+                disabled
+              >
+                ★ Importante
+              </button>
+
+
+              <button
+                class="notebook-study-tool warning"
+                type="button"
+                data-study-block="warning"
+                disabled
+              >
+                ⚠ Pegadinha
+              </button>
+
+
+              <button
+                class="notebook-study-tool memory"
+                type="button"
+                data-study-block="memory"
+                disabled
+              >
+                🧠 Decore
+              </button>
+
+
+              <span class="notebook-toolbar-spacer"></span>
+
+
+              <button
+                id="notebook-save-now"
+                class="button secondary compact-button"
+                type="button"
+                disabled
+              >
+                Salvar
+              </button>
+
+            </div>
+
+
+            <!-- NENHUMA AULA ESCOLHIDA -->
+            <div
+              id="notebook-empty-state"
+              class="notebook-empty-state"
+            >
+
+              <div class="notebook-empty-icon">
+                ✎
+              </div>
+
+              <strong>
+                Escolha uma aula
+              </strong>
+
+              <p>
+                Cada aula do seu cronograma possui um caderno próprio.
+                Se o caderno for aberto diretamente pela aula,
+                o tema será selecionado automaticamente.
+              </p>
+
+            </div>
+
+
+            <!-- DOCUMENTO -->
+            <div
+              id="notebook-document-wrap"
+              class="notebook-document-wrap"
+              hidden
+            >
+
+              <article class="notebook-paper">
+
+
+                <!-- CABEÇALHO DO DOCUMENTO -->
+                <header class="notebook-document-head">
+
+                  <div
+                    id="notebook-document-breadcrumb"
+                    class="notebook-document-breadcrumb"
+                  ></div>
+
+                  <h1
+                    id="notebook-document-title"
+                  >
+                    Tema
+                  </h1>
+
+                  <p
+                    id="notebook-document-meta"
+                  ></p>
+
+                </header>
+
+
+                <!-- CAMPO DE TEXTO -->
+                <div
+                  id="notebook-editor"
+                  class="notebook-editor"
+                  contenteditable="true"
+                  role="textbox"
+                  aria-multiline="true"
+                  spellcheck="true"
+                  data-placeholder="Comece a escrever seu resumo..."
+                ></div>
+
+
+              </article>
+
+            </div>
+
+          </section>
+
+        </section>
+
+      </div>
+
+    </main>
+
+  </div>
+
+
+  <!-- SUPABASE -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
+
+  <!-- IMPORTANTE: É supabase.js, NÃO config.js -->
+  <script src="supabase.js"></script>
+
+  <!-- ESTRUTURA GERAL DO RESIBULANDO -->
+  <script src="app.js?v=12.1"></script>
+
+  <!-- CADERNO -->
+  <script src="caderno.js?v=14.0"></script>
+
+</body>
+</html>

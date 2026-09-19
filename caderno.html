@@ -1,424 +1,417 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Caderno - StudyOS</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    .caderno-page {
-      width: min(980px, 100%);
-      margin: 0 auto;
-      padding-bottom: 80px;
-    }
+  <title>Caderno · Resibulando</title>
 
-    .caderno-back {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 22px;
-      color: var(--muted, #6b7280);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 650;
-    }
+  <link
+    rel="icon"
+    type="image/png"
+    href="favicon.png?v=resibulando2"
+  >
 
-    .caderno-back:hover {
-      color: var(--accent, #4f46e5);
-    }
+  <link
+    rel="stylesheet"
+    href="style.css?v=12.1"
+  >
 
-    .caderno-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 18px;
-      margin-bottom: 22px;
-    }
-
-    .caderno-kicker {
-      margin: 0 0 6px;
-      color: var(--muted, #6b7280);
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-
-    .caderno-title {
-      margin: 0;
-      color: var(--text, #111827);
-      font-size: clamp(28px, 4vw, 42px);
-      line-height: 1.1;
-      letter-spacing: -.025em;
-    }
-
-    .caderno-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .caderno-chip {
-      display: inline-flex;
-      align-items: center;
-      min-height: 30px;
-      padding: 0 10px;
-      border: 1px solid var(--border, #e5e7eb);
-      border-radius: 999px;
-      background: var(--surface-2, #f8fafc);
-      color: var(--muted, #6b7280);
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .save-status {
-      flex: 0 0 auto;
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      min-height: 34px;
-      padding: 0 11px;
-      border: 1px solid var(--border, #e5e7eb);
-      border-radius: 10px;
-      background: var(--surface, #fff);
-      color: var(--muted, #6b7280);
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .save-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--success, #16a34a);
-    }
-
-    .editor-shell {
-      overflow: hidden;
-      border: 1px solid var(--border, #e5e7eb);
-      border-radius: 18px;
-      background: var(--surface, #fff);
-      box-shadow: var(--shadow, 0 10px 30px rgba(15, 23, 42, .05));
-    }
-
-    .editor-toolbar {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      padding: 10px;
-      border-bottom: 1px solid var(--border, #e5e7eb);
-      background: color-mix(in srgb, var(--surface, #fff) 94%, transparent);
-      backdrop-filter: blur(12px);
-    }
-
-    .editor-btn {
-      display: inline-grid;
-      place-items: center;
-      min-width: 36px;
-      height: 36px;
-      padding: 0 10px;
-      border: 1px solid transparent;
-      border-radius: 9px;
-      background: transparent;
-      color: var(--text, #111827);
-      font: inherit;
-      font-size: 13px;
-      font-weight: 750;
-      cursor: pointer;
-    }
-
-    .editor-btn:hover {
-      border-color: var(--border, #e5e7eb);
-      background: var(--surface-2, #f8fafc);
-    }
-
-    .editor-separator {
-      width: 1px;
-      height: 24px;
-      margin: 6px 3px;
-      background: var(--border, #e5e7eb);
-    }
-
-    .study-btn {
-      color: var(--accent, #4f46e5);
-    }
-
-    .editor {
-      min-height: 620px;
-      padding: 48px clamp(24px, 7vw, 74px) 80px;
-      color: var(--text, #111827);
-      font-size: 16px;
-      line-height: 1.75;
-      outline: none;
-    }
-
-    .editor:empty::before {
-      content: "Comece a escrever seu resumo...";
-      color: var(--muted, #9ca3af);
-      pointer-events: none;
-    }
-
-    .editor h1,
-    .editor h2,
-    .editor h3 {
-      line-height: 1.25;
-      margin: 1.35em 0 .45em;
-    }
-
-    .editor h1 { font-size: 30px; }
-    .editor h2 { font-size: 24px; }
-    .editor h3 { font-size: 20px; }
-
-    .editor p { margin: .55em 0; }
-
-    .editor ul,
-    .editor ol {
-      padding-left: 26px;
-    }
-
-    .study-block {
-      margin: 18px 0;
-      padding: 14px 16px;
-      border: 1px solid var(--border, #e5e7eb);
-      border-left: 4px solid var(--accent, #4f46e5);
-      border-radius: 10px;
-      background: var(--surface-2, #f8fafc);
-    }
-
-    .study-block strong {
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .study-block.warning {
-      border-left-color: #f59e0b;
-    }
-
-    .study-block.memory {
-      border-left-color: #8b5cf6;
-    }
-
-    .caderno-footer-help {
-      margin-top: 14px;
-      color: var(--muted, #6b7280);
-      font-size: 12px;
-      text-align: center;
-    }
-
-    @media (max-width: 760px) {
-      .caderno-head {
-        flex-direction: column;
-      }
-
-      .editor {
-        min-height: 520px;
-        padding: 30px 20px 60px;
-      }
-
-      .editor-toolbar {
-        overflow-x: auto;
-        flex-wrap: nowrap;
-      }
-
-      .editor-separator {
-        flex: 0 0 1px;
-      }
-    }
-  </style>
+  <link
+    rel="stylesheet"
+    href="caderno.css?v=14.0"
+  >
 </head>
 
-<body>
-  <div class="container">
-    <aside class="menu-lateral">
-      <h2>StudyOS</h2>
-      <nav>
-        <a href="dashboard.html">Dashboard</a>
-        <a href="cronograma.html">Cronograma</a>
-        <a href="ambientacao.html">Ambientação</a>
-        <a href="caderno.html" class="active">Caderno</a>
-        <a href="flashcards.html">Flashcards</a>
-        <a href="caderno-erros.html">Caderno de erros</a>
-        <a href="editais-provas.html">Editais e provas</a>
-        <a href="configuracoes.html">Configurações</a>
-        <a href="index.html" class="botao-sair">Sair</a>
-      </nav>
-    </aside>
+<body data-page="caderno">
 
-    <main class="conteudo-principal">
-      <div class="caderno-page">
-        <a class="caderno-back" href="cronograma.html">← Voltar ao cronograma</a>
+  <div class="app-shell">
 
-        <header class="caderno-head">
-          <div>
-            <p class="caderno-kicker">Caderno da aula</p>
-            <h1 class="caderno-title" id="titulo-aula">Hipertensão Arterial</h1>
+    <aside
+      id="sidebar"
+      class="sidebar"
+    ></aside>
 
-            <div class="caderno-meta">
-              <span class="caderno-chip" id="area-aula">Clínica Médica</span>
-              <span class="caderno-chip" id="subtema-aula">Cardiologia</span>
-              <span class="caderno-chip" id="data-aula">19/09/2026</span>
-            </div>
+    <div
+      id="sidebar-backdrop"
+      class="sidebar-backdrop"
+    ></div>
+
+    <main class="main notebook-main-shell">
+
+      <div class="page notebook-page">
+
+        <!-- TOPO -->
+        <header class="topbar notebook-topbar">
+
+          <button
+            id="menu-open"
+            class="menu-open"
+            type="button"
+            aria-label="Abrir menu"
+          >
+            ☰
+          </button>
+
+          <div class="page-heading">
+
+            <span
+              class="eyebrow"
+              data-page-eyebrow
+            ></span>
+
+            <h1 data-page-title></h1>
+
           </div>
 
-          <div class="save-status" id="save-status">
-            <span class="save-dot"></span>
-            <span>Salvo</span>
+          <div class="notebook-top-actions">
+
+            <a
+              href="cronograma.html"
+              class="button secondary notebook-back-button"
+            >
+              ← Cronograma
+            </a>
+
+            <span
+              id="notebook-save-status"
+              class="notebook-save-status"
+            >
+              Selecione uma aula
+            </span>
+
           </div>
+
         </header>
 
-        <section class="editor-shell">
-          <div class="editor-toolbar" aria-label="Ferramentas do caderno">
-            <button class="editor-btn" data-cmd="bold" title="Negrito"><b>B</b></button>
-            <button class="editor-btn" data-cmd="italic" title="Itálico"><i>I</i></button>
-            <button class="editor-btn" data-cmd="underline" title="Sublinhado"><u>U</u></button>
 
-            <span class="editor-separator"></span>
+        <!-- ÁREA PRINCIPAL -->
+        <section class="notebook-workspace">
 
-            <button class="editor-btn" data-block="h1">H1</button>
-            <button class="editor-btn" data-block="h2">H2</button>
-            <button class="editor-btn" data-block="p">Texto</button>
 
-            <span class="editor-separator"></span>
+          <!-- LISTA DE AULAS -->
+          <aside class="notebook-topic-panel">
 
-            <button class="editor-btn" data-cmd="insertUnorderedList" title="Lista">• Lista</button>
-            <button class="editor-btn" data-cmd="insertOrderedList" title="Lista numerada">1. Lista</button>
+            <div class="notebook-topic-head">
 
-            <span class="editor-separator"></span>
+              <div>
 
-            <button class="editor-btn study-btn" data-study="important">★ Importante</button>
-            <button class="editor-btn study-btn" data-study="warning">⚠ Pegadinha</button>
-            <button class="editor-btn study-btn" data-study="memory">🧠 Decore</button>
+                <span class="badge accent">
+                  Caderno
+                </span>
 
-            <span class="editor-separator"></span>
+                <h2>Aulas</h2>
 
-            <button class="editor-btn" id="limpar-caderno" title="Limpar caderno">Limpar</button>
-          </div>
+              </div>
 
-          <div
-            id="editor"
-            class="editor"
-            contenteditable="true"
-            spellcheck="true"
-            aria-label="Editor do caderno"
-          ></div>
+              <span
+                id="notebook-topic-count"
+                class="notebook-topic-count"
+              >
+                0
+              </span>
+
+            </div>
+
+
+            <label class="notebook-search">
+
+              <span class="sr-only">
+                Buscar aula
+              </span>
+
+              <input
+                id="notebook-topic-search"
+                type="search"
+                placeholder="Buscar tema, matéria ou área..."
+                autocomplete="off"
+              >
+
+            </label>
+
+
+            <div
+              id="notebook-topic-list"
+              class="notebook-topic-list"
+            >
+
+              <div class="notebook-empty-small">
+                Carregando suas aulas...
+              </div>
+
+            </div>
+
+          </aside>
+
+
+          <!-- EDITOR -->
+          <section class="notebook-editor-column">
+
+
+            <!-- BARRA DO EDITOR -->
+            <div
+              id="notebook-toolbar"
+              class="notebook-toolbar"
+              aria-label="Ferramentas do caderno"
+            >
+
+              <select
+                id="notebook-block-style"
+                class="notebook-style-select"
+                aria-label="Estilo do texto"
+                disabled
+              >
+
+                <option value="p">
+                  Texto normal
+                </option>
+
+                <option value="h1">
+                  Título 1
+                </option>
+
+                <option value="h2">
+                  Título 2
+                </option>
+
+                <option value="h3">
+                  Subtítulo
+                </option>
+
+              </select>
+
+
+              <span class="notebook-toolbar-divider"></span>
+
+
+              <button
+                id="notebook-bold"
+                class="notebook-tool-button"
+                type="button"
+                title="Negrito"
+                disabled
+              >
+                <strong>B</strong>
+              </button>
+
+
+              <button
+                id="notebook-italic"
+                class="notebook-tool-button"
+                type="button"
+                title="Itálico"
+                disabled
+              >
+                <em>I</em>
+              </button>
+
+
+              <button
+                id="notebook-underline"
+                class="notebook-tool-button"
+                type="button"
+                title="Sublinhado"
+                disabled
+              >
+                <u>U</u>
+              </button>
+
+
+              <span class="notebook-toolbar-divider"></span>
+
+
+              <button
+                id="notebook-list"
+                class="notebook-tool-button notebook-tool-text"
+                type="button"
+                title="Lista"
+                disabled
+              >
+                • Lista
+              </button>
+
+
+              <button
+                id="notebook-numbered-list"
+                class="notebook-tool-button notebook-tool-text"
+                type="button"
+                title="Lista numerada"
+                disabled
+              >
+                1. Lista
+              </button>
+
+
+              <span class="notebook-toolbar-divider"></span>
+
+
+              <!-- EMOJIS -->
+              <div class="notebook-emoji-wrap">
+
+                <button
+                  id="notebook-emoji-toggle"
+                  class="notebook-tool-button"
+                  type="button"
+                  title="Emoji"
+                  aria-expanded="false"
+                  disabled
+                >
+                  ☺
+                </button>
+
+                <div
+                  id="notebook-emoji-menu"
+                  class="notebook-emoji-menu"
+                  hidden
+                ></div>
+
+              </div>
+
+
+              <span class="notebook-toolbar-divider"></span>
+
+
+              <!-- BLOCOS DE ESTUDO -->
+
+              <button
+                class="notebook-study-tool important"
+                type="button"
+                data-study-block="important"
+                disabled
+              >
+                ★ Importante
+              </button>
+
+
+              <button
+                class="notebook-study-tool warning"
+                type="button"
+                data-study-block="warning"
+                disabled
+              >
+                ⚠ Pegadinha
+              </button>
+
+
+              <button
+                class="notebook-study-tool memory"
+                type="button"
+                data-study-block="memory"
+                disabled
+              >
+                🧠 Decore
+              </button>
+
+
+              <span class="notebook-toolbar-spacer"></span>
+
+
+              <button
+                id="notebook-save-now"
+                class="button secondary compact-button"
+                type="button"
+                disabled
+              >
+                Salvar
+              </button>
+
+            </div>
+
+
+            <!-- NENHUMA AULA ESCOLHIDA -->
+            <div
+              id="notebook-empty-state"
+              class="notebook-empty-state"
+            >
+
+              <div class="notebook-empty-icon">
+                ✎
+              </div>
+
+              <strong>
+                Escolha uma aula
+              </strong>
+
+              <p>
+                Cada aula do seu cronograma possui um caderno próprio.
+                Se o caderno for aberto diretamente pela aula,
+                o tema será selecionado automaticamente.
+              </p>
+
+            </div>
+
+
+            <!-- DOCUMENTO -->
+            <div
+              id="notebook-document-wrap"
+              class="notebook-document-wrap"
+              hidden
+            >
+
+              <article class="notebook-paper">
+
+
+                <!-- CABEÇALHO DO DOCUMENTO -->
+                <header class="notebook-document-head">
+
+                  <div
+                    id="notebook-document-breadcrumb"
+                    class="notebook-document-breadcrumb"
+                  ></div>
+
+                  <h1
+                    id="notebook-document-title"
+                  >
+                    Tema
+                  </h1>
+
+                  <p
+                    id="notebook-document-meta"
+                  ></p>
+
+                </header>
+
+
+                <!-- CAMPO DE TEXTO -->
+                <div
+                  id="notebook-editor"
+                  class="notebook-editor"
+                  contenteditable="true"
+                  role="textbox"
+                  aria-multiline="true"
+                  spellcheck="true"
+                  data-placeholder="Comece a escrever seu resumo..."
+                ></div>
+
+
+              </article>
+
+            </div>
+
+          </section>
+
         </section>
 
-        <p class="caderno-footer-help">
-          Esta versão de teste salva automaticamente no navegador. Depois ligamos o mesmo conteúdo ao Supabase.
-        </p>
       </div>
+
     </main>
+
   </div>
 
-  <script>
-    (() => {
-      const params = new URLSearchParams(window.location.search);
 
-      const aulaId = params.get("aula_id") || "teste";
-      const tema = params.get("tema") || "Hipertensão Arterial";
-      const area = params.get("area") || "Clínica Médica";
-      const subtema = params.get("subtema") || "Cardiologia";
-      const data = params.get("data") || "2026-09-19";
+  <!-- SUPABASE -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
 
-      const editor = document.getElementById("editor");
-      const status = document.getElementById("save-status");
-      const storageKey = `studyos:caderno:${aulaId}`;
+  <!-- IMPORTANTE: É supabase.js, NÃO config.js -->
+  <script src="supabase.js"></script>
 
-      document.getElementById("titulo-aula").textContent = tema;
-      document.getElementById("area-aula").textContent = area;
-      document.getElementById("subtema-aula").textContent = subtema;
+  <!-- ESTRUTURA GERAL DO RESIBULANDO -->
+  <script src="app.js?v=12.1"></script>
 
-      const formatDate = (value) => {
-        const parts = value.split("-");
-        if (parts.length !== 3) return value;
-        return `${parts[2]}/${parts[1]}/${parts[0]}`;
-      };
+  <!-- CADERNO -->
+  <script src="caderno.js?v=14.0"></script>
 
-      document.getElementById("data-aula").textContent = formatDate(data);
-
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        editor.innerHTML = saved;
-      }
-
-      let saveTimer;
-
-      const setSaving = () => {
-        status.querySelector("span:last-child").textContent = "Salvando...";
-      };
-
-      const save = () => {
-        localStorage.setItem(storageKey, editor.innerHTML);
-        status.querySelector("span:last-child").textContent = "Salvo";
-      };
-
-      editor.addEventListener("input", () => {
-        setSaving();
-        clearTimeout(saveTimer);
-        saveTimer = setTimeout(save, 450);
-      });
-
-      document.querySelectorAll("[data-cmd]").forEach((button) => {
-        button.addEventListener("mousedown", (event) => {
-          event.preventDefault();
-          document.execCommand(button.dataset.cmd, false, null);
-          editor.focus();
-        });
-      });
-
-      document.querySelectorAll("[data-block]").forEach((button) => {
-        button.addEventListener("mousedown", (event) => {
-          event.preventDefault();
-          document.execCommand("formatBlock", false, button.dataset.block);
-          editor.focus();
-        });
-      });
-
-      document.querySelectorAll("[data-study]").forEach((button) => {
-        button.addEventListener("mousedown", (event) => {
-          event.preventDefault();
-
-          const type = button.dataset.study;
-          const labels = {
-            important: "★ Importante",
-            warning: "⚠ Pegadinha de prova",
-            memory: "🧠 Decore"
-          };
-
-          const selection = window.getSelection();
-          const selectedText = selection ? selection.toString().trim() : "";
-
-          const html = `
-            <div class="study-block ${type}">
-              <strong>${labels[type]}</strong>
-              <div>${selectedText || "Escreva aqui..."}</div>
-            </div>
-            <p><br></p>
-          `;
-
-          document.execCommand("insertHTML", false, html);
-          editor.dispatchEvent(new Event("input"));
-          editor.focus();
-        });
-      });
-
-      document.getElementById("limpar-caderno").addEventListener("click", () => {
-        const ok = window.confirm("Apagar todo o conteúdo deste caderno?");
-        if (!ok) return;
-
-        editor.innerHTML = "";
-        localStorage.removeItem(storageKey);
-        status.querySelector("span:last-child").textContent = "Salvo";
-        editor.focus();
-      });
-
-      window.addEventListener("beforeunload", save);
-    })();
-  </script>
 </body>
 </html>
