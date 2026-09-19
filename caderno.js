@@ -65,6 +65,9 @@ const notebookState = {
   editorEditable:
     false,
 
+  lockedNoteIds:
+    new Set(),
+
   editorDirty:
     false,
 
@@ -1298,14 +1301,13 @@ function setEditorEnabled(
     "notebook-underline",
     "notebook-text-color",
     "notebook-highlight-color",
-    "notebook-list",
-    "notebook-numbered-list",
+    "notebook-list-toggle",
     "notebook-template",
     "notebook-break",
     "notebook-divider",
-    "notebook-table-manual",
-    "notebook-table-reader",
+    "notebook-table-toggle",
     "notebook-emoji-toggle",
+    "notebook-callout-toggle",
     "notebook-save-now"
   ]
     .forEach(
@@ -1522,11 +1524,44 @@ function renderDocument() {
   notebookState.editorEditable =
     false;
 
+  const storedContent =
+    String(
+      current.note
+        ?.content_html
+      || ""
+    )
+      .trim();
+
+  const lockedInSession =
+    Boolean(
+      current.note?.id
+      &&
+      notebookState
+        .lockedNoteIds
+        .has(
+          current.note.id
+        )
+    );
+
+  /*
+    Primeira mexida:
+    - aula sem caderno salvo -> abre editável;
+    - página/caderno ainda vazio -> abre editável;
+    - depois de Salvar explicitamente -> trava.
+  */
   notebookState.editorEditable =
-    false;
+    (
+      !current.note
+      ||
+      (
+        !storedContent
+        &&
+        !lockedInSession
+      )
+    );
 
   setEditorEnabled(
-    false
+    notebookState.editorEditable
   );
 
 
@@ -3656,6 +3691,12 @@ function toggleEmojiMenu() {
   const opening =
     menu.hidden;
 
+  if (
+    opening
+  ) {
+    closeNotebookToolMenus();
+  }
+
 
   menu.hidden =
     !opening;
@@ -3706,6 +3747,101 @@ function closeEmojiMenu() {
 
   }
 
+}
+
+
+
+/* =========================================================
+   MENUS COMPACTOS DA BARRA
+   ========================================================= */
+
+function closeNotebookToolMenus(
+  except = null
+) {
+  [
+    "list",
+    "table",
+    "callout"
+  ]
+    .forEach(
+      (name) => {
+        if (
+          name === except
+        ) {
+          return;
+        }
+
+        const menu =
+          document.getElementById(
+            `notebook-${name}-menu`
+          );
+
+        const toggle =
+          document.getElementById(
+            `notebook-${name}-toggle`
+          );
+
+        if (
+          menu
+        ) {
+          menu.hidden =
+            true;
+        }
+
+        if (
+          toggle
+        ) {
+          toggle.setAttribute(
+            "aria-expanded",
+            "false"
+          );
+        }
+      }
+    );
+}
+
+
+function toggleNotebookToolMenu(
+  name
+) {
+  const menu =
+    document.getElementById(
+      `notebook-${name}-menu`
+    );
+
+  const toggle =
+    document.getElementById(
+      `notebook-${name}-toggle`
+    );
+
+  if (
+    !menu
+    || !toggle
+    || toggle.disabled
+  ) {
+    return;
+  }
+
+  const opening =
+    menu.hidden;
+
+  closeNotebookToolMenus(
+    opening
+      ? name
+      : null
+  );
+
+  closeEmojiMenu();
+
+  menu.hidden =
+    !opening;
+
+  toggle.setAttribute(
+    "aria-expanded",
+    opening
+      ? "true"
+      : "false"
+  );
 }
 
 
@@ -4745,12 +4881,24 @@ async function toggleCurrentDocumentEdit() {
       notebookState.saveTimer
     );
 
+    await saveCurrentNotebook(
+      false
+    );
+
+    const savedNoteId =
+      getCurrentDocument()
+        ?.note
+        ?.id
+      || null;
+
     if (
-      notebookState.editorDirty
+      savedNoteId
     ) {
-      await saveCurrentNotebook(
-        false
-      );
+      notebookState
+        .lockedNoteIds
+        .add(
+          savedNoteId
+        );
     }
 
     setNotebookEditMode(
@@ -5534,16 +5682,6 @@ function wireEvents() {
     [
       "notebook-underline",
       "underline"
-    ],
-
-    [
-      "notebook-list",
-      "insertUnorderedList"
-    ],
-
-    [
-      "notebook-numbered-list",
-      "insertOrderedList"
     ]
   ]
     .forEach(
@@ -5607,29 +5745,96 @@ function wireEvents() {
     );
 
 
-  document
-    .getElementById(
-      "notebook-table-manual"
-    )
-    ?.addEventListener(
-      "click",
-      () =>
-        openNotebookTableModal(
-          "manual"
-        )
+  [
+    "list",
+    "table",
+    "callout"
+  ]
+    .forEach(
+      (name) => {
+        const toggle =
+          document.getElementById(
+            `notebook-${name}-toggle`
+          );
+
+        toggle
+          ?.addEventListener(
+            "mousedown",
+            (event) =>
+              event.preventDefault()
+          );
+
+        toggle
+          ?.addEventListener(
+            "click",
+            (event) => {
+              event.stopPropagation();
+
+              saveSelection();
+
+              toggleNotebookToolMenu(
+                name
+              );
+            }
+          );
+      }
     );
 
 
   document
-    .getElementById(
-      "notebook-table-reader"
+    .querySelectorAll(
+      "[data-list-command]"
     )
-    ?.addEventListener(
-      "click",
-      () =>
-        openNotebookTableModal(
-          "reader"
-        )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "mousedown",
+          (event) =>
+            event.preventDefault()
+        );
+
+        button.addEventListener(
+          "click",
+          () => {
+            execEditorCommand(
+              button.dataset
+                .listCommand
+            );
+
+            closeNotebookToolMenus();
+          }
+        );
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-table-action]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "mousedown",
+          (event) =>
+            event.preventDefault()
+        );
+
+        button.addEventListener(
+          "click",
+          () => {
+            const mode =
+              button.dataset
+                .tableAction;
+
+            closeNotebookToolMenus();
+
+            openNotebookTableModal(
+              mode
+            );
+          }
+        );
+      }
     );
 
 
@@ -5849,11 +6054,14 @@ function wireEvents() {
 
         button.addEventListener(
           "click",
-          () =>
+          () => {
             insertStudyBlock(
               button.dataset
                 .studyBlock
-            )
+            );
+
+            closeNotebookToolMenus();
+          }
         );
 
       }
@@ -5866,14 +6074,37 @@ function wireEvents() {
     )
     ?.addEventListener(
       "click",
-      () => {
+      async () => {
 
         clearTimeout(
           notebookState.saveTimer
         );
 
 
-        saveCurrentNotebook(
+        await saveCurrentNotebook(
+          false
+        );
+
+
+        const savedNoteId =
+          getCurrentDocument()
+            ?.note
+            ?.id
+          || null;
+
+
+        if (
+          savedNoteId
+        ) {
+          notebookState
+            .lockedNoteIds
+            .add(
+              savedNoteId
+            );
+        }
+
+
+        setNotebookEditMode(
           false
         );
 
@@ -5975,6 +6206,13 @@ function wireEvents() {
           "notebook-table-modal"
         );
 
+      const insideToolMenu =
+        event.target
+          ?.closest
+          ?.(
+            ".notebook-tool-menu-wrap"
+          );
+
 
       const freeModal =
         document.getElementById(
@@ -6028,6 +6266,12 @@ function wireEvents() {
       }
 
       if (
+        !insideToolMenu
+      ) {
+        closeNotebookToolMenus();
+      }
+
+      if (
         tableModal
         &&
         !tableModal.hidden
@@ -6066,6 +6310,8 @@ function wireEvents() {
       ) {
 
         closeEmojiMenu();
+
+        closeNotebookToolMenus();
 
         closeFilterMenu();
 
