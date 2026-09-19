@@ -6939,6 +6939,540 @@ function analyzeAnswerColorAroundNumber(
 }
 
 
+
+
+/* =========================================================
+   FALLBACK DE GABARITO POR ORDEM VISUAL
+   ---------------------------------------------------------
+   Se o OCR não conseguir ler os números brancos dentro das
+   bolinhas/quadradinhos, detectamos as formas pela cor.
+   Quando a quantidade de formas coincide com a quantidade de
+   questões, a ordem visual define a numeração:
+   esquerda -> direita, de cima -> baixo.
+   ========================================================= */
+
+function answerShapePixelCode(
+  red,
+  green,
+  blue
+) {
+  const r = Number(red);
+  const g = Number(green);
+  const b = Number(blue);
+
+  /* Verde = acerto */
+  if (
+    g >= 115
+    && g - r >= 24
+    && g - b >= 10
+  ) {
+    return 1;
+  }
+
+  /* Vermelho = erro */
+  if (
+    r >= 145
+    && r - g >= 32
+    && r - b >= 25
+  ) {
+    return 2;
+  }
+
+  /* Azul da questão selecionada */
+  if (
+    b >= 130
+    && b - r >= 25
+    && b - g >= 10
+  ) {
+    return 3;
+  }
+
+  /* Amarelo/creme da questão selecionada */
+  if (
+    r >= 220
+    && g >= 195
+    && b >= 125
+    && b <= 240
+    && r - b >= 12
+  ) {
+    return 4;
+  }
+
+  return 0;
+}
+
+
+function detectAnswerShapesByGeometry(
+  canvas
+) {
+  const context =
+    canvas.getContext(
+      "2d",
+      {
+        willReadFrequently:
+          true
+      }
+    );
+
+  const width =
+    canvas.width;
+
+  const height =
+    canvas.height;
+
+  const image =
+    context.getImageData(
+      0,
+      0,
+      width,
+      height
+    );
+
+  const mask =
+    new Uint8Array(
+      width * height
+    );
+
+  for (
+    let pixel = 0;
+    pixel < width * height;
+    pixel += 1
+  ) {
+    const offset =
+      pixel * 4;
+
+    mask[pixel] =
+      answerShapePixelCode(
+        image.data[offset],
+        image.data[offset + 1],
+        image.data[offset + 2]
+      );
+  }
+
+  const minDimension =
+    Math.min(
+      width,
+      height
+    );
+
+  const minSide =
+    Math.max(
+      10,
+      Math.floor(
+        minDimension * 0.014
+      )
+    );
+
+  const maxSide =
+    Math.max(
+      80,
+      Math.floor(
+        minDimension * 0.30
+      )
+    );
+
+  const components = [];
+
+  for (
+    let start = 0;
+    start < mask.length;
+    start += 1
+  ) {
+    const code =
+      mask[start];
+
+    if (!code) {
+      continue;
+    }
+
+    const stack = [
+      start
+    ];
+
+    mask[start] =
+      0;
+
+    let count = 0;
+    let minX = width;
+    let maxX = 0;
+    let minY = height;
+    let maxY = 0;
+
+    while (
+      stack.length
+    ) {
+      const current =
+        stack.pop();
+
+      const y =
+        Math.floor(
+          current / width
+        );
+
+      const x =
+        current
+        - y * width;
+
+      count += 1;
+
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+
+      /*
+        Usa 8 vizinhos para tolerar antialiasing
+        e funcionar com círculos e quadrados.
+      */
+      for (
+        let dy = -1;
+        dy <= 1;
+        dy += 1
+      ) {
+        for (
+          let dx = -1;
+          dx <= 1;
+          dx += 1
+        ) {
+          if (
+            dx === 0
+            && dy === 0
+          ) {
+            continue;
+          }
+
+          const nx =
+            x + dx;
+
+          const ny =
+            y + dy;
+
+          if (
+            nx < 0
+            || ny < 0
+            || nx >= width
+            || ny >= height
+          ) {
+            continue;
+          }
+
+          const next =
+            ny * width
+            + nx;
+
+          if (
+            mask[next]
+            === code
+          ) {
+            mask[next] =
+              0;
+
+            stack.push(
+              next
+            );
+          }
+        }
+      }
+    }
+
+    const componentWidth =
+      maxX - minX + 1;
+
+    const componentHeight =
+      maxY - minY + 1;
+
+    const ratio =
+      componentWidth
+      / Math.max(
+          1,
+          componentHeight
+        );
+
+    const fill =
+      count
+      / Math.max(
+          1,
+          componentWidth
+          * componentHeight
+        );
+
+    /*
+      Remove ícones, barras, textos coloridos e
+      áreas grandes que não têm formato de botão.
+    */
+    if (
+      componentWidth < minSide
+      || componentHeight < minSide
+      || componentWidth > maxSide
+      || componentHeight > maxSide
+      || ratio < 0.55
+      || ratio > 1.75
+      || fill < 0.16
+    ) {
+      continue;
+    }
+
+    components.push({
+      left:
+        minX,
+
+      top:
+        minY,
+
+      right:
+        maxX,
+
+      bottom:
+        maxY,
+
+      width:
+        componentWidth,
+
+      height:
+        componentHeight,
+
+      centerX:
+        (
+          minX + maxX
+        ) / 2,
+
+      centerY:
+        (
+          minY + maxY
+        ) / 2,
+
+      code,
+
+      color_status:
+        code === 1
+          ? "green"
+          : code === 2
+            ? "red"
+            : "selected",
+
+      status_hint:
+        code === 1
+          ? "correct"
+          : code === 2
+            ? "wrong"
+            : null
+    });
+  }
+
+  /*
+    A questão selecionada pode gerar dois componentes
+    sobrepostos: amarelo no centro + azul na borda.
+    Mantém apenas um deles.
+  */
+  const deduped = [];
+
+  const orderedByPriority =
+    components
+      .slice()
+      .sort(
+        (a, b) => {
+          const priorityA =
+            (
+              a.code === 3
+              || a.code === 4
+            )
+              ? 2
+              : 1;
+
+          const priorityB =
+            (
+              b.code === 3
+              || b.code === 4
+            )
+              ? 2
+              : 1;
+
+          return (
+            priorityB
+            - priorityA
+            || (
+              b.width
+              * b.height
+            )
+            - (
+                a.width
+                * a.height
+              )
+          );
+        }
+      );
+
+  for (
+    const candidate
+    of orderedByPriority
+  ) {
+    const duplicate =
+      deduped.some(
+        existing => {
+          const dx =
+            existing.centerX
+            - candidate.centerX;
+
+          const dy =
+            existing.centerY
+            - candidate.centerY;
+
+          const distance =
+            Math.sqrt(
+              dx * dx
+              + dy * dy
+            );
+
+          const reference =
+            Math.max(
+              10,
+              Math.min(
+                existing.width,
+                existing.height,
+                candidate.width,
+                candidate.height
+              )
+            );
+
+          return (
+            distance
+            <= reference * 0.55
+          );
+        }
+      );
+
+    if (!duplicate) {
+      deduped.push(
+        candidate
+      );
+    }
+  }
+
+  /*
+    Remove elementos cujo tamanho é muito diferente
+    do tamanho típico da grade.
+  */
+  if (
+    deduped.length >= 3
+  ) {
+    const typical =
+      medianNumber(
+        deduped.map(
+          item =>
+            (
+              item.width
+              + item.height
+            ) / 2
+        )
+      );
+
+    return deduped.filter(
+      item => {
+        const side =
+          (
+            item.width
+            + item.height
+          ) / 2;
+
+        return (
+          side >= typical * 0.58
+          && side <= typical * 1.55
+        );
+      }
+    );
+  }
+
+  return deduped;
+}
+
+
+function sortAnswerShapesAsGrid(
+  shapes
+) {
+  if (!shapes.length) {
+    return [];
+  }
+
+  const rowTolerance =
+    Math.max(
+      9,
+      medianNumber(
+        shapes.map(
+          item =>
+            item.height
+        )
+      ) * 0.68
+    );
+
+  const rows = [];
+
+  for (
+    const shape
+    of shapes
+      .slice()
+      .sort(
+        (a, b) =>
+          a.centerY
+          - b.centerY
+      )
+  ) {
+    let row =
+      rows.find(
+        candidate =>
+          Math.abs(
+            candidate.centerY
+            - shape.centerY
+          )
+          <= rowTolerance
+      );
+
+    if (!row) {
+      row = {
+        centerY:
+          shape.centerY,
+
+        shapes: []
+      };
+
+      rows.push(
+        row
+      );
+    }
+
+    row.shapes.push(
+      shape
+    );
+
+    row.centerY =
+      row.shapes.reduce(
+        (
+          total,
+          item
+        ) =>
+          total
+          + item.centerY,
+        0
+      )
+      / row.shapes.length;
+  }
+
+  rows.sort(
+    (a, b) =>
+      a.centerY
+      - b.centerY
+  );
+
+  return rows.flatMap(
+    row =>
+      row.shapes.sort(
+        (a, b) =>
+          a.centerX
+          - b.centerX
+      )
+  );
+}
+
+
 async function recognizeAnswerGridByNumber(
   file,
   fileIndex,
@@ -6970,6 +7504,94 @@ async function recognizeAnswerGridByNumber(
           )
       )
     );
+
+
+  /*
+    FALLBACK POR ORDEM VISUAL: se a quantidade de formas
+    detectadas for exatamente a quantidade de questões,
+    não precisamos ler os números pelo OCR.
+
+    Ex.: 20 bolinhas + 20 questões:
+    1ª bolinha = questão 1
+    2ª bolinha = questão 2
+    ...
+    20ª bolinha = questão 20.
+  */
+  const expectedItems =
+    [...qsState.items]
+      .sort(
+        (a, b) =>
+          Number(
+            a.order_index
+            || a.question_number
+            || 0
+          )
+          - Number(
+              b.order_index
+              || b.question_number
+              || 0
+            )
+      );
+
+  const orderedShapes =
+    sortAnswerShapesAsGrid(
+      detectAnswerShapesByGeometry(
+        canvas
+      )
+    );
+
+  if (
+    expectedItems.length > 0
+    && orderedShapes.length
+      === expectedItems.length
+  ) {
+    setAnswerImportStatus(
+      `Grade completa reconhecida pela ordem — print ${fileIndex + 1} de ${fileCount}...`
+    );
+
+    return {
+      detections:
+        orderedShapes.map(
+          (
+            shape,
+            index
+          ) => ({
+            question_number:
+              Number(
+                expectedItems[index]
+                  .question_number
+              ),
+
+            user_answer:
+              null,
+
+            status_hint:
+              shape.status_hint,
+
+            color_status:
+              shape.color_status,
+
+            confidence:
+              1,
+
+            ocr_confidence:
+              0,
+
+            inferred_from_order:
+              true
+          })
+        ),
+
+      numberCount:
+        expectedItems.length,
+
+      shapeCount:
+        orderedShapes.length,
+
+      inferredFromOrder:
+        true
+    };
+  }
 
   /*
     Primeira leitura no print original.
