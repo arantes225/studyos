@@ -776,15 +776,31 @@ function populateAreaFilter() {
   const areas =
     Array.from(
       new Set(
-        notebookState.topics
-          .map(
-            (topic) =>
-              String(
-                topic.area ||
-                ""
-              )
-                .trim()
+        [
+          ...notebookState.topics
+            .map(
+              (topic) =>
+                String(
+                  topic.area ||
+                  ""
+                )
+                  .trim()
+            ),
+
+          ...Array.from(
+            notebookState
+              .notesById
+              .values()
           )
+            .map(
+              (note) =>
+                String(
+                  note.area ||
+                  ""
+                )
+                  .trim()
+            )
+        ]
           .filter(
             Boolean
           )
