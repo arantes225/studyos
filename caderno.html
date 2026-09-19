@@ -1,399 +1,806 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Caderno · Resibulando</title>
-
-  <link
-    rel="icon"
-    type="image/png"
-    href="favicon.png?v=resibulando2"
-  >
-
-  <link
-    rel="stylesheet"
-    href="style.css?v=12.1"
-  >
-
-  <link
-    rel="stylesheet"
-    href="caderno.css?v=14.0"
-  >
-</head>
-
-<body data-page="caderno">
-
-  <div class="app-shell">
-
-    <aside
-      id="sidebar"
-      class="sidebar"
-    ></aside>
-
-    <div
-      id="sidebar-backdrop"
-      class="sidebar-backdrop"
-    ></div>
-
-    <main class="main notebook-main-shell">
-
-      <div class="page notebook-page">
-
-        <!-- TOPO -->
-        <header class="topbar notebook-topbar">
-
-          <button
-            id="menu-open"
-            class="menu-open"
-            type="button"
-            aria-label="Abrir menu"
-          >
-            ☰
-          </button>
-
-          <div class="page-heading">
-
-            <span
-              class="eyebrow"
-              data-page-eyebrow
-            ></span>
-
-            <h1 data-page-title></h1>
-
-          </div>
-
-          <div class="notebook-top-actions">
-
-            <a
-              href="cronograma.html"
-              class="button secondary notebook-back-button"
-            >
-              ← Cronograma
-            </a>
-
-            <span
-              id="notebook-save-status"
-              class="notebook-save-status"
-            >
-              Selecione uma aula
-            </span>
-
-          </div>
-
-        </header>
-
-
-        <!-- ÁREA PRINCIPAL -->
-        <section class="notebook-workspace">
-
-
-          <!-- LISTA DE AULAS -->
-          <aside class="notebook-topic-panel">
-
-            <div class="notebook-topic-head">
-
-              <div>
-
-                <span class="badge accent">
-                  Caderno
-                </span>
-
-                <h2>Aulas</h2>
-
-              </div>
-
-              <span
-                id="notebook-topic-count"
-                class="notebook-topic-count"
-              >
-                0
-              </span>
-
-            </div>
-
-
-            <label class="notebook-search">
-
-              <span class="sr-only">
-                Buscar aula
-              </span>
-
-              <input
-                id="notebook-topic-search"
-                type="search"
-                placeholder="Buscar tema, matéria ou área..."
-                autocomplete="off"
-              >
-
-            </label>
-
-
-            <div
-              id="notebook-topic-list"
-              class="notebook-topic-list"
-            >
-
-              <div class="notebook-empty-small">
-                Carregando suas aulas...
-              </div>
-
-            </div>
-
-          </aside>
-
-
-          <!-- EDITOR -->
-          <section class="notebook-editor-column">
-
-
-            <!-- BARRA DO EDITOR -->
-            <div
-              id="notebook-toolbar"
-              class="notebook-toolbar"
-              aria-label="Ferramentas do caderno"
-            >
-
-              <select
-                id="notebook-block-style"
-                class="notebook-style-select"
-                aria-label="Estilo do texto"
-                disabled
-              >
-
-                <option value="p">
-                  Texto normal
-                </option>
-
-                <option value="h1">
-                  Título 1
-                </option>
-
-                <option value="h2">
-                  Título 2
-                </option>
-
-                <option value="h3">
-                  Subtítulo
-                </option>
-
-              </select>
-
-
-              <span class="notebook-toolbar-divider"></span>
-
-
-              <button
-                id="notebook-bold"
-                class="notebook-tool-button"
-                type="button"
-                title="Negrito"
-                disabled
-              >
-                <strong>B</strong>
-              </button>
-
-
-              <button
-                id="notebook-italic"
-                class="notebook-tool-button"
-                type="button"
-                title="Itálico"
-                disabled
-              >
-                <em>I</em>
-              </button>
-
-
-              <button
-                id="notebook-underline"
-                class="notebook-tool-button"
-                type="button"
-                title="Sublinhado"
-                disabled
-              >
-                <u>U</u>
-              </button>
-
-
-              <span class="notebook-toolbar-divider"></span>
-
-
-              <button
-                id="notebook-list"
-                class="notebook-tool-button notebook-tool-text"
-                type="button"
-                title="Lista"
-                disabled
-              >
-                • Lista
-              </button>
-
-
-              <button
-                id="notebook-numbered-list"
-                class="notebook-tool-button notebook-tool-text"
-                type="button"
-                title="Lista numerada"
-                disabled
-              >
-                1. Lista
-              </button>
-
-
-              <span class="notebook-toolbar-divider"></span>
-
-
-              <!-- EMOJIS -->
-              <div class="notebook-emoji-wrap">
-
-                <button
-                  id="notebook-emoji-toggle"
-                  class="notebook-tool-button"
-                  type="button"
-                  title="Emoji"
-                  aria-expanded="false"
-                  disabled
-                >
-                  ☺
-                </button>
-
-                <div
-                  id="notebook-emoji-menu"
-                  class="notebook-emoji-menu"
-                  hidden
-                ></div>
-
-              </div>
-
-
-              <span class="notebook-toolbar-divider"></span>
-
-
-              <!-- BLOCOS DE ESTUDO -->
-
-              <button
-                class="notebook-study-tool important"
-                type="button"
-                data-study-block="important"
-                disabled
-              >
-                ★ Importante
-              </button>
-
-
-              <button
-                class="notebook-study-tool warning"
-                type="button"
-                data-study-block="warning"
-                disabled
-              >
-                ⚠ Pegadinha
-              </button>
-
-
-              <button
-                class="notebook-study-tool memory"
-                type="button"
-                data-study-block="memory"
-                disabled
-              >
-                🧠 Decore
-              </button>
-
-
-              <span class="notebook-toolbar-spacer"></span>
-
-
-              <button
-                id="notebook-save-now"
-                class="button secondary compact-button"
-                type="button"
-                disabled
-              >
-                Salvar
-              </button>
-
-            </div>
-
-
-           
-
-            </div>
-
-
-            <!-- DOCUMENTO -->
-            <div
-              id="notebook-document-wrap"
-              class="notebook-document-wrap"
-              hidden
-            >
-
-              <article class="notebook-paper">
-
-
-                <!-- CABEÇALHO DO DOCUMENTO -->
-                <header class="notebook-document-head">
-
-                  <div
-                    id="notebook-document-breadcrumb"
-                    class="notebook-document-breadcrumb"
-                  ></div>
-
-                  <h1
-                    id="notebook-document-title"
-                  >
-                    Tema
-                  </h1>
-
-                  <p
-                    id="notebook-document-meta"
-                  ></p>
-
-                </header>
-
-
-                <!-- CAMPO DE TEXTO -->
-                <div
-                  id="notebook-editor"
-                  class="notebook-editor"
-                  contenteditable="true"
-                  role="textbox"
-                  aria-multiline="true"
-                  spellcheck="true"
-                  data-placeholder="Comece a escrever seu resumo..."
-                ></div>
-
-
-              </article>
-
-            </div>
-
-          </section>
-
-        </section>
-
-      </div>
-
-    </main>
-
-  </div>
-
-
-  <!-- SUPABASE -->
-  <script
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-  ></script>
-
-  <!-- IMPORTANTE: É supabase.js, NÃO config.js -->
-  <script src="supabase.js"></script>
-
-  <!-- ESTRUTURA GERAL DO RESIBULANDO -->
-  <script src="app.js?v=12.1"></script>
-
-  <!-- CADERNO -->
-  <script src="caderno.js?v=14.0"></script>
-
-</body>
-</html>
+/* =========================================================
+   RESIBULANDO — CADERNO V15
+   ========================================================= */
+
+.notebook-main-shell {
+  min-width: 0;
+}
+
+.notebook-page {
+  max-width: 1240px;
+  padding-bottom: 54px;
+}
+
+.notebook-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 35;
+  background: color-mix(in srgb, var(--background) 94%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.notebook-save-status {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.notebook-save-status.saving {
+  color: var(--accent);
+}
+
+.notebook-save-status.saved {
+  color: var(--success);
+}
+
+.notebook-save-status.error {
+  color: var(--danger);
+}
+
+/* =========================================================
+   NAVEGAÇÃO SUPERIOR
+   ========================================================= */
+
+.notebook-tabs {
+  display: inline-flex;
+  gap: 4px;
+  margin-bottom: 22px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.notebook-tab {
+  min-height: 38px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.notebook-tab:hover {
+  color: var(--text);
+}
+
+.notebook-tab.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 5px rgba(15, 23, 42, .08);
+}
+
+/* =========================================================
+   VIEWS
+   ========================================================= */
+
+.notebook-view[hidden] {
+  display: none !important;
+}
+
+.notebook-view-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.notebook-view-head h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.notebook-view-head p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   BUSCA — MESMA LINGUAGEM VISUAL DO CRONOGRAMA
+   ========================================================= */
+
+.notebook-searchbar {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.notebook-searchbar input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  font: inherit;
+  font-size: 11px;
+}
+
+.notebook-searchbar input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* =========================================================
+   PÁGINAS
+   ========================================================= */
+
+.notebook-pages-list,
+.notebook-library-list {
+  display: grid;
+  gap: 8px;
+}
+
+.notebook-page-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(120px, .8fr) 120px auto;
+  gap: 14px;
+  align-items: center;
+  min-height: 58px;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+}
+
+.notebook-page-row strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notebook-page-area,
+.notebook-page-date {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.notebook-open-button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 9px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.notebook-open-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.notebook-empty-small {
+  padding: 36px 18px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 10px;
+  text-align: center;
+}
+
+/* =========================================================
+   BUSCA DE AULA
+   ========================================================= */
+
+.notebook-topic-search-shell {
+  position: relative;
+  z-index: 20;
+  margin-bottom: 12px;
+}
+
+.notebook-topic-search-shell .notebook-searchbar {
+  margin-bottom: 0;
+}
+
+.notebook-topic-search-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, .14);
+}
+
+.notebook-topic-search-results[hidden] {
+  display: none !important;
+}
+
+.notebook-search-result {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 10px 11px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.notebook-search-result:hover {
+  background: var(--surface-2);
+}
+
+.notebook-search-result strong,
+.notebook-search-result small {
+  display: block;
+}
+
+.notebook-search-result strong {
+  font-size: 11px;
+}
+
+.notebook-search-result small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.notebook-search-result span {
+  color: var(--muted);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.notebook-editor-empty {
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--muted);
+  text-align: center;
+}
+
+.notebook-editor-empty strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.notebook-editor-empty p {
+  margin: 0;
+  font-size: 10px;
+}
+
+/* =========================================================
+   TOOLBAR
+   ========================================================= */
+
+.notebook-toolbar {
+  position: sticky;
+  top: 76px;
+  z-index: 18;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--surface) 97%, transparent);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, .06);
+  backdrop-filter: blur(12px);
+}
+
+.notebook-style-select {
+  min-width: 132px;
+  min-height: 34px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.notebook-toolbar-divider {
+  width: 1px;
+  height: 24px;
+  margin: 0 2px;
+  flex: 0 0 1px;
+  background: var(--border);
+}
+
+.notebook-toolbar-spacer {
+  flex: 1;
+}
+
+.notebook-tool-button,
+.notebook-study-tool {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0 9px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.notebook-tool-button {
+  min-width: 34px;
+  font-size: 13px;
+}
+
+.notebook-tool-text,
+.notebook-study-tool {
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.notebook-tool-button:hover,
+.notebook-study-tool:hover {
+  border-color: var(--border);
+  background: var(--surface-2);
+}
+
+.notebook-study-tool.important {
+  color: var(--accent);
+}
+
+.notebook-study-tool.warning {
+  color: #b77709;
+}
+
+.notebook-study-tool.memory {
+  color: #7956c6;
+}
+
+/* =========================================================
+   EMOJIS
+   ========================================================= */
+
+.notebook-emoji-wrap {
+  position: relative;
+}
+
+.notebook-emoji-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 80;
+  width: 245px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 18px 55px rgba(15, 23, 42, .18);
+}
+
+.notebook-emoji-menu[hidden] {
+  display: none !important;
+}
+
+.notebook-emoji-button {
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.notebook-emoji-button:hover {
+  background: var(--surface-2);
+}
+
+/* =========================================================
+   FOLHA DE TEXTO
+   ========================================================= */
+
+.notebook-paper {
+  width: min(100%, 1040px);
+  min-height: 1180px;
+  margin: 0 auto;
+  padding: 72px 86px 110px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--surface);
+  box-shadow: 0 8px 26px rgba(15, 23, 42, .07);
+}
+
+.notebook-document-head {
+  padding-bottom: 25px;
+  margin-bottom: 30px;
+  border-bottom: 1px solid var(--border);
+}
+
+.notebook-document-head h1 {
+  margin: 0;
+  font-size: clamp(28px, 3.5vw, 38px);
+  line-height: 1.15;
+  letter-spacing: -.035em;
+}
+
+.notebook-document-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.notebook-document-meta span + span::before {
+  content: "•";
+  margin-right: 16px;
+  color: var(--border);
+}
+
+.notebook-editor {
+  min-height: 900px;
+  outline: none;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.72;
+  word-break: break-word;
+}
+
+.notebook-editor p {
+  min-height: 1.2em;
+  margin: 0 0 18px;
+}
+
+.notebook-editor h1 {
+  margin: 36px 0 13px;
+  font-size: 29px;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.notebook-editor h2 {
+  margin: 32px 0 12px;
+  font-size: 23px;
+  line-height: 1.25;
+  font-weight: 900;
+}
+
+.notebook-editor h3 {
+  margin: 26px 0 10px;
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 850;
+}
+
+.notebook-editor h2:first-child {
+  margin-top: 0;
+}
+
+.notebook-editor ul,
+.notebook-editor ol {
+  margin: 0 0 18px 24px;
+  padding-left: 10px;
+}
+
+.notebook-editor li {
+  margin-bottom: 5px;
+}
+
+.notebook-study-block {
+  margin: 20px 0;
+  padding: 15px 17px;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 9px;
+  background: var(--surface-2);
+}
+
+.notebook-study-block > strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.notebook-study-block.important {
+  border-left-color: var(--accent);
+}
+
+.notebook-study-block.warning {
+  border-left-color: #e7a126;
+  background: color-mix(in srgb, #f2b647 9%, var(--surface));
+}
+
+.notebook-study-block.memory {
+  border-left-color: #8768cf;
+  background: color-mix(in srgb, #8768cf 8%, var(--surface));
+}
+
+/* =========================================================
+   BIBLIOTECA
+   ========================================================= */
+
+.notebook-library-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+}
+
+.notebook-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.notebook-select-all input,
+.notebook-library-check {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+.notebook-selected-count {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.notebook-library-spacer {
+  flex: 1;
+}
+
+.danger-button {
+  color: var(--danger);
+}
+
+.notebook-library-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1.7fr) minmax(120px, .8fr) 120px;
+  gap: 13px;
+  align-items: center;
+  min-height: 56px;
+  padding: 10px 13px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+}
+
+.notebook-library-row strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notebook-batch-editor {
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-2);
+}
+
+.notebook-batch-editor[hidden] {
+  display: none !important;
+}
+
+.notebook-batch-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.notebook-batch-head h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.notebook-batch-head p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.notebook-batch-head-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.notebook-batch-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 14px;
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.notebook-batch-editors {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.notebook-batch-card {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.notebook-batch-card-head {
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.notebook-batch-card-head strong {
+  display: block;
+  font-size: 13px;
+}
+
+.notebook-batch-card-head small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.notebook-batch-content {
+  min-height: 220px;
+  outline: none;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.notebook-batch-content h1 {
+  font-size: 22px;
+}
+
+.notebook-batch-content h2 {
+  font-size: 18px;
+}
+
+.notebook-batch-content h3 {
+  font-size: 15px;
+}
+
+/* =========================================================
+   RESPONSIVO
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .notebook-page-row {
+    grid-template-columns: minmax(0, 1fr) 120px auto;
+  }
+
+  .notebook-page-area {
+    display: none;
+  }
+
+  .notebook-library-row {
+    grid-template-columns: auto minmax(0, 1fr) 110px;
+  }
+
+  .notebook-library-row .notebook-page-area {
+    display: none;
+  }
+
+  .notebook-paper {
+    padding: 56px 48px 86px;
+  }
+}
+
+@media (max-width: 700px) {
+  .notebook-tabs {
+    width: 100%;
+  }
+
+  .notebook-tab {
+    flex: 1;
+    padding: 0 9px;
+  }
+
+  .notebook-toolbar,
+  .notebook-batch-toolbar {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .notebook-page-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .notebook-page-date {
+    display: none;
+  }
+
+  .notebook-library-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .notebook-library-row .notebook-page-date {
+    display: none;
+  }
+
+  .notebook-paper {
+    width: 100%;
+    min-height: 820px;
+    padding: 38px 22px 60px;
+  }
+
+  .notebook-batch-head {
+    flex-direction: column;
+  }
+
+  .notebook-library-actions {
+    align-items: stretch;
+  }
+
+  .notebook-library-spacer {
+    display: none;
+  }
+}
+
+
+/* =========================================================
+   ESTRUTURA E SEPARADORES DO CADERNO
+   ========================================================= */
+
+.notebook-template-button {
+  color: var(--accent);
+  font-weight: 850;
+}
+
+.notebook-editor hr,
+.notebook-content-divider {
+  width: 100%;
+  margin: 32px 0;
+  border: 0;
+  border-top: 2px solid var(--border);
+}
+
+.notebook-editor h2 + p {
+  min-height: 22px;
+}
