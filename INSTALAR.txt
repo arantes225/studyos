@@ -1,0 +1,68 @@
+RESIBULANDO V18 — INSTALAÇÃO
+
+O que muda
+-----------
+1. AMBIENTAÇÃO
+   - Ao iniciar uma aula, o caderno da própria aula abre dentro da Ambientação.
+   - Aparece somente o editor/caderno: sem sidebar do Caderno, sem lista lateral e sem abas.
+   - O bloco da aula fica bem mais discreto.
+   - O CCQ de revisão passiva deixa de aparecer na Ambientação.
+
+2. DASHBOARD
+   - O card "Maior dificuldade" é substituído em tempo de execução pelo CCQ de revisão passiva.
+   - Os CCQs mudam automaticamente a cada 30 segundos.
+   - A ofensiva ganha uma chama SVG que cresce e muda de cor:
+       0 dias      = cinza
+       1–6 dias    = amarelo
+       7–29 dias   = laranja
+       30–89 dias  = vermelho
+       90–179 dias = rosa/magenta
+       180–364     = roxo
+       365+        = azul
+
+Arquivos novos
+--------------
+- ambientacao-v18.js
+- dashboard-v18.js
+
+Como instalar pelo GitHub
+-------------------------
+1. Envie ambientacao-v18.js e dashboard-v18.js para a RAIZ do repositório,
+   junto de ambientacao.js, dashboard.js etc.
+
+2. No final de ambientacao.html, imediatamente depois de:
+
+   <script src="ambientacao.js?v=12.9"></script>
+
+   adicione:
+
+   <script src="ambientacao-v18.js?v=18.0"></script>
+
+3. No final de dashboard.html, imediatamente depois de:
+
+   <script src="dashboard.js?v=11.7"></script>
+
+   adicione:
+
+   <script src="dashboard-v18.js?v=18.0"></script>
+
+4. Commit.
+
+5. Abra o site e faça Ctrl + Shift + R.
+
+Instalação automática opcional
+------------------------------
+Se você trabalha com o repositório no computador/Codespaces:
+
+- Coloque todos os arquivos deste ZIP na raiz do projeto.
+- Rode:
+
+  python aplicar_v18.py
+
+O script apenas insere as duas tags acima. Ele não apaga seu código existente.
+
+Observação importante
+---------------------
+O caderno mostrado dentro da Ambientação é o MESMO caderno salvo em study_notes.
+Não é uma cópia. Portanto, o que for escrito durante a aula continua aparecendo
+normalmente em Caderno/Biblioteca.
