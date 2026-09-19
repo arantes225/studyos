@@ -934,6 +934,142 @@ async function loadDashboardPassiveCcq() {
   startDashboardCcqRotation();
 }
 
+
+/* =========================================================
+   OFENSIVA — CHAMA PROGRESSIVA
+   ========================================================= */
+
+function dashboardStreakTier(days) {
+  if (days <= 0) {
+    return {
+      tier: "0",
+      label: "Comece hoje"
+    };
+  }
+
+  if (days < 7) {
+    return {
+      tier: "1",
+      label: "Aquecendo"
+    };
+  }
+
+  if (days < 30) {
+    return {
+      tier: "2",
+      label: "1 semana+"
+    };
+  }
+
+  if (days < 90) {
+    return {
+      tier: "3",
+      label: "1 mês+"
+    };
+  }
+
+  if (days < 180) {
+    return {
+      tier: "4",
+      label: "3 meses+"
+    };
+  }
+
+  if (days < 365) {
+    return {
+      tier: "5",
+      label: "6 meses+"
+    };
+  }
+
+  return {
+    tier: "6",
+    label: "1 ano+"
+  };
+}
+
+
+function initDashboardStreakVisual() {
+  const card =
+    document.getElementById(
+      "dashboard-streak-card"
+    );
+
+
+  const value =
+    card?.querySelector(
+      "[data-streak-value]"
+    );
+
+
+  const label =
+    document.getElementById(
+      "dashboard-streak-stage"
+    );
+
+
+  if (
+    !card ||
+    !value
+  ) {
+    return;
+  }
+
+
+  const update =
+    () => {
+      const days =
+        Number(
+          String(
+            value.textContent ||
+            "0"
+          )
+            .replace(
+              /[^\d]/g,
+              ""
+            )
+        )
+        ||
+        0;
+
+
+      const info =
+        dashboardStreakTier(
+          days
+        );
+
+
+      card.dataset.streakTier =
+        info.tier;
+
+
+      if (label) {
+        label.textContent =
+          info.label;
+      }
+    };
+
+
+  const observer =
+    new MutationObserver(
+      update
+    );
+
+
+  observer.observe(
+    value,
+    {
+      childList: true,
+      characterData: true,
+      subtree: true
+    }
+  );
+
+
+  update();
+}
+
+
 async function loadDashboardMetrics() {
   await Promise.all([
     loadStudyHours(),
@@ -999,6 +1135,7 @@ function wireDashboardControls() {
 
 async function initDashboard() {
   wireDashboardControls();
+  initDashboardStreakVisual();
 
   await Promise.all([
     loadDashboardMetrics(),
