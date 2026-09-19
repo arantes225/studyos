@@ -1519,116 +1519,7 @@
 
 
   /* ========================================================
-     FASE 12.9 — FILTRO FEITOS / MENU ⋯
-     ======================================================== */
-
-  .theme-bulk-menu-wrap {
-    position: relative;
-    margin-left: auto;
-  }
-
-  .theme-bulk-menu-toggle {
-    width: 38px;
-    height: 36px;
-
-    display: grid;
-    place-items: center;
-
-    padding: 0;
-
-    border: 1px solid var(--border);
-    border-radius: 10px;
-
-    background: var(--surface);
-    color: var(--text);
-
-    font-size: 23px;
-    font-weight: 900;
-    line-height: 1;
-
-    cursor: pointer;
-  }
-
-  .theme-bulk-menu-toggle:hover:not(:disabled) {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
-
-  .theme-bulk-menu-toggle:disabled {
-    opacity: .45;
-    cursor: not-allowed;
-  }
-
-  .theme-bulk-menu {
-    position: absolute;
-    top: calc(100% + 7px);
-    right: 0;
-    z-index: 45;
-
-    width: min(290px, 86vw);
-
-    display: grid;
-    gap: 4px;
-
-    padding: 6px;
-
-    border: 1px solid var(--border);
-    border-radius: 12px;
-
-    background: var(--surface);
-
-    box-shadow:
-      0 18px 50px
-      rgba(15, 23, 42, .16);
-  }
-
-  .theme-bulk-menu[hidden] {
-    display: none !important;
-  }
-
-  .theme-bulk-menu-item {
-    min-height: 39px;
-
-    padding:
-      0
-      11px;
-
-    border: 0;
-    border-radius: 8px;
-
-    background: transparent;
-    color: var(--text);
-
-    text-align: left;
-
-    font-size: 11px;
-    font-weight: 800;
-
-    cursor: pointer;
-  }
-
-  .theme-bulk-menu-item:hover:not(:disabled) {
-    background: var(--surface-2);
-  }
-
-  .theme-bulk-menu-item.danger {
-    color: var(--danger);
-  }
-
-  .theme-bulk-menu-item:disabled {
-    opacity: .45;
-    cursor: not-allowed;
-  }
-
-  @media (max-width: 680px) {
-    .theme-bulk-menu-wrap {
-      margin-left: 0;
-    }
-  }
-
-  /* ========================================================
-     FASE 13.1 — FILTRO COMPACTO
+     FASE 13.3 — FILTRO ÚNICO + AÇÕES ⋯
      ======================================================== */
 
   .theme-library-controls-compact {
@@ -1636,15 +1527,16 @@
       minmax(0, 1fr)
       auto
       !important;
-
     align-items: center;
   }
 
-  .theme-filter-menu-wrap {
+  .theme-filter-menu-wrap,
+  .theme-bulk-menu-wrap {
     position: relative;
   }
 
-  .theme-filter-menu-toggle {
+  .theme-filter-menu-toggle,
+  .theme-bulk-menu-toggle {
     width: 40px;
     height: 40px;
 
@@ -1662,25 +1554,36 @@
     cursor: pointer;
   }
 
+  .theme-bulk-menu-toggle {
+    font-size: 22px;
+    line-height: 1;
+    font-weight: 900;
+  }
+
   .theme-filter-menu-toggle:hover,
-  .theme-filter-menu-toggle.has-active-filter {
+  .theme-filter-menu-toggle.has-active-filter,
+  .theme-bulk-menu-toggle:hover:not(:disabled) {
     border-color: var(--accent);
     background: var(--accent-soft);
     color: var(--accent);
   }
 
-  .theme-filter-menu {
+  .theme-bulk-menu-toggle:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+  }
+
+  .theme-filter-menu,
+  .theme-bulk-menu {
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
     z-index: 60;
 
-    width: min(350px, 90vw);
-
     display: grid;
-    gap: 12px;
+    gap: 8px;
 
-    padding: 14px;
+    padding: 12px;
 
     border: 1px solid var(--border);
     border-radius: 14px;
@@ -1692,7 +1595,18 @@
       rgba(15, 23, 42, .18);
   }
 
-  .theme-filter-menu[hidden] {
+  .theme-filter-menu {
+    width: min(350px, 90vw);
+  }
+
+  .theme-bulk-menu {
+    width: min(290px, 86vw);
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .theme-filter-menu[hidden],
+  .theme-bulk-menu[hidden] {
     display: none !important;
   }
 
@@ -1725,7 +1639,6 @@
     place-items: center;
 
     padding: 0;
-
     border: 0;
     border-radius: 8px;
 
@@ -1733,7 +1646,6 @@
     color: var(--muted);
 
     font-size: 20px;
-
     cursor: pointer;
   }
 
@@ -1749,10 +1661,8 @@
 
   .theme-filter-field > span {
     color: var(--muted);
-
     font-size: 9px;
     font-weight: 850;
-
     text-transform: uppercase;
     letter-spacing: .04em;
   }
@@ -1776,33 +1686,43 @@
     gap: 8px;
   }
 
-  @media (max-width: 560px) {
-    .theme-library-controls-compact {
-      grid-template-columns:
-        minmax(0, 1fr)
-        auto
-        !important;
-    }
+  .theme-bulk-menu-item {
+    min-height: 39px;
 
+    padding: 0 11px;
+
+    border: 0;
+    border-radius: 8px;
+
+    background: transparent;
+    color: var(--text);
+
+    text-align: left;
+    font-size: 11px;
+    font-weight: 800;
+
+    cursor: pointer;
+  }
+
+  .theme-bulk-menu-item:hover:not(:disabled) {
+    background: var(--surface-2);
+  }
+
+  .theme-bulk-menu-item.danger {
+    color: var(--danger);
+  }
+
+  .theme-bulk-menu-item:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 560px) {
     .theme-filter-date-grid {
       grid-template-columns: 1fr;
     }
   }
 
-
-  .theme-library-action.notebook-link {
-    color: var(--accent);
-    border-color:
-      color-mix(
-        in srgb,
-        var(--accent) 26%,
-        var(--border)
-      );
-  }
-
-  .theme-library-action.notebook-link:hover {
-    background: var(--accent-soft);
-  }
 </style>
   <link rel="stylesheet" href="resibulando-brand-v5.css?v=5">
   <script defer src="resibulando-brand-v5.js?v=5"></script>
@@ -2311,12 +2231,8 @@
 
                     <div>
                       <strong>Filtros</strong>
-
-                      <small>
-                        Área, status e período
-                      </small>
+                      <small>Área, status e período</small>
                     </div>
-
 
                     <button
                       id="theme-filter-menu-close"
@@ -2331,7 +2247,6 @@
 
 
                   <label class="theme-filter-field">
-
                     <span>Área</span>
 
                     <select
@@ -2339,63 +2254,43 @@
                       data-resibulando-area-select
                       data-blank-label="Todas as áreas"
                     >
-                      <option value="">
-                        Todas as áreas
-                      </option>
+                      <option value="">Todas as áreas</option>
                     </select>
-
                   </label>
 
 
                   <label class="theme-filter-field">
-
                     <span>Status</span>
 
                     <select
                       id="theme-completion-filter"
                       aria-label="Filtrar por conclusão"
                     >
-                      <option value="all">
-                        Feitos e não feitos
-                      </option>
-
-                      <option value="pending">
-                        Não feitos
-                      </option>
-
-                      <option value="completed">
-                        Feitos
-                      </option>
+                      <option value="all">Feitos e não feitos</option>
+                      <option value="pending">Não feitos</option>
+                      <option value="completed">Feitos</option>
                     </select>
-
                   </label>
 
 
                   <div class="theme-filter-date-grid">
 
                     <label class="theme-filter-field">
-
                       <span>De</span>
-
                       <input
                         id="theme-date-from"
                         type="date"
                         aria-label="Data inicial"
                       >
-
                     </label>
 
-
                     <label class="theme-filter-field">
-
                       <span>Até</span>
-
                       <input
                         id="theme-date-to"
                         type="date"
                         aria-label="Data final"
                       >
-
                     </label>
 
                   </div>
@@ -2436,7 +2331,6 @@
             <div class="theme-library-bulk">
 
               <label class="theme-bulk-check">
-
                 <input
                   id="theme-select-all"
                   type="checkbox"
@@ -2445,9 +2339,7 @@
                 <span>
                   Selecionar visíveis
                 </span>
-
               </label>
-
 
               <span id="theme-selected-count">
                 0 selecionadas
@@ -2487,7 +2379,6 @@
                     Remover para o deck
                   </button>
 
-
                   <button
                     id="theme-done-selected"
                     class="theme-bulk-menu-item"
@@ -2497,7 +2388,6 @@
                   >
                     Marcar selecionadas como já feitas
                   </button>
-
 
                   <button
                     id="theme-delete-selected"
@@ -2558,6 +2448,6 @@
   <script src="app.js?v=12.1"></script>
   <script src="study-mode.js?v=12.1"></script>
   <script src="cronograma-base-data.js?v=12.6"></script>
-  <script src="cronograma.js?v=13.3-caderno"></script>
+  <script src="cronograma.js?v=13.3-recovery"></script>
 </body>
 </html>

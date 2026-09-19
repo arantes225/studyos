@@ -1,65 +1,44 @@
 RESIBULANDO — FASE 13.3
-CADERNO DIGITAL TIPO DOCUMENTO
+RECUPERAÇÃO DO CRONOGRAMA
 
-O QUE FOI CRIADO
+Esta versão NÃO foi construída em cima da 13.1/13.2.
 
-1. NOVA PÁGINA: caderno.html
-Editor em formato de folha/documento, sem cartões para cada parágrafo.
-O conteúdo fica corrido como em um Google Docs.
+Ela foi reconstruída a partir da base 12.8, que era a base anterior
+estável do Cronograma, e recebeu somente as alterações solicitadas:
 
-2. CADA AULA/TEMA TEM SEU PRÓPRIO CADERNO
-Na lateral ficam os tópicos do Cronograma, inclusive aulas concluídas.
-Ao escolher uma aula, abre o documento correspondente.
+1. Um único ícone de filtro contendo:
+   - Área
+   - Feitos e não feitos
+   - Não feitos
+   - Feitos
+   - Data inicial
+   - Data final
 
-3. FORMATAÇÃO
-- Texto normal
-- Título 1
-- Título 2
-- Subtítulo
-- Negrito
-- Emojis
-- Post-it amarelo de alerta
+2. Menu de 3 pontos para aulas selecionadas:
+   - Remover para o deck
+   - Marcar selecionadas como já feitas
+   - Excluir selecionadas
 
-O título da aula já aparece grande e em negrito no topo do documento.
-Dentro das anotações você pode criar outros títulos/subtítulos e manter o texto corrido.
+3. A Lista de temas continua mostrando aulas concluídas.
 
-4. AUTOSAVE
-O caderno salva automaticamente cerca de 650 ms depois que você para de digitar.
-Também existe botão Salvar.
+O cronograma genérico e o reorganizador da base 12.8 foram preservados.
 
-5. AMBIENTAÇÃO
-Ao dar play/iniciar uma AULA pelo Cronograma, na Ambientação aparece:
+VALIDAÇÕES
+- sintaxe de cronograma.js: OK
+- sintaxe de cronograma-base-data.js: OK
+- integridade básica do HTML: OK
+- nenhum marcador de conflito Git
+- todos os IDs usados por getElementById no JS existem no HTML
 
-[Abrir caderno]
+ARQUIVOS PARA SUBSTITUIR
+- cronograma.html
+- cronograma.js
+- cronograma-base-data.js
 
-O botão abre em nova aba o caderno já selecionado exatamente na aula atual,
-sem interromper o cronômetro/Pomodoro da Ambientação.
-
-6. MENU LATERAL
-Adicionado Caderno dentro de Estudar.
-
-INSTALAÇÃO
-
-1. Rode SOMENTE este SQL uma vez no Supabase:
-   fase13_3_caderno_digital.sql
-
-2. Adicione/substitua:
-   caderno.html
-   caderno.js
-   caderno.css
-   ambientacao.html
-   ambientacao.js
-   ambientacao.css
-   app.js
-
-3. Publique:
-
-git add -A
-git commit -m "Adiciona caderno digital por aula"
-git pull --rebase origin main
-git push origin main
-
-4. Depois faça Ctrl + Shift + R.
+NÃO PRECISA RODAR SQL.
 
 IMPORTANTE
-Não rode SQL mestre. Use apenas fase13_3_caderno_digital.sql.
+Substitua os 3 arquivos juntos. Não misture cronograma.html de uma fase
+com cronograma.js de outra.
+
+Depois publique e faça Ctrl + Shift + R.
