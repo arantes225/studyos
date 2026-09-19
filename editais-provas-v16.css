@@ -1,0 +1,350 @@
+/* =========================================================
+   RESIBULANDO v16 — PROVAS
+   Menu ⋯, edição rápida de nota e histórico de notas de corte
+   ========================================================= */
+
+/* A antiga aba "Editar provas" deixa de ser usada. */
+[data-exam-mode="edit"],
+.exam-bulk-toolbar,
+.exam-card-select {
+  display: none !important;
+}
+
+.exam-card-top {
+  padding-left: 0 !important;
+}
+
+.exam-card-side {
+  flex: 0 0 auto;
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+
+.exam-card-menu-wrap {
+  position: relative;
+  z-index: 30;
+}
+
+.exam-card-menu-trigger {
+  width: 36px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 19px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.exam-card-menu-trigger:hover,
+.exam-card-menu-trigger[aria-expanded="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.exam-card-menu {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  width: 190px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.exam-card-menu[hidden] {
+  display: none !important;
+}
+
+.exam-card-menu button {
+  width: 100%;
+  min-height: 35px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.exam-card-menu button:hover {
+  background: var(--surface-2);
+}
+
+.exam-card-menu button.danger {
+  color: var(--danger);
+}
+
+/* Editar / Excluir antigos continuam no DOM só para reaproveitar a lógica
+   existente do site, mas deixam de aparecer visualmente. */
+.exam-card-actions [data-edit-exam],
+.exam-card-actions [data-delete-exam] {
+  display: none !important;
+}
+
+/* Agora entram Inscrição, Prova, Taxa, Resultado e Últimas notas de corte. */
+.exam-card-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.exam-card-info small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.exam-cutoff-card strong {
+  overflow-wrap: anywhere;
+}
+
+/* Semáforo da nota */
+.exam-score-comparison {
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.exam-score-comparison.red {
+  border-color: color-mix(in srgb, var(--danger) 42%, var(--border));
+  background: color-mix(in srgb, var(--danger) 10%, var(--surface-2));
+}
+
+.exam-score-comparison.yellow {
+  border-color: color-mix(in srgb, var(--warning) 48%, var(--border));
+  background: color-mix(in srgb, var(--warning) 12%, var(--surface-2));
+}
+
+.exam-score-comparison.green {
+  border-color: color-mix(in srgb, var(--success) 46%, var(--border));
+  background: color-mix(in srgb, var(--success) 11%, var(--surface-2));
+}
+
+.exam-score-comparison.red strong,
+.exam-score-comparison.red .exam-score-delta {
+  color: var(--danger);
+}
+
+.exam-score-comparison.yellow strong,
+.exam-score-comparison.yellow .exam-score-delta {
+  color: color-mix(in srgb, var(--warning) 78%, var(--text));
+}
+
+.exam-score-comparison.green strong,
+.exam-score-comparison.green .exam-score-delta {
+  color: var(--success);
+}
+
+/* Dialog de edição rápida */
+.exam-score-quick-dialog {
+  width: min(700px, calc(100vw - 28px));
+  max-height: calc(100vh - 40px);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.exam-score-quick-dialog::backdrop {
+  background: rgba(0, 0, 0, .35);
+}
+
+.exam-score-quick-dialog form {
+  padding: 22px;
+}
+
+.exam-score-quick-grid {
+  display: grid;
+  gap: 13px;
+  margin-top: 20px;
+}
+
+.exam-score-dialog-subtitle {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+/* Campo de notas de corte */
+.exam-cutoff-field {
+  display: grid;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-2);
+}
+
+.exam-cutoff-field-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.exam-cutoff-field-head > div > span {
+  display: block;
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.exam-cutoff-field-head small {
+  display: block;
+  max-width: 560px;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.exam-cutoff-add {
+  min-height: 34px;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+.exam-cutoff-list {
+  display: grid;
+  gap: 7px;
+}
+
+.exam-cutoff-row {
+  display: grid;
+  grid-template-columns: minmax(110px, .8fr) minmax(140px, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.exam-cutoff-row label {
+  display: grid;
+  gap: 5px;
+}
+
+.exam-cutoff-row label > span {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.exam-cutoff-row input {
+  width: 100%;
+  min-height: 39px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+}
+
+.exam-cutoff-row input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.exam-cutoff-remove {
+  width: 39px;
+  height: 39px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--danger);
+  font-size: 17px;
+  cursor: pointer;
+}
+
+/* Legenda visual dentro da edição rápida */
+.exam-score-legend {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 13px;
+}
+
+.exam-score-legend span {
+  padding: 8px 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font-size: 8px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.exam-score-legend .red {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface));
+}
+
+.exam-score-legend .yellow {
+  color: color-mix(in srgb, var(--warning) 78%, var(--text));
+  background: color-mix(in srgb, var(--warning) 10%, var(--surface));
+}
+
+.exam-score-legend .green {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 9%, var(--surface));
+}
+
+.exam-cutoff-storage-note {
+  min-height: 17px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.exam-cutoff-storage-note.local {
+  color: var(--warning);
+}
+
+@media (max-width: 1100px) {
+  .exam-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .exam-card-grid,
+  .exam-score-legend {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .exam-card-side {
+    width: 100%;
+    justify-items: stretch;
+  }
+
+  .exam-card-menu-wrap {
+    justify-self: end;
+  }
+}
+
+@media (max-width: 520px) {
+  .exam-card-grid,
+  .exam-score-legend,
+  .exam-cutoff-row {
+    grid-template-columns: 1fr;
+  }
+
+  .exam-cutoff-remove {
+    width: 100%;
+  }
+}

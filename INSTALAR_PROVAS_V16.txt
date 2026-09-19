@@ -1,0 +1,43 @@
+RESIBULANDO — PROVAS v16
+========================
+
+O que mudou:
+- remove a aba "Editar provas"
+- adiciona menu ⋯ acima do Status em cada prova
+- pelo menu:
+  • Registrar / editar nota
+  • Editar prova
+  • Excluir
+- adiciona "Últimas notas de corte" no card da prova
+- permite cadastrar até 8 notas de corte por ano/edição
+- compara sua nota com a nota de corte mais recente:
+  • vermelho: mais de 2 pontos abaixo
+  • amarelo: de 2 pontos abaixo até menos de 2 pontos acima
+  • verde: 2 ou mais pontos acima
+- a edição de nota abre um dialog pequeno e direto, sem precisar entrar na edição completa
+
+ARQUIVOS
+--------
+Substitua:
+- editais.html
+
+Adicione na raiz:
+- editais-provas-v16.css
+- editais-provas-v16.js
+
+Banco:
+- fase16_provas_notas_corte.sql
+
+PASSOS
+------
+1. Suba editais.html, editais-provas-v16.css e editais-provas-v16.js para a raiz do site.
+2. Rode fase16_provas_notas_corte.sql UMA VEZ no Supabase SQL Editor.
+3. Publique.
+4. Faça Ctrl+F5 no navegador.
+
+IMPORTANTE
+----------
+Mesmo antes de rodar o SQL, a edição da SUA NOTA continua funcionando.
+As notas de corte usam localStorage temporariamente se a coluna cutoff_history
+ainda não existir. Depois que a migration for aplicada, o script migra esse
+histórico para o Supabase automaticamente.
