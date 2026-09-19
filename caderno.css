@@ -1650,3 +1650,164 @@
     overflow-x: auto;
   }
 }
+
+
+/* =========================================================
+   RESIBULANDO — CADERNO V19
+   Menus compactos + fluxo de edição
+   ========================================================= */
+
+/* O menu ⋯ fica no canto superior direito da folha. */
+.notebook-paper {
+  position: relative;
+}
+
+.notebook-document-head {
+  position: static;
+  display: block;
+}
+
+.notebook-document-menu-wrap {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 45;
+}
+
+.notebook-document-menu {
+  top: calc(100% + 5px);
+  right: 0;
+}
+
+
+/* Menus da toolbar no mesmo padrão visual do emoji. */
+.notebook-tool-menu-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.notebook-tool-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 95;
+
+  min-width: 190px;
+
+  display: grid;
+  gap: 3px;
+
+  padding: 6px;
+
+  border: 1px solid var(--border);
+  border-radius: 11px;
+
+  background: var(--surface);
+
+  box-shadow:
+    0
+    18px
+    55px
+    rgba(15, 23, 42, .18);
+}
+
+.notebook-tool-menu[hidden] {
+  display: none !important;
+}
+
+.notebook-tool-menu button {
+  width: 100%;
+  min-height: 36px;
+
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+
+  padding: 0 9px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+  color: var(--text);
+
+  text-align: left;
+
+  font: inherit;
+  font-size: 10px;
+  font-weight: 750;
+
+  cursor: pointer;
+}
+
+.notebook-tool-menu button:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.notebook-tool-menu button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+
+.notebook-tool-menu button > span:first-child {
+  display: grid;
+  place-items: center;
+
+  min-width: 26px;
+
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.notebook-tool-menu button.important {
+  color: var(--accent);
+}
+
+.notebook-tool-menu button.warning {
+  color: #b77709;
+}
+
+.notebook-tool-menu button.memory {
+  color: #7956c6;
+}
+
+/*
+  Quando está somente leitura, a barra continua visível para
+  o usuário entender as ferramentas, mas fica claramente
+  desabilitada até ⋯ > Editar.
+*/
+.notebook-toolbar:has(
+  #notebook-save-now:disabled
+) {
+  opacity: .82;
+}
+
+
+/* Primeira edição tem aparência normal; após Salvar, leitura limpa. */
+.notebook-editor[contenteditable="false"] {
+  caret-color: transparent;
+}
+
+.notebook-editor[contenteditable="true"] {
+  caret-color: auto;
+}
+
+
+/* Menus compactos precisam caber na tela em mobile. */
+@media (max-width: 760px) {
+  .notebook-document-menu-wrap {
+    top: 10px;
+    right: 10px;
+  }
+
+  .notebook-tool-menu {
+    min-width: 178px;
+    max-width: calc(100vw - 30px);
+  }
+
+  .notebook-tool-menu-wrap:last-of-type .notebook-tool-menu {
+    left: auto;
+    right: 0;
+  }
+}
