@@ -176,14 +176,6 @@ function renderActivityCard(item) {
   const canMove = activityCanMove(item);
   const canStart = activityCanStart(item);
 
-  const areaText = item.area
-    ? `<span>${escapeDashboardHtml(item.area)}</span>`
-    : "";
-
-  const matterText = item.materia
-    ? `<span>${escapeDashboardHtml(item.materia)}</span>`
-    : "";
-
   const actions = [];
 
   if (canStart) {
@@ -206,6 +198,60 @@ function renderActivityCard(item) {
       `<button class="agenda-card-action move-action" type="button" data-move-key="${escapeDashboardHtml(item.agenda_key)}">Mover</button>`
     );
   }
+
+  const isCompactStudyBatch =
+    item.kind === "flashcards_batch"
+    || item.kind === "errors_batch";
+
+  if (isCompactStudyBatch) {
+    const count =
+      Number(
+        item.item_count
+        || 0
+      );
+
+    const quantityLabel =
+      item.kind === "flashcards_batch"
+        ? `${count} flashcard${count === 1 ? "" : "s"}`
+        : `${count} CCQ${count === 1 ? "" : "s"}`;
+
+    const areaLabel =
+      item.area
+        ? escapeDashboardHtml(item.area)
+        : "Sem área";
+
+    return `
+      <article
+        class="agenda-card ${meta.className} compact-study-batch"
+        ${canMove ? 'draggable="true"' : ""}
+        data-agenda-key="${escapeDashboardHtml(item.agenda_key)}"
+      >
+        <div class="agenda-card-top">
+          <span class="agenda-kind">${escapeDashboardHtml(meta.label)}</span>
+        </div>
+
+        <strong class="agenda-title compact-batch-quantity">
+          ${escapeDashboardHtml(quantityLabel)}
+        </strong>
+
+        <div class="agenda-meta compact-batch-area">
+          <span>${areaLabel}</span>
+        </div>
+
+        <div class="agenda-card-actions">
+          ${actions.join("")}
+        </div>
+      </article>
+    `;
+  }
+
+  const areaText = item.area
+    ? `<span>${escapeDashboardHtml(item.area)}</span>`
+    : "";
+
+  const matterText = item.materia
+    ? `<span>${escapeDashboardHtml(item.materia)}</span>`
+    : "";
 
   return `
     <article
