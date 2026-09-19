@@ -1,0 +1,57 @@
+RESIBULANDO v17 — QUESTÕES / SIMULADOS + ESTATÍSTICAS
+=========================================================
+
+QUESTÕES / SIMULADOS
+--------------------
+O dashboard da aba "Meus simulados" passa a mostrar somente:
+1. Quantidade de questões da semana
+2. % de acerto
+3. % de erro
+4. Gráfico linear de desempenho ao longo do tempo
+
+Também é adicionado, na barra de abas, o botão:
+"Iniciar lista ou simulado"
+
+Esse botão abre:
+ambientacao.html
+
+ESTATÍSTICAS
+------------
+Cada aba passa a usar 9 callouts pequenos:
+3 colunas × 3 linhas no desktop.
+
+Foram mantidos somente os indicadores mais relevantes de:
+- Geral
+- Aulas
+- Flashcards
+- Caderno de erros
+- Questões / Simulados
+
+A opção "Tudo" passa a se chamar:
+"Desde sempre"
+
+Os callouts também deixam de repetir frases de temporalidade como
+"no período", "no 30 dias" etc., porque a temporalidade já está
+selecionada no topo da página.
+
+INSTALAÇÃO
+----------
+1. Copie estes arquivos para a raiz:
+   - questoes-simulados-v17.css
+   - questoes-simulados-v17.js
+   - estatisticas-v17.css
+   - estatisticas-v17.js
+   - aplicar_v17.py
+
+2. Na raiz do projeto, execute:
+   python aplicar_v17.py
+
+3. Publique o site.
+
+4. Faça Ctrl+F5 no navegador.
+
+O script cria backups:
+- questoes-simulados.html.bak-v17
+- estatisticas.html.bak-v17
+
+Não há alteração de banco de dados nesta versão.

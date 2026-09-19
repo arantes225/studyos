@@ -1,0 +1,58 @@
+/* =========================================================
+   RESIBULANDO v17 — ESTATÍSTICAS EM 3 x 3
+   ========================================================= */
+
+.stats-summary-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 9px !important;
+}
+
+.stats-summary-card {
+  min-height: 104px !important;
+  padding: 12px !important;
+}
+
+.stats-summary-card > span {
+  font-size: 8px !important;
+}
+
+.stats-summary-card > strong {
+  margin-top: 6px !important;
+  font-size: 20px !important;
+}
+
+.stats-summary-card > small {
+  min-height: 13px !important;
+  margin-top: 4px !important;
+  font-size: 8px !important;
+}
+
+.stats-summary-viz {
+  margin-top: 7px !important;
+}
+
+.stats-summary-card.stats-v17-hidden {
+  display: none !important;
+}
+
+.stats-summary-box {
+  gap: 10px !important;
+}
+
+.stats-v17-period-note {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 750;
+}
+
+@media (max-width: 850px) {
+  .stats-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .stats-summary-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

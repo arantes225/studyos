@@ -1,0 +1,152 @@
+/* =========================================================
+   RESIBULANDO v17 — DASHBOARD ENXUTO DE QUESTÕES / SIMULADOS
+   ========================================================= */
+
+.qs-mode-section.qs-compact-dashboard.qs-v17-ready.active {
+  display: block !important;
+}
+
+.qs-compact-dashboard.qs-v17-ready > .qs-compact-card {
+  display: none !important;
+}
+
+.qs-v17-dashboard {
+  display: grid;
+  gap: 12px;
+}
+
+.qs-v17-top {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.qs-v17-stat,
+.qs-v17-trend {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.qs-v17-stat {
+  min-height: 116px;
+  padding: 15px;
+}
+
+.qs-v17-stat span {
+  display: block;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.qs-v17-stat strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 28px;
+  line-height: 1.05;
+}
+
+.qs-v17-stat small {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.qs-v17-stat.accuracy strong {
+  color: var(--success);
+}
+
+.qs-v17-stat.error strong {
+  color: var(--danger);
+}
+
+.qs-v17-trend {
+  padding: 16px;
+}
+
+.qs-v17-trend-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.qs-v17-trend-head h2 {
+  margin: 4px 0 0;
+  font-size: 16px;
+}
+
+.qs-v17-trend-head p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.qs-v17-trend-current {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.qs-v17-chart {
+  min-height: 210px;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-2);
+}
+
+.qs-v17-chart .qs-fortnight-chart {
+  min-height: 210px;
+  margin: 0;
+  border: 0;
+  background: transparent;
+}
+
+.qs-v17-chart svg {
+  min-width: 650px;
+}
+
+.qs-v17-start-button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  padding: 0 14px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--accent);
+  color: white !important;
+  font-size: 10px;
+  font-weight: 850;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.qs-v17-start-button:hover {
+  filter: brightness(.97);
+}
+
+@media (max-width: 820px) {
+  .qs-v17-top {
+    grid-template-columns: 1fr;
+  }
+
+  .qs-v17-trend-head {
+    flex-direction: column;
+  }
+
+  .qs-v17-start-button {
+    width: 100%;
+    margin-left: 0;
+  }
+}
