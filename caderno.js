@@ -3473,39 +3473,278 @@ function longestDarkRunInColumn(
 }
 
 
-function detectNotebookTableGrid(
-  canvas
+function notebookPixelDifference(
+  pixels,
+  firstOffset,
+  secondOffset
 ) {
-  const context =
-    canvas.getContext(
-      "2d",
-      {
-        willReadFrequently:
-          true
-      }
-    );
+  return Math.max(
+    Math.abs(
+      pixels[firstOffset]
+      - pixels[secondOffset]
+    ),
+    Math.abs(
+      pixels[firstOffset + 1]
+      - pixels[secondOffset + 1]
+    ),
+    Math.abs(
+      pixels[firstOffset + 2]
+      - pixels[secondOffset + 2]
+    )
+  );
+}
 
-  const width =
-    canvas.width;
 
-  const height =
-    canvas.height;
-
-  const image =
-    context.getImageData(
-      0,
-      0,
-      width,
-      height
-    );
-
-  const pixels =
-    image.data;
-
+function detectNotebookGridByEdges(
+  pixels,
+  width,
+  height
+) {
   /*
-    Linhas cinza-claro também entram. Usamos "maior sequência
-    contínua" de pixels escuros, pois textos não costumam formar
-    traços horizontais/verticais tão longos quanto uma grade.
+    As bordas de tabelas reais muitas vezes são muito claras
+    (#d9d9d9, azul-claro etc.). Em vez de procurar "linha escura",
+    medimos a mudança de cor entre pixels vizinhos.
+
+    Uma divisória vertical verdadeira provoca essa mudança em
+    muitos Y consecutivos. Letras também criam bordas, mas por
+    poucos pixels de altura.
+  */
+  const differenceThreshold =
+    12;
+
+  const verticalCandidates =
+    [];
+
+  const minVerticalRun =
+    Math.max(
+      12,
+      Math.round(
+        height * 0.04
+      )
+    );
+
+  const minVerticalFraction =
+    0.10;
+
+  for (
+    let x = 1;
+    x < width;
+    x += 1
+  ) {
+    let hits =
+      0;
+
+    let run =
+      0;
+
+    let longestRun =
+      0;
+
+    for (
+      let y = 0;
+      y < height;
+      y += 1
+    ) {
+      const current =
+        (
+          y * width
+          + x
+        ) * 4;
+
+      const previous =
+        (
+          y * width
+          + (
+            x - 1
+          )
+        ) * 4;
+
+      const edge =
+        notebookPixelDifference(
+          pixels,
+          current,
+          previous
+        )
+        >= differenceThreshold;
+
+      if (
+        edge
+      ) {
+        hits +=
+          1;
+
+        run +=
+          1;
+
+        if (
+          run > longestRun
+        ) {
+          longestRun =
+            run;
+        }
+      } else {
+        run =
+          0;
+      }
+    }
+
+    if (
+      hits / height
+        >= minVerticalFraction
+      &&
+      longestRun
+        >= minVerticalRun
+    ) {
+      verticalCandidates.push(
+        x
+      );
+    }
+  }
+
+
+  const horizontalCandidates =
+    [];
+
+  const minHorizontalFraction =
+    0.52;
+
+  const minHorizontalRun =
+    Math.max(
+      55,
+      Math.round(
+        width * 0.22
+      )
+    );
+
+  for (
+    let y = 1;
+    y < height;
+    y += 1
+  ) {
+    let hits =
+      0;
+
+    let run =
+      0;
+
+    let longestRun =
+      0;
+
+    for (
+      let x = 0;
+      x < width;
+      x += 1
+    ) {
+      const current =
+        (
+          y * width
+          + x
+        ) * 4;
+
+      const previous =
+        (
+          (
+            y - 1
+          ) * width
+          + x
+        ) * 4;
+
+      const edge =
+        notebookPixelDifference(
+          pixels,
+          current,
+          previous
+        )
+        >= differenceThreshold;
+
+      if (
+        edge
+      ) {
+        hits +=
+          1;
+
+        run +=
+          1;
+
+        if (
+          run > longestRun
+        ) {
+          longestRun =
+            run;
+        }
+      } else {
+        run =
+          0;
+      }
+    }
+
+    if (
+      hits / width
+        >= minHorizontalFraction
+      &&
+      longestRun
+        >= minHorizontalRun
+    ) {
+      horizontalCandidates.push(
+        y
+      );
+    }
+  }
+
+
+  const groupingGap =
+    Math.max(
+      4,
+      Math.round(
+        Math.min(
+          width,
+          height
+        ) * 0.004
+      )
+    );
+
+  const vertical =
+    groupNotebookLinePositions(
+      verticalCandidates,
+      groupingGap
+    );
+
+  const horizontal =
+    groupNotebookLinePositions(
+      horizontalCandidates,
+      groupingGap
+    );
+
+
+  if (
+    vertical.length < 2
+    ||
+    horizontal.length < 2
+    ||
+    vertical.length > 16
+    ||
+    horizontal.length > 60
+  ) {
+    return null;
+  }
+
+
+  return {
+    vertical,
+    horizontal,
+    method:
+      "edges"
+  };
+}
+
+
+function detectNotebookGridByDarkRuns(
+  pixels,
+  width,
+  height
+) {
+  /*
+    Fallback para tabelas com linhas pretas/cinza-escuras.
   */
   const thresholds = [
     205,
@@ -3513,11 +3752,10 @@ function detectNotebookTableGrid(
     235
   ];
 
-  let best =
-    {
-      vertical: [],
-      horizontal: []
-    };
+  let best = {
+    vertical: [],
+    horizontal: []
+  };
 
   for (
     const threshold
@@ -3616,51 +3854,6 @@ function detectNotebookTableGrid(
     }
   }
 
-  /*
-    Remove linhas quase duplicadas e grades impossíveis.
-  */
-  const dedupe =
-    values => {
-      const result =
-        [];
-
-      for (
-        const value
-        of values
-          .slice()
-          .sort(
-            (a, b) =>
-              a - b
-          )
-      ) {
-        if (
-          !result.length
-          ||
-          value
-          - result[
-              result.length - 1
-            ]
-          >= 8
-        ) {
-          result.push(
-            value
-          );
-        }
-      }
-
-      return result;
-    };
-
-  best.vertical =
-    dedupe(
-      best.vertical
-    );
-
-  best.horizontal =
-    dedupe(
-      best.horizontal
-    );
-
   if (
     best.vertical.length < 2
     ||
@@ -3673,7 +3866,178 @@ function detectNotebookTableGrid(
     return null;
   }
 
-  return best;
+  return {
+    ...best,
+    method:
+      "dark"
+  };
+}
+
+
+function normalizeNotebookGridLines(
+  values,
+  minSpacing
+) {
+  const result =
+    [];
+
+  for (
+    const value
+    of values
+      .slice()
+      .sort(
+        (a, b) =>
+          a - b
+      )
+  ) {
+    if (
+      !result.length
+      ||
+      value
+      - result[
+          result.length - 1
+        ]
+      >= minSpacing
+    ) {
+      result.push(
+        value
+      );
+    } else {
+      /*
+        Se duas bordas fazem parte da mesma linha grossa,
+        usa o ponto médio em vez de manter duas colunas.
+      */
+      const lastIndex =
+        result.length - 1;
+
+      result[
+        lastIndex
+      ] =
+        Math.round(
+          (
+            result[
+              lastIndex
+            ]
+            + value
+          ) / 2
+        );
+    }
+  }
+
+  return result;
+}
+
+
+function detectNotebookTableGrid(
+  canvas
+) {
+  const context =
+    canvas.getContext(
+      "2d",
+      {
+        willReadFrequently:
+          true
+      }
+    );
+
+  const width =
+    canvas.width;
+
+  const height =
+    canvas.height;
+
+  const image =
+    context.getImageData(
+      0,
+      0,
+      width,
+      height
+    );
+
+  const pixels =
+    image.data;
+
+
+  /*
+    PRIMEIRA ESCOLHA: bordas por diferença de cor.
+    Isso foi feito para tabelas com linhas muito claras,
+    fundos azuis/cinzas e cabeçalhos coloridos.
+  */
+  let grid =
+    detectNotebookGridByEdges(
+      pixels,
+      width,
+      height
+    );
+
+
+  /*
+    Se a borda é escura e o detector de diferenças não
+    conseguiu montar uma grade coerente, usa o método antigo.
+  */
+  if (
+    !grid
+  ) {
+    grid =
+      detectNotebookGridByDarkRuns(
+        pixels,
+        width,
+        height
+      );
+  }
+
+
+  if (
+    !grid
+  ) {
+    return null;
+  }
+
+
+  const minVerticalSpacing =
+    Math.max(
+      9,
+      Math.round(
+        width * 0.012
+      )
+    );
+
+  const minHorizontalSpacing =
+    Math.max(
+      8,
+      Math.round(
+        height * 0.018
+      )
+    );
+
+
+  grid.vertical =
+    normalizeNotebookGridLines(
+      grid.vertical,
+      minVerticalSpacing
+    );
+
+  grid.horizontal =
+    normalizeNotebookGridLines(
+      grid.horizontal,
+      minHorizontalSpacing
+    );
+
+
+  if (
+    grid.vertical.length < 2
+    ||
+    grid.horizontal.length < 2
+    ||
+    grid.vertical.length > 16
+    ||
+    grid.horizontal.length > 60
+  ) {
+    return null;
+  }
+
+
+  return grid;
 }
 
 
