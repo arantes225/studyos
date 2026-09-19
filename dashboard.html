@@ -786,17 +786,26 @@
 }
 
 .dashboard-passive-ccq-stage {
-  width: 100%;
-  min-height: 80px;
-  height: 100%;
-  align-self: stretch;
-  justify-self: stretch;
-  display: grid;
-  place-content: center;
-  place-items: center;
+  position: absolute;
+
+  top: 34px;
+  right: 10px;
+  bottom: 4px;
+  left: 10px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
   gap: 8px;
+
   text-align: center;
-  transition: transform 300ms ease, opacity 300ms ease;
+
+  transition:
+    transform 300ms ease,
+    opacity 300ms ease;
 }
 
 .dashboard-passive-ccq-stage.is-leaving {
@@ -811,24 +820,36 @@
 
 .dashboard-passive-ccq-text {
   width: 100%;
-  margin: auto;
+  max-width: 100%;
+  margin: 0 auto;
+
   display: -webkit-box;
   overflow: hidden;
+
   color: var(--text);
+
   font-size: 29px;
   font-weight: 820;
   line-height: 1.25;
+
   text-align: center;
+
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
 }
 
 .dashboard-passive-ccq-meta {
   width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+
   overflow: hidden;
+
   color: var(--muted);
+
   font-size: 8.5px;
   font-weight: 700;
+
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
