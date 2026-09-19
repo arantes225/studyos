@@ -1562,6 +1562,241 @@
       }
     }
 
+
+    /* =====================================================
+       IMPORTAR PRINT DO GABARITO
+       ===================================================== */
+
+    .qs-answer-import-dialog {
+      width: min(980px, calc(100vw - 28px));
+      max-height: calc(100vh - 28px);
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 24px 80px rgba(10, 15, 25, .24);
+    }
+
+    .qs-answer-import-dialog::backdrop {
+      background: rgba(9, 13, 22, .48);
+      backdrop-filter: blur(3px);
+    }
+
+    .qs-answer-import-shell {
+      display: grid;
+      gap: 14px;
+      max-height: calc(100vh - 28px);
+      padding: 20px;
+      overflow: auto;
+    }
+
+    .qs-answer-import-headline {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .qs-answer-import-headline h2 {
+      margin: 4px 0 0;
+      font-size: 20px;
+    }
+
+    .qs-answer-import-headline p {
+      max-width: 720px;
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.55;
+    }
+
+    .qs-answer-import-privacy {
+      display: grid;
+      gap: 3px;
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: var(--surface-2);
+    }
+
+    .qs-answer-import-privacy strong {
+      font-size: 10px;
+    }
+
+    .qs-answer-import-privacy span {
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.45;
+    }
+
+    .qs-answer-shot-drop {
+      display: grid;
+      gap: 5px;
+      padding: 16px;
+      border: 1px dashed var(--border);
+      border-radius: 13px;
+      background: var(--surface-2);
+      cursor: pointer;
+    }
+
+    .qs-answer-shot-drop > span {
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .qs-answer-shot-drop > small {
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .qs-answer-shot-drop input {
+      margin-top: 7px;
+    }
+
+    .qs-answer-shot-preview {
+      display: grid;
+      grid-template-columns:
+        repeat(auto-fill, minmax(130px, 1fr));
+      gap: 9px;
+    }
+
+    .qs-answer-shot-thumb {
+      margin: 0;
+      padding: 7px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: var(--surface-2);
+    }
+
+    .qs-answer-shot-thumb img {
+      display: block;
+      width: 100%;
+      height: 115px;
+      object-fit: contain;
+      border-radius: 7px;
+      background: #fff;
+    }
+
+    .qs-answer-shot-thumb figcaption {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 8px;
+      text-align: center;
+    }
+
+    .qs-answer-import-toolbar,
+    .qs-answer-import-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .qs-answer-import-table {
+      display: grid;
+      gap: 5px;
+    }
+
+    .qs-answer-import-grid {
+      display: grid;
+      grid-template-columns:
+        80px
+        minmax(115px, .8fr)
+        minmax(90px, .6fr)
+        minmax(110px, .8fr);
+      gap: 8px;
+      align-items: center;
+      min-height: 38px;
+      padding: 6px 9px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface);
+      font-size: 10px;
+    }
+
+    .qs-answer-import-head {
+      min-height: 30px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .qs-answer-import-row.correct {
+      border-color:
+        color-mix(
+          in srgb,
+          var(--success) 40%,
+          var(--border)
+        );
+    }
+
+    .qs-answer-import-row.wrong {
+      border-color:
+        color-mix(
+          in srgb,
+          var(--danger) 40%,
+          var(--border)
+        );
+    }
+
+    .qs-answer-import-row.annulled {
+      opacity: .8;
+    }
+
+    .qs-answer-import-row select {
+      width: 100%;
+      min-height: 30px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--surface);
+      color: var(--text);
+      padding: 0 8px;
+    }
+
+    .qs-answer-official,
+    .qs-answer-import-result {
+      font-weight: 800;
+    }
+
+    .qs-answer-import-row.correct
+    .qs-answer-import-result {
+      color: var(--success);
+    }
+
+    .qs-answer-import-row.wrong
+    .qs-answer-import-result {
+      color: var(--danger);
+    }
+
+    .qs-answer-import-empty {
+      padding: 18px;
+      border: 1px dashed var(--border);
+      border-radius: 11px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 10px;
+    }
+
+    @media (max-width: 700px) {
+      .qs-answer-import-grid {
+        grid-template-columns:
+          65px
+          1fr
+          70px
+          86px;
+        font-size: 9px;
+      }
+
+      .qs-answer-import-shell {
+        padding: 14px;
+      }
+    }
+
   </style>
   <link rel="stylesheet" href="resibulando-brand-v5.css?v=5">
   <script defer src="resibulando-brand-v5.js?v=5"></script>
@@ -2099,6 +2334,14 @@
             </div>
 
             <div class="qs-answer-actions" style="margin-top:14px">
+              <button
+                id="qs-open-answer-import"
+                class="button secondary"
+                type="button"
+              >
+                Importar print do gabarito
+              </button>
+
               <button id="qs-save-key" class="button primary" type="button">
                 Salvar gabarito
               </button>
@@ -2117,6 +2360,109 @@
       </div>
     </main>
   </div>
+
+
+  <dialog
+    id="qs-answer-import-dialog"
+    class="qs-answer-import-dialog"
+  >
+    <div class="qs-answer-import-shell">
+      <div class="qs-answer-import-headline">
+        <div>
+          <span class="badge accent">
+            Correção automática
+          </span>
+
+          <h2>
+            Importar print do gabarito
+          </h2>
+
+          <p>
+            Envie um ou mais prints com as respostas. O Resibulando lê as questões,
+            compara com o gabarito oficial extraído do PDF e mostra uma prévia antes
+            de salvar.
+          </p>
+        </div>
+
+        <button
+          id="qs-answer-import-close"
+          class="qs-dialog-close"
+          type="button"
+          aria-label="Fechar"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="qs-answer-import-privacy">
+        <strong>Privacidade</strong>
+        <span>
+          Os prints são processados localmente no navegador e não são enviados ao
+          Supabase. Depois de aplicar ou cancelar, as imagens são descartadas da memória.
+        </span>
+      </div>
+
+      <label class="qs-answer-shot-drop">
+        <span>Selecionar print(s)</span>
+        <small>
+          PNG, JPG ou captura de tela. Você pode selecionar várias imagens.
+        </small>
+
+        <input
+          id="qs-answer-screenshot-files"
+          type="file"
+          accept="image/*"
+          multiple
+        >
+      </label>
+
+      <div
+        id="qs-answer-screenshot-preview"
+        class="qs-answer-shot-preview"
+      ></div>
+
+      <div class="qs-answer-import-toolbar">
+        <button
+          id="qs-read-answer-screenshots"
+          class="button secondary"
+          type="button"
+        >
+          Ler print(s)
+        </button>
+
+        <span
+          id="qs-answer-import-status"
+          class="qs-status"
+          aria-live="polite"
+        ></span>
+      </div>
+
+      <div
+        id="qs-answer-import-table"
+        class="qs-answer-import-table"
+      ></div>
+
+      <div class="qs-answer-import-actions">
+        <button
+          id="qs-apply-answer-import"
+          class="button primary"
+          type="button"
+          disabled
+        >
+          Aplicar resultados
+        </button>
+
+        <button
+          id="qs-answer-import-cancel"
+          class="button secondary"
+          type="button"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </dialog>
+
 
   <dialog
     id="qs-edit-dialog"
@@ -2196,8 +2542,9 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="supabase.js"></script>
   <script src="app.js?v=resibulando5"></script>
-  <script src="questoes-simulados.js?v=11.16-gallery"></script>
+  <script src="questoes-simulados.js?v=11.17-answer-shot"></script>
 </body>
 </html>

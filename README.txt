@@ -1,50 +1,73 @@
-RESIBULANDO — GALERIA TEMPORÁRIA DE IMAGENS DOS ERROS
+RESIBULANDO — IMPORTAR PRINT DO GABARITO
 
-O QUE MUDA
-- As imagens que o importador já detectou e salvou agora aparecem como
-  uma galeria quando você marca uma questão como "Errei".
-- A escolha da imagem é OPCIONAL.
-- Você pode selecionar qualquer imagem detectada no simulado.
-- A imagem escolhida é copiada para a entrada correspondente no
-  Caderno de Erros.
-- Depois que os erros são enviados ao Caderno, a galeria temporária
-  daquele simulado é apagada.
-- A cópia que foi enviada ao Caderno NÃO é apagada.
+NOVO FLUXO
+1. Abra um simulado.
+2. Clique em "Importar print do gabarito".
+3. Selecione um ou mais prints.
+4. Clique em "Ler print(s)".
+5. O Resibulando usa OCR no navegador.
+6. Ele compara a resposta reconhecida com o gabarito oficial extraído do PDF.
+7. Uma prévia mostra:
+   - questão
+   - resposta reconhecida
+   - resposta oficial
+   - acerto / erro / anulada
+8. Você pode corrigir manualmente qualquer letra reconhecida.
+9. Clique em "Aplicar resultados".
+10. Acertos e erros são preenchidos automaticamente no simulado.
 
-FLUXO
-1. Importar PDF.
-2. Abrir o simulado.
-3. Marcar "Errei".
-4. Preencher Área, Resposta correta e CCQ.
-5. Se quiser, escolher uma imagem da galeria.
-6. Salvar gabarito.
-7. Enviar erros ao Caderno.
-8. O Resibulando:
-   - cria o erro;
-   - copia a imagem selecionada para o Caderno;
-   - marca o erro como enviado;
-   - apaga a galeria temporária do simulado.
+IMPORTANTE SOBRE OS PRINTS
+- Os prints NÃO são enviados ao Supabase.
+- Eles são processados localmente no navegador.
+- Ao clicar em "Aplicar resultados", os arquivos são descartados da memória.
+- Ao clicar em "Cancelar" ou fechar o simulado, também são descartados.
+- Portanto não ficam salvos no Storage.
 
-IMPORTANTE
-Este patch parte do princípio de que o SQL anterior já foi rodado:
-question_items.image_path
+GABARITO OFICIAL
+A partir desta versão, o gabarito encontrado no PDF do MedCof é salvo em:
+question_items.official_answer
 
-Como você informou que as imagens já estavam sendo reconhecidas e salvas,
-NÃO há SQL novo nesta versão.
+Para simulados MedCof antigos, ao usar o importador de print, o sistema tenta
+baixar o PDF original já salvo no bucket docmap, recuperar o gabarito e preencher
+official_answer automaticamente.
 
-ARQUIVOS PARA SUBSTITUIR
-- questoes-simulados.js
-- questoes-simulados.html
+QUESTÕES ANULADAS
+X no gabarito oficial é mostrado como "Anulada" e não é tratado como erro.
+Na estrutura atual de métricas ela é persistida como correta para não penalizar
+o usuário.
 
-PUBLICAR
+OCR
+O recurso usa Tesseract.js diretamente no navegador.
+Reconhece formatos como:
+- 1 A
+- 1) A
+- 1. A
+- Q1 A
+- Questão 1: A
+- várias questões no mesmo print
+
+Também tenta reconhecer textos como:
+- Questão 1 correta
+- Questão 2 errada
+
+Se alguma linha sair errada, corrija a letra na prévia antes de aplicar.
+
+INSTALAÇÃO
+1. No Supabase SQL Editor, rode SOMENTE:
+   fase11_17_answer_screenshot.sql
+
+2. Substitua na raiz do projeto:
+   - questoes-simulados.html
+   - questoes-simulados.js
+
+3. Publique:
+
 git add -A
-git commit -m "Adiciona galeria de imagens aos erros"
+git commit -m "Adiciona correcao de simulado por print"
 git pull --rebase origin main
 git push origin main
 
-Depois:
+4. Depois do GitHub Pages atualizar:
 Ctrl + Shift + R
 
-OBSERVAÇÃO
-O PDF original continua salvo normalmente. O que é apagado após o envio
-são apenas os PNGs temporários da galeria.
+NÃO precisa criar bucket novo.

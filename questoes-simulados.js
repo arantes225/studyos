@@ -27,7 +27,16 @@ const qsState = {
     value = image_path da galeria
   */
   imageSelections:
-    new Map()
+    new Map(),
+
+  /*
+    Prints do gabarito/respostas são mantidos
+    SOMENTE na memória do navegador.
+    Nunca são enviados ao Supabase.
+  */
+  answerScreenshotFiles: [],
+  answerScreenshotUrls: [],
+  answerImportRows: []
 };
 
 const AREA_OPTIONS = [
@@ -1905,7 +1914,8 @@ async function extractQuestionsFromPdf(
 
   return {
     questions,
-    questionImages
+    questionImages,
+    answerKey
   };
 }
 
@@ -2283,7 +2293,8 @@ async function importPdf() {
 
     const {
       questions,
-      questionImages
+      questionImages,
+      answerKey
     } =
       extraction;
 
@@ -2297,6 +2308,13 @@ async function importPdf() {
       user_id: qsState.user.id,
       set_id: setRecord.id,
       ...question,
+
+      official_answer:
+        answerKey[
+          question.question_number
+        ]
+        || null,
+
       image_path:
         imagePaths[
           question.question_number
@@ -4506,6 +4524,219 @@ async function attachQuestionImageUrls(
 }
 
 
+async function extractOfficialAnswerKeyFromPdfBlob(
+  blob
+) {
+  if (!window.pdfjsLib) {
+    return {};
+  }
+
+  const buffer =
+    await blob.arrayBuffer();
+
+  const pdf =
+    await window.pdfjsLib
+      .getDocument({
+        data: buffer
+      })
+      .promise;
+
+  const lines = [];
+  const pageTexts = [];
+
+  for (
+    let pageNumber = 1;
+    pageNumber <= pdf.numPages;
+    pageNumber += 1
+  ) {
+    const page =
+      await pdf.getPage(
+        pageNumber
+      );
+
+    const content =
+      await page
+        .getTextContent();
+
+    const pageText =
+      normalizeLine(
+        content.items
+          .map(
+            (item) =>
+              item.str || ""
+          )
+          .join(" ")
+      );
+
+    pageTexts.push(
+      pageText
+    );
+
+    lines.push(
+      ...groupTextItemsIntoLines(
+        content.items
+      )
+    );
+  }
+
+  const direct =
+    extractMedCofAnswerKey(
+      lines
+    );
+
+  if (
+    Object.keys(
+      direct
+    ).length
+  ) {
+    return direct;
+  }
+
+  return extractMedCofAnswerKey(
+    buildLooseTextLines(
+      pageTexts
+    )
+  );
+}
+
+
+async function backfillOfficialAnswerKeyFromSourcePdf() {
+  if (
+    !qsState.currentSet?.source_file_path
+  ) {
+    return 0;
+  }
+
+  const {
+    data: pdfBlob,
+    error
+  } =
+    await qsSb
+      .storage
+      .from(
+        "docmap"
+      )
+      .download(
+        qsState.currentSet
+          .source_file_path
+      );
+
+  if (error) {
+    console.warn(
+      "Não foi possível baixar o PDF original para recuperar o gabarito:",
+      error
+    );
+
+    return 0;
+  }
+
+  const answerKey =
+    await extractOfficialAnswerKeyFromPdfBlob(
+      pdfBlob
+    );
+
+  const rows =
+    qsState.items
+      .map(
+        (item) => ({
+          id: item.id,
+          official_answer:
+            answerKey[
+              item.question_number
+            ]
+            || null
+        })
+      )
+      .filter(
+        (row) =>
+          Boolean(
+            row.official_answer
+          )
+      );
+
+  if (!rows.length) {
+    return 0;
+  }
+
+  let updated = 0;
+
+  for (const row of rows) {
+    const {
+      error: updateError
+    } =
+      await qsSb
+        .from(
+          "question_items"
+        )
+        .update({
+          official_answer:
+            row.official_answer
+        })
+        .eq(
+          "id",
+          row.id
+        );
+
+    if (!updateError) {
+      updated += 1;
+
+      const localItem =
+        qsState.items.find(
+          (item) =>
+            item.id === row.id
+        );
+
+      if (localItem) {
+        localItem.official_answer =
+          row.official_answer;
+      }
+    }
+  }
+
+  return updated;
+}
+
+
+async function ensureOfficialAnswerKey() {
+  const known =
+    qsState.items
+      .filter(
+        (item) =>
+          Boolean(
+            item.official_answer
+          )
+      )
+      .length;
+
+  if (
+    known
+    >= Math.max(
+      1,
+      qsState.items.length - 1
+    )
+  ) {
+    return known;
+  }
+
+  try {
+    const recovered =
+      await backfillOfficialAnswerKeyFromSourcePdf();
+
+    return Math.max(
+      known,
+      recovered
+    );
+  } catch (error) {
+    console.warn(
+      "Falha ao recuperar gabarito oficial:",
+      error
+    );
+
+    return known;
+  }
+}
+
+
 async function openSet(setId) {
   const set =
     qsState.sets.find(
@@ -4551,6 +4782,7 @@ async function openSet(setId) {
 
   if (changingSet) {
     qsState.imageSelections.clear();
+    clearAnswerScreenshotMemory();
   }
 
   const items =
@@ -4860,6 +5092,1127 @@ function bindErrorImagePickerEvents(
             );
           }
         );
+      }
+    );
+}
+
+
+function clearAnswerScreenshotMemory() {
+  for (
+    const url
+    of qsState.answerScreenshotUrls
+  ) {
+    try {
+      URL.revokeObjectURL(
+        url
+      );
+    } catch {}
+  }
+
+  qsState.answerScreenshotFiles =
+    [];
+
+  qsState.answerScreenshotUrls =
+    [];
+
+  qsState.answerImportRows =
+    [];
+
+  const input =
+    document.getElementById(
+      "qs-answer-screenshot-files"
+    );
+
+  if (input) {
+    input.value = "";
+  }
+
+  const preview =
+    document.getElementById(
+      "qs-answer-screenshot-preview"
+    );
+
+  if (preview) {
+    preview.innerHTML = "";
+  }
+
+  const table =
+    document.getElementById(
+      "qs-answer-import-table"
+    );
+
+  if (table) {
+    table.innerHTML = "";
+  }
+
+  const applyButton =
+    document.getElementById(
+      "qs-apply-answer-import"
+    );
+
+  if (applyButton) {
+    applyButton.disabled =
+      true;
+  }
+}
+
+
+function setAnswerImportStatus(
+  message,
+  type = ""
+) {
+  const element =
+    document.getElementById(
+      "qs-answer-import-status"
+    );
+
+  if (!element) {
+    return;
+  }
+
+  element.textContent =
+    message || "";
+
+  element.className =
+    `qs-status ${
+      type
+        ? type
+        : ""
+    }`;
+}
+
+
+function normalizeOcrAnswerText(
+  text
+) {
+  return String(
+    text || ""
+  )
+    .replace(
+      /[|]/g,
+      " "
+    )
+    .replace(
+      /[–—]/g,
+      "-"
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
+    .trim();
+}
+
+
+function parseAnswerPairsFromOcr(
+  rawText
+) {
+  const text =
+    normalizeOcrAnswerText(
+      rawText
+    );
+
+  const found =
+    new Map();
+
+  /*
+    Exemplos aceitos:
+    1 A
+    1) A
+    1. A
+    Q1 A
+    Questão 1: A
+    1 - A
+    e várias duplas na mesma linha.
+  */
+  const pairRegex =
+    /(?:QUEST(?:Ã|A)O\s*|QUESTAO\s*|Q\s*)?(\d{1,3})\s*[\)\.\-:\s]\s*([A-E])\b/gi;
+
+  let match;
+
+  while (
+    (
+      match =
+        pairRegex.exec(
+          text
+        )
+    )
+  ) {
+    const number =
+      Number(
+        match[1]
+      );
+
+    const answer =
+      match[2]
+        .toUpperCase();
+
+    if (
+      number > 0
+      && number <= 500
+    ) {
+      found.set(
+        number,
+        {
+          question_number:
+            number,
+          user_answer:
+            answer,
+          status_hint:
+            null
+        }
+      );
+    }
+  }
+
+  /*
+    Alguns sistemas mostram apenas:
+    Questão 12 correta
+    Questão 13 errada
+  */
+  const statusRegex =
+    /(?:QUEST(?:Ã|A)O\s*|QUESTAO\s*|Q\s*)?(\d{1,3})\s*[\)\.\-:\s]*.*?\b(CORRETA|CORRETO|CERTA|CERTO|ERRADA|ERRADO|INCORRETA|INCORRETO)\b/gi;
+
+  while (
+    (
+      match =
+        statusRegex.exec(
+          text
+        )
+    )
+  ) {
+    const number =
+      Number(
+        match[1]
+      );
+
+    const word =
+      match[2]
+        .toUpperCase();
+
+    const status =
+      /ERRAD|INCORRET/
+        .test(
+          word
+        )
+        ? "wrong"
+        : "correct";
+
+    const previous =
+      found.get(
+        number
+      );
+
+    found.set(
+      number,
+      {
+        question_number:
+          number,
+        user_answer:
+          previous?.user_answer
+          || null,
+        status_hint:
+          status
+      }
+    );
+  }
+
+  return Array.from(
+    found.values()
+  );
+}
+
+
+async function prepareScreenshotForOcr(
+  file
+) {
+  const bitmap =
+    await createImageBitmap(
+      file
+    );
+
+  const maxSide =
+    2600;
+
+  const scale =
+    Math.min(
+      2,
+      maxSide
+      / Math.max(
+        bitmap.width,
+        bitmap.height
+      )
+    );
+
+  const width =
+    Math.max(
+      bitmap.width,
+      Math.round(
+        bitmap.width
+        * Math.max(
+          1,
+          scale
+        )
+      )
+    );
+
+  const height =
+    Math.max(
+      bitmap.height,
+      Math.round(
+        bitmap.height
+        * Math.max(
+          1,
+          scale
+        )
+      )
+    );
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+  canvas.width =
+    width;
+
+  canvas.height =
+    height;
+
+  const context =
+    canvas.getContext(
+      "2d",
+      {
+        alpha: false
+      }
+    );
+
+  context.fillStyle =
+    "#ffffff";
+
+  context.fillRect(
+    0,
+    0,
+    width,
+    height
+  );
+
+  context.drawImage(
+    bitmap,
+    0,
+    0,
+    width,
+    height
+  );
+
+  bitmap.close?.();
+
+  return canvas;
+}
+
+
+function answerImportRowForItem(
+  item,
+  detected
+) {
+  const official =
+    item.official_answer
+    || null;
+
+  const userAnswer =
+    detected?.user_answer
+    || null;
+
+  const statusHint =
+    detected?.status_hint
+    || null;
+
+  let result =
+    null;
+
+  if (
+    official === "X"
+  ) {
+    result =
+      "annulled";
+  } else if (
+    statusHint
+    === "correct"
+    || statusHint
+    === "wrong"
+  ) {
+    result =
+      statusHint;
+  } else if (
+    official
+    && userAnswer
+  ) {
+    result =
+      official === userAnswer
+        ? "correct"
+        : "wrong";
+  }
+
+  return {
+    item_id:
+      item.id,
+    question_number:
+      item.question_number,
+    official_answer:
+      official,
+    user_answer:
+      userAnswer,
+    result
+  };
+}
+
+
+function renderAnswerImportPreview() {
+  const table =
+    document.getElementById(
+      "qs-answer-import-table"
+    );
+
+  const applyButton =
+    document.getElementById(
+      "qs-apply-answer-import"
+    );
+
+  if (!table) {
+    return;
+  }
+
+  const rows =
+    qsState.answerImportRows;
+
+  if (!rows.length) {
+    table.innerHTML =
+      '<div class="qs-answer-import-empty">Nenhuma questão reconhecida.</div>';
+
+    if (applyButton) {
+      applyButton.disabled =
+        true;
+    }
+
+    return;
+  }
+
+  const recognized =
+    rows.filter(
+      (row) =>
+        Boolean(
+          row.user_answer
+          || row.result
+        )
+    );
+
+  table.innerHTML = `
+    <div class="qs-answer-import-grid qs-answer-import-head">
+      <span>Questão</span>
+      <span>Reconhecida</span>
+      <span>Oficial</span>
+      <span>Resultado</span>
+    </div>
+
+    ${
+      rows.map(
+        (row) => {
+          const statusLabel =
+            row.result
+              === "correct"
+                ? "Acerto"
+                : row.result
+                  === "wrong"
+                    ? "Erro"
+                    : row.result
+                      === "annulled"
+                        ? "Anulada"
+                        : "Revisar";
+
+          const statusClass =
+            row.result
+            || "unknown";
+
+          return `
+            <div
+              class="qs-answer-import-grid qs-answer-import-row ${statusClass}"
+              data-import-question="${row.question_number}"
+            >
+              <strong>
+                ${row.question_number}
+              </strong>
+
+              <select
+                data-import-user-answer="${row.question_number}"
+                aria-label="Resposta reconhecida da questão ${row.question_number}"
+              >
+                <option value="">—</option>
+                ${
+                  ["A","B","C","D","E"]
+                    .map(
+                      (option) => `
+                        <option
+                          value="${option}"
+                          ${row.user_answer === option ? "selected" : ""}
+                        >
+                          ${option}
+                        </option>
+                      `
+                    )
+                    .join("")
+                }
+              </select>
+
+              <span class="qs-answer-official">
+                ${row.official_answer || "—"}
+              </span>
+
+              <span class="qs-answer-import-result">
+                ${statusLabel}
+              </span>
+            </div>
+          `;
+        }
+      ).join("")
+    }
+  `;
+
+  table
+    .querySelectorAll(
+      "[data-import-user-answer]"
+    )
+    .forEach(
+      (select) => {
+        select.addEventListener(
+          "change",
+          () => {
+            const number =
+              Number(
+                select.dataset
+                  .importUserAnswer
+              );
+
+            const row =
+              qsState
+                .answerImportRows
+                .find(
+                  (candidate) =>
+                    candidate
+                      .question_number
+                    === number
+                );
+
+            if (!row) {
+              return;
+            }
+
+            row.user_answer =
+              select.value
+              || null;
+
+            if (
+              row.official_answer
+              === "X"
+            ) {
+              row.result =
+                "annulled";
+            } else if (
+              row.official_answer
+              && row.user_answer
+            ) {
+              row.result =
+                row.official_answer
+                === row.user_answer
+                  ? "correct"
+                  : "wrong";
+            } else {
+              row.result =
+                null;
+            }
+
+            renderAnswerImportPreview();
+          }
+        );
+      }
+    );
+
+  if (applyButton) {
+    applyButton.disabled =
+      !recognized.some(
+        (row) =>
+          row.result
+          === "correct"
+          || row.result
+          === "wrong"
+          || row.result
+          === "annulled"
+      );
+  }
+}
+
+
+function previewAnswerScreenshotFiles(
+  files
+) {
+  const preview =
+    document.getElementById(
+      "qs-answer-screenshot-preview"
+    );
+
+  if (!preview) {
+    return;
+  }
+
+  preview.innerHTML = "";
+
+  qsState.answerScreenshotUrls =
+    files.map(
+      (file) =>
+        URL.createObjectURL(
+          file
+        )
+    );
+
+  qsState.answerScreenshotUrls
+    .forEach(
+      (url, index) => {
+        const figure =
+          document.createElement(
+            "figure"
+          );
+
+        figure.className =
+          "qs-answer-shot-thumb";
+
+        figure.innerHTML = `
+          <img
+            src="${qsEscape(url)}"
+            alt="Print ${index + 1} do gabarito"
+          >
+          <figcaption>
+            Print ${index + 1}
+          </figcaption>
+        `;
+
+        preview.appendChild(
+          figure
+        );
+      }
+    );
+}
+
+
+async function readAnswerScreenshots() {
+  const files =
+    qsState.answerScreenshotFiles;
+
+  if (!files.length) {
+    setAnswerImportStatus(
+      "Selecione pelo menos uma imagem.",
+      "error"
+    );
+
+    return;
+  }
+
+  if (!window.Tesseract) {
+    setAnswerImportStatus(
+      "O leitor de imagem ainda não carregou. Atualize a página e tente novamente.",
+      "error"
+    );
+
+    return;
+  }
+
+  const button =
+    document.getElementById(
+      "qs-read-answer-screenshots"
+    );
+
+  if (button) {
+    button.disabled =
+      true;
+  }
+
+  try {
+    setAnswerImportStatus(
+      "Preparando gabarito oficial..."
+    );
+
+    await ensureOfficialAnswerKey();
+
+    const detected =
+      new Map();
+
+    for (
+      let index = 0;
+      index < files.length;
+      index += 1
+    ) {
+      const file =
+        files[index];
+
+      setAnswerImportStatus(
+        `Lendo print ${index + 1} de ${files.length}...`
+      );
+
+      const canvas =
+        await prepareScreenshotForOcr(
+          file
+        );
+
+      const result =
+        await window
+          .Tesseract
+          .recognize(
+            canvas,
+            "eng",
+            {
+              logger:
+                (message) => {
+                  if (
+                    message.status
+                    === "recognizing text"
+                  ) {
+                    const percent =
+                      Math.round(
+                        (
+                          message.progress
+                          || 0
+                        )
+                        * 100
+                      );
+
+                    setAnswerImportStatus(
+                      `Lendo print ${index + 1} de ${files.length}: ${percent}%`
+                    );
+                  }
+                }
+            }
+          );
+
+      const pairs =
+        parseAnswerPairsFromOcr(
+          result?.data?.text
+          || ""
+        );
+
+      for (
+        const pair
+        of pairs
+      ) {
+        detected.set(
+          pair.question_number,
+          pair
+        );
+      }
+    }
+
+    qsState.answerImportRows =
+      qsState.items
+        .map(
+          (item) =>
+            answerImportRowForItem(
+              item,
+              detected.get(
+                item.question_number
+              )
+            )
+        );
+
+    renderAnswerImportPreview();
+
+    const recognizedCount =
+      qsState.answerImportRows
+        .filter(
+          (row) =>
+            Boolean(
+              row.user_answer
+              || row.result
+            )
+        )
+        .length;
+
+    const unresolved =
+      qsState.answerImportRows
+        .filter(
+          (row) =>
+            (
+              row.user_answer
+              || row.result
+            )
+            && ![
+              "correct",
+              "wrong",
+              "annulled"
+            ].includes(
+              row.result
+            )
+        )
+        .length;
+
+    setAnswerImportStatus(
+      `${recognizedCount} questão(ões) reconhecida(s).${
+        unresolved
+          ? ` ${unresolved} precisam de conferência.`
+          : " Confira a prévia antes de aplicar."
+      }`,
+      recognizedCount
+        ? "success"
+        : "error"
+    );
+  } catch (error) {
+    console.error(error);
+
+    setAnswerImportStatus(
+      `Não foi possível ler o print: ${error.message || "erro desconhecido"}`,
+      "error"
+    );
+  } finally {
+    if (button) {
+      button.disabled =
+        false;
+    }
+  }
+}
+
+
+async function applyAnswerScreenshotResults() {
+  if (!qsState.currentSet) {
+    return;
+  }
+
+  const rows =
+    qsState.answerImportRows
+      .filter(
+        (row) =>
+          [
+            "correct",
+            "wrong",
+            "annulled"
+          ].includes(
+            row.result
+          )
+      );
+
+  if (!rows.length) {
+    setAnswerImportStatus(
+      "Não há resultados válidos para aplicar.",
+      "error"
+    );
+
+    return;
+  }
+
+  const button =
+    document.getElementById(
+      "qs-apply-answer-import"
+    );
+
+  if (button) {
+    button.disabled =
+      true;
+  }
+
+  setAnswerImportStatus(
+    "Aplicando resultados..."
+  );
+
+  try {
+    const attemptRows =
+      rows.map(
+        (row) => {
+          const item =
+            qsState.items.find(
+              (candidate) =>
+                candidate.id
+                === row.item_id
+            );
+
+          const previous =
+            qsState.attempts.get(
+              row.item_id
+            );
+
+          const treatedAsCorrect =
+            row.result
+            === "correct"
+            || row.result
+            === "annulled";
+
+          return {
+            user_id:
+              qsState.user.id,
+
+            question_item_id:
+              row.item_id,
+
+            result:
+              treatedAsCorrect
+                ? "correct"
+                : "wrong",
+
+            area:
+              treatedAsCorrect
+                ? null
+                : previous?.area
+                  || null,
+
+            materia:
+              treatedAsCorrect
+                ? null
+                : previous?.materia
+                  || null,
+
+            correct_option:
+              row.result
+              === "wrong"
+              && row.official_answer
+              && row.official_answer
+                !== "X"
+                ? row.official_answer
+                : null,
+
+            ccq:
+              treatedAsCorrect
+                ? null
+                : previous?.ccq
+                  || null,
+
+            what_i_thought:
+              treatedAsCorrect
+                ? null
+                : previous
+                    ?.what_i_thought
+                  || null,
+
+            sent_to_error:
+              previous
+                ?.sent_to_error
+              || false,
+
+            error_entry_id:
+              previous
+                ?.error_entry_id
+              || null,
+
+            answered_at:
+              new Date()
+                .toISOString()
+          };
+        }
+      );
+
+    const {
+      error
+    } =
+      await qsSb
+        .from(
+          "question_attempts"
+        )
+        .upsert(
+          attemptRows,
+          {
+            onConflict:
+              "user_id,question_item_id"
+          }
+        );
+
+    if (error) {
+      throw error;
+    }
+
+    const appliedCount =
+      attemptRows.length;
+
+    /*
+      PRIVACIDADE:
+      depois de usado, o print é descartado.
+      Ele nunca foi enviado ao Supabase.
+    */
+    clearAnswerScreenshotMemory();
+
+    const dialog =
+      document.getElementById(
+        "qs-answer-import-dialog"
+      );
+
+    if (
+      dialog?.open
+    ) {
+      dialog.close();
+    }
+
+    await Promise.all([
+      loadSets(),
+      openSet(
+        qsState.currentSet.id
+      ),
+      loadQuestionOverview()
+    ]);
+
+    setAnswerStatus(
+      `${appliedCount} resultado(s) importado(s) do print. Os arquivos de imagem foram descartados do navegador.`,
+      "success"
+    );
+  } catch (error) {
+    console.error(error);
+
+    setAnswerImportStatus(
+      `Não foi possível aplicar: ${error.message || "erro desconhecido"}`,
+      "error"
+    );
+
+    if (button) {
+      button.disabled =
+        false;
+    }
+  }
+}
+
+
+function openAnswerImportDialog() {
+  if (!qsState.currentSet) {
+    return;
+  }
+
+  clearAnswerScreenshotMemory();
+
+  const dialog =
+    document.getElementById(
+      "qs-answer-import-dialog"
+    );
+
+  if (
+    dialog
+    && !dialog.open
+  ) {
+    dialog.showModal();
+  }
+}
+
+
+function closeAnswerImportDialog() {
+  /*
+    Cancelar também apaga imediatamente
+    os prints da memória do navegador.
+  */
+  clearAnswerScreenshotMemory();
+
+  const dialog =
+    document.getElementById(
+      "qs-answer-import-dialog"
+    );
+
+  if (
+    dialog?.open
+  ) {
+    dialog.close();
+  }
+
+  setAnswerImportStatus("");
+}
+
+
+function wireAnswerScreenshotImporter() {
+  const input =
+    document.getElementById(
+      "qs-answer-screenshot-files"
+    );
+
+  input?.addEventListener(
+    "change",
+    () => {
+      for (
+        const url
+        of qsState.answerScreenshotUrls
+      ) {
+        try {
+          URL.revokeObjectURL(
+            url
+          );
+        } catch {}
+      }
+
+      qsState.answerScreenshotUrls =
+        [];
+
+      qsState.answerScreenshotFiles =
+        Array.from(
+          input.files
+          || []
+        ).filter(
+          (file) =>
+            file.type
+              .startsWith(
+                "image/"
+              )
+        );
+
+      previewAnswerScreenshotFiles(
+        qsState.answerScreenshotFiles
+      );
+
+      setAnswerImportStatus(
+        qsState.answerScreenshotFiles.length
+          ? `${qsState.answerScreenshotFiles.length} imagem(ns) selecionada(s).`
+          : ""
+      );
+    }
+  );
+
+  document
+    .getElementById(
+      "qs-open-answer-import"
+    )
+    ?.addEventListener(
+      "click",
+      openAnswerImportDialog
+    );
+
+  document
+    .getElementById(
+      "qs-read-answer-screenshots"
+    )
+    ?.addEventListener(
+      "click",
+      readAnswerScreenshots
+    );
+
+  document
+    .getElementById(
+      "qs-apply-answer-import"
+    )
+    ?.addEventListener(
+      "click",
+      applyAnswerScreenshotResults
+    );
+
+  [
+    "qs-answer-import-close",
+    "qs-answer-import-cancel"
+  ].forEach(
+    (id) => {
+      document
+        .getElementById(
+          id
+        )
+        ?.addEventListener(
+          "click",
+          closeAnswerImportDialog
+        );
+    }
+  );
+
+  document
+    .getElementById(
+      "qs-answer-import-dialog"
+    )
+    ?.addEventListener(
+      "cancel",
+      (event) => {
+        event.preventDefault();
+        closeAnswerImportDialog();
       }
     );
 }
@@ -5835,6 +7188,8 @@ async function deleteSet(setId) {
 }
 
 function closeCurrentSet() {
+  clearAnswerScreenshotMemory();
+
   qsState.currentSet = null;
   qsState.items = [];
   qsState.attempts = new Map();
@@ -6069,6 +7424,7 @@ function wireSimulationNavigation() {
 async function initQuestionSets() {
   wireSetBulkActions();
   wireSimulationNavigation();
+  wireAnswerScreenshotImporter();
 
   qsState.user =
     window.docmapUser;
