@@ -1,0 +1,54 @@
+RESIBULANDO V18.1 — CCQ EXCLUSIVO DO DASHBOARD
+
+REGRA FINAL
+===========
+
+O CCQ de revisão passiva fica SOMENTE no Dashboard.
+
+Na Ambientação:
+- o bloco de CCQ é removido do HTML;
+- loadCcqRotation/initCcqRotation são removidos do JavaScript;
+- portanto a Ambientação não carrega nem consulta esse mostrador.
+
+No Dashboard:
+- o card de revisão passiva ocupa o lugar visual de "Maior dificuldade";
+- permanece sempre no Dashboard;
+- os CCQs alternam automaticamente a cada 30 segundos.
+
+Também continuam:
+- caderno da aula dentro da Ambientação;
+- somente o caderno, sem a lista lateral do Caderno;
+- bloco da aula mais discreto;
+- ofensiva com chama progressiva.
+
+ATENÇÃO SOBRE O PACOTE ANTERIOR
+===============================
+
+O pacote V18 anterior acabou sendo colocado por cima de ambientacao.js e
+dashboard.js no GitHub. Por isso esta V18.1 primeiro recupera os arquivos
+completos do histórico Git e depois aplica as mudanças.
+
+INSTALAÇÃO RECOMENDADA
+======================
+
+Use um Codespace do GitHub ou uma cópia local do repositório.
+
+1. Extraia estes arquivos na RAIZ do projeto:
+   - ambientacao-v18.1.js
+   - dashboard-v18.1.js
+   - aplicar_v18_1.py
+
+2. Rode:
+
+   python aplicar_v18_1.py
+
+3. Depois:
+
+   git add .
+   git commit -m "CCQ somente no dashboard"
+   git push
+
+4. No navegador:
+   Ctrl + Shift + R
+
+Não precisa rodar SQL.
