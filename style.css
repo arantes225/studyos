@@ -1164,3 +1164,43 @@ body.app-ready .app-shell .main { opacity: 1; }
   }
 
 }
+
+
+/* =========================================================
+   FASE 12 — SIDEBAR RECOLHÍVEL
+   ========================================================= */
+.sidebar-top-actions { display:flex; align-items:center; gap:4px; }
+.sidebar-collapse { width:32px; height:32px; display:inline-grid; place-items:center; border:1px solid var(--border); border-radius:9px; background:var(--surface-2); color:var(--muted); font-size:22px; line-height:1; }
+.sidebar-collapse:hover { color:var(--text); border-color:var(--accent); }
+.nav-group-label { width:100%; border:0; background:transparent; text-align:left; cursor:pointer; }
+.nav-group-chevron { margin-left:auto; font-size:14px; transition:transform .16s ease; }
+.nav-group.nav-group-collapsed .nav-group-chevron { transform:rotate(-90deg); }
+.nav-group.nav-group-collapsed .nav-submenu { display:none; }
+body.sidebar-collapsed .app-shell { grid-template-columns:82px minmax(0,1fr); }
+body.sidebar-collapsed .sidebar { padding-inline:10px; overflow-x:hidden; }
+body.sidebar-collapsed .sidebar-top { display:grid; justify-items:center; }
+body.sidebar-collapsed .brand { justify-content:center; }
+body.sidebar-collapsed .brand-copy,
+body.sidebar-collapsed .nav-link > span:not(.nav-icon),
+body.sidebar-collapsed .nav-group-label .nav-label-text,
+body.sidebar-collapsed .nav-group-label .nav-group-chevron,
+body.sidebar-collapsed .nav-submenu,
+body.sidebar-collapsed .sidebar-footer { display:none !important; }
+body.sidebar-collapsed .brand-logo-single,
+body.sidebar-collapsed .resibulando-theme-logo { width:52px !important; height:52px !important; flex-basis:52px !important; }
+body.sidebar-collapsed .nav-link,
+body.sidebar-collapsed .nav-group-label { justify-content:center; padding-inline:0; }
+body.sidebar-collapsed .nav-icon { font-size:18px; }
+@media (max-width:980px) {
+  .sidebar-collapse { display:none; }
+  body.sidebar-collapsed .app-shell { grid-template-columns:1fr; }
+  body.sidebar-collapsed .brand-copy,
+  body.sidebar-collapsed .nav-link > span:not(.nav-icon),
+  body.sidebar-collapsed .nav-group-label .nav-label-text,
+  body.sidebar-collapsed .nav-group-label .nav-group-chevron,
+  body.sidebar-collapsed .sidebar-footer { display:initial !important; }
+  body.sidebar-collapsed .nav-submenu { display:grid !important; }
+  body.sidebar-collapsed .nav-group.nav-group-collapsed .nav-submenu { display:none !important; }
+  body.sidebar-collapsed .nav-link,
+  body.sidebar-collapsed .nav-group-label { justify-content:flex-start; padding:0 12px; }
+}

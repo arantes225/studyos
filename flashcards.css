@@ -907,3 +907,15 @@
     padding: 28px 22px;
   }
 }
+
+
+/* =========================================================
+   FASE 12 — EXPORTAR PDF
+   ========================================================= */
+#flash-library-export-selected {
+  margin-left: auto;
+}
+
+#flash-library-export-selected + #flash-library-delete-selected {
+  margin-left: 0;
+}

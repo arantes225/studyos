@@ -16,7 +16,7 @@
 
   <link
     rel="stylesheet"
-    href="style.css?v=resibulando5"
+    href="style.css?v=12"
   >
 
   <link
@@ -276,7 +276,25 @@
                     type="button"
                     disabled
                   >
-                    Extrair texto da imagem
+                    Extrair texto e remover imagem
+                  </button>
+
+                  <button
+                    id="extract-error-image-text-keep"
+                    class="button secondary"
+                    type="button"
+                    disabled
+                  >
+                    Extrair texto e manter imagem
+                  </button>
+
+                  <button
+                    id="remove-new-error-image"
+                    class="button secondary"
+                    type="button"
+                    disabled
+                  >
+                    Remover imagem
                   </button>
 
                   <span
@@ -291,7 +309,7 @@
             </div>
 
 
-            <datalist id="error-medical-areas">
+            <datalist id="error-medical-areas" data-resibulando-area-list>
               <option value="Clínica Médica"></option>
               <option value="Pediatria"></option>
               <option value="Ginecologia e Obstetrícia"></option>
@@ -709,6 +727,15 @@
             </span>
 
             <button
+              id="error-library-export-selected"
+              class="button secondary"
+              type="button"
+              disabled
+            >
+              Exportar PDF
+            </button>
+
+            <button
               id="error-library-delete-selected"
               class="button secondary error-bulk-danger"
               type="button"
@@ -847,7 +874,23 @@
           class="button secondary"
           type="button"
         >
-          Extrair texto da imagem salva
+          Extrair texto e remover imagem
+        </button>
+
+        <button
+          id="error-edit-extract-image-keep"
+          class="button secondary"
+          type="button"
+        >
+          Extrair texto e manter imagem
+        </button>
+
+        <button
+          id="error-edit-delete-image"
+          class="button secondary"
+          type="button"
+        >
+          Excluir imagem
         </button>
 
         <span
@@ -900,11 +943,13 @@
     src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"
   ></script>
 
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
   <script src="supabase.js"></script>
 
-  <script src="app.js?v=resibulando5"></script>
+  <script src="app.js?v=12"></script>
+  <script src="study-mode.js?v=12"></script>
 
-  <script src="caderno-erros.js?v=11.5"></script>
+  <script src="caderno-erros.js?v=12"></script>
 
 </body>
 

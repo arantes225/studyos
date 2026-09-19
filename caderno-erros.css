@@ -1042,3 +1042,28 @@
   color: var(--muted);
   font-size: 10px;
 }
+
+
+/* =========================================================
+   FASE 12 — OCR / EXPORTAÇÃO PDF
+   ========================================================= */
+.error-image-tools,
+.error-edit-image-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#error-edit-delete-image,
+#remove-new-error-image {
+  color: var(--danger);
+}
+
+#error-library-export-selected {
+  margin-left: auto;
+}
+
+#error-library-export-selected + #error-library-delete-selected {
+  margin-left: 0;
+}

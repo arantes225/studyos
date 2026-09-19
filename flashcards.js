@@ -3486,6 +3486,11 @@ function updateFlashBulkToolbar() {
       "flash-library-delete-selected"
     );
 
+  const exportButton =
+    document.getElementById(
+      "flash-library-export-selected"
+    );
+
 
   const selectAll =
     document.getElementById(
@@ -3504,6 +3509,11 @@ function updateFlashBulkToolbar() {
       selectedFlashcardIds.size === 0;
   }
 
+  if (exportButton) {
+    exportButton.disabled =
+      selectedFlashcardIds.size === 0;
+  }
+
 
   if (selectAll) {
     selectAll.checked =
@@ -3516,6 +3526,184 @@ function updateFlashBulkToolbar() {
   }
 }
 
+
+async function flashPdfImageData(path) {
+  if (!path) return null;
+
+  try {
+    const { data: blob, error } = await flashSb
+      .storage
+      .from("docmap")
+      .download(path);
+
+    if (error) throw error;
+
+    const bitmap = await createImageBitmap(blob);
+    const maxWidth = 1000;
+    const scale = Math.min(1, maxWidth / bitmap.width);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+
+    const context = canvas.getContext("2d", { alpha: false });
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close?.();
+
+    return {
+      dataUrl: canvas.toDataURL("image/jpeg", 0.78),
+      width: canvas.width,
+      height: canvas.height
+    };
+  } catch (error) {
+    console.warn("Imagem não incluída no PDF dos Flashcards:", error);
+    return null;
+  }
+}
+
+
+function flashPdfAddImage(doc, imageData, state) {
+  if (!imageData) return state;
+
+  const margin = 14;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const maxWidth = Math.min(95, pageWidth - margin * 2);
+  const maxHeight = 70;
+
+  const ratio = imageData.width / Math.max(1, imageData.height);
+  let width = maxWidth;
+  let height = width / ratio;
+
+  if (height > maxHeight) {
+    height = maxHeight;
+    width = height * ratio;
+  }
+
+  if (state.y + height + 8 > pageHeight - 14) {
+    doc.addPage();
+    state.y = 16;
+  }
+
+  const x = margin + Math.max(0, (pageWidth - margin * 2 - width) / 2);
+  doc.addImage(imageData.dataUrl, "JPEG", x, state.y, width, height, undefined, "FAST");
+  state.y += height + 6;
+  return state;
+}
+
+
+function flashPdfAddBlock(doc, label, value, state) {
+  if (!value) return state;
+
+  const margin = 14;
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const maxWidth = doc.internal.pageSize.getWidth() - margin * 2;
+  const labelLines = doc.splitTextToSize(`${label}:`, maxWidth);
+  const valueLines = doc.splitTextToSize(String(value), maxWidth);
+  const needed = (labelLines.length + valueLines.length + 1) * 5;
+
+  if (state.y + needed > pageHeight - 14) {
+    doc.addPage();
+    state.y = 16;
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.text(labelLines, margin, state.y);
+  state.y += labelLines.length * 4.5;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text(valueLines, margin, state.y);
+  state.y += valueLines.length * 4.5 + 4;
+
+  return state;
+}
+
+
+async function exportSelectedFlashcardsPdf() {
+  const ids = Array.from(selectedFlashcardIds);
+  if (!ids.length) return;
+
+  if (!window.jspdf?.jsPDF) {
+    setLibraryStatus("Gerador de PDF não carregou. Atualize a página.", "error");
+    return;
+  }
+
+  const cards = libraryCards.filter((card) => selectedFlashcardIds.has(card.id));
+  if (!cards.length) return;
+
+  const button = document.getElementById("flash-library-export-selected");
+  if (button) button.disabled = true;
+  setLibraryStatus("Gerando PDF...");
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    const margin = 14;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("Resibulando — Flashcards", margin, 16);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(
+      `${cards.length} flashcard${cards.length === 1 ? "" : "s"} selecionado${cards.length === 1 ? "" : "s"}`,
+      margin,
+      23
+    );
+
+    let state = { y: 32 };
+
+    for (let index = 0; index < cards.length; index += 1) {
+      const card = cards[index];
+
+      if (state.y > 250) {
+        doc.addPage();
+        state.y = 16;
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text(
+        `${index + 1}. ${card.area || "Sem área"}${card.materia ? ` · ${card.materia}` : ""}`,
+        margin,
+        state.y
+      );
+      state.y += 7;
+
+      state = flashPdfAddBlock(doc, "Tema", card.theme, state);
+      state = flashPdfAddBlock(doc, "Frente", card.front_text, state);
+
+      if (card.front_image_path) {
+        setLibraryStatus(`Preparando mídia ${index + 1} de ${cards.length}...`);
+        const frontImage = await flashPdfImageData(card.front_image_path);
+        state = flashPdfAddImage(doc, frontImage, state);
+      }
+
+      state = flashPdfAddBlock(doc, "Verso", card.back_text, state);
+
+      if (card.back_image_path) {
+        const backImage = await flashPdfImageData(card.back_image_path);
+        state = flashPdfAddImage(doc, backImage, state);
+      }
+
+      state.y += 4;
+      doc.setDrawColor(220);
+      doc.line(margin, state.y, doc.internal.pageSize.getWidth() - margin, state.y);
+      state.y += 8;
+    }
+
+    doc.save(`resibulando-flashcards-${todayISO()}.pdf`);
+    setLibraryStatus("PDF exportado.", "success");
+  } catch (error) {
+    console.error(error);
+    setLibraryStatus(`Não foi possível gerar o PDF: ${error.message}`, "error");
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
 
 async function deleteSelectedFlashcards() {
   const ids =
@@ -4181,6 +4369,15 @@ function wireLibrary() {
       }
     );
 
+
+  document
+    .getElementById(
+      "flash-library-export-selected"
+    )
+    ?.addEventListener(
+      "click",
+      exportSelectedFlashcardsPdf
+    );
 
   document
     .getElementById(

@@ -39,7 +39,7 @@ const qsState = {
   answerImportRows: []
 };
 
-const AREA_OPTIONS = [
+let AREA_OPTIONS = [
   "Clínica Médica",
   "Pediatria",
   "Ginecologia e Obstetrícia",
@@ -7606,6 +7606,46 @@ async function saveAnswerKey() {
   );
 }
 
+async function compressNotebookGalleryBlob(blob) {
+  if (!blob || !blob.type?.startsWith("image/")) return blob;
+
+  try {
+    const bitmap = await createImageBitmap(blob);
+    const maxDimension = 1100;
+    const scale = Math.min(
+      1,
+      maxDimension / bitmap.width,
+      maxDimension / bitmap.height
+    );
+
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+
+    const context = canvas.getContext("2d", { alpha: false });
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close?.();
+
+    const toBlob = (quality) =>
+      new Promise((resolve) =>
+        canvas.toBlob(resolve, "image/webp", quality)
+      );
+
+    let result = await toBlob(0.68);
+    if (result && result.size > 420 * 1024) {
+      result = await toBlob(0.55);
+    }
+
+    return result || blob;
+  } catch (error) {
+    console.warn("Não foi possível comprimir a imagem do Caderno:", error);
+    return blob;
+  }
+}
+
+
 async function copyGalleryImageToNotebook(
   sourcePath,
   errorEntryId
@@ -7634,8 +7674,13 @@ async function copyGalleryImageToNotebook(
     throw downloadError;
   }
 
+  const compressedBlob =
+    await compressNotebookGalleryBlob(
+      imageBlob
+    );
+
   const destinationPath =
-    `${qsState.user.id}/error_notebook/${errorEntryId}/question.png`;
+    `${qsState.user.id}/error_notebook/${errorEntryId}/question.webp`;
 
   const {
     error: uploadError
@@ -7647,11 +7692,11 @@ async function copyGalleryImageToNotebook(
       )
       .upload(
         destinationPath,
-        imageBlob,
+        compressedBlob,
         {
           contentType:
-            imageBlob.type
-            || "image/png",
+            compressedBlob.type
+            || "image/webp",
           upsert:
             true
         }
@@ -8509,6 +8554,36 @@ async function initQuestionSets() {
 
   qsState.user =
     window.docmapUser;
+
+  const mode =
+    await window.ResibulandoStudyMode
+      ?.load?.();
+
+  if (
+    window.ResibulandoStudyMode
+      ?.areasFor
+  ) {
+    AREA_OPTIONS =
+      window.ResibulandoStudyMode
+        .areasFor(
+          mode
+          || window.resibulandoStudyMode
+          || "medicine"
+        );
+  }
+
+  window.addEventListener(
+    "resibulando:study-mode",
+    (event) => {
+      AREA_OPTIONS =
+        event.detail?.areas
+        || AREA_OPTIONS;
+
+      if (qsState.currentSet) {
+        renderQuestions();
+      }
+    }
+  );
 
   applyExamContext();
 
