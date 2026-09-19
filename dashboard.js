@@ -52,11 +52,6 @@ function toISODate(date) {
   return `${year}-${month}-${day}`;
 }
 
-function parseISODate(value) {
-  const [year, month, day] = value.split("-").map(Number);
-  return new Date(year, month - 1, day);
-}
-
 function sameDate(a, b) {
   return toISODate(a) === toISODate(b);
 }
@@ -551,410 +546,135 @@ async function loadStudyHours() {
 }
 
 async function loadRetention() {
-  const value =
-    document.getElementById(
-      "metric-retention"
-    );
+  const value = document.getElementById("metric-retention");
+  const helper = document.getElementById("metric-retention-helper");
 
-  const helper =
-    document.getElementById(
-      "metric-retention-helper"
-    );
-
-
-  const {
-    data,
-    error
-  } =
-    await dashboardSb
-      .from(
-        "flashcard_retention_overall"
-      )
-      .select(
-        "reviewed_cards,retention_percent"
-      )
-      .maybeSingle();
-
+  const { data, error } = await dashboardSb
+    .from("flashcard_retention_overall")
+    .select("reviewed_cards,retention_percent")
+    .maybeSingle();
 
   if (error) {
-    console.warn(
-      error
-    );
-
-    if (value) {
-      value.textContent =
-        "—";
-    }
-
-    if (helper) {
-      helper.textContent =
-        "Sem dados suficientes";
-    }
-
+    console.warn(error);
+    if (value) value.textContent = "—";
+    if (helper) helper.textContent = "Sem dados suficientes";
     return;
   }
 
-
-  if (
-    !data
-    || data.retention_percent
-      === null
-  ) {
-    if (value) {
-      value.textContent =
-        "—";
-    }
-
-    if (helper) {
-      helper.textContent =
-        "Revise flashcards para estimar";
-    }
-
+  if (!data || data.retention_percent === null) {
+    if (value) value.textContent = "—";
+    if (helper) helper.textContent = "Revise flashcards para estimar";
     return;
   }
 
+  const retention = Number(data.retention_percent || 0);
+  const reviewed = Number(data.reviewed_cards || 0);
 
-  const retention =
-    Number(
-      data.retention_percent
-      || 0
-    );
-
-  const reviewed =
-    Number(
-      data.reviewed_cards
-      || 0
-    );
-
-
-  if (value) {
-    value.textContent =
-      `${retention.toFixed(0)}%`;
-  }
-
-
-  if (helper) {
-    helper.textContent =
-      `${reviewed} card${reviewed === 1 ? "" : "s"} com memória estimada`;
-  }
+  if (value) value.textContent = `${retention.toFixed(0)}%`;
+  if (helper) helper.textContent =
+    `${reviewed} card${reviewed === 1 ? "" : "s"} com memória estimada`;
 }
-
 
 async function loadLessonMetrics() {
-  const today =
-    toISODate(
-      new Date()
-    );
+  const today = toISODate(new Date());
 
+  const [totalResult, completedResult, overdueResult] = await Promise.all([
+    dashboardSb.from("study_topics").select("id", { count: "exact", head: true }),
 
-  const [
-    totalResult,
-    completedResult,
-    overdueResult
-  ] =
-    await Promise.all([
+    dashboardSb.from("study_topics")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "completed"),
 
-      dashboardSb
-        .from(
-          "study_topics"
-        )
-        .select(
-          "id",
-          {
-            count:
-              "exact",
+    dashboardSb.from("study_topics")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "scheduled")
+      .is("completed_at", null)
+      .lt("scheduled_date", today)
+  ]);
 
-            head:
-              true
-          }
-        ),
+  [totalResult, completedResult, overdueResult].forEach((result) => {
+    if (result.error) console.warn(result.error);
+  });
 
-      dashboardSb
-        .from(
-          "study_topics"
-        )
-        .select(
-          "id",
-          {
-            count:
-              "exact",
+  const total = totalResult.count ?? 0;
+  const completed = completedResult.count ?? 0;
+  const overdue = overdueResult.count ?? 0;
+  const progress = total > 0 ? (completed / total) * 100 : 0;
 
-            head:
-              true
-          }
-        )
-        .eq(
-          "status",
-          "completed"
-        ),
+  const overdueValue = document.getElementById("metric-overdue-lessons");
+  const overdueHelper = document.getElementById("metric-overdue-lessons-helper");
 
-      dashboardSb
-        .from(
-          "study_topics"
-        )
-        .select(
-          "id",
-          {
-            count:
-              "exact",
-
-            head:
-              true
-          }
-        )
-        .eq(
-          "status",
-          "scheduled"
-        )
-        .is(
-          "completed_at",
-          null
-        )
-        .lt(
-          "scheduled_date",
-          today
-        )
-    ]);
-
-
-  [
-    totalResult,
-    completedResult,
-    overdueResult
-  ].forEach(
-    (result) => {
-      if (result.error) {
-        console.warn(
-          result.error
-        );
-      }
-    }
-  );
-
-
-  const total =
-    totalResult.count
-    ?? 0;
-
-  const completed =
-    completedResult.count
-    ?? 0;
-
-  const overdue =
-    overdueResult.count
-    ?? 0;
-
-  const progress =
-    total > 0
-      ? (
-          completed
-          / total
-        )
-        * 100
-      : 0;
-
-
-  const overdueValue =
-    document.getElementById(
-      "metric-overdue-lessons"
-    );
-
-  const overdueHelper =
-    document.getElementById(
-      "metric-overdue-lessons-helper"
-    );
-
-
-  if (overdueValue) {
-    overdueValue.textContent =
-      overdue;
-  }
-
-
+  if (overdueValue) overdueValue.textContent = overdue;
   if (overdueHelper) {
-    overdueHelper.textContent =
-      overdue === 0
-        ? "Cronograma em dia"
-        : `${overdue} aula${overdue === 1 ? "" : "s"} com data anterior a hoje`;
+    overdueHelper.textContent = overdue === 0
+      ? "Cronograma em dia"
+      : `${overdue} aula${overdue === 1 ? "" : "s"} com data anterior a hoje`;
   }
 
+  const progressValue = document.getElementById("metric-lessons-progress");
+  const progressCopy = document.getElementById("metric-lessons-progress-copy");
+  const progressHelper = document.getElementById("metric-lessons-progress-helper");
+  const progressRing = document.getElementById("lesson-progress-ring");
 
-  const progressValue =
-    document.getElementById(
-      "metric-lessons-progress"
-    );
-
-  const progressCopy =
-    document.getElementById(
-      "metric-lessons-progress-copy"
-    );
-
-  const progressHelper =
-    document.getElementById(
-      "metric-lessons-progress-helper"
-    );
-
-  const progressRing =
-    document.getElementById(
-      "lesson-progress-ring"
-    );
-
-
-  if (progressValue) {
-    progressValue.textContent =
-      `${progress.toFixed(0)}%`;
-  }
-
-
-  if (progressCopy) {
-    progressCopy.textContent =
-      `${completed}/${total}`;
-  }
-
+  if (progressValue) progressValue.textContent = `${progress.toFixed(0)}%`;
+  if (progressCopy) progressCopy.textContent = `${completed}/${total}`;
 
   if (progressHelper) {
-    progressHelper.textContent =
-      total
-        ? "Aulas feitas / aulas totais"
-        : "Nenhuma aula cadastrada";
+    progressHelper.textContent = total
+      ? "Aulas feitas / aulas totais"
+      : "Nenhuma aula cadastrada";
   }
 
-
   if (progressRing) {
-    progressRing.style
-      .setProperty(
-        "--metric-ring-value",
-        Math.max(
-          0,
-          Math.min(
-            100,
-            progress
-          )
-        )
-      );
+    progressRing.style.setProperty(
+      "--metric-ring-value",
+      Math.max(0, Math.min(100, progress))
+    );
   }
 }
 
-
 async function loadErrorMetrics() {
-  const value =
-    document.getElementById(
-      "metric-errors"
-    );
+  const value = document.getElementById("metric-errors");
+  const helper = document.getElementById("metric-errors-helper");
+  const retentionValue = document.getElementById("metric-error-retention");
+  const ring = document.getElementById("error-retention-ring");
 
-  const helper =
-    document.getElementById(
-      "metric-errors-helper"
-    );
-
-  const retentionValue =
-    document.getElementById(
-      "metric-error-retention"
-    );
-
-  const ring =
-    document.getElementById(
-      "error-retention-ring"
-    );
-
-
-  const {
-    data,
-    error
-  } =
-    await dashboardSb
-      .from(
-        "error_notebook_metrics"
-      )
-      .select(
-        "registered_errors,reviewed_errors,overdue_errors,retention_percent"
-      )
-      .maybeSingle();
-
+  const { data, error } = await dashboardSb
+    .from("error_notebook_metrics")
+    .select("registered_errors,reviewed_errors,overdue_errors,retention_percent")
+    .maybeSingle();
 
   if (error) {
-    console.warn(
-      error
-    );
-
-    if (value) {
-      value.textContent =
-        "—";
-    }
-
-    if (helper) {
-      helper.textContent =
-        "Sem dados do Caderno";
-    }
-
-    if (retentionValue) {
-      retentionValue.textContent =
-        "—";
-    }
-
+    console.warn(error);
+    if (value) value.textContent = "—";
+    if (helper) helper.textContent = "Sem dados do Caderno";
+    if (retentionValue) retentionValue.textContent = "—";
     return;
   }
 
-
-  const overdue =
-    Number(
-      data?.overdue_errors
-      || 0
-    );
-
-  const total =
-    Number(
-      data?.registered_errors
-      || 0
-    );
-
+  const overdue = Number(data?.overdue_errors || 0);
+  const total = Number(data?.registered_errors || 0);
   const retention =
-    data?.retention_percent
-      === null
-      || data?.retention_percent
-        === undefined
-        ? null
-        : Number(
-            data.retention_percent
-          );
+    data?.retention_percent === null || data?.retention_percent === undefined
+      ? null
+      : Number(data.retention_percent);
 
+  if (value) value.textContent =
+    overdue === 1 ? "1 atrasado" : `${overdue} atrasados`;
 
-  if (value) {
-    value.textContent =
-      overdue === 1
-        ? "1 atrasado"
-        : `${overdue} atrasados`;
-  }
-
-
-  if (helper) {
-    helper.textContent =
-      `${total} CCQ${total === 1 ? "" : "s"} ativo${total === 1 ? "" : "s"}`;
-  }
-
+  if (helper) helper.textContent =
+    `${total} CCQ${total === 1 ? "" : "s"} ativo${total === 1 ? "" : "s"}`;
 
   if (retentionValue) {
     retentionValue.textContent =
-      retention === null
-        ? "—"
-        : `${retention.toFixed(0)}%`;
+      retention === null ? "—" : `${retention.toFixed(0)}%`;
   }
 
-
   if (ring) {
-    ring.style
-      .setProperty(
-        "--metric-ring-value",
-        retention === null
-          ? 0
-          : Math.max(
-              0,
-              Math.min(
-                100,
-                retention
-              )
-            )
-      );
+    ring.style.setProperty(
+      "--metric-ring-value",
+      retention === null ? 0 : Math.max(0, Math.min(100, retention))
+    );
   }
 }
 
@@ -975,13 +695,8 @@ async function loadFlashcardMetrics() {
       .maybeSingle()
   ]);
 
-  if (pendingResult.error) {
-    console.warn(pendingResult.error);
-  }
-
-  if (dailyResult.error) {
-    console.warn(dailyResult.error);
-  }
+  if (pendingResult.error) console.warn(pendingResult.error);
+  if (dailyResult.error) console.warn(dailyResult.error);
 
   const pending = pendingResult.count ?? 0;
   const daily = dailyResult.data || {
@@ -997,261 +712,226 @@ async function loadFlashcardMetrics() {
     `Hoje: ${daily.correct || 0} acertos · ${daily.incorrect || 0} erros`;
 }
 
-
-async function loadQuestionDifficulty() {
-  const value =
-    document.getElementById("metric-difficulty");
-
-  const helper =
-    document.getElementById("metric-difficulty-helper");
-
-  if (!value || !helper) return;
-
-  const { data, error } = await dashboardSb
-    .from("question_area_difficulty")
-    .select("area,wrong_count,set_count,error_share_percent")
-    .order("wrong_count", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) {
-    console.warn(error);
-    value.textContent = "—";
-    helper.textContent = "Sem dados de simulados";
-    return;
-  }
-
-  if (!data) {
-    value.textContent = "—";
-    helper.textContent = "Classifique os erros dos simulados";
-    return;
-  }
-
-  value.textContent = data.area;
-
-  const wrongCount =
-    Number(data.wrong_count || 0);
-
-  const share =
-    Number(data.error_share_percent || 0);
-
-  if (wrongCount < 3) {
-    helper.textContent =
-      `${wrongCount} ${wrongCount === 1 ? "erro classificado" : "erros classificados"} · poucos dados`;
-    return;
-  }
-
-  helper.textContent =
-    `${wrongCount} erros · ${share.toFixed(0)}% dos erros classificados`;
-}
-
-
-
-function dashboardEscapeHtml(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-
-
 function formatSimulationAccuracy(value) {
   if (
-    value === null
-    || value === undefined
-    || Number.isNaN(
-      Number(value)
-    )
+    value === null ||
+    value === undefined ||
+    Number.isNaN(Number(value))
   ) {
     return "—";
   }
 
-  return `${Number(value)
-    .toFixed(1)
-    .replace(".", ",")}%`;
+  return `${Number(value).toFixed(1).replace(".", ",")}%`;
 }
 
-
 async function loadSimulationMetrics() {
-  const value =
-    document.getElementById(
-      "metric-simulations"
-    );
+  const value = document.getElementById("metric-simulations");
+  const helper = document.getElementById("metric-simulations-helper");
+  const accuracyElement = document.getElementById("metric-simulations-accuracy");
+  const accuracyRing = document.getElementById("simulation-accuracy-ring");
 
-  const helper =
-    document.getElementById(
-      "metric-simulations-helper"
-    );
+  if (!value || !helper) return;
 
-  const accuracyElement =
-    document.getElementById(
-      "metric-simulations-accuracy"
-    );
+  const start30 = new Date();
+  start30.setDate(start30.getDate() - 29);
+  start30.setHours(0, 0, 0, 0);
 
-  const accuracyRing =
-    document.getElementById(
-      "simulation-accuracy-ring"
-    );
+  const { data, error } = await dashboardSb
+    .from("question_set_metrics")
+    .select("set_id,answered_count,correct_count,last_answered_at")
+    .gt("answered_count", 0)
+    .gte("last_answered_at", start30.toISOString());
 
-
-  if (
-    !value
-    || !helper
-  ) {
+  if (error) {
+    console.warn(error);
+    value.textContent = "—";
+    helper.textContent = "Não foi possível carregar";
+    if (accuracyElement) accuracyElement.textContent = "—";
+    if (accuracyRing) accuracyRing.style.setProperty("--metric-ring-value", 0);
     return;
   }
 
+  const rows = data || [];
+  const setCount = rows.length;
 
-  const start30 =
-    new Date();
-
-  start30.setDate(
-    start30.getDate()
-    - 29
-  );
-
-  start30.setHours(
-    0,
-    0,
-    0,
+  const answered30 = rows.reduce(
+    (sum, row) => sum + Number(row.answered_count || 0),
     0
   );
 
-
-  const {
-    data,
-    error
-  } =
-    await dashboardSb
-      .from(
-        "question_set_metrics"
-      )
-      .select(
-        "set_id,answered_count,correct_count,last_answered_at"
-      )
-      .gt(
-        "answered_count",
-        0
-      )
-      .gte(
-        "last_answered_at",
-        start30.toISOString()
-      );
-
-
-  if (error) {
-    console.warn(
-      error
-    );
-
-    value.textContent =
-      "—";
-
-    helper.textContent =
-      "Não foi possível carregar";
-
-    if (accuracyElement) {
-      accuracyElement.textContent =
-        "—";
-    }
-
-    if (accuracyRing) {
-      accuracyRing.style
-        .setProperty(
-          "--metric-ring-value",
-          0
-        );
-    }
-
-    return;
-  }
-
-
-  const rows =
-    data
-    || [];
-
-
-  const setCount =
-    rows.length;
-
-
-  const answered30 =
-    rows.reduce(
-      (
-        sum,
-        row
-      ) =>
-        sum
-        + Number(
-            row.answered_count
-            || 0
-          ),
-      0
-    );
-
-
-  const correct30 =
-    rows.reduce(
-      (
-        sum,
-        row
-      ) =>
-        sum
-        + Number(
-            row.correct_count
-            || 0
-          ),
-      0
-    );
-
+  const correct30 = rows.reduce(
+    (sum, row) => sum + Number(row.correct_count || 0),
+    0
+  );
 
   const accuracy30 =
-    answered30 > 0
-      ? (
-          correct30
-          / answered30
-        )
-        * 100
-      : null;
+    answered30 > 0 ? (correct30 / answered30) * 100 : null;
 
+  value.textContent = setCount;
 
-  value.textContent =
-    setCount;
-
-
-  helper.textContent =
-    setCount
-      ? `${setCount} simulado${setCount === 1 ? "" : "s"} nos últimos 30 dias`
-      : "Nenhum simulado nos últimos 30 dias";
-
+  helper.textContent = setCount
+    ? `${setCount} simulado${setCount === 1 ? "" : "s"} nos últimos 30 dias`
+    : "Nenhum simulado nos últimos 30 dias";
 
   if (accuracyElement) {
     accuracyElement.textContent =
-      accuracy30 === null
-        ? "—"
-        : `${accuracy30.toFixed(0)}%`;
+      accuracy30 === null ? "—" : `${accuracy30.toFixed(0)}%`;
   }
-
 
   if (accuracyRing) {
-    accuracyRing.style
-      .setProperty(
-        "--metric-ring-value",
-        accuracy30 === null
-          ? 0
-          : Math.max(
-              0,
-              Math.min(
-                100,
-                accuracy30
-              )
-            )
-      );
+    accuracyRing.style.setProperty(
+      "--metric-ring-value",
+      accuracy30 === null ? 0 : Math.max(0, Math.min(100, accuracy30))
+    );
   }
+}
+
+/* =========================================================
+   CCQ — REVISÃO PASSIVA
+   ========================================================= */
+
+const DASHBOARD_CCQ_ROTATION_MS = 30000;
+
+const dashboardCcqState = {
+  items: [],
+  currentIndex: -1,
+  bag: [],
+  timerId: null
+};
+
+function shuffleCcqIndexes(count) {
+  const indexes = Array.from({ length: count }, (_, index) => index);
+
+  for (let i = indexes.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indexes[i], indexes[j]] = [indexes[j], indexes[i]];
+  }
+
+  return indexes;
+}
+
+function refillCcqBag() {
+  dashboardCcqState.bag = shuffleCcqIndexes(dashboardCcqState.items.length);
+}
+
+function nextCcqIndex() {
+  if (!dashboardCcqState.items.length) return -1;
+  if (dashboardCcqState.items.length === 1) return 0;
+
+  if (!dashboardCcqState.bag.length) {
+    refillCcqBag();
+  }
+
+  let index = dashboardCcqState.bag.pop();
+
+  if (
+    index === dashboardCcqState.currentIndex &&
+    dashboardCcqState.bag.length
+  ) {
+    const alternative = dashboardCcqState.bag.pop();
+    dashboardCcqState.bag.push(index);
+    index = alternative;
+  }
+
+  return index;
+}
+
+function resetCcqProgress() {
+  const bar = document.getElementById("dashboard-passive-ccq-progress");
+  if (!bar) return;
+
+  bar.style.transition = "none";
+  bar.style.width = "0%";
+
+  void bar.offsetWidth;
+
+  bar.style.transition =
+    `width ${DASHBOARD_CCQ_ROTATION_MS}ms linear`;
+
+  requestAnimationFrame(() => {
+    bar.style.width = "100%";
+  });
+}
+
+function showDashboardCcq() {
+  if (!dashboardCcqState.items.length) return;
+
+  const index = nextCcqIndex();
+  if (index < 0) return;
+
+  dashboardCcqState.currentIndex = index;
+
+  const item = dashboardCcqState.items[index];
+  const text = document.getElementById("dashboard-passive-ccq-text");
+  const meta = document.getElementById("dashboard-passive-ccq-meta");
+
+  if (text) {
+    text.textContent = item.ccq || "";
+  }
+
+  if (meta) {
+    meta.textContent = [
+      item.area,
+      item.materia,
+      item.theme
+    ].filter(Boolean).join(" · ");
+  }
+
+  resetCcqProgress();
+}
+
+function startDashboardCcqRotation() {
+  if (dashboardCcqState.timerId) {
+    clearInterval(dashboardCcqState.timerId);
+  }
+
+  if (dashboardCcqState.items.length < 2) return;
+
+  dashboardCcqState.timerId = setInterval(() => {
+    if (!document.hidden) {
+      showDashboardCcq();
+    }
+  }, DASHBOARD_CCQ_ROTATION_MS);
+}
+
+async function loadDashboardPassiveCcq() {
+  const empty = document.getElementById("dashboard-passive-ccq-empty");
+  const stage = document.getElementById("dashboard-passive-ccq-stage");
+
+  if (!empty || !stage) return;
+
+  const { data, error } = await dashboardSb
+    .from("error_notebook")
+    .select("id,area,materia,theme,ccq,due_date,review_count,created_at")
+    .eq("active", true)
+    .not("ccq", "is", null)
+    .limit(100);
+
+  if (error) {
+    console.warn(error);
+    empty.textContent = "Sem CCQs disponíveis.";
+    empty.hidden = false;
+    stage.hidden = true;
+    return;
+  }
+
+  dashboardCcqState.items = (data || []).filter(
+    (item) => String(item.ccq || "").trim()
+  );
+
+  if (!dashboardCcqState.items.length) {
+    empty.textContent = "Nenhum CCQ ativo no Caderno de Erros.";
+    empty.hidden = false;
+    stage.hidden = true;
+    return;
+  }
+
+  empty.hidden = true;
+  stage.hidden = false;
+
+  refillCcqBag();
+  showDashboardCcq();
+  startDashboardCcqRotation();
 }
 
 async function loadDashboardMetrics() {
@@ -1261,7 +941,6 @@ async function loadDashboardMetrics() {
     loadRetention(),
     loadFlashcardMetrics(),
     loadErrorMetrics(),
-    loadQuestionDifficulty(),
     loadSimulationMetrics()
   ]);
 }
@@ -1323,7 +1002,8 @@ async function initDashboard() {
 
   await Promise.all([
     loadDashboardMetrics(),
-    loadAgenda()
+    loadAgenda(),
+    loadDashboardPassiveCcq()
   ]);
 }
 

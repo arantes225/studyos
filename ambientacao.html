@@ -9,7 +9,66 @@
   <link rel="stylesheet" href="ambientacao.css?v=12.9">
   <link rel="stylesheet" href="resibulando-brand-v5.css?v=5">
   <script defer src="resibulando-brand-v5.js?v=5"></script>
+
+  <style>
+    /* Aula mais discreta */
+    .ambientacao-workspace.lesson-with-notebook {
+      padding: 12px;
+      overflow: visible;
+    }
+
+    .ambientacao-workspace.lesson-with-notebook > .panel-header {
+      display: none;
+    }
+
+    .lesson-with-notebook .agenda-lesson-activity {
+      margin-bottom: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--surface-2);
+    }
+
+    .lesson-with-notebook .agenda-lesson-activity > .badge {
+      display: none;
+    }
+
+    .lesson-with-notebook .agenda-lesson-activity h3 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.3;
+    }
+
+    .lesson-with-notebook .agenda-lesson-meta {
+      margin-top: 3px;
+      font-size: 9px;
+    }
+
+    .lesson-with-notebook .agenda-lesson-subtitle {
+      margin: 5px 0 0;
+      font-size: 9px;
+      line-height: 1.4;
+    }
+
+    .lesson-with-notebook .agenda-lesson-actions {
+      margin-top: 8px;
+      gap: 8px;
+    }
+
+    .lesson-with-notebook .agenda-lesson-actions .button {
+      min-height: 31px;
+      padding: 0 11px;
+      font-size: 9px;
+    }
+
+    .lesson-with-notebook .ambientacao-workspace-frame {
+      width: 100%;
+      min-height: 820px;
+      margin: 0;
+      border-radius: 10px;
+    }
+  </style>
 </head>
+
 <body data-page="ambientacao">
   <div class="app-shell">
     <aside id="sidebar" class="sidebar"></aside>
@@ -42,7 +101,6 @@
           <article class="feature-card pomodoro-card study-timer-card">
 
             <div class="study-timer-topline">
-
               <div>
                 <span class="badge">Cronômetro</span>
                 <h2>Tempo de estudo</h2>
@@ -57,7 +115,6 @@
                 role="tablist"
                 aria-label="Tipo de cronômetro"
               >
-
                 <button
                   id="timer-view-simple"
                   class="study-timer-type active"
@@ -79,11 +136,8 @@
                 >
                   Pomodoro
                 </button>
-
               </div>
-
             </div>
-
 
             <section
               id="simple-timer-panel"
@@ -91,33 +145,21 @@
               data-timer-panel="simple"
               role="tabpanel"
             >
-
               <div class="simple-timer-head">
-
                 <div>
                   <strong>Cronômetro simples</strong>
-
                   <small id="simple-timer-activity-copy">
                     Estudo livre.
                   </small>
                 </div>
 
-                <span
-                  id="simple-timer-state"
-                  class="pomodoro-state"
-                >
+                <span id="simple-timer-state" class="pomodoro-state">
                   pronto
                 </span>
-
               </div>
 
-
               <div class="simple-timer-clock-wrap">
-
-                <div
-                  id="simple-timer-clock"
-                  class="pomodoro-clock simple-timer-clock"
-                >
+                <div id="simple-timer-clock" class="pomodoro-clock simple-timer-clock">
                   00:00
                 </div>
 
@@ -129,43 +171,23 @@
                   <span>Tempo corrido</span>
                   <span>Sem limite</span>
                 </div>
-
               </div>
 
-
               <div class="pomodoro-actions">
-
-                <button
-                  id="simple-timer-start"
-                  class="button primary"
-                  type="button"
-                >
+                <button id="simple-timer-start" class="button primary" type="button">
                   Iniciar
                 </button>
 
-                <button
-                  id="simple-timer-pause"
-                  class="button secondary"
-                  type="button"
-                  disabled
-                >
+                <button id="simple-timer-pause" class="button secondary" type="button" disabled>
                   Pausar
                 </button>
 
-                <button
-                  id="simple-timer-finish"
-                  class="button secondary"
-                  type="button"
-                  disabled
-                >
+                <button id="simple-timer-finish" class="button secondary" type="button" disabled>
                   Finalizar sessão
                 </button>
-
               </div>
 
-
               <div class="pomodoro-summary">
-
                 <div>
                   <span>Nesta sessão</span>
                   <strong id="simple-timer-effective-time">0 min</strong>
@@ -175,18 +197,10 @@
                   <span>Registrado hoje</span>
                   <strong id="simple-today-time">0 min</strong>
                 </div>
-
               </div>
 
-
-              <div
-                id="simple-timer-status"
-                class="pomodoro-status"
-                aria-live="polite"
-              ></div>
-
+              <div id="simple-timer-status" class="pomodoro-status" aria-live="polite"></div>
             </section>
-
 
             <section
               id="pomodoro-timer-panel"
@@ -195,116 +209,59 @@
               role="tabpanel"
               hidden
             >
-
               <div class="pomodoro-head">
-
                 <div>
                   <strong>Pomodoro</strong>
-
                   <p id="pomodoro-activity-copy">
                     O tempo efetivo de foco será registrado no Dashboard.
                   </p>
                 </div>
 
-                <span
-                  id="pomodoro-session-state"
-                  class="pomodoro-state"
-                >
+                <span id="pomodoro-session-state" class="pomodoro-state">
                   pronto
                 </span>
-
               </div>
 
-
               <div class="pomodoro-modes">
-
-                <button
-                  id="pomodoro-focus-mode"
-                  class="pomodoro-mode active"
-                  type="button"
-                  data-pomodoro-mode="focus"
-                >
+                <button id="pomodoro-focus-mode" class="pomodoro-mode active" type="button" data-pomodoro-mode="focus">
                   Foco
                 </button>
 
-                <button
-                  id="pomodoro-break-mode"
-                  class="pomodoro-mode"
-                  type="button"
-                  data-pomodoro-mode="break"
-                >
+                <button id="pomodoro-break-mode" class="pomodoro-mode" type="button" data-pomodoro-mode="break">
                   Pausa
                 </button>
-
               </div>
 
-
               <div class="pomodoro-clock-wrap">
-
-                <div
-                  id="pomodoro-clock"
-                  class="pomodoro-clock"
-                >
+                <div id="pomodoro-clock" class="pomodoro-clock">
                   25:00
                 </div>
 
                 <div class="pomodoro-progress-track">
-
-                  <div
-                    id="pomodoro-progress-bar"
-                    class="pomodoro-progress-bar"
-                  ></div>
-
+                  <div id="pomodoro-progress-bar" class="pomodoro-progress-bar"></div>
                 </div>
 
                 <div class="pomodoro-clock-meta">
-
-                  <span id="pomodoro-mode-copy">
-                    Foco
-                  </span>
-
-                  <span id="pomodoro-duration-copy">
-                    25 min
-                  </span>
-
+                  <span id="pomodoro-mode-copy">Foco</span>
+                  <span id="pomodoro-duration-copy">25 min</span>
                 </div>
-
               </div>
 
-
               <div class="pomodoro-actions">
-
-                <button
-                  id="pomodoro-start"
-                  class="button primary"
-                  type="button"
-                >
+                <button id="pomodoro-start" class="button primary" type="button">
                   Iniciar
                 </button>
 
-                <button
-                  id="pomodoro-pause"
-                  class="button secondary"
-                  type="button"
-                  disabled
-                >
+                <button id="pomodoro-pause" class="button secondary" type="button" disabled>
                   Pausar
                 </button>
 
-                <button
-                  id="pomodoro-finish"
-                  class="button secondary"
-                  type="button"
-                  disabled
-                >
+                <button id="pomodoro-finish" class="button secondary" type="button" disabled>
                   Finalizar sessão
                 </button>
-
               </div>
 
-
               <div class="pomodoro-summary">
-
                 <div>
                   <span>Foco nesta sessão</span>
                   <strong id="pomodoro-effective-time">0 min</strong>
@@ -314,16 +271,9 @@
                   <span>Registrado hoje</span>
                   <strong id="pomodoro-today-time">0 min</strong>
                 </div>
-
               </div>
 
-
-              <div
-                id="pomodoro-status"
-                class="pomodoro-status"
-                aria-live="polite"
-              ></div>
-
+              <div id="pomodoro-status" class="pomodoro-status" aria-live="polite"></div>
             </section>
 
           </article>
@@ -342,12 +292,7 @@
               </label>
 
               <div class="lofi-player-main">
-                <button
-                  class="lofi-main-toggle"
-                  type="button"
-                  data-lofi-toggle
-                  aria-label="Tocar lo-fi"
-                >
+                <button class="lofi-main-toggle" type="button" data-lofi-toggle aria-label="Tocar lo-fi">
                   ▶
                 </button>
 
@@ -358,15 +303,7 @@
               </div>
 
               <div class="lofi-progress">
-                <input
-                  type="range"
-                  min="0"
-                  max="0"
-                  step="1"
-                  value="0"
-                  data-lofi-progress
-                  aria-label="Posição da música"
-                >
+                <input type="range" min="0" max="0" step="1" value="0" data-lofi-progress aria-label="Posição da música">
 
                 <div class="lofi-time">
                   <span data-lofi-current>0:00</span>
@@ -376,15 +313,7 @@
 
               <div class="lofi-volume">
                 <span>Volume</span>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value="0.45"
-                  data-lofi-volume
-                  aria-label="Volume do lo-fi"
-                >
+                <input type="range" min="0" max="1" step="0.01" value="0.45" data-lofi-volume aria-label="Volume do lo-fi">
               </div>
 
               <div class="lofi-note-row">
@@ -395,11 +324,7 @@
           </article>
         </section>
 
-        <section
-          id="ambientacao-workspace"
-          class="panel ambientacao-workspace"
-          hidden
-        >
+        <section id="ambientacao-workspace" class="panel ambientacao-workspace" hidden>
           <div class="panel-header">
             <div>
               <span class="badge accent">Sessão de estudo</span>
@@ -410,44 +335,21 @@
             </div>
           </div>
 
-          <div
-            id="ambientacao-lesson-activity"
-            class="agenda-lesson-activity"
-            hidden
-          >
-            <span class="badge accent">
-              Aula
-            </span>
+          <div id="ambientacao-lesson-activity" class="agenda-lesson-activity" hidden>
+            <span class="badge accent">Aula</span>
 
-            <h3 id="agenda-lesson-title">
-              Aula
-            </h3>
+            <h3 id="agenda-lesson-title">Aula</h3>
 
-            <div
-              id="agenda-lesson-meta"
-              class="agenda-lesson-meta"
-            ></div>
+            <div id="agenda-lesson-meta" class="agenda-lesson-meta"></div>
 
-            <p
-              id="agenda-lesson-subtitle"
-              class="agenda-lesson-subtitle"
-              hidden
-            ></p>
+            <p id="agenda-lesson-subtitle" class="agenda-lesson-subtitle" hidden></p>
 
             <div class="agenda-lesson-actions">
-              <button
-                id="agenda-lesson-complete"
-                class="button primary"
-                type="button"
-              >
+              <button id="agenda-lesson-complete" class="button primary" type="button">
                 Concluir aula
               </button>
 
-              <span
-                id="agenda-lesson-status"
-                class="agenda-lesson-status"
-                aria-live="polite"
-              ></span>
+              <span id="agenda-lesson-status" class="agenda-lesson-status" aria-live="polite"></span>
             </div>
           </div>
 
@@ -458,76 +360,6 @@
           ></iframe>
         </section>
 
-        <section class="panel ccq-showcase-panel">
-
-          <div class="ccq-showcase-head">
-
-            <div>
-              <span class="badge accent">
-                CCQs
-              </span>
-
-              <h2>
-                Revisão passiva
-              </h2>
-
-              <p>
-                Conceitos aleatórios do seu Caderno de Erros passam automaticamente pela tela.
-              </p>
-            </div>
-
-            <span class="ccq-auto-label">
-              troca automática · 30s
-            </span>
-
-          </div>
-
-
-          <div
-            id="ccq-empty"
-            class="ccq-showcase-empty"
-            hidden
-          >
-            Nenhum CCQ disponível no Caderno de Erros.
-          </div>
-
-
-          <div
-            id="ccq-showcase"
-            class="ccq-showcase"
-            hidden
-          >
-
-            <div
-              id="ccq-slide"
-              class="ccq-slide"
-              aria-live="polite"
-            >
-
-              <div
-                id="ccq-text"
-                class="ccq-showcase-text"
-              ></div>
-
-
-              <div
-                id="ccq-meta"
-                class="ccq-showcase-meta"
-              ></div>
-
-            </div>
-
-
-            <div class="ccq-showcase-progress">
-              <div
-                id="ccq-progress-bar"
-                class="ccq-showcase-progress-bar"
-              ></div>
-            </div>
-
-          </div>
-
-        </section>
       </div>
     </main>
   </div>
@@ -537,5 +369,184 @@
   <script src="app.js?v=12.1"></script>
   <script src="study-mode.js?v=12.1"></script>
   <script src="ambientacao.js?v=12.9"></script>
+
+  <script>
+    (function () {
+      function isUuid(value) {
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+          .test(String(value || ""));
+      }
+
+      function disableOldCcq() {
+        document.querySelector(".ccq-showcase-panel")?.remove();
+
+        try {
+          if (typeof stopCcqRotation === "function") {
+            stopCcqRotation();
+          }
+
+          if (typeof startCcqRotation === "function") {
+            startCcqRotation = function () {};
+          }
+        } catch {}
+      }
+
+      function prepareNotebook(frame) {
+        try {
+          const doc = frame.contentDocument;
+          if (!doc) return;
+
+          [
+            ".sidebar",
+            ".sidebar-backdrop",
+            ".topbar",
+            ".notebook-tabs",
+            ".notebook-topic-panel",
+            "#notebook-view-library"
+          ].forEach((selector) => {
+            doc.querySelectorAll(selector).forEach((element) => {
+              element.style.display = "none";
+            });
+          });
+
+          const shell = doc.querySelector(".app-shell");
+          if (shell) {
+            shell.style.display = "block";
+            shell.style.gridTemplateColumns = "1fr";
+            shell.style.minHeight = "0";
+          }
+
+          const main = doc.querySelector(".main");
+          if (main) {
+            main.style.margin = "0";
+            main.style.padding = "0";
+            main.style.width = "100%";
+            main.style.opacity = "1";
+          }
+
+          const page = doc.querySelector(".notebook-page, .page");
+          if (page) {
+            page.style.width = "100%";
+            page.style.maxWidth = "none";
+            page.style.margin = "0";
+            page.style.padding = "0";
+          }
+
+          const editorView = doc.querySelector("#notebook-view-editor");
+          if (editorView) {
+            editorView.hidden = false;
+            editorView.style.display = "block";
+          }
+
+          const workspace = doc.querySelector(".notebook-workspace");
+          if (workspace) {
+            workspace.style.display = "block";
+            workspace.style.gridTemplateColumns = "1fr";
+          }
+
+          const column = doc.querySelector(".notebook-editor-column");
+          if (column) {
+            column.style.width = "100%";
+            column.style.minWidth = "0";
+          }
+
+          const toolbar = doc.querySelector(".notebook-toolbar");
+          if (toolbar) {
+            toolbar.style.top = "0";
+          }
+
+          const paper = doc.querySelector(".notebook-paper");
+          if (paper) {
+            paper.style.width = "min(100%, 980px)";
+            paper.style.maxWidth = "980px";
+            paper.style.margin = "0 auto";
+          }
+
+          if (doc.body) {
+            doc.body.style.margin = "0";
+            doc.body.style.padding = "0";
+            doc.body.style.background = "transparent";
+          }
+
+          const resize = () => {
+            const height = Math.max(
+              720,
+              doc.documentElement?.scrollHeight || 0,
+              doc.body?.scrollHeight || 0
+            );
+
+            frame.style.height = `${height + 20}px`;
+          };
+
+          resize();
+
+          if ("ResizeObserver" in window && doc.body) {
+            const observer = new ResizeObserver(resize);
+            observer.observe(doc.body);
+          }
+
+        } catch (error) {
+          console.warn("Não foi possível preparar o Caderno da aula:", error);
+        }
+      }
+
+      function openLessonNotebook() {
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.get("kind") !== "lesson") {
+          return;
+        }
+
+        const topicId = params.get("item_id");
+
+        if (!isUuid(topicId)) {
+          return;
+        }
+
+        const workspace = document.getElementById("ambientacao-workspace");
+        const lesson = document.getElementById("ambientacao-lesson-activity");
+        const frame = document.getElementById("ambientacao-study-frame");
+
+        if (!workspace || !frame) {
+          return;
+        }
+
+        workspace.hidden = false;
+        workspace.classList.add("lesson-with-notebook");
+
+        if (lesson) {
+          lesson.hidden = false;
+        }
+
+        const url = new URL("caderno.html", window.location.href);
+        url.searchParams.set("topic_id", topicId);
+        url.searchParams.set("view", "editor");
+
+        frame.hidden = false;
+        frame.title = "Caderno da aula";
+
+        frame.addEventListener(
+          "load",
+          () => prepareNotebook(frame),
+          { once: true }
+        );
+
+        frame.src = url.toString();
+      }
+
+      function boot() {
+        disableOldCcq();
+
+        window.setTimeout(openLessonNotebook, 0);
+        window.setTimeout(openLessonNotebook, 250);
+      }
+
+      if (window.docmapUser) {
+        boot();
+      } else {
+        window.addEventListener("docmap:ready", boot, { once: true });
+      }
+    })();
+  </script>
 </body>
 </html>

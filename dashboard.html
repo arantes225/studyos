@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard · Resibulando</title>
   <link rel="icon" type="image/png" href="favicon.png?v=resibulando2">
-  <link rel="stylesheet" href="style.css?v=12">
+  <link rel="stylesheet" href="style.css?v=12.1">
   <style id="fase3-inline">
 /* =========================================================
    FASE 3 — DASHBOARD + AGENDA
@@ -521,8 +521,6 @@
   }
 }
 
-
-
 .simulations-panel {
   margin-top: 16px;
 }
@@ -623,7 +621,6 @@
   }
 }
 
-
 .metric-grid {
   grid-template-columns: repeat(6, minmax(0, 1fr));
 }
@@ -651,9 +648,6 @@
     grid-template-columns: 1fr;
   }
 }
-
-  
-
 
 /* =========================================================
    FASE 11.2 — DASHBOARD EXPANDIDO
@@ -767,6 +761,98 @@
   }
 }
 
+/* CCQ fixo no Dashboard */
+.dashboard-passive-ccq-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 150px;
+}
+
+.dashboard-ccq-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dashboard-ccq-auto {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.dashboard-passive-ccq-stage {
+  min-height: 80px;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  text-align: center;
+  transition: transform 300ms ease, opacity 300ms ease;
+}
+
+.dashboard-passive-ccq-stage.is-leaving {
+  transform: translateX(-24px);
+  opacity: 0;
+}
+
+.dashboard-passive-ccq-stage.is-entering {
+  transform: translateX(24px);
+  opacity: 0;
+}
+
+.dashboard-passive-ccq-text {
+  width: 100%;
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 14.5px;
+  font-weight: 820;
+  line-height: 1.4;
+  text-align: center;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
+.dashboard-passive-ccq-meta {
+  width: 100%;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 8.5px;
+  font-weight: 700;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-passive-ccq-empty {
+  min-height: 80px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 10px;
+  text-align: center;
+}
+
+.dashboard-passive-ccq-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  overflow: hidden;
+  background: var(--border);
+}
+
+.dashboard-passive-ccq-progress > span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--accent);
+}
+
 </style>
   <link rel="stylesheet" href="resibulando-brand-v5.css?v=5">
   <script defer src="resibulando-brand-v5.js?v=5"></script>
@@ -795,7 +881,6 @@
             <span class="metric-helper">Nesta semana</span>
           </article>
 
-
           <article class="metric-card overdue-card">
             <span class="metric-label">Aulas atrasadas</span>
             <strong id="metric-overdue-lessons" class="metric-value">—</strong>
@@ -803,7 +888,6 @@
               Carregando cronograma...
             </span>
           </article>
-
 
           <article class="metric-card visual-card">
             <div class="metric-visual-copy">
@@ -827,7 +911,6 @@
             </div>
           </article>
 
-
           <article class="metric-card">
             <span class="metric-label">Retenção dos flashcards</span>
             <strong id="metric-retention" class="metric-value">—</strong>
@@ -836,7 +919,6 @@
             </span>
           </article>
 
-
           <article class="metric-card">
             <span class="metric-label">Flashcards para revisar</span>
             <strong id="metric-flashcards" class="metric-value">—</strong>
@@ -844,7 +926,6 @@
               Carregando...
             </span>
           </article>
-
 
           <article class="metric-card visual-card">
             <div class="metric-visual-copy">
@@ -868,7 +949,6 @@
             </div>
           </article>
 
-
           <article class="metric-card visual-card simulation-metric-card">
             <div class="metric-visual-copy">
               <span class="metric-label">Simulados · 30 dias</span>
@@ -891,15 +971,30 @@
             </div>
           </article>
 
+          <article class="metric-card dashboard-passive-ccq-card">
+            <div class="dashboard-ccq-head">
+              <span class="metric-label">Revisão passiva</span>
+              <span class="dashboard-ccq-auto">CCQ · 30s</span>
+            </div>
 
-          <article class="metric-card">
-            <span class="metric-label">Maior dificuldade</span>
-            <strong id="metric-difficulty" class="metric-value">—</strong>
-            <span id="metric-difficulty-helper" class="metric-helper">
-              Sem erros classificados
-            </span>
+            <div id="dashboard-passive-ccq-empty" class="dashboard-passive-ccq-empty">
+              Carregando CCQs...
+            </div>
+
+            <div
+              id="dashboard-passive-ccq-stage"
+              class="dashboard-passive-ccq-stage"
+              hidden
+              aria-live="polite"
+            >
+              <div id="dashboard-passive-ccq-text" class="dashboard-passive-ccq-text"></div>
+              <div id="dashboard-passive-ccq-meta" class="dashboard-passive-ccq-meta"></div>
+            </div>
+
+            <div class="dashboard-passive-ccq-progress">
+              <span id="dashboard-passive-ccq-progress"></span>
+            </div>
           </article>
-
 
           <article class="metric-card">
             <span class="metric-label">Ofensiva</span>
@@ -970,7 +1065,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
-  <script src="app.js?v=12"></script>
-  <script src="dashboard.js?v=11.7"></script>
+  <script src="app.js?v=12.1"></script>
+  <script src="study-mode.js?v=12.1"></script>
+  <script src="dashboard.js?v=21.0"></script>
 </body>
 </html>
