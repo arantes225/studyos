@@ -7,7 +7,7 @@
 
   <link rel="icon" type="image/png" href="favicon.png?v=resibulando2">
   <link rel="stylesheet" href="style.css?v=12.1">
-  <link rel="stylesheet" href="caderno.css?v=19.0">
+  <link rel="stylesheet" href="caderno.css?v=22.0">
 </head>
 
 <body data-page="caderno">
@@ -341,6 +341,22 @@
                     >
                       <span>▦</span>
                       Ler tabela da imagem
+                    </button>
+
+                    <button
+                      type="button"
+                      data-table-action="merge-row"
+                    >
+                      <span>▤</span>
+                      Unir linha atual (título)
+                    </button>
+
+                    <button
+                      type="button"
+                      data-table-action="split-row"
+                    >
+                      <span>▥</span>
+                      Separar linha atual
                     </button>
                   </div>
                 </div>
@@ -836,6 +852,14 @@
         <button id="notebook-table-remove-col" class="button secondary compact-button" type="button">
           − Coluna
         </button>
+
+        <button id="notebook-table-merge-row" class="button secondary compact-button" type="button">
+          Unir linha (título)
+        </button>
+
+        <button id="notebook-table-split-row" class="button secondary compact-button" type="button">
+          Separar linha
+        </button>
       </div>
 
       <div
@@ -869,6 +893,6 @@
 
   <script src="supabase.js"></script>
   <script src="app.js?v=12.1"></script>
-  <script src="caderno.js?v=21.0"></script>
+  <script src="caderno.js?v=22.0"></script>
 </body>
 </html>
