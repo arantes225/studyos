@@ -509,6 +509,120 @@
     `).join("");
   }
 
+
+  function heatIntensity(value, max) {
+    if (!max || !value) return 0;
+    return Math.max(8, Math.min(100, Math.round(value / max * 100)));
+  }
+
+  function renderWeekTimeHeatmap(id, sessions) {
+    const el = $(id);
+    if (!el) return;
+
+    const weekdays = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+    const periods = [
+      { label:"Madrugada", start:0, end:6 },
+      { label:"Manhã", start:6, end:12 },
+      { label:"Tarde", start:12, end:18 },
+      { label:"Noite", start:18, end:24 }
+    ];
+
+    const matrix = Array.from({length:7}, () => Array(4).fill(0));
+
+    for (const row of sessions || []) {
+      const d = new Date(row.started_at);
+      if (Number.isNaN(d.getTime())) continue;
+
+      const weekday = (d.getDay() + 6) % 7;
+      const hour = d.getHours();
+      const period = periods.findIndex(p => hour >= p.start && hour < p.end);
+
+      if (period >= 0) {
+        matrix[weekday][period] += Number(row.duration_seconds || 0) / 60;
+      }
+    }
+
+    const max = Math.max(0, ...matrix.flat());
+
+    el.innerHTML = `
+      <div class="heatmap-grid week-time">
+        <div class="heatmap-head">Dia</div>
+        ${periods.map(p => `<div class="heatmap-head">${esc(p.label)}</div>`).join("")}
+
+        ${weekdays.map((day, dayIndex) => `
+          <div class="heatmap-row-label">${day}</div>
+          ${matrix[dayIndex].map(minutes => `
+            <div class="heatmap-cell" style="--heat:${heatIntensity(minutes,max)}">
+              <strong>${minutes ? hours(minutes * 60) : "—"}</strong>
+              <small>${minutes ? `${num(minutes)} min` : "sem registro"}</small>
+            </div>
+          `).join("")}
+        `).join("")}
+      </div>
+      <div class="heatmap-legend"><span>menos</span><span class="heatmap-legend-swatch"></span><span>mais tempo</span></div>
+    `;
+  }
+
+  function renderQuestionAreaWeekHeatmap(id, attempts) {
+    const el = $(id);
+    if (!el) return;
+
+    const weekdays = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+    const grouped = new Map();
+
+    for (const row of attempts || []) {
+      const label = area(row);
+      const d = new Date(row.answered_at);
+      if (Number.isNaN(d.getTime())) continue;
+
+      const weekday = (d.getDay() + 6) % 7;
+      if (!grouped.has(label)) {
+        grouped.set(label, Array.from({length:7}, () => ({ total:0, correct:0 })));
+      }
+
+      const cell = grouped.get(label)[weekday];
+      cell.total += 1;
+      if (row.result === "correct") cell.correct += 1;
+    }
+
+    const rows = Array.from(grouped.entries())
+      .map(([label,cells]) => ({
+        label,
+        cells,
+        total: cells.reduce((sum,cell)=>sum+cell.total,0)
+      }))
+      .sort((a,b)=>b.total-a.total)
+      .slice(0,10);
+
+    if (!rows.length) {
+      el.innerHTML = '<div class="stats-empty">Ainda não há questões suficientes para montar o mapa de calor.</div>';
+      return;
+    }
+
+    const max = Math.max(1, ...rows.flatMap(row => row.cells.map(cell => cell.total)));
+
+    el.innerHTML = `
+      <div class="heatmap-grid area-week">
+        <div class="heatmap-head">Área</div>
+        ${weekdays.map(day => `<div class="heatmap-head">${day}</div>`).join("")}
+
+        ${rows.map(row => `
+          <div class="heatmap-row-label">${esc(row.label)}</div>
+          ${row.cells.map(cell => {
+            const accuracy = pct(cell.correct, cell.total);
+            return `
+              <div class="heatmap-cell" style="--heat:${heatIntensity(cell.total,max)}">
+                <strong>${cell.total ? percent(accuracy,0) : "—"}</strong>
+                <small>${cell.total ? `${cell.total} q.` : "0 q."}</small>
+              </div>
+            `;
+          }).join("")}
+        `).join("")}
+      </div>
+      <div class="heatmap-legend"><span>menos</span><span class="heatmap-legend-swatch"></span><span>mais questões</span></div>
+    `;
+  }
+
   function renderMetricStrip(id, cards) {
     const el = $(id);
     if (!el) return;
@@ -701,22 +815,21 @@
       { label:"Tempo estudado", value:hours(m.seconds), helper:`${labelPeriod()} · ${compare(m.seconds,m.prevSeconds)}`, progress:Math.min(100,m.seconds/108000*100) },
       { label:"Consistência", value:percent(m.consistency), helper:`${m.activeDays}/${m.eligible} dias planejados`, progress:m.consistency },
       { label:"Aderência às aulas", value:percent(m.adherence), helper:`${m.plannedDone.length}/${m.planned.length} previstas`, progress:m.adherence },
-      { label:"Aproveitamento em questões", value:percent(m.accuracyQ,1), helper:`${m.questions.length} questões · ${comparePP(m.accuracyQ,m.prevAccuracyQ)}`, progress:m.accuracyQ }
+      { label:"Aproveitamento em questões", value:percent(m.accuracyQ,1), helper:`${m.questions.length} questões · ${comparePP(m.accuracyQ,m.prevAccuracyQ)}`, progress:m.accuracyQ },
+
+      { label:"Progresso das aulas", value:percent(m.progress,1), helper:`${m.totalDone}/${m.totalTopics} concluídas`, progress:m.progress },
+      { label:"Aulas no período", value:num(m.donePeriod), helper:`concluídas em ${labelPeriod()}`, progress:Math.min(100,m.donePeriod/30*100) },
+      { label:"Revisões de flashcards", value:num(m.flashReviews.length), helper:compare(m.flashReviews.length,m.prevFlashReviews.length), progress:Math.min(100,m.flashReviews.length/1500*100) },
+      { label:"Acerto nos flashcards", value:percent(m.flashAccuracy,1), helper:comparePP(m.flashAccuracy,m.prevFlashAccuracy), progress:m.flashAccuracy },
+
+      { label:"Retenção dos flashcards", value:percent(m.retention,1), helper:`${m.reviewedCards.length} cards estimados`, progress:m.retention },
+      { label:"CCQs ativos", value:num(m.err.length), helper:`${m.overdueErr} atrasados`, progress:pct(m.err.length,Math.max(1,state.static.errors.length)) },
+      { label:"Revisões teóricas", value:percent(m.reviewRate), helper:`${m.doneReviews.length}/${m.scheduledReviews.length} previstas`, progress:m.reviewRate },
+      { label:"Ofensiva", value:`${currentStreak()} d`, helper:`recorde ${longestStreak()} dias`, progress:pct(currentStreak(),Math.max(1,longestStreak())) }
     ]);
 
-    renderMetricStrip("general-habit-metrics", [
-      { label:"Dias ativos", value:num(m.activeDays), helper:`de ${m.eligible} planejados` },
-      { label:"Média por dia ativo", value:hours(m.activeDays ? m.seconds/m.activeDays : 0), helper:"tempo efetivo" },
-      { label:"Sessões", value:num(m.sessions.length), helper:`média ${hours(m.sessions.length ? m.seconds/m.sessions.length : 0)}` },
-      { label:"Ofensiva", value:`${currentStreak()} d`, helper:`recorde ${longestStreak()} dias` }
-    ]);
-
-    renderMetricStrip("general-progress-metrics", [
-      { label:"Progresso das aulas", value:percent(m.progress), helper:`${m.totalDone}/${m.totalTopics}` },
-      { label:"Retenção dos flashcards", value:percent(m.retention,1), helper:`${m.reviewedCards.length} cards estimados` },
-      { label:"CCQs ativos", value:num(m.err.length), helper:`${m.overdueErr} atrasados` },
-      { label:"Revisões teóricas", value:percent(m.reviewRate), helper:`${m.doneReviews.length}/${m.scheduledReviews.length}` }
-    ]);
+    renderMetricStrip("general-habit-metrics", []);
+    renderMetricStrip("general-progress-metrics", []);
 
     const studySeries = dateSeries(m.sessions, "started_at", x => Number(x.duration_seconds || 0) / 3600);
     chart("chart-general-study","bar",studySeries.map(x=>x.label),[
@@ -732,10 +845,10 @@
       { label:"Horas", data:activity.map(x=>Number((x.value/3600).toFixed(2))) }
     ],{ extra:{ cutout:"64%" } });
 
+    renderWeekTimeHeatmap("general-week-heatmap", m.sessions);
     renderGeneralAreaTable(m);
     renderGeneralInsights(m);
   }
-
 
   function renderGeneralAreaTable(m) {
     const areas = new Set();
@@ -866,25 +979,24 @@
     const worst = m.areaProgress[0];
 
     renderSummary("lesson-summary", [
-      { label:"Progresso total", value:percent(m.progress,1), helper:`${m.done.length}/${m.topics.length} aulas`, progress:m.progress },
+      { label:"Aulas no cronograma", value:num(m.topics.length), helper:"total importado", progress:100 },
+      { label:"Aulas concluídas", value:num(m.done.length), helper:`${percent(m.progress)} do total`, progress:m.progress },
+      { label:"Progresso total", value:percent(m.progress,1), helper:`${m.done.length}/${m.topics.length}`, progress:m.progress },
       { label:"Aderência", value:percent(m.adherence,1), helper:`${m.scheduledDone.length}/${m.scheduled.length} previstas`, progress:m.adherence },
+
       { label:"Aulas atrasadas", value:num(m.overdue.length), helper:"pendentes com data vencida", progress:pct(m.overdue.length,Math.max(1,m.topics.length-m.done.length)) },
-      { label:"Tempo em aulas", value:hours(m.seconds), helper:compare(m.seconds,m.prevSeconds), progress:Math.min(100,m.seconds/72000*100) }
+      { label:"Pontualidade", value:percent(m.onTime,1), helper:`${m.lateDelay.length} concluídas após o prazo`, progress:m.onTime },
+      { label:"Tempo em aulas", value:hours(m.seconds), helper:compare(m.seconds,m.prevSeconds), progress:Math.min(100,m.seconds/72000*100) },
+      { label:"Dias com aula", value:num(studyDays), helper:`de ${eligibleDays(state.settings?.theory_study_weekdays)} permitidos`, progress:pct(studyDays,eligibleDays(state.settings?.theory_study_weekdays)) },
+
+      { label:"Revisões previstas", value:num(m.scheduledReviews.length), helper:"revisões teóricas", progress:Math.min(100,m.scheduledReviews.length/80*100) },
+      { label:"Revisões concluídas", value:num(m.completedReviews.length), helper:`${percent(m.reviewRate)} das previstas`, progress:m.reviewRate },
+      { label:"Área mais pendente", value:worst?.label||"—", helper:worst?`${percent(worst.value)} concluído`:"sem dados", progress:worst?.value||0 },
+      { label:"Matéria mais pendente", value:m.subjectPending?.label||"—", helper:m.subjectPending?`${m.subjectPending.count} aulas pendentes`:"sem pendências", progress:Math.min(100,(m.subjectPending?.count||0)*8) }
     ]);
 
-    renderMetricStrip("lesson-volume-metrics", [
-      { label:"Planejadas", value:num(m.scheduled.length), helper:labelPeriod() },
-      { label:"Concluídas", value:num(m.completedPeriod.length), helper:labelPeriod() },
-      { label:"Pontualidade", value:percent(m.onTime,1), helper:`${m.lateDelay.length} após o prazo` },
-      { label:"Remanejadas", value:num(m.moved.length), helper:m.movedDays.length?`média ${days(mean(m.movedDays),1)}`:"sem remanejamentos" }
-    ]);
-
-    renderMetricStrip("lesson-review-metrics", [
-      { label:"Previstas", value:num(m.scheduledReviews.length), helper:"no período" },
-      { label:"Concluídas", value:num(m.completedReviews.length), helper:percent(m.reviewRate) },
-      { label:"Atrasadas", value:num(m.overdueReviews.length), helper:"neste momento" },
-      { label:"Remarcadas", value:num(m.manualReviews.length), helper:"manualmente" }
-    ]);
+    renderMetricStrip("lesson-volume-metrics", []);
+    renderMetricStrip("lesson-review-metrics", []);
 
     const plannedSeries = dateSeries(m.scheduled,"scheduled_date");
     const doneSeries = dateSeries(m.completedPeriod,"completed_at");
@@ -935,7 +1047,6 @@
     if (m.moved.length) out.push({title:"Remanejamentos",text:`${m.moved.length} aulas mudaram de data, com deslocamento médio de ${days(mean(m.movedDays),1)}.`});
     insights("lesson-insights",out);
   }
-
 
   // =========================================================
   // FLASHCARDS
@@ -1006,38 +1117,25 @@
 
     renderSummary("flash-summary", [
       { label:"Cards ativos", value:num(m.active.length), helper:`${m.all.length} registrados`, progress:pct(m.active.length,m.all.length) },
-      { label:"Revisões", value:num(m.reviews.length), helper:compare(m.reviews.length,m.prevReviews.length), progress:Math.min(100,m.reviews.length/2000*100) },
+      { label:"Revisões realizadas", value:num(m.reviews.length), helper:compare(m.reviews.length,m.prevReviews.length), progress:Math.min(100,m.reviews.length/2000*100) },
       { label:"Taxa de acerto", value:percent(m.accuracy,1), helper:comparePP(m.accuracy,m.prevAccuracy), progress:m.accuracy },
-      { label:"Retenção atual", value:percent(m.retention,1), helper:`${m.reviewed.length} cards estimados`, progress:m.retention }
+      { label:"Retenção atual", value:percent(m.retention,1), helper:`${m.reviewed.length} cards estimados`, progress:m.retention },
+
+      { label:"Novos cards", value:num(m.created.length), helper:`criados no ${labelPeriod()}`, progress:Math.min(100,m.created.length/300*100) },
+      { label:"Únicos revisados", value:num(m.unique), helper:`${percent(pct(m.unique,m.active.length))} dos ativos`, progress:pct(m.unique,m.active.length) },
+      { label:"Dias com revisão", value:num(m.reviewDays), helper:`${percent(pct(m.reviewDays,eligibleDays(state.settings?.flashcard_weekdays)))} dos permitidos`, progress:pct(m.reviewDays,eligibleDays(state.settings?.flashcard_weekdays)) },
+      { label:"Média por dia ativo", value:m.reviewDays?num(m.reviews.length/m.reviewDays,1):"0", helper:"revisões por dia", progress:Math.min(100,(m.reviewDays?m.reviews.length/m.reviewDays:0)/150*100) },
+
+      { label:"Atrasados", value:num(m.overdue), helper:`${percent(pct(m.overdue,m.active.length))} dos ativos`, progress:pct(m.overdue,m.active.length) },
+      { label:"Próximos 7 dias", value:num(m.next7), helper:"carga prevista", progress:pct(m.next7,m.active.length) },
+      { label:"Estabilidade média", value:days(mean(m.stability),1), helper:`mediana ${days(median(m.stability),1)}`, progress:Math.min(100,mean(m.stability)/90*100) },
+      { label:"Intervalo médio", value:days(mean(m.intervals),1), helper:`mediana ${days(median(m.intervals),1)}`, progress:Math.min(100,mean(m.intervals)/90*100) }
     ]);
 
-    renderMetricStrip("flash-volume-metrics", [
-      { label:"Novos cards", value:num(m.created.length), helper:`no ${labelPeriod()}` },
-      { label:"Únicos revisados", value:num(m.unique), helper:`${percent(pct(m.unique,m.active.length))} dos ativos` },
-      { label:"Dias com revisão", value:num(m.reviewDays), helper:`${percent(pct(m.reviewDays,eligibleDays(state.settings?.flashcard_weekdays)))} dos permitidos` },
-      { label:"Média/dia ativo", value:m.reviewDays?num(m.reviews.length/m.reviewDays,1):"0", helper:"revisões por dia" }
-    ]);
-
-    renderMetricStrip("flash-quality-metrics", [
-      { label:"Acertos", value:num(m.correct), helper:percent(m.accuracy,1) },
-      { label:"Erros", value:num(incorrect), helper:percent(pct(incorrect,m.reviews.length),1) },
-      { label:"Fácil", value:percent(pct(m.easy,m.reviews.length),1), helper:`${m.easy} respostas` },
-      { label:"Difícil", value:percent(pct(m.hard,m.reviews.length),1), helper:`${m.hard} respostas` }
-    ]);
-
-    renderMetricStrip("flash-load-metrics", [
-      { label:"Hoje", value:num(m.dueToday), helper:"vencendo hoje" },
-      { label:"Atrasados", value:num(m.overdue), helper:`${percent(pct(m.overdue,m.active.length))} dos ativos` },
-      { label:"Próximos 7 dias", value:num(m.next7), helper:"carga prevista" },
-      { label:"Próximos 30 dias", value:num(m.next30), helper:"carga prevista" }
-    ]);
-
-    renderMetricStrip("flash-memory-metrics", [
-      { label:"Estabilidade média", value:days(mean(m.stability),1), helper:`mediana ${days(median(m.stability),1)}` },
-      { label:"Intervalo médio", value:days(mean(m.intervals),1), helper:`mediana ${days(median(m.intervals),1)}` },
-      { label:"Recuperabilidade pré-revisão", value:m.preR.length?percent(mean(m.preR)*100,1):"—", helper:`${m.preR.length} revisões` },
-      { label:"Crescimento estabilidade", value:m.growth.length?`${num(mean(m.growth),1)}%`:"—", helper:"média após revisar" }
-    ]);
+    renderMetricStrip("flash-volume-metrics", []);
+    renderMetricStrip("flash-quality-metrics", []);
+    renderMetricStrip("flash-load-metrics", []);
+    renderMetricStrip("flash-memory-metrics", []);
 
     const reviewSeries = dateSeries(m.reviews,"reviewed_at");
     const accuracyByDate = Array.from(group(m.reviews,x=>dateKey(x.reviewed_at)).entries())
@@ -1116,7 +1214,6 @@
     insights("flash-insights",out);
   }
 
-
   // =========================================================
   // CADERNO DE ERROS
   // =========================================================
@@ -1166,31 +1263,24 @@
 
     renderSummary("error-summary",[
       {label:"CCQs ativos",value:num(m.active.length),helper:`${m.all.length} registrados`,progress:pct(m.active.length,m.all.length)},
-      {label:"Revisões",value:num(m.reviews.length),helper:compare(m.reviews.length,m.prevReviews.length),progress:Math.min(100,m.reviews.length/500*100)},
+      {label:"Revisões realizadas",value:num(m.reviews.length),helper:compare(m.reviews.length,m.prevReviews.length),progress:Math.min(100,m.reviews.length/500*100)},
       {label:"Retenção atual",value:percent(m.ret,1),helper:`${m.reviewed.length} CCQs estimados`,progress:m.ret},
-      {label:"Atrasados",value:num(m.overdue),helper:`${percent(pct(m.overdue,m.active.length))} dos ativos`,progress:pct(m.overdue,m.active.length)}
+      {label:"Atrasados",value:num(m.overdue),helper:`${percent(pct(m.overdue,m.active.length))} dos ativos`,progress:pct(m.overdue,m.active.length)},
+
+      {label:"CCQs criados",value:num(m.created.length),helper:`no ${labelPeriod()}`,progress:Math.min(100,m.created.length/100*100)},
+      {label:"Únicos revisados",value:num(m.unique),helper:`${percent(pct(m.unique,m.active.length))} dos ativos`,progress:pct(m.unique,m.active.length)},
+      {label:"Dias com revisão",value:num(m.reviewDays),helper:`${percent(pct(m.reviewDays,eligibleDays(state.settings?.error_weekdays)))} dos permitidos`,progress:pct(m.reviewDays,eligibleDays(state.settings?.error_weekdays))},
+      {label:"Já revisados",value:num(m.reviewed.length),helper:`${percent(pct(m.reviewed.length,m.active.length))} dos ativos`,progress:pct(m.reviewed.length,m.active.length)},
+
+      {label:"Nunca revisados",value:num(m.never),helper:`${percent(pct(m.never,m.active.length))} dos ativos`,progress:pct(m.never,m.active.length)},
+      {label:"Próximos 7 dias",value:num(m.next7),helper:"carga prevista",progress:pct(m.next7,m.active.length)},
+      {label:"Estabilidade média",value:days(mean(m.stability),1),helper:`mediana ${days(median(m.stability),1)}`,progress:Math.min(100,mean(m.stability)/90*100)},
+      {label:"Área com mais CCQs",value:m.areaGroups[0]?.label||"—",helper:m.areaGroups[0]?`${m.areaGroups[0].count} ativos`:"sem dados",progress:pct(m.areaGroups[0]?.count||0,m.active.length)}
     ]);
 
-    renderMetricStrip("error-volume-metrics",[
-      {label:"Criados",value:num(m.created.length),helper:`no ${labelPeriod()}`},
-      {label:"Únicos revisados",value:num(m.unique),helper:`${percent(pct(m.unique,m.active.length))} dos ativos`},
-      {label:"Dias com revisão",value:num(m.reviewDays),helper:`${percent(pct(m.reviewDays,eligibleDays(state.settings?.error_weekdays)))} dos permitidos`},
-      {label:"Tempo no Caderno",value:hours(m.seconds),helper:compare(m.seconds,m.prevSeconds)}
-    ]);
-
-    renderMetricStrip("error-load-metrics",[
-      {label:"Para hoje",value:num(m.dueToday),helper:"vencendo hoje"},
-      {label:"Atrasados",value:num(m.overdue),helper:`${percent(pct(m.overdue,m.active.length))} dos ativos`},
-      {label:"Próximos 7 dias",value:num(m.next7),helper:"carga prevista"},
-      {label:"Próximos 30 dias",value:num(m.next30),helper:"carga prevista"}
-    ]);
-
-    renderMetricStrip("error-memory-metrics",[
-      {label:"Já revisados",value:num(m.reviewed.length),helper:`${percent(pct(m.reviewed.length,m.active.length))} dos ativos`},
-      {label:"Nunca revisados",value:num(m.never),helper:`${percent(pct(m.never,m.active.length))} dos ativos`},
-      {label:"Estabilidade média",value:days(mean(m.stability),1),helper:`mediana ${days(median(m.stability),1)}`},
-      {label:"3+ revisões",value:num(m.threePlus),helper:`${percent(pct(m.threePlus,m.active.length))} dos ativos`}
-    ]);
+    renderMetricStrip("error-volume-metrics",[]);
+    renderMetricStrip("error-load-metrics",[]);
+    renderMetricStrip("error-memory-metrics",[]);
 
     const createdSeries=dateSeries(m.created,"created_at");
     const reviewSeries=dateSeries(m.reviews,"reviewed_at");
@@ -1265,8 +1355,6 @@
     insights("error-insights",out);
   }
 
-
-
   function renderQuestions() {
     const attempts = current(state.period.questionAttempts,"answered_at");
     const prevAttempts = previous(state.period.questionAttempts,"answered_at");
@@ -1281,27 +1369,41 @@
       x.last_answered_at && (state.range==="all" || inCurrent(x.last_answered_at))
     );
     const completedSets = sets.filter(x=>x.completed===true).length;
+    const setAccuracies = sets
+      .map(x=>Number(x.accuracy_percent))
+      .filter(Number.isFinite);
+
+    const areasPreview = Array.from(group(attempts,area).entries()).map(([label,rows])=>{
+      const c=rows.filter(x=>x.result==="correct").length;
+      return {label,total:rows.length,accuracy:pct(c,rows.length)};
+    }).filter(x=>x.total>=1);
+
+    const strongest = areasPreview.filter(x=>x.total>=5).slice().sort((a,b)=>b.accuracy-a.accuracy)[0];
+    const weakest = areasPreview.filter(x=>x.total>=5).slice().sort((a,b)=>a.accuracy-b.accuracy)[0];
+    const bestSet = sets
+      .filter(x=>Number.isFinite(Number(x.accuracy_percent)))
+      .slice()
+      .sort((a,b)=>Number(b.accuracy_percent)-Number(a.accuracy_percent))[0];
 
     renderSummary("question-summary",[
       {label:"Simulados realizados",value:num(completedSets),helper:`${sets.length} com atividade no período`,progress:Math.min(100,completedSets*12)},
       {label:"Questões respondidas",value:num(attempts.length),helper:compare(attempts.length,prevAttempts.length),progress:Math.min(100,attempts.length/500*100)},
       {label:"Aproveitamento",value:percent(accuracy,1),helper:comparePP(accuracy,prevAccuracy),progress:accuracy},
-      {label:"Erros enviados ao Caderno",value:num(sent),helper:`${percent(conversion,1)} dos erros`,progress:conversion}
+      {label:"Erros enviados ao Caderno",value:num(sent),helper:`${percent(conversion,1)} dos erros`,progress:conversion},
+
+      {label:"Acertos",value:num(correct),helper:`${percent(accuracy,1)} das respostas`,progress:accuracy},
+      {label:"Erros",value:num(wrong),helper:`${percent(pct(wrong,attempts.length),1)} das respostas`,progress:pct(wrong,attempts.length)},
+      {label:"Conversão para o Caderno",value:percent(conversion,1),helper:`${sent}/${wrong} erros`,progress:conversion},
+      {label:"Questões por simulado",value:completedSets?num(attempts.length/completedSets,1):"—",helper:"média no período",progress:Math.min(100,(completedSets?attempts.length/completedSets:0)/100*100)},
+
+      {label:"Melhor área",value:strongest?.label||"—",helper:strongest?`${percent(strongest.accuracy,1)} · ${strongest.total} questões`:"mínimo 5 questões",progress:strongest?.accuracy||0},
+      {label:"Área mais frágil",value:weakest?.label||"—",helper:weakest?`${percent(weakest.accuracy,1)} · ${weakest.total} questões`:"mínimo 5 questões",progress:weakest?.accuracy||0},
+      {label:"Média dos simulados",value:setAccuracies.length?percent(mean(setAccuracies),1):"—",helper:`${setAccuracies.length} com resultado`,progress:mean(setAccuracies)},
+      {label:"Melhor simulado",value:bestSet?.title||"—",helper:bestSet?percent(Number(bestSet.accuracy_percent),1):"sem resultado",progress:Number(bestSet?.accuracy_percent||0)}
     ]);
 
-    renderMetricStrip("question-performance-metrics",[
-      {label:"Acertos",value:num(correct),helper:percent(accuracy,1)},
-      {label:"Erros",value:num(wrong),helper:percent(pct(wrong,attempts.length),1)},
-      {label:"Questões/simulado",value:completedSets?num(attempts.length/completedSets,1):"—",helper:"média no período"},
-      {label:"Variação do acerto",value:state.range==="all"?"—":comparePP(accuracy,prevAccuracy),helper:"vs período anterior"}
-    ]);
-
-    renderMetricStrip("question-error-metrics",[
-      {label:"Erros totais",value:num(wrong),helper:"no período"},
-      {label:"Enviados ao Caderno",value:num(sent),helper:"transformados em revisão"},
-      {label:"Conversão de erros",value:percent(conversion,1),helper:"erros → Caderno"},
-      {label:"Erros não enviados",value:num(Math.max(0,wrong-sent)),helper:"ainda fora do Caderno"}
-    ]);
+    renderMetricStrip("question-performance-metrics",[]);
+    renderMetricStrip("question-error-metrics",[]);
 
     const series = dateSeries(attempts,"answered_at");
     const dailyAcc = Array.from(group(attempts,x=>dateKey(x.answered_at)).entries())
@@ -1341,13 +1443,13 @@
     );
 
     const out=[];
-    const weakest=areas.filter(x=>x.total>=5).slice().sort((a,b)=>a.accuracy-b.accuracy)[0];
-    const strongest=areas.filter(x=>x.total>=5).slice().sort((a,b)=>b.accuracy-a.accuracy)[0];
     if(weakest) out.push({title:"Área com menor aproveitamento",text:`${weakest.label}: ${percent(weakest.accuracy,1)} em ${weakest.total} questões.`});
     if(strongest) out.push({title:"Área com maior aproveitamento",text:`${strongest.label}: ${percent(strongest.accuracy,1)} em ${strongest.total} questões.`});
     if(wrong) out.push({title:"Conversão para o Caderno",text:`${sent} de ${wrong} erros foram transformados em revisão (${percent(conversion,1)}).`});
     if(state.range!=="all"&&prevAttempts.length) out.push({title:"Tendência",text:`O aproveitamento ${accuracy>=prevAccuracy?"subiu":"caiu"} ${num(Math.abs(accuracy-prevAccuracy),1)} p.p. em relação ao período anterior.`});
     insights("question-insights",out);
+
+    renderQuestionAreaWeekHeatmap("question-area-week-heatmap", attempts);
   }
 
   // =========================================================

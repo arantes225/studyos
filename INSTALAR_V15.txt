@@ -1,0 +1,66 @@
+RESIBULANDO v15 — ESTATÍSTICAS + PROVAS
+========================================
+
+1) ESTATÍSTICAS
+---------------
+Substitua na raiz do projeto:
+- estatisticas.html
+- estatisticas.css
+- estatisticas.js
+
+Mudanças:
+- 12 callouts principais no topo de CADA aba (3 linhas × 4 no desktop)
+- blocos inferiores continuam focados em gráficos/tabelas
+- métricas secundárias redundantes foram retiradas dos blocos
+- mapa de calor semanal na aba Geral:
+  dia da semana × madrugada/manhã/tarde/noite
+- mapa de calor na aba Questões / Simulados:
+  área × dia da semana, mostrando aproveitamento e volume
+- mantém as abas:
+  Geral | Aulas | Flashcards | Caderno de erros | Questões / Simulados
+
+2) PROVAS / EDITAIS
+-------------------
+Antes de usar:
+- rode fase15_provas_notas_corte.sql no Supabase SQL Editor
+
+Depois copie para a raiz:
+- editais-v15.css
+- editais-v15.js
+- aplicar_patch_editais_v15.py
+
+Na raiz do projeto, execute:
+  python aplicar_patch_editais_v15.py
+
+O patch:
+- remove a aba "Editar provas"
+- injeta os recursos v15 preservando seu editais.js/editais.css atuais
+- cria backup editais.html.bak-v15
+
+Mudanças na página:
+- menu ⋯ acima do Status em cada prova
+- pelo menu:
+  • Registrar / editar nota
+  • Editar prova
+  • Excluir
+- campo "Últimas notas de corte" com até 8 anos/edições
+- a nota mais recente vira referência
+- Resultado:
+  • vermelho: mais de 2 pontos abaixo da corte
+  • amarelo: de 2 pontos abaixo até menos de 2 pontos acima
+  • verde: 2 ou mais pontos acima da corte
+- o card mostra a última nota de corte e quantas anteriores existem
+
+3) PUBLICAÇÃO
+-------------
+Depois:
+- publique no GitHub/Netlify
+- faça Ctrl+F5 para limpar cache
+
+ORDEM RECOMENDADA
+-----------------
+1. Rodar o SQL
+2. Aplicar o patch de Editais
+3. Substituir os 3 arquivos de Estatísticas
+4. Publicar
+5. Ctrl+F5
