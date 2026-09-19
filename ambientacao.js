@@ -21,6 +21,45 @@ let pomodoroState = {
   finishing: false
 };
 
+let simpleTimerState = {
+  running:
+    false,
+
+  sessionId:
+    null,
+
+  accumulatedSeconds:
+    0,
+
+  lastTickAt:
+    null,
+
+  timerId:
+    null,
+
+  finishing:
+    false
+};
+
+
+let studyTimerView =
+  "simple";
+
+
+function simpleTimerStorageKey(
+  userId
+) {
+  return `docmap:simple-timer:${userId}`;
+}
+
+
+function studyTimerViewStorageKey(
+  userId
+) {
+  return `docmap:ambientacao-timer-view:${userId}`;
+}
+
+
 
 function pomodoroStorageKey(userId) {
   return `docmap:pomodoro:${userId}`;
@@ -706,19 +745,30 @@ async function loadTodayStudyTime() {
   }
 
 
-  const element =
-    document.getElementById(
-      "pomodoro-today-time"
+  const formatted =
+    formatStudyDuration(
+      data?.total_seconds
+      || 0
     );
 
 
-  if (element) {
-    element.textContent =
-      formatStudyDuration(
-        data?.total_seconds
-        || 0
-      );
-  }
+  [
+    "pomodoro-today-time",
+    "simple-today-time"
+  ]
+    .forEach(
+      (id) => {
+        const element =
+          document.getElementById(
+            id
+          );
+
+        if (element) {
+          element.textContent =
+            formatted;
+        }
+      }
+    );
 }
 
 
@@ -1349,6 +1399,942 @@ function wirePomodoro() {
 }
 
 
+
+function readSimpleTimerLocal() {
+  if (!ambientacaoUser) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(
+      localStorage.getItem(
+        simpleTimerStorageKey(
+          ambientacaoUser.id
+        )
+      )
+      || "null"
+    );
+  } catch {
+    return null;
+  }
+}
+
+
+function writeSimpleTimerLocal() {
+  if (!ambientacaoUser) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(
+      simpleTimerStorageKey(
+        ambientacaoUser.id
+      ),
+      JSON.stringify({
+        activityKey:
+          currentActivityKey(),
+
+        sessionId:
+          simpleTimerState
+            .sessionId,
+
+        accumulatedSeconds:
+          Math.max(
+            0,
+            Number(
+              simpleTimerState
+                .accumulatedSeconds
+            )
+            || 0
+          )
+      })
+    );
+  } catch {}
+}
+
+
+function clearSimpleTimerLocal() {
+  if (!ambientacaoUser) {
+    return;
+  }
+
+  try {
+    localStorage.removeItem(
+      simpleTimerStorageKey(
+        ambientacaoUser.id
+      )
+    );
+  } catch {}
+}
+
+
+function formatElapsedClock(
+  seconds
+) {
+  const safe =
+    Math.max(
+      0,
+      Math.floor(
+        Number(seconds)
+        || 0
+      )
+    );
+
+  const hours =
+    Math.floor(
+      safe / 3600
+    );
+
+  const minutes =
+    Math.floor(
+      (
+        safe % 3600
+      )
+      / 60
+    );
+
+  const rest =
+    safe % 60;
+
+  if (hours > 0) {
+    return `${hours}:${String(
+      minutes
+    ).padStart(
+      2,
+      "0"
+    )}:${String(
+      rest
+    ).padStart(
+      2,
+      "0"
+    )}`;
+  }
+
+  return `${String(
+    minutes
+  ).padStart(
+    2,
+    "0"
+  )}:${String(
+    rest
+  ).padStart(
+    2,
+    "0"
+  )}`;
+}
+
+
+function currentSimpleTimerSeconds() {
+  let seconds =
+    Math.max(
+      0,
+      Number(
+        simpleTimerState
+          .accumulatedSeconds
+      )
+      || 0
+    );
+
+  if (
+    simpleTimerState.running
+    && simpleTimerState
+      .lastTickAt
+  ) {
+    seconds +=
+      Math.max(
+        0,
+        (
+          Date.now()
+          - simpleTimerState
+              .lastTickAt
+        )
+        / 1000
+      );
+  }
+
+  return seconds;
+}
+
+
+function setSimpleTimerStatus(
+  text = "",
+  type = ""
+) {
+  const element =
+    document.getElementById(
+      "simple-timer-status"
+    );
+
+  if (!element) {
+    return;
+  }
+
+  element.textContent =
+    text;
+
+  element.className =
+    `pomodoro-status ${type}`
+      .trim();
+}
+
+
+function renderSimpleTimer() {
+  const seconds =
+    currentSimpleTimerSeconds();
+
+  const panel =
+    document.getElementById(
+      "simple-timer-panel"
+    );
+
+  const clock =
+    document.getElementById(
+      "simple-timer-clock"
+    );
+
+  const state =
+    document.getElementById(
+      "simple-timer-state"
+    );
+
+  const effective =
+    document.getElementById(
+      "simple-timer-effective-time"
+    );
+
+  const start =
+    document.getElementById(
+      "simple-timer-start"
+    );
+
+  const pause =
+    document.getElementById(
+      "simple-timer-pause"
+    );
+
+  const finish =
+    document.getElementById(
+      "simple-timer-finish"
+    );
+
+
+  if (clock) {
+    clock.textContent =
+      formatElapsedClock(
+        seconds
+      );
+  }
+
+
+  if (effective) {
+    effective.textContent =
+      formatStudyDuration(
+        seconds
+      );
+  }
+
+
+  if (panel) {
+    panel.classList.toggle(
+      "running",
+      simpleTimerState.running
+    );
+  }
+
+
+  if (state) {
+    state.textContent =
+      simpleTimerState.running
+        ? "rodando"
+        : simpleTimerState
+            .sessionId
+          ? "pausado"
+          : "pronto";
+
+    state.className =
+      `pomodoro-state ${
+        simpleTimerState.running
+          ? "running"
+          : simpleTimerState
+              .sessionId
+            ? "paused"
+            : ""
+      }`.trim();
+  }
+
+
+  if (start) {
+    start.disabled =
+      simpleTimerState.running
+      || simpleTimerState.finishing;
+
+    start.textContent =
+      simpleTimerState
+        .sessionId
+        ? "Continuar"
+        : "Iniciar";
+  }
+
+
+  if (pause) {
+    pause.disabled =
+      !simpleTimerState.running
+      || simpleTimerState.finishing;
+  }
+
+
+  if (finish) {
+    finish.disabled =
+      !simpleTimerState
+        .sessionId
+      || simpleTimerState.finishing;
+  }
+}
+
+
+function applySimpleTimerDelta() {
+  if (
+    !simpleTimerState.running
+    || !simpleTimerState
+      .lastTickAt
+  ) {
+    return;
+  }
+
+  const now =
+    Date.now();
+
+  simpleTimerState
+    .accumulatedSeconds +=
+      Math.max(
+        0,
+        (
+          now
+          - simpleTimerState
+              .lastTickAt
+        )
+        / 1000
+      );
+
+  simpleTimerState
+    .lastTickAt =
+      now;
+}
+
+
+function stopSimpleTimerInterval() {
+  if (
+    simpleTimerState.timerId
+  ) {
+    clearInterval(
+      simpleTimerState.timerId
+    );
+
+    simpleTimerState.timerId =
+      null;
+  }
+}
+
+
+function startSimpleTimerInterval() {
+  stopSimpleTimerInterval();
+
+  simpleTimerState.timerId =
+    window.setInterval(
+      () => {
+        applySimpleTimerDelta();
+
+        writeSimpleTimerLocal();
+
+        renderSimpleTimer();
+      },
+      1000
+    );
+}
+
+
+async function closeStoredSimpleTimerIfNeeded(
+  stored
+) {
+  if (
+    !stored?.sessionId
+    || stored.activityKey
+      === currentActivityKey()
+  ) {
+    return;
+  }
+
+  try {
+    await ambientacaoSb.rpc(
+      "finish_study_session_v2",
+      {
+        p_session_id:
+          stored.sessionId,
+
+        p_duration_seconds:
+          Math.max(
+            0,
+            Math.floor(
+              Number(
+                stored
+                  .accumulatedSeconds
+              )
+              || 0
+            )
+          )
+      }
+    );
+  } catch (error) {
+    console.warn(
+      "Não foi possível encerrar o cronômetro anterior:",
+      error
+    );
+  }
+
+  clearSimpleTimerLocal();
+}
+
+
+function restoreSimpleTimerState() {
+  const stored =
+    readSimpleTimerLocal();
+
+  if (
+    !stored
+    || stored.activityKey
+      !== currentActivityKey()
+  ) {
+    simpleTimerState.running =
+      false;
+
+    simpleTimerState.sessionId =
+      null;
+
+    simpleTimerState
+      .accumulatedSeconds =
+        0;
+
+    simpleTimerState.lastTickAt =
+      null;
+
+    simpleTimerState.timerId =
+      null;
+
+    simpleTimerState.finishing =
+      false;
+
+    return;
+  }
+
+  simpleTimerState.running =
+    false;
+
+  simpleTimerState.sessionId =
+    stored.sessionId
+    || null;
+
+  simpleTimerState
+    .accumulatedSeconds =
+      Math.max(
+        0,
+        Number(
+          stored
+            .accumulatedSeconds
+        )
+        || 0
+      );
+
+  simpleTimerState.lastTickAt =
+    null;
+
+  simpleTimerState.timerId =
+    null;
+
+  simpleTimerState.finishing =
+    false;
+}
+
+
+async function startSimpleStudySessionIfNeeded() {
+  if (
+    simpleTimerState.sessionId
+  ) {
+    return;
+  }
+
+  const params =
+    getAmbientacaoParams();
+
+  const {
+    data,
+    error
+  } =
+    await ambientacaoSb.rpc(
+      "start_study_session",
+      {
+        p_activity_kind:
+          studyActivityKind(),
+
+        p_source_id:
+          studySourceId(),
+
+        p_area:
+          params.get(
+            "area"
+          )
+          || null,
+
+        p_materia:
+          params.get(
+            "materia"
+          )
+          || null
+      }
+    );
+
+  if (error) {
+    throw error;
+  }
+
+  simpleTimerState.sessionId =
+    data?.id
+    || null;
+
+  writeSimpleTimerLocal();
+}
+
+
+async function startSimpleTimer() {
+  if (
+    simpleTimerState.running
+    || simpleTimerState.finishing
+  ) {
+    return;
+  }
+
+  setSimpleTimerStatus(
+    "Iniciando sessão..."
+  );
+
+  try {
+    await startSimpleStudySessionIfNeeded();
+
+    simpleTimerState.running =
+      true;
+
+    simpleTimerState.lastTickAt =
+      Date.now();
+
+    writeSimpleTimerLocal();
+
+    startSimpleTimerInterval();
+
+    renderSimpleTimer();
+
+    setSimpleTimerStatus(
+      "Cronômetro em andamento. O tempo está sendo contabilizado."
+    );
+
+  } catch (error) {
+    console.error(
+      error
+    );
+
+    setSimpleTimerStatus(
+      `Não foi possível iniciar: ${error.message}`,
+      "error"
+    );
+  }
+}
+
+
+function pauseSimpleTimer() {
+  if (
+    !simpleTimerState.running
+  ) {
+    return;
+  }
+
+  applySimpleTimerDelta();
+
+  simpleTimerState.running =
+    false;
+
+  simpleTimerState.lastTickAt =
+    null;
+
+  stopSimpleTimerInterval();
+
+  writeSimpleTimerLocal();
+
+  renderSimpleTimer();
+
+  setSimpleTimerStatus(
+    "Cronômetro pausado. O tempo pausado não é contabilizado."
+  );
+}
+
+
+async function finishSimpleTimer() {
+  if (
+    simpleTimerState.finishing
+  ) {
+    return;
+  }
+
+  if (
+    simpleTimerState.running
+  ) {
+    applySimpleTimerDelta();
+
+    simpleTimerState.running =
+      false;
+
+    simpleTimerState.lastTickAt =
+      null;
+
+    stopSimpleTimerInterval();
+  }
+
+  if (
+    !simpleTimerState.sessionId
+  ) {
+    renderSimpleTimer();
+
+    return;
+  }
+
+  simpleTimerState.finishing =
+    true;
+
+  renderSimpleTimer();
+
+  setSimpleTimerStatus(
+    "Registrando tempo de estudo..."
+  );
+
+  const effectiveSeconds =
+    Math.max(
+      0,
+      Math.floor(
+        simpleTimerState
+          .accumulatedSeconds
+      )
+    );
+
+  const {
+    error
+  } =
+    await ambientacaoSb.rpc(
+      "finish_study_session_v2",
+      {
+        p_session_id:
+          simpleTimerState
+            .sessionId,
+
+        p_duration_seconds:
+          effectiveSeconds
+      }
+    );
+
+  simpleTimerState.finishing =
+    false;
+
+  if (error) {
+    console.error(
+      error
+    );
+
+    renderSimpleTimer();
+
+    setSimpleTimerStatus(
+      `Não foi possível registrar: ${error.message}`,
+      "error"
+    );
+
+    return;
+  }
+
+  simpleTimerState.sessionId =
+    null;
+
+  simpleTimerState
+    .accumulatedSeconds =
+      0;
+
+  clearSimpleTimerLocal();
+
+  renderSimpleTimer();
+
+  await loadTodayStudyTime();
+
+  setSimpleTimerStatus(
+    `Sessão registrada: ${formatStudyDuration(
+      effectiveSeconds
+    )}.`,
+    "success"
+  );
+}
+
+
+function readStudyTimerView() {
+  if (!ambientacaoUser) {
+    return "simple";
+  }
+
+  try {
+    return localStorage.getItem(
+      studyTimerViewStorageKey(
+        ambientacaoUser.id
+      )
+    ) === "pomodoro"
+      ? "pomodoro"
+      : "simple";
+
+  } catch {
+    return "simple";
+  }
+}
+
+
+function writeStudyTimerView(
+  view
+) {
+  if (!ambientacaoUser) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(
+      studyTimerViewStorageKey(
+        ambientacaoUser.id
+      ),
+      view
+    );
+  } catch {}
+}
+
+
+function renderStudyTimerView() {
+  document
+    .querySelectorAll(
+      "[data-timer-panel]"
+    )
+    .forEach(
+      (panel) => {
+        panel.hidden =
+          panel.dataset
+            .timerPanel
+          !== studyTimerView;
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-timer-view]"
+    )
+    .forEach(
+      (button) => {
+        const active =
+          button.dataset
+            .timerView
+          === studyTimerView;
+
+        button.classList.toggle(
+          "active",
+          active
+        );
+
+        button.setAttribute(
+          "aria-selected",
+          active
+            ? "true"
+            : "false"
+        );
+      }
+    );
+}
+
+
+function switchStudyTimerView(
+  view
+) {
+  const next =
+    view === "pomodoro"
+      ? "pomodoro"
+      : "simple";
+
+  if (
+    next === studyTimerView
+  ) {
+    return;
+  }
+
+  if (
+    next === "simple"
+    && (
+      pomodoroState.running
+      || pomodoroState
+        .sessionId
+    )
+  ) {
+    setPomodoroStatus(
+      "Finalize a sessão de Pomodoro antes de trocar para o cronômetro simples.",
+      "error"
+    );
+
+    return;
+  }
+
+  if (
+    next === "pomodoro"
+    && (
+      simpleTimerState.running
+      || simpleTimerState
+        .sessionId
+    )
+  ) {
+    setSimpleTimerStatus(
+      "Finalize o cronômetro simples antes de trocar para o Pomodoro.",
+      "error"
+    );
+
+    return;
+  }
+
+  studyTimerView =
+    next;
+
+  writeStudyTimerView(
+    studyTimerView
+  );
+
+  renderStudyTimerView();
+}
+
+
+function wireStudyTimerViewMenu() {
+  document
+    .querySelectorAll(
+      "[data-timer-view]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            switchStudyTimerView(
+              button.dataset
+                .timerView
+            );
+          }
+        );
+      }
+    );
+}
+
+
+function wireSimpleTimer() {
+  const activityCopy =
+    document.getElementById(
+      "simple-timer-activity-copy"
+    );
+
+  if (activityCopy) {
+    const label =
+      studyActivityLabel();
+
+    activityCopy.textContent =
+      getAmbientacaoParams()
+        .get("title")
+        ? `Atividade: ${label}. O tempo será registrado no Dashboard.`
+        : "Estudo livre. O tempo será registrado no Dashboard.";
+  }
+
+
+  document
+    .getElementById(
+      "simple-timer-start"
+    )
+    ?.addEventListener(
+      "click",
+      startSimpleTimer
+    );
+
+
+  document
+    .getElementById(
+      "simple-timer-pause"
+    )
+    ?.addEventListener(
+      "click",
+      pauseSimpleTimer
+    );
+
+
+  document
+    .getElementById(
+      "simple-timer-finish"
+    )
+    ?.addEventListener(
+      "click",
+      finishSimpleTimer
+    );
+
+
+  document.addEventListener(
+    "visibilitychange",
+    () => {
+      if (
+        !document.hidden
+        && simpleTimerState.running
+      ) {
+        applySimpleTimerDelta();
+
+        renderSimpleTimer();
+      }
+    }
+  );
+
+
+  window.addEventListener(
+    "pagehide",
+    () => {
+      if (
+        simpleTimerState.running
+      ) {
+        applySimpleTimerDelta();
+      }
+
+      writeSimpleTimerLocal();
+    }
+  );
+}
+
+
+async function initSimpleTimer() {
+  const stored =
+    readSimpleTimerLocal();
+
+  if (
+    stored
+    && stored.activityKey
+      !== currentActivityKey()
+  ) {
+    await closeStoredSimpleTimerIfNeeded(
+      stored
+    );
+  }
+
+  restoreSimpleTimerState();
+
+  wireSimpleTimer();
+
+  renderSimpleTimer();
+}
+
+
 async function initPomodoro() {
   ambientacaoUser =
     window.docmapUser;
@@ -1375,6 +2361,31 @@ async function initPomodoro() {
   wirePomodoro();
 
   renderPomodoro();
+
+  await initSimpleTimer();
+
+  wireStudyTimerViewMenu();
+
+
+  if (
+    simpleTimerState.sessionId
+  ) {
+    studyTimerView =
+      "simple";
+
+  } else if (
+    pomodoroState.sessionId
+  ) {
+    studyTimerView =
+      "pomodoro";
+
+  } else {
+    studyTimerView =
+      readStudyTimerView();
+  }
+
+
+  renderStudyTimerView();
 
   await loadTodayStudyTime();
 }

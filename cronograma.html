@@ -1517,6 +1517,115 @@
     font-weight: 900;
   }
 
+
+  /* ========================================================
+     FASE 12.9 — FILTRO FEITOS / MENU ⋯
+     ======================================================== */
+
+  .theme-bulk-menu-wrap {
+    position: relative;
+    margin-left: auto;
+  }
+
+  .theme-bulk-menu-toggle {
+    width: 38px;
+    height: 36px;
+
+    display: grid;
+    place-items: center;
+
+    padding: 0;
+
+    border: 1px solid var(--border);
+    border-radius: 10px;
+
+    background: var(--surface);
+    color: var(--text);
+
+    font-size: 23px;
+    font-weight: 900;
+    line-height: 1;
+
+    cursor: pointer;
+  }
+
+  .theme-bulk-menu-toggle:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .theme-bulk-menu-toggle:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+  }
+
+  .theme-bulk-menu {
+    position: absolute;
+    top: calc(100% + 7px);
+    right: 0;
+    z-index: 45;
+
+    width: min(290px, 86vw);
+
+    display: grid;
+    gap: 4px;
+
+    padding: 6px;
+
+    border: 1px solid var(--border);
+    border-radius: 12px;
+
+    background: var(--surface);
+
+    box-shadow:
+      0 18px 50px
+      rgba(15, 23, 42, .16);
+  }
+
+  .theme-bulk-menu[hidden] {
+    display: none !important;
+  }
+
+  .theme-bulk-menu-item {
+    min-height: 39px;
+
+    padding:
+      0
+      11px;
+
+    border: 0;
+    border-radius: 8px;
+
+    background: transparent;
+    color: var(--text);
+
+    text-align: left;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    cursor: pointer;
+  }
+
+  .theme-bulk-menu-item:hover:not(:disabled) {
+    background: var(--surface-2);
+  }
+
+  .theme-bulk-menu-item.danger {
+    color: var(--danger);
+  }
+
+  .theme-bulk-menu-item:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 680px) {
+    .theme-bulk-menu-wrap {
+      margin-left: 0;
+    }
+  }
 </style>
   <link rel="stylesheet" href="resibulando-brand-v5.css?v=5">
   <script defer src="resibulando-brand-v5.js?v=5"></script>
@@ -1989,6 +2098,15 @@
                 <option value="">Todas as áreas</option>
               </select>
 
+              <select
+                id="theme-completion-filter"
+                aria-label="Filtrar por conclusão"
+              >
+                <option value="all">Feitos e não feitos</option>
+                <option value="pending">Não feitos</option>
+                <option value="completed">Feitos</option>
+              </select>
+
               <label class="theme-date-filter">
                 <span>De</span>
                 <input id="theme-date-from" type="date" aria-label="Data inicial">
@@ -2006,13 +2124,14 @@
 
             <div class="theme-library-meta">
               <span id="theme-list-count">0 aulas</span>
-              <span>Somente aulas ainda não concluídas</span>
+              <span>Inclui aulas feitas e não feitas</span>
             </div>
 
 
             <div class="theme-library-bulk">
 
               <label class="theme-bulk-check">
+
                 <input
                   id="theme-select-all"
                   type="checkbox"
@@ -2021,32 +2140,75 @@
                 <span>
                   Selecionar visíveis
                 </span>
+
               </label>
+
 
               <span id="theme-selected-count">
                 0 selecionadas
               </span>
 
-              <button
-                id="theme-done-selected"
-                class="button secondary"
-                type="button"
-                disabled
-              >
-                Marcar selecionadas como já feitas
-              </button>
 
-              <button
-                id="theme-delete-selected"
-                class="button secondary theme-bulk-danger"
-                type="button"
-                disabled
-              >
-                Excluir selecionadas
-              </button>
+              <div class="theme-bulk-menu-wrap">
+
+                <button
+                  id="theme-bulk-menu-toggle"
+                  class="theme-bulk-menu-toggle"
+                  type="button"
+                  aria-label="Ações das aulas selecionadas"
+                  aria-haspopup="menu"
+                  aria-expanded="false"
+                  title="Ações"
+                  disabled
+                >
+                  ⋯
+                </button>
+
+
+                <div
+                  id="theme-bulk-menu"
+                  class="theme-bulk-menu"
+                  role="menu"
+                  hidden
+                >
+
+                  <button
+                    id="theme-deck-selected"
+                    class="theme-bulk-menu-item"
+                    type="button"
+                    role="menuitem"
+                    disabled
+                  >
+                    Remover para o deck
+                  </button>
+
+
+                  <button
+                    id="theme-done-selected"
+                    class="theme-bulk-menu-item"
+                    type="button"
+                    role="menuitem"
+                    disabled
+                  >
+                    Marcar selecionadas como já feitas
+                  </button>
+
+
+                  <button
+                    id="theme-delete-selected"
+                    class="theme-bulk-menu-item danger"
+                    type="button"
+                    role="menuitem"
+                    disabled
+                  >
+                    Excluir selecionadas
+                  </button>
+
+                </div>
+
+              </div>
 
             </div>
-
 
             <div id="theme-library-list" class="theme-library-list"></div>
           </section>
@@ -2091,6 +2253,6 @@
   <script src="app.js?v=12.1"></script>
   <script src="study-mode.js?v=12.1"></script>
   <script src="cronograma-base-data.js?v=12.6"></script>
-  <script src="cronograma.js?v=12.8"></script>
+  <script src="cronograma.js?v=12.9"></script>
 </body>
 </html>

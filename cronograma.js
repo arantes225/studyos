@@ -17,6 +17,7 @@ const scheduleState = {
   themeAreaFilter: "",
   themeDateFrom: "",
   themeDateTo: "",
+  themeCompletionFilter: "all",
 
   studyMode:
     "medicine",
@@ -4499,6 +4500,10 @@ function filteredLibraryTopics() {
   const dateTo =
     scheduleState.themeDateTo;
 
+  const completionFilter =
+    scheduleState
+      .themeCompletionFilter;
+
   return getActiveTopicsForLibrary()
     .filter((topic) => {
       if (
@@ -4527,6 +4532,24 @@ function filteredLibraryTopics() {
       ) {
         return false;
       }
+
+      if (
+        completionFilter
+        === "completed"
+        && !topic.completed_at
+      ) {
+        return false;
+      }
+
+
+      if (
+        completionFilter
+        === "pending"
+        && topic.completed_at
+      ) {
+        return false;
+      }
+
 
       if (!search) return true;
 
@@ -4598,20 +4621,69 @@ function updateThemeBulkToolbar() {
     ).length;
 
 
+  const selectedTopics =
+    scheduleState.topics
+      .filter(
+        (topic) =>
+          scheduleState
+            .selectedThemeIds
+            .has(
+              topic.id
+            )
+      );
+
+
+  const selectedCount =
+    selectedTopics.length;
+
+
+  const canMoveToDeck =
+    selectedTopics.some(
+      (topic) =>
+        !topic.completed_at
+        && Boolean(
+          topic.scheduled_date
+        )
+    );
+
+
+  const canMarkDone =
+    selectedTopics.some(
+      (topic) =>
+        !topic.completed_at
+        && Boolean(
+          topic.scheduled_date
+        )
+    );
+
+
   const count =
     document.getElementById(
       "theme-selected-count"
     );
 
 
-  const button =
+  const deleteButton =
     document.getElementById(
       "theme-delete-selected"
     );
 
+
   const doneButton =
     document.getElementById(
       "theme-done-selected"
+    );
+
+
+  const deckButton =
+    document.getElementById(
+      "theme-deck-selected"
+    );
+
+
+  const menuToggle =
+    document.getElementById(
+      "theme-bulk-menu-toggle"
     );
 
 
@@ -4623,35 +4695,37 @@ function updateThemeBulkToolbar() {
 
   if (count) {
     count.textContent =
-      `${scheduleState.selectedThemeIds.size} selecionada${scheduleState.selectedThemeIds.size === 1 ? "" : "s"}`;
+      `${selectedCount} selecionada${selectedCount === 1 ? "" : "s"}`;
   }
 
 
-  if (button) {
-    button.disabled =
-      scheduleState
-        .selectedThemeIds
-        .size === 0;
+  if (deleteButton) {
+    deleteButton.disabled =
+      selectedCount === 0;
   }
+
 
   if (doneButton) {
-    const selectedPending =
-      scheduleState.topics
-        .some(
-          (topic) =>
-            scheduleState
-              .selectedThemeIds
-              .has(
-                topic.id
-              )
-            && !topic.completed_at
-            && Boolean(
-              topic.scheduled_date
-            )
-        );
-
     doneButton.disabled =
-      !selectedPending;
+      !canMarkDone;
+  }
+
+
+  if (deckButton) {
+    deckButton.disabled =
+      !canMoveToDeck;
+  }
+
+
+  if (menuToggle) {
+    menuToggle.disabled =
+      selectedCount === 0;
+
+    if (
+      selectedCount === 0
+    ) {
+      closeThemeBulkMenu();
+    }
   }
 
 
@@ -4669,6 +4743,165 @@ function updateThemeBulkToolbar() {
   }
 }
 
+function closeThemeBulkMenu() {
+  const menu =
+    document.getElementById(
+      "theme-bulk-menu"
+    );
+
+  const toggle =
+    document.getElementById(
+      "theme-bulk-menu-toggle"
+    );
+
+  if (menu) {
+    menu.hidden =
+      true;
+  }
+
+  if (toggle) {
+    toggle.setAttribute(
+      "aria-expanded",
+      "false"
+    );
+  }
+}
+
+
+function toggleThemeBulkMenu() {
+  const menu =
+    document.getElementById(
+      "theme-bulk-menu"
+    );
+
+  const toggle =
+    document.getElementById(
+      "theme-bulk-menu-toggle"
+    );
+
+  if (
+    !menu
+    || !toggle
+    || toggle.disabled
+  ) {
+    return;
+  }
+
+  const open =
+    menu.hidden;
+
+  menu.hidden =
+    !open;
+
+  toggle.setAttribute(
+    "aria-expanded",
+    open
+      ? "true"
+      : "false"
+  );
+}
+
+
+async function returnSelectedThemesToDeck() {
+  const eligible =
+    scheduleState.topics
+      .filter(
+        (topic) =>
+          scheduleState
+            .selectedThemeIds
+            .has(
+              topic.id
+            )
+          && !topic.completed_at
+          && Boolean(
+            topic.scheduled_date
+          )
+      );
+
+  if (!eligible.length) {
+    window.alert(
+      "Nenhuma das aulas selecionadas pode ser removida para o deck."
+    );
+
+    closeThemeBulkMenu();
+
+    return;
+  }
+
+
+  const confirmed =
+    window.confirm(
+      `Remover ${eligible.length} aula${eligible.length === 1 ? "" : "s"} selecionada${eligible.length === 1 ? "" : "s"} das datas atuais e enviar para o Deck não programado?`
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      "theme-deck-selected"
+    );
+
+
+  if (button) {
+    button.disabled =
+      true;
+  }
+
+
+  const {
+    error
+  } =
+    await scheduleSb
+      .from(
+        "study_topics"
+      )
+      .update({
+        scheduled_date:
+          null,
+
+        status:
+          "deck"
+      })
+      .in(
+        "id",
+        eligible.map(
+          (topic) =>
+            topic.id
+        )
+      );
+
+
+  if (error) {
+    console.error(
+      error
+    );
+
+    window.alert(
+      `Não foi possível remover as aulas para o deck: ${error.message}`
+    );
+
+    if (button) {
+      button.disabled =
+        false;
+    }
+
+    return;
+  }
+
+
+  scheduleState
+    .selectedThemeIds
+    .clear();
+
+
+  closeThemeBulkMenu();
+
+  await loadTopics();
+}
 
 
 async function markSelectedThemesAlreadyDone() {
@@ -4696,6 +4929,7 @@ async function markSelectedThemesAlreadyDone() {
     const marked = Number(data?.marked || 0);
     const skipped = Number(data?.skipped || 0);
     scheduleState.selectedThemeIds.clear();
+    closeThemeBulkMenu();
     window.alert(`${marked} aula${marked === 1 ? "" : "s"} marcada${marked === 1 ? "" : "s"} como já feita${marked === 1 ? "" : "s"}.${skipped ? ` ${skipped} selecionada${skipped === 1 ? "" : "s"} não tinham data ou já estavam concluídas.` : ""}`);
     await loadTopics();
   } catch (error) {
@@ -4781,6 +5015,8 @@ async function deleteSelectedThemes() {
     .selectedThemeIds
     .clear();
 
+
+  closeThemeBulkMenu();
 
   await loadTopics();
 }
@@ -5204,12 +5440,37 @@ function wireThemeLibraryBulkActions() {
 
   document
     .getElementById(
+      "theme-bulk-menu-toggle"
+    )
+    ?.addEventListener(
+      "click",
+      (event) => {
+        event.stopPropagation();
+
+        toggleThemeBulkMenu();
+      }
+    );
+
+
+  document
+    .getElementById(
+      "theme-deck-selected"
+    )
+    ?.addEventListener(
+      "click",
+      returnSelectedThemesToDeck
+    );
+
+
+  document
+    .getElementById(
       "theme-done-selected"
     )
     ?.addEventListener(
       "click",
       markSelectedThemesAlreadyDone
     );
+
 
   document
     .getElementById(
@@ -5219,15 +5480,66 @@ function wireThemeLibraryBulkActions() {
       "click",
       deleteSelectedThemes
     );
-}
 
+
+  document.addEventListener(
+    "click",
+    (event) => {
+      const wrap =
+        document.querySelector(
+          ".theme-bulk-menu-wrap"
+        );
+
+      if (
+        wrap
+        && !wrap.contains(
+          event.target
+        )
+      ) {
+        closeThemeBulkMenu();
+      }
+    }
+  );
+
+
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (
+        event.key === "Escape"
+      ) {
+        closeThemeBulkMenu();
+      }
+    }
+  );
+}
 
 function wireThemeLibraryFilters() {
   const search =
-    document.getElementById("theme-search");
+    document.getElementById(
+      "theme-search"
+    );
 
   const area =
-    document.getElementById("theme-area-filter");
+    document.getElementById(
+      "theme-area-filter"
+    );
+
+  const completion =
+    document.getElementById(
+      "theme-completion-filter"
+    );
+
+  const dateFrom =
+    document.getElementById(
+      "theme-date-from"
+    );
+
+  const dateTo =
+    document.getElementById(
+      "theme-date-to"
+    );
+
 
   search?.addEventListener(
     "input",
@@ -5239,37 +5551,88 @@ function wireThemeLibraryFilters() {
     }
   );
 
+
   area?.addEventListener(
     "change",
     () => {
-      scheduleState.themeAreaFilter =
-        area.value;
+      scheduleState
+        .themeAreaFilter =
+          area.value;
 
       renderThemeLibrary();
     }
   );
 
-  const dateFrom = document.getElementById("theme-date-from");
-  const dateTo = document.getElementById("theme-date-to");
 
-  dateFrom?.addEventListener("change", () => {
-    scheduleState.themeDateFrom = dateFrom.value || "";
-    renderThemeLibrary();
-  });
+  completion?.addEventListener(
+    "change",
+    () => {
+      scheduleState
+        .themeCompletionFilter =
+          completion.value
+          || "all";
 
-  dateTo?.addEventListener("change", () => {
-    scheduleState.themeDateTo = dateTo.value || "";
-    renderThemeLibrary();
-  });
+      renderThemeLibrary();
+    }
+  );
 
-  document.getElementById("theme-clear-date-filter")?.addEventListener("click", () => {
-    scheduleState.themeDateFrom = "";
-    scheduleState.themeDateTo = "";
-    if (dateFrom) dateFrom.value = "";
-    if (dateTo) dateTo.value = "";
-    renderThemeLibrary();
-  });
+
+  dateFrom?.addEventListener(
+    "change",
+    () => {
+      scheduleState
+        .themeDateFrom =
+          dateFrom.value
+          || "";
+
+      renderThemeLibrary();
+    }
+  );
+
+
+  dateTo?.addEventListener(
+    "change",
+    () => {
+      scheduleState
+        .themeDateTo =
+          dateTo.value
+          || "";
+
+      renderThemeLibrary();
+    }
+  );
+
+
+  document
+    .getElementById(
+      "theme-clear-date-filter"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+        scheduleState
+          .themeDateFrom =
+            "";
+
+        scheduleState
+          .themeDateTo =
+            "";
+
+        if (dateFrom) {
+          dateFrom.value =
+            "";
+        }
+
+        if (dateTo) {
+          dateTo.value =
+            "";
+        }
+
+        renderThemeLibrary();
+      }
+    );
 }
+
 
 function renderSchedule() {
   renderSummary();

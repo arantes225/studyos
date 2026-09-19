@@ -729,15 +729,6 @@ function renderExams() {
             highlightedExamId
             === exam.id;
 
-
-          const questionUrl =
-            `questoes-simulados.html?exam_id=${encodeURIComponent(
-              exam.id
-            )}&exam_title=${encodeURIComponent(
-              exam.institution
-            )}`;
-
-
           return `
             <article
               class="exam-card ${
@@ -909,16 +900,6 @@ function renderExams() {
                 >
                   Editar
                 </button>
-
-
-                <a
-                  class="exam-link-button"
-                  href="${examEscape(
-                    questionUrl
-                  )}"
-                >
-                  Questões / Simulados
-                </a>
 
 
                 ${

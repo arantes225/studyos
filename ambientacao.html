@@ -6,7 +6,7 @@
   <title>Ambientação · Resibulando</title>
   <link rel="icon" type="image/png" href="favicon.png?v=resibulando2">
   <link rel="stylesheet" href="style.css?v=12.1">
-  <link rel="stylesheet" href="ambientacao.css?v=7.2">
+  <link rel="stylesheet" href="ambientacao.css?v=12.9">
   <link rel="stylesheet" href="resibulando-brand-v5.css?v=5">
   <script defer src="resibulando-brand-v5.js?v=5"></script>
 </head>
@@ -39,115 +39,293 @@
         </section>
 
         <section class="feature-grid">
-          <article class="feature-card pomodoro-card">
-            <div class="pomodoro-head">
+          <article class="feature-card pomodoro-card study-timer-card">
+
+            <div class="study-timer-topline">
+
               <div>
-                <span class="badge">Pomodoro</span>
-                <h2>Cronômetro de estudo</h2>
-                <p id="pomodoro-activity-copy">
-                  O tempo efetivo de foco será registrado no Dashboard.
+                <span class="badge">Cronômetro</span>
+                <h2>Tempo de estudo</h2>
+                <p>
+                  Escolha entre cronômetro simples ou Pomodoro.
+                  O tempo efetivo de estudo é registrado no Dashboard.
                 </p>
               </div>
 
-              <span
-                id="pomodoro-session-state"
-                class="pomodoro-state"
-              >
-                pronto
-              </span>
-            </div>
-
-            <div class="pomodoro-modes">
-              <button
-                id="pomodoro-focus-mode"
-                class="pomodoro-mode active"
-                type="button"
-                data-pomodoro-mode="focus"
-              >
-                Foco
-              </button>
-
-              <button
-                id="pomodoro-break-mode"
-                class="pomodoro-mode"
-                type="button"
-                data-pomodoro-mode="break"
-              >
-                Pausa
-              </button>
-            </div>
-
-            <div class="pomodoro-clock-wrap">
               <div
-                id="pomodoro-clock"
-                class="pomodoro-clock"
+                class="study-timer-type-menu"
+                role="tablist"
+                aria-label="Tipo de cronômetro"
               >
-                25:00
+
+                <button
+                  id="timer-view-simple"
+                  class="study-timer-type active"
+                  type="button"
+                  data-timer-view="simple"
+                  role="tab"
+                  aria-selected="true"
+                >
+                  Cronômetro
+                </button>
+
+                <button
+                  id="timer-view-pomodoro"
+                  class="study-timer-type"
+                  type="button"
+                  data-timer-view="pomodoro"
+                  role="tab"
+                  aria-selected="false"
+                >
+                  Pomodoro
+                </button>
+
               </div>
 
-              <div class="pomodoro-progress-track">
+            </div>
+
+
+            <section
+              id="simple-timer-panel"
+              class="study-timer-panel simple-timer-panel"
+              data-timer-panel="simple"
+              role="tabpanel"
+            >
+
+              <div class="simple-timer-head">
+
+                <div>
+                  <strong>Cronômetro simples</strong>
+
+                  <small id="simple-timer-activity-copy">
+                    Estudo livre.
+                  </small>
+                </div>
+
+                <span
+                  id="simple-timer-state"
+                  class="pomodoro-state"
+                >
+                  pronto
+                </span>
+
+              </div>
+
+
+              <div class="simple-timer-clock-wrap">
+
                 <div
-                  id="pomodoro-progress-bar"
-                  class="pomodoro-progress-bar"
-                ></div>
+                  id="simple-timer-clock"
+                  class="pomodoro-clock simple-timer-clock"
+                >
+                  00:00
+                </div>
+
+                <div class="simple-timer-visual-track">
+                  <span></span>
+                </div>
+
+                <div class="pomodoro-clock-meta">
+                  <span>Tempo corrido</span>
+                  <span>Sem limite</span>
+                </div>
+
               </div>
 
-              <div class="pomodoro-clock-meta">
-                <span id="pomodoro-mode-copy">
+
+              <div class="pomodoro-actions">
+
+                <button
+                  id="simple-timer-start"
+                  class="button primary"
+                  type="button"
+                >
+                  Iniciar
+                </button>
+
+                <button
+                  id="simple-timer-pause"
+                  class="button secondary"
+                  type="button"
+                  disabled
+                >
+                  Pausar
+                </button>
+
+                <button
+                  id="simple-timer-finish"
+                  class="button secondary"
+                  type="button"
+                  disabled
+                >
+                  Finalizar sessão
+                </button>
+
+              </div>
+
+
+              <div class="pomodoro-summary">
+
+                <div>
+                  <span>Nesta sessão</span>
+                  <strong id="simple-timer-effective-time">0 min</strong>
+                </div>
+
+                <div>
+                  <span>Registrado hoje</span>
+                  <strong id="simple-today-time">0 min</strong>
+                </div>
+
+              </div>
+
+
+              <div
+                id="simple-timer-status"
+                class="pomodoro-status"
+                aria-live="polite"
+              ></div>
+
+            </section>
+
+
+            <section
+              id="pomodoro-timer-panel"
+              class="study-timer-panel"
+              data-timer-panel="pomodoro"
+              role="tabpanel"
+              hidden
+            >
+
+              <div class="pomodoro-head">
+
+                <div>
+                  <strong>Pomodoro</strong>
+
+                  <p id="pomodoro-activity-copy">
+                    O tempo efetivo de foco será registrado no Dashboard.
+                  </p>
+                </div>
+
+                <span
+                  id="pomodoro-session-state"
+                  class="pomodoro-state"
+                >
+                  pronto
+                </span>
+
+              </div>
+
+
+              <div class="pomodoro-modes">
+
+                <button
+                  id="pomodoro-focus-mode"
+                  class="pomodoro-mode active"
+                  type="button"
+                  data-pomodoro-mode="focus"
+                >
                   Foco
-                </span>
+                </button>
 
-                <span id="pomodoro-duration-copy">
-                  25 min
-                </span>
-              </div>
-            </div>
+                <button
+                  id="pomodoro-break-mode"
+                  class="pomodoro-mode"
+                  type="button"
+                  data-pomodoro-mode="break"
+                >
+                  Pausa
+                </button>
 
-            <div class="pomodoro-actions">
-              <button
-                id="pomodoro-start"
-                class="button primary"
-                type="button"
-              >
-                Iniciar
-              </button>
-
-              <button
-                id="pomodoro-pause"
-                class="button secondary"
-                type="button"
-                disabled
-              >
-                Pausar
-              </button>
-
-              <button
-                id="pomodoro-finish"
-                class="button secondary"
-                type="button"
-                disabled
-              >
-                Finalizar sessão
-              </button>
-            </div>
-
-            <div class="pomodoro-summary">
-              <div>
-                <span>Foco nesta sessão</span>
-                <strong id="pomodoro-effective-time">0 min</strong>
               </div>
 
-              <div>
-                <span>Registrado hoje</span>
-                <strong id="pomodoro-today-time">0 min</strong>
-              </div>
-            </div>
 
-            <div
-              id="pomodoro-status"
-              class="pomodoro-status"
-              aria-live="polite"
-            ></div>
+              <div class="pomodoro-clock-wrap">
+
+                <div
+                  id="pomodoro-clock"
+                  class="pomodoro-clock"
+                >
+                  25:00
+                </div>
+
+                <div class="pomodoro-progress-track">
+
+                  <div
+                    id="pomodoro-progress-bar"
+                    class="pomodoro-progress-bar"
+                  ></div>
+
+                </div>
+
+                <div class="pomodoro-clock-meta">
+
+                  <span id="pomodoro-mode-copy">
+                    Foco
+                  </span>
+
+                  <span id="pomodoro-duration-copy">
+                    25 min
+                  </span>
+
+                </div>
+
+              </div>
+
+
+              <div class="pomodoro-actions">
+
+                <button
+                  id="pomodoro-start"
+                  class="button primary"
+                  type="button"
+                >
+                  Iniciar
+                </button>
+
+                <button
+                  id="pomodoro-pause"
+                  class="button secondary"
+                  type="button"
+                  disabled
+                >
+                  Pausar
+                </button>
+
+                <button
+                  id="pomodoro-finish"
+                  class="button secondary"
+                  type="button"
+                  disabled
+                >
+                  Finalizar sessão
+                </button>
+
+              </div>
+
+
+              <div class="pomodoro-summary">
+
+                <div>
+                  <span>Foco nesta sessão</span>
+                  <strong id="pomodoro-effective-time">0 min</strong>
+                </div>
+
+                <div>
+                  <span>Registrado hoje</span>
+                  <strong id="pomodoro-today-time">0 min</strong>
+                </div>
+
+              </div>
+
+
+              <div
+                id="pomodoro-status"
+                class="pomodoro-status"
+                aria-live="polite"
+              ></div>
+
+            </section>
+
           </article>
 
           <article class="feature-card">
@@ -358,6 +536,6 @@
   <script src="supabase.js"></script>
   <script src="app.js?v=12.1"></script>
   <script src="study-mode.js?v=12.1"></script>
-  <script src="ambientacao.js?v=7.2"></script>
+  <script src="ambientacao.js?v=12.9"></script>
 </body>
 </html>

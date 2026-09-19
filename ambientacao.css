@@ -395,3 +395,182 @@
 .agenda-lesson-status.error {
   color: var(--danger);
 }
+
+
+/* =========================================================
+   FASE 12.9 — CRONÔMETRO SIMPLES + POMODORO
+   ========================================================= */
+
+.study-timer-card {
+  display: grid;
+  align-content: start;
+}
+
+.study-timer-topline {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+  gap: 16px;
+  align-items: start;
+}
+
+.study-timer-topline h2 {
+  margin-top: 8px;
+}
+
+.study-timer-topline p {
+  max-width: 520px;
+  margin-bottom: 0;
+  color: var(--muted);
+}
+
+.study-timer-type-menu {
+  display: inline-grid;
+  grid-template-columns:
+    repeat(2, auto);
+  gap: 4px;
+
+  padding: 4px;
+
+  border: 1px solid var(--border);
+  border-radius: 11px;
+
+  background: var(--surface-2);
+}
+
+.study-timer-type {
+  min-height: 34px;
+
+  padding:
+    0
+    11px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+  color: var(--muted);
+
+  font-size: 10px;
+  font-weight: 850;
+
+  cursor: pointer;
+}
+
+.study-timer-type.active {
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: var(--shadow);
+}
+
+.study-timer-panel {
+  margin-top: 18px;
+}
+
+.study-timer-panel[hidden] {
+  display: none !important;
+}
+
+.simple-timer-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.simple-timer-head > div {
+  display: grid;
+  gap: 5px;
+}
+
+.simple-timer-head strong {
+  font-size: 14px;
+}
+
+.simple-timer-head small {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.simple-timer-clock-wrap {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.simple-timer-clock {
+  letter-spacing: -.045em;
+}
+
+.simple-timer-visual-track {
+  position: relative;
+
+  height: 7px;
+  overflow: hidden;
+
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.simple-timer-visual-track span {
+  position: absolute;
+  inset: 0 auto 0 0;
+
+  width: 22%;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      var(--accent),
+      transparent
+    );
+
+  transform:
+    translateX(-110%);
+
+  opacity: .35;
+}
+
+.simple-timer-panel.running
+.simple-timer-visual-track span {
+  opacity: 1;
+
+  animation:
+    simpleTimerSweep
+    1.4s
+    linear
+    infinite;
+}
+
+@keyframes simpleTimerSweep {
+  from {
+    transform:
+      translateX(-110%);
+  }
+
+  to {
+    transform:
+      translateX(560%);
+  }
+}
+
+@media (max-width: 760px) {
+  .study-timer-topline {
+    grid-template-columns: 1fr;
+  }
+
+  .study-timer-type-menu {
+    width: 100%;
+
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .simple-timer-head {
+    flex-direction: column;
+  }
+}
