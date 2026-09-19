@@ -4339,6 +4339,7 @@ async function loadSets() {
       answered: 0,
       correct: 0,
       wrong: 0,
+      annulled: 0,
       sent: 0
     });
   }
@@ -4363,7 +4364,14 @@ async function loadSets() {
       metric.wrong += 1;
     }
 
-    if (attempt.sent_to_error === true) {
+    if (attempt.result === "annulled") {
+      metric.annulled += 1;
+    }
+
+    if (
+      attempt.result === "wrong"
+      && attempt.sent_to_error === true
+    ) {
       metric.sent += 1;
     }
   }
@@ -4374,6 +4382,7 @@ async function loadSets() {
       answered: 0,
       correct: 0,
       wrong: 0,
+      annulled: 0,
       sent: 0
     }
   }));
@@ -4467,7 +4476,7 @@ function renderSimulationLibrary() {
                 )} respondidas
                 · ${accuracy(
                   m.correct,
-                  m.answered
+                  m.correct + m.wrong
                 )} de acerto
               </small>
 
@@ -5144,7 +5153,7 @@ function renderSetHistory() {
                 <strong>
                   ${accuracy(
                     m.correct,
-                    m.answered
+                    m.correct + m.wrong
                   )}
                 </strong>
               </div>
@@ -5900,779 +5909,68 @@ function setAnswerImportStatus(
 }
 
 
-function normalizeOcrAnswerText(
-  text
-) {
-  return String(
-    text || ""
-  )
-    .replace(
-      /[|]/g,
-      " "
-    )
-    .replace(
-      /[–—]/g,
-      "-"
-    )
-    .replace(
-      /\s+/g,
-      " "
-    )
-    .trim();
-}
 
-
-function parseAnswerPairsFromOcr(
-  rawText
-) {
-  const text =
-    normalizeOcrAnswerText(
-      rawText
-    );
-
-  const found =
-    new Map();
-
-  /*
-    Exemplos aceitos:
-    1 A
-    1) A
-    1. A
-    Q1 A
-    Questão 1: A
-    1 - A
-    e várias duplas na mesma linha.
-  */
-  const pairRegex =
-    /(?:QUEST(?:Ã|A)O\s*|QUESTAO\s*|Q\s*)?(\d{1,3})\s*[\)\.\-:\s]\s*([A-E])\b/gi;
-
-  let match;
-
-  while (
-    (
-      match =
-        pairRegex.exec(
-          text
-        )
-    )
-  ) {
-    const number =
-      Number(
-        match[1]
-      );
-
-    const answer =
-      match[2]
-        .toUpperCase();
-
-    if (
-      number > 0
-      && number <= 500
-    ) {
-      found.set(
-        number,
-        {
-          question_number:
-            number,
-          user_answer:
-            answer,
-          status_hint:
-            null
-        }
-      );
-    }
-  }
-
-  /*
-    Alguns sistemas mostram apenas:
-    Questão 12 correta
-    Questão 13 errada
-  */
-  const statusRegex =
-    /(?:QUEST(?:Ã|A)O\s*|QUESTAO\s*|Q\s*)?(\d{1,3})\s*[\)\.\-:\s]*.*?\b(CORRETA|CORRETO|CERTA|CERTO|ERRADA|ERRADO|INCORRETA|INCORRETO)\b/gi;
-
-  while (
-    (
-      match =
-        statusRegex.exec(
-          text
-        )
-    )
-  ) {
-    const number =
-      Number(
-        match[1]
-      );
-
-    const word =
-      match[2]
-        .toUpperCase();
-
-    const status =
-      /ERRAD|INCORRET/
-        .test(
-          word
-        )
-        ? "wrong"
-        : "correct";
-
-    const previous =
-      found.get(
-        number
-      );
-
-    found.set(
-      number,
-      {
-        question_number:
-          number,
-        user_answer:
-          previous?.user_answer
-          || null,
-        status_hint:
-          status
-      }
-    );
-  }
-
-  return Array.from(
-    found.values()
-  );
-}
-
-
-function classifyAnswerTilePixel(
-  red,
-  green,
-  blue
-) {
-  /*
-    Verde = acerto.
-    Rosa/vermelho claro = erro.
-    Azul = questão atualmente selecionada
-    no QBank (o resultado pode estar escondido
-    pela seleção).
-  */
-
-  if (
-    green >= 145
-    && red >= 85
-    && blue >= 85
-    && green >= red + 8
-    && green >= blue + 5
-  ) {
-    return 2;
-  }
-
-  if (
-    red >= 175
-    && green >= 105
-    && blue >= 105
-    && red >= green + 8
-    && red >= blue + 8
-  ) {
-    return 1;
-  }
-
-  if (
-    blue >= 145
-    && blue >= red + 30
-    && blue >= green + 18
-    && red <= 180
-  ) {
-    return 3;
-  }
-
-  return 0;
-}
-
-
-async function prepareScreenshotForColorAnalysis(
-  file
-) {
-  const bitmap =
-    await createImageBitmap(
-      file
-    );
-
-  const maxSide =
-    1200;
-
-  const scale =
-    Math.min(
-      1,
-      maxSide
-      / Math.max(
-        bitmap.width,
-        bitmap.height
-      )
-    );
-
-  const width =
-    Math.max(
-      1,
-      Math.round(
-        bitmap.width
-        * scale
-      )
-    );
-
-  const height =
-    Math.max(
-      1,
-      Math.round(
-        bitmap.height
-        * scale
-      )
-    );
-
-  const canvas =
-    document.createElement(
-      "canvas"
-    );
-
-  canvas.width =
-    width;
-
-  canvas.height =
-    height;
-
-  const context =
-    canvas.getContext(
-      "2d",
-      {
-        alpha: false,
-        willReadFrequently:
-          true
-      }
-    );
-
-  context.fillStyle =
-    "#ffffff";
-
-  context.fillRect(
-    0,
-    0,
-    width,
-    height
-  );
-
-  context.drawImage(
-    bitmap,
-    0,
-    0,
-    width,
-    height
-  );
-
-  bitmap.close?.();
-
-  return canvas;
-}
-
-
-function medianNumber(
-  values
-) {
-  if (!values.length) {
-    return 0;
-  }
-
-  const sorted =
-    [...values]
-      .sort(
-        (a, b) =>
-          a - b
-      );
-
-  const middle =
-    Math.floor(
-      sorted.length / 2
-    );
-
-  if (
-    sorted.length % 2
-  ) {
-    return sorted[
-      middle
-    ];
-  }
-
-  return (
-    sorted[
-      middle - 1
-    ]
-    + sorted[
-      middle
-    ]
-  ) / 2;
-}
-
-
-function findColoredAnswerTiles(
-  canvas
-) {
-  const context =
-    canvas.getContext(
-      "2d",
-      {
-        willReadFrequently:
-          true
-      }
-    );
-
-  const {
-    data
-  } =
-    context.getImageData(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
-
-  const width =
-    canvas.width;
-
-  const height =
-    canvas.height;
-
-  const mask =
-    new Uint8Array(
-      width * height
-    );
-
-  for (
-    let pixel = 0;
-    pixel < width * height;
-    pixel += 1
-  ) {
-    const offset =
-      pixel * 4;
-
-    mask[pixel] =
-      classifyAnswerTilePixel(
-        data[offset],
-        data[offset + 1],
-        data[offset + 2]
-      );
-  }
-
-  const components = [];
-
-  const minSide =
-    Math.max(
-      16,
-      Math.floor(
-        Math.min(
-          width,
-          height
-        ) * 0.025
-      )
-    );
-
-  const maxSide =
-    Math.max(
-      70,
-      Math.floor(
-        Math.min(
-          width,
-          height
-        ) * 0.32
-      )
-    );
-
-  for (
-    let start = 0;
-    start < mask.length;
-    start += 1
-  ) {
-    const colorCode =
-      mask[start];
-
-    if (!colorCode) {
-      continue;
-    }
-
-    const stack = [
-      start
-    ];
-
-    mask[start] =
-      0;
-
-    let count = 0;
-
-    let minX =
-      width;
-
-    let maxX =
-      0;
-
-    let minY =
-      height;
-
-    let maxY =
-      0;
-
-    while (
-      stack.length
-    ) {
-      const current =
-        stack.pop();
-
-      const y =
-        Math.floor(
-          current / width
-        );
-
-      const x =
-        current
-        - y * width;
-
-      count += 1;
-
-      if (x < minX) minX = x;
-      if (x > maxX) maxX = x;
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
-
-      if (x > 0) {
-        const left =
-          current - 1;
-
-        if (
-          mask[left]
-          === colorCode
-        ) {
-          mask[left] = 0;
-          stack.push(left);
-        }
-      }
-
-      if (
-        x < width - 1
-      ) {
-        const right =
-          current + 1;
-
-        if (
-          mask[right]
-          === colorCode
-        ) {
-          mask[right] = 0;
-          stack.push(right);
-        }
-      }
-
-      if (y > 0) {
-        const up =
-          current - width;
-
-        if (
-          mask[up]
-          === colorCode
-        ) {
-          mask[up] = 0;
-          stack.push(up);
-        }
-      }
-
-      if (
-        y < height - 1
-      ) {
-        const down =
-          current + width;
-
-        if (
-          mask[down]
-          === colorCode
-        ) {
-          mask[down] = 0;
-          stack.push(down);
-        }
-      }
-    }
-
-    const componentWidth =
-      maxX - minX + 1;
-
-    const componentHeight =
-      maxY - minY + 1;
-
-    const ratio =
-      componentWidth
-      / Math.max(
-        1,
-        componentHeight
-      );
-
-    const fill =
-      count
-      / Math.max(
-        1,
-        componentWidth
-        * componentHeight
-      );
-
-    /*
-      Remove:
-      - ícones pequenos do cabeçalho;
-      - barra azul de progresso;
-      - áreas grandes que não são botões.
-    */
-    if (
-      componentWidth < minSide
-      || componentHeight < minSide
-      || componentWidth > maxSide
-      || componentHeight > maxSide
-      || ratio < 0.62
-      || ratio > 1.55
-      || fill < 0.42
-    ) {
-      continue;
-    }
-
-    components.push({
-      left:
-        minX,
-      top:
-        minY,
-      right:
-        maxX,
-      bottom:
-        maxY,
-      width:
-        componentWidth,
-      height:
-        componentHeight,
-      centerX:
-        (
-          minX + maxX
-        ) / 2,
-      centerY:
-        (
-          minY + maxY
-        ) / 2,
-      color_code:
-        colorCode,
-      status_hint:
-        colorCode === 2
-          ? "correct"
-          : colorCode === 1
-            ? "wrong"
-            : "selected"
-    });
-  }
-
-  return components;
-}
-
-
-function sortAnswerTilesAsGrid(
-  tiles
-) {
-  if (!tiles.length) {
-    return [];
-  }
-
-  const rowTolerance =
-    Math.max(
-      10,
-      medianNumber(
-        tiles.map(
-          (tile) =>
-            tile.height
-        )
-      ) * 0.65
-    );
-
-  const byY =
-    [...tiles]
-      .sort(
-        (a, b) =>
-          a.centerY
-          - b.centerY
-      );
-
-  const rows = [];
-
-  for (
-    const tile
-    of byY
-  ) {
-    let row =
-      rows.find(
-        (candidate) =>
-          Math.abs(
-            candidate.centerY
-            - tile.centerY
-          ) <= rowTolerance
-      );
-
-    if (!row) {
-      row = {
-        centerY:
-          tile.centerY,
-        tiles: []
-      };
-
-      rows.push(
-        row
-      );
-    }
-
-    row.tiles.push(
-      tile
-    );
-
-    row.centerY =
-      row.tiles.reduce(
-        (
-          total,
-          item
-        ) =>
-          total
-          + item.centerY,
-        0
-      )
-      / row.tiles.length;
-  }
-
-  rows.sort(
-    (a, b) =>
-      a.centerY
-      - b.centerY
-  );
-
-  return rows.flatMap(
-    (row) =>
-      row.tiles
-        .sort(
-          (a, b) =>
-            a.centerX
-            - b.centerX
-        )
-  );
-}
-
-
-function parseAnswerSummaryCounts(
-  rawText,
-  fallbackTotal
-) {
-  const text =
-    normalizeOcrAnswerText(
-      rawText
-    );
-
-  const fraction =
-    text.match(
-      /(\d{1,3})\s*\/\s*(\d{1,3})/
-    );
-
-  const total =
-    fraction
-      ? Number(
-          fraction[2]
-        )
-      : Number(
-          fallbackTotal
-          || 0
-        );
-
-  if (!total) {
-    return null;
-  }
-
-  const afterFraction =
-    fraction
-      ? text.slice(
-          fraction.index
-          + fraction[0].length
-        )
-      : text;
-
-  const numbers =
-    (
-      afterFraction.match(
-        /\d{1,3}/g
-      )
-      || []
-    )
-      .map(Number)
-      .filter(
-        (value) =>
-          value >= 0
-          && value <= total
-      );
-
-  /*
-    Procura um par cujo total seja igual ao
-    número de questões concluídas.
-    No exemplo:
-    20/20   ✓ 2   × 18   10%
-  */
-  for (
-    let first = 0;
-    first < numbers.length;
-    first += 1
-  ) {
-    for (
-      let second =
-        first + 1;
-      second < numbers.length;
-      second += 1
-    ) {
-      const correct =
-        numbers[first];
-
-      const wrong =
-        numbers[second];
-
-      if (
-        correct + wrong
-        === total
-      ) {
-        return {
-          total,
-          correct,
-          wrong
-        };
-      }
-    }
-  }
-
-  return null;
-}
-
-
-function matchOcrNumbersToTiles(
-  tiles,
-  ocrData
+/* =========================================================
+   LEITOR DE GABARITO POR NÚMERO + COR
+   ---------------------------------------------------------
+   Fluxo:
+   1. OCR procura APENAS a numeração das questões.
+   2. Depois de localizar cada número, analisa a cor ao redor.
+   3. Verde    = acerto
+      Vermelho = erro
+      Branco   = anulada
+   4. Azul/amarelo = questão selecionada -> pedir conferência.
+   5. Não procura A/B/C/D/E no print.
+   ========================================================= */
+
+
+function extractQuestionNumbersFromOcr(
+  ocrData,
+  expectedNumbers
 ) {
   const words =
     ocrData?.words
     || [];
 
-  const matches =
-    new Map();
+  const candidates =
+    [];
 
   for (
     const word
     of words
   ) {
-    const cleaned =
+    const raw =
       String(
         word.text
         || ""
       )
-        .replace(
-          /[^\d]/g,
-          ""
-        );
+        .trim();
 
-    if (!cleaned) {
+    /*
+      O leitor de print aceita somente números.
+      Letras, alternativas e palavras são ignoradas.
+    */
+    const cleaned =
+      raw.replace(
+        /[^\d]/g,
+        ""
+      );
+
+    if (
+      !cleaned
+      || cleaned.length > 3
+    ) {
+      continue;
+    }
+
+    /*
+      Evita aceitar textos longos que apenas
+      contenham algum algarismo.
+    */
+    if (
+      raw.length
+      > cleaned.length + 2
+    ) {
       continue;
     }
 
@@ -6682,8 +5980,12 @@ function matchOcrNumbersToTiles(
       );
 
     if (
-      number < 1
-      || number > 500
+      !Number.isInteger(
+        number
+      )
+      || !expectedNumbers.has(
+        number
+      )
     ) {
       continue;
     }
@@ -6691,322 +5993,1092 @@ function matchOcrNumbersToTiles(
     const bbox =
       word.bbox;
 
-    if (!bbox) {
+    if (
+      !bbox
+      || !Number.isFinite(
+        Number(
+          bbox.x0
+        )
+      )
+      || !Number.isFinite(
+        Number(
+          bbox.y0
+        )
+      )
+      || !Number.isFinite(
+        Number(
+          bbox.x1
+        )
+      )
+      || !Number.isFinite(
+        Number(
+          bbox.y1
+        )
+      )
+    ) {
       continue;
     }
 
-    const centerX =
-      (
-        bbox.x0
-        + bbox.x1
-      ) / 2;
-
-    const centerY =
-      (
-        bbox.y0
-        + bbox.y1
-      ) / 2;
-
-    const tile =
-      tiles.find(
-        (candidate) =>
-          centerX
-            >= candidate.left - 3
-          && centerX
-            <= candidate.right + 3
-          && centerY
-            >= candidate.top - 3
-          && centerY
-            <= candidate.bottom + 3
+    const width =
+      Math.max(
+        1,
+        Number(
+          bbox.x1
+        )
+        - Number(
+            bbox.x0
+          )
       );
 
-    if (tile) {
-      matches.set(
-        tile,
-        number
+    const height =
+      Math.max(
+        1,
+        Number(
+          bbox.y1
+        )
+        - Number(
+            bbox.y0
+          )
+      );
+
+    /*
+      Filtra ruído minúsculo, mas mantém números
+      pequenos em screenshots compactos.
+    */
+    if (
+      width < 3
+      || height < 5
+    ) {
+      continue;
+    }
+
+    candidates.push({
+      question_number:
+        number,
+
+      confidence:
+        Number(
+          word.confidence
+          || 0
+        ),
+
+      bbox: {
+        x0:
+          Number(
+            bbox.x0
+          ),
+
+        y0:
+          Number(
+            bbox.y0
+          ),
+
+        x1:
+          Number(
+            bbox.x1
+          ),
+
+        y1:
+          Number(
+            bbox.y1
+          )
+      }
+    });
+  }
+
+  /*
+    Se um mesmo número aparecer mais de uma vez,
+    conserva a leitura de maior confiança.
+  */
+  const best =
+    new Map();
+
+  for (
+    const item
+    of candidates
+  ) {
+    const previous =
+      best.get(
+        item.question_number
+      );
+
+    if (
+      !previous
+      || item.confidence
+        > previous.confidence
+    ) {
+      best.set(
+        item.question_number,
+        item
       );
     }
   }
 
-  return matches;
+  return Array.from(
+    best.values()
+  )
+    .sort(
+      (a, b) =>
+        a.question_number
+        - b.question_number
+    );
 }
 
 
-function resolveSelectedTileColors(
-  mapped,
-  summary
+function createInvertedNumberOcrCanvas(
+  source
 ) {
-  if (!summary) {
-    return mapped;
-  }
-
-  const correctKnown =
-    mapped.filter(
-      (item) =>
-        item.status_hint
-        === "correct"
-    ).length;
-
-  const wrongKnown =
-    mapped.filter(
-      (item) =>
-        item.status_hint
-        === "wrong"
-    ).length;
-
-  const selected =
-    mapped.filter(
-      (item) =>
-        item.status_hint
-        === "selected"
+  const canvas =
+    document.createElement(
+      "canvas"
     );
 
-  if (!selected.length) {
-    return mapped;
-  }
+  canvas.width =
+    source.width;
 
-  const missingCorrect =
-    Math.max(
+  canvas.height =
+    source.height;
+
+  const input =
+    source.getContext(
+      "2d",
+      {
+        willReadFrequently:
+          true
+      }
+    );
+
+  const output =
+    canvas.getContext(
+      "2d",
+      {
+        alpha: false,
+        willReadFrequently:
+          true
+      }
+    );
+
+  const image =
+    input.getImageData(
       0,
-      summary.correct
-      - correctKnown
-    );
-
-  const missingWrong =
-    Math.max(
       0,
-      summary.wrong
-      - wrongKnown
+      source.width,
+      source.height
     );
 
-  if (
-    missingCorrect
-      + missingWrong
-    !== selected.length
-  ) {
-    return mapped;
-  }
+  const data =
+    image.data;
 
   /*
-    Normalmente existe uma única questão azul:
-    a questão ativa. Se o resumo diz 2 acertos
-    e já encontramos 2 verdes, ela só pode
-    ser um erro.
+    Passagem invertida:
+    ajuda o OCR a ler algarismos brancos
+    desenhados sobre círculos verdes/vermelhos.
   */
-  if (
-    missingCorrect === 0
+  for (
+    let i = 0;
+    i < data.length;
+    i += 4
   ) {
-    selected.forEach(
-      (item) => {
-        item.status_hint =
-          "wrong";
+    data[i] =
+      255 - data[i];
 
-        item.inferred_from_summary =
-          true;
-      }
-    );
+    data[i + 1] =
+      255 - data[i + 1];
 
-    return mapped;
+    data[i + 2] =
+      255 - data[i + 2];
+
+    data[i + 3] =
+      255;
   }
 
-  if (
-    missingWrong === 0
-  ) {
-    selected.forEach(
-      (item) => {
-        item.status_hint =
-          "correct";
+  output.putImageData(
+    image,
+    0,
+    0
+  );
 
-        item.inferred_from_summary =
-          true;
-      }
-    );
-
-    return mapped;
-  }
-
-  return mapped;
+  return canvas;
 }
 
 
-async function recognizeColoredAnswerGrid(
+function mergeNumberOcrDetections(
+  first,
+  second
+) {
+  const best =
+    new Map();
+
+  for (
+    const item
+    of [
+      ...(first || []),
+      ...(second || [])
+    ]
+  ) {
+    const previous =
+      best.get(
+        item.question_number
+      );
+
+    if (
+      !previous
+      || Number(
+          item.confidence
+          || 0
+        )
+        > Number(
+            previous.confidence
+            || 0
+          )
+    ) {
+      best.set(
+        item.question_number,
+        item
+      );
+    }
+  }
+
+  return Array.from(
+    best.values()
+  )
+    .sort(
+      (a, b) =>
+        a.question_number
+        - b.question_number
+    );
+}
+
+
+function answerPixelClass(
+  red,
+  green,
+  blue
+) {
+  const r =
+    Number(red);
+
+  const g =
+    Number(green);
+
+  const b =
+    Number(blue);
+
+  const max =
+    Math.max(
+      r,
+      g,
+      b
+    );
+
+  const min =
+    Math.min(
+      r,
+      g,
+      b
+    );
+
+  const chroma =
+    max - min;
+
+
+  /* Verde saturado: ex. #22C55E */
+  if (
+    g >= 120
+    && (
+      g - r >= 25
+      || g >= r * 1.22
+    )
+    && g - b >= 12
+  ) {
+    return "green";
+  }
+
+
+  /* Vermelho saturado: ex. #EF4444 */
+  if (
+    r >= 150
+    && r - g >= 35
+    && r - b >= 28
+  ) {
+    return "red";
+  }
+
+
+  /* Azul de seleção: ex. #3B82F6 */
+  if (
+    b >= 135
+    && b - r >= 28
+    && b - g >= 12
+  ) {
+    return "blue";
+  }
+
+
+  /*
+    Amarelo / creme usado pelo botão selecionado.
+    Deve ser reconhecido ANTES de branco.
+  */
+  if (
+    r >= 225
+    && g >= 200
+    && b >= 135
+    && b <= 238
+    && r - b >= 14
+  ) {
+    return "yellow";
+  }
+
+
+  if (
+    r >= 228
+    && g >= 228
+    && b >= 228
+    && chroma <= 24
+  ) {
+    return "white";
+  }
+
+
+  if (
+    chroma <= 28
+    && r >= 65
+    && r <= 228
+  ) {
+    return "gray";
+  }
+
+
+  if (
+    r <= 80
+    && g <= 80
+    && b <= 80
+  ) {
+    return "dark";
+  }
+
+
+  return "other";
+}
+
+
+function samplePixelClass(
+  context,
+  x,
+  y,
+  width,
+  height
+) {
+  const px =
+    Math.max(
+      0,
+      Math.min(
+        width - 1,
+        Math.round(x)
+      )
+    );
+
+  const py =
+    Math.max(
+      0,
+      Math.min(
+        height - 1,
+        Math.round(y)
+      )
+    );
+
+  const data =
+    context.getImageData(
+      px,
+      py,
+      1,
+      1
+    ).data;
+
+  return answerPixelClass(
+    data[0],
+    data[1],
+    data[2]
+  );
+}
+
+
+function circularBorderScore(
+  context,
+  centerX,
+  centerY,
+  minRadius,
+  maxRadius,
+  width,
+  height,
+  acceptedClasses
+) {
+  let best =
+    0;
+
+  const start =
+    Math.max(
+      5,
+      Math.floor(
+        minRadius
+      )
+    );
+
+  const end =
+    Math.max(
+      start,
+      Math.ceil(
+        maxRadius
+      )
+    );
+
+  const radiusStep =
+    Math.max(
+      1,
+      Math.floor(
+        (
+          end - start
+        )
+        / 10
+      )
+    );
+
+  for (
+    let radius = start;
+    radius <= end;
+    radius += radiusStep
+  ) {
+    let hits =
+      0;
+
+    let samples =
+      0;
+
+    for (
+      let degree = 0;
+      degree < 360;
+      degree += 6
+    ) {
+      const angle =
+        degree
+        * Math.PI
+        / 180;
+
+      const x =
+        centerX
+        + Math.cos(
+            angle
+          )
+          * radius;
+
+      const y =
+        centerY
+        + Math.sin(
+            angle
+          )
+          * radius;
+
+      if (
+        x < 0
+        || y < 0
+        || x >= width
+        || y >= height
+      ) {
+        continue;
+      }
+
+      const cls =
+        samplePixelClass(
+          context,
+          x,
+          y,
+          width,
+          height
+        );
+
+      samples +=
+        1;
+
+      if (
+        acceptedClasses.has(
+          cls
+        )
+      ) {
+        hits +=
+          1;
+      }
+    }
+
+    if (samples) {
+      best =
+        Math.max(
+          best,
+          hits / samples
+        );
+    }
+  }
+
+  return best;
+}
+
+
+function analyzeAnswerColorAroundNumber(
+  canvas,
+  bbox
+) {
+  const context =
+    canvas.getContext(
+      "2d",
+      {
+        willReadFrequently:
+          true
+      }
+    );
+
+  const centerX =
+    (
+      Number(
+        bbox.x0
+      )
+      + Number(
+          bbox.x1
+        )
+    ) / 2;
+
+  const centerY =
+    (
+      Number(
+        bbox.y0
+      )
+      + Number(
+          bbox.y1
+        )
+    ) / 2;
+
+  const textWidth =
+    Math.max(
+      5,
+      Number(
+        bbox.x1
+      )
+      - Number(
+          bbox.x0
+        )
+    );
+
+  const textHeight =
+    Math.max(
+      7,
+      Number(
+        bbox.y1
+      )
+      - Number(
+          bbox.y0
+        )
+    );
+
+  /*
+    O círculo é maior que o caractere.
+    O limite evita engolir círculos vizinhos.
+  */
+  const radius =
+    Math.max(
+      16,
+      Math.min(
+        58,
+        Math.max(
+          textHeight * 2.15,
+          textWidth * 1.55
+        )
+      )
+    );
+
+  const innerRadius =
+    Math.max(
+      4,
+      Math.min(
+        textHeight,
+        textWidth
+      ) * 0.45
+    );
+
+  const left =
+    Math.max(
+      0,
+      Math.floor(
+        centerX - radius
+      )
+    );
+
+  const top =
+    Math.max(
+      0,
+      Math.floor(
+        centerY - radius
+      )
+    );
+
+  const right =
+    Math.min(
+      canvas.width,
+      Math.ceil(
+        centerX + radius
+      )
+    );
+
+  const bottom =
+    Math.min(
+      canvas.height,
+      Math.ceil(
+        centerY + radius
+      )
+    );
+
+  const width =
+    Math.max(
+      1,
+      right - left
+    );
+
+  const height =
+    Math.max(
+      1,
+      bottom - top
+    );
+
+  const image =
+    context.getImageData(
+      left,
+      top,
+      width,
+      height
+    );
+
+  const counts = {
+    green: 0,
+    red: 0,
+    blue: 0,
+    yellow: 0,
+    white: 0,
+    gray: 0,
+    dark: 0,
+    other: 0
+  };
+
+  let sampled =
+    0;
+
+  /*
+    Analisa uma coroa em volta do número.
+    O centro do caractere é ignorado para
+    o branco/preto do próprio número não
+    distorcer a cor do botão.
+  */
+  for (
+    let y = 0;
+    y < height;
+    y += 1
+  ) {
+    for (
+      let x = 0;
+      x < width;
+      x += 1
+    ) {
+      const globalX =
+        left + x;
+
+      const globalY =
+        top + y;
+
+      const dx =
+        globalX - centerX;
+
+      const dy =
+        globalY - centerY;
+
+      const distance =
+        Math.sqrt(
+          dx * dx
+          + dy * dy
+        );
+
+      if (
+        distance > radius
+        || distance < innerRadius
+      ) {
+        continue;
+      }
+
+      const offset =
+        (
+          y * width
+          + x
+        ) * 4;
+
+      const cls =
+        answerPixelClass(
+          image.data[
+            offset
+          ],
+          image.data[
+            offset + 1
+          ],
+          image.data[
+            offset + 2
+          ]
+        );
+
+      counts[
+        cls
+      ] +=
+        1;
+
+      sampled +=
+        1;
+    }
+  }
+
+  const total =
+    Math.max(
+      1,
+      sampled
+    );
+
+  const ratio =
+    key =>
+      counts[key]
+      / total;
+
+  const greenRatio =
+    ratio(
+      "green"
+    );
+
+  const redRatio =
+    ratio(
+      "red"
+    );
+
+  const blueRatio =
+    ratio(
+      "blue"
+    );
+
+  const yellowRatio =
+    ratio(
+      "yellow"
+    );
+
+  const whiteRatio =
+    ratio(
+      "white"
+    );
+
+  const selectedRatio =
+    blueRatio
+    + yellowRatio;
+
+  /*
+    Uma questão branca/anulada pode ter o mesmo
+    fundo branco da página. Por isso exigimos
+    uma borda circular cinza em volta do número.
+  */
+  const grayRing =
+    circularBorderScore(
+      context,
+      centerX,
+      centerY,
+      Math.max(
+        textHeight * 1.0,
+        8
+      ),
+      radius * 0.92,
+      canvas.width,
+      canvas.height,
+      new Set([
+        "gray"
+      ])
+    );
+
+  const blueRing =
+    circularBorderScore(
+      context,
+      centerX,
+      centerY,
+      Math.max(
+        textHeight * 1.0,
+        8
+      ),
+      radius * 0.92,
+      canvas.width,
+      canvas.height,
+      new Set([
+        "blue"
+      ])
+    );
+
+
+  if (
+    greenRatio >= 0.13
+    && greenRatio
+      > redRatio * 1.25
+  ) {
+    return {
+      color:
+        "green",
+
+      result:
+        "correct",
+
+      confidence:
+        Math.min(
+          1,
+          greenRatio / 0.34
+        )
+    };
+  }
+
+
+  if (
+    redRatio >= 0.13
+    && redRatio
+      > greenRatio * 1.25
+  ) {
+    return {
+      color:
+        "red",
+
+      result:
+        "wrong",
+
+      confidence:
+        Math.min(
+          1,
+          redRatio / 0.34
+        )
+    };
+  }
+
+
+  /*
+    Azul/amarelo significa apenas que a questão
+    está selecionada na plataforma de origem.
+    Não inferimos acerto, erro ou anulação.
+  */
+  if (
+    selectedRatio >= 0.035
+    || blueRing >= 0.14
+  ) {
+    return {
+      color:
+        "selected",
+
+      result:
+        null,
+
+      confidence:
+        Math.min(
+          1,
+          Math.max(
+            selectedRatio / 0.14,
+            blueRing / 0.35
+          )
+        )
+    };
+  }
+
+
+  /*
+    Branco = anulada, mas somente quando há
+    evidência de uma bolinha/círculo delimitado.
+    Isso evita considerar qualquer número solto
+    no fundo branco como questão anulada.
+  */
+  if (
+    whiteRatio >= 0.43
+    && grayRing >= 0.10
+  ) {
+    return {
+      color:
+        "white",
+
+      result:
+        "annulled",
+
+      confidence:
+        Math.min(
+          1,
+          (
+            whiteRatio
+            + grayRing
+          )
+          / 1.05
+        )
+    };
+  }
+
+
+  return {
+    color:
+      "unknown",
+
+    result:
+      null,
+
+    confidence:
+      Math.min(
+        1,
+        Math.max(
+          greenRatio,
+          redRatio,
+          selectedRatio,
+          grayRing
+        )
+      )
+  };
+}
+
+
+async function recognizeAnswerGridByNumber(
   file,
   fileIndex,
   fileCount
 ) {
+  if (
+    !window.Tesseract
+  ) {
+    throw new Error(
+      "Leitor OCR não carregou. Atualize a página e tente novamente."
+    );
+  }
+
+  setAnswerImportStatus(
+    `Lendo números — print ${fileIndex + 1} de ${fileCount}...`
+  );
+
   const canvas =
-    await prepareScreenshotForColorAnalysis(
+    await prepareScreenshotForOcr(
       file
     );
 
-  const tiles =
-    sortAnswerTilesAsGrid(
-      findColoredAnswerTiles(
-        canvas
+  const expectedNumbers =
+    new Set(
+      qsState.items.map(
+        item =>
+          Number(
+            item.question_number
+          )
       )
     );
 
-  if (
-    tiles.length < 2
-  ) {
-    return {
-      detections: [],
-      tileCount: 0,
-      summary: null,
-      ocrText: ""
-    };
-  }
-
-  const expectedItems =
-    [...qsState.items]
-      .sort(
-        (a, b) =>
-          a.question_number
-          - b.question_number
+  /*
+    Primeira leitura no print original.
+  */
+  const originalResult =
+    await window
+      .Tesseract
+      .recognize(
+        canvas,
+        "eng"
       );
 
-  let ocrResult =
-    null;
-
-  const needsOcr =
-    tiles.some(
-      (tile) =>
-        tile.status_hint
-        === "selected"
-    )
-    || tiles.length
-      !== expectedItems.length;
-
-  if (
-    needsOcr
-    && window.Tesseract
-  ) {
-    setAnswerImportStatus(
-      `Reconhecendo grade por cores — print ${fileIndex + 1} de ${fileCount}...`
+  let detectedNumbers =
+    extractQuestionNumbersFromOcr(
+      originalResult?.data,
+      expectedNumbers
     );
 
-    ocrResult =
+  /*
+    Números brancos em círculos coloridos podem
+    ter contraste ruim no OCR. Se a primeira
+    leitura não encontrar a maior parte das
+    questões, fazemos uma segunda leitura invertida.
+  */
+  const expectedCount =
+    expectedNumbers.size;
+
+  const secondPassNeeded =
+    detectedNumbers.length
+    < Math.max(
+        3,
+        Math.ceil(
+          expectedCount * 0.80
+        )
+      );
+
+  if (
+    secondPassNeeded
+  ) {
+    setAnswerImportStatus(
+      `Reforçando leitura dos números — print ${fileIndex + 1} de ${fileCount}...`
+    );
+
+    const inverted =
+      createInvertedNumberOcrCanvas(
+        canvas
+      );
+
+    const invertedResult =
       await window
         .Tesseract
         .recognize(
-          canvas,
+          inverted,
           "eng"
         );
-  }
 
-  const numberMatches =
-    ocrResult
-      ? matchOcrNumbersToTiles(
-          tiles,
-          ocrResult.data
+    detectedNumbers =
+      mergeNumberOcrDetections(
+        detectedNumbers,
+        extractQuestionNumbersFromOcr(
+          invertedResult?.data,
+          expectedNumbers
         )
-      : new Map();
-
-  let mapped = [];
-
-  /*
-    Se a imagem contém exatamente a grade inteira,
-    a ordem visual já corresponde à ordem das
-    questões. Isso evita depender de OCR.
-  */
-  if (
-    tiles.length
-    === expectedItems.length
-  ) {
-    mapped =
-      tiles.map(
-        (tile, index) => ({
-          ...tile,
-          question_number:
-            numberMatches.get(
-              tile
-            )
-            || expectedItems[
-              index
-            ]?.question_number
-            || index + 1
-        })
       );
-  } else {
-    mapped =
-      tiles
-        .map(
-          (tile) => ({
-            ...tile,
-            question_number:
-              numberMatches.get(
-                tile
-              )
-              || null
-          })
-        )
-        .filter(
-          (tile) =>
-            Number.isInteger(
-              tile.question_number
-            )
-        );
   }
 
-  const summary =
-    ocrResult
-      ? parseAnswerSummaryCounts(
-          ocrResult.data?.text
-          || "",
-          expectedItems.length
-        )
-      : null;
+  setAnswerImportStatus(
+    `Identificando cores — print ${fileIndex + 1} de ${fileCount}...`
+  );
 
-  mapped =
-    resolveSelectedTileColors(
-      mapped,
-      summary
-    );
+  const detections =
+    detectedNumbers.map(
+      numberData => {
+        const color =
+          analyzeAnswerColorAroundNumber(
+            canvas,
+            numberData.bbox
+          );
 
-  return {
-    detections:
-      mapped.map(
-        (tile) => ({
+        return {
           question_number:
-            tile.question_number,
+            numberData.question_number,
 
           user_answer:
             null,
 
           status_hint:
-            (
-              tile.status_hint
-              === "correct"
-              || tile.status_hint
-                === "wrong"
-            )
-              ? tile.status_hint
-              : null,
+            color.result,
 
           color_status:
-            tile.color_code
-            === 2
-              ? "green"
-              : tile.color_code
-                === 1
-                  ? "red"
-                  : "blue",
+            color.color,
 
-          inferred_from_summary:
-            Boolean(
-              tile.inferred_from_summary
+          confidence:
+            color.confidence,
+
+          ocr_confidence:
+            Number(
+              numberData.confidence
+              || 0
             )
-        })
-      ),
+        };
+      }
+    );
 
-    tileCount:
-      tiles.length,
+  return {
+    detections,
 
-    summary,
-
-    ocrText:
-      ocrResult?.data?.text
-      || ""
+    numberCount:
+      detectedNumbers.length
   };
 }
 
@@ -7099,57 +7171,32 @@ async function prepareScreenshotForOcr(
 }
 
 
+
 function answerImportRowForItem(
   item,
   detected
 ) {
-  const official =
-    item.official_answer
-    || null;
-
-  const userAnswer =
-    detected?.user_answer
-    || null;
-
   const statusHint =
     detected?.status_hint
     || null;
 
-  let result =
-    null;
-
-  if (
-    official === "X"
-  ) {
-    result =
-      "annulled";
-  } else if (
-    statusHint
-    === "correct"
-    || statusHint
-    === "wrong"
-  ) {
-    result =
-      statusHint;
-  } else if (
-    official
-    && userAnswer
-  ) {
-    result =
-      official === userAnswer
-        ? "correct"
-        : "wrong";
-  }
-
   return {
     item_id:
       item.id,
+
     question_number:
       item.question_number,
+
+    /*
+      O leitor de print não tenta identificar
+      A/B/C/D/E. O resultado vem somente da cor.
+    */
     official_answer:
-      official,
+      item.official_answer
+      || null,
+
     user_answer:
-      userAnswer,
+      null,
 
     detected_status:
       statusHint,
@@ -7158,15 +7205,31 @@ function answerImportRowForItem(
       detected?.color_status
       || null,
 
-    inferred_from_summary:
-      Boolean(
-        detected
-          ?.inferred_from_summary
+    confidence:
+      Number(
+        detected?.confidence
+        || 0
       ),
 
-    result
+    ocr_confidence:
+      Number(
+        detected?.ocr_confidence
+        || 0
+      ),
+
+    result:
+      [
+        "correct",
+        "wrong",
+        "annulled"
+      ].includes(
+        statusHint
+      )
+        ? statusHint
+        : null
   };
 }
+
 
 
 function renderAnswerImportPreview() {
@@ -7199,41 +7262,117 @@ function renderAnswerImportPreview() {
     return;
   }
 
-  const recognized =
-    rows.filter(
-      (row) =>
-        Boolean(
-          row.user_answer
-          || row.result
-        )
-    );
+  const colorLabel =
+    row => {
+      if (
+        row.color_status
+        === "green"
+      ) {
+        return "Verde";
+      }
+
+      if (
+        row.color_status
+        === "red"
+      ) {
+        return "Vermelho";
+      }
+
+      if (
+        row.color_status
+        === "white"
+      ) {
+        return "Branco";
+      }
+
+      if (
+        row.color_status
+        === "selected"
+      ) {
+        return "Selecionada";
+      }
+
+      return "Não reconhecida";
+    };
+
+  const colorSymbol =
+    row => {
+      if (
+        row.color_status
+        === "green"
+      ) {
+        return "●";
+      }
+
+      if (
+        row.color_status
+        === "red"
+      ) {
+        return "●";
+      }
+
+      if (
+        row.color_status
+        === "white"
+      ) {
+        return "○";
+      }
+
+      if (
+        row.color_status
+        === "selected"
+      ) {
+        return "◎";
+      }
+
+      return "·";
+    };
 
   table.innerHTML = `
     <div class="qs-answer-import-grid qs-answer-import-head">
       <span>Questão</span>
-      <span>Reconhecida</span>
-      <span>Oficial</span>
+      <span>Cor</span>
       <span>Resultado</span>
+      <span>Confiança</span>
     </div>
 
     ${
       rows.map(
-        (row) => {
+        row => {
           const statusLabel =
             row.result
-              === "correct"
-                ? "Acerto"
-                : row.result
-                  === "wrong"
-                    ? "Erro"
-                    : row.result
-                      === "annulled"
-                        ? "Anulada"
-                        : "Revisar";
+            === "correct"
+              ? "Acerto"
+              : row.result
+                === "wrong"
+                  ? "Erro"
+                  : row.result
+                    === "annulled"
+                      ? "Anulada"
+                      : "Revisar";
 
           const statusClass =
             row.result
             || "unknown";
+
+          const confidence =
+            row.color_status
+            && row.color_status
+              !== "unknown"
+              ? `${Math.round(
+                  Math.max(
+                    0,
+                    Math.min(
+                      1,
+                      Number(
+                        row.confidence
+                        || 0
+                      )
+                    )
+                  )
+                  * 100
+                )}%`
+              : "—";
 
           return `
             <div
@@ -7244,70 +7383,49 @@ function renderAnswerImportPreview() {
                 ${row.question_number}
               </strong>
 
-              ${
-                row.detected_status
-                  ? `
-                    <select
-                      data-import-result-status="${row.question_number}"
-                      aria-label="Resultado reconhecido da questão ${row.question_number}"
-                    >
-                      <option value="">Revisar</option>
-                      <option
-                        value="correct"
-                        ${row.result === "correct" ? "selected" : ""}
-                      >
-                        ✓ Acerto
-                      </option>
-                      <option
-                        value="wrong"
-                        ${row.result === "wrong" ? "selected" : ""}
-                      >
-                        ✕ Erro
-                      </option>
-                    </select>
-
-                    <small class="qs-color-read-note">
-                      ${
-                        row.color_status === "green"
-                          ? "cor verde"
-                          : row.color_status === "red"
-                            ? "cor vermelha"
-                            : row.inferred_from_summary
-                              ? "azul resolvido pelo resumo"
-                              : "cor azul"
-                      }
-                    </small>
-                  `
-                  : `
-                    <select
-                      data-import-user-answer="${row.question_number}"
-                      aria-label="Resposta reconhecida da questão ${row.question_number}"
-                    >
-                      <option value="">—</option>
-                      ${
-                        ["A","B","C","D","E"]
-                          .map(
-                            (option) => `
-                              <option
-                                value="${option}"
-                                ${row.user_answer === option ? "selected" : ""}
-                              >
-                                ${option}
-                              </option>
-                            `
-                          )
-                          .join("")
-                      }
-                    </select>
-                  `
-              }
-
-              <span class="qs-answer-official">
-                ${row.official_answer || "—"}
+              <span
+                class="qs-color-read-note"
+                data-color="${qsEscape(row.color_status || "unknown")}"
+              >
+                ${colorSymbol(row)}
+                ${qsEscape(colorLabel(row))}
               </span>
 
+              <select
+                data-import-result-status="${row.question_number}"
+                aria-label="Resultado da questão ${row.question_number}"
+              >
+                <option
+                  value=""
+                  ${!row.result ? "selected" : ""}
+                >
+                  Revisar
+                </option>
+
+                <option
+                  value="correct"
+                  ${row.result === "correct" ? "selected" : ""}
+                >
+                  ✓ Acerto
+                </option>
+
+                <option
+                  value="wrong"
+                  ${row.result === "wrong" ? "selected" : ""}
+                >
+                  ✕ Erro
+                </option>
+
+                <option
+                  value="annulled"
+                  ${row.result === "annulled" ? "selected" : ""}
+                >
+                  ○ Anulada
+                </option>
+              </select>
+
               <span class="qs-answer-import-result">
-                ${statusLabel}
+                ${confidence}
               </span>
             </div>
           `;
@@ -7318,69 +7436,10 @@ function renderAnswerImportPreview() {
 
   table
     .querySelectorAll(
-      "[data-import-user-answer]"
-    )
-    .forEach(
-      (select) => {
-        select.addEventListener(
-          "change",
-          () => {
-            const number =
-              Number(
-                select.dataset
-                  .importUserAnswer
-              );
-
-            const row =
-              qsState
-                .answerImportRows
-                .find(
-                  (candidate) =>
-                    candidate
-                      .question_number
-                    === number
-                );
-
-            if (!row) {
-              return;
-            }
-
-            row.user_answer =
-              select.value
-              || null;
-
-            if (
-              row.official_answer
-              === "X"
-            ) {
-              row.result =
-                "annulled";
-            } else if (
-              row.official_answer
-              && row.user_answer
-            ) {
-              row.result =
-                row.official_answer
-                === row.user_answer
-                  ? "correct"
-                  : "wrong";
-            } else {
-              row.result =
-                null;
-            }
-
-            renderAnswerImportPreview();
-          }
-        );
-      }
-    );
-
-  table
-    .querySelectorAll(
       "[data-import-result-status]"
     )
     .forEach(
-      (select) => {
+      select => {
         select.addEventListener(
           "change",
           () => {
@@ -7394,7 +7453,7 @@ function renderAnswerImportPreview() {
               qsState
                 .answerImportRows
                 .find(
-                  (candidate) =>
+                  candidate =>
                     candidate
                       .question_number
                     === number
@@ -7417,17 +7476,17 @@ function renderAnswerImportPreview() {
       }
     );
 
-
   if (applyButton) {
     applyButton.disabled =
-      !recognized.some(
-        (row) =>
-          row.result
-          === "correct"
-          || row.result
-          === "wrong"
-          || row.result
-          === "annulled"
+      !rows.some(
+        row =>
+          [
+            "correct",
+            "wrong",
+            "annulled"
+          ].includes(
+            row.result
+          )
       );
   }
 }
@@ -7484,6 +7543,7 @@ function previewAnswerScreenshotFiles(
 }
 
 
+
 async function readAnswerScreenshots() {
   const files =
     qsState.answerScreenshotFiles;
@@ -7508,51 +7568,69 @@ async function readAnswerScreenshots() {
   }
 
   try {
-    setAnswerImportStatus(
-      "Preparando gabarito oficial..."
-    );
-
-    await ensureOfficialAnswerKey();
-
     const detected =
       new Map();
 
-    let colorTilesFound =
+    let numbersFound =
       0;
 
+    /*
+      Não lê alternativas A/B/C/D/E.
+      Cada print é processado em duas etapas:
+      número primeiro, cor depois.
+    */
     for (
       let index = 0;
       index < files.length;
       index += 1
     ) {
-      const file =
-        files[index];
-
-      setAnswerImportStatus(
-        `Analisando cores — print ${index + 1} de ${files.length}...`
-      );
-
-      /*
-        MÉTODO PRINCIPAL:
-        detecta o fundo verde/vermelho dos botões.
-        Não depende de ler A/B/C/D/E.
-      */
-      const colorResult =
-        await recognizeColoredAnswerGrid(
-          file,
+      const result =
+        await recognizeAnswerGridByNumber(
+          files[index],
           index,
           files.length
         );
 
-      colorTilesFound +=
-        colorResult.tileCount;
+      numbersFound +=
+        result.numberCount;
 
       for (
         const item
-        of colorResult.detections
+        of result.detections
       ) {
+        const previous =
+          detected.get(
+            item.question_number
+          );
+
+        /*
+          Em vários prints, uma questão pode estar
+          selecionada em um print e aparecer com a
+          cor real em outro. O resultado resolvido
+          sempre ganha do estado "selecionada".
+        */
         if (
-          item.status_hint
+          !previous
+          || (
+            !previous.status_hint
+            && item.status_hint
+          )
+          || (
+            Boolean(
+              item.status_hint
+            )
+            === Boolean(
+              previous.status_hint
+            )
+            && Number(
+                item.confidence
+                || 0
+              )
+              > Number(
+                  previous.confidence
+                  || 0
+                )
+          )
         ) {
           detected.set(
             item.question_number,
@@ -7560,114 +7638,89 @@ async function readAnswerScreenshots() {
           );
         }
       }
-
-      /*
-        FALLBACK:
-        se não encontrou uma grade colorida,
-        tenta o método textual antigo.
-      */
-      if (
-        colorResult.tileCount < 2
-        && window.Tesseract
-      ) {
-        setAnswerImportStatus(
-          `Cores não reconhecidas. Tentando leitura de texto — print ${index + 1} de ${files.length}...`
-        );
-
-        const canvas =
-          await prepareScreenshotForOcr(
-            file
-          );
-
-        const result =
-          await window
-            .Tesseract
-            .recognize(
-              canvas,
-              "eng"
-            );
-
-        const pairs =
-          parseAnswerPairsFromOcr(
-            result?.data?.text
-            || ""
-          );
-
-        for (
-          const pair
-          of pairs
-        ) {
-          detected.set(
-            pair.question_number,
-            pair
-          );
-        }
-      }
     }
 
     qsState.answerImportRows =
-      qsState.items
-        .map(
-          (item) =>
-            answerImportRowForItem(
-              item,
-              detected.get(
-                item.question_number
-              )
+      qsState.items.map(
+        item =>
+          answerImportRowForItem(
+            item,
+            detected.get(
+              item.question_number
             )
-        );
+          )
+      );
 
     renderAnswerImportPreview();
 
     const recognizedCount =
       qsState.answerImportRows
         .filter(
-          (row) =>
-            row.result
-            === "correct"
-            || row.result
-            === "wrong"
-            || row.result
-            === "annulled"
+          row =>
+            [
+              "correct",
+              "wrong",
+              "annulled"
+            ].includes(
+              row.result
+            )
+        )
+        .length;
+
+    const selectedCount =
+      qsState.answerImportRows
+        .filter(
+          row =>
+            row.color_status
+            === "selected"
         )
         .length;
 
     const unresolvedCount =
       qsState.answerImportRows
         .filter(
-          (row) =>
+          row =>
             !row.result
         )
         .length;
 
     if (
       recognizedCount
+      || selectedCount
     ) {
       setAnswerImportStatus(
-        `${recognizedCount} resultado(s) reconhecido(s) pela cor.${
-          colorTilesFound
-            ? ` ${colorTilesFound} botão(ões) colorido(s) detectado(s).`
+        `${recognizedCount} resultado(s) reconhecido(s). ${
+          numbersFound
+        } número(s) localizado(s).${
+          selectedCount
+            ? ` ${selectedCount} questão(ões) selecionada(s) precisam de conferência.`
             : ""
         }${
           unresolvedCount
-            ? ` ${unresolvedCount} questão(ões) precisam de conferência.`
+            ? ` ${unresolvedCount} questão(ões) sem resultado definido.`
             : " Confira a prévia e aplique."
         }`,
-        "success"
+        recognizedCount
+          ? "success"
+          : ""
       );
     } else {
       setAnswerImportStatus(
-        "Não consegui reconhecer o padrão de cores deste print. Tente recortar a imagem deixando a grade de questões visível.",
+        "Não consegui localizar números de questões com cores válidas. Recorte o print deixando a grade numerada visível e tente novamente.",
         "error"
       );
     }
+
   } catch (error) {
-    console.error(error);
+    console.error(
+      error
+    );
 
     setAnswerImportStatus(
       `Não foi possível analisar o print: ${error.message || "erro desconhecido"}`,
       "error"
     );
+
   } finally {
     if (button) {
       button.disabled =
@@ -7675,6 +7728,8 @@ async function readAnswerScreenshots() {
     }
   }
 }
+
+
 
 async function applyAnswerScreenshotResults() {
   if (!qsState.currentSet) {
@@ -7684,7 +7739,7 @@ async function applyAnswerScreenshotResults() {
   const rows =
     qsState.answerImportRows
       .filter(
-        (row) =>
+        row =>
           [
             "correct",
             "wrong",
@@ -7720,24 +7775,15 @@ async function applyAnswerScreenshotResults() {
   try {
     const attemptRows =
       rows.map(
-        (row) => {
-          const item =
-            qsState.items.find(
-              (candidate) =>
-                candidate.id
-                === row.item_id
-            );
-
+        row => {
           const previous =
             qsState.attempts.get(
               row.item_id
             );
 
-          const treatedAsCorrect =
+          const isWrong =
             row.result
-            === "correct"
-            || row.result
-            === "annulled";
+            === "wrong";
 
           return {
             user_id:
@@ -7746,54 +7792,59 @@ async function applyAnswerScreenshotResults() {
             question_item_id:
               row.item_id,
 
+            /*
+              Agora anulada é salva como "annulled".
+              Rode o SQL que acompanha este arquivo
+              antes de usar o novo leitor.
+            */
             result:
-              treatedAsCorrect
-                ? "correct"
-                : "wrong",
+              row.result,
 
             area:
-              treatedAsCorrect
-                ? null
-                : previous?.area
-                  || null,
+              isWrong
+                ? previous?.area
+                  || null
+                : null,
 
             materia:
-              treatedAsCorrect
-                ? null
-                : previous?.materia
-                  || null,
+              isWrong
+                ? previous?.materia
+                  || null
+                : null,
 
             correct_option:
-              row.result
-              === "wrong"
-              && row.official_answer
-              && row.official_answer
-                !== "X"
-                ? row.official_answer
+              isWrong
+                ? previous
+                    ?.correct_option
+                  || null
                 : null,
 
             ccq:
-              treatedAsCorrect
-                ? null
-                : previous?.ccq
-                  || null,
+              isWrong
+                ? previous?.ccq
+                  || null
+                : null,
 
             what_i_thought:
-              treatedAsCorrect
-                ? null
-                : previous
+              isWrong
+                ? previous
                     ?.what_i_thought
-                  || null,
+                  || null
+                : null,
 
             sent_to_error:
-              previous
-                ?.sent_to_error
-              || false,
+              isWrong
+                ? previous
+                    ?.sent_to_error
+                  || false
+                : false,
 
             error_entry_id:
-              previous
-                ?.error_entry_id
-              || null,
+              isWrong
+                ? previous
+                    ?.error_entry_id
+                  || null
+                : null,
 
             answered_at:
               new Date()
@@ -7824,11 +7875,6 @@ async function applyAnswerScreenshotResults() {
     const appliedCount =
       attemptRows.length;
 
-    /*
-      PRIVACIDADE:
-      depois de usado, o print é descartado.
-      Ele nunca foi enviado ao Supabase.
-    */
     clearAnswerScreenshotMemory();
 
     const dialog =
@@ -7844,18 +7890,23 @@ async function applyAnswerScreenshotResults() {
 
     await Promise.all([
       loadSets(),
+
       openSet(
         qsState.currentSet.id
       ),
+
       loadQuestionOverview()
     ]);
 
     setAnswerStatus(
-      `${appliedCount} resultado(s) importado(s) do print. Os arquivos de imagem foram descartados do navegador.`,
+      `${appliedCount} resultado(s) importado(s) do print. As imagens foram descartadas do navegador.`,
       "success"
     );
+
   } catch (error) {
-    console.error(error);
+    console.error(
+      error
+    );
 
     setAnswerImportStatus(
       `Não foi possível aplicar: ${error.message || "erro desconhecido"}`,
@@ -8029,12 +8080,15 @@ function renderQuestions() {
       const wrong =
         attempt?.result === "wrong";
 
+      const annulled =
+        attempt?.result === "annulled";
+
       const sent =
         attempt?.sent_to_error === true;
 
       return `
         <article
-          class="qs-question ${wrong ? "wrong" : ""} ${sent ? "sent" : ""}"
+          class="qs-question ${wrong ? "wrong" : ""} ${annulled ? "annulled" : ""} ${sent ? "sent" : ""}"
           data-question-id="${qsEscape(item.id)}"
         >
           <div class="qs-question-main">
@@ -8050,8 +8104,9 @@ function renderQuestions() {
                 type="checkbox"
                 data-wrong-toggle="${qsEscape(item.id)}"
                 ${wrong ? "checked" : ""}
+                ${annulled ? "disabled" : ""}
               >
-              <span>Errei</span>
+              <span>${annulled ? "Anulada" : "Errei"}</span>
             </label>
           </div>
 
@@ -8146,28 +8201,80 @@ function currentWrongIds() {
   );
 }
 
+
 function updateLiveSummary() {
   const total =
     qsState.items.length;
 
+  const wrongIds =
+    new Set(
+      currentWrongIds()
+    );
+
+  const annulled =
+    qsState.items
+      .filter(
+        item =>
+          !wrongIds.has(
+            item.id
+          )
+          && qsState
+            .attempts
+            .get(
+              item.id
+            )
+            ?.result
+            === "annulled"
+      )
+      .length;
+
   const wrong =
-    currentWrongIds().length;
+    wrongIds.size;
+
+  const scored =
+    Math.max(
+      0,
+      total - annulled
+    );
 
   const correct =
-    Math.max(0, total - wrong);
+    Math.max(
+      0,
+      scored - wrong
+    );
 
-  document.getElementById("qs-summary-total").textContent =
-    total;
+  document
+    .getElementById(
+      "qs-summary-total"
+    )
+    .textContent =
+      total;
 
-  document.getElementById("qs-summary-correct").textContent =
-    correct;
+  document
+    .getElementById(
+      "qs-summary-correct"
+    )
+    .textContent =
+      correct;
 
-  document.getElementById("qs-summary-wrong").textContent =
-    wrong;
+  document
+    .getElementById(
+      "qs-summary-wrong"
+    )
+    .textContent =
+      wrong;
 
-  document.getElementById("qs-summary-accuracy").textContent =
-    accuracy(correct, total);
+  document
+    .getElementById(
+      "qs-summary-accuracy"
+    )
+    .textContent =
+      accuracy(
+        correct,
+        scored
+      );
 }
+
 
 function readWrongMetadata(itemId) {
   const area =
@@ -8233,7 +8340,10 @@ async function saveAnswerKey() {
         return {
           user_id: qsState.user.id,
           question_item_id: item.id,
-          result: "correct",
+          result:
+            previous?.result === "annulled"
+              ? "annulled"
+              : "correct",
           area: null,
           materia: null,
           correct_option: null,

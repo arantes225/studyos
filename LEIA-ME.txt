@@ -1,49 +1,46 @@
-RESIBULANDO V20 — BASE ESTÁVEL
+RESIBULANDO — LEITOR DE GABARITO v20
+======================================
 
-A integração do ChatGPT com o GitHub está retornando 403 para operações de escrita.
-As tentativas não alteraram o repositório.
+ARQUIVOS
+--------
+1. questoes-simulados.js
+   -> substitua diretamente o arquivo atual da raiz.
 
-Este pacote parte diretamente do último estado estável em que a Agenda funcionava:
+2. fase20_gabarito_anuladas.sql
+   -> rode UMA VEZ no Supabase SQL Editor.
 
-c00b6f7deb56f6472b18b538268944a122f2a487
+Não é necessário adicionar JS complementar.
+Não é necessário alterar questoes-simulados.html.
 
-ALTERAÇÕES
-==========
+NOVO LEITOR
+-----------
+O print é interpretado nesta ordem:
 
-DASHBOARD
-- restaura a Agenda completa;
-- preserva Semana/Mês, anterior/próximo/hoje, mover atividades e botões Iniciar;
-- substitui "Maior dificuldade" por Revisão passiva / CCQ;
-- CCQ troca a cada 30 segundos;
-- texto do CCQ centralizado e com 14,5 px.
+1. reconhece a NUMERAÇÃO da questão;
+2. localiza cada número no print;
+3. analisa somente a cor ao redor daquele número.
 
-AMBIENTAÇÃO
-- restaura cronômetro e Pomodoro da versão estável;
-- remove o antigo bloco de CCQ;
-- quando a atividade é uma aula, abre o caderno daquela aula;
-- mostra somente o editor do Caderno, sem a lista lateral e sem as abas;
-- preserva "Concluir aula";
-- deixa o bloco da aula mais discreto.
+Cores:
+- verde = acerto
+- vermelho = erro
+- branco = anulada
+- azul/amarelo = questão selecionada; fica para conferência
 
-COMO APLICAR
-============
+O leitor NÃO procura A, B, C, D ou E no print.
 
-1. Abra um GitHub Codespace do repositório arantes225/studyos.
-2. Coloque APLICAR_V20.py na raiz do projeto.
-3. Rode:
+ANULADAS
+--------
+A migration permite:
+- correct
+- wrong
+- annulled
 
-   python APLICAR_V20.py
+Questões anuladas:
+- contam como concluídas;
+- não contam como acerto;
+- não contam como erro;
+- não entram no denominador da porcentagem de acerto.
 
-4. O script cria backup em:
-
-   _backup_antes_v20/
-
-5. Se todos os itens aparecerem com ✓:
-
-   git add dashboard.html dashboard.js ambientacao.html ambientacao.js ambientacao.css
-   git commit -m "Restaura agenda e integra CCQ e caderno"
-   git push
-
-6. No site faça Ctrl + Shift + R.
-
-Não precisa rodar SQL.
+DEPOIS DE PUBLICAR
+------------------
+Faça Ctrl+F5 para forçar o navegador a carregar o novo questoes-simulados.js.
