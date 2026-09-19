@@ -1,54 +1,98 @@
-RESIBULANDO V18.1 — CCQ EXCLUSIVO DO DASHBOARD
+RESIBULANDO V19 — REPARO COMPLETO
 
-REGRA FINAL
+O QUE ESTE PACOTE CORRIGE
+=========================
+
+A versão anterior substituiu dashboard.js e ambientacao.js por arquivos
+complementares. Isso removeu a lógica original da Agenda.
+
+A V19 recupera os CINCO arquivos completos da última versão estável:
+
+- ambientacao.html
+- ambientacao.css
+- ambientacao.js
+- dashboard.html
+- dashboard.js
+
+Base:
+c00b6f7deb56f6472b18b538268944a122f2a487
+
+Depois aplica somente as mudanças novas.
+
+DASHBOARD
+=========
+
+- Agenda completa restaurada.
+- Semana e mês restaurados.
+- Navegação anterior / próximo / hoje restaurada.
+- Arrastar e mover atividades preservado.
+- Botões Iniciar preservados.
+- "Maior dificuldade" removido.
+- Revisão passiva / CCQ fica FIXA no Dashboard.
+- CCQs trocam automaticamente a cada 30 segundos.
+- Texto do CCQ CENTRALIZADO.
+- Texto em 14,5 px, aproximadamente 10% maior que os 13 px anteriores.
+- Ofensiva com chama progressiva.
+- A chama cresce e muda de cor conforme os dias.
+
+AMBIENTAÇÃO
 ===========
 
-O CCQ de revisão passiva fica SOMENTE no Dashboard.
+- CCQ removido do HTML.
+- Lógica de consulta e rotação do CCQ removida do JavaScript.
+- CCQ existe somente no Dashboard.
+- Cronômetro simples restaurado.
+- Pomodoro restaurado.
+- Lo-fi preservado.
+- Ao iniciar uma aula, abre o Caderno daquela aula dentro da Ambientação.
+- O Caderno incorporado não mostra sua lista lateral nem as abas.
+- O bloco da aula fica mais discreto.
+- Botão Concluir aula continua funcionando.
 
-Na Ambientação:
-- o bloco de CCQ é removido do HTML;
-- loadCcqRotation/initCcqRotation são removidos do JavaScript;
-- portanto a Ambientação não carrega nem consulta esse mostrador.
+COMO APLICAR
+============
 
-No Dashboard:
-- o card de revisão passiva ocupa o lugar visual de "Maior dificuldade";
-- permanece sempre no Dashboard;
-- os CCQs alternam automaticamente a cada 30 segundos.
+Recomendado: GitHub Codespaces.
 
-Também continuam:
-- caderno da aula dentro da Ambientação;
-- somente o caderno, sem a lista lateral do Caderno;
-- bloco da aula mais discreto;
-- ofensiva com chama progressiva.
-
-ATENÇÃO SOBRE O PACOTE ANTERIOR
-===============================
-
-O pacote V18 anterior acabou sendo colocado por cima de ambientacao.js e
-dashboard.js no GitHub. Por isso esta V18.1 primeiro recupera os arquivos
-completos do histórico Git e depois aplica as mudanças.
-
-INSTALAÇÃO RECOMENDADA
-======================
-
-Use um Codespace do GitHub ou uma cópia local do repositório.
-
-1. Extraia estes arquivos na RAIZ do projeto:
-   - ambientacao-v18.1.js
-   - dashboard-v18.1.js
-   - aplicar_v18_1.py
+1. Extraia APLICAR_V19.py na RAIZ do repositório.
 
 2. Rode:
 
-   python aplicar_v18_1.py
+   python APLICAR_V19.py
 
-3. Depois:
+3. Se aparecerem todos os ✓, rode:
 
-   git add .
-   git commit -m "CCQ somente no dashboard"
+   git add ambientacao.html ambientacao.css ambientacao.js dashboard.html dashboard.js
+   git commit -m "Repara agenda, CCQ e ambientacao"
    git push
 
-4. No navegador:
+4. Depois, no navegador:
+
    Ctrl + Shift + R
 
-Não precisa rodar SQL.
+BACKUP
+======
+
+Antes de alterar qualquer arquivo, o script copia os arquivos atuais para:
+
+_backup_antes_v19/
+
+VALIDAÇÃO
+=========
+
+O instalador verifica:
+- agendaState;
+- loadAgenda;
+- controles Semana/Mês;
+- ausência do CCQ na Ambientação;
+- CCQ fixo no Dashboard;
+- integração do Caderno;
+- chama da ofensiva;
+- tamanho e centralização do CCQ.
+
+Se Node estiver disponível, também roda:
+
+node --check ambientacao.js
+node --check dashboard.js
+
+NÃO PRECISA RODAR SQL.
