@@ -1,31 +1,47 @@
-RESIBULANDO — FASE 12.5
-DASHBOARD DE QUESTÕES ALINHADO COM "MEUS SIMULADOS"
+RESIBULANDO — FASE 12.6
+CRONOGRAMA GENÉRICO — CORREÇÃO SIMPLIFICADA
 
-CORREÇÃO
-Os 9 cards do dashboard agora usam 100% da mesma largura disponível
-do retângulo "Meus simulados" logo abaixo.
+A versão anterior ainda podia falhar porque tentava usar a nova RPC
+apply_generic_schedule antes do fallback.
 
-Desktop:
-[ 1 ] [ 2 ] [ 3 ]
-[ 4 ] [ 5 ] [ 6 ]
-[ 7 ] [ 8 ] [ 9 ]
+Nesta versão removi completamente essa dependência.
 
-As bordas esquerda e direita ficam alinhadas ao bloco inferior.
+O botão agora usa SOMENTE create_study_topic, que é a mesma função
+já usada pelo cadastro manual de uma aula no Cronograma.
 
-Para evitar que os cards voltem a ficar gigantes, eles têm altura compacta
-de aproximadamente 205 px no desktop.
+Também:
+- o clique chama a função diretamente no HTML;
+- não depende do listener do botão;
+- mostra progresso;
+- informa exatamente qual aula falhou;
+- recarrega as aulas antes de começar;
+- ignora temas que já estão no cronograma;
+- Medicina usa a lista de 180 aulas;
+- Odontologia usa a lista de 108 aulas;
+- distribui até a data limite;
+- usa no máximo 3 dias diferentes por semana;
+- depois rola automaticamente até o Planejador.
 
-ARQUIVOS PARA SUBSTITUIR
-- questoes-simulados.html
-- questoes-simulados.js
+ARQUIVOS
+Substitua:
+- cronograma.html
+- cronograma.js
+- cronograma-base-data.js
 
-NÃO PRECISA RODAR SQL.
+NÃO PRECISA RODAR SQL NOVO.
 
 PUBLICAR
 git add -A
-git commit -m "Alinha dashboard de questoes"
+git commit -m "Corrige definitivamente cronograma generico"
 git pull --rebase origin main
 git push origin main
 
 Depois:
 Ctrl + Shift + R
+
+TESTE
+Ao confirmar, o texto abaixo do botão deve começar a mudar para:
+Adicionando aulas... 0/180
+
+ou:
+Adicionando aulas... 0/108

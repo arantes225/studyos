@@ -3814,8 +3814,62 @@ function currentBaseScheduleRows() {
 }
 
 function currentBaseStudyDays() {
-  const days = scheduleState.theoryStudyWeekdays.slice(0,3);
-  return days.length ? days : [1,3,5];
+  const configured =
+    Array.from(
+      new Set(
+        (
+          scheduleState.theoryStudyWeekdays
+          || []
+        )
+          .map(Number)
+          .filter(
+            (day) =>
+              day >= 1
+              && day <= 7
+          )
+      )
+    )
+      .sort(
+        (a, b) =>
+          a - b
+      );
+
+  if (!configured.length) {
+    return [1, 3, 5];
+  }
+
+  if (configured.length <= 3) {
+    return configured;
+  }
+
+  const preferred =
+    [1, 3, 5]
+      .filter(
+        (day) =>
+          configured.includes(day)
+      );
+
+  if (preferred.length === 3) {
+    return preferred;
+  }
+
+  const indexes = [
+    0,
+    Math.floor(
+      (configured.length - 1)
+      / 2
+    ),
+    configured.length - 1
+  ];
+
+  return Array.from(
+    new Set(
+      indexes.map(
+        (index) =>
+          configured[index]
+      )
+    )
+  ).slice(0, 3);
 }
 
 function renderBaseSchedulePreview() {
@@ -3867,104 +3921,77 @@ function spreadBaseRowsAcrossDates(rows, dates) {
   });
 }
 
-async function insertGenericScheduleFallback(
-  rows,
-  endValue
+function genericScheduleSleep(
+  milliseconds
 ) {
-  /*
-    Fallback usando a RPC já existente de criação manual.
-    É mais lento, mas evita deixar o botão inutilizável
-    caso o patch SQL novo ainda não tenha sido aplicado.
-  */
-  const endDate =
-    parseISODateForLibrary(
-      endValue
+  return new Promise(
+    (resolve) =>
+      window.setTimeout(
+        resolve,
+        milliseconds
+      )
+  );
+}
+
+
+async function createGenericTopicWithExistingRpc(
+  row,
+  index
+) {
+  const {
+    error
+  } =
+    await scheduleSb.rpc(
+      "create_study_topic",
+      {
+        p_area:
+          row.area
+          || null,
+
+        p_materia:
+          null,
+
+        p_theme:
+          row.theme,
+
+        p_original_date:
+          row.scheduled_date,
+
+        p_scheduled_date:
+          row.scheduled_date,
+
+        p_import_id:
+          null,
+
+        p_deck_order:
+          Number(
+            row.aula
+            || index + 1
+          )
+      }
     );
 
-  const dates =
-    baseEligibleDates(
-      new Date(),
-      endDate
-    );
-
-  if (!dates.length) {
-    throw new Error(
-      "Não há dias de estudo disponíveis até a data limite."
-    );
+  if (error) {
+    throw error;
   }
-
-  const distributed =
-    spreadBaseRowsAcrossDates(
-      rows,
-      dates
-    );
-
-  let inserted =
-    0;
-
-  for (
-    let index = 0;
-    index < distributed.length;
-    index += 1
-  ) {
-    const row =
-      distributed[index];
-
-    setBaseScheduleStatus(
-      `Inserindo aulas... ${inserted}/${distributed.length}`
-    );
-
-    const {
-      error
-    } =
-      await scheduleSb.rpc(
-        "create_study_topic",
-        {
-          p_area:
-            row.area
-            || null,
-
-          p_materia:
-            null,
-
-          p_theme:
-            row.theme,
-
-          p_original_date:
-            null,
-
-          p_scheduled_date:
-            row.scheduled_date,
-
-          p_import_id:
-            null,
-
-          p_deck_order:
-            Number(
-              row.aula
-              || index + 1
-            )
-        }
-      );
-
-    if (error) {
-      throw error;
-    }
-
-    inserted += 1;
-  }
-
-  return {
-    inserted,
-    skipped_existing:
-      0,
-    fallback:
-      true
-  };
 }
 
 
 async function applyBaseSchedule() {
+  scheduleState.user =
+    scheduleState.user
+    || window.docmapUser;
+
+  if (!scheduleState.user) {
+    setBaseScheduleStatus(
+      "Sua sessão ainda não carregou. Atualize a página e tente novamente.",
+      "error"
+    );
+
+    return;
+  }
+
+
   const button =
     document.getElementById(
       "apply-base-schedule"
@@ -4007,13 +4034,23 @@ async function applyBaseSchedule() {
   }
 
 
+  try {
+    await loadTopics();
+  } catch (error) {
+    console.warn(
+      "Falha ao atualizar tópicos antes da inserção:",
+      error
+    );
+  }
+
+
   const allRows =
     currentBaseScheduleRows();
 
 
   if (!allRows.length) {
     setBaseScheduleStatus(
-      "A base do cronograma genérico não foi carregada. Faça Ctrl + Shift + R e tente novamente.",
+      "A lista do cronograma genérico não foi carregada. Faça Ctrl + Shift + R e tente novamente.",
       "error"
     );
 
@@ -4021,24 +4058,20 @@ async function applyBaseSchedule() {
   }
 
 
-  /*
-    Remove conteúdos que já existem no cronograma atual.
-    A RPC do servidor também faz essa verificação,
-    então esta é uma proteção adicional.
-  */
   const existingKeys =
     new Set(
-      scheduleState.topics.map(
-        (topic) =>
-          baseTopicKey(
-            topic.area,
-            topic.theme
-          )
-      )
+      scheduleState.topics
+        .map(
+          (topic) =>
+            baseTopicKey(
+              topic.area,
+              topic.theme
+            )
+        )
     );
 
 
-  const rows =
+  const missingRows =
     allRows.filter(
       (row) =>
         !existingKeys.has(
@@ -4050,14 +4083,44 @@ async function applyBaseSchedule() {
     );
 
 
-  if (!rows.length) {
+  if (!missingRows.length) {
     setBaseScheduleStatus(
-      "Todas as aulas deste cronograma genérico já estão cadastradas.",
+      "Todas as aulas deste cronograma genérico já estão no seu cronograma.",
       "success"
     );
 
     return;
   }
+
+
+  const endDate =
+    parseISODateForLibrary(
+      endValue
+    );
+
+
+  const eligibleDates =
+    baseEligibleDates(
+      new Date(),
+      endDate
+    );
+
+
+  if (!eligibleDates.length) {
+    setBaseScheduleStatus(
+      "Não há dias de aula disponíveis até a data limite.",
+      "error"
+    );
+
+    return;
+  }
+
+
+  const distributed =
+    spreadBaseRowsAcrossDates(
+      missingRows,
+      eligibleDates
+    );
 
 
   const modeLabel =
@@ -4067,9 +4130,20 @@ async function applyBaseSchedule() {
       : "Medicina";
 
 
+  const studyDaysLabel =
+    currentBaseStudyDays()
+      .map(
+        (day) =>
+          BASE_WEEKDAY_LABELS[
+            day
+          ]
+      )
+      .join(", ");
+
+
   const confirmed =
     window.confirm(
-      `Adicionar ${rows.length} aula${rows.length === 1 ? "" : "s"} do cronograma genérico de ${modeLabel} até ${formatDateLabelSchedule(endValue)}?`
+      `Adicionar ${distributed.length} aula${distributed.length === 1 ? "" : "s"} do cronograma genérico de ${modeLabel}?\n\nDias de aula: ${studyDaysLabel}\nData limite: ${formatDateLabelSchedule(endValue)}`
     );
 
 
@@ -4087,127 +4161,58 @@ async function applyBaseSchedule() {
   }
 
 
-  setBaseScheduleStatus(
-    `Preparando ${rows.length} aulas do cronograma genérico...`
-  );
+  let inserted =
+    0;
 
 
   try {
     /*
-      Caminho principal:
-      uma única RPC transacional no Supabase.
+      Usa SOMENTE create_study_topic,
+      a mesma RPC usada pelo formulário manual.
     */
-    const {
-      data,
-      error
-    } =
-      await scheduleSb.rpc(
-        "apply_generic_schedule",
-        {
-          p_mode:
-            scheduleState.studyMode,
+    for (
+      let index = 0;
+      index < distributed.length;
+      index += 1
+    ) {
+      const row =
+        distributed[index];
 
-          p_end_date:
-            endValue,
 
-          p_rows:
-            rows.map(
-              (
-                row,
-                index
-              ) => ({
-                aula:
-                  Number(
-                    row.aula
-                    || index + 1
-                  ),
-
-                area:
-                  row.area
-                  || null,
-
-                theme:
-                  row.theme
-              })
-            )
-        }
+      setBaseScheduleStatus(
+        `Adicionando aulas... ${inserted}/${distributed.length}`
       );
 
 
-    let result =
-      data;
-
-
-    if (error) {
-      /*
-        Se a função ainda não existir no banco,
-        usa a RPC create_study_topic já existente
-        para o botão continuar funcionando.
-      */
-      const message =
-        String(
-          error.message
-          || ""
-        ).toLowerCase();
-
-      const functionMissing =
-        message.includes(
-          "apply_generic_schedule"
-        )
-        || message.includes(
-          "could not find the function"
-        )
-        || message.includes(
-          "schema cache"
+      try {
+        await createGenericTopicWithExistingRpc(
+          row,
+          index
         );
 
-      if (!functionMissing) {
-        throw error;
+        inserted += 1;
+
+      } catch (error) {
+        const lessonNumber =
+          Number(
+            row.aula
+            || index + 1
+          );
+
+        throw new Error(
+          `Falha na aula ${lessonNumber} — ${row.theme}: ${error.message || "erro do Supabase"}`
+        );
       }
 
-      console.warn(
-        "RPC apply_generic_schedule ainda não disponível. Usando fallback.",
-        error
-      );
 
-      setBaseScheduleStatus(
-        "Aplicando pelo modo de compatibilidade..."
-      );
-
-      result =
-        await insertGenericScheduleFallback(
-          rows,
-          endValue
+      if (
+        inserted > 0
+        && inserted % 20 === 0
+      ) {
+        await genericScheduleSleep(
+          80
         );
-    }
-
-
-    const inserted =
-      Number(
-        result?.inserted
-        || 0
-      );
-
-    const skipped =
-      Number(
-        result?.skipped_existing
-        || 0
-      );
-
-
-    if (!inserted) {
-      setBaseScheduleStatus(
-        skipped
-          ? `Nenhuma aula nova foi inserida. ${skipped} já existiam no cronograma.`
-          : "Nenhuma aula foi inserida. Verifique a data limite e tente novamente.",
-        skipped
-          ? "success"
-          : "error"
-      );
-
-      await loadTopics();
-
-      return;
+      }
     }
 
 
@@ -4215,18 +4220,28 @@ async function applyBaseSchedule() {
 
 
     setBaseScheduleStatus(
-      `${inserted} aula${inserted === 1 ? "" : "s"} do cronograma genérico de ${modeLabel} adicionada${inserted === 1 ? "" : "s"} com sucesso.${skipped ? ` ${skipped} já existiam e foram ignoradas.` : ""}`,
+      `${inserted} aula${inserted === 1 ? "" : "s"} do cronograma genérico de ${modeLabel} adicionada${inserted === 1 ? "" : "s"} com sucesso.`,
       "success"
     );
 
 
-    /*
-      Leva o usuário ao planejador para confirmar
-      visualmente que as aulas entraram.
-    */
+    if (
+      distributed[0]
+        ?.scheduled_date
+    ) {
+      scheduleState.weekAnchor =
+        parseISODateForLibrary(
+          distributed[0]
+            .scheduled_date
+        );
+
+      renderSchedule();
+    }
+
+
     document
-      .querySelector(
-        ".planner-panel"
+      .getElementById(
+        "week-planner"
       )
       ?.scrollIntoView({
         behavior:
@@ -4239,13 +4254,20 @@ async function applyBaseSchedule() {
 
   } catch (error) {
     console.error(
-      "Erro ao aplicar cronograma genérico:",
+      "Erro ao adicionar cronograma genérico:",
       error
     );
 
 
+    try {
+      await loadTopics();
+    } catch {}
+
+
     setBaseScheduleStatus(
-      `Não foi possível adicionar o cronograma: ${error.message || "erro desconhecido"}`,
+      inserted > 0
+        ? `${inserted} aula${inserted === 1 ? "" : "s"} foram adicionadas antes do erro. ${error.message}`
+        : `Não foi possível adicionar o cronograma: ${error.message}`,
       "error"
     );
 
@@ -4261,19 +4283,45 @@ async function applyBaseSchedule() {
   }
 }
 
+
+window.applyResibulandoGenericSchedule =
+  applyBaseSchedule;
+
+
 function wireBaseSchedule() {
-  const endInput = document.getElementById("base-schedule-end-date");
+  const endInput =
+    document.getElementById(
+      "base-schedule-end-date"
+    );
+
   if (endInput) {
-    endInput.min = todayScheduleISO();
-    if (!endInput.value) endInput.value = toISODateSchedule(addDaysSchedule(new Date(), 270));
+    endInput.min =
+      todayScheduleISO();
+
+    if (!endInput.value) {
+      endInput.value =
+        toISODateSchedule(
+          addDaysSchedule(
+            new Date(),
+            270
+          )
+        );
+    }
   }
 
-  document.getElementById("apply-base-schedule")?.addEventListener("click", applyBaseSchedule);
 
-  window.addEventListener("resibulando:study-mode", (event) => {
-    scheduleState.studyMode = event.detail?.mode === "dentistry" ? "dentistry" : "medicine";
-    renderBaseSchedulePreview();
-  });
+  window.addEventListener(
+    "resibulando:study-mode",
+    (event) => {
+      scheduleState.studyMode =
+        event.detail?.mode
+        === "dentistry"
+          ? "dentistry"
+          : "medicine";
+
+      renderBaseSchedulePreview();
+    }
+  );
 }
 
 function getActiveTopicsForLibrary() {
