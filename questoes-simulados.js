@@ -5323,6 +5323,976 @@ function parseAnswerPairsFromOcr(
 }
 
 
+function classifyAnswerTilePixel(
+  red,
+  green,
+  blue
+) {
+  /*
+    Verde = acerto.
+    Rosa/vermelho claro = erro.
+    Azul = questão atualmente selecionada
+    no QBank (o resultado pode estar escondido
+    pela seleção).
+  */
+
+  if (
+    green >= 145
+    && red >= 85
+    && blue >= 85
+    && green >= red + 8
+    && green >= blue + 5
+  ) {
+    return 2;
+  }
+
+  if (
+    red >= 175
+    && green >= 105
+    && blue >= 105
+    && red >= green + 8
+    && red >= blue + 8
+  ) {
+    return 1;
+  }
+
+  if (
+    blue >= 145
+    && blue >= red + 30
+    && blue >= green + 18
+    && red <= 180
+  ) {
+    return 3;
+  }
+
+  return 0;
+}
+
+
+async function prepareScreenshotForColorAnalysis(
+  file
+) {
+  const bitmap =
+    await createImageBitmap(
+      file
+    );
+
+  const maxSide =
+    1200;
+
+  const scale =
+    Math.min(
+      1,
+      maxSide
+      / Math.max(
+        bitmap.width,
+        bitmap.height
+      )
+    );
+
+  const width =
+    Math.max(
+      1,
+      Math.round(
+        bitmap.width
+        * scale
+      )
+    );
+
+  const height =
+    Math.max(
+      1,
+      Math.round(
+        bitmap.height
+        * scale
+      )
+    );
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+  canvas.width =
+    width;
+
+  canvas.height =
+    height;
+
+  const context =
+    canvas.getContext(
+      "2d",
+      {
+        alpha: false,
+        willReadFrequently:
+          true
+      }
+    );
+
+  context.fillStyle =
+    "#ffffff";
+
+  context.fillRect(
+    0,
+    0,
+    width,
+    height
+  );
+
+  context.drawImage(
+    bitmap,
+    0,
+    0,
+    width,
+    height
+  );
+
+  bitmap.close?.();
+
+  return canvas;
+}
+
+
+function medianNumber(
+  values
+) {
+  if (!values.length) {
+    return 0;
+  }
+
+  const sorted =
+    [...values]
+      .sort(
+        (a, b) =>
+          a - b
+      );
+
+  const middle =
+    Math.floor(
+      sorted.length / 2
+    );
+
+  if (
+    sorted.length % 2
+  ) {
+    return sorted[
+      middle
+    ];
+  }
+
+  return (
+    sorted[
+      middle - 1
+    ]
+    + sorted[
+      middle
+    ]
+  ) / 2;
+}
+
+
+function findColoredAnswerTiles(
+  canvas
+) {
+  const context =
+    canvas.getContext(
+      "2d",
+      {
+        willReadFrequently:
+          true
+      }
+    );
+
+  const {
+    data
+  } =
+    context.getImageData(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+  const width =
+    canvas.width;
+
+  const height =
+    canvas.height;
+
+  const mask =
+    new Uint8Array(
+      width * height
+    );
+
+  for (
+    let pixel = 0;
+    pixel < width * height;
+    pixel += 1
+  ) {
+    const offset =
+      pixel * 4;
+
+    mask[pixel] =
+      classifyAnswerTilePixel(
+        data[offset],
+        data[offset + 1],
+        data[offset + 2]
+      );
+  }
+
+  const components = [];
+
+  const minSide =
+    Math.max(
+      16,
+      Math.floor(
+        Math.min(
+          width,
+          height
+        ) * 0.025
+      )
+    );
+
+  const maxSide =
+    Math.max(
+      70,
+      Math.floor(
+        Math.min(
+          width,
+          height
+        ) * 0.32
+      )
+    );
+
+  for (
+    let start = 0;
+    start < mask.length;
+    start += 1
+  ) {
+    const colorCode =
+      mask[start];
+
+    if (!colorCode) {
+      continue;
+    }
+
+    const stack = [
+      start
+    ];
+
+    mask[start] =
+      0;
+
+    let count = 0;
+
+    let minX =
+      width;
+
+    let maxX =
+      0;
+
+    let minY =
+      height;
+
+    let maxY =
+      0;
+
+    while (
+      stack.length
+    ) {
+      const current =
+        stack.pop();
+
+      const y =
+        Math.floor(
+          current / width
+        );
+
+      const x =
+        current
+        - y * width;
+
+      count += 1;
+
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+
+      if (x > 0) {
+        const left =
+          current - 1;
+
+        if (
+          mask[left]
+          === colorCode
+        ) {
+          mask[left] = 0;
+          stack.push(left);
+        }
+      }
+
+      if (
+        x < width - 1
+      ) {
+        const right =
+          current + 1;
+
+        if (
+          mask[right]
+          === colorCode
+        ) {
+          mask[right] = 0;
+          stack.push(right);
+        }
+      }
+
+      if (y > 0) {
+        const up =
+          current - width;
+
+        if (
+          mask[up]
+          === colorCode
+        ) {
+          mask[up] = 0;
+          stack.push(up);
+        }
+      }
+
+      if (
+        y < height - 1
+      ) {
+        const down =
+          current + width;
+
+        if (
+          mask[down]
+          === colorCode
+        ) {
+          mask[down] = 0;
+          stack.push(down);
+        }
+      }
+    }
+
+    const componentWidth =
+      maxX - minX + 1;
+
+    const componentHeight =
+      maxY - minY + 1;
+
+    const ratio =
+      componentWidth
+      / Math.max(
+        1,
+        componentHeight
+      );
+
+    const fill =
+      count
+      / Math.max(
+        1,
+        componentWidth
+        * componentHeight
+      );
+
+    /*
+      Remove:
+      - ícones pequenos do cabeçalho;
+      - barra azul de progresso;
+      - áreas grandes que não são botões.
+    */
+    if (
+      componentWidth < minSide
+      || componentHeight < minSide
+      || componentWidth > maxSide
+      || componentHeight > maxSide
+      || ratio < 0.62
+      || ratio > 1.55
+      || fill < 0.42
+    ) {
+      continue;
+    }
+
+    components.push({
+      left:
+        minX,
+      top:
+        minY,
+      right:
+        maxX,
+      bottom:
+        maxY,
+      width:
+        componentWidth,
+      height:
+        componentHeight,
+      centerX:
+        (
+          minX + maxX
+        ) / 2,
+      centerY:
+        (
+          minY + maxY
+        ) / 2,
+      color_code:
+        colorCode,
+      status_hint:
+        colorCode === 2
+          ? "correct"
+          : colorCode === 1
+            ? "wrong"
+            : "selected"
+    });
+  }
+
+  return components;
+}
+
+
+function sortAnswerTilesAsGrid(
+  tiles
+) {
+  if (!tiles.length) {
+    return [];
+  }
+
+  const rowTolerance =
+    Math.max(
+      10,
+      medianNumber(
+        tiles.map(
+          (tile) =>
+            tile.height
+        )
+      ) * 0.65
+    );
+
+  const byY =
+    [...tiles]
+      .sort(
+        (a, b) =>
+          a.centerY
+          - b.centerY
+      );
+
+  const rows = [];
+
+  for (
+    const tile
+    of byY
+  ) {
+    let row =
+      rows.find(
+        (candidate) =>
+          Math.abs(
+            candidate.centerY
+            - tile.centerY
+          ) <= rowTolerance
+      );
+
+    if (!row) {
+      row = {
+        centerY:
+          tile.centerY,
+        tiles: []
+      };
+
+      rows.push(
+        row
+      );
+    }
+
+    row.tiles.push(
+      tile
+    );
+
+    row.centerY =
+      row.tiles.reduce(
+        (
+          total,
+          item
+        ) =>
+          total
+          + item.centerY,
+        0
+      )
+      / row.tiles.length;
+  }
+
+  rows.sort(
+    (a, b) =>
+      a.centerY
+      - b.centerY
+  );
+
+  return rows.flatMap(
+    (row) =>
+      row.tiles
+        .sort(
+          (a, b) =>
+            a.centerX
+            - b.centerX
+        )
+  );
+}
+
+
+function parseAnswerSummaryCounts(
+  rawText,
+  fallbackTotal
+) {
+  const text =
+    normalizeOcrAnswerText(
+      rawText
+    );
+
+  const fraction =
+    text.match(
+      /(\d{1,3})\s*\/\s*(\d{1,3})/
+    );
+
+  const total =
+    fraction
+      ? Number(
+          fraction[2]
+        )
+      : Number(
+          fallbackTotal
+          || 0
+        );
+
+  if (!total) {
+    return null;
+  }
+
+  const afterFraction =
+    fraction
+      ? text.slice(
+          fraction.index
+          + fraction[0].length
+        )
+      : text;
+
+  const numbers =
+    (
+      afterFraction.match(
+        /\d{1,3}/g
+      )
+      || []
+    )
+      .map(Number)
+      .filter(
+        (value) =>
+          value >= 0
+          && value <= total
+      );
+
+  /*
+    Procura um par cujo total seja igual ao
+    número de questões concluídas.
+    No exemplo:
+    20/20   ✓ 2   × 18   10%
+  */
+  for (
+    let first = 0;
+    first < numbers.length;
+    first += 1
+  ) {
+    for (
+      let second =
+        first + 1;
+      second < numbers.length;
+      second += 1
+    ) {
+      const correct =
+        numbers[first];
+
+      const wrong =
+        numbers[second];
+
+      if (
+        correct + wrong
+        === total
+      ) {
+        return {
+          total,
+          correct,
+          wrong
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+
+function matchOcrNumbersToTiles(
+  tiles,
+  ocrData
+) {
+  const words =
+    ocrData?.words
+    || [];
+
+  const matches =
+    new Map();
+
+  for (
+    const word
+    of words
+  ) {
+    const cleaned =
+      String(
+        word.text
+        || ""
+      )
+        .replace(
+          /[^\d]/g,
+          ""
+        );
+
+    if (!cleaned) {
+      continue;
+    }
+
+    const number =
+      Number(
+        cleaned
+      );
+
+    if (
+      number < 1
+      || number > 500
+    ) {
+      continue;
+    }
+
+    const bbox =
+      word.bbox;
+
+    if (!bbox) {
+      continue;
+    }
+
+    const centerX =
+      (
+        bbox.x0
+        + bbox.x1
+      ) / 2;
+
+    const centerY =
+      (
+        bbox.y0
+        + bbox.y1
+      ) / 2;
+
+    const tile =
+      tiles.find(
+        (candidate) =>
+          centerX
+            >= candidate.left - 3
+          && centerX
+            <= candidate.right + 3
+          && centerY
+            >= candidate.top - 3
+          && centerY
+            <= candidate.bottom + 3
+      );
+
+    if (tile) {
+      matches.set(
+        tile,
+        number
+      );
+    }
+  }
+
+  return matches;
+}
+
+
+function resolveSelectedTileColors(
+  mapped,
+  summary
+) {
+  if (!summary) {
+    return mapped;
+  }
+
+  const correctKnown =
+    mapped.filter(
+      (item) =>
+        item.status_hint
+        === "correct"
+    ).length;
+
+  const wrongKnown =
+    mapped.filter(
+      (item) =>
+        item.status_hint
+        === "wrong"
+    ).length;
+
+  const selected =
+    mapped.filter(
+      (item) =>
+        item.status_hint
+        === "selected"
+    );
+
+  if (!selected.length) {
+    return mapped;
+  }
+
+  const missingCorrect =
+    Math.max(
+      0,
+      summary.correct
+      - correctKnown
+    );
+
+  const missingWrong =
+    Math.max(
+      0,
+      summary.wrong
+      - wrongKnown
+    );
+
+  if (
+    missingCorrect
+      + missingWrong
+    !== selected.length
+  ) {
+    return mapped;
+  }
+
+  /*
+    Normalmente existe uma única questão azul:
+    a questão ativa. Se o resumo diz 2 acertos
+    e já encontramos 2 verdes, ela só pode
+    ser um erro.
+  */
+  if (
+    missingCorrect === 0
+  ) {
+    selected.forEach(
+      (item) => {
+        item.status_hint =
+          "wrong";
+
+        item.inferred_from_summary =
+          true;
+      }
+    );
+
+    return mapped;
+  }
+
+  if (
+    missingWrong === 0
+  ) {
+    selected.forEach(
+      (item) => {
+        item.status_hint =
+          "correct";
+
+        item.inferred_from_summary =
+          true;
+      }
+    );
+
+    return mapped;
+  }
+
+  return mapped;
+}
+
+
+async function recognizeColoredAnswerGrid(
+  file,
+  fileIndex,
+  fileCount
+) {
+  const canvas =
+    await prepareScreenshotForColorAnalysis(
+      file
+    );
+
+  const tiles =
+    sortAnswerTilesAsGrid(
+      findColoredAnswerTiles(
+        canvas
+      )
+    );
+
+  if (
+    tiles.length < 2
+  ) {
+    return {
+      detections: [],
+      tileCount: 0,
+      summary: null,
+      ocrText: ""
+    };
+  }
+
+  const expectedItems =
+    [...qsState.items]
+      .sort(
+        (a, b) =>
+          a.question_number
+          - b.question_number
+      );
+
+  let ocrResult =
+    null;
+
+  const needsOcr =
+    tiles.some(
+      (tile) =>
+        tile.status_hint
+        === "selected"
+    )
+    || tiles.length
+      !== expectedItems.length;
+
+  if (
+    needsOcr
+    && window.Tesseract
+  ) {
+    setAnswerImportStatus(
+      `Reconhecendo grade por cores — print ${fileIndex + 1} de ${fileCount}...`
+    );
+
+    ocrResult =
+      await window
+        .Tesseract
+        .recognize(
+          canvas,
+          "eng"
+        );
+  }
+
+  const numberMatches =
+    ocrResult
+      ? matchOcrNumbersToTiles(
+          tiles,
+          ocrResult.data
+        )
+      : new Map();
+
+  let mapped = [];
+
+  /*
+    Se a imagem contém exatamente a grade inteira,
+    a ordem visual já corresponde à ordem das
+    questões. Isso evita depender de OCR.
+  */
+  if (
+    tiles.length
+    === expectedItems.length
+  ) {
+    mapped =
+      tiles.map(
+        (tile, index) => ({
+          ...tile,
+          question_number:
+            numberMatches.get(
+              tile
+            )
+            || expectedItems[
+              index
+            ]?.question_number
+            || index + 1
+        })
+      );
+  } else {
+    mapped =
+      tiles
+        .map(
+          (tile) => ({
+            ...tile,
+            question_number:
+              numberMatches.get(
+                tile
+              )
+              || null
+          })
+        )
+        .filter(
+          (tile) =>
+            Number.isInteger(
+              tile.question_number
+            )
+        );
+  }
+
+  const summary =
+    ocrResult
+      ? parseAnswerSummaryCounts(
+          ocrResult.data?.text
+          || "",
+          expectedItems.length
+        )
+      : null;
+
+  mapped =
+    resolveSelectedTileColors(
+      mapped,
+      summary
+    );
+
+  return {
+    detections:
+      mapped.map(
+        (tile) => ({
+          question_number:
+            tile.question_number,
+
+          user_answer:
+            null,
+
+          status_hint:
+            (
+              tile.status_hint
+              === "correct"
+              || tile.status_hint
+                === "wrong"
+            )
+              ? tile.status_hint
+              : null,
+
+          color_status:
+            tile.color_code
+            === 2
+              ? "green"
+              : tile.color_code
+                === 1
+                  ? "red"
+                  : "blue",
+
+          inferred_from_summary:
+            Boolean(
+              tile.inferred_from_summary
+            )
+        })
+      ),
+
+    tileCount:
+      tiles.length,
+
+    summary,
+
+    ocrText:
+      ocrResult?.data?.text
+      || ""
+  };
+}
+
+
 async function prepareScreenshotForOcr(
   file
 ) {
@@ -5462,6 +6432,20 @@ function answerImportRowForItem(
       official,
     user_answer:
       userAnswer,
+
+    detected_status:
+      statusHint,
+
+    color_status:
+      detected?.color_status
+      || null,
+
+    inferred_from_summary:
+      Boolean(
+        detected
+          ?.inferred_from_summary
+      ),
+
     result
   };
 }
@@ -5542,26 +6526,63 @@ function renderAnswerImportPreview() {
                 ${row.question_number}
               </strong>
 
-              <select
-                data-import-user-answer="${row.question_number}"
-                aria-label="Resposta reconhecida da questão ${row.question_number}"
-              >
-                <option value="">—</option>
-                ${
-                  ["A","B","C","D","E"]
-                    .map(
-                      (option) => `
-                        <option
-                          value="${option}"
-                          ${row.user_answer === option ? "selected" : ""}
-                        >
-                          ${option}
-                        </option>
-                      `
-                    )
-                    .join("")
-                }
-              </select>
+              ${
+                row.detected_status
+                  ? `
+                    <select
+                      data-import-result-status="${row.question_number}"
+                      aria-label="Resultado reconhecido da questão ${row.question_number}"
+                    >
+                      <option value="">Revisar</option>
+                      <option
+                        value="correct"
+                        ${row.result === "correct" ? "selected" : ""}
+                      >
+                        ✓ Acerto
+                      </option>
+                      <option
+                        value="wrong"
+                        ${row.result === "wrong" ? "selected" : ""}
+                      >
+                        ✕ Erro
+                      </option>
+                    </select>
+
+                    <small class="qs-color-read-note">
+                      ${
+                        row.color_status === "green"
+                          ? "cor verde"
+                          : row.color_status === "red"
+                            ? "cor vermelha"
+                            : row.inferred_from_summary
+                              ? "azul resolvido pelo resumo"
+                              : "cor azul"
+                      }
+                    </small>
+                  `
+                  : `
+                    <select
+                      data-import-user-answer="${row.question_number}"
+                      aria-label="Resposta reconhecida da questão ${row.question_number}"
+                    >
+                      <option value="">—</option>
+                      ${
+                        ["A","B","C","D","E"]
+                          .map(
+                            (option) => `
+                              <option
+                                value="${option}"
+                                ${row.user_answer === option ? "selected" : ""}
+                              >
+                                ${option}
+                              </option>
+                            `
+                          )
+                          .join("")
+                      }
+                    </select>
+                  `
+              }
 
               <span class="qs-answer-official">
                 ${row.official_answer || "—"}
@@ -5635,6 +6656,49 @@ function renderAnswerImportPreview() {
         );
       }
     );
+
+  table
+    .querySelectorAll(
+      "[data-import-result-status]"
+    )
+    .forEach(
+      (select) => {
+        select.addEventListener(
+          "change",
+          () => {
+            const number =
+              Number(
+                select.dataset
+                  .importResultStatus
+              );
+
+            const row =
+              qsState
+                .answerImportRows
+                .find(
+                  (candidate) =>
+                    candidate
+                      .question_number
+                    === number
+                );
+
+            if (!row) {
+              return;
+            }
+
+            row.result =
+              select.value
+              || null;
+
+            row.detected_status =
+              row.result;
+
+            renderAnswerImportPreview();
+          }
+        );
+      }
+    );
+
 
   if (applyButton) {
     applyButton.disabled =
@@ -5715,15 +6779,6 @@ async function readAnswerScreenshots() {
     return;
   }
 
-  if (!window.Tesseract) {
-    setAnswerImportStatus(
-      "O leitor de imagem ainda não carregou. Atualize a página e tente novamente.",
-      "error"
-    );
-
-    return;
-  }
-
   const button =
     document.getElementById(
       "qs-read-answer-screenshots"
@@ -5744,6 +6799,9 @@ async function readAnswerScreenshots() {
     const detected =
       new Map();
 
+    let colorTilesFound =
+      0;
+
     for (
       let index = 0;
       index < files.length;
@@ -5753,58 +6811,79 @@ async function readAnswerScreenshots() {
         files[index];
 
       setAnswerImportStatus(
-        `Lendo print ${index + 1} de ${files.length}...`
+        `Analisando cores — print ${index + 1} de ${files.length}...`
       );
 
-      const canvas =
-        await prepareScreenshotForOcr(
-          file
+      /*
+        MÉTODO PRINCIPAL:
+        detecta o fundo verde/vermelho dos botões.
+        Não depende de ler A/B/C/D/E.
+      */
+      const colorResult =
+        await recognizeColoredAnswerGrid(
+          file,
+          index,
+          files.length
         );
 
-      const result =
-        await window
-          .Tesseract
-          .recognize(
-            canvas,
-            "eng",
-            {
-              logger:
-                (message) => {
-                  if (
-                    message.status
-                    === "recognizing text"
-                  ) {
-                    const percent =
-                      Math.round(
-                        (
-                          message.progress
-                          || 0
-                        )
-                        * 100
-                      );
-
-                    setAnswerImportStatus(
-                      `Lendo print ${index + 1} de ${files.length}: ${percent}%`
-                    );
-                  }
-                }
-            }
-          );
-
-      const pairs =
-        parseAnswerPairsFromOcr(
-          result?.data?.text
-          || ""
-        );
+      colorTilesFound +=
+        colorResult.tileCount;
 
       for (
-        const pair
-        of pairs
+        const item
+        of colorResult.detections
       ) {
-        detected.set(
-          pair.question_number,
-          pair
+        if (
+          item.status_hint
+        ) {
+          detected.set(
+            item.question_number,
+            item
+          );
+        }
+      }
+
+      /*
+        FALLBACK:
+        se não encontrou uma grade colorida,
+        tenta o método textual antigo.
+      */
+      if (
+        colorResult.tileCount < 2
+        && window.Tesseract
+      ) {
+        setAnswerImportStatus(
+          `Cores não reconhecidas. Tentando leitura de texto — print ${index + 1} de ${files.length}...`
         );
+
+        const canvas =
+          await prepareScreenshotForOcr(
+            file
+          );
+
+        const result =
+          await window
+            .Tesseract
+            .recognize(
+              canvas,
+              "eng"
+            );
+
+        const pairs =
+          parseAnswerPairsFromOcr(
+            result?.data?.text
+            || ""
+          );
+
+        for (
+          const pair
+          of pairs
+        ) {
+          detected.set(
+            pair.question_number,
+            pair
+          );
+        }
       }
     }
 
@@ -5826,46 +6905,49 @@ async function readAnswerScreenshots() {
       qsState.answerImportRows
         .filter(
           (row) =>
-            Boolean(
-              row.user_answer
-              || row.result
-            )
+            row.result
+            === "correct"
+            || row.result
+            === "wrong"
+            || row.result
+            === "annulled"
         )
         .length;
 
-    const unresolved =
+    const unresolvedCount =
       qsState.answerImportRows
         .filter(
           (row) =>
-            (
-              row.user_answer
-              || row.result
-            )
-            && ![
-              "correct",
-              "wrong",
-              "annulled"
-            ].includes(
-              row.result
-            )
+            !row.result
         )
         .length;
 
-    setAnswerImportStatus(
-      `${recognizedCount} questão(ões) reconhecida(s).${
-        unresolved
-          ? ` ${unresolved} precisam de conferência.`
-          : " Confira a prévia antes de aplicar."
-      }`,
+    if (
       recognizedCount
-        ? "success"
-        : "error"
-    );
+    ) {
+      setAnswerImportStatus(
+        `${recognizedCount} resultado(s) reconhecido(s) pela cor.${
+          colorTilesFound
+            ? ` ${colorTilesFound} botão(ões) colorido(s) detectado(s).`
+            : ""
+        }${
+          unresolvedCount
+            ? ` ${unresolvedCount} questão(ões) precisam de conferência.`
+            : " Confira a prévia e aplique."
+        }`,
+        "success"
+      );
+    } else {
+      setAnswerImportStatus(
+        "Não consegui reconhecer o padrão de cores deste print. Tente recortar a imagem deixando a grade de questões visível.",
+        "error"
+      );
+    }
   } catch (error) {
     console.error(error);
 
     setAnswerImportStatus(
-      `Não foi possível ler o print: ${error.message || "erro desconhecido"}`,
+      `Não foi possível analisar o print: ${error.message || "erro desconhecido"}`,
       "error"
     );
   } finally {
@@ -5875,7 +6957,6 @@ async function readAnswerScreenshots() {
     }
   }
 }
-
 
 async function applyAnswerScreenshotResults() {
   if (!qsState.currentSet) {

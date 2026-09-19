@@ -1797,6 +1797,16 @@
       }
     }
 
+
+    .qs-color-read-note {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 7px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
   </style>
   <link rel="stylesheet" href="resibulando-brand-v5.css?v=5">
   <script defer src="resibulando-brand-v5.js?v=5"></script>
@@ -2378,9 +2388,10 @@
           </h2>
 
           <p>
-            Envie um ou mais prints com as respostas. O Resibulando lê as questões,
-            compara com o gabarito oficial extraído do PDF e mostra uma prévia antes
-            de salvar.
+            Envie um ou mais prints da tela de resultado. O Resibulando identifica
+            principalmente a COR ao redor do número: verde = acerto e vermelho = erro.
+            A questão azul (selecionada) é resolvida pelo resumo do print quando possível.
+            Você confere tudo antes de salvar.
           </p>
         </div>
 
@@ -2405,7 +2416,8 @@
       <label class="qs-answer-shot-drop">
         <span>Selecionar print(s)</span>
         <small>
-          PNG, JPG ou captura de tela. Você pode selecionar várias imagens.
+          PNG, JPG ou captura de tela. Deixe a grade com os números e as cores visível.
+          Verde = acerto; vermelho/rosa = erro.
         </small>
 
         <input
@@ -2545,6 +2557,6 @@
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="supabase.js"></script>
   <script src="app.js?v=resibulando5"></script>
-  <script src="questoes-simulados.js?v=11.17-answer-shot"></script>
+  <script src="questoes-simulados.js?v=11.18-color-grid"></script>
 </body>
 </html>
