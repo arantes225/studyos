@@ -1,739 +1,1334 @@
-(() => {
-  "use strict";
+const dashboardSb = window.supabaseClient;
 
-  const sb = window.supabaseClient;
-  const ROTATION_MS = 30000;
-  const STYLE_ID = "resibulando-dashboard-v18-style";
+const agendaState = {
+  view: "week",
+  anchorDate: startOfDay(new Date()),
+  items: [],
+  itemMap: new Map(),
+  movingKey: null,
+  loading: false
+};
 
-  const ccqState = {
-    items: [],
-    currentIndex: -1,
-    bag: [],
-    timerId: null,
-    transitionId: null
+function startOfDay(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function addDays(date, amount) {
+  const copy = startOfDay(date);
+  copy.setDate(copy.getDate() + amount);
+  return copy;
+}
+
+function addMonths(date, amount) {
+  const copy = startOfDay(date);
+  copy.setDate(1);
+  copy.setMonth(copy.getMonth() + amount);
+  return copy;
+}
+
+function startOfWeek(date) {
+  const copy = startOfDay(date);
+  const day = copy.getDay();
+  const delta = day === 0 ? -6 : 1 - day;
+  return addDays(copy, delta);
+}
+
+function endOfWeek(date) {
+  return addDays(startOfWeek(date), 6);
+}
+
+function startOfMonth(date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function endOfMonth(date) {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+}
+
+function toISODate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function parseISODate(value) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function sameDate(a, b) {
+  return toISODate(a) === toISODate(b);
+}
+
+function capitalize(text) {
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : text;
+}
+
+function formatShortDate(date) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short"
+  }).format(date).replace(".", "");
+}
+
+function formatMonthYear(date) {
+  return capitalize(
+    new Intl.DateTimeFormat("pt-BR", {
+      month: "long",
+      year: "numeric"
+    }).format(date)
+  );
+}
+
+function formatWeekRange(start, end) {
+  if (start.getMonth() === end.getMonth()) {
+    const monthYear = new Intl.DateTimeFormat("pt-BR", {
+      month: "long",
+      year: "numeric"
+    }).format(end);
+
+    return `${start.getDate()}–${end.getDate()} de ${monthYear}`;
+  }
+
+  return `${formatShortDate(start)} – ${formatShortDate(end)} de ${end.getFullYear()}`;
+}
+
+function getVisibleRange() {
+  if (agendaState.view === "week") {
+    const start = startOfWeek(agendaState.anchorDate);
+    return {
+      displayStart: start,
+      displayEnd: endOfWeek(agendaState.anchorDate),
+      queryStart: start,
+      queryEnd: endOfWeek(agendaState.anchorDate)
+    };
+  }
+
+  const monthStart = startOfMonth(agendaState.anchorDate);
+  const monthEnd = endOfMonth(agendaState.anchorDate);
+  const gridStart = startOfWeek(monthStart);
+  const finalWeekStart = startOfWeek(monthEnd);
+  const gridEnd = addDays(finalWeekStart, 6);
+
+  return {
+    displayStart: monthStart,
+    displayEnd: monthEnd,
+    queryStart: gridStart,
+    queryEnd: gridEnd
+  };
+}
+
+function kindMeta(kind) {
+  const map = {
+    lesson: { label: "Aula", className: "lesson" },
+    subject_review: { label: "Revisão", className: "subject-review" },
+    flashcards_batch: { label: "Flashcards", className: "flashcards" },
+    errors_batch: { label: "Caderno de erros", className: "errors" },
+    simulation: { label: "Simulado", className: "exam" },
+    smart_simulation: { label: "Simulado inteligente", className: "exam" },
+    full_exam: { label: "Prova na íntegra", className: "exam" },
+    smart_review: { label: "Revisão inteligente", className: "subject-review" },
+    external_review: { label: "Revisão teórica", className: "subject-review" },
+    final_review: { label: "Reta final", className: "lesson" },
+    other: { label: "Evento", className: "default" },
+    exam: { label: "Prova", className: "exam" },
+    registration_deadline: { label: "Inscrição", className: "registration" }
   };
 
-  function injectDashboardStyles() {
-    if (document.getElementById(STYLE_ID)) return;
+  return map[kind] || { label: "Atividade", className: "default" };
+}
 
-    const style = document.createElement("style");
-    style.id = STYLE_ID;
+function activityCanStart(item) {
+  return [
+    "lesson",
+    "subject_review",
+    "flashcards_batch",
+    "errors_batch"
+  ].includes(item.kind);
+}
 
-    style.textContent = `
-      /* =====================================================
-         RESIBULANDO V18 — DASHBOARD
-         ===================================================== */
+function activityCanMove(item) {
+  return item.movable === true;
+}
 
-      /* -----------------------------------------------------
-         CCQ PASSIVO — ocupa o antigo card "Maior dificuldade"
-         ----------------------------------------------------- */
+function buildAmbientacaoUrl(item) {
+  const params = new URLSearchParams({
+    kind: item.kind,
+    date: item.activity_date,
+    title: item.title || "Atividade"
+  });
 
-      .metric-card.dashboard-passive-ccq-card {
-        position: relative;
-        overflow: hidden;
-        display: grid;
-        align-content: start;
-        gap: 9px;
-        min-height: 150px;
-      }
+  if (item.item_id) params.set("item_id", item.item_id);
+  if (item.area) params.set("area", item.area);
+  if (item.materia) params.set("materia", item.materia);
+  if (item.subtitle) params.set("subtitle", item.subtitle);
 
-      .dashboard-ccq-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-      }
+  return `ambientacao.html?${params.toString()}`;
+}
 
-      .dashboard-ccq-head .metric-label {
-        margin: 0;
-      }
+function escapeDashboardHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
-      .dashboard-ccq-auto {
-        color: var(--muted);
-        font-size: 8px;
-        font-weight: 800;
-        white-space: nowrap;
-      }
+function renderActivityCard(item) {
+  const meta = kindMeta(item.kind);
+  const canMove = activityCanMove(item);
+  const canStart = activityCanStart(item);
 
-      .dashboard-passive-ccq-stage {
-        min-height: 74px;
-        display: grid;
-        align-content: center;
-        gap: 7px;
-        transform: translateX(0);
-        opacity: 1;
-        transition:
-          transform 300ms ease,
-          opacity 300ms ease;
-      }
+  const areaText = item.area
+    ? `<span>${escapeDashboardHtml(item.area)}</span>`
+    : "";
 
-      .dashboard-passive-ccq-stage.is-leaving {
-        transform: translateX(-24px);
-        opacity: 0;
-      }
+  const matterText = item.materia
+    ? `<span>${escapeDashboardHtml(item.materia)}</span>`
+    : "";
 
-      .dashboard-passive-ccq-stage.is-entering {
-        transform: translateX(24px);
-        opacity: 0;
-      }
+  const actions = [];
 
-      .dashboard-passive-ccq-text {
-        display: -webkit-box;
-        overflow: hidden;
-        color: var(--text);
-        font-size: 13px;
-        font-weight: 820;
-        line-height: 1.35;
-        letter-spacing: -.012em;
-        -webkit-line-clamp: 4;
-        -webkit-box-orient: vertical;
-      }
+  if (canStart) {
+    actions.push(
+      `<a class="agenda-card-action primary-action" href="${escapeDashboardHtml(buildAmbientacaoUrl(item))}">Iniciar</a>`
+    );
+  } else if (item.kind === "exam" || item.kind === "registration_deadline") {
+    const examUrl =
+      item.item_id
+        ? `editais.html?exam_id=${encodeURIComponent(item.item_id)}`
+        : "editais.html";
 
-      .dashboard-passive-ccq-meta {
-        overflow: hidden;
-        color: var(--muted);
-        font-size: 8px;
-        font-weight: 700;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .dashboard-passive-ccq-empty {
-        display: grid;
-        place-items: center;
-        min-height: 74px;
-        color: var(--muted);
-        font-size: 10px;
-        text-align: center;
-      }
-
-      .dashboard-passive-ccq-progress {
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 3px;
-        overflow: hidden;
-        background: var(--border);
-      }
-
-      .dashboard-passive-ccq-progress > span {
-        display: block;
-        width: 0%;
-        height: 100%;
-        background: var(--accent);
-      }
-
-      /* -----------------------------------------------------
-         OFENSIVA
-         ----------------------------------------------------- */
-
-      .metric-card.streak-card-v18 {
-        position: relative;
-        overflow: hidden;
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        grid-template-areas:
-          "label flame"
-          "value flame"
-          "helper flame";
-        align-items: center;
-        column-gap: 12px;
-      }
-
-      .streak-card-v18 > .metric-label {
-        grid-area: label;
-      }
-
-      .streak-card-v18 > .metric-value {
-        grid-area: value;
-      }
-
-      .streak-card-v18 > .metric-helper {
-        grid-area: helper;
-      }
-
-      .streak-flame-wrap {
-        grid-area: flame;
-        position: relative;
-        width: 78px;
-        height: 90px;
-        display: grid;
-        place-items: center;
-        justify-self: end;
-      }
-
-      .streak-flame-aura {
-        position: absolute;
-        width: calc(var(--flame-size, 38px) * 1.3);
-        height: calc(var(--flame-size, 38px) * 1.3);
-        border-radius: 50%;
-        background: var(--flame-main, #f59e0b);
-        opacity: .10;
-        filter: blur(13px);
-        transition:
-          width .35s ease,
-          height .35s ease,
-          background .35s ease,
-          opacity .35s ease;
-      }
-
-      .streak-flame-svg {
-        position: relative;
-        z-index: 1;
-        width: var(--flame-size, 38px);
-        height: var(--flame-size, 38px);
-        overflow: visible;
-        color: var(--flame-main, #f59e0b);
-        filter:
-          drop-shadow(
-            0 6px
-            var(--flame-glow, rgba(245, 158, 11, .22))
-          );
-        transition:
-          width .35s ease,
-          height .35s ease,
-          color .35s ease,
-          filter .35s ease;
-        transform-origin: 50% 85%;
-        animation: streakFlamePulse 2.5s ease-in-out infinite;
-      }
-
-      .streak-flame-core {
-        fill: var(--flame-core, #fde68a);
-        transition: fill .35s ease;
-      }
-
-      .streak-stage-label {
-        grid-column: 1 / -1;
-        margin-top: 7px;
-        color: var(--flame-main, var(--muted));
-        font-size: 8px;
-        font-weight: 850;
-        text-transform: uppercase;
-        letter-spacing: .055em;
-        transition: color .35s ease;
-      }
-
-      .streak-card-v18[data-streak-tier="0"] {
-        --flame-size: 32px;
-        --flame-main: #94a3b8;
-        --flame-core: #cbd5e1;
-        --flame-glow: rgba(148, 163, 184, .15);
-      }
-
-      .streak-card-v18[data-streak-tier="1"] {
-        --flame-size: 38px;
-        --flame-main: #f5a524;
-        --flame-core: #fde68a;
-        --flame-glow: rgba(245, 165, 36, .24);
-      }
-
-      .streak-card-v18[data-streak-tier="2"] {
-        --flame-size: 45px;
-        --flame-main: #ff7a1a;
-        --flame-core: #ffd166;
-        --flame-glow: rgba(255, 122, 26, .30);
-      }
-
-      .streak-card-v18[data-streak-tier="3"] {
-        --flame-size: 52px;
-        --flame-main: #ff4d2e;
-        --flame-core: #ffb347;
-        --flame-glow: rgba(255, 77, 46, .34);
-      }
-
-      .streak-card-v18[data-streak-tier="4"] {
-        --flame-size: 58px;
-        --flame-main: #e43dff;
-        --flame-core: #ff9bf0;
-        --flame-glow: rgba(228, 61, 255, .32);
-      }
-
-      .streak-card-v18[data-streak-tier="5"] {
-        --flame-size: 64px;
-        --flame-main: #7c4dff;
-        --flame-core: #c7b8ff;
-        --flame-glow: rgba(124, 77, 255, .34);
-      }
-
-      .streak-card-v18[data-streak-tier="6"] {
-        --flame-size: 70px;
-        --flame-main: #169bff;
-        --flame-core: #8fddff;
-        --flame-glow: rgba(22, 155, 255, .38);
-      }
-
-      @keyframes streakFlamePulse {
-        0%,
-        100% {
-          transform: translateY(1px) scale(.97) rotate(-1deg);
-        }
-
-        50% {
-          transform: translateY(-2px) scale(1.035) rotate(1deg);
-        }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        .streak-flame-svg {
-          animation: none;
-        }
-
-        .dashboard-passive-ccq-stage {
-          transition: none;
-        }
-      }
-
-      @media (max-width: 680px) {
-        .streak-flame-wrap {
-          width: 62px;
-        }
-
-        .dashboard-passive-ccq-text {
-          font-size: 12px;
-        }
-      }
-    `;
-
-    document.head.appendChild(style);
+    actions.push(
+      `<a class="agenda-card-action" href="${escapeDashboardHtml(examUrl)}">Abrir</a>`
+    );
   }
 
-  function installPassiveCcqCard() {
-    const oldValue = document.getElementById("metric-difficulty");
-    const card = oldValue?.closest(".metric-card");
+  if (canMove) {
+    actions.push(
+      `<button class="agenda-card-action move-action" type="button" data-move-key="${escapeDashboardHtml(item.agenda_key)}">Mover</button>`
+    );
+  }
 
-    if (!card) return null;
-
-    card.classList.add("dashboard-passive-ccq-card");
-
-    card.innerHTML = `
-      <div class="dashboard-ccq-head">
-        <span class="metric-label">
-          Revisão passiva
-        </span>
-
-        <span class="dashboard-ccq-auto">
-          CCQ · 30s
-        </span>
+  return `
+    <article
+      class="agenda-card ${meta.className}"
+      ${canMove ? 'draggable="true"' : ""}
+      data-agenda-key="${escapeDashboardHtml(item.agenda_key)}"
+    >
+      <div class="agenda-card-top">
+        <span class="agenda-kind">${escapeDashboardHtml(meta.label)}</span>
+        ${item.item_count > 1 ? `<span class="agenda-count">${item.item_count}</span>` : ""}
       </div>
 
-      <div
-        id="dashboard-passive-ccq-empty"
-        class="dashboard-passive-ccq-empty"
-      >
-        Carregando CCQs...
+      <strong class="agenda-title">${escapeDashboardHtml(item.title || meta.label)}</strong>
+
+      <div class="agenda-meta">
+        ${areaText}
+        ${matterText}
       </div>
 
-      <div
-        id="dashboard-passive-ccq-stage"
-        class="dashboard-passive-ccq-stage"
-        hidden
-        aria-live="polite"
-      >
-        <div
-          id="dashboard-passive-ccq-text"
-          class="dashboard-passive-ccq-text"
-        ></div>
+      <p class="agenda-subtitle">${escapeDashboardHtml(item.subtitle || "")}</p>
 
-        <div
-          id="dashboard-passive-ccq-meta"
-          class="dashboard-passive-ccq-meta"
-        ></div>
+      <div class="agenda-card-actions">
+        ${actions.join("")}
       </div>
+    </article>
+  `;
+}
 
-      <div class="dashboard-passive-ccq-progress">
-        <span id="dashboard-passive-ccq-progress"></span>
-      </div>
-    `;
+function itemsForDate(date) {
+  const iso = toISODate(date);
+  return agendaState.items.filter((item) => item.activity_date === iso);
+}
 
-    return card;
-  }
+function renderWeek() {
+  const { displayStart } = getVisibleRange();
+  const today = startOfDay(new Date());
 
-  function shuffleIndexes(count) {
-    const indexes = Array.from(
-      { length: count },
-      (_, index) => index
-    );
+  const days = Array.from({ length: 7 }, (_, index) => addDays(displayStart, index));
 
-    for (let i = indexes.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
+  return `
+    <div class="week-calendar">
+      ${days.map((date) => {
+        const dayItems = itemsForDate(date);
+        const isToday = sameDate(date, today);
 
-      [indexes[i], indexes[j]] = [indexes[j], indexes[i]];
-    }
+        const weekday = capitalize(
+          new Intl.DateTimeFormat("pt-BR", { weekday: "short" })
+            .format(date)
+            .replace(".", "")
+        );
 
-    return indexes;
-  }
-
-  function refillBag() {
-    ccqState.bag = shuffleIndexes(ccqState.items.length);
-
-    if (
-      ccqState.items.length > 1
-      && ccqState.currentIndex >= 0
-      && ccqState.bag[ccqState.bag.length - 1] === ccqState.currentIndex
-    ) {
-      [ccqState.bag[0], ccqState.bag[ccqState.bag.length - 1]] = [
-        ccqState.bag[ccqState.bag.length - 1],
-        ccqState.bag[0]
-      ];
-    }
-  }
-
-  function nextCcqIndex() {
-    if (!ccqState.items.length) return -1;
-    if (ccqState.items.length === 1) return 0;
-
-    if (!ccqState.bag.length) {
-      refillBag();
-    }
-
-    let index = ccqState.bag.pop();
-
-    if (
-      index === ccqState.currentIndex
-      && ccqState.bag.length
-    ) {
-      const alternative = ccqState.bag.pop();
-      ccqState.bag.push(index);
-      index = alternative;
-    }
-
-    return index;
-  }
-
-  function metaText(item) {
-    return [
-      item.area,
-      item.materia,
-      item.theme
-    ]
-      .filter(Boolean)
-      .join(" · ");
-  }
-
-  function resetProgress() {
-    const bar = document.getElementById(
-      "dashboard-passive-ccq-progress"
-    );
-
-    if (!bar) return;
-
-    bar.style.transition = "none";
-    bar.style.width = "0%";
-
-    void bar.offsetWidth;
-
-    bar.style.transition =
-      `width ${ROTATION_MS}ms linear`;
-
-    requestAnimationFrame(() => {
-      bar.style.width = "100%";
-    });
-  }
-
-  function writeCcq(item) {
-    const text = document.getElementById(
-      "dashboard-passive-ccq-text"
-    );
-
-    const meta = document.getElementById(
-      "dashboard-passive-ccq-meta"
-    );
-
-    if (text) {
-      text.textContent = item?.ccq || "";
-    }
-
-    if (meta) {
-      const value = metaText(item);
-      meta.textContent = value;
-      meta.hidden = !value;
-    }
-  }
-
-  function showNextCcq(animate = true) {
-    if (!ccqState.items.length) return;
-
-    const stage = document.getElementById(
-      "dashboard-passive-ccq-stage"
-    );
-
-    const nextIndex = nextCcqIndex();
-
-    if (nextIndex < 0) return;
-
-    const item = ccqState.items[nextIndex];
-
-    clearTimeout(ccqState.transitionId);
-
-    if (!animate || !stage) {
-      ccqState.currentIndex = nextIndex;
-      writeCcq(item);
-      resetProgress();
-      return;
-    }
-
-    stage.classList.add("is-leaving");
-
-    ccqState.transitionId = window.setTimeout(() => {
-      ccqState.currentIndex = nextIndex;
-
-      writeCcq(item);
-
-      stage.classList.remove("is-leaving");
-      stage.classList.add("is-entering");
-
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          stage.classList.remove("is-entering");
-        });
-      });
-
-      resetProgress();
-    }, 300);
-  }
-
-  function startRotation() {
-    clearInterval(ccqState.timerId);
-
-    if (ccqState.items.length < 2) return;
-
-    ccqState.timerId = window.setInterval(() => {
-      if (!document.hidden) {
-        showNextCcq(true);
-      }
-    }, ROTATION_MS);
-  }
-
-  async function loadPassiveCcqs() {
-    const empty = document.getElementById(
-      "dashboard-passive-ccq-empty"
-    );
-
-    const stage = document.getElementById(
-      "dashboard-passive-ccq-stage"
-    );
-
-    if (!empty || !stage || !sb) return;
-
-    const { data, error } = await sb
-      .from("error_notebook")
-      .select(
-        "id,area,materia,theme,ccq,due_date,review_count,created_at"
-      )
-      .eq("active", true)
-      .not("ccq", "is", null)
-      .limit(100);
-
-    if (error) {
-      console.warn(
-        "Não foi possível carregar os CCQs no Dashboard:",
-        error.message
-      );
-
-      empty.hidden = false;
-      empty.textContent = "Sem CCQs disponíveis.";
-      stage.hidden = true;
-      return;
-    }
-
-    ccqState.items = (data || []).filter((item) =>
-      String(item.ccq || "").trim()
-    );
-
-    ccqState.currentIndex = -1;
-    ccqState.bag = [];
-
-    if (!ccqState.items.length) {
-      empty.hidden = false;
-      empty.textContent = "Nenhum CCQ ativo no Caderno de Erros.";
-      stage.hidden = true;
-      return;
-    }
-
-    empty.hidden = true;
-    stage.hidden = false;
-
-    showNextCcq(false);
-    startRotation();
-  }
-
-  function streakTier(days) {
-    if (days <= 0) {
-      return {
-        tier: "0",
-        label: "Comece hoje"
-      };
-    }
-
-    if (days < 7) {
-      return {
-        tier: "1",
-        label: "Aquecendo"
-      };
-    }
-
-    if (days < 30) {
-      return {
-        tier: "2",
-        label: "1 semana+"
-      };
-    }
-
-    if (days < 90) {
-      return {
-        tier: "3",
-        label: "1 mês+"
-      };
-    }
-
-    if (days < 180) {
-      return {
-        tier: "4",
-        label: "3 meses+"
-      };
-    }
-
-    if (days < 365) {
-      return {
-        tier: "5",
-        label: "6 meses+"
-      };
-    }
-
-    return {
-      tier: "6",
-      label: "1 ano+"
-    };
-  }
-
-  function installStreakCard() {
-    const value = document.querySelector(
-      ".metric-card [data-streak-value]"
-    );
-
-    const card = value?.closest(".metric-card");
-
-    if (!value || !card) return;
-
-    card.classList.add("streak-card-v18");
-
-    if (!card.querySelector(".streak-flame-wrap")) {
-      card.insertAdjacentHTML(
-        "beforeend",
-        `
-          <div
-            class="streak-flame-wrap"
-            aria-hidden="true"
+        return `
+          <section
+            class="calendar-day ${isToday ? "today" : ""}"
+            data-drop-date="${toISODate(date)}"
           >
-            <span class="streak-flame-aura"></span>
+            <header class="calendar-day-header">
+              <span>${escapeDashboardHtml(weekday)}</span>
+              <strong>${date.getDate()}</strong>
+            </header>
 
-            <svg
-              class="streak-flame-svg"
-              viewBox="0 0 64 80"
-              role="img"
-              aria-label="Chama da ofensiva"
+            <div class="calendar-day-body">
+              ${dayItems.length
+                ? dayItems.map(renderActivityCard).join("")
+                : '<div class="empty-day">Sem atividades</div>'}
+            </div>
+          </section>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function renderMonth() {
+  const { queryStart, queryEnd, displayStart } = getVisibleRange();
+  const today = startOfDay(new Date());
+
+  const days = [];
+  let cursor = queryStart;
+
+  while (cursor <= queryEnd) {
+    days.push(startOfDay(cursor));
+    cursor = addDays(cursor, 1);
+  }
+
+  const weekdayLabels = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+
+  return `
+    <div class="month-calendar">
+      <div class="month-weekdays">
+        ${weekdayLabels.map((label) => `<span>${label}</span>`).join("")}
+      </div>
+
+      <div class="month-grid">
+        ${days.map((date) => {
+          const dayItems = itemsForDate(date);
+          const outside = date.getMonth() !== displayStart.getMonth();
+          const isToday = sameDate(date, today);
+
+          return `
+            <section
+              class="month-day ${outside ? "outside" : ""} ${isToday ? "today" : ""}"
+              data-drop-date="${toISODate(date)}"
             >
-              <path
-                fill="currentColor"
-                d="
-                  M34 3
-                  C35 15 26 19 26 29
-                  C26 35 30 38 33 40
-                  C27 40 22 35 21 29
-                  C13 37 8 46 8 56
-                  C8 69 18 77 32 77
-                  C46 77 56 68 56 54
-                  C56 41 48 30 40 22
-                  C39 30 36 34 32 36
-                  C35 27 43 18 34 3
-                  Z
-                "
-              />
+              <header>
+                <span>${date.getDate()}</span>
+              </header>
 
-              <path
-                class="streak-flame-core"
-                d="
-                  M33 40
-                  C27 47 23 52 23 59
-                  C23 67 27 71 33 71
-                  C40 71 44 66 44 59
-                  C44 52 39 47 35 43
-                  C35 48 33 51 30 53
-                  C31 48 34 45 33 40
-                  Z
-                "
-              />
-            </svg>
-          </div>
+              <div class="month-day-items">
+                ${dayItems.length
+                  ? dayItems.map(renderActivityCard).join("")
+                  : ""}
+              </div>
+            </section>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+}
 
-          <div
-            class="streak-stage-label"
-            data-streak-stage-label
-          ></div>
-        `
-      );
+function renderCalendar() {
+  const calendar = document.getElementById("calendar");
+  const label = document.getElementById("calendar-range-label");
+
+  if (!calendar || !label) return;
+
+  const range = getVisibleRange();
+
+  if (agendaState.view === "week") {
+    label.textContent = formatWeekRange(range.displayStart, range.displayEnd);
+    calendar.innerHTML = renderWeek();
+  } else {
+    label.textContent = formatMonthYear(range.displayStart);
+    calendar.innerHTML = renderMonth();
+  }
+
+  wireCalendarInteractions();
+}
+
+function setCalendarStatus(text, type = "") {
+  const element = document.getElementById("calendar-status");
+  if (!element) return;
+
+  element.textContent = text;
+  element.className = `calendar-status ${type}`.trim();
+}
+
+function wireCalendarInteractions() {
+  document.querySelectorAll(".agenda-card[draggable='true']").forEach((card) => {
+    card.addEventListener("dragstart", (event) => {
+      const key = card.dataset.agendaKey;
+      event.dataTransfer.setData("text/plain", key);
+      event.dataTransfer.effectAllowed = "move";
+      card.classList.add("dragging");
+    });
+
+    card.addEventListener("dragend", () => {
+      card.classList.remove("dragging");
+      document.querySelectorAll("[data-drop-date].drop-target").forEach((el) => {
+        el.classList.remove("drop-target");
+      });
+    });
+  });
+
+  document.querySelectorAll("[data-drop-date]").forEach((day) => {
+    day.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      day.classList.add("drop-target");
+    });
+
+    day.addEventListener("dragleave", () => {
+      day.classList.remove("drop-target");
+    });
+
+    day.addEventListener("drop", async (event) => {
+      event.preventDefault();
+      day.classList.remove("drop-target");
+
+      const key = event.dataTransfer.getData("text/plain");
+      const item = agendaState.itemMap.get(key);
+      const newDate = day.dataset.dropDate;
+
+      if (!item || !newDate || item.activity_date === newDate) return;
+
+      await moveAgendaItem(item, newDate);
+    });
+  });
+
+  document.querySelectorAll("[data-move-key]").forEach((button) => {
+    button.addEventListener("click", () => {
+      openMoveDialog(button.dataset.moveKey);
+    });
+  });
+}
+
+async function loadAgenda() {
+  if (agendaState.loading) return;
+
+  agendaState.loading = true;
+  setCalendarStatus("Carregando agenda...");
+
+  const { queryStart, queryEnd } = getVisibleRange();
+
+  const { data, error } = await dashboardSb
+    .from("agenda_feed")
+    .select("*")
+    .gte("activity_date", toISODate(queryStart))
+    .lte("activity_date", toISODate(queryEnd))
+    .order("activity_date", { ascending: true });
+
+  agendaState.loading = false;
+
+  if (error) {
+    console.error(error);
+    agendaState.items = [];
+    agendaState.itemMap = new Map();
+    renderCalendar();
+    setCalendarStatus("Não foi possível carregar a agenda.", "error");
+    return;
+  }
+
+  agendaState.items = data || [];
+  agendaState.itemMap = new Map(
+    agendaState.items.map((item) => [item.agenda_key, item])
+  );
+
+  renderCalendar();
+
+  const count = agendaState.items.length;
+  setCalendarStatus(
+    count
+      ? `${count} atividade${count === 1 ? "" : "s"} neste período.`
+      : "Nenhuma atividade neste período."
+  );
+}
+
+async function moveAgendaItem(item, newDate) {
+  if (!activityCanMove(item)) return;
+
+  setCalendarStatus("Remarcando atividade...");
+
+  const { error } = await dashboardSb.rpc("move_agenda_item", {
+    p_kind: item.kind,
+    p_item_id: item.item_id || null,
+    p_from_date: item.activity_date,
+    p_to_date: newDate,
+    p_area: item.area || null
+  });
+
+  if (error) {
+    console.error(error);
+    setCalendarStatus(`Erro ao mover: ${error.message}`, "error");
+    return;
+  }
+
+  setCalendarStatus("Atividade remarcada.", "success");
+  await Promise.all([loadAgenda(), loadDashboardMetrics()]);
+}
+
+function openMoveDialog(key) {
+  const item = agendaState.itemMap.get(key);
+  const dialog = document.getElementById("move-dialog");
+
+  if (!item || !dialog) return;
+
+  agendaState.movingKey = key;
+
+  document.getElementById("move-title").textContent =
+    item.title || kindMeta(item.kind).label;
+
+  document.getElementById("move-date").value = item.activity_date;
+
+  dialog.showModal();
+}
+
+function closeMoveDialog() {
+  const dialog = document.getElementById("move-dialog");
+
+  agendaState.movingKey = null;
+
+  if (dialog?.open) {
+    dialog.close();
+  }
+}
+
+async function handleMoveForm(event) {
+  event.preventDefault();
+
+  const item = agendaState.itemMap.get(agendaState.movingKey);
+  const date = document.getElementById("move-date").value;
+
+  if (!item || !date) return;
+
+  closeMoveDialog();
+
+  if (date === item.activity_date) return;
+
+  await moveAgendaItem(item, date);
+}
+
+function formatHours(totalSeconds) {
+  const seconds = Number(totalSeconds || 0);
+
+  if (seconds <= 0) return "0h";
+
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.round((seconds % 3600) / 60);
+
+  if (hours === 0) return `${minutes}min`;
+  if (minutes === 0) return `${hours}h`;
+
+  return `${hours}h ${minutes}min`;
+}
+
+async function loadStudyHours() {
+  const start = startOfWeek(new Date());
+  const today = startOfDay(new Date());
+
+  const { data, error } = await dashboardSb
+    .from("study_hours_daily")
+    .select("total_seconds")
+    .gte("study_date", toISODate(start))
+    .lte("study_date", toISODate(today));
+
+  if (error) {
+    console.warn(error);
+    return;
+  }
+
+  const seconds = (data || []).reduce(
+    (sum, row) => sum + Number(row.total_seconds || 0),
+    0
+  );
+
+  document.getElementById("metric-hours").textContent = formatHours(seconds);
+}
+
+async function loadRetention() {
+  const value =
+    document.getElementById(
+      "metric-retention"
+    );
+
+  const helper =
+    document.getElementById(
+      "metric-retention-helper"
+    );
+
+
+  const {
+    data,
+    error
+  } =
+    await dashboardSb
+      .from(
+        "flashcard_retention_overall"
+      )
+      .select(
+        "reviewed_cards,retention_percent"
+      )
+      .maybeSingle();
+
+
+  if (error) {
+    console.warn(
+      error
+    );
+
+    if (value) {
+      value.textContent =
+        "—";
     }
 
-    const stageLabel = card.querySelector(
-      "[data-streak-stage-label]"
+    if (helper) {
+      helper.textContent =
+        "Sem dados suficientes";
+    }
+
+    return;
+  }
+
+
+  if (
+    !data
+    || data.retention_percent
+      === null
+  ) {
+    if (value) {
+      value.textContent =
+        "—";
+    }
+
+    if (helper) {
+      helper.textContent =
+        "Revise flashcards para estimar";
+    }
+
+    return;
+  }
+
+
+  const retention =
+    Number(
+      data.retention_percent
+      || 0
     );
 
-    const update = () => {
-      const days = Number(
-        String(value.textContent || "0")
-          .replace(/[^\d]/g, "")
-      ) || 0;
+  const reviewed =
+    Number(
+      data.reviewed_cards
+      || 0
+    );
 
-      const info = streakTier(days);
 
-      card.dataset.streakTier = info.tier;
+  if (value) {
+    value.textContent =
+      `${retention.toFixed(0)}%`;
+  }
 
-      if (stageLabel) {
-        stageLabel.textContent = info.label;
+
+  if (helper) {
+    helper.textContent =
+      `${reviewed} card${reviewed === 1 ? "" : "s"} com memória estimada`;
+  }
+}
+
+
+async function loadLessonMetrics() {
+  const today =
+    toISODate(
+      new Date()
+    );
+
+
+  const [
+    totalResult,
+    completedResult,
+    overdueResult
+  ] =
+    await Promise.all([
+
+      dashboardSb
+        .from(
+          "study_topics"
+        )
+        .select(
+          "id",
+          {
+            count:
+              "exact",
+
+            head:
+              true
+          }
+        ),
+
+      dashboardSb
+        .from(
+          "study_topics"
+        )
+        .select(
+          "id",
+          {
+            count:
+              "exact",
+
+            head:
+              true
+          }
+        )
+        .eq(
+          "status",
+          "completed"
+        ),
+
+      dashboardSb
+        .from(
+          "study_topics"
+        )
+        .select(
+          "id",
+          {
+            count:
+              "exact",
+
+            head:
+              true
+          }
+        )
+        .eq(
+          "status",
+          "scheduled"
+        )
+        .is(
+          "completed_at",
+          null
+        )
+        .lt(
+          "scheduled_date",
+          today
+        )
+    ]);
+
+
+  [
+    totalResult,
+    completedResult,
+    overdueResult
+  ].forEach(
+    (result) => {
+      if (result.error) {
+        console.warn(
+          result.error
+        );
       }
+    }
+  );
 
-      card.setAttribute(
-        "aria-label",
-        `Ofensiva atual: ${days} dia${days === 1 ? "" : "s"}`
+
+  const total =
+    totalResult.count
+    ?? 0;
+
+  const completed =
+    completedResult.count
+    ?? 0;
+
+  const overdue =
+    overdueResult.count
+    ?? 0;
+
+  const progress =
+    total > 0
+      ? (
+          completed
+          / total
+        )
+        * 100
+      : 0;
+
+
+  const overdueValue =
+    document.getElementById(
+      "metric-overdue-lessons"
+    );
+
+  const overdueHelper =
+    document.getElementById(
+      "metric-overdue-lessons-helper"
+    );
+
+
+  if (overdueValue) {
+    overdueValue.textContent =
+      overdue;
+  }
+
+
+  if (overdueHelper) {
+    overdueHelper.textContent =
+      overdue === 0
+        ? "Cronograma em dia"
+        : `${overdue} aula${overdue === 1 ? "" : "s"} com data anterior a hoje`;
+  }
+
+
+  const progressValue =
+    document.getElementById(
+      "metric-lessons-progress"
+    );
+
+  const progressCopy =
+    document.getElementById(
+      "metric-lessons-progress-copy"
+    );
+
+  const progressHelper =
+    document.getElementById(
+      "metric-lessons-progress-helper"
+    );
+
+  const progressRing =
+    document.getElementById(
+      "lesson-progress-ring"
+    );
+
+
+  if (progressValue) {
+    progressValue.textContent =
+      `${progress.toFixed(0)}%`;
+  }
+
+
+  if (progressCopy) {
+    progressCopy.textContent =
+      `${completed}/${total}`;
+  }
+
+
+  if (progressHelper) {
+    progressHelper.textContent =
+      total
+        ? "Aulas feitas / aulas totais"
+        : "Nenhuma aula cadastrada";
+  }
+
+
+  if (progressRing) {
+    progressRing.style
+      .setProperty(
+        "--metric-ring-value",
+        Math.max(
+          0,
+          Math.min(
+            100,
+            progress
+          )
+        )
       );
-    };
+  }
+}
 
-    const observer = new MutationObserver(update);
 
-    observer.observe(
-      value,
-      {
-        childList: true,
-        characterData: true,
-        subtree: true
-      }
+async function loadErrorMetrics() {
+  const value =
+    document.getElementById(
+      "metric-errors"
     );
 
-    update();
-  }
-
-  function bootVisuals() {
-    injectDashboardStyles();
-    installPassiveCcqCard();
-    installStreakCard();
-  }
-
-  async function bootData() {
-    await loadPassiveCcqs();
-  }
-
-  // O HTML já foi carregado porque este script entra depois de dashboard.js.
-  bootVisuals();
-
-  if (window.docmapUser) {
-    bootData();
-  } else {
-    window.addEventListener(
-      "docmap:ready",
-      bootData,
-      { once: true }
+  const helper =
+    document.getElementById(
+      "metric-errors-helper"
     );
+
+  const retentionValue =
+    document.getElementById(
+      "metric-error-retention"
+    );
+
+  const ring =
+    document.getElementById(
+      "error-retention-ring"
+    );
+
+
+  const {
+    data,
+    error
+  } =
+    await dashboardSb
+      .from(
+        "error_notebook_metrics"
+      )
+      .select(
+        "registered_errors,reviewed_errors,overdue_errors,retention_percent"
+      )
+      .maybeSingle();
+
+
+  if (error) {
+    console.warn(
+      error
+    );
+
+    if (value) {
+      value.textContent =
+        "—";
+    }
+
+    if (helper) {
+      helper.textContent =
+        "Sem dados do Caderno";
+    }
+
+    if (retentionValue) {
+      retentionValue.textContent =
+        "—";
+    }
+
+    return;
   }
-})();
+
+
+  const overdue =
+    Number(
+      data?.overdue_errors
+      || 0
+    );
+
+  const total =
+    Number(
+      data?.registered_errors
+      || 0
+    );
+
+  const retention =
+    data?.retention_percent
+      === null
+      || data?.retention_percent
+        === undefined
+        ? null
+        : Number(
+            data.retention_percent
+          );
+
+
+  if (value) {
+    value.textContent =
+      overdue === 1
+        ? "1 atrasado"
+        : `${overdue} atrasados`;
+  }
+
+
+  if (helper) {
+    helper.textContent =
+      `${total} CCQ${total === 1 ? "" : "s"} ativo${total === 1 ? "" : "s"}`;
+  }
+
+
+  if (retentionValue) {
+    retentionValue.textContent =
+      retention === null
+        ? "—"
+        : `${retention.toFixed(0)}%`;
+  }
+
+
+  if (ring) {
+    ring.style
+      .setProperty(
+        "--metric-ring-value",
+        retention === null
+          ? 0
+          : Math.max(
+              0,
+              Math.min(
+                100,
+                retention
+              )
+            )
+      );
+  }
+}
+
+async function loadFlashcardMetrics() {
+  const today = toISODate(new Date());
+
+  const [pendingResult, dailyResult] = await Promise.all([
+    dashboardSb
+      .from("flashcards")
+      .select("id", { count: "exact", head: true })
+      .eq("active", true)
+      .lte("due_date", today),
+
+    dashboardSb
+      .from("flashcard_metrics_daily")
+      .select("total_reviews,correct,incorrect")
+      .eq("review_date", today)
+      .maybeSingle()
+  ]);
+
+  if (pendingResult.error) {
+    console.warn(pendingResult.error);
+  }
+
+  if (dailyResult.error) {
+    console.warn(dailyResult.error);
+  }
+
+  const pending = pendingResult.count ?? 0;
+  const daily = dailyResult.data || {
+    total_reviews: 0,
+    correct: 0,
+    incorrect: 0
+  };
+
+  document.getElementById("metric-flashcards").textContent =
+    `${pending} pendente${pending === 1 ? "" : "s"}`;
+
+  document.getElementById("metric-flashcards-helper").textContent =
+    `Hoje: ${daily.correct || 0} acertos · ${daily.incorrect || 0} erros`;
+}
+
+
+async function loadQuestionDifficulty() {
+  const value =
+    document.getElementById("metric-difficulty");
+
+  const helper =
+    document.getElementById("metric-difficulty-helper");
+
+  if (!value || !helper) return;
+
+  const { data, error } = await dashboardSb
+    .from("question_area_difficulty")
+    .select("area,wrong_count,set_count,error_share_percent")
+    .order("wrong_count", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.warn(error);
+    value.textContent = "—";
+    helper.textContent = "Sem dados de simulados";
+    return;
+  }
+
+  if (!data) {
+    value.textContent = "—";
+    helper.textContent = "Classifique os erros dos simulados";
+    return;
+  }
+
+  value.textContent = data.area;
+
+  const wrongCount =
+    Number(data.wrong_count || 0);
+
+  const share =
+    Number(data.error_share_percent || 0);
+
+  if (wrongCount < 3) {
+    helper.textContent =
+      `${wrongCount} ${wrongCount === 1 ? "erro classificado" : "erros classificados"} · poucos dados`;
+    return;
+  }
+
+  helper.textContent =
+    `${wrongCount} erros · ${share.toFixed(0)}% dos erros classificados`;
+}
+
+
+
+function dashboardEscapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+
+
+function formatSimulationAccuracy(value) {
+  if (
+    value === null
+    || value === undefined
+    || Number.isNaN(
+      Number(value)
+    )
+  ) {
+    return "—";
+  }
+
+  return `${Number(value)
+    .toFixed(1)
+    .replace(".", ",")}%`;
+}
+
+
+async function loadSimulationMetrics() {
+  const value =
+    document.getElementById(
+      "metric-simulations"
+    );
+
+  const helper =
+    document.getElementById(
+      "metric-simulations-helper"
+    );
+
+  const accuracyElement =
+    document.getElementById(
+      "metric-simulations-accuracy"
+    );
+
+  const accuracyRing =
+    document.getElementById(
+      "simulation-accuracy-ring"
+    );
+
+
+  if (
+    !value
+    || !helper
+  ) {
+    return;
+  }
+
+
+  const start30 =
+    new Date();
+
+  start30.setDate(
+    start30.getDate()
+    - 29
+  );
+
+  start30.setHours(
+    0,
+    0,
+    0,
+    0
+  );
+
+
+  const {
+    data,
+    error
+  } =
+    await dashboardSb
+      .from(
+        "question_set_metrics"
+      )
+      .select(
+        "set_id,answered_count,correct_count,last_answered_at"
+      )
+      .gt(
+        "answered_count",
+        0
+      )
+      .gte(
+        "last_answered_at",
+        start30.toISOString()
+      );
+
+
+  if (error) {
+    console.warn(
+      error
+    );
+
+    value.textContent =
+      "—";
+
+    helper.textContent =
+      "Não foi possível carregar";
+
+    if (accuracyElement) {
+      accuracyElement.textContent =
+        "—";
+    }
+
+    if (accuracyRing) {
+      accuracyRing.style
+        .setProperty(
+          "--metric-ring-value",
+          0
+        );
+    }
+
+    return;
+  }
+
+
+  const rows =
+    data
+    || [];
+
+
+  const setCount =
+    rows.length;
+
+
+  const answered30 =
+    rows.reduce(
+      (
+        sum,
+        row
+      ) =>
+        sum
+        + Number(
+            row.answered_count
+            || 0
+          ),
+      0
+    );
+
+
+  const correct30 =
+    rows.reduce(
+      (
+        sum,
+        row
+      ) =>
+        sum
+        + Number(
+            row.correct_count
+            || 0
+          ),
+      0
+    );
+
+
+  const accuracy30 =
+    answered30 > 0
+      ? (
+          correct30
+          / answered30
+        )
+        * 100
+      : null;
+
+
+  value.textContent =
+    setCount;
+
+
+  helper.textContent =
+    setCount
+      ? `${setCount} simulado${setCount === 1 ? "" : "s"} nos últimos 30 dias`
+      : "Nenhum simulado nos últimos 30 dias";
+
+
+  if (accuracyElement) {
+    accuracyElement.textContent =
+      accuracy30 === null
+        ? "—"
+        : `${accuracy30.toFixed(0)}%`;
+  }
+
+
+  if (accuracyRing) {
+    accuracyRing.style
+      .setProperty(
+        "--metric-ring-value",
+        accuracy30 === null
+          ? 0
+          : Math.max(
+              0,
+              Math.min(
+                100,
+                accuracy30
+              )
+            )
+      );
+  }
+}
+
+async function loadDashboardMetrics() {
+  await Promise.all([
+    loadStudyHours(),
+    loadLessonMetrics(),
+    loadRetention(),
+    loadFlashcardMetrics(),
+    loadErrorMetrics(),
+    loadQuestionDifficulty(),
+    loadSimulationMetrics()
+  ]);
+}
+
+function wireDashboardControls() {
+  const weekButton = document.getElementById("view-week");
+  const monthButton = document.getElementById("view-month");
+
+  weekButton.addEventListener("click", async () => {
+    if (agendaState.view === "week") return;
+
+    agendaState.view = "week";
+    weekButton.classList.add("active");
+    monthButton.classList.remove("active");
+
+    await loadAgenda();
+  });
+
+  monthButton.addEventListener("click", async () => {
+    if (agendaState.view === "month") return;
+
+    agendaState.view = "month";
+    monthButton.classList.add("active");
+    weekButton.classList.remove("active");
+
+    await loadAgenda();
+  });
+
+  document.getElementById("calendar-prev").addEventListener("click", async () => {
+    agendaState.anchorDate =
+      agendaState.view === "week"
+        ? addDays(agendaState.anchorDate, -7)
+        : addMonths(agendaState.anchorDate, -1);
+
+    await loadAgenda();
+  });
+
+  document.getElementById("calendar-next").addEventListener("click", async () => {
+    agendaState.anchorDate =
+      agendaState.view === "week"
+        ? addDays(agendaState.anchorDate, 7)
+        : addMonths(agendaState.anchorDate, 1);
+
+    await loadAgenda();
+  });
+
+  document.getElementById("calendar-today").addEventListener("click", async () => {
+    agendaState.anchorDate = startOfDay(new Date());
+    await loadAgenda();
+  });
+
+  document.getElementById("move-form").addEventListener("submit", handleMoveForm);
+  document.getElementById("move-cancel").addEventListener("click", closeMoveDialog);
+  document.getElementById("move-close").addEventListener("click", closeMoveDialog);
+}
+
+async function initDashboard() {
+  wireDashboardControls();
+
+  await Promise.all([
+    loadDashboardMetrics(),
+    loadAgenda()
+  ]);
+}
+
+if (window.docmapUser) {
+  initDashboard();
+} else {
+  window.addEventListener("docmap:ready", initDashboard, { once: true });
+}
