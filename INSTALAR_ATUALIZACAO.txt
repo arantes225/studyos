@@ -1,0 +1,73 @@
+RESIBULANDO — ATUALIZAÇÃO CADERNO + ESTATÍSTICAS
+==================================================
+
+O pacote contém:
+
+1) CADERNO DE ERROS
+- leitor de tabelas por imagem
+- criação de tabela do zero
+- edição de linhas e colunas
+- setas/fluxos entre conceitos
+- até 2 imagens por item
+- edição posterior de tabela, setas e imagens
+- compatibilidade com a imagem antiga (question_image_path)
+
+Arquivos:
+- fase14_caderno_conteudo_rico.sql
+- caderno-recursos.css
+- caderno-recursos.js
+- aplicar_patch_caderno.py
+
+INSTALAÇÃO DO CADERNO
+---------------------
+1. Faça backup do projeto.
+2. No Supabase SQL Editor, rode:
+   fase14_caderno_conteudo_rico.sql
+3. Copie para a raiz do projeto:
+   caderno-recursos.css
+   caderno-recursos.js
+   aplicar_patch_caderno.py
+4. Na raiz do projeto, execute:
+   python aplicar_patch_caderno.py
+5. Publique as alterações.
+6. Faça Ctrl+F5 no navegador.
+
+O patcher modifica automaticamente:
+- caderno-erros.html
+- caderno-erros.js
+
+LEITOR DE TABELAS
+-----------------
+O botão "Reconhecer tabela" usa Tesseract.js já carregado no Caderno.
+A melhor precisão ocorre em prints ou imagens com linhas de grade visíveis.
+O resultado sempre aparece como tabela editável antes de salvar.
+Quando não encontra uma grade clara, tenta extrair o texto em linhas para
+você ajustar manualmente.
+
+2) ESTATÍSTICAS
+- visual reorganizado em blocos
+- apenas 4 indicadores principais no topo de cada aba
+- informações secundárias distribuídas em seções
+- gráficos e tabelas continuam detalhados
+- nova aba Questões / Simulados
+- análise por área e por simulado
+- conversão de erros em Caderno de Erros
+
+Arquivos para SUBSTITUIR na raiz:
+- estatisticas.html
+- estatisticas.css
+- estatisticas.js
+
+ORDEM RECOMENDADA
+-----------------
+1. Rode o SQL.
+2. Aplique o patch do Caderno.
+3. Substitua os 3 arquivos de Estatísticas.
+4. Publique.
+5. Ctrl+F5.
+
+OBSERVAÇÃO
+----------
+A página de Questões / Simulados continua funcionando normalmente.
+A nova aba em Estatísticas passa a ser o painel analítico principal,
+como solicitado.

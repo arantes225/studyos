@@ -490,6 +490,38 @@
     `).join("");
   }
 
+
+  function renderSummary(id, cards) {
+    const el = $(id);
+    if (!el) return;
+
+    el.innerHTML = cards.map(c => `
+      <article class="stats-summary-card">
+        <span>${esc(c.label)}</span>
+        <strong>${esc(c.value)}</strong>
+        <small>${esc(c.helper || "")}</small>
+        <div class="stats-summary-viz">
+          <div class="stats-mini-track">
+            <span style="width:${clamp(c.progress ?? 0)}%"></span>
+          </div>
+        </div>
+      </article>
+    `).join("");
+  }
+
+  function renderMetricStrip(id, cards) {
+    const el = $(id);
+    if (!el) return;
+
+    el.innerHTML = cards.map(c => `
+      <article class="metric-mini">
+        <span>${esc(c.label)}</span>
+        <strong>${esc(c.value)}</strong>
+        <small>${esc(c.helper || "")}</small>
+      </article>
+    `).join("");
+  }
+
   function chart(id, type, labels, datasets, options = {}) {
     const canvas = $(id);
     if (!canvas || !window.Chart) return;
@@ -665,71 +697,45 @@
   function renderGeneral() {
     const m = generalData();
 
-    renderCards("general-callouts", [
-      { label:"Tempo estudado", value:hours(m.seconds), helper:`${labelPeriod()} · ${compare(m.seconds,m.prevSeconds)}`, viz:{value:Math.min(100,m.seconds/108000*100)} },
-      { label:"Média por dia ativo", value:hours(m.activeDays?m.seconds/m.activeDays:0), helper:`${m.activeDays} dias ativos`, viz:{value:pct(m.activeDays,m.eligible)} },
-      { label:"Consistência", value:percent(m.consistency), helper:`${m.activeDays}/${m.eligible} dias planejados`, viz:{type:"ring",value:m.consistency} },
-      { label:"Ofensiva", value:`${currentStreak()} d`, helper:`recorde ${longestStreak()} dias`, viz:{value:pct(currentStreak(),Math.max(1,longestStreak()))} },
-      { label:"Sessões de estudo", value:num(m.sessions.length), helper:`média ${hours(m.sessions.length?m.seconds/m.sessions.length:0)}`, viz:{value:Math.min(100,m.sessions.length/60*100)} },
+    renderSummary("general-summary", [
+      { label:"Tempo estudado", value:hours(m.seconds), helper:`${labelPeriod()} · ${compare(m.seconds,m.prevSeconds)}`, progress:Math.min(100,m.seconds/108000*100) },
+      { label:"Consistência", value:percent(m.consistency), helper:`${m.activeDays}/${m.eligible} dias planejados`, progress:m.consistency },
+      { label:"Aderência às aulas", value:percent(m.adherence), helper:`${m.plannedDone.length}/${m.planned.length} previstas`, progress:m.adherence },
+      { label:"Aproveitamento em questões", value:percent(m.accuracyQ,1), helper:`${m.questions.length} questões · ${comparePP(m.accuracyQ,m.prevAccuracyQ)}`, progress:m.accuracyQ }
+    ]);
 
-      { label:"Aderência às aulas", value:percent(m.adherence), helper:`${m.plannedDone.length}/${m.planned.length} previstas`, viz:{type:"ring",value:m.adherence} },
-      { label:"Progresso total", value:percent(m.progress), helper:`${m.totalDone}/${m.totalTopics} aulas`, viz:{value:m.progress} },
-      { label:"Aulas concluídas", value:num(m.donePeriod), helper:`no ${labelPeriod()}`, viz:{value:Math.min(100,m.donePeriod/30*100)} },
-      { label:"Questões", value:num(m.questions.length), helper:`${m.correctQ} acertos`, viz:{value:Math.min(100,m.questions.length/500*100)} },
-      { label:"Aproveitamento", value:percent(m.accuracyQ,1), helper:comparePP(m.accuracyQ,m.prevAccuracyQ), viz:{type:"ring",value:m.accuracyQ} },
+    renderMetricStrip("general-habit-metrics", [
+      { label:"Dias ativos", value:num(m.activeDays), helper:`de ${m.eligible} planejados` },
+      { label:"Média por dia ativo", value:hours(m.activeDays ? m.seconds/m.activeDays : 0), helper:"tempo efetivo" },
+      { label:"Sessões", value:num(m.sessions.length), helper:`média ${hours(m.sessions.length ? m.seconds/m.sessions.length : 0)}` },
+      { label:"Ofensiva", value:`${currentStreak()} d`, helper:`recorde ${longestStreak()} dias` }
+    ]);
 
-      { label:"Simulados concluídos", value:num(m.completedSets), helper:`no ${labelPeriod()}`, viz:{value:Math.min(100,m.completedSets*12)} },
-      { label:"Revisões de flashcards", value:num(m.flashReviews.length), helper:compare(m.flashReviews.length,m.prevFlashReviews.length), viz:{value:Math.min(100,m.flashReviews.length/1500*100)} },
-      { label:"Acerto nos flashcards", value:percent(m.flashAccuracy,1), helper:comparePP(m.flashAccuracy,m.prevFlashAccuracy), viz:{type:"ring",value:m.flashAccuracy} },
-      { label:"Retenção atual", value:percent(m.retention,1), helper:`${m.reviewedCards.length} cards estimados`, viz:{type:"ring",value:m.retention} },
-      { label:"CCQs ativos", value:num(m.err.length), helper:`${state.static.errors.length} registrados`, viz:{value:pct(m.err.length,state.static.errors.length)} },
-
-      { label:"CCQs atrasados", value:num(m.overdueErr), helper:`${percent(pct(m.overdueErr,m.err.length))} dos ativos`, viz:{type:"ring",value:pct(m.overdueErr,m.err.length)} },
-      { label:"Revisões teóricas", value:num(m.doneReviews.length), helper:`${m.scheduledReviews.length} previstas`, viz:{value:m.reviewRate} },
-      { label:"Aderência às revisões", value:percent(m.reviewRate), helper:`${m.doneReviews.length}/${m.scheduledReviews.length}`, viz:{type:"ring",value:m.reviewRate} },
-      { label:"Tempo médio/sessão", value:hours(m.sessions.length?m.seconds/m.sessions.length:0), helper:`${m.sessions.length} sessões`, viz:{value:Math.min(100,(m.sessions.length?m.seconds/m.sessions.length:0)/3600*100)} },
-      { label:"Tipos de estudo usados", value:num(new Set(m.sessions.map(x=>x.activity_kind)).size), helper:"atividades diferentes", viz:{type:"stack",values:Object.keys(ACTIVITY).map(k=>m.sessions.filter(x=>x.activity_kind===k).length)} }
+    renderMetricStrip("general-progress-metrics", [
+      { label:"Progresso das aulas", value:percent(m.progress), helper:`${m.totalDone}/${m.totalTopics}` },
+      { label:"Retenção dos flashcards", value:percent(m.retention,1), helper:`${m.reviewedCards.length} cards estimados` },
+      { label:"CCQs ativos", value:num(m.err.length), helper:`${m.overdueErr} atrasados` },
+      { label:"Revisões teóricas", value:percent(m.reviewRate), helper:`${m.doneReviews.length}/${m.scheduledReviews.length}` }
     ]);
 
     const studySeries = dateSeries(m.sessions, "started_at", x => Number(x.duration_seconds || 0) / 3600);
-    chart(
-      "chart-general-study",
-      "bar",
-      studySeries.map(x=>x.label),
-      [{ label:"Horas", data:studySeries.map(x=>Number(x.value.toFixed(2))) }]
-    );
+    chart("chart-general-study","bar",studySeries.map(x=>x.label),[
+      { label:"Horas", data:studySeries.map(x=>Number(x.value.toFixed(2))) }
+    ]);
 
     const activity = Array.from(group(m.sessions, x=>x.activity_kind).entries())
       .map(([k,rows])=>({ label:ACTIVITY[k]||k, value:sum(rows,x=>x.duration_seconds) }))
       .filter(x=>x.value>0)
       .sort((a,b)=>b.value-a.value);
 
-    chart(
-      "chart-general-activity",
-      "doughnut",
-      activity.map(x=>x.label),
-      [{ label:"Tempo", data:activity.map(x=>Number((x.value/3600).toFixed(2))) }],
-      { extra:{ cutout:"64%" } }
-    );
-
-    const qAreas = Array.from(group(m.questions, area).entries())
-      .map(([label,rows])=>({label,total:rows.length,accuracy:pct(rows.filter(x=>x.result==="correct").length,rows.length)}))
-      .sort((a,b)=>b.total-a.total)
-      .slice(0,8);
-
-    chart(
-      "chart-general-questions",
-      "bar",
-      qAreas.map(x=>x.label),
-      [
-        { label:"Acerto %", data:qAreas.map(x=>Number(x.accuracy.toFixed(1))) }
-      ],
-      { max:100 }
-    );
+    chart("chart-general-activity","doughnut",activity.map(x=>x.label),[
+      { label:"Horas", data:activity.map(x=>Number((x.value/3600).toFixed(2))) }
+    ],{ extra:{ cutout:"64%" } });
 
     renderGeneralAreaTable(m);
     renderGeneralInsights(m);
   }
+
 
   function renderGeneralAreaTable(m) {
     const areas = new Set();
@@ -859,54 +865,45 @@
     const best = [...m.areaProgress].sort((a,b)=>b.value-a.value)[0];
     const worst = m.areaProgress[0];
 
-    renderCards("lesson-callouts",[
-      {label:"Aulas no cronograma",value:num(m.topics.length),helper:"total importado",viz:{value:100}},
-      {label:"Aulas concluídas",value:num(m.done.length),helper:`${percent(m.progress)} do total`,viz:{type:"ring",value:m.progress}},
-      {label:"Progresso total",value:percent(m.progress,1),helper:`${m.done.length}/${m.topics.length}`,viz:{value:m.progress}},
-      {label:"Concluídas no período",value:num(m.completedPeriod.length),helper:labelPeriod(),viz:{value:Math.min(100,m.completedPeriod.length/30*100)}},
-      {label:"Planejadas no período",value:num(m.scheduled.length),helper:`${m.scheduledDone.length} concluídas`,viz:{value:Math.min(100,m.scheduled.length/35*100)}},
+    renderSummary("lesson-summary", [
+      { label:"Progresso total", value:percent(m.progress,1), helper:`${m.done.length}/${m.topics.length} aulas`, progress:m.progress },
+      { label:"Aderência", value:percent(m.adherence,1), helper:`${m.scheduledDone.length}/${m.scheduled.length} previstas`, progress:m.adherence },
+      { label:"Aulas atrasadas", value:num(m.overdue.length), helper:"pendentes com data vencida", progress:pct(m.overdue.length,Math.max(1,m.topics.length-m.done.length)) },
+      { label:"Tempo em aulas", value:hours(m.seconds), helper:compare(m.seconds,m.prevSeconds), progress:Math.min(100,m.seconds/72000*100) }
+    ]);
 
-      {label:"Aderência",value:percent(m.adherence,1),helper:`${m.scheduledDone.length}/${m.scheduled.length} previstas`,viz:{type:"ring",value:m.adherence}},
-      {label:"Aulas atrasadas",value:num(m.overdue.length),helper:"pendentes com data vencida",viz:{type:"ring",value:pct(m.overdue.length,Math.max(1,m.topics.length-m.done.length))}},
-      {label:"Aulas futuras",value:num(m.future.length),helper:"já agendadas",viz:{value:pct(m.future.length,m.topics.length)}},
-      {label:"Pontualidade",value:percent(m.onTime,1),helper:`${m.lateDelay.length} concluídas após o prazo`,viz:{type:"ring",value:m.onTime}},
-      {label:"Atraso médio",value:m.lateDelay.length?days(mean(m.lateDelay),1):"0 d",helper:"entre aulas concluídas atrasadas",viz:{value:Math.min(100,mean(m.lateDelay)/14*100)}},
+    renderMetricStrip("lesson-volume-metrics", [
+      { label:"Planejadas", value:num(m.scheduled.length), helper:labelPeriod() },
+      { label:"Concluídas", value:num(m.completedPeriod.length), helper:labelPeriod() },
+      { label:"Pontualidade", value:percent(m.onTime,1), helper:`${m.lateDelay.length} após o prazo` },
+      { label:"Remanejadas", value:num(m.moved.length), helper:m.movedDays.length?`média ${days(mean(m.movedDays),1)}`:"sem remanejamentos" }
+    ]);
 
-      {label:"Maior atraso",value:m.lateDelay.length?days(Math.max(...m.lateDelay)):"0 d",helper:"entre aulas concluídas",viz:{value:Math.min(100,(m.lateDelay.length?Math.max(...m.lateDelay):0)/30*100)}},
-      {label:"Remanejadas",value:num(m.moved.length),helper:`${percent(pct(m.moved.length,m.topics.length))} do cronograma`,viz:{type:"ring",value:pct(m.moved.length,m.topics.length)}},
-      {label:"Deslocamento médio",value:m.movedDays.length?days(mean(m.movedDays),1):"0 d",helper:"data original → atual",viz:{value:Math.min(100,mean(m.movedDays)/21*100)}},
-      {label:"Já estudadas",value:num(m.topics.filter(x=>x.already_done).length),helper:"marcadas como já feitas",viz:{value:pct(m.topics.filter(x=>x.already_done).length,m.topics.length)}},
-      {label:"Tempo em aulas",value:hours(m.seconds),helper:compare(m.seconds,m.prevSeconds),viz:{value:Math.min(100,m.seconds/72000*100)}},
-
-      {label:"Média por conclusão",value:hours(m.completedPeriod.length?m.seconds/m.completedPeriod.length:0),helper:`${m.completedPeriod.length} conclusões`,viz:{value:Math.min(100,(m.completedPeriod.length?m.seconds/m.completedPeriod.length:0)/5400*100)}},
-      {label:"Dias com aula",value:num(studyDays),helper:`de ${eligibleDays(state.settings?.theory_study_weekdays)} dias permitidos`,viz:{type:"ring",value:pct(studyDays,eligibleDays(state.settings?.theory_study_weekdays))}},
-      {label:"Revisões previstas",value:num(m.scheduledReviews.length),helper:"revisões teóricas",viz:{value:Math.min(100,m.scheduledReviews.length/80*100)}},
-      {label:"Revisões concluídas",value:num(m.completedReviews.length),helper:`${percent(m.reviewRate)} das previstas`,viz:{type:"ring",value:m.reviewRate}},
-      {label:"Revisões atrasadas",value:num(m.overdueReviews.length),helper:"pendentes neste momento",viz:{type:"ring",value:pct(m.overdueReviews.length,Math.max(1,m.reviews.filter(x=>!x.completed_at).length))}},
-
-      {label:"Revisões remarcadas",value:num(m.manualReviews.length),helper:"movidas manualmente",viz:{value:pct(m.manualReviews.length,m.reviews.length)}},
-      {label:"Melhor área",value:best?.label||"—",helper:best?`${percent(best.value)} concluído`:"sem dados",viz:{value:best?.value||0}},
-      {label:"Área mais pendente",value:worst?.label||"—",helper:worst?`${percent(worst.value)} concluído`:"sem dados",viz:{value:worst?.value||0}},
-      {label:"Matéria + pendente",value:m.subjectPending?.label||"—",helper:m.subjectPending?`${m.subjectPending.count} aulas pendentes`:"sem pendências",viz:{value:Math.min(100,(m.subjectPending?.count||0)*8)}}
+    renderMetricStrip("lesson-review-metrics", [
+      { label:"Previstas", value:num(m.scheduledReviews.length), helper:"no período" },
+      { label:"Concluídas", value:num(m.completedReviews.length), helper:percent(m.reviewRate) },
+      { label:"Atrasadas", value:num(m.overdueReviews.length), helper:"neste momento" },
+      { label:"Remarcadas", value:num(m.manualReviews.length), helper:"manualmente" }
     ]);
 
     const plannedSeries = dateSeries(m.scheduled,"scheduled_date");
     const doneSeries = dateSeries(m.completedPeriod,"completed_at");
-    const labels = plannedSeries.map(x=>x.label);
     const doneMap = new Map(doneSeries.map(x=>[x.date,x.value]));
 
-    chart("chart-lessons-plan","bar",labels,[
+    chart("chart-lessons-plan","bar",plannedSeries.map(x=>x.label),[
       {label:"Planejadas",data:plannedSeries.map(x=>x.value)},
       {label:"Concluídas",data:plannedSeries.map(x=>doneMap.get(x.date)||0)}
     ]);
 
     progressList("lesson-area-progress",m.areaProgress.slice(0,12));
 
-    const stageRows = Array.from(group(m.reviews,x=>Number(x.stage||0)).entries()).sort((a,b)=>a[0]-b[0]).map(([stage,rows])=>({
-      label:`Etapa ${stage}`,
-      value:pct(rows.filter(x=>x.completed_at).length,rows.length),
-      helper:`${rows.filter(x=>x.completed_at).length}/${rows.length} concluídas`
-    }));
+    const stageRows = Array.from(group(m.reviews,x=>Number(x.stage||0)).entries())
+      .sort((a,b)=>a[0]-b[0])
+      .map(([stage,rows])=>({
+        label:`Etapa ${stage}`,
+        value:pct(rows.filter(x=>x.completed_at).length,rows.length),
+        helper:`${rows.filter(x=>x.completed_at).length}/${rows.length} concluídas`
+      }));
     progressList("lesson-review-progress",stageRows);
 
     const sessionPeriod = current(state.period.sessions,"started_at").filter(x=>x.activity_kind==="lesson");
@@ -916,7 +913,6 @@
       const done = items.filter(completedTopic).length;
       const late = items.filter(x=>!completedTopic(x)&&x.scheduled_date&&parseDate(x.scheduled_date)<startDay(new Date())).length;
       const secs = sum(sessionPeriod.filter(x=>subject(x)===label),x=>x.duration_seconds);
-
       return {
         label,total:items.length,done,pending:items.length-done,progress:pct(done,items.length),late,secs,
         revRate:pct(rev.filter(x=>x.completed_at).length,rev.length),revN:rev.length
@@ -926,17 +922,20 @@
     table("lesson-subject-table",
       [{label:"Matéria"},{label:"Progresso"},{label:"Concluídas",num:true},{label:"Pendentes",num:true},{label:"Atrasadas",num:true},{label:"Tempo",num:true},{label:"Revisões",num:true}],
       rows.map(x=>[
-        `<strong>${esc(x.label)}</strong>`,`${percent(x.progress)} · ${x.done}/${x.total}`,num(x.done),num(x.pending),num(x.late),hours(x.secs),x.revN?percent(x.revRate):"—"
+        `<strong>${esc(x.label)}</strong>`,`${percent(x.progress)} · ${x.done}/${x.total}`,
+        num(x.done),num(x.pending),num(x.late),hours(x.secs),x.revN?percent(x.revRate):"—"
       ])
     );
 
     const out = [];
     if (m.overdue.length) out.push({title:"Atrasos",text:`${m.overdue.length} aulas estão vencidas agora.`});
     if (worst) out.push({title:"Área mais pendente",text:`${worst.label} tem ${percent(worst.value)} das aulas concluídas.`});
-    if (m.scheduledReviews.length) out.push({title:"Revisões teóricas",text:`${percent(m.reviewRate)} das revisões previstas para o período foram concluídas.`});
+    if (best) out.push({title:"Maior avanço",text:`${best.label} está com ${percent(best.value)} das aulas concluídas.`});
+    if (m.scheduledReviews.length) out.push({title:"Revisões teóricas",text:`${percent(m.reviewRate)} das revisões previstas foram concluídas.`});
     if (m.moved.length) out.push({title:"Remanejamentos",text:`${m.moved.length} aulas mudaram de data, com deslocamento médio de ${days(mean(m.movedDays),1)}.`});
     insights("lesson-insights",out);
   }
+
 
   // =========================================================
   // FLASHCARDS
@@ -1003,47 +1002,41 @@
 
   function renderFlashcards() {
     const m = flashData();
-    const incorrect = m.reviews.length-m.correct;
+    const incorrect = m.reviews.length - m.correct;
 
-    renderCards("flash-callouts",[
-      {label:"Cards ativos",value:num(m.active.length),helper:`${m.all.length} registrados`,viz:{value:pct(m.active.length,m.all.length)}},
-      {label:"Novos cards",value:num(m.created.length),helper:`criados no ${labelPeriod()}`,viz:{value:Math.min(100,m.created.length/300*100)}},
-      {label:"Cards únicos revisados",value:num(m.unique),helper:`${percent(pct(m.unique,m.active.length))} dos ativos`,viz:{type:"ring",value:pct(m.unique,m.active.length)}},
-      {label:"Revisões realizadas",value:num(m.reviews.length),helper:compare(m.reviews.length,m.prevReviews.length),viz:{value:Math.min(100,m.reviews.length/2000*100)}},
-      {label:"Tempo em flashcards",value:hours(m.seconds),helper:compare(m.seconds,m.prevSeconds),viz:{value:Math.min(100,m.seconds/54000*100)}},
+    renderSummary("flash-summary", [
+      { label:"Cards ativos", value:num(m.active.length), helper:`${m.all.length} registrados`, progress:pct(m.active.length,m.all.length) },
+      { label:"Revisões", value:num(m.reviews.length), helper:compare(m.reviews.length,m.prevReviews.length), progress:Math.min(100,m.reviews.length/2000*100) },
+      { label:"Taxa de acerto", value:percent(m.accuracy,1), helper:comparePP(m.accuracy,m.prevAccuracy), progress:m.accuracy },
+      { label:"Retenção atual", value:percent(m.retention,1), helper:`${m.reviewed.length} cards estimados`, progress:m.retention }
+    ]);
 
-      {label:"Acertos",value:num(m.correct),helper:`${percent(m.accuracy,1)} das revisões`,viz:{value:m.accuracy}},
-      {label:"Erros",value:num(incorrect),helper:`${percent(pct(incorrect,m.reviews.length),1)} das revisões`,viz:{value:pct(incorrect,m.reviews.length)}},
-      {label:"Taxa de acerto",value:percent(m.accuracy,1),helper:comparePP(m.accuracy,m.prevAccuracy),viz:{type:"ring",value:m.accuracy}},
-      {label:"Fácil",value:percent(pct(m.easy,m.reviews.length),1),helper:`${m.easy} respostas`,viz:{type:"stack",values:[m.easy,m.medium,m.hard]}},
-      {label:"Médio",value:percent(pct(m.medium,m.reviews.length),1),helper:`${m.medium} respostas`,viz:{type:"stack",values:[m.easy,m.medium,m.hard]}},
+    renderMetricStrip("flash-volume-metrics", [
+      { label:"Novos cards", value:num(m.created.length), helper:`no ${labelPeriod()}` },
+      { label:"Únicos revisados", value:num(m.unique), helper:`${percent(pct(m.unique,m.active.length))} dos ativos` },
+      { label:"Dias com revisão", value:num(m.reviewDays), helper:`${percent(pct(m.reviewDays,eligibleDays(state.settings?.flashcard_weekdays)))} dos permitidos` },
+      { label:"Média/dia ativo", value:m.reviewDays?num(m.reviews.length/m.reviewDays,1):"0", helper:"revisões por dia" }
+    ]);
 
-      {label:"Difícil",value:percent(pct(m.hard,m.reviews.length),1),helper:`${m.hard} respostas`,viz:{type:"stack",values:[m.easy,m.medium,m.hard]}},
-      {label:"Retenção atual",value:percent(m.retention,1),helper:`${m.reviewed.length} cards estimados`,viz:{type:"ring",value:m.retention}},
-      {label:"Estabilidade média",value:days(mean(m.stability),1),helper:"cards já revisados",viz:{value:Math.min(100,mean(m.stability)/90*100)}},
-      {label:"Estabilidade mediana",value:days(median(m.stability),1),helper:"menos sensível a extremos",viz:{value:Math.min(100,median(m.stability)/90*100)}},
-      {label:"Intervalo médio",value:days(mean(m.intervals),1),helper:"intervalo atual",viz:{value:Math.min(100,mean(m.intervals)/90*100)}},
+    renderMetricStrip("flash-quality-metrics", [
+      { label:"Acertos", value:num(m.correct), helper:percent(m.accuracy,1) },
+      { label:"Erros", value:num(incorrect), helper:percent(pct(incorrect,m.reviews.length),1) },
+      { label:"Fácil", value:percent(pct(m.easy,m.reviews.length),1), helper:`${m.easy} respostas` },
+      { label:"Difícil", value:percent(pct(m.hard,m.reviews.length),1), helper:`${m.hard} respostas` }
+    ]);
 
-      {label:"Intervalo mediano",value:days(median(m.intervals),1),helper:"intervalo atual",viz:{value:Math.min(100,median(m.intervals)/90*100)}},
-      {label:"Recuperabilidade pré-revisão",value:m.preR.length?percent(mean(m.preR)*100,1):"—",helper:`${m.preR.length} revisões com estimativa`,viz:{type:"ring",value:mean(m.preR)*100}},
-      {label:"Crescimento estabilidade",value:m.growth.length?`${num(mean(m.growth),1)}%`:"—",helper:"média após revisar",viz:{value:Math.min(100,Math.max(0,mean(m.growth)))}},
-      {label:"Dias com revisão",value:num(m.reviewDays),helper:`${percent(pct(m.reviewDays,eligibleDays(state.settings?.flashcard_weekdays)))} dos permitidos`,viz:{type:"ring",value:pct(m.reviewDays,eligibleDays(state.settings?.flashcard_weekdays))}},
-      {label:"Média por dia ativo",value:m.reviewDays?num(m.reviews.length/m.reviewDays,1):"0",helper:"revisões/dia",viz:{value:Math.min(100,(m.reviewDays?m.reviews.length/m.reviewDays:0)/150*100)}},
+    renderMetricStrip("flash-load-metrics", [
+      { label:"Hoje", value:num(m.dueToday), helper:"vencendo hoje" },
+      { label:"Atrasados", value:num(m.overdue), helper:`${percent(pct(m.overdue,m.active.length))} dos ativos` },
+      { label:"Próximos 7 dias", value:num(m.next7), helper:"carga prevista" },
+      { label:"Próximos 30 dias", value:num(m.next30), helper:"carga prevista" }
+    ]);
 
-      {label:"Revisões por card",value:m.unique?`${num(m.reviews.length/m.unique,1)}×`:"0×",helper:"no período",viz:{value:Math.min(100,(m.unique?m.reviews.length/m.unique:0)/5*100)}},
-      {label:"Para hoje",value:num(m.dueToday),helper:"cards vencendo hoje",viz:{value:pct(m.dueToday,m.active.length)}},
-      {label:"Atrasados",value:num(m.overdue),helper:`${percent(pct(m.overdue,m.active.length))} dos ativos`,viz:{type:"ring",value:pct(m.overdue,m.active.length)}},
-      {label:"Nunca revisados",value:num(m.never),helper:`${percent(pct(m.never,m.active.length))} dos ativos`,viz:{type:"ring",value:pct(m.never,m.active.length)}},
-      {label:"Próximos 7 dias",value:num(m.next7),helper:"carga prevista",viz:{value:pct(m.next7,m.active.length)}},
-
-      {label:"Próximos 30 dias",value:num(m.next30),helper:"carga prevista",viz:{value:pct(m.next30,m.active.length)}},
-      {label:"Cards com 5+ revisões",value:num(m.fivePlus),helper:`${percent(pct(m.fivePlus,m.active.length))} dos ativos`,viz:{type:"ring",value:pct(m.fivePlus,m.active.length)}},
-      {label:"Retenção < 70%",value:num(m.low),helper:"cards potencialmente frágeis",viz:{type:"ring",value:pct(m.low,m.reviewed.length)}},
-      {label:"Retenção ≥ 95%",value:num(m.high),helper:"memória forte",viz:{type:"ring",value:pct(m.high,m.reviewed.length)}},
-      {label:"Maior nº de revisões",value:`${m.maxReview}×`,helper:"em um único card",viz:{value:Math.min(100,m.maxReview/15*100)}},
-
-      {label:"Menor retenção/matéria",value:m.weakSubject?.label||"—",helper:m.weakSubject?`${percent(m.weakSubject.value,1)} · ${m.weakSubject.evidence} cards`:"evidência insuficiente",viz:{value:m.weakSubject?.value||0}},
-      {label:"Menor retenção/área",value:m.weakArea?.label||"—",helper:m.weakArea?`${percent(m.weakArea.value,1)} · ${m.weakArea.evidence} cards`:"evidência insuficiente",viz:{value:m.weakArea?.value||0}}
+    renderMetricStrip("flash-memory-metrics", [
+      { label:"Estabilidade média", value:days(mean(m.stability),1), helper:`mediana ${days(median(m.stability),1)}` },
+      { label:"Intervalo médio", value:days(mean(m.intervals),1), helper:`mediana ${days(median(m.intervals),1)}` },
+      { label:"Recuperabilidade pré-revisão", value:m.preR.length?percent(mean(m.preR)*100,1):"—", helper:`${m.preR.length} revisões` },
+      { label:"Crescimento estabilidade", value:m.growth.length?`${num(mean(m.growth),1)}%`:"—", helper:"média após revisar" }
     ]);
 
     const reviewSeries = dateSeries(m.reviews,"reviewed_at");
@@ -1063,15 +1056,22 @@
     const workload = [];
     for(let i=0;i<14;i++){
       const d=addDays(new Date(),i), key=dateKey(d);
-      workload.push({label:i===0?"hoje":new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"2-digit"}).format(d),value:m.active.filter(x=>dateKey(x.due_date)===key).length});
+      workload.push({
+        label:i===0?"hoje":new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"2-digit"}).format(d),
+        value:m.active.filter(x=>dateKey(x.due_date)===key).length
+      });
     }
     chart("chart-flash-workload","bar",workload.map(x=>x.label),[{label:"Cards",data:workload.map(x=>x.value)}]);
 
-    progressList("flash-area-retention",m.byArea.slice(0,12).map(x=>({label:x.label,value:x.value,helper:`${x.evidence} cards`})));
+    progressList("flash-area-retention",m.byArea.slice(0,12).map(x=>({
+      label:x.label,value:x.value,helper:`${x.evidence} cards`
+    })));
 
     const stabilityBins = [
       ["<3d",0,3],["3–7d",3,8],["8–21d",8,22],["22–45d",22,46],["46–90d",46,91],[">90d",91,Infinity]
-    ].map(([label,min,max])=>({label,value:m.reviewed.filter(x=>Number(x.stability_days)>=min&&Number(x.stability_days)<max).length}));
+    ].map(([label,min,max])=>({
+      label,value:m.reviewed.filter(x=>Number(x.stability_days)>=min&&Number(x.stability_days)<max).length
+    }));
     chart("chart-flash-stability","bar",stabilityBins.map(x=>x.label),[{label:"Cards",data:stabilityBins.map(x=>x.value)}]);
 
     const subjectRows = Array.from(group(m.active,subject).entries()).map(([label,cards])=>{
@@ -1080,7 +1080,6 @@
       const reviewed=cards.filter(x=>x.review_count>0&&x.last_reviewed_at);
       const ret=mean(reviewed.map(x=>memory(x.last_reviewed_at,x.stability_days)).filter(x=>x!==null))*100;
       const late=cards.filter(x=>parseDate(x.due_date)<startDay(new Date())).length;
-
       return {
         label,cards:cards.length,reviews:rev.length,accuracy:pct(rev.filter(x=>x.was_correct).length,rev.length),
         retention:ret,stability:mean(reviewed.map(x=>x.stability_days)),interval:mean(cards.map(x=>x.current_interval_days)),late
@@ -1090,7 +1089,8 @@
     table("flash-subject-table",
       [{label:"Matéria"},{label:"Cards",num:true},{label:"Revisões",num:true},{label:"Acerto",num:true},{label:"Retenção",num:true},{label:"Estabilidade",num:true},{label:"Intervalo",num:true},{label:"Atrasados",num:true}],
       subjectRows.map(x=>[
-        `<strong>${esc(x.label)}</strong>`,num(x.cards),num(x.reviews),x.reviews?percent(x.accuracy,1):"—",x.retention?percent(x.retention,1):"—",x.stability?days(x.stability,1):"—",x.interval?days(x.interval,1):"—",num(x.late)
+        `<strong>${esc(x.label)}</strong>`,num(x.cards),num(x.reviews),x.reviews?percent(x.accuracy,1):"—",
+        x.retention?percent(x.retention,1):"—",x.stability?days(x.stability,1):"—",x.interval?days(x.interval,1):"—",num(x.late)
       ])
     );
 
@@ -1099,8 +1099,9 @@
       .map(x=>({label:(x.card.front_text||"Flashcard").slice(0,72),value:x.value,helper:`${subject(x.card)} · ${x.card.review_count} revisões`}));
     progressList("flash-hardest",fragile,v=>percent(v,1));
 
+    const cardMap = new Map(m.all.map(x=>[x.id,x]));
     const areaReview = Array.from(group(m.reviews, r => {
-      const card = m.all.find(x=>x.id===r.flashcard_id);
+      const card = cardMap.get(r.flashcard_id);
       return card ? area(card) : "Sem área";
     }).entries()).map(([label,rows])=>({label,value:rows.length})).sort((a,b)=>b.value-a.value).slice(0,8);
 
@@ -1114,6 +1115,7 @@
     if(m.growth.length) out.push({title:"Estabilidade",text:`A estabilidade cresceu em média ${num(mean(m.growth),1)}% nas revisões com dados antes/depois.`});
     insights("flash-insights",out);
   }
+
 
   // =========================================================
   // CADERNO DE ERROS
@@ -1162,38 +1164,32 @@
   function renderErrors() {
     const m=errorData();
 
-    renderCards("error-callouts",[
-      {label:"CCQs ativos",value:num(m.active.length),helper:`${m.all.length} registrados`,viz:{value:pct(m.active.length,m.all.length)}},
-      {label:"CCQs criados",value:num(m.created.length),helper:`no ${labelPeriod()}`,viz:{value:Math.min(100,m.created.length/100*100)}},
-      {label:"Revisões realizadas",value:num(m.reviews.length),helper:compare(m.reviews.length,m.prevReviews.length),viz:{value:Math.min(100,m.reviews.length/500*100)}},
-      {label:"CCQs únicos revisados",value:num(m.unique),helper:`${percent(pct(m.unique,m.active.length))} dos ativos`,viz:{type:"ring",value:pct(m.unique,m.active.length)}},
-      {label:"Tempo no Caderno",value:hours(m.seconds),helper:compare(m.seconds,m.prevSeconds),viz:{value:Math.min(100,m.seconds/36000*100)}},
+    renderSummary("error-summary",[
+      {label:"CCQs ativos",value:num(m.active.length),helper:`${m.all.length} registrados`,progress:pct(m.active.length,m.all.length)},
+      {label:"Revisões",value:num(m.reviews.length),helper:compare(m.reviews.length,m.prevReviews.length),progress:Math.min(100,m.reviews.length/500*100)},
+      {label:"Retenção atual",value:percent(m.ret,1),helper:`${m.reviewed.length} CCQs estimados`,progress:m.ret},
+      {label:"Atrasados",value:num(m.overdue),helper:`${percent(pct(m.overdue,m.active.length))} dos ativos`,progress:pct(m.overdue,m.active.length)}
+    ]);
 
-      {label:"Já revisados",value:num(m.reviewed.length),helper:`${percent(pct(m.reviewed.length,m.active.length))} dos ativos`,viz:{type:"ring",value:pct(m.reviewed.length,m.active.length)}},
-      {label:"Nunca revisados",value:num(m.never),helper:`${percent(pct(m.never,m.active.length))} dos ativos`,viz:{type:"ring",value:pct(m.never,m.active.length)}},
-      {label:"Atrasados",value:num(m.overdue),helper:`${percent(pct(m.overdue,m.active.length))} dos ativos`,viz:{type:"ring",value:pct(m.overdue,m.active.length)}},
-      {label:"Para hoje",value:num(m.dueToday),helper:"revisões vencendo hoje",viz:{value:pct(m.dueToday,m.active.length)}},
-      {label:"Próximos 7 dias",value:num(m.next7),helper:"carga prevista",viz:{value:pct(m.next7,m.active.length)}},
+    renderMetricStrip("error-volume-metrics",[
+      {label:"Criados",value:num(m.created.length),helper:`no ${labelPeriod()}`},
+      {label:"Únicos revisados",value:num(m.unique),helper:`${percent(pct(m.unique,m.active.length))} dos ativos`},
+      {label:"Dias com revisão",value:num(m.reviewDays),helper:`${percent(pct(m.reviewDays,eligibleDays(state.settings?.error_weekdays)))} dos permitidos`},
+      {label:"Tempo no Caderno",value:hours(m.seconds),helper:compare(m.seconds,m.prevSeconds)}
+    ]);
 
-      {label:"Próximos 30 dias",value:num(m.next30),helper:"carga prevista",viz:{value:pct(m.next30,m.active.length)}},
-      {label:"Retenção atual",value:percent(m.ret,1),helper:`${m.reviewed.length} CCQs estimados`,viz:{type:"ring",value:m.ret}},
-      {label:"Estabilidade média",value:days(mean(m.stability),1),helper:"CCQs revisados",viz:{value:Math.min(100,mean(m.stability)/90*100)}},
-      {label:"Estabilidade mediana",value:days(median(m.stability),1),helper:"CCQs revisados",viz:{value:Math.min(100,median(m.stability)/90*100)}},
-      {label:"Intervalo médio",value:days(mean(m.intervals),1),helper:"intervalo atual",viz:{value:Math.min(100,mean(m.intervals)/90*100)}},
+    renderMetricStrip("error-load-metrics",[
+      {label:"Para hoje",value:num(m.dueToday),helper:"vencendo hoje"},
+      {label:"Atrasados",value:num(m.overdue),helper:`${percent(pct(m.overdue,m.active.length))} dos ativos`},
+      {label:"Próximos 7 dias",value:num(m.next7),helper:"carga prevista"},
+      {label:"Próximos 30 dias",value:num(m.next30),helper:"carga prevista"}
+    ]);
 
-      {label:"Intervalo mediano",value:days(median(m.intervals),1),helper:"intervalo atual",viz:{value:Math.min(100,median(m.intervals)/90*100)}},
-      {label:"Revisões por CCQ",value:m.active.length?`${num(mean(m.active.map(x=>x.review_count)),1)}×`:"0×",helper:"média acumulada",viz:{value:Math.min(100,mean(m.active.map(x=>x.review_count))/6*100)}},
-      {label:"CCQs com 3+ revisões",value:num(m.threePlus),helper:`${percent(pct(m.threePlus,m.active.length))} dos ativos`,viz:{type:"ring",value:pct(m.threePlus,m.active.length)}},
-      {label:"Dias com revisão",value:num(m.reviewDays),helper:`${percent(pct(m.reviewDays,eligibleDays(state.settings?.error_weekdays)))} dos permitidos`,viz:{type:"ring",value:pct(m.reviewDays,eligibleDays(state.settings?.error_weekdays))}},
-      {label:"Média por dia ativo",value:m.reviewDays?num(m.reviews.length/m.reviewDays,1):"0",helper:"revisões/dia",viz:{value:Math.min(100,(m.reviewDays?m.reviews.length/m.reviewDays:0)/30*100)}},
-
-      {label:"CCQ ativo mais antigo",value:m.oldest?fmtDate(m.oldest):"—",helper:m.oldest?`${diffDays(new Date(),m.oldest)} dias no caderno`:"sem dados",viz:{value:Math.min(100,m.oldest?diffDays(new Date(),m.oldest)/180*100:0)}},
-      {label:"CCQ ativo mais recente",value:m.newest?fmtDate(m.newest):"—",helper:m.newest?`${diffDays(new Date(),m.newest)} dias atrás`:"sem dados",viz:{value:m.newest?Math.max(5,100-diffDays(new Date(),m.newest)):0}},
-      {label:"Área com mais CCQs",value:m.areaGroups[0]?.label||"—",helper:m.areaGroups[0]?`${m.areaGroups[0].count} ativos`:"sem dados",viz:{value:pct(m.areaGroups[0]?.count||0,m.active.length)}},
-      {label:"Matéria com mais CCQs",value:m.subjectGroups[0]?.label||"—",helper:m.subjectGroups[0]?`${m.subjectGroups[0].count} ativos`:"sem dados",viz:{value:pct(m.subjectGroups[0]?.count||0,m.active.length)}},
-      {label:"Originados de questões",value:num(m.originated),helper:`no ${labelPeriod()}`,viz:{value:Math.min(100,pct(m.originated,Math.max(1,m.created.length)))}},
-
-      {label:"Menor retenção/área",value:m.byArea[0]?.label||"—",helper:m.byArea[0]?`${percent(m.byArea[0].value,1)} · ${m.byArea[0].evidence} CCQs`:"evidência insuficiente",viz:{value:m.byArea[0]?.value||0}}
+    renderMetricStrip("error-memory-metrics",[
+      {label:"Já revisados",value:num(m.reviewed.length),helper:`${percent(pct(m.reviewed.length,m.active.length))} dos ativos`},
+      {label:"Nunca revisados",value:num(m.never),helper:`${percent(pct(m.never,m.active.length))} dos ativos`},
+      {label:"Estabilidade média",value:days(mean(m.stability),1),helper:`mediana ${days(median(m.stability),1)}`},
+      {label:"3+ revisões",value:num(m.threePlus),helper:`${percent(pct(m.threePlus,m.active.length))} dos ativos`}
     ]);
 
     const createdSeries=dateSeries(m.created,"created_at");
@@ -1211,11 +1207,16 @@
     const workload=[];
     for(let i=0;i<14;i++){
       const d=addDays(new Date(),i),key=dateKey(d);
-      workload.push({label:i===0?"hoje":new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"2-digit"}).format(d),value:m.active.filter(x=>dateKey(x.due_date)===key).length});
+      workload.push({
+        label:i===0?"hoje":new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"2-digit"}).format(d),
+        value:m.active.filter(x=>dateKey(x.due_date)===key).length
+      });
     }
     chart("chart-error-workload","bar",workload.map(x=>x.label),[{label:"CCQs",data:workload.map(x=>x.value)}]);
 
-    progressList("error-area-retention",m.byArea.slice(0,12).map(x=>({label:x.label,value:x.value,helper:`${x.evidence} CCQs`})));
+    progressList("error-area-retention",m.byArea.slice(0,12).map(x=>({
+      label:x.label,value:x.value,helper:`${x.evidence} CCQs`
+    })));
 
     const depth=[
       ["Nunca",m.active.filter(x=>x.review_count===0).length],
@@ -1238,14 +1239,16 @@
     }).sort((a,b)=>b.active-a.active).slice(0,50);
 
     table("error-subject-table",
-      [{label:"Matéria"},{label:"CCQs ativos",num:true},{label:"Revisões acumuladas",num:true},{label:"Retenção",num:true},{label:"Estabilidade",num:true},{label:"Intervalo",num:true},{label:"Atrasados",num:true}],
+      [{label:"Matéria"},{label:"CCQs ativos",num:true},{label:"Revisões",num:true},{label:"Retenção",num:true},{label:"Estabilidade",num:true},{label:"Intervalo",num:true},{label:"Atrasados",num:true}],
       subjRows.map(x=>[
-        `<strong>${esc(x.label)}</strong>`,num(x.active),num(x.reviews),x.ret?percent(x.ret,1):"—",x.stability?days(x.stability,1):"—",x.interval?days(x.interval,1):"—",num(x.late)
+        `<strong>${esc(x.label)}</strong>`,num(x.active),num(x.reviews),x.ret?percent(x.ret,1):"—",
+        x.stability?days(x.stability,1):"—",x.interval?days(x.interval,1):"—",num(x.late)
       ])
     );
 
     const persistent=m.active.slice().sort((a,b)=>b.review_count-a.review_count).slice(0,10).map(x=>({
-      label:(x.ccq||x.theme||"CCQ").slice(0,78),value:x.review_count,helper:`${subject(x)} · ${x.last_reviewed_at?`última ${fmtDate(x.last_reviewed_at)}`:"nunca revisado"}`
+      label:(x.ccq||x.theme||"CCQ").slice(0,78),value:x.review_count,
+      helper:`${subject(x)} · ${x.last_reviewed_at?`última ${fmtDate(x.last_reviewed_at)}`:"nunca revisado"}`
     }));
     progressList("error-most-reviewed",persistent,v=>`${num(v)}×`,Math.max(1,...persistent.map(x=>x.value)));
 
@@ -1259,8 +1262,92 @@
     if(m.byArea[0]) out.push({title:"Memória",text:`${m.byArea[0].label} apresenta a menor retenção estimada entre áreas com pelo menos 2 CCQs revisados: ${percent(m.byArea[0].value,1)}.`});
     if(m.threePlus) out.push({title:"Profundidade",text:`${m.threePlus} CCQs já passaram por pelo menos 3 revisões.`});
     if(m.originated) out.push({title:"Questões → Caderno",text:`${m.originated} erros de questões foram enviados ao Caderno no período.`});
-    out.push({title:"Limite atual",text:"O banco ainda não registra acerto/erro na revisão do CCQ; por isso não são inventadas métricas de domínio ou reincidência real."});
     insights("error-insights",out);
+  }
+
+
+
+  function renderQuestions() {
+    const attempts = current(state.period.questionAttempts,"answered_at");
+    const prevAttempts = previous(state.period.questionAttempts,"answered_at");
+    const correct = attempts.filter(x=>x.result==="correct").length;
+    const wrong = attempts.filter(x=>x.result==="wrong").length;
+    const accuracy = pct(correct,attempts.length);
+    const prevAccuracy = pct(prevAttempts.filter(x=>x.result==="correct").length,prevAttempts.length);
+    const sent = attempts.filter(x=>x.sent_to_error===true).length;
+    const conversion = pct(sent,wrong);
+
+    const sets = state.static.questionSets.filter(x =>
+      x.last_answered_at && (state.range==="all" || inCurrent(x.last_answered_at))
+    );
+    const completedSets = sets.filter(x=>x.completed===true).length;
+
+    renderSummary("question-summary",[
+      {label:"Simulados realizados",value:num(completedSets),helper:`${sets.length} com atividade no período`,progress:Math.min(100,completedSets*12)},
+      {label:"Questões respondidas",value:num(attempts.length),helper:compare(attempts.length,prevAttempts.length),progress:Math.min(100,attempts.length/500*100)},
+      {label:"Aproveitamento",value:percent(accuracy,1),helper:comparePP(accuracy,prevAccuracy),progress:accuracy},
+      {label:"Erros enviados ao Caderno",value:num(sent),helper:`${percent(conversion,1)} dos erros`,progress:conversion}
+    ]);
+
+    renderMetricStrip("question-performance-metrics",[
+      {label:"Acertos",value:num(correct),helper:percent(accuracy,1)},
+      {label:"Erros",value:num(wrong),helper:percent(pct(wrong,attempts.length),1)},
+      {label:"Questões/simulado",value:completedSets?num(attempts.length/completedSets,1):"—",helper:"média no período"},
+      {label:"Variação do acerto",value:state.range==="all"?"—":comparePP(accuracy,prevAccuracy),helper:"vs período anterior"}
+    ]);
+
+    renderMetricStrip("question-error-metrics",[
+      {label:"Erros totais",value:num(wrong),helper:"no período"},
+      {label:"Enviados ao Caderno",value:num(sent),helper:"transformados em revisão"},
+      {label:"Conversão de erros",value:percent(conversion,1),helper:"erros → Caderno"},
+      {label:"Erros não enviados",value:num(Math.max(0,wrong-sent)),helper:"ainda fora do Caderno"}
+    ]);
+
+    const series = dateSeries(attempts,"answered_at");
+    const dailyAcc = Array.from(group(attempts,x=>dateKey(x.answered_at)).entries())
+      .map(([key,rows])=>[key,pct(rows.filter(x=>x.result==="correct").length,rows.length)]);
+    const accMap = new Map(dailyAcc);
+
+    chart("chart-question-trend","bar",series.map(x=>x.label),[
+      {label:"Questões",data:series.map(x=>x.value)},
+      {type:"line",label:"Acerto %",data:series.map(x=>accMap.get(x.date)??null)}
+    ]);
+
+    const areas = Array.from(group(attempts,area).entries()).map(([label,rows])=>{
+      const c=rows.filter(x=>x.result==="correct").length;
+      const w=rows.length-c;
+      const s=rows.filter(x=>x.sent_to_error).length;
+      return {label,total:rows.length,correct:c,wrong:w,sent:s,accuracy:pct(c,rows.length)};
+    }).sort((a,b)=>b.total-a.total);
+
+    chart("chart-question-area","bar",areas.slice(0,10).map(x=>x.label),[
+      {label:"Acerto %",data:areas.slice(0,10).map(x=>Number(x.accuracy.toFixed(1)))}
+    ],{max:100});
+
+    table("question-area-table",
+      [{label:"Área"},{label:"Questões",num:true},{label:"Acertos",num:true},{label:"Erros",num:true},{label:"Aproveitamento",num:true},{label:"Enviados ao Caderno",num:true}],
+      areas.map(x=>[
+        `<strong>${esc(x.label)}</strong>`,num(x.total),num(x.correct),num(x.wrong),percent(x.accuracy,1),num(x.sent)
+      ])
+    );
+
+    table("question-set-table",
+      [{label:"Simulado"},{label:"Questões",num:true},{label:"Respondidas",num:true},{label:"Acertos",num:true},{label:"Erros",num:true},{label:"Aproveitamento",num:true},{label:"Ao Caderno",num:true}],
+      sets.slice().sort((a,b)=>String(b.last_answered_at||"").localeCompare(String(a.last_answered_at||""))).map(x=>[
+        `<strong>${esc(x.title||"Simulado")}</strong>`,
+        num(x.total_questions),num(x.answered_count),num(x.correct_count),num(x.wrong_count),
+        x.accuracy_percent==null?"—":percent(Number(x.accuracy_percent),1),num(x.sent_to_error_count)
+      ])
+    );
+
+    const out=[];
+    const weakest=areas.filter(x=>x.total>=5).slice().sort((a,b)=>a.accuracy-b.accuracy)[0];
+    const strongest=areas.filter(x=>x.total>=5).slice().sort((a,b)=>b.accuracy-a.accuracy)[0];
+    if(weakest) out.push({title:"Área com menor aproveitamento",text:`${weakest.label}: ${percent(weakest.accuracy,1)} em ${weakest.total} questões.`});
+    if(strongest) out.push({title:"Área com maior aproveitamento",text:`${strongest.label}: ${percent(strongest.accuracy,1)} em ${strongest.total} questões.`});
+    if(wrong) out.push({title:"Conversão para o Caderno",text:`${sent} de ${wrong} erros foram transformados em revisão (${percent(conversion,1)}).`});
+    if(state.range!=="all"&&prevAttempts.length) out.push({title:"Tendência",text:`O aproveitamento ${accuracy>=prevAccuracy?"subiu":"caiu"} ${num(Math.abs(accuracy-prevAccuracy),1)} p.p. em relação ao período anterior.`});
+    insights("question-insights",out);
   }
 
   // =========================================================
@@ -1272,6 +1359,7 @@
     renderLessons();
     renderFlashcards();
     renderErrors();
+    renderQuestions();
 
     const status = $("stats-status");
     if (state.sourceErrors.length) {

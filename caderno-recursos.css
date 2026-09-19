@@ -1,0 +1,28 @@
+
+.error-rich-builder,.error-rich-edit-builder{grid-column:1/-1;display:grid;gap:14px;padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--surface-2)}
+.error-rich-section{display:grid;gap:10px;padding:13px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+.error-rich-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.error-rich-section-head h3{margin:0;font-size:13px}.error-rich-section-head p{margin:4px 0 0;color:var(--muted);font-size:10px;line-height:1.45}
+.error-rich-actions,.rich-table-tools{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.error-rich-actions .button,.rich-table-tools .button{min-height:34px;padding:0 10px;font-size:10px}
+.error-rich-image-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.error-rich-image-row input[type=file]{width:100%;min-height:42px;padding:8px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text)}
+.error-rich-status{min-height:16px;color:var(--muted);font-size:9px}.error-rich-status.success{color:var(--success)}.error-rich-status.error{color:var(--danger)}
+.rich-table-tools select{min-height:34px;padding:0 9px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:10px}
+.rich-table-editor{overflow:auto;border:1px solid var(--border);border-radius:10px;background:var(--surface)}.rich-table-editor:empty{display:none}
+.rich-table-editor table,.error-rich-render-table{width:100%;border-collapse:collapse;min-width:420px}
+.rich-table-editor th,.rich-table-editor td,.error-rich-render-table th,.error-rich-render-table td{border:1px solid var(--border);padding:9px 10px;text-align:left;vertical-align:top;line-height:1.4}
+.rich-table-editor th,.error-rich-render-table th{background:var(--surface-2);font-weight:850}
+.rich-table-editor [contenteditable=true]{outline:0;min-width:80px}.rich-table-editor [contenteditable=true]:focus{box-shadow:inset 0 0 0 2px var(--accent-soft);background:var(--accent-soft)}
+.rich-arrow-list{display:grid;gap:8px}.rich-arrow-row{display:grid;grid-template-columns:minmax(0,1fr) 86px minmax(0,1fr) minmax(90px,.7fr) auto;gap:7px;align-items:center}
+.rich-arrow-row input,.rich-arrow-row select{width:100%;min-height:38px;padding:0 9px;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);font-size:10px}
+.rich-arrow-row button{min-width:38px;min-height:38px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);color:var(--danger);cursor:pointer}
+.error-rich-content{display:grid;gap:14px;margin-top:14px}.error-rich-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.error-rich-gallery figure{margin:0;padding:8px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2)}
+.error-rich-gallery img{display:block;width:100%;max-height:520px;object-fit:contain;border-radius:8px}
+.error-rich-table-wrap{overflow:auto;border:1px solid var(--border);border-radius:12px}
+.error-rich-arrow-render{display:grid;gap:8px}.error-rich-arrow-card{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:center;padding:11px 12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2)}
+.error-rich-arrow-card .arrow-symbol{min-width:42px;color:var(--accent);font-size:24px;font-weight:900;text-align:center}.error-rich-arrow-card strong{display:block;font-size:12px;line-height:1.4}.error-rich-arrow-card small{display:block;grid-column:1/-1;color:var(--muted);font-size:9px;text-align:center}
+.error-rich-edit-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.error-rich-edit-image{position:relative;padding:8px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+.error-rich-edit-image img{width:100%;max-height:180px;object-fit:contain;border-radius:7px}.error-rich-edit-image button{position:absolute;top:7px;right:7px;min-width:30px;min-height:30px;border:0;border-radius:999px;background:rgba(20,20,24,.75);color:white;cursor:pointer}
+@media(max-width:760px){.rich-arrow-row{grid-template-columns:1fr 70px 1fr}.rich-arrow-row input[data-arrow-label]{grid-column:1/-2}.error-rich-gallery,.error-rich-edit-gallery{grid-template-columns:1fr}}
