@@ -3,12 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Caderno · Resibulando</title>
-
   <link rel="icon" type="image/png" href="favicon.png?v=resibulando2">
   <link rel="stylesheet" href="style.css?v=12.1">
-  <link rel="stylesheet" href="caderno.css?v=15.0">
+  <link rel="stylesheet" href="caderno.css?v=16.0">
 </head>
 
 <body data-page="caderno">
@@ -21,203 +19,124 @@
 
         <header class="topbar notebook-topbar">
           <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
-
           <div class="page-heading">
             <span class="eyebrow" data-page-eyebrow></span>
             <h1 data-page-title></h1>
           </div>
-
           <span id="notebook-save-status" class="notebook-save-status"></span>
         </header>
 
         <nav class="notebook-tabs" aria-label="Seções do caderno">
-          <button class="notebook-tab active" type="button" data-notebook-tab="pages">Páginas</button>
-          <button class="notebook-tab" type="button" data-notebook-tab="editor">Nova aula</button>
+          <button class="notebook-tab active" type="button" data-notebook-tab="editor">Caderno</button>
           <button class="notebook-tab" type="button" data-notebook-tab="library">Biblioteca</button>
         </nav>
 
-        <!-- =====================================================
-             PÁGINAS
-             ===================================================== -->
-        <section id="notebook-view-pages" class="notebook-view">
-          <div class="notebook-view-head">
-            <div>
-              <h2>Páginas</h2>
-              <p>Seus cadernos já criados.</p>
-            </div>
-          </div>
+        <section id="notebook-view-editor" class="notebook-view">
+          <div class="notebook-workspace">
 
-          <div class="notebook-searchbar">
-            <input
-              id="notebook-pages-search"
-              type="search"
-              placeholder="Pesquisar tema, área ou data..."
-              autocomplete="off"
-            >
-          </div>
-
-          <div id="notebook-pages-list" class="notebook-pages-list">
-            <div class="notebook-empty-small">Carregando páginas...</div>
-          </div>
-        </section>
-
-        <!-- =====================================================
-             NOVA AULA / EDITOR
-             ===================================================== -->
-        <section id="notebook-view-editor" class="notebook-view" hidden>
-          <div class="notebook-view-head">
-            <div>
-              <h2>Nova aula</h2>
-              <p>Busque uma aula do cronograma para abrir ou criar o caderno.</p>
-            </div>
-          </div>
-
-          <div class="notebook-topic-search-shell">
-            <div class="notebook-searchbar">
-              <input
-                id="notebook-topic-search"
-                type="search"
-                placeholder="Pesquisar tema, matéria ou área..."
-                autocomplete="off"
-              >
-            </div>
-
-            <div id="notebook-topic-search-results" class="notebook-topic-search-results" hidden></div>
-          </div>
-
-          <div id="notebook-editor-empty" class="notebook-editor-empty">
-            <strong>Escolha uma aula acima</strong>
-            <p>O caderno será vinculado ao tema escolhido no seu cronograma.</p>
-          </div>
-
-          <div id="notebook-document-area" hidden>
-            <div id="notebook-toolbar" class="notebook-toolbar" aria-label="Ferramentas de edição">
-              <select id="notebook-block-style" class="notebook-style-select" aria-label="Estilo do texto">
-                <option value="p">Texto normal</option>
-                <option value="h1">Título grande</option>
-                <option value="h2">Título</option>
-                <option value="h3">Subtítulo</option>
-              </select>
-
-              <span class="notebook-toolbar-divider"></span>
-
-              <button id="notebook-bold" class="notebook-tool-button" type="button" title="Negrito">
-                <strong>B</strong>
-              </button>
-
-              <button id="notebook-italic" class="notebook-tool-button" type="button" title="Itálico">
-                <em>I</em>
-              </button>
-
-              <button id="notebook-underline" class="notebook-tool-button" type="button" title="Sublinhado">
-                <u>U</u>
-              </button>
-
-              <span class="notebook-toolbar-divider"></span>
-
-              <button id="notebook-list" class="notebook-tool-button notebook-tool-text" type="button">
-                • Lista
-              </button>
-
-              <button id="notebook-numbered-list" class="notebook-tool-button notebook-tool-text" type="button">
-                1. Lista
-              </button>
-
-              <span class="notebook-toolbar-divider"></span>
-
-              <button
-                id="notebook-template"
-                class="notebook-tool-button notebook-tool-text notebook-template-button"
-                type="button"
-                title="Inserir estrutura do resumo"
-              >
-                + Estrutura
-              </button>
-
-              <button
-                id="notebook-break"
-                class="notebook-tool-button"
-                type="button"
-                title="Inserir quebra de texto"
-              >
-                ↵
-              </button>
-
-              <button
-                id="notebook-divider"
-                class="notebook-tool-button notebook-tool-text"
-                type="button"
-                title="Inserir linha divisória"
-              >
-                — Linha
-              </button>
-
-              <span class="notebook-toolbar-divider"></span>
-
-              <div class="notebook-emoji-wrap">
-                <button
-                  id="notebook-emoji-toggle"
-                  class="notebook-tool-button"
-                  type="button"
-                  aria-expanded="false"
-                  title="Inserir emoji"
-                >
-                  ☺
-                </button>
-
-                <div id="notebook-emoji-menu" class="notebook-emoji-menu" hidden></div>
+            <aside class="notebook-topic-panel">
+              <div class="notebook-topic-panel-head">
+                <div>
+                  <span class="badge accent">Aulas</span>
+                  <h2>Temas</h2>
+                </div>
+                <span id="notebook-topic-count" class="notebook-topic-count">0</span>
               </div>
 
-              <span class="notebook-toolbar-divider"></span>
+              <div class="notebook-searchbar notebook-topic-searchbar">
+                <input
+                  id="notebook-topic-search"
+                  type="search"
+                  placeholder="Pesquisar tema, matéria ou área..."
+                  autocomplete="off"
+                >
+              </div>
 
-              <button class="notebook-study-tool important" type="button" data-study-block="important">
-                ★ Importante
-              </button>
+              <div id="notebook-topic-list" class="notebook-topic-list">
+                <div class="notebook-empty-small">Carregando temas...</div>
+              </div>
+            </aside>
 
-              <button class="notebook-study-tool warning" type="button" data-study-block="warning">
-                ⚠ Pegadinha
-              </button>
+            <section class="notebook-editor-column">
 
-              <button class="notebook-study-tool memory" type="button" data-study-block="memory">
-                🧠 Decore
-              </button>
+              <div id="notebook-toolbar" class="notebook-toolbar" aria-label="Ferramentas de edição">
+                <select id="notebook-block-style" class="notebook-style-select" aria-label="Estilo do texto" disabled>
+                  <option value="p">Texto normal</option>
+                  <option value="h1">Título grande</option>
+                  <option value="h2">Título</option>
+                  <option value="h3">Subtítulo</option>
+                </select>
 
-              <span class="notebook-toolbar-spacer"></span>
+                <span class="notebook-toolbar-divider"></span>
 
-              <button id="notebook-save-now" class="button secondary compact-button" type="button">
-                Salvar
-              </button>
-            </div>
+                <button id="notebook-bold" class="notebook-tool-button" type="button" title="Negrito" disabled><strong>B</strong></button>
+                <button id="notebook-italic" class="notebook-tool-button" type="button" title="Itálico" disabled><em>I</em></button>
+                <button id="notebook-underline" class="notebook-tool-button" type="button" title="Sublinhado" disabled><u>U</u></button>
 
-            <article class="notebook-paper">
-              <header class="notebook-document-head">
-                <h1 id="notebook-document-title">Tema</h1>
-                <div class="notebook-document-meta">
-                  <span id="notebook-document-area"></span>
-                  <span id="notebook-document-date"></span>
+                <span class="notebook-toolbar-divider"></span>
+
+                <button id="notebook-list" class="notebook-tool-button notebook-tool-text" type="button" title="Lista" disabled>• Lista</button>
+                <button id="notebook-numbered-list" class="notebook-tool-button notebook-tool-text" type="button" title="Lista numerada" disabled>1. Lista</button>
+
+                <span class="notebook-toolbar-divider"></span>
+
+                <button id="notebook-template" class="notebook-tool-button notebook-tool-text notebook-template-button" type="button" title="Inserir estrutura do resumo" disabled>+ Estrutura</button>
+                <button id="notebook-break" class="notebook-tool-button" type="button" title="Inserir quebra de texto" disabled>↵</button>
+                <button id="notebook-divider" class="notebook-tool-button notebook-tool-text" type="button" title="Inserir linha divisória" disabled>— Linha</button>
+
+                <span class="notebook-toolbar-divider"></span>
+
+                <div class="notebook-emoji-wrap">
+                  <button id="notebook-emoji-toggle" class="notebook-tool-button" type="button" title="Inserir emoji" aria-expanded="false" disabled>☺</button>
+                  <div id="notebook-emoji-menu" class="notebook-emoji-menu" hidden></div>
                 </div>
-              </header>
 
-              <div
-                id="notebook-editor"
-                class="notebook-editor"
-                contenteditable="true"
-                role="textbox"
-                aria-multiline="true"
-                spellcheck="true"
-              ></div>
-            </article>
+                <span class="notebook-toolbar-divider"></span>
+
+                <button class="notebook-study-tool important" type="button" data-study-block="important" disabled>★ Importante</button>
+                <button class="notebook-study-tool warning" type="button" data-study-block="warning" disabled>⚠ Pegadinha</button>
+                <button class="notebook-study-tool memory" type="button" data-study-block="memory" disabled>🧠 Decore</button>
+
+                <span class="notebook-toolbar-spacer"></span>
+
+                <button id="notebook-save-now" class="button secondary compact-button" type="button" disabled>Salvar</button>
+              </div>
+
+              <div id="notebook-editor-hint" class="notebook-editor-hint">
+                Selecione um tema na lista ao lado para abrir o caderno.
+              </div>
+
+              <div id="notebook-document-wrap" class="notebook-document-wrap" hidden>
+                <article class="notebook-paper">
+                  <header class="notebook-document-head">
+                    <h1 id="notebook-document-title">Tema</h1>
+                    <div class="notebook-document-meta">
+                      <span id="notebook-document-area"></span>
+                      <span id="notebook-document-date"></span>
+                    </div>
+                  </header>
+
+                  <div
+                    id="notebook-editor"
+                    class="notebook-editor"
+                    contenteditable="true"
+                    role="textbox"
+                    aria-multiline="true"
+                    spellcheck="true"
+                    data-placeholder="Comece a escrever seu resumo..."
+                  ></div>
+                </article>
+              </div>
+
+            </section>
           </div>
         </section>
 
-        <!-- =====================================================
-             BIBLIOTECA
-             ===================================================== -->
         <section id="notebook-view-library" class="notebook-view" hidden>
           <div class="notebook-view-head">
             <div>
               <h2>Biblioteca</h2>
-              <p>Selecione vários cadernos para editar, exportar ou apagar.</p>
+              <p>Selecione os cadernos que deseja exportar em PDF.</p>
             </div>
           </div>
 
@@ -236,63 +155,16 @@
               <span>Selecionar todos</span>
             </label>
 
-            <span id="notebook-library-selected-count" class="notebook-selected-count">
-              0 selecionados
-            </span>
-
+            <span id="notebook-library-selected-count" class="notebook-selected-count">0 selecionados</span>
             <span class="notebook-library-spacer"></span>
 
-            <button id="notebook-library-edit" class="button secondary compact-button" type="button" disabled>
-              Editar selecionados
-            </button>
-
-            <button id="notebook-library-export" class="button secondary compact-button" type="button" disabled>
-              Exportar PDF
-            </button>
-
-            <button id="notebook-library-delete" class="button secondary compact-button danger-button" type="button" disabled>
-              Apagar
-            </button>
+            <button id="notebook-library-export" class="button primary compact-button" type="button" disabled>Exportar PDF</button>
+            <button id="notebook-library-delete" class="button secondary compact-button danger-button" type="button" disabled>Apagar</button>
           </div>
 
           <div id="notebook-library-list" class="notebook-library-list">
             <div class="notebook-empty-small">Carregando biblioteca...</div>
           </div>
-
-          <section id="notebook-batch-editor" class="notebook-batch-editor" hidden>
-            <div class="notebook-batch-head">
-              <div>
-                <h3>Editar selecionados</h3>
-                <p>Edite vários cadernos na mesma tela e salve tudo de uma vez.</p>
-              </div>
-
-              <div class="notebook-batch-head-actions">
-                <button id="notebook-batch-close" class="button secondary compact-button" type="button">
-                  Fechar
-                </button>
-                <button id="notebook-batch-save" class="button primary compact-button" type="button">
-                  Salvar todos
-                </button>
-              </div>
-            </div>
-
-            <div class="notebook-batch-toolbar">
-              <select id="notebook-batch-block-style" class="notebook-style-select" aria-label="Estilo do texto">
-                <option value="p">Texto normal</option>
-                <option value="h1">Título grande</option>
-                <option value="h2">Título</option>
-                <option value="h3">Subtítulo</option>
-              </select>
-
-              <button type="button" class="notebook-tool-button" data-batch-command="bold"><strong>B</strong></button>
-              <button type="button" class="notebook-tool-button" data-batch-command="italic"><em>I</em></button>
-              <button type="button" class="notebook-tool-button" data-batch-command="underline"><u>U</u></button>
-              <button type="button" class="notebook-tool-button notebook-tool-text" data-batch-command="insertUnorderedList">• Lista</button>
-              <button type="button" class="notebook-tool-button notebook-tool-text" data-batch-command="insertOrderedList">1. Lista</button>
-            </div>
-
-            <div id="notebook-batch-editors" class="notebook-batch-editors"></div>
-          </section>
         </section>
 
       </div>
@@ -303,6 +175,6 @@
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
   <script src="supabase.js"></script>
   <script src="app.js?v=12.1"></script>
-  <script src="caderno.js?v=15.0"></script>
+  <script src="caderno.js?v=16.0"></script>
 </body>
 </html>

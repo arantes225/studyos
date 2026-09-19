@@ -1,26 +1,13 @@
 const notebookSb = window.supabaseClient;
 
 const NOTEBOOK_TEMPLATE = `
-  <h2>Doença</h2>
-  <p><br></p>
-
-  <h2>Epidemiologia</h2>
-  <p><br></p>
-
-  <h2>Quadro clínico</h2>
-  <p><br></p>
-
-  <h2>Diagnóstico</h2>
-  <p><br></p>
-
-  <h2>Tratamento</h2>
-  <p><br></p>
-
-  <h2>Profilaxia</h2>
-  <p><br></p>
-
-  <h2>Observações</h2>
-  <p><br></p>
+  <h2>Doença</h2><p><br></p>
+  <h2>Epidemiologia</h2><p><br></p>
+  <h2>Quadro clínico</h2><p><br></p>
+  <h2>Diagnóstico</h2><p><br></p>
+  <h2>Tratamento</h2><p><br></p>
+  <h2>Profilaxia</h2><p><br></p>
+  <h2>Observações</h2><p><br></p>
 `;
 
 const NOTEBOOK_EMOJIS = [
@@ -30,7 +17,7 @@ const NOTEBOOK_EMOJIS = [
   "🔥", "🎯", "⏱️", "📖", "🧩", "❗"
 ];
 
-const NOTEBOOK_ALLOWED_TAGS = new Set([
+const ALLOWED_TAGS = new Set([
   "P", "BR", "HR", "STRONG", "B", "EM", "I", "U",
   "H1", "H2", "H3", "UL", "OL", "LI",
   "DIV", "SPAN", "BLOCKQUOTE"
@@ -40,20 +27,17 @@ const notebookState = {
   user: null,
   topics: [],
   notes: new Map(),
-  activeView: "pages",
+  activeView: "editor",
   selectedTopicId: null,
-  editorDirty: false,
-  saveTimer: null,
-  savedRange: null,
-  pagesSearch: "",
   topicSearch: "",
   librarySearch: "",
   librarySelected: new Set(),
-  libraryActiveEditor: null,
-  librarySavedRange: null
+  editorDirty: false,
+  saveTimer: null,
+  savedRange: null
 };
 
-function notebookEscape(value) {
+function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -62,7 +46,7 @@ function notebookEscape(value) {
     .replaceAll("'", "&#039;");
 }
 
-function notebookNormalize(value) {
+function normalizeText(value) {
   return String(value || "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -70,111 +54,185 @@ function notebookNormalize(value) {
     .trim();
 }
 
-function notebookDateLabel(value) {
+function formatDate(value) {
   if (!value) return "Sem data";
 
   const raw = String(value).slice(0, 10);
   const parts = raw.split("-");
 
-  if (parts.length !== 3) return raw;
+  if (parts.length !== 3) {
+    return raw;
+  }
 
   const [year, month, day] = parts.map(Number);
-  const date = new Date(year, month - 1, day);
 
-  if (Number.isNaN(date.getTime())) return raw;
+  const date = new Date(
+    year,
+    month - 1,
+    day
+  );
 
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric"
-  }).format(date);
-}
+  if (Number.isNaN(date.getTime())) {
+    return raw;
+  }
 
-function setNotebookSaveStatus(text = "", type = "") {
-  const element = document.getElementById("notebook-save-status");
-  if (!element) return;
-
-  element.textContent = text;
-  element.className = `notebook-save-status ${type}`.trim();
-}
-
-function topicById(topicId) {
-  return notebookState.topics.find((topic) => topic.id === topicId) || null;
-}
-
-function noteByTopicId(topicId) {
-  return notebookState.notes.get(topicId) || null;
+  return new Intl.DateTimeFormat(
+    "pt-BR",
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    }
+  ).format(date);
 }
 
 function topicDate(topic, note = null) {
-  return topic?.scheduled_date
+  return (
+    topic?.scheduled_date
     || topic?.original_date
     || note?.created_at
-    || null;
+    || null
+  );
 }
 
-function noteTitle(note, topic) {
-  return topic?.theme
-    || note?.topic_title
-    || "Tema sem título";
+function topicById(id) {
+  return notebookState.topics.find(
+    (topic) => topic.id === id
+  ) || null;
 }
 
-function noteArea(note, topic) {
-  return topic?.area
-    || note?.area
-    || "Sem área";
+function noteByTopicId(id) {
+  return notebookState.notes.get(id) || null;
 }
 
-function sanitizeNotebookHtml(html) {
-  const template = document.createElement("template");
-  template.innerHTML = String(html || "");
+function setSaveStatus(
+  text = "",
+  type = ""
+) {
+  const element =
+    document.getElementById(
+      "notebook-save-status"
+    );
+
+  if (!element) {
+    return;
+  }
+
+  element.textContent = text;
+
+  element.className =
+    `notebook-save-status ${type}`.trim();
+}
+
+/* =========================================================
+   SANITIZAÇÃO
+   ========================================================= */
+
+function sanitizeHtml(html) {
+  const template =
+    document.createElement(
+      "template"
+    );
+
+  template.innerHTML =
+    String(html || "");
 
   function clean(node) {
-    for (const child of Array.from(node.childNodes)) {
-      if (child.nodeType === Node.COMMENT_NODE) {
+    for (
+      const child
+      of
+      Array.from(node.childNodes)
+    ) {
+      if (
+        child.nodeType ===
+        Node.COMMENT_NODE
+      ) {
         child.remove();
         continue;
       }
 
-      if (child.nodeType !== Node.ELEMENT_NODE) {
+      if (
+        child.nodeType !==
+        Node.ELEMENT_NODE
+      ) {
         continue;
       }
 
-      const tag = child.tagName;
+      if (
+        !ALLOWED_TAGS.has(
+          child.tagName
+        )
+      ) {
+        const fragment =
+          document.createDocumentFragment();
 
-      if (!NOTEBOOK_ALLOWED_TAGS.has(tag)) {
-        const fragment = document.createDocumentFragment();
-
-        while (child.firstChild) {
-          fragment.appendChild(child.firstChild);
+        while (
+          child.firstChild
+        ) {
+          fragment.appendChild(
+            child.firstChild
+          );
         }
 
         child.replaceWith(fragment);
+
         clean(node);
+
         continue;
       }
 
       let keepClass = "";
 
       if (
-        tag === "DIV"
-        && child.classList.contains("notebook-study-block")
+        child.tagName === "DIV"
+        &&
+        child.classList.contains(
+          "notebook-study-block"
+        )
       ) {
-        if (child.classList.contains("important")) {
-          keepClass = "notebook-study-block important";
-        } else if (child.classList.contains("warning")) {
-          keepClass = "notebook-study-block warning";
-        } else if (child.classList.contains("memory")) {
-          keepClass = "notebook-study-block memory";
+        if (
+          child.classList.contains(
+            "important"
+          )
+        ) {
+          keepClass =
+            "notebook-study-block important";
+        }
+
+        else if (
+          child.classList.contains(
+            "warning"
+          )
+        ) {
+          keepClass =
+            "notebook-study-block warning";
+        }
+
+        else if (
+          child.classList.contains(
+            "memory"
+          )
+        ) {
+          keepClass =
+            "notebook-study-block memory";
         }
       }
 
-      for (const attribute of Array.from(child.attributes)) {
-        child.removeAttribute(attribute.name);
+      for (
+        const attribute
+        of
+        Array.from(
+          child.attributes
+        )
+      ) {
+        child.removeAttribute(
+          attribute.name
+        );
       }
 
       if (keepClass) {
-        child.className = keepClass;
+        child.className =
+          keepClass;
       }
 
       clean(child);
@@ -182,295 +240,369 @@ function sanitizeNotebookHtml(html) {
   }
 
   clean(template.content);
+
   return template.innerHTML;
 }
 
-function getNotebookEntries() {
-  return Array.from(notebookState.notes.values())
-    .map((note) => {
-      const topic = topicById(note.topic_id);
+/* =========================================================
+   ABAS
+   ========================================================= */
 
-      return {
-        note,
-        topic,
-        title: noteTitle(note, topic),
-        area: noteArea(note, topic),
-        date: topicDate(topic, note)
-      };
-    })
-    .sort((a, b) => {
-      const dateA = a.date ? new Date(a.date).getTime() : 0;
-      const dateB = b.date ? new Date(b.date).getTime() : 0;
-      return dateB - dateA;
-    });
-}
-
-async function switchNotebookView(view, options = {}) {
+async function switchView(
+  view,
+  keepUrl = false
+) {
   if (
-    notebookState.activeView === "editor"
-    && view !== "editor"
-    && notebookState.editorDirty
+    notebookState.activeView ===
+      "editor"
+    &&
+    view !== "editor"
+    &&
+    notebookState.editorDirty
   ) {
-    await saveCurrentNotebook({ silent: true });
-  }
-
-  notebookState.activeView = view;
-
-  document.querySelectorAll("[data-notebook-tab]").forEach((button) => {
-    button.classList.toggle(
-      "active",
-      button.dataset.notebookTab === view
+    await saveCurrentNotebook(
+      true
     );
-  });
-
-  document.querySelectorAll(".notebook-view").forEach((section) => {
-    section.hidden = section.id !== `notebook-view-${view}`;
-  });
-
-  if (view === "pages") {
-    setNotebookSaveStatus("");
-    renderNotebookPages();
   }
 
-  if (view === "editor") {
-    if (!notebookState.selectedTopicId) {
-      setNotebookSaveStatus("");
-    } else {
-      const note = noteByTopicId(notebookState.selectedTopicId);
-      setNotebookSaveStatus(
-        note ? "Salvo" : "Novo caderno",
-        note ? "saved" : ""
+  notebookState.activeView =
+    view;
+
+  document
+    .querySelectorAll(
+      "[data-notebook-tab]"
+    )
+    .forEach(
+      (button) => {
+        button.classList.toggle(
+          "active",
+          button.dataset
+            .notebookTab ===
+            view
+        );
+      }
+    );
+
+  document
+    .querySelectorAll(
+      ".notebook-view"
+    )
+    .forEach(
+      (section) => {
+        section.hidden =
+          section.id !==
+          `notebook-view-${view}`;
+      }
+    );
+
+  if (
+    view === "editor"
+  ) {
+    renderTopicList();
+    renderDocument();
+  }
+
+  else if (
+    view === "library"
+  ) {
+    setSaveStatus("");
+    renderLibrary();
+  }
+
+  if (!keepUrl) {
+    const url =
+      new URL(
+        window.location.href
+      );
+
+    url.searchParams.set(
+      "view",
+      view
+    );
+
+    if (
+      view !== "editor"
+    ) {
+      url.searchParams.delete(
+        "topic_id"
       );
     }
-  }
 
-  if (view === "library") {
-    setNotebookSaveStatus("");
-    renderNotebookLibrary();
-  }
-
-  if (!options.keepUrl) {
-    const url = new URL(window.location.href);
-    url.searchParams.set("view", view);
-
-    if (view !== "editor") {
-      url.searchParams.delete("topic_id");
-    }
-
-    window.history.replaceState({}, "", url);
+    window.history.replaceState(
+      {},
+      "",
+      url
+    );
   }
 }
 
 /* =========================================================
-   PÁGINAS
+   LISTA DE TEMAS
    ========================================================= */
 
-function renderNotebookPages() {
-  const list = document.getElementById("notebook-pages-list");
-  if (!list) return;
+function renderTopicList() {
+  const list =
+    document.getElementById(
+      "notebook-topic-list"
+    );
 
-  const search = notebookNormalize(notebookState.pagesSearch);
+  const count =
+    document.getElementById(
+      "notebook-topic-count"
+    );
 
-  const entries = getNotebookEntries().filter((entry) => {
-    if (!search) return true;
+  if (!list) {
+    return;
+  }
 
-    return notebookNormalize([
-      entry.title,
-      entry.area,
-      notebookDateLabel(entry.date)
-    ].join(" ")).includes(search);
-  });
+  const query =
+    normalizeText(
+      notebookState.topicSearch
+    );
 
-  if (!entries.length) {
-    list.innerHTML = `
-      <div class="notebook-empty-small">
-        ${search
-          ? "Nenhuma página encontrada."
-          : "Você ainda não criou nenhum caderno."
+  const topics =
+    notebookState.topics.filter(
+      (topic) => {
+        if (!query) {
+          return true;
         }
-      </div>
-    `;
-    return;
+
+        return normalizeText(
+          [
+            topic.theme,
+            topic.area,
+            topic.materia,
+            formatDate(
+              topicDate(topic)
+            )
+          ]
+            .filter(Boolean)
+            .join(" ")
+        ).includes(query);
+      }
+    );
+
+  if (count) {
+    count.textContent =
+      topics.length;
   }
-
-  list.innerHTML = entries.map((entry) => `
-    <div class="notebook-page-row">
-      <strong>${notebookEscape(entry.title)}</strong>
-
-      <span class="notebook-page-area">
-        ${notebookEscape(entry.area)}
-      </span>
-
-      <span class="notebook-page-date">
-        ${notebookEscape(notebookDateLabel(entry.date))}
-      </span>
-
-      <button
-        class="notebook-open-button"
-        type="button"
-        data-open-notebook="${notebookEscape(entry.note.topic_id)}"
-      >
-        Abrir
-      </button>
-    </div>
-  `).join("");
-
-  list.querySelectorAll("[data-open-notebook]").forEach((button) => {
-    button.addEventListener("click", () => {
-      openNotebookTopic(button.dataset.openNotebook);
-    });
-  });
-}
-
-/* =========================================================
-   BUSCA DE AULAS / EDITOR
-   ========================================================= */
-
-function renderTopicSearchResults() {
-  const results = document.getElementById(
-    "notebook-topic-search-results"
-  );
-
-  if (!results) return;
-
-  const search = notebookNormalize(notebookState.topicSearch);
-
-  if (!search) {
-    results.hidden = true;
-    results.innerHTML = "";
-    return;
-  }
-
-  const topics = notebookState.topics
-    .filter((topic) => {
-      const haystack = notebookNormalize([
-        topic.theme,
-        topic.area,
-        topic.materia,
-        notebookDateLabel(topicDate(topic))
-      ].filter(Boolean).join(" "));
-
-      return haystack.includes(search);
-    })
-    .slice(0, 15);
-
-  results.hidden = false;
-
-  if (!topics.length) {
-    results.innerHTML = `
-      <div class="notebook-empty-small">
-        Nenhuma aula encontrada.
-      </div>
-    `;
-    return;
-  }
-
-  results.innerHTML = topics.map((topic) => {
-    const existing = noteByTopicId(topic.id);
-
-    return `
-      <button
-        class="notebook-search-result"
-        type="button"
-        data-select-topic="${notebookEscape(topic.id)}"
-      >
-        <span>
-          <strong>
-            ${notebookEscape(topic.theme || "Tema sem título")}
-          </strong>
-
-          <small>
-            ${notebookEscape(
-              [topic.area, topic.materia]
-                .filter(Boolean)
-                .join(" · ")
-            )}
-          </small>
-        </span>
-
-        <span>
-          ${
-            existing
-              ? "Abrir"
-              : notebookEscape(
-                  notebookDateLabel(topicDate(topic))
-                )
-          }
-        </span>
-      </button>
-    `;
-  }).join("");
-
-  results.querySelectorAll("[data-select-topic]").forEach((button) => {
-    button.addEventListener("click", () => {
-      openNotebookTopic(button.dataset.selectTopic);
-    });
-  });
-}
-
-async function openNotebookTopic(topicId) {
-  const topic = topicById(topicId);
-
-  if (!topic) return;
 
   if (
-    notebookState.selectedTopicId
-    && notebookState.selectedTopicId !== topicId
-    && notebookState.editorDirty
+    !topics.length
   ) {
-    await saveCurrentNotebook({
-      silent: true
-    });
+    list.innerHTML = `
+      <div class="notebook-empty-small">
+        Nenhum tema encontrado.
+      </div>
+    `;
+
+    return;
   }
 
-  notebookState.selectedTopicId = topicId;
-  notebookState.editorDirty = false;
+  list.innerHTML =
+    topics
+      .map(
+        (topic) => {
+          const note =
+            noteByTopicId(
+              topic.id
+            );
 
-  await switchNotebookView(
-    "editor",
-    {
-      keepUrl: true
+          const active =
+            topic.id ===
+            notebookState.selectedTopicId;
+
+          return `
+            <button
+              class="
+                notebook-topic-item
+                ${active ? "active" : ""}
+              "
+              type="button"
+              data-topic-id="${escapeHtml(
+                topic.id
+              )}"
+            >
+
+              <strong>
+                ${escapeHtml(
+                  topic.theme ||
+                  "Tema sem título"
+                )}
+              </strong>
+
+              <small>
+                ${escapeHtml(
+                  [
+                    topic.area,
+                    topic.materia,
+                    formatDate(
+                      topicDate(topic)
+                    )
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")
+                )}
+              </small>
+
+              <span class="notebook-topic-flags">
+
+                ${
+                  note?.content_html?.trim()
+                    ? `
+                      <span class="
+                        notebook-topic-flag
+                        has-note
+                      ">
+                        com anotações
+                      </span>
+                    `
+                    : ""
+                }
+
+                ${
+                  topic.completed_at
+                    ? `
+                      <span class="
+                        notebook-topic-flag
+                        completed
+                      ">
+                        concluída
+                      </span>
+                    `
+                    : ""
+                }
+
+              </span>
+
+            </button>
+          `;
+        }
+      )
+      .join("");
+
+  list
+    .querySelectorAll(
+      "[data-topic-id]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            openTopic(
+              button.dataset
+                .topicId
+            );
+          }
+        );
+      }
+    );
+}
+
+/* =========================================================
+   ATIVAR / DESATIVAR EDITOR
+   ========================================================= */
+
+function setEditorEnabled(
+  enabled
+) {
+  [
+    "notebook-block-style",
+    "notebook-bold",
+    "notebook-italic",
+    "notebook-underline",
+    "notebook-list",
+    "notebook-numbered-list",
+    "notebook-template",
+    "notebook-break",
+    "notebook-divider",
+    "notebook-emoji-toggle",
+    "notebook-save-now"
+  ].forEach(
+    (id) => {
+      const element =
+        document.getElementById(
+          id
+        );
+
+      if (element) {
+        element.disabled =
+          !enabled;
+      }
     }
   );
 
-  const searchInput =
-    document.getElementById(
-      "notebook-topic-search"
+  document
+    .querySelectorAll(
+      "[data-study-block]"
+    )
+    .forEach(
+      (button) => {
+        button.disabled =
+          !enabled;
+      }
+    );
+}
+
+/* =========================================================
+   DOCUMENTO
+   ========================================================= */
+
+function renderDocument() {
+  const topic =
+    topicById(
+      notebookState.selectedTopicId
     );
 
-  const searchResults =
+  const wrap =
     document.getElementById(
-      "notebook-topic-search-results"
+      "notebook-document-wrap"
     );
 
-  if (searchInput) {
-    searchInput.value = "";
-  }
-
-  if (searchResults) {
-    searchResults.hidden = true;
-    searchResults.innerHTML = "";
-  }
-
-  notebookState.topicSearch = "";
-
-  const empty =
+  const hint =
     document.getElementById(
-      "notebook-editor-empty"
+      "notebook-editor-hint"
     );
 
-  const documentArea =
+  const editor =
     document.getElementById(
-      "notebook-document-area"
+      "notebook-editor"
     );
 
-  if (empty) {
-    empty.hidden = true;
+  if (!topic) {
+    if (wrap) {
+      wrap.hidden =
+        true;
+    }
+
+    if (hint) {
+      hint.hidden =
+        false;
+    }
+
+    setEditorEnabled(
+      false
+    );
+
+    setSaveStatus("");
+
+    return;
   }
 
-  if (documentArea) {
-    documentArea.hidden = false;
+  if (wrap) {
+    wrap.hidden =
+      false;
   }
+
+  if (hint) {
+    hint.hidden =
+      true;
+  }
+
+  setEditorEnabled(
+    true
+  );
 
   const title =
     document.getElementById(
@@ -496,35 +628,37 @@ async function openNotebookTopic(topicId) {
   if (area) {
     area.textContent =
       topic.area ||
+      topic.materia ||
       "Sem área";
   }
 
   if (date) {
     date.textContent =
-      notebookDateLabel(
+      formatDate(
         topicDate(topic)
       );
   }
 
-  const editor =
-    document.getElementById(
-      "notebook-editor"
-    );
-
   const note =
     noteByTopicId(
-      topicId
+      topic.id
     );
 
-  if (!editor) return;
+  if (editor) {
+    editor.innerHTML =
+      sanitizeHtml(
+        note?.content_html ||
+        ""
+      );
+  }
 
-  editor.innerHTML =
-    sanitizeNotebookHtml(
-      note?.content_html ||
-      ""
-    );
+  notebookState.editorDirty =
+    false;
 
-  setNotebookSaveStatus(
+  notebookState.savedRange =
+    null;
+
+  setSaveStatus(
     note
       ? "Salvo"
       : "Novo caderno",
@@ -533,6 +667,40 @@ async function openNotebookTopic(topicId) {
       ? "saved"
       : ""
   );
+}
+
+async function openTopic(
+  topicId
+) {
+  if (
+    !topicById(topicId)
+  ) {
+    return;
+  }
+
+  if (
+    notebookState.selectedTopicId
+    &&
+    notebookState.selectedTopicId !==
+      topicId
+    &&
+    notebookState.editorDirty
+  ) {
+    await saveCurrentNotebook(
+      true
+    );
+  }
+
+  notebookState.selectedTopicId =
+    topicId;
+
+  await switchView(
+    "editor",
+    true
+  );
+
+  renderTopicList();
+  renderDocument();
 
   const url =
     new URL(
@@ -555,9 +723,13 @@ async function openNotebookTopic(topicId) {
     url
   );
 
-  window.requestAnimationFrame(
+  requestAnimationFrame(
     () => {
-      editor.focus();
+      document
+        .getElementById(
+          "notebook-editor"
+        )
+        ?.focus();
     }
   );
 }
@@ -566,12 +738,12 @@ async function openNotebookTopic(topicId) {
    SALVAMENTO
    ========================================================= */
 
-async function saveCurrentNotebook({
+async function saveCurrentNotebook(
   silent = false
-} = {}) {
-
+) {
   if (
-    !notebookState.user ||
+    !notebookState.user
+    ||
     !notebookState.selectedTopicId
   ) {
     return;
@@ -595,7 +767,7 @@ async function saveCurrentNotebook({
   }
 
   if (!silent) {
-    setNotebookSaveStatus(
+    setSaveStatus(
       "Salvando...",
       "saving"
     );
@@ -621,7 +793,7 @@ async function saveCurrentNotebook({
       null,
 
     content_html:
-      sanitizeNotebookHtml(
+      sanitizeHtml(
         editor.innerHTML
       )
   };
@@ -633,8 +805,9 @@ async function saveCurrentNotebook({
 
   let result;
 
-  if (existing?.id) {
-
+  if (
+    existing?.id
+  ) {
     result =
       await notebookSb
         .from(
@@ -655,9 +828,9 @@ async function saveCurrentNotebook({
           "id,user_id,topic_id,topic_title,area,materia,content_html,created_at,updated_at"
         )
         .single();
+  }
 
-  } else {
-
+  else {
     result =
       await notebookSb
         .from(
@@ -672,13 +845,14 @@ async function saveCurrentNotebook({
         .single();
   }
 
-  if (result.error) {
-
+  if (
+    result.error
+  ) {
     console.error(
       result.error
     );
 
-    setNotebookSaveStatus(
+    setSaveStatus(
       `Erro ao salvar: ${result.error.message}`,
       "error"
     );
@@ -694,17 +868,16 @@ async function saveCurrentNotebook({
   notebookState.editorDirty =
     false;
 
-  setNotebookSaveStatus(
+  renderTopicList();
+  renderLibrary();
+
+  setSaveStatus(
     "Salvo",
     "saved"
   );
-
-  renderNotebookPages();
-  renderNotebookLibrary();
 }
 
-function scheduleNotebookSave() {
-
+function scheduleSave() {
   notebookState.editorDirty =
     true;
 
@@ -712,26 +885,27 @@ function scheduleNotebookSave() {
     notebookState.saveTimer
   );
 
-  setNotebookSaveStatus(
+  setSaveStatus(
     "Alterações não salvas",
     "saving"
   );
 
   notebookState.saveTimer =
-    window.setTimeout(
+    setTimeout(
       () => {
-        saveCurrentNotebook();
+        saveCurrentNotebook(
+          false
+        );
       },
       700
     );
 }
 
 /* =========================================================
-   TOOLBAR DO EDITOR
+   SELEÇÃO DE TEXTO
    ========================================================= */
 
-function saveNotebookSelection() {
-
+function saveSelection() {
   const editor =
     document.getElementById(
       "notebook-editor"
@@ -765,39 +939,58 @@ function saveNotebookSelection() {
     range.cloneRange();
 }
 
-function restoreNotebookSelection() {
-
+function restoreSelection() {
   const editor =
     document.getElementById(
       "notebook-editor"
     );
 
-  if (!editor) return;
-
-  editor.focus();
-
-  if (
-    !notebookState.savedRange
-  ) {
+  if (!editor) {
     return;
   }
+
+  editor.focus();
 
   const selection =
     window.getSelection();
 
   selection.removeAllRanges();
 
-  selection.addRange(
+  if (
     notebookState.savedRange
+  ) {
+    selection.addRange(
+      notebookState.savedRange
+    );
+
+    return;
+  }
+
+  const range =
+    document.createRange();
+
+  range.selectNodeContents(
+    editor
+  );
+
+  range.collapse(
+    false
+  );
+
+  selection.addRange(
+    range
   );
 }
 
-function applyNotebookCommand(
+/* =========================================================
+   COMANDOS
+   ========================================================= */
+
+function execEditorCommand(
   command,
   value = null
 ) {
-
-  restoreNotebookSelection();
+  restoreSelection();
 
   document.execCommand(
     command,
@@ -805,145 +998,17 @@ function applyNotebookCommand(
     value
   );
 
-  saveNotebookSelection();
+  saveSelection();
 
-  scheduleNotebookSave();
-}
-
-function insertNotebookEmoji(
-  emoji
-) {
-
-  restoreNotebookSelection();
-
-  document.execCommand(
-    "insertText",
-    false,
-    emoji
-  );
-
-  saveNotebookSelection();
-
-  scheduleNotebookSave();
-
-  closeNotebookEmojiMenu();
-}
-
-function closeNotebookEmojiMenu() {
-
-  const menu =
-    document.getElementById(
-      "notebook-emoji-menu"
-    );
-
-  const toggle =
-    document.getElementById(
-      "notebook-emoji-toggle"
-    );
-
-  if (menu) {
-    menu.hidden = true;
-  }
-
-  if (toggle) {
-    toggle.setAttribute(
-      "aria-expanded",
-      "false"
-    );
-  }
-}
-
-function toggleNotebookEmojiMenu() {
-
-  const menu =
-    document.getElementById(
-      "notebook-emoji-menu"
-    );
-
-  const toggle =
-    document.getElementById(
-      "notebook-emoji-toggle"
-    );
-
-  if (
-    !menu ||
-    !toggle
-  ) {
-    return;
-  }
-
-  const open =
-    menu.hidden;
-
-  menu.hidden =
-    !open;
-
-  toggle.setAttribute(
-    "aria-expanded",
-    open
-      ? "true"
-      : "false"
-  );
-}
-
-function renderNotebookEmojiMenu() {
-
-  const menu =
-    document.getElementById(
-      "notebook-emoji-menu"
-    );
-
-  if (!menu) return;
-
-  menu.innerHTML =
-    NOTEBOOK_EMOJIS
-      .map(
-        (emoji) => `
-          <button
-            class="notebook-emoji-button"
-            type="button"
-            data-notebook-emoji="${emoji}"
-            title="Inserir ${emoji}"
-          >
-            ${emoji}
-          </button>
-        `
-      )
-      .join("");
-
-  menu
-    .querySelectorAll(
-      "[data-notebook-emoji]"
-    )
-    .forEach(
-      (button) => {
-
-        button.addEventListener(
-          "mousedown",
-          (event) =>
-            event.preventDefault()
-        );
-
-        button.addEventListener(
-          "click",
-          () => {
-            insertNotebookEmoji(
-              button.dataset
-                .notebookEmoji
-            );
-          }
-        );
-      }
-    );
+  scheduleSave();
 }
 
 /* =========================================================
-   BOTÃO + ESTRUTURA
+   ESTRUTURA
    ========================================================= */
 
-function insertNotebookTemplate() {
-
-  restoreNotebookSelection();
+function insertTemplate() {
+  restoreSelection();
 
   document.execCommand(
     "insertHTML",
@@ -951,18 +1016,17 @@ function insertNotebookTemplate() {
     NOTEBOOK_TEMPLATE
   );
 
-  saveNotebookSelection();
+  saveSelection();
 
-  scheduleNotebookSave();
+  scheduleSave();
 }
 
 /* =========================================================
-   QUEBRA DE TEXTO
+   QUEBRA
    ========================================================= */
 
-function insertNotebookBreak() {
-
-  restoreNotebookSelection();
+function insertBreak() {
+  restoreSelection();
 
   document.execCommand(
     "insertHTML",
@@ -970,38 +1034,36 @@ function insertNotebookBreak() {
     "<p><br></p><p><br></p>"
   );
 
-  saveNotebookSelection();
+  saveSelection();
 
-  scheduleNotebookSave();
+  scheduleSave();
 }
 
 /* =========================================================
-   LINHA DIVISÓRIA
+   LINHA
    ========================================================= */
 
-function insertNotebookDivider() {
-
-  restoreNotebookSelection();
+function insertDivider() {
+  restoreSelection();
 
   document.execCommand(
     "insertHTML",
     false,
-    '<hr class="notebook-content-divider"><p><br></p>'
+    "<hr><p><br></p>"
   );
 
-  saveNotebookSelection();
+  saveSelection();
 
-  scheduleNotebookSave();
+  scheduleSave();
 }
 
 /* =========================================================
-   BLOCOS IMPORTANTES
+   BLOCOS DE ESTUDO
    ========================================================= */
 
 function insertStudyBlock(
   type
 ) {
-
   const labels = {
     important:
       "★ Importante",
@@ -1013,25 +1075,26 @@ function insertStudyBlock(
       "🧠 Decore"
   };
 
-  if (!labels[type]) {
+  if (
+    !labels[type]
+  ) {
     return;
   }
 
-  restoreNotebookSelection();
+  restoreSelection();
 
-  const selection =
-    window.getSelection();
-
-  const selectedText =
-    selection
+  const selected =
+    window
+      .getSelection()
       ?.toString()
       .trim()
-    || "";
+    ||
+    "";
 
   const content =
-    selectedText
-      ? notebookEscape(
-          selectedText
+    selected
+      ? escapeHtml(
+          selected
         )
       : "Escreva aqui...";
 
@@ -1039,7 +1102,9 @@ function insertStudyBlock(
     "insertHTML",
     false,
     `
-      <div class="notebook-study-block ${type}">
+      <div
+        class="notebook-study-block ${type}"
+      >
         <strong>
           ${labels[type]}
         </strong>
@@ -1053,59 +1118,240 @@ function insertStudyBlock(
     `
   );
 
-  saveNotebookSelection();
+  saveSelection();
 
-  scheduleNotebookSave();
+  scheduleSave();
+}
+
+/* =========================================================
+   EMOJIS
+   ========================================================= */
+
+function renderEmojiMenu() {
+  const menu =
+    document.getElementById(
+      "notebook-emoji-menu"
+    );
+
+  if (!menu) {
+    return;
+  }
+
+  menu.innerHTML =
+    NOTEBOOK_EMOJIS
+      .map(
+        (emoji) => `
+          <button
+            class="notebook-emoji-button"
+            type="button"
+            data-emoji="${emoji}"
+            title="Inserir ${emoji}"
+          >
+            ${emoji}
+          </button>
+        `
+      )
+      .join("");
+
+  menu
+    .querySelectorAll(
+      "[data-emoji]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "mousedown",
+          (event) =>
+            event.preventDefault()
+        );
+
+        button.addEventListener(
+          "click",
+          () => {
+            restoreSelection();
+
+            document.execCommand(
+              "insertText",
+              false,
+              button.dataset.emoji
+            );
+
+            saveSelection();
+
+            scheduleSave();
+
+            closeEmojiMenu();
+          }
+        );
+      }
+    );
+}
+
+function toggleEmojiMenu() {
+  const menu =
+    document.getElementById(
+      "notebook-emoji-menu"
+    );
+
+  const toggle =
+    document.getElementById(
+      "notebook-emoji-toggle"
+    );
+
+  if (
+    !menu ||
+    !toggle ||
+    toggle.disabled
+  ) {
+    return;
+  }
+
+  const opening =
+    menu.hidden;
+
+  menu.hidden =
+    !opening;
+
+  toggle.setAttribute(
+    "aria-expanded",
+    opening
+      ? "true"
+      : "false"
+  );
+}
+
+function closeEmojiMenu() {
+  const menu =
+    document.getElementById(
+      "notebook-emoji-menu"
+    );
+
+  const toggle =
+    document.getElementById(
+      "notebook-emoji-toggle"
+    );
+
+  if (menu) {
+    menu.hidden =
+      true;
+  }
+
+  if (toggle) {
+    toggle.setAttribute(
+      "aria-expanded",
+      "false"
+    );
+  }
 }
 
 /* =========================================================
    BIBLIOTECA
    ========================================================= */
 
-function filteredLibraryEntries() {
+function getLibraryEntries() {
+  return Array
+    .from(
+      notebookState.notes.values()
+    )
+    .map(
+      (note) => {
+        const topic =
+          topicById(
+            note.topic_id
+          );
 
-  const search =
-    notebookNormalize(
+        return {
+          note,
+
+          topic,
+
+          title:
+            topic?.theme
+            ||
+            note.topic_title
+            ||
+            "Tema sem título",
+
+          area:
+            topic?.area
+            ||
+            note.area
+            ||
+            "Sem área",
+
+          date:
+            topicDate(
+              topic,
+              note
+            )
+        };
+      }
+    )
+    .sort(
+      (a, b) => {
+        const aTime =
+          a.date
+            ? new Date(
+                a.date
+              ).getTime()
+            : 0;
+
+        const bTime =
+          b.date
+            ? new Date(
+                b.date
+              ).getTime()
+            : 0;
+
+        return bTime - aTime;
+      }
+    );
+}
+
+function filteredLibraryEntries() {
+  const query =
+    normalizeText(
       notebookState.librarySearch
     );
 
-  return getNotebookEntries()
+  return getLibraryEntries()
     .filter(
       (entry) => {
-
-        if (!search) {
+        if (!query) {
           return true;
         }
 
-        return notebookNormalize(
+        return normalizeText(
           [
             entry.title,
             entry.area,
-            notebookDateLabel(
+            formatDate(
               entry.date
             )
           ].join(" ")
         ).includes(
-          search
+          query
         );
       }
     );
 }
 
-function renderNotebookLibrary() {
-
+function renderLibrary() {
   const list =
     document.getElementById(
       "notebook-library-list"
     );
 
-  if (!list) return;
+  if (!list) {
+    return;
+  }
 
   const entries =
     filteredLibraryEntries();
 
-  if (!entries.length) {
-
+  if (
+    !entries.length
+  ) {
     list.innerHTML = `
       <div class="notebook-empty-small">
         ${
@@ -1116,93 +1362,138 @@ function renderNotebookLibrary() {
       </div>
     `;
 
-  } else {
+    updateLibraryActions();
 
-    list.innerHTML =
-      entries
-        .map(
-          (entry) => `
-            <label class="notebook-library-row">
-
-              <input
-                class="notebook-library-check"
-                type="checkbox"
-                value="${notebookEscape(entry.note.id)}"
-                data-library-note="${notebookEscape(entry.note.id)}"
-                ${
-                  notebookState.librarySelected.has(
-                    entry.note.id
-                  )
-                    ? "checked"
-                    : ""
-                }
-              >
-
-              <strong>
-                ${notebookEscape(entry.title)}
-              </strong>
-
-              <span class="notebook-page-area">
-                ${notebookEscape(entry.area)}
-              </span>
-
-              <span class="notebook-page-date">
-                ${notebookEscape(
-                  notebookDateLabel(
-                    entry.date
-                  )
-                )}
-              </span>
-
-            </label>
-          `
-        )
-        .join("");
-
-    list
-      .querySelectorAll(
-        "[data-library-note]"
-      )
-      .forEach(
-        (checkbox) => {
-
-          checkbox.addEventListener(
-            "change",
-            () => {
-
-              if (
-                checkbox.checked
-              ) {
-
-                notebookState
-                  .librarySelected
-                  .add(
-                    checkbox.dataset
-                      .libraryNote
-                  );
-
-              } else {
-
-                notebookState
-                  .librarySelected
-                  .delete(
-                    checkbox.dataset
-                      .libraryNote
-                  );
-              }
-
-              updateLibraryActions();
-            }
-          );
-        }
-      );
+    return;
   }
+
+  list.innerHTML =
+    entries
+      .map(
+        (entry) => `
+          <div class="notebook-library-row">
+
+            <input
+              class="notebook-library-check"
+              type="checkbox"
+              data-note-id="${escapeHtml(
+                entry.note.id
+              )}"
+              ${
+                notebookState.librarySelected.has(
+                  entry.note.id
+                )
+                  ? "checked"
+                  : ""
+              }
+            >
+
+            <strong>
+              ${escapeHtml(
+                entry.title
+              )}
+            </strong>
+
+            <span class="notebook-page-area">
+              ${escapeHtml(
+                entry.area
+              )}
+            </span>
+
+            <span class="notebook-page-date">
+              ${escapeHtml(
+                formatDate(
+                  entry.date
+                )
+              )}
+            </span>
+
+            <button
+              class="notebook-open-button"
+              type="button"
+              data-open-topic="${escapeHtml(
+                entry.note.topic_id
+              )}"
+            >
+              Abrir
+            </button>
+
+          </div>
+        `
+      )
+      .join("");
+
+  list
+    .querySelectorAll(
+      "[data-note-id]"
+    )
+    .forEach(
+      (checkbox) => {
+        checkbox.addEventListener(
+          "change",
+          () => {
+            const noteId =
+              checkbox.dataset
+                .noteId;
+
+            if (
+              checkbox.checked
+            ) {
+              notebookState
+                .librarySelected
+                .add(
+                  noteId
+                );
+            }
+
+            else {
+              notebookState
+                .librarySelected
+                .delete(
+                  noteId
+                );
+            }
+
+            updateLibraryActions();
+          }
+        );
+      }
+    );
+
+  list
+    .querySelectorAll(
+      "[data-open-topic]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            openTopic(
+              button.dataset
+                .openTopic
+            );
+          }
+        );
+      }
+    );
 
   updateLibraryActions();
 }
 
-function updateLibraryActions() {
+function selectedEntries() {
+  return getLibraryEntries()
+    .filter(
+      (entry) =>
+        notebookState
+          .librarySelected
+          .has(
+            entry.note.id
+          )
+    );
+}
 
+function updateLibraryActions() {
   const count =
     notebookState
       .librarySelected
@@ -1211,11 +1502,6 @@ function updateLibraryActions() {
   const countElement =
     document.getElementById(
       "notebook-library-selected-count"
-    );
-
-  const editButton =
-    document.getElementById(
-      "notebook-library-edit"
     );
 
   const exportButton =
@@ -1234,7 +1520,6 @@ function updateLibraryActions() {
     );
 
   if (countElement) {
-
     countElement.textContent =
       `${count} selecionado${
         count === 1
@@ -1243,26 +1528,21 @@ function updateLibraryActions() {
       }`;
   }
 
-  [
-    editButton,
-    exportButton,
-    deleteButton
-  ].forEach(
-    (button) => {
+  if (exportButton) {
+    exportButton.disabled =
+      count === 0;
+  }
 
-      if (button) {
-        button.disabled =
-          count === 0;
-      }
-    }
-  );
+  if (deleteButton) {
+    deleteButton.disabled =
+      count === 0;
+  }
 
   if (selectAll) {
-
     const visible =
       filteredLibraryEntries();
 
-    selectAll.checked =
+    const allChecked =
       visible.length > 0
       &&
       visible.every(
@@ -1274,9 +1554,7 @@ function updateLibraryActions() {
             )
       );
 
-    selectAll.indeterminate =
-      !selectAll.checked
-      &&
+    const someChecked =
       visible.some(
         (entry) =>
           notebookState
@@ -1285,375 +1563,53 @@ function updateLibraryActions() {
               entry.note.id
             )
       );
+
+    selectAll.checked =
+      allChecked;
+
+    selectAll.indeterminate =
+      !allChecked
+      &&
+      someChecked;
   }
 }
 
-function selectedLibraryEntries() {
-
-  return getNotebookEntries()
-    .filter(
-      (entry) =>
-        notebookState
-          .librarySelected
-          .has(
-            entry.note.id
-          )
-    );
-}
-
-function openBatchEditor() {
-
-  const section =
-    document.getElementById(
-      "notebook-batch-editor"
-    );
-
-  const container =
-    document.getElementById(
-      "notebook-batch-editors"
-    );
-
-  if (
-    !section ||
-    !container
-  ) {
-    return;
-  }
-
-  const entries =
-    selectedLibraryEntries();
-
-  if (!entries.length) {
-    return;
-  }
-
-  container.innerHTML =
-    entries
-      .map(
-        (entry) => `
-          <article class="notebook-batch-card">
-
-            <header class="notebook-batch-card-head">
-
-              <strong>
-                ${notebookEscape(entry.title)}
-              </strong>
-
-              <small>
-                ${notebookEscape(entry.area)}
-                ·
-                ${notebookEscape(
-                  notebookDateLabel(
-                    entry.date
-                  )
-                )}
-              </small>
-
-            </header>
-
-            <div
-              class="notebook-batch-content"
-              contenteditable="true"
-              spellcheck="true"
-              data-batch-editor="${notebookEscape(entry.note.id)}"
-            >${sanitizeNotebookHtml(entry.note.content_html || "")}</div>
-
-          </article>
-        `
-      )
-      .join("");
-
-  section.hidden =
-    false;
-
-  container
-    .querySelectorAll(
-      "[data-batch-editor]"
-    )
-    .forEach(
-      (editor) => {
-
-        [
-          "focus",
-          "keyup",
-          "mouseup"
-        ].forEach(
-          (eventName) => {
-
-            editor.addEventListener(
-              eventName,
-              () => {
-                saveLibrarySelection(
-                  editor
-                );
-              }
-            );
-          }
-        );
-      }
-    );
-
-  section.scrollIntoView({
-    behavior:
-      "smooth",
-
-    block:
-      "start"
-  });
-}
-
-function closeBatchEditor() {
-
-  const section =
-    document.getElementById(
-      "notebook-batch-editor"
-    );
-
-  if (section) {
-    section.hidden = true;
-  }
-
-  notebookState.libraryActiveEditor =
-    null;
-
-  notebookState.librarySavedRange =
-    null;
-}
-
-function saveLibrarySelection(
-  editor
-) {
-
-  const selection =
-    window.getSelection();
-
-  if (
-    !editor ||
-    !selection ||
-    !selection.rangeCount
-  ) {
-    return;
-  }
-
-  const range =
-    selection.getRangeAt(
-      0
-    );
-
-  if (
-    !editor.contains(
-      range.commonAncestorContainer
-    )
-  ) {
-    return;
-  }
-
-  notebookState.libraryActiveEditor =
-    editor;
-
-  notebookState.librarySavedRange =
-    range.cloneRange();
-}
-
-function restoreLibrarySelection() {
-
-  const editor =
-    notebookState
-      .libraryActiveEditor;
-
-  const range =
-    notebookState
-      .librarySavedRange;
-
-  if (!editor) {
-    return false;
-  }
-
-  editor.focus();
-
-  if (range) {
-
-    const selection =
-      window.getSelection();
-
-    selection.removeAllRanges();
-
-    selection.addRange(
-      range
-    );
-  }
-
-  return true;
-}
-
-function applyBatchCommand(
-  command,
-  value = null
-) {
-
-  if (
-    !restoreLibrarySelection()
-  ) {
-    return;
-  }
-
-  document.execCommand(
-    command,
-    false,
-    value
-  );
-
-  saveLibrarySelection(
-    notebookState
-      .libraryActiveEditor
-  );
-}
-
-async function saveBatchEditors() {
-
-  const editors =
-    Array.from(
-      document.querySelectorAll(
-        "[data-batch-editor]"
-      )
-    );
-
-  if (!editors.length) {
-    return;
-  }
-
-  const button =
-    document.getElementById(
-      "notebook-batch-save"
-    );
-
-  if (button) {
-
-    button.disabled =
-      true;
-
-    button.textContent =
-      "Salvando...";
-  }
-
-  try {
-
-    for (
-      const editor
-      of
-      editors
-    ) {
-
-      const noteId =
-        editor.dataset
-          .batchEditor;
-
-      const entry =
-        getNotebookEntries()
-          .find(
-            (item) =>
-              item.note.id ===
-              noteId
-          );
-
-      if (!entry) {
-        continue;
-      }
-
-      const contentHtml =
-        sanitizeNotebookHtml(
-          editor.innerHTML
-        );
-
-      const {
-        data,
-        error
-      } =
-        await notebookSb
-          .from(
-            "study_notes"
-          )
-          .update({
-            content_html:
-              contentHtml
-          })
-          .eq(
-            "id",
-            noteId
-          )
-          .eq(
-            "user_id",
-            notebookState.user.id
-          )
-          .select(
-            "id,user_id,topic_id,topic_title,area,materia,content_html,created_at,updated_at"
-          )
-          .single();
-
-      if (error) {
-        throw error;
-      }
-
-      notebookState.notes.set(
-        data.topic_id,
-        data
-      );
-    }
-
-    renderNotebookPages();
-    renderNotebookLibrary();
-
-    if (button) {
-      button.textContent =
-        "Salvo";
-    }
-
-    window.setTimeout(
-      () => {
-
-        if (button) {
-
-          button.textContent =
-            "Salvar todos";
-        }
-      },
-      1200
-    );
-
-  } catch (error) {
-
-    console.error(
-      error
-    );
-
-    alert(
-      `Não foi possível salvar: ${error.message}`
-    );
-
-  } finally {
-
-    if (button) {
-      button.disabled = false;
-    }
-  }
-}
-
-function htmlToPdfText(
+/* =========================================================
+   PDF
+   ========================================================= */
+
+function htmlToPdfBlocks(
   html
 ) {
-
   const container =
     document.createElement(
       "div"
     );
 
   container.innerHTML =
-    sanitizeNotebookHtml(
+    sanitizeHtml(
       html
     );
 
-  const blocks =
-    [];
+  const blocks = [];
+
+  function add(
+    text,
+    type = "text"
+  ) {
+    const clean =
+      String(
+        text || ""
+      ).trim();
+
+    if (clean) {
+      blocks.push({
+        type,
+        text:
+          clean
+      });
+    }
+  }
 
   for (
     const child
@@ -1662,25 +1618,68 @@ function htmlToPdfText(
       container.children
     )
   ) {
+    if (
+      child.tagName ===
+      "HR"
+    ) {
+      blocks.push({
+        type:
+          "divider",
 
-    const text =
-      child.innerText
-        .trim();
+        text:
+          ""
+      });
 
-    if (!text) {
       continue;
     }
 
-    blocks.push({
-      type:
-        /^H[1-3]$/.test(
-          child.tagName
-        )
-          ? "heading"
-          : "text",
+    if (
+      /^H[1-3]$/.test(
+        child.tagName
+      )
+    ) {
+      add(
+        child.innerText,
+        "heading"
+      );
 
-      text
-    });
+      continue;
+    }
+
+    if (
+      child.tagName ===
+        "UL"
+      ||
+      child.tagName ===
+        "OL"
+    ) {
+      Array
+        .from(
+          child.children
+        )
+        .forEach(
+          (
+            item,
+            index
+          ) => {
+            const prefix =
+              child.tagName ===
+                "OL"
+                ? `${index + 1}. `
+                : "• ";
+
+            add(
+              `${prefix}${item.innerText}`
+            );
+          }
+        );
+
+      continue;
+    }
+
+    add(
+      child.innerText
+    );
   }
 
   return blocks;
@@ -1691,7 +1690,6 @@ function writePdfBlock(
   block,
   layout
 ) {
-
   const margin =
     layout.margin;
 
@@ -1702,26 +1700,58 @@ function writePdfBlock(
       margin * 2
     );
 
-  let y =
-    layout.y;
+  if (
+    block.type ===
+    "divider"
+  ) {
+    if (
+      layout.y >
+      layout.height
+      -
+      margin
+      -
+      8
+    ) {
+      doc.addPage();
 
-  const isHeading =
+      layout.y =
+        margin;
+    }
+
+    doc.setDrawColor(
+      190
+    );
+
+    doc.line(
+      margin,
+      layout.y,
+      layout.width - margin,
+      layout.y
+    );
+
+    layout.y +=
+      8;
+
+    return;
+  }
+
+  const heading =
     block.type ===
     "heading";
 
   const fontSize =
-    isHeading
+    heading
       ? 13
       : 10;
 
   const lineHeight =
-    isHeading
-      ? 6.2
-      : 5;
+    heading
+      ? 6.5
+      : 5.2;
 
   doc.setFont(
     "helvetica",
-    isHeading
+    heading
       ? "bold"
       : "normal"
   );
@@ -1741,45 +1771,41 @@ function writePdfBlock(
     of
     lines
   ) {
-
     if (
-      y >
+      layout.y >
       layout.height
       -
       margin
     ) {
-
       doc.addPage();
 
-      y =
+      layout.y =
         margin;
     }
 
     doc.text(
       line,
       margin,
-      y
+      layout.y
     );
 
-    y +=
+    layout.y +=
       lineHeight;
   }
 
-  y +=
-    isHeading
-      ? 2
+  layout.y +=
+    heading
+      ? 2.5
       : 3;
-
-  layout.y =
-    y;
 }
 
 async function exportSelectedPdf() {
-
   const entries =
-    selectedLibraryEntries();
+    selectedEntries();
 
-  if (!entries.length) {
+  if (
+    !entries.length
+  ) {
     return;
   }
 
@@ -1787,7 +1813,6 @@ async function exportSelectedPdf() {
     window.jspdf?.jsPDF;
 
   if (!jsPDF) {
-
     alert(
       "Não foi possível carregar o exportador de PDF."
     );
@@ -1823,12 +1848,10 @@ async function exportSelectedPdf() {
       entry,
       index
     ) => {
-
       if (
         index >
         0
       ) {
-
         doc.addPage();
 
         layout.y =
@@ -1844,14 +1867,28 @@ async function exportSelectedPdf() {
         17
       );
 
+      const titleLines =
+        doc.splitTextToSize(
+          entry.title,
+          layout.width
+          -
+          (
+            layout.margin * 2
+          )
+        );
+
       doc.text(
-        entry.title,
+        titleLines,
         layout.margin,
         layout.y
       );
 
       layout.y +=
-        8;
+        (
+          titleLines.length
+          * 7
+        )
+        + 2;
 
       doc.setFont(
         "helvetica",
@@ -1863,7 +1900,9 @@ async function exportSelectedPdf() {
       );
 
       doc.text(
-        `${entry.area} · ${notebookDateLabel(entry.date)}`,
+        `${entry.area} · ${formatDate(
+          entry.date
+        )}`,
         layout.margin,
         layout.y
       );
@@ -1871,23 +1910,19 @@ async function exportSelectedPdf() {
       layout.y +=
         10;
 
-      const blocks =
-        htmlToPdfText(
-          entry.note
-            .content_html
-          || ""
+      htmlToPdfBlocks(
+        entry.note.content_html ||
+        ""
+      )
+        .forEach(
+          (block) => {
+            writePdfBlock(
+              doc,
+              block,
+              layout
+            );
+          }
         );
-
-      blocks.forEach(
-        (block) => {
-
-          writePdfBlock(
-            doc,
-            block,
-            layout
-          );
-        }
-      );
     }
   );
 
@@ -1896,12 +1931,17 @@ async function exportSelectedPdf() {
   );
 }
 
+/* =========================================================
+   APAGAR CADERNOS
+   ========================================================= */
+
 async function deleteSelectedNotes() {
-
   const entries =
-    selectedLibraryEntries();
+    selectedEntries();
 
-  if (!entries.length) {
+  if (
+    !entries.length
+  ) {
     return;
   }
 
@@ -1914,7 +1954,9 @@ async function deleteSelectedNotes() {
       }? As aulas do cronograma não serão apagadas.`
     );
 
-  if (!confirmed) {
+  if (
+    !confirmed
+  ) {
     return;
   }
 
@@ -1942,7 +1984,6 @@ async function deleteSelectedNotes() {
       );
 
   if (error) {
-
     console.error(
       error
     );
@@ -1956,40 +1997,51 @@ async function deleteSelectedNotes() {
 
   entries.forEach(
     (entry) => {
-
-      notebookState.notes.delete(
-        entry.note.topic_id
-      );
+      notebookState
+        .notes
+        .delete(
+          entry.note.topic_id
+        );
     }
   );
 
-  notebookState.librarySelected.clear();
+  notebookState
+    .librarySelected
+    .clear();
 
-  closeBatchEditor();
+  if (
+    entries.some(
+      (entry) =>
+        entry.note.topic_id ===
+        notebookState.selectedTopicId
+    )
+  ) {
+    notebookState.selectedTopicId =
+      null;
 
-  renderNotebookPages();
+    renderDocument();
+  }
 
-  renderNotebookLibrary();
+  renderTopicList();
+
+  renderLibrary();
 }
 
 /* =========================================================
    EVENTOS
    ========================================================= */
 
-function wireNotebookEvents() {
-
+function wireEvents() {
   document
     .querySelectorAll(
       "[data-notebook-tab]"
     )
     .forEach(
       (button) => {
-
         button.addEventListener(
           "click",
           () => {
-
-            switchNotebookView(
+            switchView(
               button.dataset
                 .notebookTab
             );
@@ -2000,31 +2052,15 @@ function wireNotebookEvents() {
 
   document
     .getElementById(
-      "notebook-pages-search"
-    )
-    ?.addEventListener(
-      "input",
-      (event) => {
-
-        notebookState.pagesSearch =
-          event.target.value;
-
-        renderNotebookPages();
-      }
-    );
-
-  document
-    .getElementById(
       "notebook-topic-search"
     )
     ?.addEventListener(
       "input",
       (event) => {
-
         notebookState.topicSearch =
           event.target.value;
 
-        renderTopicSearchResults();
+        renderTopicList();
       }
     );
 
@@ -2035,11 +2071,10 @@ function wireNotebookEvents() {
     ?.addEventListener(
       "input",
       (event) => {
-
         notebookState.librarySearch =
           event.target.value;
 
-        renderNotebookLibrary();
+        renderLibrary();
       }
     );
 
@@ -2050,55 +2085,56 @@ function wireNotebookEvents() {
 
   editor?.addEventListener(
     "input",
-    scheduleNotebookSave
+    scheduleSave
   );
 
   editor?.addEventListener(
     "keyup",
-    saveNotebookSelection
+    saveSelection
   );
 
   editor?.addEventListener(
     "mouseup",
-    saveNotebookSelection
+    saveSelection
   );
 
   editor?.addEventListener(
     "focus",
-    saveNotebookSelection
+    saveSelection
   );
 
   editor?.addEventListener(
     "paste",
     (event) => {
-
       event.preventDefault();
 
       const html =
-        event.clipboardData
+        event
+          .clipboardData
           ?.getData(
             "text/html"
           );
 
       const text =
-        event.clipboardData
+        event
+          .clipboardData
           ?.getData(
             "text/plain"
           )
-        || "";
+        ||
+        "";
 
       if (html) {
-
         document.execCommand(
           "insertHTML",
           false,
-          sanitizeNotebookHtml(
+          sanitizeHtml(
             html
           )
         );
+      }
 
-      } else {
-
+      else {
         document.execCommand(
           "insertText",
           false,
@@ -2106,7 +2142,7 @@ function wireNotebookEvents() {
         );
       }
 
-      scheduleNotebookSave();
+      scheduleSave();
     }
   );
 
@@ -2117,11 +2153,9 @@ function wireNotebookEvents() {
     ?.addEventListener(
       "change",
       (event) => {
-
-        applyNotebookCommand(
+        execEditorCommand(
           "formatBlock",
-          event.target.value
-          ||
+          event.target.value ||
           "p"
         );
 
@@ -2130,54 +2164,7 @@ function wireNotebookEvents() {
       }
     );
 
-  const templateButton =
-    document.getElementById(
-      "notebook-template"
-    );
-
-  const breakButton =
-    document.getElementById(
-      "notebook-break"
-    );
-
-  const dividerButton =
-    document.getElementById(
-      "notebook-divider"
-    );
-
   [
-    templateButton,
-    breakButton,
-    dividerButton
-  ].forEach(
-    (button) => {
-
-      button?.addEventListener(
-        "mousedown",
-        (event) => {
-
-          event.preventDefault();
-        }
-      );
-    }
-  );
-
-  templateButton?.addEventListener(
-    "click",
-    insertNotebookTemplate
-  );
-
-  breakButton?.addEventListener(
-    "click",
-    insertNotebookBreak
-  );
-
-  dividerButton?.addEventListener(
-    "click",
-    insertNotebookDivider
-  );
-
-  const toolbarButtons = [
     [
       "notebook-bold",
       "bold"
@@ -2202,58 +2189,103 @@ function wireNotebookEvents() {
       "notebook-numbered-list",
       "insertOrderedList"
     ]
-  ];
-
-  toolbarButtons.forEach(
-    (
-      [
-        id,
-        command
-      ]
-    ) => {
-
-      const button =
-        document.getElementById(
-          id
-        );
-
-      button?.addEventListener(
-        "mousedown",
-        (event) => {
-
-          event.preventDefault();
-        }
-      );
-
-      button?.addEventListener(
-        "click",
-        () => {
-
-          applyNotebookCommand(
-            command
+  ]
+    .forEach(
+      (
+        [
+          id,
+          command
+        ]
+      ) => {
+        const button =
+          document.getElementById(
+            id
           );
-        }
-      );
-    }
-  );
 
-  document
-    .getElementById(
+        button
+          ?.addEventListener(
+            "mousedown",
+            (event) =>
+              event.preventDefault()
+          );
+
+        button
+          ?.addEventListener(
+            "click",
+            () => {
+              execEditorCommand(
+                command
+              );
+            }
+          );
+      }
+    );
+
+  const templateButton =
+    document.getElementById(
+      "notebook-template"
+    );
+
+  const breakButton =
+    document.getElementById(
+      "notebook-break"
+    );
+
+  const dividerButton =
+    document.getElementById(
+      "notebook-divider"
+    );
+
+  [
+    templateButton,
+    breakButton,
+    dividerButton
+  ]
+    .forEach(
+      (button) => {
+        button
+          ?.addEventListener(
+            "mousedown",
+            (event) =>
+              event.preventDefault()
+          );
+      }
+    );
+
+  templateButton
+    ?.addEventListener(
+      "click",
+      insertTemplate
+    );
+
+  breakButton
+    ?.addEventListener(
+      "click",
+      insertBreak
+    );
+
+  dividerButton
+    ?.addEventListener(
+      "click",
+      insertDivider
+    );
+
+  const emojiToggle =
+    document.getElementById(
       "notebook-emoji-toggle"
-    )
+    );
+
+  emojiToggle
     ?.addEventListener(
       "mousedown",
       (event) =>
         event.preventDefault()
     );
 
-  document
-    .getElementById(
-      "notebook-emoji-toggle"
-    )
+  emojiToggle
     ?.addEventListener(
       "click",
-      toggleNotebookEmojiMenu
+      toggleEmojiMenu
     );
 
   document
@@ -2262,7 +2294,6 @@ function wireNotebookEvents() {
     )
     .forEach(
       (button) => {
-
         button.addEventListener(
           "mousedown",
           (event) =>
@@ -2272,7 +2303,6 @@ function wireNotebookEvents() {
         button.addEventListener(
           "click",
           () => {
-
             insertStudyBlock(
               button.dataset
                 .studyBlock
@@ -2289,27 +2319,22 @@ function wireNotebookEvents() {
     ?.addEventListener(
       "click",
       () => {
-
         clearTimeout(
           notebookState.saveTimer
         );
 
-        saveCurrentNotebook();
+        saveCurrentNotebook(
+          false
+        );
       }
     );
 
   document.addEventListener(
     "click",
     (event) => {
-
       const emojiWrap =
         document.querySelector(
           ".notebook-emoji-wrap"
-        );
-
-      const searchShell =
-        document.querySelector(
-          ".notebook-topic-search-shell"
         );
 
       if (
@@ -2319,25 +2344,7 @@ function wireNotebookEvents() {
           event.target
         )
       ) {
-        closeNotebookEmojiMenu();
-      }
-
-      if (
-        searchShell
-        &&
-        !searchShell.contains(
-          event.target
-        )
-      ) {
-
-        const results =
-          document.getElementById(
-            "notebook-topic-search-results"
-          );
-
-        if (results) {
-          results.hidden = true;
-        }
+        closeEmojiMenu();
       }
     }
   );
@@ -2349,45 +2356,31 @@ function wireNotebookEvents() {
     ?.addEventListener(
       "change",
       (event) => {
+        filteredLibraryEntries()
+          .forEach(
+            (entry) => {
+              if (
+                event.target.checked
+              ) {
+                notebookState
+                  .librarySelected
+                  .add(
+                    entry.note.id
+                  );
+              }
 
-        const visible =
-          filteredLibraryEntries();
-
-        visible.forEach(
-          (entry) => {
-
-            if (
-              event.target.checked
-            ) {
-
-              notebookState
-                .librarySelected
-                .add(
-                  entry.note.id
-                );
-
-            } else {
-
-              notebookState
-                .librarySelected
-                .delete(
-                  entry.note.id
-                );
+              else {
+                notebookState
+                  .librarySelected
+                  .delete(
+                    entry.note.id
+                  );
+              }
             }
-          }
-        );
+          );
 
-        renderNotebookLibrary();
+        renderLibrary();
       }
-    );
-
-  document
-    .getElementById(
-      "notebook-library-edit"
-    )
-    ?.addEventListener(
-      "click",
-      openBatchEditor
     );
 
   document
@@ -2408,74 +2401,9 @@ function wireNotebookEvents() {
       deleteSelectedNotes
     );
 
-  document
-    .getElementById(
-      "notebook-batch-close"
-    )
-    ?.addEventListener(
-      "click",
-      closeBatchEditor
-    );
-
-  document
-    .getElementById(
-      "notebook-batch-save"
-    )
-    ?.addEventListener(
-      "click",
-      saveBatchEditors
-    );
-
-  document
-    .querySelectorAll(
-      "[data-batch-command]"
-    )
-    .forEach(
-      (button) => {
-
-        button.addEventListener(
-          "mousedown",
-          (event) =>
-            event.preventDefault()
-        );
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            applyBatchCommand(
-              button.dataset
-                .batchCommand
-            );
-          }
-        );
-      }
-    );
-
-  document
-    .getElementById(
-      "notebook-batch-block-style"
-    )
-    ?.addEventListener(
-      "change",
-      (event) => {
-
-        applyBatchCommand(
-          "formatBlock",
-          event.target.value
-          ||
-          "p"
-        );
-
-        event.target.value =
-          "p";
-      }
-    );
-
   document.addEventListener(
     "visibilitychange",
     () => {
-
       if (
         document.hidden
         &&
@@ -2484,25 +2412,23 @@ function wireNotebookEvents() {
         &&
         notebookState.editorDirty
       ) {
-
         clearTimeout(
           notebookState.saveTimer
         );
 
-        saveCurrentNotebook({
-          silent: true
-        });
+        saveCurrentNotebook(
+          true
+        );
       }
     }
   );
 }
 
 /* =========================================================
-   DADOS
+   CARREGAR SUPABASE
    ========================================================= */
 
-async function loadNotebookData() {
-
+async function loadData() {
   const userId =
     notebookState.user.id;
 
@@ -2511,7 +2437,6 @@ async function loadNotebookData() {
     notesResult
   ] =
     await Promise.all([
-
       notebookSb
         .from(
           "study_topics"
@@ -2574,15 +2499,13 @@ async function loadNotebookData() {
   }
 
   notebookState.topics =
-    topicsResult.data
-    ||
+    topicsResult.data ||
     [];
 
   notebookState.notes =
     new Map(
       (
-        notesResult.data
-        ||
+        notesResult.data ||
         []
       )
         .filter(
@@ -2599,11 +2522,10 @@ async function loadNotebookData() {
 }
 
 /* =========================================================
-   INIT
+   INICIAR
    ========================================================= */
 
 async function initNotebook() {
-
   notebookState.user =
     window.docmapUser;
 
@@ -2613,17 +2535,20 @@ async function initNotebook() {
     return;
   }
 
-  renderNotebookEmojiMenu();
+  renderEmojiMenu();
 
-  wireNotebookEvents();
+  wireEvents();
+
+  setEditorEnabled(
+    false
+  );
 
   try {
+    await loadData();
 
-    await loadNotebookData();
+    renderTopicList();
 
-    renderNotebookPages();
-
-    renderNotebookLibrary();
+    renderLibrary();
 
     const params =
       new URLSearchParams(
@@ -2649,47 +2574,40 @@ async function initNotebook() {
           requestedTopic
       )
     ) {
-
-      await openNotebookTopic(
+      await openTopic(
         requestedTopic
       );
 
       return;
     }
 
-    const validView =
-      [
-        "pages",
-        "editor",
+    await switchView(
+      requestedView ===
         "library"
-      ].includes(
-        requestedView
-      )
-        ? requestedView
-        : "pages";
+        ? "library"
+        : "editor",
 
-    await switchNotebookView(
-      validView,
-      {
-        keepUrl:
-          true
-      }
+      true
     );
 
-  } catch (error) {
+    renderDocument();
+  }
 
+  catch (
+    error
+  ) {
     console.error(
       error
     );
 
-    setNotebookSaveStatus(
+    setSaveStatus(
       `Erro ao carregar: ${error.message}`,
       "error"
     );
 
-    const pagesList =
+    const topicList =
       document.getElementById(
-        "notebook-pages-list"
+        "notebook-topic-list"
       );
 
     const libraryList =
@@ -2697,20 +2615,18 @@ async function initNotebook() {
         "notebook-library-list"
       );
 
-    if (pagesList) {
-
-      pagesList.innerHTML = `
+    if (topicList) {
+      topicList.innerHTML = `
         <div class="notebook-empty-small">
-          Não foi possível carregar seus cadernos.
+          Não foi possível carregar os temas.
         </div>
       `;
     }
 
     if (libraryList) {
-
       libraryList.innerHTML = `
         <div class="notebook-empty-small">
-          Não foi possível carregar sua biblioteca.
+          Não foi possível carregar a biblioteca.
         </div>
       `;
     }
@@ -2720,16 +2636,16 @@ async function initNotebook() {
 if (
   window.docmapUser
 ) {
-
   initNotebook();
+}
 
-} else {
-
+else {
   window.addEventListener(
     "docmap:ready",
     initNotebook,
     {
-      once: true
+      once:
+        true
     }
   );
 }
