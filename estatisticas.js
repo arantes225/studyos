@@ -1,3028 +1,1372 @@
-const statsSb =
-  window.supabaseClient;
-
-
-const statsState = {
-  days:
-    30
-};
-
-
-function startOfDay(
-  date
-) {
-  return new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate()
-  );
-}
-
-
-function addDays(
-  date,
-  amount
-) {
-  const copy =
-    startOfDay(
-      date
-    );
-
-  copy.setDate(
-    copy.getDate()
-    + amount
-  );
-
-  return copy;
-}
-
-
-function toISODate(
-  date
-) {
-  const year =
-    date.getFullYear();
-
-  const month =
-    String(
-      date.getMonth()
-      + 1
-    )
-    .padStart(
-      2,
-      "0"
-    );
-
-  const day =
-    String(
-      date.getDate()
-    )
-    .padStart(
-      2,
-      "0"
-    );
-
-  return `${year}-${month}-${day}`;
-}
-
-
-function parseISODate(
-  value
-) {
-  const [
-    year,
-    month,
-    day
-  ] =
-    String(
-      value
-    )
-    .split("-")
-    .map(
-      Number
-    );
-
-  return new Date(
-    year,
-    month - 1,
-    day
-  );
-}
-
-
-function formatHours(
-  totalSeconds
-) {
-  const seconds =
-    Number(
-      totalSeconds
-      || 0
-    );
-
-  if (
-    seconds <= 0
-  ) {
-    return "0h";
-  }
-
-
-  const hours =
-    Math.floor(
-      seconds / 3600
-    );
-
-  const minutes =
-    Math.round(
-      (
-        seconds % 3600
-      )
-      / 60
-    );
-
-
-  if (
-    hours === 0
-  ) {
-    return `${minutes}min`;
-  }
-
-
-  if (
-    minutes === 0
-  ) {
-    return `${hours}h`;
-  }
-
-
-  return `${hours}h ${minutes}min`;
-}
-
-
-function formatMinutesFromSeconds(
-  seconds
-) {
-  const minutes =
-    Math.round(
-      Number(
-        seconds
-        || 0
-      )
-      / 60
-    );
-
-  if (
-    minutes < 60
-  ) {
-    return `${minutes} min`;
-  }
-
-  return formatHours(
-    seconds
-  );
-}
-
-
-function statsEscape(
-  value
-) {
-  return String(
-    value ?? ""
-  )
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-    .replaceAll(
-      '"',
-      "&quot;"
-    )
-    .replaceAll(
-      "'",
-      "&#039;"
-    );
-}
-
-
-function statsDateDaysAgo(
-  daysAgo
-) {
-  const date =
-    startOfDay(
-      new Date()
-    );
-
-  date.setDate(
-    date.getDate()
-    - daysAgo
-  );
-
-  return date;
-}
-
-
-function statsDateRange(
-  days
-) {
-  const end =
-    startOfDay(
-      new Date()
-    );
-
-  const start =
-    statsDateDaysAgo(
-      Math.max(
-        0,
-        days - 1
-      )
-    );
-
-  const previousEnd =
-    addDays(
-      start,
-      -1
-    );
-
-  const previousStart =
-    addDays(
-      previousEnd,
-      -(days - 1)
-    );
-
-  return {
-    start,
-    end,
-    previousStart,
-    previousEnd,
-
-    startISO:
-      toISODate(
-        start
-      ),
-
-    endISO:
-      toISODate(
-        end
-      ),
-
-    previousStartISO:
-      toISODate(
-        previousStart
-      ),
-
-    previousEndISO:
-      toISODate(
-        previousEnd
-      )
-  };
-}
-
-
-function statsPercent(
-  numerator,
-  denominator
-) {
-  const total =
-    Number(
-      denominator
-      || 0
-    );
-
-  if (
-    total <= 0
-  ) {
-    return null;
-  }
-
-  return (
-    Number(
-      numerator
-      || 0
-    )
-    / total
-  )
-  * 100;
-}
-
-
-function statsPercentLabel(
-  value,
-  digits = 0
-) {
-  if (
-    value === null
-    || value === undefined
-    || Number.isNaN(
-      Number(
-        value
-      )
-    )
-  ) {
-    return "—";
-  }
-
-  return `${Number(
-    value
-  ).toFixed(
-    digits
-  )}%`;
-}
-
-
-function statsDeltaLabel(
-  current,
-  previous,
-  suffix = "%"
-) {
-  const currentNumber =
-    Number(
-      current
-    );
-
-  const previousNumber =
-    Number(
-      previous
-    );
-
-  if (
-    !Number.isFinite(
-      currentNumber
-    )
-    || !Number.isFinite(
-      previousNumber
-    )
-    || previousNumber === 0
-  ) {
-    return "sem comparação anterior";
-  }
-
-  const delta =
-    (
-      (
-        currentNumber
-        - previousNumber
-      )
-      / previousNumber
-    )
-    * 100;
-
-  const sign =
-    delta > 0
-      ? "+"
-      : "";
-
-  return `${sign}${delta.toFixed(0)}${suffix} vs. período anterior`;
-}
-
-
-function statsPointDelta(
-  current,
-  previous
-) {
-  if (
-    current === null
-    || previous === null
-    || current === undefined
-    || previous === undefined
-  ) {
-    return "sem comparação anterior";
-  }
-
-  const delta =
-    Number(
-      current
-    )
-    - Number(
-        previous
-      );
-
-  const sign =
-    delta > 0
-      ? "+"
-      : "";
-
-  return `${sign}${delta.toFixed(1)} p.p. vs. período anterior`;
-}
-
-
-function statsActivityLabel(
-  kind
-) {
-  const labels = {
-    lesson:
-      "Aulas",
-
-    flashcards:
-      "Flashcards",
-
-    error_notebook:
-      "Caderno de erros",
-
-    subject_review:
-      "Revisão teórica",
-
-    free_study:
-      "Estudo livre",
-
-    ambientacao:
-      "Ambientação"
-  };
-
-  return (
-    labels[kind]
-    || kind
-    || "Outros"
-  );
-}
-
-
-function statsShortDay(
-  isoDate
-) {
-  return new Intl
-    .DateTimeFormat(
-      "pt-BR",
-      {
-        day:
-          "2-digit",
-
-        month:
-          "2-digit"
-      }
-    )
-    .format(
-      parseISODate(
-        isoDate
-      )
-    );
-}
-
-
-function statsBuildDailySeries(
-  rows,
-  dateField,
-  valueField,
-  days
-) {
-  const map =
-    new Map(
-      (rows || [])
-        .map(
-          (row) => [
-            row[dateField],
-
-            Number(
-              row[valueField]
-              || 0
-            )
-          ]
-        )
-    );
-
-
-  const start =
-    statsDateDaysAgo(
-      Math.max(
-        0,
-        days - 1
-      )
-    );
-
-
-  return Array.from(
-    {
-      length:
-        days
+(() => {
+  "use strict";
+
+  const sb = window.supabaseClient;
+  const charts = new Map();
+
+  const state = {
+    initialized: false,
+    loading: false,
+    range: 30,
+    tab: "geral",
+    bounds: null,
+    settings: null,
+    sourceErrors: [],
+    static: {
+      flashcards: [],
+      errors: [],
+      topics: [],
+      subjectReviews: [],
+      dailyAccess: [],
+      questionSets: []
     },
-
-    (
-      _,
-      index
-    ) => {
-      const date =
-        addDays(
-          start,
-          index
-        );
-
-      const iso =
-        toISODate(
-          date
-        );
-
-      return {
-        date:
-          iso,
-
-        value:
-          map.get(
-            iso
-          )
-          || 0
-      };
+    period: {
+      sessions: [],
+      flashReviews: [],
+      errorReviews: [],
+      questionAttempts: []
     }
-  );
-}
-
-
-function splitCurrentPrevious(
-  rows,
-  dateField,
-  range
-) {
-  const current =
-    [];
-
-  const previous =
-    [];
-
-
-  for (
-    const row
-    of rows || []
-  ) {
-    const date =
-      row[dateField];
-
-    if (
-      date >= range.startISO
-      && date <= range.endISO
-    ) {
-      current.push(
-        row
-      );
-
-    } else if (
-      date >= range.previousStartISO
-      && date <= range.previousEndISO
-    ) {
-      previous.push(
-        row
-      );
-    }
-  }
-
-
-  return {
-    current,
-    previous
   };
-}
 
+  const ACTIVITY = {
+    ambientacao: "Ambientação",
+    lesson: "Aulas",
+    flashcards: "Flashcards",
+    error_notebook: "Caderno de erros",
+    subject_review: "Revisão teórica",
+    free_study: "Estudo livre"
+  };
 
-function sumField(
-  rows,
-  field
-) {
-  return (
-    rows || []
-  )
-    .reduce(
-      (
-        sum,
-        row
-      ) =>
-        sum
-        + Number(
-            row[field]
-            || 0
-          ),
-      0
-    );
-}
+  const $ = id => document.getElementById(id);
+  const css = (name, fallback) => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
 
-
-function renderStudyBars(
-  studyRows
-) {
-  const container =
-    document.getElementById(
-      "analytics-study-bars"
-    );
-
-  if (!container) {
-    return;
+  function esc(v) {
+    return String(v ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
+  function pad(n) { return String(n).padStart(2, "0"); }
 
-  const series =
-    statsBuildDailySeries(
-      studyRows,
-      "study_date",
-      "total_seconds",
-      statsState.days
-    );
+  function startDay(d = new Date()) {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
 
+  function addDays(d, n) {
+    const x = new Date(d);
+    x.setDate(x.getDate() + n);
+    return startDay(x);
+  }
 
-  const maxValue =
-    Math.max(
-      1,
-      ...series.map(
-        (item) =>
-          item.value
-      )
-    );
+  function parseDate(v) {
+    if (!v) return null;
+    if (v instanceof Date) return startDay(v);
+    const s = String(v);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      const [y, m, d] = s.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    }
+    const x = new Date(s);
+    return Number.isNaN(x.getTime()) ? null : startDay(x);
+  }
 
+  function dateKey(v) {
+    const d = parseDate(v);
+    return d ? `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` : "";
+  }
 
-  container.style.minWidth =
-    `${Math.max(
-      100,
-      series.length
-      * 22
-    )}px`;
+  function diffDays(a, b) {
+    return Math.round((startDay(a) - startDay(b)) / 86400000);
+  }
 
+  function isoStart(d) { return startDay(d).toISOString(); }
 
-  container.innerHTML =
-    series.map(
-      (
-        item,
-        index
-      ) => {
-        const percent =
-          item.value > 0
-            ? Math.max(
-                3,
-                (
-                  item.value
-                  / maxValue
-                )
-                * 100
-              )
-            : 1;
+  function isoEnd(d) {
+    const x = startDay(d);
+    x.setHours(23, 59, 59, 999);
+    return x.toISOString();
+  }
 
+  function fmtDate(v) {
+    const d = parseDate(v);
+    return d ? new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" }).format(d) : "—";
+  }
 
-        const showLabel =
-          series.length <= 14
-          || index % (
-            series.length <= 30
-              ? 3
-              : 7
-          ) === 0
-          || index === series.length - 1;
+  function num(v, digits = 0) {
+    return new Intl.NumberFormat("pt-BR", {
+      maximumFractionDigits: digits,
+      minimumFractionDigits: digits
+    }).format(Number(v || 0));
+  }
 
+  function percent(v, digits = 0) {
+    return Number.isFinite(Number(v)) ? `${num(Number(v), digits)}%` : "—";
+  }
 
-        return `
-          <div
-            class="analytics-bar-column"
-            title="${statsEscape(
-              `${statsShortDay(
-                item.date
-              )}: ${formatHours(
-                item.value
-              )}`
-            )}"
-          >
+  function hours(seconds) {
+    const s = Math.max(0, Math.round(Number(seconds || 0)));
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    if (!h) return `${m} min`;
+    return m ? `${h}h${pad(m)}` : `${h}h`;
+  }
 
-            <div
-              class="analytics-bar ${
-                item.value > 0
-                  ? ""
-                  : "muted"
-              }"
-              style="height:${percent}%"
-            ></div>
+  function days(v, digits = 0) { return `${num(v, digits)} d`; }
 
-            ${
-              showLabel
-                ? `
-                  <small>
-                    ${statsEscape(
-                      statsShortDay(
-                        item.date
-                      )
-                    )}
-                  </small>
-                `
-                : ""
-            }
+  function pct(a, b) { return Number(b || 0) ? Number(a || 0) / Number(b) * 100 : 0; }
+  function clamp(v, min = 0, max = 100) { return Math.max(min, Math.min(max, Number(v || 0))); }
 
-          </div>
-        `;
+  function sum(rows, fn) {
+    return (rows || []).reduce((acc, row) => acc + Number(fn(row) || 0), 0);
+  }
+
+  function mean(values) {
+    const a = (values || []).map(Number).filter(Number.isFinite);
+    return a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+  }
+
+  function median(values) {
+    const a = (values || []).map(Number).filter(Number.isFinite).sort((x, y) => x - y);
+    if (!a.length) return 0;
+    const m = Math.floor(a.length / 2);
+    return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+  }
+
+  function group(rows, fn) {
+    const map = new Map();
+    for (const row of rows || []) {
+      const key = fn(row);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(row);
+    }
+    return map;
+  }
+
+  function subject(row) {
+    return String(row.materia || row.area || "Sem matéria").trim() || "Sem matéria";
+  }
+
+  function area(row) {
+    return String(row.area || "Sem área").trim() || "Sem área";
+  }
+
+  // Mesma fórmula SQL de public.memory_retrievability.
+  function memory(lastReviewedAt, stabilityDays, asOf = new Date()) {
+    if (!lastReviewedAt) return null;
+    const last = parseDate(lastReviewedAt);
+    if (!last) return null;
+
+    const stability = Math.max(Number(stabilityDays || 1), 1);
+    const elapsed = Math.max(0, diffDays(startDay(asOf), last));
+    const value = Math.pow(1 + (19 / 81) * (elapsed / stability), -0.5);
+
+    return Math.max(0, Math.min(1, value));
+  }
+
+  function makeBounds(range) {
+    const end = startDay(new Date());
+
+    if (range === "all") {
+      return { start: null, end, prevStart: null, prevEnd: null };
+    }
+
+    const d = Number(range);
+    const start = addDays(end, -(d - 1));
+    const prevEnd = addDays(start, -1);
+    const prevStart = addDays(prevEnd, -(d - 1));
+
+    return { start, end, prevStart, prevEnd };
+  }
+
+  function inCurrent(v) {
+    const d = parseDate(v);
+    if (!d) return false;
+    if (!state.bounds.start) return d <= state.bounds.end;
+    return d >= state.bounds.start && d <= state.bounds.end;
+  }
+
+  function inPrevious(v) {
+    const d = parseDate(v);
+    if (!d || !state.bounds.prevStart) return false;
+    return d >= state.bounds.prevStart && d <= state.bounds.prevEnd;
+  }
+
+  function current(rows, prop) {
+    if (state.range === "all") return rows || [];
+    return (rows || []).filter(x => inCurrent(x[prop]));
+  }
+
+  function previous(rows, prop) {
+    if (state.range === "all") return [];
+    return (rows || []).filter(x => inPrevious(x[prop]));
+  }
+
+  function labelPeriod() {
+    return state.range === "all" ? "todo o histórico" : `${state.range} dias`;
+  }
+
+  function compare(curr, prev, invert = false) {
+    if (state.range === "all") return "";
+    curr = Number(curr || 0);
+    prev = Number(prev || 0);
+
+    if (!curr && !prev) return "sem mudança";
+    if (!prev) return "novo no período";
+
+    const delta = (curr - prev) / Math.abs(prev) * 100;
+    const good = invert ? delta <= 0 : delta >= 0;
+    return `${delta >= 0 ? "↑" : "↓"} ${num(Math.abs(delta))}% vs anterior${good ? "" : ""}`;
+  }
+
+  function comparePP(curr, prev) {
+    if (state.range === "all" || !Number.isFinite(Number(prev))) return "";
+    const d = Number(curr || 0) - Number(prev || 0);
+    return `${d >= 0 ? "↑" : "↓"} ${num(Math.abs(d), 1)} p.p.`;
+  }
+
+  async function fetchPaged(table, columns, apply = null) {
+    const page = 1000;
+    const rows = [];
+    let from = 0;
+
+    while (true) {
+      let q = sb.from(table).select(columns);
+      if (apply) q = apply(q);
+      q = q.range(from, from + page - 1);
+
+      const { data, error } = await q;
+
+      if (error) {
+        state.sourceErrors.push(`${table}: ${error.message}`);
+        return [];
       }
-    )
-    .join("");
-}
 
+      rows.push(...(data || []));
 
-function renderPerformanceBars(
-  containerId,
-  rows,
-  dateField,
-  numeratorField,
-  denominatorField
-) {
-  const container =
-    document.getElementById(
-      containerId
-    );
+      if (!data || data.length < page) break;
+      from += page;
+    }
 
-  if (!container) {
-    return;
+    return rows;
   }
 
-
-  const start =
-    statsDateDaysAgo(
-      Math.max(
-        0,
-        statsState.days - 1
-      )
-    );
-
-
-  const map =
-    new Map(
-      (rows || [])
-        .map(
-          (row) => [
-            row[dateField],
-
-            statsPercent(
-              row[numeratorField],
-              row[denominatorField]
-            )
-          ]
-        )
-    );
-
-
-  const series =
-    Array.from(
-      {
-        length:
-          statsState.days
-      },
-
-      (
-        _,
-        index
-      ) => {
-        const date =
-          addDays(
-            start,
-            index
-          );
-
-        const iso =
-          toISODate(
-            date
-          );
-
-        return {
-          date:
-            iso,
-
-          value:
-            map.has(
-              iso
-            )
-              ? map.get(
-                  iso
-                )
-              : null
-        };
-      }
-    );
-
-
-  container.innerHTML =
-    series.map(
-      (item) => {
-        const value =
-          item.value;
-
-        const height =
-          value === null
-            ? 2
-            : Math.max(
-                4,
-                Math.min(
-                  100,
-                  value
-                )
-              );
-
-
-        return `
-          <div
-            class="performance-bar-column"
-            title="${statsEscape(
-              `${statsShortDay(
-                item.date
-              )}: ${
-                value === null
-                  ? "sem dados"
-                  : statsPercentLabel(
-                      value,
-                      0
-                    )
-              }`
-            )}"
-          >
-            <div
-              class="performance-bar ${
-                value === null
-                  ? "empty"
-                  : ""
-              }"
-              style="height:${height}%"
-            ></div>
-          </div>
-        `;
-      }
-    )
-    .join("");
-}
-
-
-function renderActivity(
-  rows
-) {
-  const container =
-    document.getElementById(
-      "analytics-activity-list"
-    );
-
-  if (!container) {
-    return;
-  }
-
-
-  const grouped =
-    new Map();
-
-
-  for (
-    const row
-    of rows || []
-  ) {
-    const kind =
-      row.activity_kind
-      || "other";
-
-
-    grouped.set(
-      kind,
-      (
-        grouped.get(
-          kind
-        )
-        || 0
-      )
-      + Number(
-          row.total_seconds
-          || 0
-        )
-    );
-  }
-
-
-  const data =
-    Array.from(
-      grouped.entries()
-    )
-      .map(
-        (
-          [
-            kind,
-            seconds
-          ]
-        ) => ({
-          kind,
-          seconds
-        })
-      )
-      .sort(
-        (
-          a,
-          b
-        ) =>
-          b.seconds
-          - a.seconds
-      );
-
-
-  if (
-    !data.length
-  ) {
-    container.innerHTML =
-      '<div class="analytics-empty">Ainda não há sessões concluídas neste período.</div>';
-
-    return;
-  }
-
-
-  const total =
-    data.reduce(
-      (
-        sum,
-        item
-      ) =>
-        sum
-        + item.seconds,
-      0
-    );
-
-
-  container.innerHTML =
-    data.map(
-      (item) => {
-        const share =
-          total
-            ? (
-                item.seconds
-                / total
-              )
-              * 100
-            : 0;
-
-
-        return `
-          <div class="analytics-activity-row">
-
-            <div class="analytics-row-copy">
-              <strong>
-                ${statsEscape(
-                  statsActivityLabel(
-                    item.kind
-                  )
-                )}
-              </strong>
-            </div>
-
-            <div class="analytics-progress">
-              <span
-                style="width:${Math.max(
-                  2,
-                  share
-                )}%"
-              ></span>
-            </div>
-
-            <div class="analytics-row-value">
-              ${statsEscape(
-                formatHours(
-                  item.seconds
-                )
-              )}
-            </div>
-
-          </div>
-        `;
-      }
-    )
-    .join("");
-}
-
-
-function renderWeekdays(
-  studyRows
-) {
-  const container =
-    document.getElementById(
-      "weekday-study-list"
-    );
-
-  if (!container) {
-    return;
-  }
-
-
-  const labels = [
-    "Dom",
-    "Seg",
-    "Ter",
-    "Qua",
-    "Qui",
-    "Sex",
-    "Sáb"
-  ];
-
-
-  const totals =
-    Array(
-      7
-    )
-    .fill(
-      0
-    );
-
-
-  for (
-    const row
-    of studyRows || []
-  ) {
-    const date =
-      parseISODate(
-        row.study_date
-      );
-
-    totals[
-      date.getDay()
-    ] +=
-      Number(
-        row.total_seconds
-        || 0
-      );
-  }
-
-
-  const ordered =
-    [
-      1,2,3,4,5,6,0
-    ]
-    .map(
-      (dayIndex) => ({
-        label:
-          labels[
-            dayIndex
-          ],
-
-        seconds:
-          totals[
-            dayIndex
-          ]
-      })
-    );
-
-
-  const maxValue =
-    Math.max(
-      1,
-      ...ordered.map(
-        (item) =>
-          item.seconds
-      )
-    );
-
-
-  container.innerHTML =
-    ordered.map(
-      (item) => {
-        const percent =
-          item.seconds
-            ? (
-                item.seconds
-                / maxValue
-              )
-              * 100
-            : 0;
-
-
-        return `
-          <div class="analytics-row">
-
-            <div class="analytics-row-copy">
-              <strong>
-                ${item.label}
-              </strong>
-            </div>
-
-            <div class="analytics-progress">
-              <span
-                style="width:${Math.max(
-                  1,
-                  percent
-                )}%"
-              ></span>
-            </div>
-
-            <div class="analytics-row-value">
-              ${statsEscape(
-                formatHours(
-                  item.seconds
-                )
-              )}
-            </div>
-
-          </div>
-        `;
-      }
-    )
-    .join("");
-}
-
-
-function renderRetention(
-  rows
-) {
-  const container =
-    document.getElementById(
-      "analytics-retention-list"
-    );
-
-  if (!container) {
-    return;
-  }
-
-
-  const data =
-    (rows || [])
-      .filter(
-        (row) =>
-          row.retention_percent
-            !== null
-          && Number(
-            row.total_evidence
-            || 0
-          ) > 0
-      )
-      .sort(
-        (
-          a,
-          b
-        ) =>
-          Number(
-            a.retention_percent
-          )
-          - Number(
-              b.retention_percent
-            )
-      )
-      .slice(
-        0,
-        8
-      );
-
-
-  if (
-    !data.length
-  ) {
-    container.innerHTML =
-      '<div class="analytics-empty">Ainda não há evidência suficiente de memória.</div>';
-
-    return;
-  }
-
-
-  container.innerHTML =
-    data.map(
-      (row) => {
-        const retention =
-          Math.max(
-            0,
-            Math.min(
-              100,
-              Number(
-                row.retention_percent
-                || 0
-              )
-            )
-          );
-
-
-        return `
-          <div class="analytics-row">
-
-            <div class="analytics-row-copy">
-
-              <strong>
-                ${statsEscape(
-                  row.subject
-                  || "Sem matéria"
-                )}
-              </strong>
-
-              <small>
-                ${Number(
-                  row.total_evidence
-                  || 0
-                )} evidência${
-                  Number(
-                    row.total_evidence
-                    || 0
-                  ) === 1
-                    ? ""
-                    : "s"
-                }
-              </small>
-
-            </div>
-
-            <div class="analytics-progress">
-              <span
-                style="width:${retention}%"
-              ></span>
-            </div>
-
-            <div class="analytics-row-value">
-              ${retention.toFixed(0)}%
-            </div>
-
-          </div>
-        `;
-      }
-    )
-    .join("");
-}
-
-
-function renderErrors(
-  questionRows,
-  errorRows
-) {
-  const container =
-    document.getElementById(
-      "analytics-error-list"
-    );
-
-  if (!container) {
-    return;
-  }
-
-
-  const combined =
-    new Map();
-
-
-  for (
-    const row
-    of questionRows || []
-  ) {
-    const area =
-      row.area
-      || "Sem área";
-
-
-    const current =
-      combined.get(
-        area
-      )
-      || {
-        area,
-        questions:
-          0,
-        notebook:
-          0
-      };
-
-
-    current.questions +=
-      Number(
-        row.wrong_count
-        || 0
-      );
-
-
-    combined.set(
-      area,
-      current
-    );
-  }
-
-
-  for (
-    const row
-    of errorRows || []
-  ) {
-    const area =
-      row.area
-      || "Sem área";
-
-
-    const current =
-      combined.get(
-        area
-      )
-      || {
-        area,
-        questions:
-          0,
-        notebook:
-          0
-      };
-
-
-    current.notebook +=
-      Number(
-        row.active_count
-        || 0
-      );
-
-
-    combined.set(
-      area,
-      current
-    );
-  }
-
-
-  const data =
-    Array.from(
-      combined.values()
-    )
-      .map(
-        (item) => ({
-          ...item,
-
-          total:
-            item.questions
-            + item.notebook
-        })
-      )
-      .filter(
-        (item) =>
-          item.total > 0
-      )
-      .sort(
-        (
-          a,
-          b
-        ) =>
-          b.total
-          - a.total
-      )
-      .slice(
-        0,
-        8
-      );
-
-
-  if (
-    !data.length
-  ) {
-    container.innerHTML =
-      '<div class="analytics-empty">Nenhum erro classificado por área ainda.</div>';
-
-    return;
-  }
-
-
-  const maxValue =
-    Math.max(
-      1,
-      ...data.map(
-        (item) =>
-          item.total
-      )
-    );
-
-
-  container.innerHTML =
-    data.map(
-      (item) => {
-        const percent =
-          (
-            item.total
-            / maxValue
-          )
-          * 100;
-
-
-        return `
-          <div class="analytics-row">
-
-            <div class="analytics-row-copy">
-
-              <strong>
-                ${statsEscape(
-                  item.area
-                )}
-              </strong>
-
-              <small>
-                Simulados: ${item.questions}
-                · Caderno: ${item.notebook}
-              </small>
-
-            </div>
-
-            <div class="analytics-progress">
-              <span
-                style="width:${percent}%"
-              ></span>
-            </div>
-
-            <div class="analytics-row-value">
-              ${item.total}
-            </div>
-
-          </div>
-        `;
-      }
-    )
-    .join("");
-}
-
-
-function detailCard(
-  label,
-  value,
-  helper = ""
-) {
-  return `
-    <div class="stat-detail">
-      <span>
-        ${statsEscape(
-          label
-        )}
-      </span>
-
-      <strong>
-        ${statsEscape(
-          value
-        )}
-      </strong>
-
-      ${
-        helper
-          ? `
-            <small>
-              ${statsEscape(
-                helper
-              )}
-            </small>
-          `
-          : ""
-      }
-    </div>
-  `;
-}
-
-
-function renderErrorNotebookOverview(
-  metrics
-) {
-  const container =
-    document.getElementById(
-      "error-notebook-overview"
-    );
-
-  if (!container) {
-    return;
-  }
-
-
-  const data =
-    metrics
-    || {};
-
-
-  container.innerHTML =
-    [
-      detailCard(
-        "Registrados",
-        Number(
-          data.registered_errors
-          || 0
-        ),
-        "CCQs ativos"
-      ),
-
-      detailCard(
-        "Já revisados",
-        Number(
-          data.reviewed_errors
-          || 0
-        ),
-        "ao menos uma leitura"
-      ),
-
-      detailCard(
-        "Atrasados",
-        Number(
-          data.overdue_errors
-          || 0
-        ),
-        "data anterior a hoje"
-      ),
-
-      detailCard(
-        "Retenção",
-        statsPercentLabel(
-          data.retention_percent,
-          0
-        ),
-        "estimativa atual"
-      )
-    ]
-    .join("");
-}
-
-
-function renderScheduleOverview(
-  topics,
-  reviews
-) {
-  const container =
-    document.getElementById(
-      "schedule-overview"
-    );
-
-  if (!container) {
-    return;
-  }
-
-
-  const totalTopics =
-    (topics || [])
-      .length;
-
-
-  const completedTopics =
-    (topics || [])
-      .filter(
-        (item) =>
-          item.status === "completed"
-      )
-      .length;
-
-
-  const scheduledTopics =
-    (topics || [])
-      .filter(
-        (item) =>
-          item.status === "scheduled"
-      )
-      .length;
-
-
-  const deckTopics =
-    (topics || [])
-      .filter(
-        (item) =>
-          item.status === "deck"
-      )
-      .length;
-
-
-  const completedReviews =
-    (reviews || [])
-      .filter(
-        (item) =>
-          Boolean(
-            item.completed_at
-          )
-      )
-      .length;
-
-
-  const pendingReviews =
-    (reviews || [])
-      .filter(
-        (item) =>
-          !item.completed_at
-      )
-      .length;
-
-
-  const progress =
-    totalTopics
-      ? (
-          completedTopics
-          / totalTopics
-        )
-        * 100
-      : null;
-
-
-  container.innerHTML =
-    [
-      detailCard(
-        "Aulas concluídas",
-        `${completedTopics}/${totalTopics}`,
-        progress === null
-          ? "sem temas"
-          : `${progress.toFixed(0)}% do cronograma`
-      ),
-
-      detailCard(
-        "Programadas",
-        scheduledTopics,
-        "aulas com data"
-      ),
-
-      detailCard(
-        "No deck",
-        deckTopics,
-        "ainda sem data"
-      ),
-
-      detailCard(
-        "Revisões",
-        `${completedReviews}/${completedReviews + pendingReviews}`,
-        `${pendingReviews} pendentes`
-      )
-    ]
-    .join("");
-}
-
-
-function renderSimulationOverview(
-  metrics
-) {
-  const container =
-    document.getElementById(
-      "simulations-overview"
-    );
-
-  if (!container) {
-    return;
-  }
-
-
-  const data =
-    metrics
-    || {};
-
-
-  container.innerHTML =
-    [
-      detailCard(
-        "Simulados concluídos",
-        `${Number(
-          data.completed_sets
-          || 0
-        )}/${Number(
-          data.total_sets
-          || 0
-        )}`,
-        "concluídos / cadastrados"
-      ),
-
-      detailCard(
-        "Questões",
-        Number(
-          data.answered_questions
-          || 0
-        ),
-        "respondidas"
-      ),
-
-      detailCard(
-        "Acertos",
-        Number(
-          data.correct_questions
-          || 0
-        ),
-        `${Number(
-          data.wrong_questions
-          || 0
-        )} erros`
-      ),
-
-      detailCard(
-        "Aproveitamento",
-        statsPercentLabel(
-          data.accuracy_percent,
-          1
-        ),
-        `${Number(
-          data.sent_to_error_count
-          || 0
-        )} enviados ao Caderno`
-      )
-    ]
-    .join("");
-}
-
-
-function renderExamOverview(
-  metrics
-) {
-  const container =
-    document.getElementById(
-      "exams-overview"
-    );
-
-  if (!container) {
-    return;
-  }
-
-
-  const data =
-    metrics
-    || {};
-
-
-  container.innerHTML =
-    [
-      detailCard(
-        "Próximas",
-        Number(
-          data.upcoming_exams
-          || 0
-        ),
-        "planejadas ou inscritas"
-      ),
-
-      detailCard(
-        "Inscritas",
-        Number(
-          data.registered_exams
-          || 0
-        ),
-        "status registrado"
-      ),
-
-      detailCard(
-        "Realizadas",
-        Number(
-          data.taken_exams
-          || 0
-        ),
-        "provas concluídas"
-      ),
-
-      detailCard(
-        "Média das provas",
-        statsPercentLabel(
-          data.average_score_percent,
-          1
-        ),
-        `${Number(
-          data.deadlines_next_30_days
-          || 0
-        )} inscrições vencem em até 30 dias`
-      )
-    ]
-    .join("");
-}
-
-
-function renderInsights({
-  studyRows,
-  questionRows,
-  flashRows,
-  retentionRows,
-  questionAreaRows,
-  errorAreaRows,
-  errorMetrics,
-  simulationMetrics,
-  examMetrics,
-  topics,
-  reviews
-}) {
-  const container =
-    document.getElementById(
-      "analytics-insights"
-    );
-
-  if (!container) {
-    return;
-  }
-
-
-  const insights =
-    [];
-
-
-  const activeDays =
-    new Set(
-      (studyRows || [])
-        .filter(
-          (row) =>
-            Number(
-              row.total_seconds
-              || 0
-            ) > 0
-        )
-        .map(
-          (row) =>
-            row.study_date
-        )
-    )
-    .size;
-
-
-  const totalStudy =
-    sumField(
-      studyRows,
-      "total_seconds"
-    );
-
-
-  if (
-    activeDays > 0
-  ) {
-    insights.push({
-      title:
-        "Ritmo",
-
-      text:
-        `Você registrou estudo em ${activeDays} de ${statsState.days} dias, somando ${formatHours(
-          totalStudy
-        )}.`
-    });
-  }
-
-
-  const retention =
-    (retentionRows || [])
-      .filter(
-        (row) =>
-          row.retention_percent
-            !== null
-          && Number(
-            row.total_evidence
-            || 0
-          ) >= 2
-      )
-      .sort(
-        (
-          a,
-          b
-        ) =>
-          Number(
-            a.retention_percent
-          )
-          - Number(
-              b.retention_percent
-            )
-      )[0];
-
-
-  if (retention) {
-    insights.push({
-      title:
-        "Memória",
-
-      text:
-        `A menor retenção estimada entre matérias com pelo menos 2 evidências é ${retention.subject}, com ${Number(
-          retention.retention_percent
-        ).toFixed(0)}%.`
-    });
-  }
-
-
-  const errorMap =
-    new Map();
-
-
-  for (
-    const row
-    of questionAreaRows || []
-  ) {
-    const area =
-      row.area
-      || "Sem área";
-
-    errorMap.set(
-      area,
-      (
-        errorMap.get(
-          area
-        )
-        || 0
-      )
-      + Number(
-          row.wrong_count
-          || 0
-        )
-    );
-  }
-
-
-  for (
-    const row
-    of errorAreaRows || []
-  ) {
-    const area =
-      row.area
-      || "Sem área";
-
-    errorMap.set(
-      area,
-      (
-        errorMap.get(
-          area
-        )
-        || 0
-      )
-      + Number(
-          row.active_count
-          || 0
-        )
-    );
-  }
-
-
-  const highestError =
-    Array.from(
-      errorMap.entries()
-    )
-      .sort(
-        (
-          a,
-          b
-        ) =>
-          b[1]
-          - a[1]
-      )[0];
-
-
-  if (
-    highestError
-    && highestError[1] > 0
-  ) {
-    insights.push({
-      title:
-        "Erros",
-
-      text:
-        `A maior concentração atual está em ${highestError[0]}, com ${highestError[1]} registros somando simulados e Caderno.`
-    });
-  }
-
-
-  const questionAnswered =
-    sumField(
-      questionRows,
-      "answered_questions"
-    );
-
-
-  const flashReviewed =
-    sumField(
-      flashRows,
-      "total_reviews"
-    );
-
-
-  if (
-    questionAnswered
-    || flashReviewed
-  ) {
-    insights.push({
-      title:
-        "Volume",
-
-      text:
-        `No período foram registradas ${questionAnswered} questões respondidas e ${flashReviewed} revisões de flashcards.`
-    });
-  }
-
-
-  const overdueErrors =
-    Number(
-      errorMetrics
-        ?.overdue_errors
-      || 0
-    );
-
-
-  if (
-    overdueErrors > 0
-  ) {
-    insights.push({
-      title:
-        "Caderno de Erros",
-
-      text:
-        `${overdueErrors} CCQ${overdueErrors === 1 ? "" : "s"} está${overdueErrors === 1 ? "" : "o"} atrasado${overdueErrors === 1 ? "" : "s"} neste momento.`
-    });
-  }
-
-
-  const totalTopics =
-    (topics || [])
-      .length;
-
-  const completedTopics =
-    (topics || [])
-      .filter(
-        (item) =>
-          item.status === "completed"
-      )
-      .length;
-
-
-  if (
-    totalTopics > 0
-  ) {
-    insights.push({
-      title:
-        "Cronograma",
-
-      text:
-        `${completedTopics} de ${totalTopics} aulas do cronograma estão concluídas (${(
-          completedTopics
-          / totalTopics
-          * 100
-        ).toFixed(0)}%).`
-    });
-  }
-
-
-  const pendingReviews =
-    (reviews || [])
-      .filter(
-        (item) =>
-          !item.completed_at
-      )
-      .length;
-
-
-  if (
-    pendingReviews > 0
-  ) {
-    insights.push({
-      title:
-        "Revisões teóricas",
-
-      text:
-        `Há ${pendingReviews} revisão${pendingReviews === 1 ? "" : "ões"} teórica${pendingReviews === 1 ? "" : "s"} ainda não concluída${pendingReviews === 1 ? "" : "s"}.`
-    });
-  }
-
-
-  const simAccuracy =
-    simulationMetrics
-      ?.accuracy_percent;
-
-
-  if (
-    simAccuracy !== null
-    && simAccuracy !== undefined
-  ) {
-    insights.push({
-      title:
-        "Simulados",
-
-      text:
-        `O aproveitamento acumulado nos simulados é de ${Number(
-          simAccuracy
-        ).toFixed(1)}%.`
-    });
-  }
-
-
-  const upcoming =
-    Number(
-      examMetrics
-        ?.upcoming_exams
-      || 0
-    );
-
-
-  if (
-    upcoming > 0
-  ) {
-    insights.push({
-      title:
-        "Provas",
-
-      text:
-        `Há ${upcoming} prova${upcoming === 1 ? "" : "s"} futura${upcoming === 1 ? "" : "s"} ou em planejamento no DocMap.`
-    });
-  }
-
-
-  if (
-    !insights.length
-  ) {
-    container.innerHTML =
-      '<div class="analytics-empty">O DocMap ainda precisa de mais dados para gerar uma leitura útil.</div>';
-
-    return;
-  }
-
-
-  container.innerHTML =
-    insights
-      .slice(
-        0,
-        10
-      )
-      .map(
-        (item) =>
-          `
-            <div class="analytics-insight">
-              <strong>
-                ${statsEscape(
-                  item.title
-                )}
-              </strong>
-
-              <span>
-                ${statsEscape(
-                  item.text
-                )}
-              </span>
-            </div>
-          `
-      )
-      .join("");
-}
-
-
-async function loadStatistics() {
-  const range =
-    statsDateRange(
-      statsState.days
-    );
-
-  const today =
-    toISODate(
-      new Date()
-    );
-
-
-  const [
-    studyResult,
-    activityResult,
-    questionResult,
-    flashResult,
-    retentionResult,
-    questionAreaResult,
-    errorAreaResult,
-    errorMetricsResult,
-    simulationMetricsResult,
-    examMetricsResult,
-    topicsResult,
-    reviewsResult,
-    pendingFlashResult,
-    pendingErrorsResult
-  ] =
-    await Promise.all([
-
-      statsSb
-        .from(
-          "study_hours_daily"
-        )
-        .select(
-          "study_date,total_seconds,session_count"
-        )
-        .gte(
-          "study_date",
-          range.previousStartISO
-        )
-        .lte(
-          "study_date",
-          range.endISO
-        )
-        .order(
-          "study_date",
-          {
-            ascending:
-              true
-          }
-        ),
-
-      statsSb
-        .from(
-          "study_activity_daily"
-        )
-        .select(
-          "study_date,activity_kind,total_seconds,session_count"
-        )
-        .gte(
-          "study_date",
-          range.startISO
-        )
-        .lte(
-          "study_date",
-          range.endISO
-        ),
-
-      statsSb
-        .from(
-          "question_metrics_daily"
-        )
-        .select(
-          "answer_date,answered_questions,correct_questions,wrong_questions,accuracy_percent"
-        )
-        .gte(
-          "answer_date",
-          range.previousStartISO
-        )
-        .lte(
-          "answer_date",
-          range.endISO
-        )
-        .order(
-          "answer_date",
-          {
-            ascending:
-              true
-          }
-        ),
-
-      statsSb
-        .from(
-          "flashcard_metrics_daily"
-        )
-        .select(
-          "review_date,total_reviews,correct,incorrect"
-        )
-        .gte(
-          "review_date",
-          range.previousStartISO
-        )
-        .lte(
-          "review_date",
-          range.endISO
-        )
-        .order(
-          "review_date",
-          {
-            ascending:
-              true
-          }
-        ),
-
-      statsSb
-        .from(
-          "retention_by_subject"
-        )
-        .select(
-          "subject,retention_percent,total_evidence"
-        )
-        .gt(
-          "total_evidence",
-          0
-        ),
-
-      statsSb
-        .from(
-          "question_area_difficulty"
-        )
-        .select(
-          "area,wrong_count,set_count,error_share_percent"
-        )
-        .order(
-          "wrong_count",
-          {
-            ascending:
-              false
-          }
-        )
-        .limit(
-          30
-        ),
-
-      statsSb
-        .from(
-          "error_area_metrics"
-        )
-        .select(
-          "area,active_count,reviewed_count,overdue_count,retention_percent"
-        )
-        .order(
-          "active_count",
-          {
-            ascending:
-              false
-          }
-        )
-        .limit(
-          30
-        ),
-
-      statsSb
-        .from(
-          "error_notebook_metrics"
-        )
-        .select(
-          "registered_errors,reviewed_errors,overdue_errors,retention_percent"
-        )
-        .maybeSingle(),
-
-      statsSb
-        .from(
-          "question_metrics_overall"
-        )
-        .select(
-          "completed_sets,total_sets,answered_questions,correct_questions,wrong_questions,sent_to_error_count,accuracy_percent"
-        )
-        .maybeSingle(),
-
-      statsSb
-        .from(
-          "exam_metrics_overall"
-        )
-        .select(
-          "total_exams,upcoming_exams,registered_exams,taken_exams,deadlines_next_30_days,average_score_percent"
-        )
-        .maybeSingle(),
-
-      statsSb
-        .from(
-          "study_topics"
-        )
-        .select(
-          "id,status,scheduled_date,completed_at,already_done"
-        ),
-
-      statsSb
-        .from(
-          "subject_reviews"
-        )
-        .select(
-          "id,scheduled_date,completed_at,stage"
-        ),
-
-      statsSb
-        .from(
-          "flashcards"
-        )
-        .select(
-          "id",
-          {
-            count:
-              "exact",
-            head:
-              true
-          }
-        )
-        .eq(
-          "active",
-          true
-        )
-        .lte(
-          "due_date",
-          today
-        ),
-
-      statsSb
-        .from(
-          "error_notebook"
-        )
-        .select(
-          "id",
-          {
-            count:
-              "exact",
-            head:
-              true
-          }
-        )
-        .eq(
-          "active",
-          true
-        )
-        .lte(
-          "due_date",
-          today
-        )
+  async function loadStatic() {
+    const [
+      flashcards,
+      errors,
+      topics,
+      subjectReviews,
+      dailyAccess,
+      questionSets,
+      settings
+    ] = await Promise.all([
+      fetchPaged("flashcards", "id,area,materia,front_text,due_date,current_interval_days,stability_days,review_count,last_reviewed_at,last_rating,active,created_at"),
+      fetchPaged("error_notebook", "id,area,materia,theme,ccq,due_date,current_interval_days,stability_days,review_count,last_reviewed_at,active,created_at"),
+      fetchPaged("study_topics", "id,area,materia,theme,original_date,scheduled_date,status,completed_at,already_done,studied_on,created_at"),
+      fetchPaged("subject_reviews", "id,topic_id,stage,interval_days,scheduled_date,completed_at,rescheduled_manually,created_at"),
+      fetchPaged("daily_access", "access_date,created_at", q => q.order("access_date", { ascending: true })),
+      fetchPaged("question_set_metrics", "set_id,title,status,total_questions,created_at,answered_count,correct_count,wrong_count,sent_to_error_count,accuracy_percent,completed,last_answered_at"),
+      sb.from("user_settings")
+        .select("flashcard_weekdays,theory_study_weekdays,theory_review_weekdays,error_weekdays,question_weekdays")
+        .maybeSingle()
     ]);
 
+    state.static.flashcards = flashcards;
+    state.static.errors = errors;
+    state.static.topics = topics;
+    state.static.subjectReviews = subjectReviews;
+    state.static.dailyAccess = dailyAccess;
+    state.static.questionSets = questionSets;
 
-  const results =
-    [
-      studyResult,
-      activityResult,
-      questionResult,
-      flashResult,
-      retentionResult,
-      questionAreaResult,
-      errorAreaResult,
-      errorMetricsResult,
-      simulationMetricsResult,
-      examMetricsResult,
-      topicsResult,
-      reviewsResult,
-      pendingFlashResult,
-      pendingErrorsResult
+    if (settings.error) state.sourceErrors.push(`user_settings: ${settings.error.message}`);
+
+    state.settings = settings.data || {
+      flashcard_weekdays: [1,2,3,4,5,6,7],
+      theory_study_weekdays: [1,2,3,4,5,6,7],
+      theory_review_weekdays: [1,2,3,4,5,6,7],
+      error_weekdays: [1,2,3,4,5,6,7],
+      question_weekdays: [1,2,3,4,5,6,7]
+    };
+  }
+
+  async function loadPeriod() {
+    state.bounds = makeBounds(state.range);
+    const start = state.range === "all" ? null : state.bounds.prevStart;
+
+    const filter = (field, order = field) => q => {
+      if (start) q = q.gte(field, isoStart(start));
+      return q.lte(field, isoEnd(state.bounds.end)).order(order, { ascending: true });
+    };
+
+    const [sessions, flashReviews, errorReviews, questionAttempts] = await Promise.all([
+      fetchPaged(
+        "study_sessions",
+        "id,activity_kind,source_id,area,materia,started_at,ended_at,duration_seconds",
+        q => {
+          q = q.not("ended_at", "is", null).not("duration_seconds", "is", null);
+          return filter("started_at")(q);
+        }
+      ),
+      fetchPaged(
+        "flashcard_reviews",
+        "id,flashcard_id,reviewed_at,rating,was_correct,stage,scheduled_date_before,interval_before_days,interval_after_days,stability_before_days,stability_after_days,retrievability_before,next_due_date",
+        filter("reviewed_at")
+      ),
+      fetchPaged(
+        "error_reviews",
+        "id,error_id,reviewed_at,scheduled_date_before,interval_days,retrievability_before,next_due_date",
+        filter("reviewed_at")
+      ),
+      fetchPaged(
+        "question_attempts",
+        "id,question_item_id,result,area,materia,sent_to_error,error_entry_id,answered_at",
+        filter("answered_at")
+      )
+    ]);
+
+    state.period.sessions = sessions;
+    state.period.flashReviews = flashReviews;
+    state.period.errorReviews = errorReviews;
+    state.period.questionAttempts = questionAttempts;
+  }
+
+  function activeFlash() { return state.static.flashcards.filter(x => x.active === true); }
+  function activeErrors() { return state.static.errors.filter(x => x.active === true); }
+
+  function earliestDate() {
+    const all = [
+      ...state.period.sessions.map(x => parseDate(x.started_at)),
+      ...state.period.flashReviews.map(x => parseDate(x.reviewed_at)),
+      ...state.period.errorReviews.map(x => parseDate(x.reviewed_at)),
+      ...state.period.questionAttempts.map(x => parseDate(x.answered_at)),
+      ...state.static.topics.map(x => parseDate(x.created_at))
+    ].filter(Boolean).sort((a, b) => a - b);
+
+    return all[0] || addDays(new Date(), -29);
+  }
+
+  function activeStart() { return state.bounds.start || earliestDate(); }
+
+  function dateSeries(rows, prop, valueFn = () => 1) {
+    const map = new Map();
+    for (const row of rows || []) {
+      const d = parseDate(row[prop]);
+      if (!d || d < activeStart() || d > state.bounds.end) continue;
+      const key = dateKey(d);
+      map.set(key, (map.get(key) || 0) + Number(valueFn(row) || 0));
+    }
+
+    const result = [];
+    let d = activeStart();
+
+    while (d <= state.bounds.end) {
+      const key = dateKey(d);
+      result.push({
+        date: key,
+        label: new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(d),
+        value: map.get(key) || 0
+      });
+      d = addDays(d, 1);
+    }
+
+    return aggregateSeries(result);
+  }
+
+  function aggregateSeries(series) {
+    if (series.length <= 35) return series;
+
+    const mode = series.length <= 120 ? "week" : "month";
+    const map = new Map();
+
+    for (const item of series) {
+      const d = parseDate(item.date);
+      let key, label;
+
+      if (mode === "week") {
+        const isoDay = d.getDay() || 7;
+        const monday = addDays(d, 1 - isoDay);
+        key = dateKey(monday);
+        label = `sem ${new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(monday)}`;
+      } else {
+        key = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+        label = new Intl.DateTimeFormat("pt-BR", { month: "short", year: "2-digit" }).format(d).replace(".", "");
+      }
+
+      const old = map.get(key) || { date: key, label, value: 0 };
+      old.value += item.value;
+      map.set(key, old);
+    }
+
+    return Array.from(map.values());
+  }
+
+  function eligibleDays(weekdays, start = activeStart(), end = state.bounds.end) {
+    const set = new Set((weekdays || [1,2,3,4,5,6,7]).map(Number));
+    let count = 0;
+    let d = start;
+
+    while (d <= end) {
+      const iso = d.getDay() === 0 ? 7 : d.getDay();
+      if (set.has(iso)) count += 1;
+      d = addDays(d, 1);
+    }
+
+    return count;
+  }
+
+  function unionWeekdays() {
+    const s = state.settings || {};
+    return Array.from(new Set([
+      ...(s.flashcard_weekdays || []),
+      ...(s.theory_study_weekdays || []),
+      ...(s.theory_review_weekdays || []),
+      ...(s.error_weekdays || []),
+      ...(s.question_weekdays || [])
+    ]));
+  }
+
+  function currentStreak() {
+    const dates = new Set(state.static.dailyAccess.map(x => x.access_date));
+    let d = startDay(new Date());
+    let streak = 0;
+
+    if (!dates.has(dateKey(d))) d = addDays(d, -1);
+
+    while (dates.has(dateKey(d))) {
+      streak++;
+      d = addDays(d, -1);
+    }
+
+    return streak;
+  }
+
+  function longestStreak() {
+    const dates = state.static.dailyAccess.map(x => parseDate(x.access_date)).filter(Boolean).sort((a,b) => a-b);
+    let best = 0, run = 0, prev = null;
+
+    for (const d of dates) {
+      if (!prev || diffDays(d, prev) === 1) run++;
+      else if (diffDays(d, prev) !== 0) run = 1;
+      best = Math.max(best, run);
+      prev = d;
+    }
+
+    return best;
+  }
+
+  function groupedRetention(rows, fn, minEvidence = 1) {
+    return Array.from(group(rows, fn).entries())
+      .map(([label, items]) => {
+        const vals = items.map(x => memory(x.last_reviewed_at, x.stability_days)).filter(x => x !== null);
+        return { label, items, evidence: vals.length, value: mean(vals) * 100 };
+      })
+      .filter(x => x.evidence >= minEvidence)
+      .sort((a,b) => a.value - b.value);
+  }
+
+  function viz(type, value, values = []) {
+    if (type === "ring") return `<div class="mini-ring" style="--p:${clamp(value)}"></div>`;
+    if (type === "stack") {
+      const total = Math.max(1, values.reduce((a,b) => a + Number(b || 0), 0));
+      return `<div class="mini-stack">${values.map(v => `<span style="width:${pct(v,total)}%"></span>`).join("")}</div>`;
+    }
+    return `<div class="mini-bar"><span style="width:${clamp(value)}%"></span></div>`;
+  }
+
+  function renderCards(id, cards) {
+    const el = $(id);
+    if (!el) return;
+
+    el.innerHTML = cards.map(c => `
+      <article class="stats-callout">
+        <label>${esc(c.label)}</label>
+        <strong>${esc(c.value)}</strong>
+        <small>${esc(c.helper || "")}</small>
+        <div class="mini-viz">${viz(c.viz?.type || "bar", c.viz?.value || 0, c.viz?.values || [])}</div>
+      </article>
+    `).join("");
+  }
+
+  function chart(id, type, labels, datasets, options = {}) {
+    const canvas = $(id);
+    if (!canvas || !window.Chart) return;
+
+    if (charts.has(id)) charts.get(id).destroy();
+
+    const accent = css("--accent", "#5965d8");
+    const success = css("--success", "#2f9d71");
+    const warning = css("--warning", "#d39b27");
+    const danger = css("--danger", "#d15555");
+    const muted = css("--muted", "#7b8190");
+    const border = css("--border", "#e0e3e8");
+
+    const palette = [accent, success, warning, danger, "#8b7cf6", "#55a6b8"];
+
+    datasets = datasets.map((d, i) => ({
+      ...d,
+      borderColor: d.borderColor || palette[i % palette.length],
+      backgroundColor: d.backgroundColor || palette[i % palette.length],
+      borderWidth: d.borderWidth ?? 2,
+      tension: d.tension ?? .28,
+      pointRadius: d.pointRadius ?? 2
+    }));
+
+    charts.set(id, new Chart(canvas, {
+      type,
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { intersect: false, mode: "index" },
+        plugins: {
+          legend: { display: datasets.length > 1 || type === "doughnut", labels: { color: muted, boxWidth: 10, font: { size: 9 } } },
+          tooltip: { padding: 9, titleFont: { size: 10 }, bodyFont: { size: 10 } }
+        },
+        scales: type === "doughnut" ? undefined : {
+          x: { ticks: { color: muted, font: { size: 8 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+          y: { beginAtZero: options.beginAtZero !== false, suggestedMax: options.suggestedMax, max: options.max, ticks: { color: muted, font: { size: 8 } }, grid: { color: border } }
+        },
+        ...options.extra
+      }
+    }));
+  }
+
+  function progressList(id, rows, formatter = v => percent(v, 1), max = 100) {
+    const el = $(id);
+    if (!el) return;
+
+    if (!rows.length) {
+      el.innerHTML = '<div class="empty">Sem dados suficientes.</div>';
+      return;
+    }
+
+    const localMax = max || Math.max(1, ...rows.map(x => Number(x.value || 0)));
+
+    el.innerHTML = `<div class="progress-list">${
+      rows.map(x => `
+        <div class="progress-row">
+          <div><strong>${esc(x.label)}</strong><small>${esc(x.helper || "")}</small></div>
+          <div class="track"><span style="width:${clamp(pct(x.value, localMax))}%"></span></div>
+          <div class="progress-value">${esc(formatter(x.value))}</div>
+        </div>
+      `).join("")
+    }</div>`;
+  }
+
+  function insights(id, rows) {
+    const el = $(id);
+    if (!el) return;
+
+    if (!rows.length) {
+      el.innerHTML = '<div class="empty">Ainda não há dados suficientes para gerar insights.</div>';
+      return;
+    }
+
+    el.innerHTML = `<div class="insights">${
+      rows.map(x => `<div class="insight"><strong>${esc(x.title)}</strong>${esc(x.text)}</div>`).join("")
+    }</div>`;
+  }
+
+  function table(id, headers, rows) {
+    const el = $(id);
+    if (!el) return;
+
+    if (!rows.length) {
+      el.innerHTML = '<div class="empty">Sem dados suficientes.</div>';
+      return;
+    }
+
+    el.innerHTML = `
+      <table class="stats-table">
+        <thead><tr>${headers.map(h => `<th class="${h.num ? "num" : ""}">${esc(h.label)}</th>`).join("")}</tr></thead>
+        <tbody>${rows.map(row => `<tr>${row.map((cell,i) => `<td class="${headers[i]?.num ? "num" : ""}">${cell}</td>`).join("")}</tr>`).join("")}</tbody>
+      </table>
+    `;
+  }
+
+  function completedTopic(topic) {
+    return topic.status === "completed" || !!topic.completed_at;
+  }
+
+  function scheduledInCurrent(topic) {
+    if (!topic.scheduled_date) return false;
+    return state.range === "all" ? parseDate(topic.scheduled_date) <= state.bounds.end : inCurrent(topic.scheduled_date);
+  }
+
+  function reviewScheduledCurrent(review) {
+    if (!review.scheduled_date) return false;
+    return state.range === "all" ? parseDate(review.scheduled_date) <= state.bounds.end : inCurrent(review.scheduled_date);
+  }
+
+  // =========================================================
+  // GERAL
+  // =========================================================
+
+  function generalData() {
+    const sessions = current(state.period.sessions, "started_at");
+    const prevSessions = previous(state.period.sessions, "started_at");
+    const questions = current(state.period.questionAttempts, "answered_at");
+    const prevQuestions = previous(state.period.questionAttempts, "answered_at");
+    const flashReviews = current(state.period.flashReviews, "reviewed_at");
+    const prevFlashReviews = previous(state.period.flashReviews, "reviewed_at");
+
+    const seconds = sum(sessions, x => x.duration_seconds);
+    const prevSeconds = sum(prevSessions, x => x.duration_seconds);
+
+    const activeDays = new Set(sessions.map(x => dateKey(x.started_at))).size;
+    const eligible = Math.max(1, eligibleDays(unionWeekdays()));
+    const consistency = pct(activeDays, eligible);
+
+    const planned = state.static.topics.filter(scheduledInCurrent);
+    const plannedDone = planned.filter(completedTopic);
+    const adherence = pct(plannedDone.length, planned.length);
+
+    const totalTopics = state.static.topics.length;
+    const totalDone = state.static.topics.filter(completedTopic).length;
+    const progress = pct(totalDone, totalTopics);
+    const donePeriod = state.static.topics.filter(x => x.completed_at && (state.range === "all" || inCurrent(x.completed_at))).length;
+
+    const correctQ = questions.filter(x => x.result === "correct").length;
+    const prevCorrectQ = prevQuestions.filter(x => x.result === "correct").length;
+    const accuracyQ = pct(correctQ, questions.length);
+    const prevAccuracyQ = pct(prevCorrectQ, prevQuestions.length);
+
+    const completedSets = state.static.questionSets.filter(x =>
+      x.completed === true && x.last_answered_at && (state.range === "all" || inCurrent(x.last_answered_at))
+    ).length;
+
+    const flashCorrect = flashReviews.filter(x => x.was_correct === true).length;
+    const prevFlashCorrect = prevFlashReviews.filter(x => x.was_correct === true).length;
+    const flashAccuracy = pct(flashCorrect, flashReviews.length);
+    const prevFlashAccuracy = pct(prevFlashCorrect, prevFlashReviews.length);
+
+    const reviewedCards = activeFlash().filter(x => x.review_count > 0 && x.last_reviewed_at);
+    const retention = mean(reviewedCards.map(x => memory(x.last_reviewed_at, x.stability_days)).filter(x => x !== null)) * 100;
+
+    const err = activeErrors();
+    const overdueErr = err.filter(x => parseDate(x.due_date) < startDay(new Date())).length;
+
+    const scheduledReviews = state.static.subjectReviews.filter(reviewScheduledCurrent);
+    const doneReviews = scheduledReviews.filter(x => x.completed_at && parseDate(x.completed_at) <= state.bounds.end);
+    const reviewRate = pct(doneReviews.length, scheduledReviews.length);
+
+    return {
+      sessions, prevSessions, questions, prevQuestions, flashReviews, prevFlashReviews,
+      seconds, prevSeconds, activeDays, eligible, consistency, planned, plannedDone, adherence,
+      totalTopics, totalDone, progress, donePeriod, correctQ, accuracyQ, prevAccuracyQ,
+      completedSets, flashCorrect, flashAccuracy, prevFlashAccuracy, reviewedCards, retention,
+      err, overdueErr, scheduledReviews, doneReviews, reviewRate
+    };
+  }
+
+  function renderGeneral() {
+    const m = generalData();
+
+    renderCards("general-callouts", [
+      { label:"Tempo estudado", value:hours(m.seconds), helper:`${labelPeriod()} · ${compare(m.seconds,m.prevSeconds)}`, viz:{value:Math.min(100,m.seconds/108000*100)} },
+      { label:"Média por dia ativo", value:hours(m.activeDays?m.seconds/m.activeDays:0), helper:`${m.activeDays} dias ativos`, viz:{value:pct(m.activeDays,m.eligible)} },
+      { label:"Consistência", value:percent(m.consistency), helper:`${m.activeDays}/${m.eligible} dias planejados`, viz:{type:"ring",value:m.consistency} },
+      { label:"Ofensiva", value:`${currentStreak()} d`, helper:`recorde ${longestStreak()} dias`, viz:{value:pct(currentStreak(),Math.max(1,longestStreak()))} },
+      { label:"Sessões de estudo", value:num(m.sessions.length), helper:`média ${hours(m.sessions.length?m.seconds/m.sessions.length:0)}`, viz:{value:Math.min(100,m.sessions.length/60*100)} },
+
+      { label:"Aderência às aulas", value:percent(m.adherence), helper:`${m.plannedDone.length}/${m.planned.length} previstas`, viz:{type:"ring",value:m.adherence} },
+      { label:"Progresso total", value:percent(m.progress), helper:`${m.totalDone}/${m.totalTopics} aulas`, viz:{value:m.progress} },
+      { label:"Aulas concluídas", value:num(m.donePeriod), helper:`no ${labelPeriod()}`, viz:{value:Math.min(100,m.donePeriod/30*100)} },
+      { label:"Questões", value:num(m.questions.length), helper:`${m.correctQ} acertos`, viz:{value:Math.min(100,m.questions.length/500*100)} },
+      { label:"Aproveitamento", value:percent(m.accuracyQ,1), helper:comparePP(m.accuracyQ,m.prevAccuracyQ), viz:{type:"ring",value:m.accuracyQ} },
+
+      { label:"Simulados concluídos", value:num(m.completedSets), helper:`no ${labelPeriod()}`, viz:{value:Math.min(100,m.completedSets*12)} },
+      { label:"Revisões de flashcards", value:num(m.flashReviews.length), helper:compare(m.flashReviews.length,m.prevFlashReviews.length), viz:{value:Math.min(100,m.flashReviews.length/1500*100)} },
+      { label:"Acerto nos flashcards", value:percent(m.flashAccuracy,1), helper:comparePP(m.flashAccuracy,m.prevFlashAccuracy), viz:{type:"ring",value:m.flashAccuracy} },
+      { label:"Retenção atual", value:percent(m.retention,1), helper:`${m.reviewedCards.length} cards estimados`, viz:{type:"ring",value:m.retention} },
+      { label:"CCQs ativos", value:num(m.err.length), helper:`${state.static.errors.length} registrados`, viz:{value:pct(m.err.length,state.static.errors.length)} },
+
+      { label:"CCQs atrasados", value:num(m.overdueErr), helper:`${percent(pct(m.overdueErr,m.err.length))} dos ativos`, viz:{type:"ring",value:pct(m.overdueErr,m.err.length)} },
+      { label:"Revisões teóricas", value:num(m.doneReviews.length), helper:`${m.scheduledReviews.length} previstas`, viz:{value:m.reviewRate} },
+      { label:"Aderência às revisões", value:percent(m.reviewRate), helper:`${m.doneReviews.length}/${m.scheduledReviews.length}`, viz:{type:"ring",value:m.reviewRate} },
+      { label:"Tempo médio/sessão", value:hours(m.sessions.length?m.seconds/m.sessions.length:0), helper:`${m.sessions.length} sessões`, viz:{value:Math.min(100,(m.sessions.length?m.seconds/m.sessions.length:0)/3600*100)} },
+      { label:"Tipos de estudo usados", value:num(new Set(m.sessions.map(x=>x.activity_kind)).size), helper:"atividades diferentes", viz:{type:"stack",values:Object.keys(ACTIVITY).map(k=>m.sessions.filter(x=>x.activity_kind===k).length)} }
+    ]);
+
+    const studySeries = dateSeries(m.sessions, "started_at", x => Number(x.duration_seconds || 0) / 3600);
+    chart(
+      "chart-general-study",
+      "bar",
+      studySeries.map(x=>x.label),
+      [{ label:"Horas", data:studySeries.map(x=>Number(x.value.toFixed(2))) }]
+    );
+
+    const activity = Array.from(group(m.sessions, x=>x.activity_kind).entries())
+      .map(([k,rows])=>({ label:ACTIVITY[k]||k, value:sum(rows,x=>x.duration_seconds) }))
+      .filter(x=>x.value>0)
+      .sort((a,b)=>b.value-a.value);
+
+    chart(
+      "chart-general-activity",
+      "doughnut",
+      activity.map(x=>x.label),
+      [{ label:"Tempo", data:activity.map(x=>Number((x.value/3600).toFixed(2))) }],
+      { extra:{ cutout:"64%" } }
+    );
+
+    const qAreas = Array.from(group(m.questions, area).entries())
+      .map(([label,rows])=>({label,total:rows.length,accuracy:pct(rows.filter(x=>x.result==="correct").length,rows.length)}))
+      .sort((a,b)=>b.total-a.total)
+      .slice(0,8);
+
+    chart(
+      "chart-general-questions",
+      "bar",
+      qAreas.map(x=>x.label),
+      [
+        { label:"Acerto %", data:qAreas.map(x=>Number(x.accuracy.toFixed(1))) }
+      ],
+      { max:100 }
+    );
+
+    renderGeneralAreaTable(m);
+    renderGeneralInsights(m);
+  }
+
+  function renderGeneralAreaTable(m) {
+    const areas = new Set();
+    state.static.topics.forEach(x=>areas.add(area(x)));
+    activeFlash().forEach(x=>areas.add(area(x)));
+    activeErrors().forEach(x=>areas.add(area(x)));
+    m.questions.forEach(x=>areas.add(area(x)));
+    m.sessions.filter(x=>x.area).forEach(x=>areas.add(area(x)));
+
+    const rows = Array.from(areas).map(a => {
+      const topics = state.static.topics.filter(x=>area(x)===a);
+      const done = topics.filter(completedTopic).length;
+      const qs = m.questions.filter(x=>area(x)===a);
+      const cards = activeFlash().filter(x=>area(x)===a && x.review_count>0 && x.last_reviewed_at);
+      const retention = mean(cards.map(x=>memory(x.last_reviewed_at,x.stability_days)).filter(x=>x!==null))*100;
+      const ccq = activeErrors().filter(x=>area(x)===a).length;
+      const secs = sum(m.sessions.filter(x=>x.area && area(x)===a),x=>x.duration_seconds);
+
+      return {
+        a, progress:pct(done,topics.length), done, total:topics.length,
+        questions:qs.length, accuracy:pct(qs.filter(x=>x.result==="correct").length,qs.length),
+        retention, ccq, secs
+      };
+    }).filter(x=>x.total||x.questions||x.ccq||x.secs).sort((a,b)=>b.secs-a.secs||b.questions-a.questions);
+
+    table(
+      "general-area-table",
+      [
+        {label:"Área"},{label:"Progresso aulas"},{label:"Questões",num:true},{label:"Acerto",num:true},
+        {label:"Retenção FC",num:true},{label:"CCQs ativos",num:true},{label:"Tempo",num:true}
+      ],
+      rows.map(x=>[
+        `<strong>${esc(x.a)}</strong>`,
+        `${percent(x.progress)} · ${x.done}/${x.total}`,
+        num(x.questions),
+        x.questions?percent(x.accuracy,1):"—",
+        x.retention?percent(x.retention,1):"—",
+        num(x.ccq),
+        hours(x.secs)
+      ])
+    );
+  }
+
+  function renderGeneralInsights(m) {
+    const out = [];
+
+    if (state.range !== "all") {
+      out.push({
+        title:"Ritmo de estudo",
+        text:m.prevSeconds
+          ? `O tempo estudado ${m.seconds>=m.prevSeconds?"aumentou":"caiu"} ${num(Math.abs((m.seconds-m.prevSeconds)/m.prevSeconds*100))}% em relação ao período anterior.`
+          : `${hours(m.seconds)} foram registrados neste período.`
+      });
+    }
+
+    const weakestQ = Array.from(group(m.questions,area).entries())
+      .map(([label,rows])=>({label,n:rows.length,acc:pct(rows.filter(x=>x.result==="correct").length,rows.length)}))
+      .filter(x=>x.n>=5).sort((a,b)=>a.acc-b.acc)[0];
+
+    if (weakestQ) out.push({title:"Questões",text:`${weakestQ.label} tem o menor aproveitamento entre áreas com pelo menos 5 questões: ${percent(weakestQ.acc,1)} em ${weakestQ.n} questões.`});
+
+    const weakMemory = groupedRetention(activeFlash().filter(x=>x.review_count>0),area,5)[0];
+    if (weakMemory) out.push({title:"Memória",text:`${weakMemory.label} apresenta a menor retenção estimada entre áreas com evidência suficiente: ${percent(weakMemory.value,1)}.`});
+
+    const late = state.static.topics.filter(x=>!completedTopic(x)&&x.scheduled_date&&parseDate(x.scheduled_date)<startDay(new Date())).length;
+    if (late) out.push({title:"Cronograma",text:`${late} ${late===1?"aula está atrasada":"aulas estão atrasadas"} neste momento.`});
+
+    if (m.overdueErr) out.push({title:"Caderno de Erros",text:`${m.overdueErr} CCQs estão vencidos (${percent(pct(m.overdueErr,m.err.length))} do caderno ativo).`});
+
+    insights("general-insights",out);
+  }
+
+  // =========================================================
+  // AULAS
+  // =========================================================
+
+  function lessonsData() {
+    const topics = state.static.topics;
+    const reviews = state.static.subjectReviews;
+
+    const scheduled = topics.filter(scheduledInCurrent);
+    const scheduledDone = scheduled.filter(completedTopic);
+    const completedPeriod = topics.filter(x=>x.completed_at&&(state.range==="all"||inCurrent(x.completed_at)));
+    const done = topics.filter(completedTopic);
+    const progress = pct(done.length,topics.length);
+    const adherence = pct(scheduledDone.length,scheduled.length);
+
+    const overdue = topics.filter(x=>!completedTopic(x)&&x.scheduled_date&&parseDate(x.scheduled_date)<startDay(new Date()));
+    const future = topics.filter(x=>!completedTopic(x)&&x.scheduled_date&&parseDate(x.scheduled_date)>=startDay(new Date()));
+
+    const completedScheduled = topics.filter(x=>x.completed_at&&x.scheduled_date);
+    const delay = completedScheduled.map(x=>diffDays(parseDate(x.completed_at),parseDate(x.scheduled_date)));
+    const lateDelay = delay.filter(x=>x>0);
+    const onTime = pct(delay.filter(x=>x<=0).length,delay.length);
+
+    const moved = topics.filter(x=>x.original_date&&x.scheduled_date&&x.original_date!==x.scheduled_date);
+    const movedDays = moved.map(x=>Math.abs(diffDays(parseDate(x.scheduled_date),parseDate(x.original_date))));
+
+    const lessonSessions = current(state.period.sessions,"started_at").filter(x=>x.activity_kind==="lesson");
+    const prevLessonSessions = previous(state.period.sessions,"started_at").filter(x=>x.activity_kind==="lesson");
+    const seconds = sum(lessonSessions,x=>x.duration_seconds);
+    const prevSeconds = sum(prevLessonSessions,x=>x.duration_seconds);
+
+    const scheduledReviews = reviews.filter(reviewScheduledCurrent);
+    const completedReviews = scheduledReviews.filter(x=>x.completed_at&&parseDate(x.completed_at)<=state.bounds.end);
+    const reviewRate = pct(completedReviews.length,scheduledReviews.length);
+    const overdueReviews = reviews.filter(x=>!x.completed_at&&parseDate(x.scheduled_date)<startDay(new Date()));
+    const manualReviews = reviews.filter(x=>x.rescheduled_manually);
+
+    const areaProgress = Array.from(group(topics,area).entries())
+      .map(([label,rows])=>({label,value:pct(rows.filter(completedTopic).length,rows.length),helper:`${rows.filter(completedTopic).length}/${rows.length} aulas`}))
+      .sort((a,b)=>a.value-b.value);
+
+    const subjectPending = Array.from(group(topics.filter(x=>!completedTopic(x)),subject).entries())
+      .map(([label,rows])=>({label,count:rows.length})).sort((a,b)=>b.count-a.count)[0];
+
+    return {
+      topics,reviews,scheduled,scheduledDone,completedPeriod,done,progress,adherence,overdue,future,
+      delay,lateDelay,onTime,moved,movedDays,lessonSessions,seconds,prevSeconds,scheduledReviews,
+      completedReviews,reviewRate,overdueReviews,manualReviews,areaProgress,subjectPending
+    };
+  }
+
+  function renderLessons() {
+    const m = lessonsData();
+    const studyDays = new Set(m.lessonSessions.map(x=>dateKey(x.started_at))).size;
+    const best = [...m.areaProgress].sort((a,b)=>b.value-a.value)[0];
+    const worst = m.areaProgress[0];
+
+    renderCards("lesson-callouts",[
+      {label:"Aulas no cronograma",value:num(m.topics.length),helper:"total importado",viz:{value:100}},
+      {label:"Aulas concluídas",value:num(m.done.length),helper:`${percent(m.progress)} do total`,viz:{type:"ring",value:m.progress}},
+      {label:"Progresso total",value:percent(m.progress,1),helper:`${m.done.length}/${m.topics.length}`,viz:{value:m.progress}},
+      {label:"Concluídas no período",value:num(m.completedPeriod.length),helper:labelPeriod(),viz:{value:Math.min(100,m.completedPeriod.length/30*100)}},
+      {label:"Planejadas no período",value:num(m.scheduled.length),helper:`${m.scheduledDone.length} concluídas`,viz:{value:Math.min(100,m.scheduled.length/35*100)}},
+
+      {label:"Aderência",value:percent(m.adherence,1),helper:`${m.scheduledDone.length}/${m.scheduled.length} previstas`,viz:{type:"ring",value:m.adherence}},
+      {label:"Aulas atrasadas",value:num(m.overdue.length),helper:"pendentes com data vencida",viz:{type:"ring",value:pct(m.overdue.length,Math.max(1,m.topics.length-m.done.length))}},
+      {label:"Aulas futuras",value:num(m.future.length),helper:"já agendadas",viz:{value:pct(m.future.length,m.topics.length)}},
+      {label:"Pontualidade",value:percent(m.onTime,1),helper:`${m.lateDelay.length} concluídas após o prazo`,viz:{type:"ring",value:m.onTime}},
+      {label:"Atraso médio",value:m.lateDelay.length?days(mean(m.lateDelay),1):"0 d",helper:"entre aulas concluídas atrasadas",viz:{value:Math.min(100,mean(m.lateDelay)/14*100)}},
+
+      {label:"Maior atraso",value:m.lateDelay.length?days(Math.max(...m.lateDelay)):"0 d",helper:"entre aulas concluídas",viz:{value:Math.min(100,(m.lateDelay.length?Math.max(...m.lateDelay):0)/30*100)}},
+      {label:"Remanejadas",value:num(m.moved.length),helper:`${percent(pct(m.moved.length,m.topics.length))} do cronograma`,viz:{type:"ring",value:pct(m.moved.length,m.topics.length)}},
+      {label:"Deslocamento médio",value:m.movedDays.length?days(mean(m.movedDays),1):"0 d",helper:"data original → atual",viz:{value:Math.min(100,mean(m.movedDays)/21*100)}},
+      {label:"Já estudadas",value:num(m.topics.filter(x=>x.already_done).length),helper:"marcadas como já feitas",viz:{value:pct(m.topics.filter(x=>x.already_done).length,m.topics.length)}},
+      {label:"Tempo em aulas",value:hours(m.seconds),helper:compare(m.seconds,m.prevSeconds),viz:{value:Math.min(100,m.seconds/72000*100)}},
+
+      {label:"Média por conclusão",value:hours(m.completedPeriod.length?m.seconds/m.completedPeriod.length:0),helper:`${m.completedPeriod.length} conclusões`,viz:{value:Math.min(100,(m.completedPeriod.length?m.seconds/m.completedPeriod.length:0)/5400*100)}},
+      {label:"Dias com aula",value:num(studyDays),helper:`de ${eligibleDays(state.settings?.theory_study_weekdays)} dias permitidos`,viz:{type:"ring",value:pct(studyDays,eligibleDays(state.settings?.theory_study_weekdays))}},
+      {label:"Revisões previstas",value:num(m.scheduledReviews.length),helper:"revisões teóricas",viz:{value:Math.min(100,m.scheduledReviews.length/80*100)}},
+      {label:"Revisões concluídas",value:num(m.completedReviews.length),helper:`${percent(m.reviewRate)} das previstas`,viz:{type:"ring",value:m.reviewRate}},
+      {label:"Revisões atrasadas",value:num(m.overdueReviews.length),helper:"pendentes neste momento",viz:{type:"ring",value:pct(m.overdueReviews.length,Math.max(1,m.reviews.filter(x=>!x.completed_at).length))}},
+
+      {label:"Revisões remarcadas",value:num(m.manualReviews.length),helper:"movidas manualmente",viz:{value:pct(m.manualReviews.length,m.reviews.length)}},
+      {label:"Melhor área",value:best?.label||"—",helper:best?`${percent(best.value)} concluído`:"sem dados",viz:{value:best?.value||0}},
+      {label:"Área mais pendente",value:worst?.label||"—",helper:worst?`${percent(worst.value)} concluído`:"sem dados",viz:{value:worst?.value||0}},
+      {label:"Matéria + pendente",value:m.subjectPending?.label||"—",helper:m.subjectPending?`${m.subjectPending.count} aulas pendentes`:"sem pendências",viz:{value:Math.min(100,(m.subjectPending?.count||0)*8)}}
+    ]);
+
+    const plannedSeries = dateSeries(m.scheduled,"scheduled_date");
+    const doneSeries = dateSeries(m.completedPeriod,"completed_at");
+    const labels = plannedSeries.map(x=>x.label);
+    const doneMap = new Map(doneSeries.map(x=>[x.date,x.value]));
+
+    chart("chart-lessons-plan","bar",labels,[
+      {label:"Planejadas",data:plannedSeries.map(x=>x.value)},
+      {label:"Concluídas",data:plannedSeries.map(x=>doneMap.get(x.date)||0)}
+    ]);
+
+    progressList("lesson-area-progress",m.areaProgress.slice(0,12));
+
+    const stageRows = Array.from(group(m.reviews,x=>Number(x.stage||0)).entries()).sort((a,b)=>a[0]-b[0]).map(([stage,rows])=>({
+      label:`Etapa ${stage}`,
+      value:pct(rows.filter(x=>x.completed_at).length,rows.length),
+      helper:`${rows.filter(x=>x.completed_at).length}/${rows.length} concluídas`
+    }));
+    progressList("lesson-review-progress",stageRows);
+
+    const sessionPeriod = current(state.period.sessions,"started_at").filter(x=>x.activity_kind==="lesson");
+    const rows = Array.from(group(m.topics,subject).entries()).map(([label,items])=>{
+      const ids = new Set(items.map(x=>x.id));
+      const rev = m.reviews.filter(x=>ids.has(x.topic_id));
+      const done = items.filter(completedTopic).length;
+      const late = items.filter(x=>!completedTopic(x)&&x.scheduled_date&&parseDate(x.scheduled_date)<startDay(new Date())).length;
+      const secs = sum(sessionPeriod.filter(x=>subject(x)===label),x=>x.duration_seconds);
+
+      return {
+        label,total:items.length,done,pending:items.length-done,progress:pct(done,items.length),late,secs,
+        revRate:pct(rev.filter(x=>x.completed_at).length,rev.length),revN:rev.length
+      };
+    }).sort((a,b)=>b.total-a.total).slice(0,40);
+
+    table("lesson-subject-table",
+      [{label:"Matéria"},{label:"Progresso"},{label:"Concluídas",num:true},{label:"Pendentes",num:true},{label:"Atrasadas",num:true},{label:"Tempo",num:true},{label:"Revisões",num:true}],
+      rows.map(x=>[
+        `<strong>${esc(x.label)}</strong>`,`${percent(x.progress)} · ${x.done}/${x.total}`,num(x.done),num(x.pending),num(x.late),hours(x.secs),x.revN?percent(x.revRate):"—"
+      ])
+    );
+
+    const out = [];
+    if (m.overdue.length) out.push({title:"Atrasos",text:`${m.overdue.length} aulas estão vencidas agora.`});
+    if (worst) out.push({title:"Área mais pendente",text:`${worst.label} tem ${percent(worst.value)} das aulas concluídas.`});
+    if (m.scheduledReviews.length) out.push({title:"Revisões teóricas",text:`${percent(m.reviewRate)} das revisões previstas para o período foram concluídas.`});
+    if (m.moved.length) out.push({title:"Remanejamentos",text:`${m.moved.length} aulas mudaram de data, com deslocamento médio de ${days(mean(m.movedDays),1)}.`});
+    insights("lesson-insights",out);
+  }
+
+  // =========================================================
+  // FLASHCARDS
+  // =========================================================
+
+  function flashData() {
+    const all = state.static.flashcards;
+    const active = activeFlash();
+    const reviews = current(state.period.flashReviews,"reviewed_at");
+    const prevReviews = previous(state.period.flashReviews,"reviewed_at");
+    const sessions = current(state.period.sessions,"started_at").filter(x=>x.activity_kind==="flashcards");
+    const prevSessions = previous(state.period.sessions,"started_at").filter(x=>x.activity_kind==="flashcards");
+
+    const created = all.filter(x=>state.range==="all"||inCurrent(x.created_at));
+    const unique = new Set(reviews.map(x=>x.flashcard_id)).size;
+    const correct = reviews.filter(x=>x.was_correct).length;
+    const accuracy = pct(correct,reviews.length);
+    const prevAccuracy = pct(prevReviews.filter(x=>x.was_correct).length,prevReviews.length);
+
+    const easy = reviews.filter(x=>x.rating==="easy").length;
+    const medium = reviews.filter(x=>x.rating==="medium").length;
+    const hard = reviews.filter(x=>x.rating==="hard").length;
+
+    const reviewed = active.filter(x=>x.review_count>0&&x.last_reviewed_at);
+    const retVals = reviewed.map(x=>memory(x.last_reviewed_at,x.stability_days)).filter(x=>x!==null);
+    const retention = mean(retVals)*100;
+
+    const stability = reviewed.map(x=>Number(x.stability_days||0)).filter(x=>x>0);
+    const intervals = active.map(x=>Number(x.current_interval_days||0)).filter(x=>x>0);
+    const preR = reviews.map(x=>Number(x.retrievability_before)).filter(Number.isFinite);
+
+    const growth = reviews.map(x=>{
+      const a=Number(x.stability_before_days), b=Number(x.stability_after_days);
+      return Number.isFinite(a)&&a>0&&Number.isFinite(b)?(b-a)/a*100:null;
+    }).filter(x=>x!==null);
+
+    const reviewDays = new Set(reviews.map(x=>dateKey(x.reviewed_at))).size;
+    const today = startDay(new Date());
+    const todayKey = dateKey(today);
+
+    const dueToday = active.filter(x=>dateKey(x.due_date)===todayKey).length;
+    const overdue = active.filter(x=>parseDate(x.due_date)<today).length;
+    const never = active.filter(x=>Number(x.review_count||0)===0).length;
+    const next7 = active.filter(x=>{const d=parseDate(x.due_date);return d&&d>=today&&d<=addDays(today,7)}).length;
+    const next30 = active.filter(x=>{const d=parseDate(x.due_date);return d&&d>=today&&d<=addDays(today,30)}).length;
+    const fivePlus = active.filter(x=>x.review_count>=5).length;
+    const low = reviewed.filter(x=>memory(x.last_reviewed_at,x.stability_days)<.70).length;
+    const high = reviewed.filter(x=>memory(x.last_reviewed_at,x.stability_days)>=.95).length;
+
+    const bySubject = groupedRetention(reviewed,subject,3);
+    const byArea = groupedRetention(reviewed,area,3);
+
+    const seconds = sum(sessions,x=>x.duration_seconds);
+    const prevSeconds = sum(prevSessions,x=>x.duration_seconds);
+
+    return {
+      all,active,reviews,prevReviews,sessions,created,unique,correct,accuracy,prevAccuracy,
+      easy,medium,hard,reviewed,retVals,retention,stability,intervals,preR,growth,reviewDays,
+      dueToday,overdue,never,next7,next30,fivePlus,low,high,bySubject,byArea,
+      weakSubject:bySubject[0],weakArea:byArea[0],seconds,prevSeconds,
+      maxReview:active.length?Math.max(...active.map(x=>Number(x.review_count||0))):0
+    };
+  }
+
+  function renderFlashcards() {
+    const m = flashData();
+    const incorrect = m.reviews.length-m.correct;
+
+    renderCards("flash-callouts",[
+      {label:"Cards ativos",value:num(m.active.length),helper:`${m.all.length} registrados`,viz:{value:pct(m.active.length,m.all.length)}},
+      {label:"Novos cards",value:num(m.created.length),helper:`criados no ${labelPeriod()}`,viz:{value:Math.min(100,m.created.length/300*100)}},
+      {label:"Cards únicos revisados",value:num(m.unique),helper:`${percent(pct(m.unique,m.active.length))} dos ativos`,viz:{type:"ring",value:pct(m.unique,m.active.length)}},
+      {label:"Revisões realizadas",value:num(m.reviews.length),helper:compare(m.reviews.length,m.prevReviews.length),viz:{value:Math.min(100,m.reviews.length/2000*100)}},
+      {label:"Tempo em flashcards",value:hours(m.seconds),helper:compare(m.seconds,m.prevSeconds),viz:{value:Math.min(100,m.seconds/54000*100)}},
+
+      {label:"Acertos",value:num(m.correct),helper:`${percent(m.accuracy,1)} das revisões`,viz:{value:m.accuracy}},
+      {label:"Erros",value:num(incorrect),helper:`${percent(pct(incorrect,m.reviews.length),1)} das revisões`,viz:{value:pct(incorrect,m.reviews.length)}},
+      {label:"Taxa de acerto",value:percent(m.accuracy,1),helper:comparePP(m.accuracy,m.prevAccuracy),viz:{type:"ring",value:m.accuracy}},
+      {label:"Fácil",value:percent(pct(m.easy,m.reviews.length),1),helper:`${m.easy} respostas`,viz:{type:"stack",values:[m.easy,m.medium,m.hard]}},
+      {label:"Médio",value:percent(pct(m.medium,m.reviews.length),1),helper:`${m.medium} respostas`,viz:{type:"stack",values:[m.easy,m.medium,m.hard]}},
+
+      {label:"Difícil",value:percent(pct(m.hard,m.reviews.length),1),helper:`${m.hard} respostas`,viz:{type:"stack",values:[m.easy,m.medium,m.hard]}},
+      {label:"Retenção atual",value:percent(m.retention,1),helper:`${m.reviewed.length} cards estimados`,viz:{type:"ring",value:m.retention}},
+      {label:"Estabilidade média",value:days(mean(m.stability),1),helper:"cards já revisados",viz:{value:Math.min(100,mean(m.stability)/90*100)}},
+      {label:"Estabilidade mediana",value:days(median(m.stability),1),helper:"menos sensível a extremos",viz:{value:Math.min(100,median(m.stability)/90*100)}},
+      {label:"Intervalo médio",value:days(mean(m.intervals),1),helper:"intervalo atual",viz:{value:Math.min(100,mean(m.intervals)/90*100)}},
+
+      {label:"Intervalo mediano",value:days(median(m.intervals),1),helper:"intervalo atual",viz:{value:Math.min(100,median(m.intervals)/90*100)}},
+      {label:"Recuperabilidade pré-revisão",value:m.preR.length?percent(mean(m.preR)*100,1):"—",helper:`${m.preR.length} revisões com estimativa`,viz:{type:"ring",value:mean(m.preR)*100}},
+      {label:"Crescimento estabilidade",value:m.growth.length?`${num(mean(m.growth),1)}%`:"—",helper:"média após revisar",viz:{value:Math.min(100,Math.max(0,mean(m.growth)))}},
+      {label:"Dias com revisão",value:num(m.reviewDays),helper:`${percent(pct(m.reviewDays,eligibleDays(state.settings?.flashcard_weekdays)))} dos permitidos`,viz:{type:"ring",value:pct(m.reviewDays,eligibleDays(state.settings?.flashcard_weekdays))}},
+      {label:"Média por dia ativo",value:m.reviewDays?num(m.reviews.length/m.reviewDays,1):"0",helper:"revisões/dia",viz:{value:Math.min(100,(m.reviewDays?m.reviews.length/m.reviewDays:0)/150*100)}},
+
+      {label:"Revisões por card",value:m.unique?`${num(m.reviews.length/m.unique,1)}×`:"0×",helper:"no período",viz:{value:Math.min(100,(m.unique?m.reviews.length/m.unique:0)/5*100)}},
+      {label:"Para hoje",value:num(m.dueToday),helper:"cards vencendo hoje",viz:{value:pct(m.dueToday,m.active.length)}},
+      {label:"Atrasados",value:num(m.overdue),helper:`${percent(pct(m.overdue,m.active.length))} dos ativos`,viz:{type:"ring",value:pct(m.overdue,m.active.length)}},
+      {label:"Nunca revisados",value:num(m.never),helper:`${percent(pct(m.never,m.active.length))} dos ativos`,viz:{type:"ring",value:pct(m.never,m.active.length)}},
+      {label:"Próximos 7 dias",value:num(m.next7),helper:"carga prevista",viz:{value:pct(m.next7,m.active.length)}},
+
+      {label:"Próximos 30 dias",value:num(m.next30),helper:"carga prevista",viz:{value:pct(m.next30,m.active.length)}},
+      {label:"Cards com 5+ revisões",value:num(m.fivePlus),helper:`${percent(pct(m.fivePlus,m.active.length))} dos ativos`,viz:{type:"ring",value:pct(m.fivePlus,m.active.length)}},
+      {label:"Retenção < 70%",value:num(m.low),helper:"cards potencialmente frágeis",viz:{type:"ring",value:pct(m.low,m.reviewed.length)}},
+      {label:"Retenção ≥ 95%",value:num(m.high),helper:"memória forte",viz:{type:"ring",value:pct(m.high,m.reviewed.length)}},
+      {label:"Maior nº de revisões",value:`${m.maxReview}×`,helper:"em um único card",viz:{value:Math.min(100,m.maxReview/15*100)}},
+
+      {label:"Menor retenção/matéria",value:m.weakSubject?.label||"—",helper:m.weakSubject?`${percent(m.weakSubject.value,1)} · ${m.weakSubject.evidence} cards`:"evidência insuficiente",viz:{value:m.weakSubject?.value||0}},
+      {label:"Menor retenção/área",value:m.weakArea?.label||"—",helper:m.weakArea?`${percent(m.weakArea.value,1)} · ${m.weakArea.evidence} cards`:"evidência insuficiente",viz:{value:m.weakArea?.value||0}}
+    ]);
+
+    const reviewSeries = dateSeries(m.reviews,"reviewed_at");
+    const accuracyByDate = Array.from(group(m.reviews,x=>dateKey(x.reviewed_at)).entries())
+      .map(([d,rows])=>({d,value:pct(rows.filter(x=>x.was_correct).length,rows.length)}));
+    const accMap = new Map(accuracyByDate.map(x=>[x.d,x.value]));
+
+    chart("chart-flash-reviews","bar",reviewSeries.map(x=>x.label),[
+      {label:"Revisões",data:reviewSeries.map(x=>x.value)},
+      {type:"line",label:"Acerto %",data:reviewSeries.map(x=>accMap.get(x.date)??null)}
+    ]);
+
+    chart("chart-flash-rating","doughnut",["Fácil","Médio","Difícil"],[
+      {label:"Respostas",data:[m.easy,m.medium,m.hard]}
+    ],{extra:{cutout:"64%"}});
+
+    const workload = [];
+    for(let i=0;i<14;i++){
+      const d=addDays(new Date(),i), key=dateKey(d);
+      workload.push({label:i===0?"hoje":new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"2-digit"}).format(d),value:m.active.filter(x=>dateKey(x.due_date)===key).length});
+    }
+    chart("chart-flash-workload","bar",workload.map(x=>x.label),[{label:"Cards",data:workload.map(x=>x.value)}]);
+
+    progressList("flash-area-retention",m.byArea.slice(0,12).map(x=>({label:x.label,value:x.value,helper:`${x.evidence} cards`})));
+
+    const stabilityBins = [
+      ["<3d",0,3],["3–7d",3,8],["8–21d",8,22],["22–45d",22,46],["46–90d",46,91],[">90d",91,Infinity]
+    ].map(([label,min,max])=>({label,value:m.reviewed.filter(x=>Number(x.stability_days)>=min&&Number(x.stability_days)<max).length}));
+    chart("chart-flash-stability","bar",stabilityBins.map(x=>x.label),[{label:"Cards",data:stabilityBins.map(x=>x.value)}]);
+
+    const subjectRows = Array.from(group(m.active,subject).entries()).map(([label,cards])=>{
+      const ids=new Set(cards.map(x=>x.id));
+      const rev=m.reviews.filter(x=>ids.has(x.flashcard_id));
+      const reviewed=cards.filter(x=>x.review_count>0&&x.last_reviewed_at);
+      const ret=mean(reviewed.map(x=>memory(x.last_reviewed_at,x.stability_days)).filter(x=>x!==null))*100;
+      const late=cards.filter(x=>parseDate(x.due_date)<startDay(new Date())).length;
+
+      return {
+        label,cards:cards.length,reviews:rev.length,accuracy:pct(rev.filter(x=>x.was_correct).length,rev.length),
+        retention:ret,stability:mean(reviewed.map(x=>x.stability_days)),interval:mean(cards.map(x=>x.current_interval_days)),late
+      };
+    }).sort((a,b)=>b.cards-a.cards).slice(0,50);
+
+    table("flash-subject-table",
+      [{label:"Matéria"},{label:"Cards",num:true},{label:"Revisões",num:true},{label:"Acerto",num:true},{label:"Retenção",num:true},{label:"Estabilidade",num:true},{label:"Intervalo",num:true},{label:"Atrasados",num:true}],
+      subjectRows.map(x=>[
+        `<strong>${esc(x.label)}</strong>`,num(x.cards),num(x.reviews),x.reviews?percent(x.accuracy,1):"—",x.retention?percent(x.retention,1):"—",x.stability?days(x.stability,1):"—",x.interval?days(x.interval,1):"—",num(x.late)
+      ])
+    );
+
+    const fragile = m.reviewed.map(card=>({card,value:memory(card.last_reviewed_at,card.stability_days)*100}))
+      .sort((a,b)=>a.value-b.value).slice(0,10)
+      .map(x=>({label:(x.card.front_text||"Flashcard").slice(0,72),value:x.value,helper:`${subject(x.card)} · ${x.card.review_count} revisões`}));
+    progressList("flash-hardest",fragile,v=>percent(v,1));
+
+    const areaReview = Array.from(group(m.reviews, r => {
+      const card = m.all.find(x=>x.id===r.flashcard_id);
+      return card ? area(card) : "Sem área";
+    }).entries()).map(([label,rows])=>({label,value:rows.length})).sort((a,b)=>b.value-a.value).slice(0,8);
+
+    chart("chart-flash-area","bar",areaReview.map(x=>x.label),[{label:"Revisões",data:areaReview.map(x=>x.value)}]);
+
+    const out=[];
+    if(state.range!=="all") out.push({title:"Volume",text:m.prevReviews.length?`Foram ${num(Math.abs((m.reviews.length-m.prevReviews.length)/m.prevReviews.length*100))}% ${m.reviews.length>=m.prevReviews.length?"mais":"menos"} revisões que no período anterior.`:`${m.reviews.length} revisões foram registradas no período.`});
+    if(m.weakArea) out.push({title:"Área mais frágil",text:`${m.weakArea.label} tem retenção estimada de ${percent(m.weakArea.value,1)} em ${m.weakArea.evidence} cards.`});
+    if(m.overdue) out.push({title:"Carga vencida",text:`${m.overdue} cards estão atrasados (${percent(pct(m.overdue,m.active.length))} dos ativos).`});
+    if(m.low) out.push({title:"Memória",text:`${m.low} cards têm recuperabilidade estimada abaixo de 70%.`});
+    if(m.growth.length) out.push({title:"Estabilidade",text:`A estabilidade cresceu em média ${num(mean(m.growth),1)}% nas revisões com dados antes/depois.`});
+    insights("flash-insights",out);
+  }
+
+  // =========================================================
+  // CADERNO DE ERROS
+  // =========================================================
+
+  function errorData() {
+    const all=state.static.errors;
+    const active=activeErrors();
+    const reviews=current(state.period.errorReviews,"reviewed_at");
+    const prevReviews=previous(state.period.errorReviews,"reviewed_at");
+    const sessions=current(state.period.sessions,"started_at").filter(x=>x.activity_kind==="error_notebook");
+    const prevSessions=previous(state.period.sessions,"started_at").filter(x=>x.activity_kind==="error_notebook");
+
+    const created=all.filter(x=>state.range==="all"||inCurrent(x.created_at));
+    const unique=new Set(reviews.map(x=>x.error_id)).size;
+    const reviewed=active.filter(x=>x.review_count>0&&x.last_reviewed_at);
+    const never=active.filter(x=>!x.review_count).length;
+    const today=startDay(new Date());
+    const overdue=active.filter(x=>parseDate(x.due_date)<today).length;
+    const dueToday=active.filter(x=>dateKey(x.due_date)===dateKey(today)).length;
+    const next7=active.filter(x=>{const d=parseDate(x.due_date);return d&&d>=today&&d<=addDays(today,7)}).length;
+    const next30=active.filter(x=>{const d=parseDate(x.due_date);return d&&d>=today&&d<=addDays(today,30)}).length;
+
+    const ret=mean(reviewed.map(x=>memory(x.last_reviewed_at,x.stability_days)).filter(x=>x!==null))*100;
+    const stability=reviewed.map(x=>Number(x.stability_days||0)).filter(x=>x>0);
+    const intervals=active.map(x=>Number(x.current_interval_days||0)).filter(x=>x>0);
+    const reviewDays=new Set(reviews.map(x=>dateKey(x.reviewed_at))).size;
+    const threePlus=active.filter(x=>x.review_count>=3).length;
+    const areaGroups=Array.from(group(active,area).entries()).map(([label,rows])=>({label,count:rows.length})).sort((a,b)=>b.count-a.count);
+    const subjectGroups=Array.from(group(active,subject).entries()).map(([label,rows])=>({label,count:rows.length})).sort((a,b)=>b.count-a.count);
+    const byArea=groupedRetention(reviewed,area,2);
+    const bySubject=groupedRetention(reviewed,subject,2);
+
+    const seconds=sum(sessions,x=>x.duration_seconds), prevSeconds=sum(prevSessions,x=>x.duration_seconds);
+    const originated=current(state.period.questionAttempts,"answered_at").filter(x=>x.sent_to_error&&x.error_entry_id).length;
+
+    const createdDates=active.map(x=>parseDate(x.created_at)).filter(Boolean).sort((a,b)=>a-b);
+
+    return {
+      all,active,reviews,prevReviews,sessions,created,unique,reviewed,never,overdue,dueToday,next7,next30,
+      ret,stability,intervals,reviewDays,threePlus,areaGroups,subjectGroups,byArea,bySubject,seconds,prevSeconds,originated,
+      oldest:createdDates[0],newest:createdDates.at(-1)
+    };
+  }
+
+  function renderErrors() {
+    const m=errorData();
+
+    renderCards("error-callouts",[
+      {label:"CCQs ativos",value:num(m.active.length),helper:`${m.all.length} registrados`,viz:{value:pct(m.active.length,m.all.length)}},
+      {label:"CCQs criados",value:num(m.created.length),helper:`no ${labelPeriod()}`,viz:{value:Math.min(100,m.created.length/100*100)}},
+      {label:"Revisões realizadas",value:num(m.reviews.length),helper:compare(m.reviews.length,m.prevReviews.length),viz:{value:Math.min(100,m.reviews.length/500*100)}},
+      {label:"CCQs únicos revisados",value:num(m.unique),helper:`${percent(pct(m.unique,m.active.length))} dos ativos`,viz:{type:"ring",value:pct(m.unique,m.active.length)}},
+      {label:"Tempo no Caderno",value:hours(m.seconds),helper:compare(m.seconds,m.prevSeconds),viz:{value:Math.min(100,m.seconds/36000*100)}},
+
+      {label:"Já revisados",value:num(m.reviewed.length),helper:`${percent(pct(m.reviewed.length,m.active.length))} dos ativos`,viz:{type:"ring",value:pct(m.reviewed.length,m.active.length)}},
+      {label:"Nunca revisados",value:num(m.never),helper:`${percent(pct(m.never,m.active.length))} dos ativos`,viz:{type:"ring",value:pct(m.never,m.active.length)}},
+      {label:"Atrasados",value:num(m.overdue),helper:`${percent(pct(m.overdue,m.active.length))} dos ativos`,viz:{type:"ring",value:pct(m.overdue,m.active.length)}},
+      {label:"Para hoje",value:num(m.dueToday),helper:"revisões vencendo hoje",viz:{value:pct(m.dueToday,m.active.length)}},
+      {label:"Próximos 7 dias",value:num(m.next7),helper:"carga prevista",viz:{value:pct(m.next7,m.active.length)}},
+
+      {label:"Próximos 30 dias",value:num(m.next30),helper:"carga prevista",viz:{value:pct(m.next30,m.active.length)}},
+      {label:"Retenção atual",value:percent(m.ret,1),helper:`${m.reviewed.length} CCQs estimados`,viz:{type:"ring",value:m.ret}},
+      {label:"Estabilidade média",value:days(mean(m.stability),1),helper:"CCQs revisados",viz:{value:Math.min(100,mean(m.stability)/90*100)}},
+      {label:"Estabilidade mediana",value:days(median(m.stability),1),helper:"CCQs revisados",viz:{value:Math.min(100,median(m.stability)/90*100)}},
+      {label:"Intervalo médio",value:days(mean(m.intervals),1),helper:"intervalo atual",viz:{value:Math.min(100,mean(m.intervals)/90*100)}},
+
+      {label:"Intervalo mediano",value:days(median(m.intervals),1),helper:"intervalo atual",viz:{value:Math.min(100,median(m.intervals)/90*100)}},
+      {label:"Revisões por CCQ",value:m.active.length?`${num(mean(m.active.map(x=>x.review_count)),1)}×`:"0×",helper:"média acumulada",viz:{value:Math.min(100,mean(m.active.map(x=>x.review_count))/6*100)}},
+      {label:"CCQs com 3+ revisões",value:num(m.threePlus),helper:`${percent(pct(m.threePlus,m.active.length))} dos ativos`,viz:{type:"ring",value:pct(m.threePlus,m.active.length)}},
+      {label:"Dias com revisão",value:num(m.reviewDays),helper:`${percent(pct(m.reviewDays,eligibleDays(state.settings?.error_weekdays)))} dos permitidos`,viz:{type:"ring",value:pct(m.reviewDays,eligibleDays(state.settings?.error_weekdays))}},
+      {label:"Média por dia ativo",value:m.reviewDays?num(m.reviews.length/m.reviewDays,1):"0",helper:"revisões/dia",viz:{value:Math.min(100,(m.reviewDays?m.reviews.length/m.reviewDays:0)/30*100)}},
+
+      {label:"CCQ ativo mais antigo",value:m.oldest?fmtDate(m.oldest):"—",helper:m.oldest?`${diffDays(new Date(),m.oldest)} dias no caderno`:"sem dados",viz:{value:Math.min(100,m.oldest?diffDays(new Date(),m.oldest)/180*100:0)}},
+      {label:"CCQ ativo mais recente",value:m.newest?fmtDate(m.newest):"—",helper:m.newest?`${diffDays(new Date(),m.newest)} dias atrás`:"sem dados",viz:{value:m.newest?Math.max(5,100-diffDays(new Date(),m.newest)):0}},
+      {label:"Área com mais CCQs",value:m.areaGroups[0]?.label||"—",helper:m.areaGroups[0]?`${m.areaGroups[0].count} ativos`:"sem dados",viz:{value:pct(m.areaGroups[0]?.count||0,m.active.length)}},
+      {label:"Matéria com mais CCQs",value:m.subjectGroups[0]?.label||"—",helper:m.subjectGroups[0]?`${m.subjectGroups[0].count} ativos`:"sem dados",viz:{value:pct(m.subjectGroups[0]?.count||0,m.active.length)}},
+      {label:"Originados de questões",value:num(m.originated),helper:`no ${labelPeriod()}`,viz:{value:Math.min(100,pct(m.originated,Math.max(1,m.created.length)))}},
+
+      {label:"Menor retenção/área",value:m.byArea[0]?.label||"—",helper:m.byArea[0]?`${percent(m.byArea[0].value,1)} · ${m.byArea[0].evidence} CCQs`:"evidência insuficiente",viz:{value:m.byArea[0]?.value||0}}
+    ]);
+
+    const createdSeries=dateSeries(m.created,"created_at");
+    const reviewSeries=dateSeries(m.reviews,"reviewed_at");
+    const reviewMap=new Map(reviewSeries.map(x=>[x.date,x.value]));
+    chart("chart-error-flow","bar",createdSeries.map(x=>x.label),[
+      {label:"Criados",data:createdSeries.map(x=>x.value)},
+      {label:"Revisões",data:createdSeries.map(x=>reviewMap.get(x.date)||0)}
+    ]);
+
+    chart("chart-error-area","doughnut",m.areaGroups.slice(0,8).map(x=>x.label),[
+      {label:"CCQs",data:m.areaGroups.slice(0,8).map(x=>x.count)}
+    ],{extra:{cutout:"64%"}});
+
+    const workload=[];
+    for(let i=0;i<14;i++){
+      const d=addDays(new Date(),i),key=dateKey(d);
+      workload.push({label:i===0?"hoje":new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"2-digit"}).format(d),value:m.active.filter(x=>dateKey(x.due_date)===key).length});
+    }
+    chart("chart-error-workload","bar",workload.map(x=>x.label),[{label:"CCQs",data:workload.map(x=>x.value)}]);
+
+    progressList("error-area-retention",m.byArea.slice(0,12).map(x=>({label:x.label,value:x.value,helper:`${x.evidence} CCQs`})));
+
+    const depth=[
+      ["Nunca",m.active.filter(x=>x.review_count===0).length],
+      ["1x",m.active.filter(x=>x.review_count===1).length],
+      ["2x",m.active.filter(x=>x.review_count===2).length],
+      ["3x",m.active.filter(x=>x.review_count===3).length],
+      ["4x",m.active.filter(x=>x.review_count===4).length],
+      ["5+x",m.active.filter(x=>x.review_count>=5).length]
     ];
+    chart("chart-error-depth","bar",depth.map(x=>x[0]),[{label:"CCQs",data:depth.map(x=>x[1])}]);
 
+    const subjRows=Array.from(group(m.active,subject).entries()).map(([label,items])=>{
+      const reviewed=items.filter(x=>x.review_count>0&&x.last_reviewed_at);
+      const ret=mean(reviewed.map(x=>memory(x.last_reviewed_at,x.stability_days)).filter(x=>x!==null))*100;
+      return {
+        label,active:items.length,reviews:sum(items,x=>x.review_count),ret,
+        stability:mean(reviewed.map(x=>x.stability_days)),interval:mean(items.map(x=>x.current_interval_days)),
+        late:items.filter(x=>parseDate(x.due_date)<startDay(new Date())).length
+      };
+    }).sort((a,b)=>b.active-a.active).slice(0,50);
 
-  results.forEach(
-    (result) => {
-      if (
-        result.error
-      ) {
-        console.warn(
-          result.error
-        );
-      }
+    table("error-subject-table",
+      [{label:"Matéria"},{label:"CCQs ativos",num:true},{label:"Revisões acumuladas",num:true},{label:"Retenção",num:true},{label:"Estabilidade",num:true},{label:"Intervalo",num:true},{label:"Atrasados",num:true}],
+      subjRows.map(x=>[
+        `<strong>${esc(x.label)}</strong>`,num(x.active),num(x.reviews),x.ret?percent(x.ret,1):"—",x.stability?days(x.stability,1):"—",x.interval?days(x.interval,1):"—",num(x.late)
+      ])
+    );
+
+    const persistent=m.active.slice().sort((a,b)=>b.review_count-a.review_count).slice(0,10).map(x=>({
+      label:(x.ccq||x.theme||"CCQ").slice(0,78),value:x.review_count,helper:`${subject(x)} · ${x.last_reviewed_at?`última ${fmtDate(x.last_reviewed_at)}`:"nunca revisado"}`
+    }));
+    progressList("error-most-reviewed",persistent,v=>`${num(v)}×`,Math.max(1,...persistent.map(x=>x.value)));
+
+    chart("chart-error-subject","bar",m.subjectGroups.slice(0,10).map(x=>x.label),[
+      {label:"CCQs ativos",data:m.subjectGroups.slice(0,10).map(x=>x.count)}
+    ]);
+
+    const out=[];
+    if(m.areaGroups[0]) out.push({title:"Concentração",text:`${m.areaGroups[0].label} concentra ${m.areaGroups[0].count} CCQs ativos (${percent(pct(m.areaGroups[0].count,m.active.length))}).`});
+    if(m.overdue) out.push({title:"Revisões vencidas",text:`${m.overdue} CCQs estão atrasados (${percent(pct(m.overdue,m.active.length))} dos ativos).`});
+    if(m.byArea[0]) out.push({title:"Memória",text:`${m.byArea[0].label} apresenta a menor retenção estimada entre áreas com pelo menos 2 CCQs revisados: ${percent(m.byArea[0].value,1)}.`});
+    if(m.threePlus) out.push({title:"Profundidade",text:`${m.threePlus} CCQs já passaram por pelo menos 3 revisões.`});
+    if(m.originated) out.push({title:"Questões → Caderno",text:`${m.originated} erros de questões foram enviados ao Caderno no período.`});
+    out.push({title:"Limite atual",text:"O banco ainda não registra acerto/erro na revisão do CCQ; por isso não são inventadas métricas de domínio ou reincidência real."});
+    insights("error-insights",out);
+  }
+
+  // =========================================================
+  // CONTROLES / INICIALIZAÇÃO
+  // =========================================================
+
+  function renderAll() {
+    renderGeneral();
+    renderLessons();
+    renderFlashcards();
+    renderErrors();
+
+    const status = $("stats-status");
+    if (state.sourceErrors.length) {
+      status.className = "stats-status error";
+      status.textContent = `Dados carregados com ressalvas: ${state.sourceErrors.join(" | ")}`;
+    } else {
+      status.className = "stats-status";
+      status.textContent = `Atualizado · período: ${labelPeriod()}`;
     }
-  );
-
-
-  const studySplit =
-    splitCurrentPrevious(
-      studyResult.data || [],
-      "study_date",
-      range
-    );
-
-
-  const questionSplit =
-    splitCurrentPrevious(
-      questionResult.data || [],
-      "answer_date",
-      range
-    );
-
-
-  const flashSplit =
-    splitCurrentPrevious(
-      flashResult.data || [],
-      "review_date",
-      range
-    );
-
-
-  const studyRows =
-    studySplit.current;
-
-  const previousStudyRows =
-    studySplit.previous;
-
-  const activityRows =
-    activityResult.data
-    || [];
-
-  const questionRows =
-    questionSplit.current;
-
-  const previousQuestionRows =
-    questionSplit.previous;
-
-  const flashRows =
-    flashSplit.current;
-
-  const previousFlashRows =
-    flashSplit.previous;
-
-  const retentionRows =
-    retentionResult.data
-    || [];
-
-  const questionAreaRows =
-    questionAreaResult.data
-    || [];
-
-  const errorAreaRows =
-    errorAreaResult.data
-    || [];
-
-  const errorMetrics =
-    errorMetricsResult.data
-    || null;
-
-  const simulationMetrics =
-    simulationMetricsResult.data
-    || null;
-
-  const examMetrics =
-    examMetricsResult.data
-    || null;
-
-  const topics =
-    topicsResult.data
-    || [];
-
-  const reviews =
-    reviewsResult.data
-    || [];
-
-
-  const totalStudySeconds =
-    sumField(
-      studyRows,
-      "total_seconds"
-    );
-
-
-  const previousStudySeconds =
-    sumField(
-      previousStudyRows,
-      "total_seconds"
-    );
-
-
-  const activeStudyDays =
-    studyRows.filter(
-      (row) =>
-        Number(
-          row.total_seconds
-          || 0
-        ) > 0
-    ).length;
-
-
-  const totalSessions =
-    sumField(
-      studyRows,
-      "session_count"
-    );
-
-
-  const averageSessionSeconds =
-    totalSessions
-      ? totalStudySeconds
-        / totalSessions
-      : 0;
-
-
-  const averageActiveDaySeconds =
-    activeStudyDays
-      ? totalStudySeconds
-        / activeStudyDays
-      : 0;
-
-
-  const totalQuestions =
-    sumField(
-      questionRows,
-      "answered_questions"
-    );
-
-
-  const correctQuestions =
-    sumField(
-      questionRows,
-      "correct_questions"
-    );
-
-
-  const previousQuestions =
-    sumField(
-      previousQuestionRows,
-      "answered_questions"
-    );
-
-
-  const previousCorrectQuestions =
-    sumField(
-      previousQuestionRows,
-      "correct_questions"
-    );
-
-
-  const totalFlashReviews =
-    sumField(
-      flashRows,
-      "total_reviews"
-    );
-
-
-  const correctFlash =
-    sumField(
-      flashRows,
-      "correct"
-    );
-
-
-  const previousFlashReviews =
-    sumField(
-      previousFlashRows,
-      "total_reviews"
-    );
-
-
-  const previousCorrectFlash =
-    sumField(
-      previousFlashRows,
-      "correct"
-    );
-
-
-  const questionAccuracy =
-    statsPercent(
-      correctQuestions,
-      totalQuestions
-    );
-
-
-  const previousQuestionAccuracy =
-    statsPercent(
-      previousCorrectQuestions,
-      previousQuestions
-    );
-
-
-  const flashAccuracy =
-    statsPercent(
-      correctFlash,
-      totalFlashReviews
-    );
-
-
-  const previousFlashAccuracy =
-    statsPercent(
-      previousCorrectFlash,
-      previousFlashReviews
-    );
-
-
-  document
-    .getElementById(
-      "analytics-study-time"
-    )
-    .textContent =
-      formatHours(
-        totalStudySeconds
-      );
-
-
-  document
-    .getElementById(
-      "analytics-study-time-helper"
-    )
-    .textContent =
-      statsDeltaLabel(
-        totalStudySeconds,
-        previousStudySeconds
-      );
-
-
-  document
-    .getElementById(
-      "analytics-average-active-day"
-    )
-    .textContent =
-      formatHours(
-        averageActiveDaySeconds
-      );
-
-
-  document
-    .getElementById(
-      "analytics-average-active-day-helper"
-    )
-    .textContent =
-      activeStudyDays
-        ? `${activeStudyDays} dia${activeStudyDays === 1 ? "" : "s"} com estudo`
-        : "sem dias ativos";
-
-
-  document
-    .getElementById(
-      "analytics-sessions"
-    )
-    .textContent =
-      totalSessions;
-
-
-  document
-    .getElementById(
-      "analytics-sessions-helper"
-    )
-    .textContent =
-      totalSessions
-        ? `média de ${formatMinutesFromSeconds(
-            averageSessionSeconds
-          )}`
-        : "sem sessões";
-
-
-  document
-    .getElementById(
-      "analytics-consistency"
-    )
-    .textContent =
-      `${activeStudyDays}/${statsState.days}`;
-
-
-  document
-    .getElementById(
-      "analytics-consistency-helper"
-    )
-    .textContent =
-      `${(
-        activeStudyDays
-        / statsState.days
-        * 100
-      ).toFixed(0)}% dos dias`;
-
-
-  document
-    .getElementById(
-      "analytics-question-accuracy"
-    )
-    .textContent =
-      statsPercentLabel(
-        questionAccuracy
-      );
-
-
-  document
-    .getElementById(
-      "analytics-question-helper"
-    )
-    .textContent =
-      totalQuestions
-        ? `${totalQuestions} questões · ${statsPointDelta(
-            questionAccuracy,
-            previousQuestionAccuracy
-          )}`
-        : "sem questões no período";
-
-
-  document
-    .getElementById(
-      "analytics-flash-accuracy"
-    )
-    .textContent =
-      statsPercentLabel(
-        flashAccuracy
-      );
-
-
-  document
-    .getElementById(
-      "analytics-flash-helper"
-    )
-    .textContent =
-      totalFlashReviews
-        ? `${totalFlashReviews} revisões · ${statsPointDelta(
-            flashAccuracy,
-            previousFlashAccuracy
-          )}`
-        : "sem revisões no período";
-
-
-  document
-    .getElementById(
-      "analytics-error-retention"
-    )
-    .textContent =
-      statsPercentLabel(
-        errorMetrics
-          ?.retention_percent,
-        0
-      );
-
-
-  document
-    .getElementById(
-      "analytics-error-retention-helper"
-    )
-    .textContent =
-      errorMetrics
-        ? `${Number(
-            errorMetrics.registered_errors
-            || 0
-          )} CCQs ativos`
-        : "sem dados";
-
-
-  document
-    .getElementById(
-      "analytics-simulation-accuracy"
-    )
-    .textContent =
-      statsPercentLabel(
-        simulationMetrics
-          ?.accuracy_percent,
-        1
-      );
-
-
-  document
-    .getElementById(
-      "analytics-simulation-helper"
-    )
-    .textContent =
-      simulationMetrics
-        ? `${Number(
-            simulationMetrics.completed_sets
-            || 0
-          )} simulados concluídos`
-        : "sem dados";
-
-
-  document
-    .getElementById(
-      "pending-flashcards"
-    )
-    .textContent =
-      pendingFlashResult.count
-      ?? 0;
-
-
-  document
-    .getElementById(
-      "pending-errors"
-    )
-    .textContent =
-      pendingErrorsResult.count
-      ?? 0;
-
-
-  const pendingReviews =
-    reviews.filter(
-      (item) =>
-        !item.completed_at
-        && item.scheduled_date
-        <= today
-    ).length;
-
-
-  const pendingLessons =
-    topics.filter(
-      (item) =>
-        item.status === "scheduled"
-        && item.scheduled_date
-        && item.scheduled_date
-        <= today
-    ).length;
-
-
-  document
-    .getElementById(
-      "pending-subject-reviews"
-    )
-    .textContent =
-      pendingReviews;
-
-
-  document
-    .getElementById(
-      "pending-lessons"
-    )
-    .textContent =
-      pendingLessons;
-
-
-  const trendCopy =
-    document.getElementById(
-      "study-trend-copy"
-    );
-
-
-  if (trendCopy) {
-    trendCopy.textContent =
-      previousStudySeconds > 0
-        ? `Tempo efetivo por dia · ${statsDeltaLabel(
-            totalStudySeconds,
-            previousStudySeconds
-          )}.`
-        : "Tempo efetivo registrado por dia.";
   }
 
+  function switchTab(tab) {
+    state.tab = tab;
+    document.querySelectorAll("[data-tab]").forEach(x=>x.classList.toggle("active",x.dataset.tab===tab));
+    document.querySelectorAll("[data-stats-panel]").forEach(x=>x.hidden=x.dataset.statsPanel!==tab);
 
-  const questionTrend =
-    document.getElementById(
-      "question-trend-summary"
-    );
-
-
-  if (questionTrend) {
-    questionTrend.textContent =
-      totalQuestions
-        ? `${statsPercentLabel(
-            questionAccuracy
-          )} · ${totalQuestions} questões`
-        : "sem dados";
+    // Chart.js precisa recalcular tamanho quando um painel deixa de estar hidden.
+    setTimeout(()=>charts.forEach(c=>c.resize()),30);
   }
 
-
-  const flashTrend =
-    document.getElementById(
-      "flash-trend-summary"
-    );
-
-
-  if (flashTrend) {
-    flashTrend.textContent =
-      totalFlashReviews
-        ? `${statsPercentLabel(
-            flashAccuracy
-          )} · ${totalFlashReviews} revisões`
-        : "sem dados";
+  function setHeading() {
+    const title=document.querySelector("[data-page-title]");
+    const eye=document.querySelector("[data-page-eyebrow]");
+    if(title) title.textContent="Estatísticas";
+    if(eye) eye.textContent="Análise de desempenho";
   }
 
+  async function refresh() {
+    if(state.loading) return;
+    state.loading=true;
+    state.sourceErrors=[];
 
-  renderStudyBars(
-    studyRows
-  );
+    const status=$("stats-status");
+    status.className="stats-status";
+    status.textContent="Atualizando estatísticas...";
 
-
-  renderPerformanceBars(
-    "question-performance-bars",
-    questionRows,
-    "answer_date",
-    "correct_questions",
-    "answered_questions"
-  );
-
-
-  renderPerformanceBars(
-    "flash-performance-bars",
-    flashRows,
-    "review_date",
-    "correct",
-    "total_reviews"
-  );
-
-
-  renderActivity(
-    activityRows
-  );
-
-
-  renderWeekdays(
-    studyRows
-  );
-
-
-  renderRetention(
-    retentionRows
-  );
-
-
-  renderErrors(
-    questionAreaRows,
-    errorAreaRows
-  );
-
-
-  renderErrorNotebookOverview(
-    errorMetrics
-  );
-
-
-  renderScheduleOverview(
-    topics,
-    reviews
-  );
-
-
-  renderSimulationOverview(
-    simulationMetrics
-  );
-
-
-  renderExamOverview(
-    examMetrics
-  );
-
-
-  renderInsights({
-    studyRows,
-    questionRows,
-    flashRows,
-    retentionRows,
-    questionAreaRows,
-    errorAreaRows,
-    errorMetrics,
-    simulationMetrics,
-    examMetrics,
-    topics,
-    reviews
-  });
-}
-
-
-function wireStatisticsControls() {
-  document
-    .querySelectorAll(
-      "[data-analytics-days]"
-    )
-    .forEach(
-      (button) => {
-        button.addEventListener(
-          "click",
-          async () => {
-            const days =
-              Number(
-                button
-                  .dataset
-                  .analyticsDays
-              );
-
-
-            if (
-              ![14,30,90]
-                .includes(
-                  days
-                )
-            ) {
-              return;
-            }
-
-
-            statsState.days =
-              days;
-
-
-            document
-              .querySelectorAll(
-                "[data-analytics-days]"
-              )
-              .forEach(
-                (item) => {
-                  item.classList.toggle(
-                    "active",
-                    Number(
-                      item
-                        .dataset
-                        .analyticsDays
-                    )
-                    === days
-                  );
-                }
-              );
-
-
-            await loadStatistics();
-          }
-        );
-      }
-    );
-}
-
-
-async function initStatistics() {
-  wireStatisticsControls();
-
-  await loadStatistics();
-}
-
-
-if (
-  window.docmapUser
-) {
-  initStatistics();
-
-} else {
-  window.addEventListener(
-    "docmap:ready",
-    initStatistics,
-    {
-      once:
-        true
+    try{
+      await loadPeriod();
+      renderAll();
+    }catch(err){
+      console.error(err);
+      status.className="stats-status error";
+      status.textContent=`Erro ao carregar estatísticas: ${err.message}`;
+    }finally{
+      state.loading=false;
     }
-  );
-}
+  }
+
+  function wire() {
+    document.querySelectorAll("[data-tab]").forEach(btn=>{
+      btn.addEventListener("click",()=>switchTab(btn.dataset.tab));
+    });
+
+    document.querySelectorAll("[data-range]").forEach(btn=>{
+      btn.addEventListener("click",async()=>{
+        const raw=btn.dataset.range;
+        const value=raw==="all"?"all":Number(raw);
+        if(![14,30,90,"all"].includes(value)||value===state.range) return;
+
+        state.range=value;
+        document.querySelectorAll("[data-range]").forEach(x=>{
+          const xv=x.dataset.range==="all"?"all":Number(x.dataset.range);
+          x.classList.toggle("active",xv===value);
+        });
+
+        await refresh();
+      });
+    });
+  }
+
+  async function init() {
+    if(state.initialized||!sb) return;
+    state.initialized=true;
+    setHeading();
+    wire();
+    switchTab("geral");
+
+    try{
+      state.loading=true;
+      state.bounds=makeBounds(state.range);
+      await loadStatic();
+      await loadPeriod();
+      renderAll();
+    }catch(err){
+      console.error(err);
+      const status=$("stats-status");
+      status.className="stats-status error";
+      status.textContent=`Não foi possível carregar a página: ${err.message}`;
+    }finally{
+      state.loading=false;
+    }
+  }
+
+  if(window.docmapUser) init();
+  else window.addEventListener("docmap:ready",init,{once:true});
+
+  setTimeout(setHeading,500);
+})();

@@ -1,490 +1,199 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
   <meta charset="UTF-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estatísticas · StudyOS</title>
 
-  <title>Estatísticas · Resibulando</title>
-  <link rel="icon" type="image/png" href="favicon.png?v=resibulando2">
+  <link rel="stylesheet" href="style.css?v=2">
 
-  <link
-    rel="stylesheet"
-    href="style.css?v=12.1"
-  >
-
-  <link
-    rel="stylesheet"
-    href="estatisticas.css?v=10.2"
-  >
-  <link rel="stylesheet" href="resibulando-brand-v5.css?v=5">
-  <script defer src="resibulando-brand-v5.js?v=5"></script>
+  <style>
+    .stats-page{display:grid;gap:16px;padding-bottom:44px}
+    .stats-card,.stats-box,.stats-tabs-shell{border:1px solid var(--border);background:var(--surface);border-radius:16px}
+    .stats-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:20px}
+    .stats-head h2{margin:5px 0 0;font-size:22px}
+    .stats-head p{margin:7px 0 0;max-width:760px;color:var(--muted);line-height:1.5}
+    .stats-range,.stats-tabs{display:flex;gap:4px}
+    .stats-range{padding:3px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2);flex:0 0 auto}
+    .stats-range button,.stats-tab{border:0;background:transparent;color:var(--muted);font:inherit;font-weight:800;cursor:pointer}
+    .stats-range button{min-height:35px;padding:0 11px;border-radius:8px;font-size:10px}
+    .stats-range button.active,.stats-tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 5px rgba(20,25,35,.09)}
+    .stats-tabs-shell{padding:5px;overflow-x:auto}
+    .stats-tabs{display:grid;grid-template-columns:repeat(4,minmax(145px,1fr));min-width:620px}
+    .stats-tab{min-height:42px;border-radius:10px;font-size:12px}
+    .stats-status{min-height:20px;padding:0 2px;color:var(--muted);font-size:11px}
+    .stats-status.error{color:var(--danger)}
+    [data-stats-panel][hidden]{display:none}
+    .stats-box{padding:16px}
+    .stats-box-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:13px}
+    .stats-box-head h3,.viz-card h3{margin:0;font-size:15px}
+    .stats-box-head p,.viz-card p{margin:5px 0 0;color:var(--muted);font-size:11px;line-height:1.45}
+    .kicker{display:block;margin-bottom:5px;color:var(--muted);font-size:9px;font-weight:850;letter-spacing:.07em;text-transform:uppercase}
+    .stats-callouts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
+    .stats-callout{min-width:0;min-height:142px;padding:13px;border:1px solid var(--border);border-radius:13px;background:var(--surface-2);overflow:hidden}
+    .stats-callout label{display:block;min-height:22px;color:var(--muted);font-size:9px;font-weight:850;line-height:1.25;letter-spacing:.05em;text-transform:uppercase}
+    .stats-callout strong{display:block;margin-top:7px;font-size:22px;line-height:1.08;overflow-wrap:anywhere}
+    .stats-callout small{display:block;min-height:27px;margin-top:5px;color:var(--muted);font-size:9px;line-height:1.4}
+    .mini-viz{height:31px;margin-top:8px;display:flex;align-items:flex-end}
+    .mini-bar{width:100%;height:7px;border:1px solid var(--border);border-radius:999px;overflow:hidden;background:var(--surface)}
+    .mini-bar span{display:block;height:100%;min-width:2px;background:var(--accent);border-radius:inherit}
+    .mini-ring{--p:0;width:31px;height:31px;border-radius:50%;background:radial-gradient(circle,var(--surface-2) 56%,transparent 58%),conic-gradient(var(--accent) calc(var(--p)*1%),var(--border) 0)}
+    .mini-stack{display:flex;width:100%;height:8px;border:1px solid var(--border);border-radius:999px;overflow:hidden}
+    .mini-stack span:nth-child(1){background:var(--success)}.mini-stack span:nth-child(2){background:var(--accent)}.mini-stack span:nth-child(3){background:var(--warning)}.mini-stack span:nth-child(4){background:var(--danger)}
+    .viz-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+    .viz-card{min-width:0;padding:15px;border:1px solid var(--border);border-radius:16px;background:var(--surface);overflow:hidden}
+    .viz-card.wide{grid-column:1/-1}
+    .chart-wrap{position:relative;min-height:285px;margin-top:14px}
+    .chart-wrap.compact{min-height:245px}
+    .table-wrap{overflow:auto;margin-top:14px}
+    .stats-table{width:100%;min-width:820px;border-collapse:collapse;font-size:10px}
+    .stats-table th,.stats-table td{padding:10px 9px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle}
+    .stats-table th{color:var(--muted);font-size:8px;font-weight:850;letter-spacing:.05em;text-transform:uppercase}
+    .stats-table .num{text-align:right;white-space:nowrap}
+    .progress-list{display:grid;gap:10px;margin-top:14px}
+    .progress-row{display:grid;grid-template-columns:minmax(110px,1.3fr) minmax(110px,2fr) 62px;gap:10px;align-items:center}
+    .progress-row strong{font-size:10px;overflow-wrap:anywhere}
+    .progress-row small{display:block;margin-top:2px;color:var(--muted);font-size:8px}
+    .track{height:8px;border:1px solid var(--border);border-radius:999px;overflow:hidden;background:var(--surface-2)}
+    .track span{display:block;height:100%;min-width:2px;border-radius:inherit;background:var(--accent)}
+    .progress-value{text-align:right;font-size:10px;font-weight:850}
+    .insights{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:14px}
+    .insight{padding:12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2);font-size:10px;line-height:1.5}
+    .insight strong{display:block;margin-bottom:4px}
+    .empty{padding:20px;border:1px dashed var(--border);border-radius:11px;color:var(--muted);text-align:center;font-size:10px}
+    .stats-link{min-height:34px;display:inline-flex;align-items:center;justify-content:center;padding:0 10px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);font-size:9px;font-weight:800;white-space:nowrap}
+    @media(max-width:1260px){.stats-callouts{grid-template-columns:repeat(4,minmax(0,1fr))}}
+    @media(max-width:980px){.stats-head{flex-direction:column}.stats-callouts{grid-template-columns:repeat(3,minmax(0,1fr))}.viz-grid{grid-template-columns:1fr}.viz-card.wide{grid-column:auto}}
+    @media(max-width:720px){.stats-callouts{grid-template-columns:repeat(2,minmax(0,1fr))}.insights{grid-template-columns:1fr}}
+    @media(max-width:480px){.stats-callouts{grid-template-columns:1fr}.stats-range{width:100%}.stats-range button{flex:1}}
+  </style>
 </head>
 
-<body data-page="estatisticas">
-
+<body data-page="dashboard">
   <div class="app-shell">
-
-    <aside
-      id="sidebar"
-      class="sidebar"
-    ></aside>
-
-    <div
-      id="sidebar-backdrop"
-      class="sidebar-backdrop"
-    ></div>
-
+    <aside id="sidebar" class="sidebar"></aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
 
     <main class="main">
-
       <div class="page">
-
         <header class="topbar">
-
-          <button
-            id="menu-open"
-            class="menu-open"
-            type="button"
-            aria-label="Abrir menu"
-          >
-            ☰
-          </button>
-
+          <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
           <div class="page-heading">
-            <span
-              class="eyebrow"
-              data-page-eyebrow
-            ></span>
-
-            <h1 data-page-title></h1>
+            <span class="eyebrow" data-page-eyebrow>Análise de desempenho</span>
+            <h1 data-page-title>Estatísticas</h1>
           </div>
-
         </header>
 
-
-        <section class="panel analytics-panel">
-
-          <div class="analytics-toolbar">
-
+        <div class="stats-page">
+          <section class="stats-card stats-head">
             <div>
-              <h2>Hub de estatísticas</h2>
-
+              <span class="badge accent">Inteligência de estudo</span>
+              <h2>Estatísticas</h2>
               <p>
-                Um panorama mais completo de ritmo, desempenho, memória,
-                pendências, cronograma, simulados e provas.
+                Visão geral e análises profundas de aulas, flashcards e Caderno de Erros.
+                O máximo de informação possível, com representação visual sempre que houver
+                uma comparação, proporção, tendência ou distribuição útil.
               </p>
             </div>
 
-
-            <div
-              class="analytics-range"
-              aria-label="Período das estatísticas"
-            >
-
-              <button
-                type="button"
-                data-analytics-days="14"
-              >
-                14 dias
-              </button>
-
-              <button
-                type="button"
-                class="active"
-                data-analytics-days="30"
-              >
-                30 dias
-              </button>
-
-              <button
-                type="button"
-                data-analytics-days="90"
-              >
-                90 dias
-              </button>
-
+            <div class="stats-range" aria-label="Período">
+              <button type="button" data-range="14">14 dias</button>
+              <button type="button" class="active" data-range="30">30 dias</button>
+              <button type="button" data-range="90">90 dias</button>
+              <button type="button" data-range="all">Tudo</button>
             </div>
+          </section>
 
+          <section class="stats-tabs-shell">
+            <nav class="stats-tabs">
+              <button class="stats-tab active" type="button" data-tab="geral">Geral</button>
+              <button class="stats-tab" type="button" data-tab="aulas">Aulas</button>
+              <button class="stats-tab" type="button" data-tab="flashcards">Flashcards</button>
+              <button class="stats-tab" type="button" data-tab="erros">Caderno de erros</button>
+            </nav>
+          </section>
+
+          <div id="stats-status" class="stats-status" aria-live="polite">Carregando estatísticas...</div>
+
+          <div data-stats-panel="geral">
+            <section class="stats-box">
+              <div class="stats-box-head">
+                <div><span class="kicker">Visão executiva</span><h3>Panorama geral</h3><p>Produtividade, cronograma, questões, memória e revisões.</p></div>
+                <a class="stats-link" href="questoes-simulados.html">Questões / Simulados</a>
+              </div>
+              <div id="general-callouts" class="stats-callouts"></div>
+            </section>
+
+            <div class="viz-grid">
+              <article class="viz-card wide"><h3>Ritmo de estudo</h3><p>Tempo efetivo ao longo do período.</p><div class="chart-wrap"><canvas id="chart-general-study"></canvas></div></article>
+              <article class="viz-card"><h3>Distribuição do tempo</h3><p>Como o tempo foi dividido entre atividades.</p><div class="chart-wrap compact"><canvas id="chart-general-activity"></canvas></div></article>
+              <article class="viz-card"><h3>Questões por área</h3><p>Aproveitamento e volume nas grandes áreas.</p><div class="chart-wrap compact"><canvas id="chart-general-questions"></canvas></div></article>
+              <article class="viz-card wide"><h3>Visão por área</h3><p>Aulas, questões, flashcards, CCQs e tempo no mesmo quadro.</p><div id="general-area-table" class="table-wrap"></div></article>
+              <article class="viz-card wide"><h3>Insights</h3><p>Leituras automáticas do período selecionado.</p><div id="general-insights"></div></article>
+            </div>
           </div>
 
+          <div data-stats-panel="aulas" hidden>
+            <section class="stats-box">
+              <div class="stats-box-head"><div><span class="kicker">Execução do cronograma</span><h3>Aulas</h3><p>Progresso, pontualidade, atrasos, remanejamentos, tempo e revisões teóricas.</p></div></div>
+              <div id="lesson-callouts" class="stats-callouts"></div>
+            </section>
 
-          <div class="stats-section-label">
-            Visão geral do período
+            <div class="viz-grid">
+              <article class="viz-card wide"><h3>Planejado × concluído</h3><p>Carga prevista comparada ao realizado.</p><div class="chart-wrap"><canvas id="chart-lessons-plan"></canvas></div></article>
+              <article class="viz-card"><h3>Progresso por área</h3><p>Percentual concluído em cada área.</p><div id="lesson-area-progress"></div></article>
+              <article class="viz-card"><h3>Revisões teóricas</h3><p>Conclusão das etapas de revisão.</p><div id="lesson-review-progress"></div></article>
+              <article class="viz-card wide"><h3>Matérias do cronograma</h3><p>Detalhamento por matéria.</p><div id="lesson-subject-table" class="table-wrap"></div></article>
+              <article class="viz-card wide"><h3>Pontos de atenção</h3><p>Onde o cronograma está exigindo mais atenção.</p><div id="lesson-insights"></div></article>
+            </div>
           </div>
 
-          <div class="analytics-summary expanded">
+          <div data-stats-panel="flashcards" hidden>
+            <section class="stats-box">
+              <div class="stats-box-head"><div><span class="kicker">Memória e carga</span><h3>Flashcards</h3><p>Volume, acerto, retenção, estabilidade, intervalos, hábito e carga futura.</p></div></div>
+              <div id="flash-callouts" class="stats-callouts"></div>
+            </section>
 
-            <article class="analytics-summary-card">
-              <span>Tempo estudado</span>
-              <strong id="analytics-study-time">—</strong>
-              <small id="analytics-study-time-helper">no período</small>
-            </article>
-
-            <article class="analytics-summary-card">
-              <span>Média por dia ativo</span>
-              <strong id="analytics-average-active-day">—</strong>
-              <small id="analytics-average-active-day-helper">—</small>
-            </article>
-
-            <article class="analytics-summary-card">
-              <span>Sessões</span>
-              <strong id="analytics-sessions">—</strong>
-              <small id="analytics-sessions-helper">—</small>
-            </article>
-
-            <article class="analytics-summary-card">
-              <span>Consistência</span>
-              <strong id="analytics-consistency">—</strong>
-              <small id="analytics-consistency-helper">dias com estudo</small>
-            </article>
-
-            <article class="analytics-summary-card">
-              <span>Questões</span>
-              <strong id="analytics-question-accuracy">—</strong>
-              <small id="analytics-question-helper">sem dados</small>
-            </article>
-
-            <article class="analytics-summary-card">
-              <span>Flashcards</span>
-              <strong id="analytics-flash-accuracy">—</strong>
-              <small id="analytics-flash-helper">sem dados</small>
-            </article>
-
-            <article class="analytics-summary-card">
-              <span>Caderno de Erros</span>
-              <strong id="analytics-error-retention">—</strong>
-              <small id="analytics-error-retention-helper">retenção estimada</small>
-            </article>
-
-            <article class="analytics-summary-card">
-              <span>Simulados</span>
-              <strong id="analytics-simulation-accuracy">—</strong>
-              <small id="analytics-simulation-helper">histórico</small>
-            </article>
-
+            <div class="viz-grid">
+              <article class="viz-card wide"><h3>Revisões ao longo do tempo</h3><p>Volume e acerto no período.</p><div class="chart-wrap"><canvas id="chart-flash-reviews"></canvas></div></article>
+              <article class="viz-card"><h3>Fácil / Médio / Difícil</h3><p>Distribuição das classificações.</p><div class="chart-wrap compact"><canvas id="chart-flash-rating"></canvas></div></article>
+              <article class="viz-card"><h3>Carga futura</h3><p>Cards previstos para os próximos 14 dias.</p><div class="chart-wrap compact"><canvas id="chart-flash-workload"></canvas></div></article>
+              <article class="viz-card"><h3>Retenção por área</h3><p>Memória estimada pela fórmula do StudyOS.</p><div id="flash-area-retention"></div></article>
+              <article class="viz-card"><h3>Estabilidade</h3><p>Distribuição dos cards por faixa de estabilidade.</p><div class="chart-wrap compact"><canvas id="chart-flash-stability"></canvas></div></article>
+              <article class="viz-card wide"><h3>Memória por matéria</h3><p>Cards, revisões, acerto, retenção, estabilidade, intervalo e atrasos.</p><div id="flash-subject-table" class="table-wrap"></div></article>
+              <article class="viz-card"><h3>Cards mais frágeis</h3><p>Menor recuperabilidade atual.</p><div id="flash-hardest"></div></article>
+              <article class="viz-card"><h3>Revisões por área</h3><p>Volume recente de revisão.</p><div class="chart-wrap compact"><canvas id="chart-flash-area"></canvas></div></article>
+              <article class="viz-card wide"><h3>Insights de memória</h3><p>Tendências automáticas de volume, desempenho e carga.</p><div id="flash-insights"></div></article>
+            </div>
           </div>
 
+          <div data-stats-panel="erros" hidden>
+            <section class="stats-box">
+              <div class="stats-box-head"><div><span class="kicker">CCQs e revisão</span><h3>Caderno de Erros</h3><p>Volume, revisões, retenção, estabilidade, atrasos, concentração e carga futura.</p></div></div>
+              <div id="error-callouts" class="stats-callouts"></div>
+            </section>
 
-          <div class="stats-section-label">
-            Pendências atuais
+            <div class="viz-grid">
+              <article class="viz-card wide"><h3>Criação × revisão</h3><p>CCQs criados e revisões realizadas.</p><div class="chart-wrap"><canvas id="chart-error-flow"></canvas></div></article>
+              <article class="viz-card"><h3>CCQs ativos por área</h3><p>Concentração do caderno.</p><div class="chart-wrap compact"><canvas id="chart-error-area"></canvas></div></article>
+              <article class="viz-card"><h3>Carga futura</h3><p>Revisões previstas para os próximos 14 dias.</p><div class="chart-wrap compact"><canvas id="chart-error-workload"></canvas></div></article>
+              <article class="viz-card"><h3>Retenção por área</h3><p>Memória estimada dos CCQs revisados.</p><div id="error-area-retention"></div></article>
+              <article class="viz-card"><h3>Profundidade de revisão</h3><p>Quantas vezes cada CCQ já foi revisado.</p><div class="chart-wrap compact"><canvas id="chart-error-depth"></canvas></div></article>
+              <article class="viz-card wide"><h3>Matérias no Caderno</h3><p>Ativos, revisões, retenção, estabilidade, intervalo e atrasos.</p><div id="error-subject-table" class="table-wrap"></div></article>
+              <article class="viz-card"><h3>CCQs mais persistentes</h3><p>Itens que acumularam mais revisões.</p><div id="error-most-reviewed"></div></article>
+              <article class="viz-card"><h3>CCQs por matéria</h3><p>Maiores concentrações do caderno ativo.</p><div class="chart-wrap compact"><canvas id="chart-error-subject"></canvas></div></article>
+              <article class="viz-card wide"><h3>Insights do Caderno</h3><p>Pontos de atenção derivados do comportamento dos CCQs.</p><div id="error-insights"></div></article>
+            </div>
           </div>
-
-          <div class="pending-grid">
-
-            <a
-              class="pending-card"
-              href="flashcards.html"
-            >
-              <span>Flashcards</span>
-              <strong id="pending-flashcards">—</strong>
-              <small>vencidos ou para hoje</small>
-            </a>
-
-            <a
-              class="pending-card"
-              href="caderno-erros.html"
-            >
-              <span>CCQs</span>
-              <strong id="pending-errors">—</strong>
-              <small>vencidos ou para hoje</small>
-            </a>
-
-            <a
-              class="pending-card"
-              href="cronograma.html"
-            >
-              <span>Revisões teóricas</span>
-              <strong id="pending-subject-reviews">—</strong>
-              <small>vencidas ou para hoje</small>
-            </a>
-
-            <a
-              class="pending-card"
-              href="cronograma.html"
-            >
-              <span>Aulas</span>
-              <strong id="pending-lessons">—</strong>
-              <small>programadas até hoje</small>
-            </a>
-
-          </div>
-
-
-          <div class="analytics-grid">
-
-            <article class="analytics-card wide">
-
-              <div class="analytics-card-head">
-                <div>
-                  <h3>Ritmo de estudo</h3>
-                  <p id="study-trend-copy">
-                    Tempo efetivo registrado por dia.
-                  </p>
-                </div>
-              </div>
-
-              <div class="analytics-chart-scroll">
-                <div
-                  id="analytics-study-bars"
-                  class="analytics-bars"
-                ></div>
-              </div>
-
-            </article>
-
-
-            <article class="analytics-card wide">
-
-              <div class="analytics-card-head">
-                <div>
-                  <h3>Evolução do desempenho</h3>
-                  <p>
-                    Acertos em questões e flashcards ao longo do período.
-                  </p>
-                </div>
-              </div>
-
-              <div class="performance-grid">
-
-                <div class="performance-block">
-                  <div class="performance-title">
-                    <span>Questões</span>
-                    <strong id="question-trend-summary">—</strong>
-                  </div>
-
-                  <div
-                    id="question-performance-bars"
-                    class="performance-bars"
-                  ></div>
-                </div>
-
-                <div class="performance-block">
-                  <div class="performance-title">
-                    <span>Flashcards</span>
-                    <strong id="flash-trend-summary">—</strong>
-                  </div>
-
-                  <div
-                    id="flash-performance-bars"
-                    class="performance-bars"
-                  ></div>
-                </div>
-
-              </div>
-
-            </article>
-
-
-            <article class="analytics-card">
-
-              <div class="analytics-card-head">
-                <div>
-                  <h3>Distribuição do estudo</h3>
-                  <p>
-                    Como o tempo foi dividido entre as atividades.
-                  </p>
-                </div>
-              </div>
-
-              <div
-                id="analytics-activity-list"
-                class="analytics-list"
-              ></div>
-
-            </article>
-
-
-            <article class="analytics-card">
-
-              <div class="analytics-card-head">
-                <div>
-                  <h3>Estudo por dia da semana</h3>
-                  <p>
-                    Tempo acumulado em cada dia da semana no período.
-                  </p>
-                </div>
-              </div>
-
-              <div
-                id="weekday-study-list"
-                class="analytics-list"
-              ></div>
-
-            </article>
-
-
-            <article class="analytics-card">
-
-              <div class="analytics-card-head">
-                <div>
-                  <h3>Memória por matéria</h3>
-                  <p>
-                    Matérias com menor retenção estimada.
-                  </p>
-                </div>
-              </div>
-
-              <div
-                id="analytics-retention-list"
-                class="analytics-list"
-              ></div>
-
-            </article>
-
-
-            <article class="analytics-card">
-
-              <div class="analytics-card-head">
-                <div>
-                  <h3>Erros por área</h3>
-                  <p>
-                    Simulados + itens ativos do Caderno de Erros.
-                  </p>
-                </div>
-              </div>
-
-              <div
-                id="analytics-error-list"
-                class="analytics-list"
-              ></div>
-
-            </article>
-
-
-            <article class="analytics-card">
-
-              <div class="analytics-card-head">
-                <div>
-                  <h3>Caderno de Erros</h3>
-                  <p>
-                    Situação atual dos CCQs cadastrados.
-                  </p>
-                </div>
-              </div>
-
-              <div
-                id="error-notebook-overview"
-                class="stat-detail-grid"
-              >
-                <div class="analytics-empty">
-                  Carregando...
-                </div>
-              </div>
-
-            </article>
-
-
-            <article class="analytics-card">
-
-              <div class="analytics-card-head">
-                <div>
-                  <h3>Cronograma</h3>
-                  <p>
-                    Progresso das aulas e revisões teóricas.
-                  </p>
-                </div>
-              </div>
-
-              <div
-                id="schedule-overview"
-                class="stat-detail-grid"
-              >
-                <div class="analytics-empty">
-                  Carregando...
-                </div>
-              </div>
-
-            </article>
-
-
-            <article class="analytics-card">
-
-              <div class="analytics-card-head">
-                <div>
-                  <h3>Questões e simulados</h3>
-                  <p>
-                    Resultado acumulado dos gabaritos salvos.
-                  </p>
-                </div>
-              </div>
-
-              <div
-                id="simulations-overview"
-                class="stat-detail-grid"
-              >
-                <div class="analytics-empty">
-                  Carregando...
-                </div>
-              </div>
-
-            </article>
-
-
-            <article class="analytics-card">
-
-              <div class="analytics-card-head">
-                <div>
-                  <h3>Provas e editais</h3>
-                  <p>
-                    Situação das provas cadastradas.
-                  </p>
-                </div>
-              </div>
-
-              <div
-                id="exams-overview"
-                class="stat-detail-grid"
-              >
-                <div class="analytics-empty">
-                  Carregando...
-                </div>
-              </div>
-
-            </article>
-
-
-            <article class="analytics-card wide">
-
-              <div class="analytics-card-head">
-                <div>
-                  <h3>Leitura dos dados</h3>
-                  <p>
-                    Resumo automático, descritivo e baseado nos dados do Resibulando.
-                  </p>
-                </div>
-              </div>
-
-              <div
-                id="analytics-insights"
-                class="analytics-insights"
-              ></div>
-
-            </article>
-
-          </div>
-
-        </section>
-
+        </div>
       </div>
-
     </main>
-
   </div>
 
-
-  <script
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-  ></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <script src="supabase.js"></script>
-  <script src="app.js?v=12.1"></script>
-  <script src="study-mode.js?v=12.1"></script>
-  <script src="estatisticas.js?v=10.2"></script>
-
+  <script src="app.js?v=7.4"></script>
+  <script src="estatisticas.js?v=1.0"></script>
 </body>
-
 </html>
