@@ -39,13 +39,19 @@ const qsState = {
   answerImportRows: []
 };
 
-let AREA_OPTIONS = [
-  "Clínica Médica",
-  "Pediatria",
-  "Ginecologia e Obstetrícia",
-  "Cirurgia Geral",
-  "Preventiva"
-];
+let AREA_OPTIONS =
+  window.ResibulandoStudyMode
+    ?.areasFor(
+      window.resibulandoStudyMode
+      || "medicine"
+    )
+  || [
+    "Clínica Médica",
+    "Pediatria",
+    "Ginecologia e Obstetrícia",
+    "Cirurgia Geral",
+    "Preventiva"
+  ];
 
 
 const qsPageParams =

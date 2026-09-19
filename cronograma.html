@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cronograma · Resibulando</title>
   <link rel="icon" type="image/png" href="favicon.png?v=resibulando2">
-  <link rel="stylesheet" href="style.css?v=resibulando5">
+  <link rel="stylesheet" href="style.css?v=12.1">
 
   <style>
     .schedule-stack {
@@ -1440,6 +1440,46 @@
   }
 }
 
+
+  /* FASE 12 — CRONOGRAMA BASE + FILTROS */
+  .base-schedule-panel { padding:20px; border:1px solid var(--border); border-radius:16px; background:var(--surface); }
+  .base-schedule-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
+  .base-schedule-head h2 { margin:6px 0 0; }
+  .base-schedule-head p { max-width:760px; margin:6px 0 0; color:var(--muted); line-height:1.5; }
+  .base-schedule-controls { display:grid; grid-template-columns:minmax(180px,.8fr) minmax(220px,1.1fr) auto; gap:10px; align-items:end; margin-top:16px; }
+  .base-schedule-controls label,.base-schedule-days { display:grid; gap:5px; }
+  .base-schedule-controls label>span,.base-schedule-days strong { font-size:10px; font-weight:850; }
+  .base-schedule-controls input { min-height:42px; border:1px solid var(--border); border-radius:10px; background:var(--surface); color:var(--text); padding:0 10px; }
+  .base-schedule-days span { min-height:42px; display:flex; align-items:center; padding:0 11px; border:1px solid var(--border); border-radius:10px; background:var(--surface-2); color:var(--muted); font-size:10px; }
+  .base-schedule-deck { max-height:430px; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin-top:14px; padding:10px; border:1px solid var(--border); border-radius:13px; background:var(--surface-2); overflow:auto; }
+  .base-schedule-card { min-width:0; padding:11px; border:1px solid var(--border); border-radius:11px; background:var(--surface); }
+  .base-schedule-card span { color:var(--muted); font-size:8px; font-weight:850; text-transform:uppercase; }
+  .base-schedule-card strong { display:block; margin-top:5px; font-size:11px; line-height:1.35; }
+  .base-schedule-card small { display:block; margin-top:6px; color:var(--muted); font-size:9px; }
+  .theme-date-filter { display:grid; gap:3px; }
+  .theme-date-filter span { color:var(--muted); font-size:8px; font-weight:850; text-transform:uppercase; }
+  .theme-date-filter input { min-height:40px; border:1px solid var(--border); border-radius:10px; background:var(--surface); color:var(--text); padding:0 9px; }
+  .theme-clear-filter { min-height:40px; }
+  @media(max-width:980px){ .base-schedule-deck{grid-template-columns:repeat(2,minmax(0,1fr));}.base-schedule-controls{grid-template-columns:1fr;} }
+  @media(max-width:680px){ .base-schedule-deck{grid-template-columns:1fr;} }
+
+
+  .reorganize-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 700px) {
+    .reorganize-actions {
+      width: 100%;
+    }
+
+    .reorganize-actions .button {
+      width: 100%;
+    }
+  }
 </style>
   <link rel="stylesheet" href="resibulando-brand-v5.css?v=5">
   <script defer src="resibulando-brand-v5.js?v=5"></script>
@@ -1522,6 +1562,14 @@
                   data-schedule-add-mode="manual"
                 >
                   Manualmente
+                </button>
+
+                <button
+                  class="schedule-add-tab"
+                  type="button"
+                  data-schedule-add-mode="base"
+                >
+                  Cronograma base
                 </button>
               </div>
             </div>
@@ -1655,7 +1703,7 @@
                   list="manual-area-options"
                   placeholder="Ex.: Clínica Médica"
                 >
-                <datalist id="manual-area-options">
+                <datalist id="manual-area-options" data-resibulando-area-list>
                   <option value="Clínica Médica">
                   <option value="Pediatria">
                   <option value="Ginecologia e Obstetrícia">
@@ -1700,6 +1748,41 @@
             </form>
           </section>
 
+
+          <section class="import-box base-schedule-panel schedule-add-section" data-schedule-add-section="base">
+            <div class="base-schedule-head">
+              <div>
+                <span class="badge accent">ENARE · <span data-study-mode-label>Medicina</span></span>
+                <h2>Utilizar cronograma genérico</h2>
+                <p>
+                  Use o cronograma padrão do Resibulando quando ainda não tiver um
+                  cronograma próprio. A lista é distribuída até a data limite usando
+                  no máximo 3 dias de aula por semana.
+                </p>
+              </div>
+              <span id="base-schedule-count" class="badge">—</span>
+            </div>
+
+            <div class="base-schedule-controls">
+              <label>
+                <span>Data limite *</span>
+                <input id="base-schedule-end-date" type="date">
+              </label>
+
+              <div class="base-schedule-days">
+                <strong>Dias utilizados</strong>
+                <span id="base-schedule-days-label">Carregando...</span>
+              </div>
+
+              <button id="apply-base-schedule" class="button primary" type="button">
+                Usar cronograma genérico
+              </button>
+            </div>
+
+            <div id="base-schedule-status" class="manual-status" aria-live="polite"></div>
+            <div id="base-schedule-deck" class="base-schedule-deck"></div>
+          </section>
+
           <section class="planner-panel">
             <div class="planner-header">
               <div>
@@ -1719,21 +1802,32 @@
 
           <section class="overdue-organizer">
             <div>
-              <strong>Reorganizar aulas atrasadas</strong>
+              <strong>Reorganizar aulas</strong>
+
               <p>
-                Escolha uma data final. O Resibulando distribui as aulas entre hoje
-                e essa data, respeitando os dias de estudo teórico e o máximo
-                diário definido em Configurações.
+                Aulas atrasadas usam uma data limite. Aulas adiantadas são
+                compactadas para frente somente quando não existem atrasos,
+                usando no máximo 3 dias de aula por semana.
               </p>
             </div>
 
-            <button
-              id="reorganize-overdue"
-              class="button secondary"
-              type="button"
-            >
-              Reorganizar atrasadas
-            </button>
+            <div class="reorganize-actions">
+              <button
+                id="reorganize-overdue"
+                class="button secondary"
+                type="button"
+              >
+                Reorganizar aulas atrasadas
+              </button>
+
+              <button
+                id="reorganize-advanced"
+                class="button secondary"
+                type="button"
+              >
+                Reorganizar aulas adiantadas
+              </button>
+            </div>
 
             <span
               id="reorganize-overdue-status"
@@ -1768,8 +1862,9 @@
               </div>
 
               <p class="overdue-dialog-copy">
-                As aulas serão distribuídas pelos dias de estudo teórico
-                permitidos, sem ultrapassar o máximo de aulas por dia.
+                A data final abaixo vale somente para aulas atrasadas.
+                O Resibulando redistribui o conteúdo atrasado entre hoje e essa data,
+                respeitando os dias de estudo teórico e o limite diário configurado.
               </p>
 
               <label class="overdue-dialog-field">
@@ -1848,9 +1943,23 @@
                 autocomplete="off"
               >
 
-              <select id="theme-area-filter">
+              <select id="theme-area-filter" data-resibulando-area-select data-blank-label="Todas as áreas">
                 <option value="">Todas as áreas</option>
               </select>
+
+              <label class="theme-date-filter">
+                <span>De</span>
+                <input id="theme-date-from" type="date" aria-label="Data inicial">
+              </label>
+
+              <label class="theme-date-filter">
+                <span>Até</span>
+                <input id="theme-date-to" type="date" aria-label="Data final">
+              </label>
+
+              <button id="theme-clear-date-filter" class="button secondary theme-clear-filter" type="button">
+                Limpar datas
+              </button>
             </div>
 
             <div class="theme-library-meta">
@@ -1875,6 +1984,15 @@
               <span id="theme-selected-count">
                 0 selecionadas
               </span>
+
+              <button
+                id="theme-done-selected"
+                class="button secondary"
+                type="button"
+                disabled
+              >
+                Marcar selecionadas como já feitas
+              </button>
 
               <button
                 id="theme-delete-selected"
@@ -1928,7 +2046,9 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="supabase.js"></script>
-  <script src="app.js?v=resibulando5"></script>
-  <script src="cronograma.js?v=11.10"></script>
+  <script src="app.js?v=12.1"></script>
+  <script src="study-mode.js?v=12.1"></script>
+  <script src="cronograma-base-data.js?v=12"></script>
+  <script src="cronograma.js?v=12.1"></script>
 </body>
 </html>

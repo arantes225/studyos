@@ -2056,7 +2056,9 @@ function renderAnkiDeckMap() {
                 )
               )}"
               data-anki-deck-area="${index}"
-              placeholder="Área no DocMap"
+              list="medical-areas"
+              data-resibulando-area-input
+              placeholder="Área no Resibulando"
             >
 
             <span class="anki-deck-count">
@@ -2826,26 +2828,23 @@ function populateLibraryAreas() {
       "library-area"
     );
 
+  if (!select) {
+    return;
+  }
+
   const current =
     select.value;
 
+  const mode =
+    window.resibulandoStudyMode
+    || "medicine";
+
   const areas =
-    Array.from(
-      new Set(
-        libraryCards
-          .map(
-            (card) =>
-              card.area
-          )
-          .filter(Boolean)
+    window.ResibulandoStudyMode
+      ?.areasFor(
+        mode
       )
-    ).sort(
-      (a, b) =>
-        a.localeCompare(
-          b,
-          "pt-BR"
-        )
-    );
+    || [];
 
   select.innerHTML =
     `<option value="">Todas as áreas</option>`
@@ -2860,7 +2859,8 @@ function populateLibraryAreas() {
         .join("");
 
   if (
-    areas.includes(
+    current
+    && areas.includes(
       current
     )
   ) {
@@ -4441,6 +4441,21 @@ function wireLibrary() {
     }
   );
 }
+
+window.addEventListener(
+  "resibulando:study-mode",
+  () => {
+    populateLibraryAreas();
+
+    if (
+      importFileKind
+      === "anki"
+    ) {
+      renderAnkiDeckMap();
+    }
+  }
+);
+
 
 async function initFlashcards() {
   flashUser =

@@ -15,6 +15,14 @@ const scheduleState = {
   alreadyDoneTopicId: null,
   themeSearch: "",
   themeAreaFilter: "",
+  themeDateFrom: "",
+  themeDateTo: "",
+
+  studyMode:
+    "medicine",
+
+  theoryStudyWeekdays:
+    [1, 3, 5],
 
   addMode:
     "automatic",
@@ -3771,6 +3779,186 @@ async function addManualTopic(event) {
   await loadTopics();
 }
 
+
+const BASE_WEEKDAY_LABELS = { 1:"Seg", 2:"Ter", 3:"Qua", 4:"Qui", 5:"Sex", 6:"Sáb", 7:"Dom" };
+
+function setBaseScheduleStatus(text, type = "") {
+  const element = document.getElementById("base-schedule-status");
+  if (!element) return;
+  element.textContent = text;
+  element.className = `manual-status ${type}`.trim();
+}
+
+async function loadSchedulePreferences() {
+  const { data, error } = await scheduleSb
+    .from("user_settings")
+    .select("study_mode,theory_study_weekdays")
+    .eq("user_id", scheduleState.user.id)
+    .maybeSingle();
+
+  if (error) console.warn("Não foi possível carregar preferências do cronograma:", error.message);
+
+  scheduleState.studyMode = data?.study_mode === "dentistry" ? "dentistry" : "medicine";
+  const configuredDays = Array.isArray(data?.theory_study_weekdays)
+    ? data.theory_study_weekdays.map(Number).filter((day) => day >= 1 && day <= 7)
+    : [];
+
+  scheduleState.theoryStudyWeekdays = (configuredDays.length ? configuredDays : [1,3,5]).slice(0,3);
+  window.ResibulandoStudyMode?.apply(scheduleState.studyMode);
+  renderBaseSchedulePreview();
+}
+
+function currentBaseScheduleRows() {
+  const data = window.RESIBULANDO_BASE_SCHEDULES || {};
+  return data[scheduleState.studyMode] || data.medicine || [];
+}
+
+function currentBaseStudyDays() {
+  const days = scheduleState.theoryStudyWeekdays.slice(0,3);
+  return days.length ? days : [1,3,5];
+}
+
+function renderBaseSchedulePreview() {
+  const container = document.getElementById("base-schedule-deck");
+  const count = document.getElementById("base-schedule-count");
+  const daysLabel = document.getElementById("base-schedule-days-label");
+  if (!container || !count) return;
+
+  const rows = currentBaseScheduleRows();
+  count.textContent = `${rows.length} aulas`;
+  if (daysLabel) daysLabel.textContent = currentBaseStudyDays().map((day) => BASE_WEEKDAY_LABELS[day]).join(" · ");
+
+  container.innerHTML = rows.map((row) => `
+    <article class="base-schedule-card">
+      <span>Aula ${Number(row.aula || 0)}</span>
+      <strong>${escapeScheduleHtml(row.theme)}</strong>
+      <small>${escapeScheduleHtml(row.area)}</small>
+    </article>
+  `).join("");
+}
+
+function isoWeekdayForBase(date) {
+  const day = date.getDay();
+  return day === 0 ? 7 : day;
+}
+
+function baseEligibleDates(startDate, endDate) {
+  const allowed = new Set(currentBaseStudyDays());
+  const dates = [];
+  let cursor = startOfDaySchedule(startDate);
+  const end = startOfDaySchedule(endDate);
+
+  while (cursor <= end) {
+    if (allowed.has(isoWeekdayForBase(cursor))) dates.push(toISODateSchedule(cursor));
+    cursor = addDaysSchedule(cursor, 1);
+  }
+  return dates;
+}
+
+function baseTopicKey(area, theme) {
+  return normalizeSearchText(`${area || ""}|${theme || ""}`);
+}
+
+function spreadBaseRowsAcrossDates(rows, dates) {
+  if (!rows.length || !dates.length) return [];
+  return rows.map((row, index) => {
+    const dateIndex = Math.min(dates.length - 1, Math.floor((index * dates.length) / rows.length));
+    return { ...row, scheduled_date: dates[dateIndex] };
+  });
+}
+
+async function applyBaseSchedule() {
+  const button = document.getElementById("apply-base-schedule");
+  const endValue = document.getElementById("base-schedule-end-date")?.value || "";
+  const today = todayScheduleISO();
+
+  if (!endValue || endValue < today) {
+    setBaseScheduleStatus("Escolha uma data limite igual ou posterior a hoje.", "error");
+    return;
+  }
+
+  const rows = currentBaseScheduleRows();
+  const existingKeys = new Set(scheduleState.topics.map((topic) => baseTopicKey(topic.area, topic.theme)));
+  const missingRows = rows.filter((row) => !existingKeys.has(baseTopicKey(row.area, row.theme)));
+
+  if (!missingRows.length) {
+    setBaseScheduleStatus("Todas as aulas do cronograma genérico já existem no seu cronograma.", "success");
+    return;
+  }
+
+  const dates = baseEligibleDates(new Date(), parseISODateForLibrary(endValue));
+  if (!dates.length) {
+    setBaseScheduleStatus("Não há dias de estudo teórico disponíveis até a data limite.", "error");
+    return;
+  }
+
+  const distributed = spreadBaseRowsAcrossDates(missingRows, dates);
+  const confirmed = window.confirm(`Adicionar ${distributed.length} aula${distributed.length === 1 ? "" : "s"} do cronograma genérico de ${scheduleState.studyMode === "dentistry" ? "Odontologia" : "Medicina"} até ${formatDateLabelSchedule(endValue)}?`);
+  if (!confirmed) return;
+
+  if (button) button.disabled = true;
+  setBaseScheduleStatus("Criando cronograma genérico...");
+
+  try {
+    const { data: importRecord, error: importError } = await scheduleSb
+      .from("schedule_imports")
+      .insert({
+        user_id: scheduleState.user.id,
+        file_name: scheduleState.studyMode === "dentistry" ? "cronograma genérico ENARE Odontologia" : "cronograma genérico ENARE Medicina",
+        mode: "dates",
+        status: "processing",
+        row_count: distributed.length,
+        metadata: { base_schedule:true, study_mode:scheduleState.studyMode, source:"resibulando", end_date:endValue, weekdays:currentBaseStudyDays() }
+      })
+      .select("*")
+      .single();
+
+    if (importError) throw importError;
+
+    const payload = distributed.map((row, index) => ({
+      user_id: scheduleState.user.id,
+      import_id: importRecord.id,
+      area: row.area || null,
+      materia: null,
+      theme: row.theme,
+      original_date: null,
+      scheduled_date: row.scheduled_date,
+      deck_order: Number(row.aula || index + 1),
+      status: "scheduled"
+    }));
+
+    for (const chunk of chunkArray(payload, 100)) {
+      const { error } = await scheduleSb.from("study_topics").insert(chunk);
+      if (error) throw error;
+    }
+
+    await scheduleSb.from("schedule_imports").update({ status:"completed", row_count:payload.length }).eq("id", importRecord.id);
+
+    setBaseScheduleStatus(`${payload.length} aula${payload.length === 1 ? "" : "s"} adicionada${payload.length === 1 ? "" : "s"}. Distribuição feita em no máximo ${currentBaseStudyDays().length} dias por semana até ${formatDateLabelSchedule(endValue)}.`, "success");
+    await loadTopics();
+  } catch (error) {
+    console.error(error);
+    setBaseScheduleStatus(`Não foi possível criar o cronograma genérico: ${error.message}`, "error");
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+function wireBaseSchedule() {
+  const endInput = document.getElementById("base-schedule-end-date");
+  if (endInput) {
+    endInput.min = todayScheduleISO();
+    if (!endInput.value) endInput.value = toISODateSchedule(addDaysSchedule(new Date(), 270));
+  }
+
+  document.getElementById("apply-base-schedule")?.addEventListener("click", applyBaseSchedule);
+
+  window.addEventListener("resibulando:study-mode", (event) => {
+    scheduleState.studyMode = event.detail?.mode === "dentistry" ? "dentistry" : "medicine";
+    renderBaseSchedulePreview();
+  });
+}
+
 function getActiveTopicsForLibrary() {
   return scheduleState.topics.filter(
     (topic) => !topic.completed_at
@@ -3865,11 +4053,37 @@ function filteredLibraryTopics() {
   const areaFilter =
     scheduleState.themeAreaFilter;
 
+  const dateFrom =
+    scheduleState.themeDateFrom;
+
+  const dateTo =
+    scheduleState.themeDateTo;
+
   return getActiveTopicsForLibrary()
     .filter((topic) => {
       if (
         areaFilter
         && topic.area !== areaFilter
+      ) {
+        return false;
+      }
+
+      if (
+        dateFrom
+        && (
+          !topic.scheduled_date
+          || topic.scheduled_date < dateFrom
+        )
+      ) {
+        return false;
+      }
+
+      if (
+        dateTo
+        && (
+          !topic.scheduled_date
+          || topic.scheduled_date > dateTo
+        )
       ) {
         return false;
       }
@@ -3955,6 +4169,11 @@ function updateThemeBulkToolbar() {
       "theme-delete-selected"
     );
 
+  const doneButton =
+    document.getElementById(
+      "theme-done-selected"
+    );
+
 
   const selectAll =
     document.getElementById(
@@ -3975,6 +4194,13 @@ function updateThemeBulkToolbar() {
         .size === 0;
   }
 
+  if (doneButton) {
+    doneButton.disabled =
+      scheduleState
+        .selectedThemeIds
+        .size === 0;
+  }
+
 
   if (selectAll) {
     selectAll.checked =
@@ -3990,6 +4216,42 @@ function updateThemeBulkToolbar() {
   }
 }
 
+
+
+async function markSelectedThemesAlreadyDone() {
+  const ids = Array.from(scheduleState.selectedThemeIds);
+  if (!ids.length) return;
+
+  const selectedTopics = scheduleState.topics.filter((topic) => scheduleState.selectedThemeIds.has(topic.id));
+  const withDate = selectedTopics.filter((topic) => Boolean(topic.scheduled_date));
+
+  if (!withDate.length) {
+    window.alert("As aulas selecionadas estão no deck e não possuem data no cronograma.");
+    return;
+  }
+
+  const confirmed = window.confirm(`Marcar ${withDate.length} aula${withDate.length === 1 ? "" : "s"} como já feita${withDate.length === 1 ? "" : "s"} usando exatamente as datas em que estão agendadas no cronograma?`);
+  if (!confirmed) return;
+
+  const button = document.getElementById("theme-done-selected");
+  if (button) button.disabled = true;
+
+  try {
+    const { data, error } = await scheduleSb.rpc("mark_topics_already_done_on_schedule", { p_topic_ids: ids });
+    if (error) throw error;
+
+    const marked = Number(data?.marked || 0);
+    const skipped = Number(data?.skipped || 0);
+    scheduleState.selectedThemeIds.clear();
+    window.alert(`${marked} aula${marked === 1 ? "" : "s"} marcada${marked === 1 ? "" : "s"} como já feita${marked === 1 ? "" : "s"}.${skipped ? ` ${skipped} selecionada${skipped === 1 ? "" : "s"} não tinham data ou já estavam concluídas.` : ""}`);
+    await loadTopics();
+  } catch (error) {
+    console.error(error);
+    window.alert(`Não foi possível marcar as aulas: ${error.message}`);
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
 
 async function deleteSelectedThemes() {
   const ids =
@@ -4347,7 +4609,8 @@ function switchScheduleAddMode(
   if (
     ![
       "automatic",
-      "manual"
+      "manual",
+      "base"
     ].includes(
       mode
     )
@@ -4465,6 +4728,15 @@ function wireThemeLibraryBulkActions() {
 
   document
     .getElementById(
+      "theme-done-selected"
+    )
+    ?.addEventListener(
+      "click",
+      markSelectedThemesAlreadyDone
+    );
+
+  document
+    .getElementById(
       "theme-delete-selected"
     )
     ?.addEventListener(
@@ -4500,6 +4772,27 @@ function wireThemeLibraryFilters() {
       renderThemeLibrary();
     }
   );
+
+  const dateFrom = document.getElementById("theme-date-from");
+  const dateTo = document.getElementById("theme-date-to");
+
+  dateFrom?.addEventListener("change", () => {
+    scheduleState.themeDateFrom = dateFrom.value || "";
+    renderThemeLibrary();
+  });
+
+  dateTo?.addEventListener("change", () => {
+    scheduleState.themeDateTo = dateTo.value || "";
+    renderThemeLibrary();
+  });
+
+  document.getElementById("theme-clear-date-filter")?.addEventListener("click", () => {
+    scheduleState.themeDateFrom = "";
+    scheduleState.themeDateTo = "";
+    if (dateFrom) dateFrom.value = "";
+    if (dateTo) dateTo.value = "";
+    renderThemeLibrary();
+  });
 }
 
 function renderSchedule() {
@@ -5048,7 +5341,7 @@ async function openReorganizeOverdueDialog() {
 
   if (!overdue.length) {
     setReorganizeStatus(
-      "Não há aulas atrasadas para reorganizar.",
+      "Não há aulas atrasadas. Use “Reorganizar aulas adiantadas” se quiser puxar o conteúdo para frente.",
       "success"
     );
 
@@ -5123,7 +5416,7 @@ async function openReorganizeOverdueDialog() {
     capacity.textContent =
       error
         ? `${overdue.length} aula${overdue.length === 1 ? "" : "s"} atrasada${overdue.length === 1 ? "" : "s"}.`
-        : `${overdue.length} aula${overdue.length === 1 ? "" : "s"} atrasada${overdue.length === 1 ? "" : "s"} · máximo de ${maxLessons} aula${maxLessons === 1 ? "" : "s"} teórica${maxLessons === 1 ? "" : "s"} por dia.`;
+        : `${overdue.length} aula${overdue.length === 1 ? "" : "s"} atrasada${overdue.length === 1 ? "" : "s"} · máximo de ${maxLessons} aula${maxLessons === 1 ? "" : "s"} por dia.`;
   }
 
 
@@ -5154,18 +5447,6 @@ async function reorganizeOverdueLessons() {
       .filter(
         isTopicOverdue
       );
-
-
-  if (!overdue.length) {
-    closeReorganizeOverdueDialog();
-
-    setReorganizeStatus(
-      "Não há aulas atrasadas para reorganizar.",
-      "success"
-    );
-
-    return;
-  }
 
 
   const endDate =
@@ -5249,13 +5530,11 @@ async function reorganizeOverdueLessons() {
 
   closeReorganizeOverdueDialog();
 
-
   const moved =
     Number(
       data?.moved
       || 0
     );
-
 
   const remaining =
     Number(
@@ -5263,33 +5542,137 @@ async function reorganizeOverdueLessons() {
       || 0
     );
 
-
   const maxLessons =
     Number(
       data?.max_lessons_per_day
       || 1
     );
 
+  setReorganizeStatus(
+    remaining > 0
+      ? `${moved} aula${moved === 1 ? "" : "s"} atrasada${moved === 1 ? "" : "s"} reorganizada${moved === 1 ? "" : "s"}. ${remaining} não couberam até ${formatDateLabelSchedule(endDate)}.`
+      : moved > 0
+        ? `${moved} aula${moved === 1 ? "" : "s"} atrasada${moved === 1 ? "" : "s"} reorganizada${moved === 1 ? "" : "s"} até ${formatDateLabelSchedule(endDate)}. Limite diário: ${maxLessons}.`
+        : "Não havia aulas atrasadas para mover.",
+    remaining > 0
+      ? "error"
+      : "success"
+  );
+
+  await loadTopics();
+}
+
+
+
+async function reorganizeAdvancedLessons() {
+  const button =
+    document.getElementById(
+      "reorganize-advanced"
+    );
+
+  const overdueCount =
+    scheduleState.topics
+      .filter(
+        isTopicOverdue
+      )
+      .length;
 
   if (
-    remaining > 0
+    overdueCount > 0
   ) {
     setReorganizeStatus(
-      `${moved} aula${moved === 1 ? "" : "s"} reorganizada${moved === 1 ? "" : "s"}. Restaram ${remaining} atrasada${remaining === 1 ? "" : "s"} porque o intervalo não comporta todas sem ultrapassar ${maxLessons} aula${maxLessons === 1 ? "" : "s"}/dia.`,
+      `Existem ${overdueCount} aula${overdueCount === 1 ? "" : "s"} atrasada${overdueCount === 1 ? "" : "s"}. Reorganize as atrasadas antes de adiantar o cronograma.`,
       "error"
     );
 
-  } else {
-    setReorganizeStatus(
-      `${moved} aula${moved === 1 ? "" : "s"} distribuída${moved === 1 ? "" : "s"} entre hoje e ${formatDateLabelSchedule(
-        endDate
-      )}, respeitando o limite de ${maxLessons}/dia.`,
-      "success"
-    );
+    return;
   }
 
+  const confirmed =
+    window.confirm(
+      "Adiantar o cronograma agora? O Resibulando compactará as aulas futuras para frente, usando no máximo 3 dias de aula por semana e respeitando o máximo diário configurado."
+    );
 
-  await loadTopics();
+  if (!confirmed) {
+    return;
+  }
+
+  if (button) {
+    button.disabled =
+      true;
+  }
+
+  setReorganizeStatus(
+    "Reorganizando aulas adiantadas..."
+  );
+
+  try {
+    const {
+      data,
+      error
+    } =
+      await scheduleSb.rpc(
+        "reorganize_advanced_lessons"
+      );
+
+    if (error) {
+      throw error;
+    }
+
+    if (
+      data?.blocked_by_overdue
+    ) {
+      setReorganizeStatus(
+        `Existem ${Number(data?.overdue_count || 0)} aula(s) atrasada(s). Reorganize-as primeiro.`,
+        "error"
+      );
+
+      return;
+    }
+
+    const moved =
+      Number(
+        data?.moved
+        || 0
+      );
+
+    const daysPerWeek =
+      Number(
+        data?.days_per_week
+        || 3
+      );
+
+    const maxPerDay =
+      Number(
+        data?.max_lessons_per_day
+        || 1
+      );
+
+    setReorganizeStatus(
+      moved > 0
+        ? `${moved} aula${moved === 1 ? "" : "s"} futura${moved === 1 ? "" : "s"} reorganizada${moved === 1 ? "" : "s"} para frente. Máximo de ${daysPerWeek} dias de aula por semana e ${maxPerDay} aula${maxPerDay === 1 ? "" : "s"} por dia.`
+        : "O cronograma futuro já está compacto dentro do limite de até 3 dias de aula por semana.",
+      "success"
+    );
+
+    await loadTopics();
+
+  } catch (error) {
+    console.error(
+      error
+    );
+
+    setReorganizeStatus(
+      `Não foi possível reorganizar as aulas adiantadas: ${error.message}`,
+      "error"
+    );
+
+  } finally {
+    if (button) {
+      button.disabled =
+        false;
+    }
+  }
 }
 
 
@@ -5301,6 +5684,16 @@ function wireOverdueOrganizer() {
     ?.addEventListener(
       "click",
       openReorganizeOverdueDialog
+    );
+
+
+  document
+    .getElementById(
+      "reorganize-advanced"
+    )
+    ?.addEventListener(
+      "click",
+      reorganizeAdvancedLessons
     );
 
 
@@ -5448,6 +5841,9 @@ async function initCronograma() {
   wireThemeLibraryFilters();
   wireThemeLibraryBulkActions();
   wireOverdueOrganizer();
+  wireBaseSchedule();
+
+  await loadSchedulePreferences();
 
   switchScheduleAddMode(
     "automatic"

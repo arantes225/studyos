@@ -114,7 +114,9 @@ function sidebarMarkup(user, profile = null) {
           <small>Mapa até a residência</small>
         </span>
       </a>
-      <button class="sidebar-close" id="sidebar-close" type="button" aria-label="Fechar menu">×</button>
+      <div class="sidebar-top-actions">
+        <button class="sidebar-close" id="sidebar-close" type="button" aria-label="Fechar menu">×</button>
+      </div>
     </div>
 
     <nav class="nav">
@@ -126,12 +128,14 @@ function sidebarMarkup(user, profile = null) {
         <span class="nav-icon">▦</span><span>Cronograma</span>
       </a>
 
-      <div class="nav-group">
-        <div class="nav-group-label">
-          <span class="nav-icon">◉</span><span>Estudar</span>
-        </div>
+      <div class="nav-group" id="study-nav-group">
+        <button class="nav-group-label" id="study-nav-toggle" type="button" aria-expanded="true" aria-controls="study-nav-submenu">
+          <span class="nav-icon">◉</span>
+          <span class="nav-label-text">Estudar</span>
+          <span class="nav-group-chevron" aria-hidden="true">⌄</span>
+        </button>
 
-        <div class="nav-submenu">
+        <div class="nav-submenu" id="study-nav-submenu">
           <a class="nav-sublink ${page === "ambientacao" ? "active" : ""}" href="ambientacao.html">Ambientação</a>
           <a class="nav-sublink ${page === "flashcards" ? "active" : ""}" href="flashcards.html">Flashcards</a>
           <a class="nav-sublink ${page === "erros" ? "active" : ""}" href="caderno-erros.html">Caderno de erros</a>
@@ -929,6 +933,220 @@ async function registrarAcessoDiario() {
   });
 }
 
+
+function sidebarCollapseKey(userId) {
+  return `docmap:sidebar-hidden:${userId}`;
+}
+
+
+function prepararSidebarDesktop(
+  userId
+) {
+  let button =
+    document.getElementById(
+      "sidebar-desktop-toggle"
+    );
+
+  if (!button) {
+    button =
+      document.createElement(
+        "button"
+      );
+
+    button.id =
+      "sidebar-desktop-toggle";
+
+    button.className =
+      "sidebar-desktop-toggle";
+
+    button.type =
+      "button";
+
+    document.body.appendChild(
+      button
+    );
+  }
+
+  const apply =
+    (hidden) => {
+      document.body
+        .classList
+        .toggle(
+          "sidebar-hidden",
+          hidden
+        );
+
+      button.textContent =
+        hidden
+          ? "›"
+          : "‹";
+
+      button.setAttribute(
+        "aria-label",
+        hidden
+          ? "Abrir barra lateral"
+          : "Fechar barra lateral"
+      );
+
+      button.title =
+        hidden
+          ? "Abrir barra lateral"
+          : "Fechar barra lateral";
+
+      try {
+        localStorage.setItem(
+          sidebarCollapseKey(
+            userId
+          ),
+          hidden
+            ? "1"
+            : "0"
+        );
+      } catch {}
+    };
+
+  let initial =
+    false;
+
+  try {
+    initial =
+      localStorage.getItem(
+        sidebarCollapseKey(
+          userId
+        )
+      ) === "1";
+  } catch {}
+
+  apply(
+    initial
+  );
+
+  button.addEventListener(
+    "click",
+    () => {
+      if (
+        window.matchMedia(
+          "(max-width: 980px)"
+        ).matches
+      ) {
+        return;
+      }
+
+      apply(
+        !document.body
+          .classList
+          .contains(
+            "sidebar-hidden"
+          )
+      );
+    }
+  );
+}
+
+
+function prepararStudyMenu(
+  userId
+) {
+  const group =
+    document.getElementById(
+      "study-nav-group"
+    );
+
+  const toggle =
+    document.getElementById(
+      "study-nav-toggle"
+    );
+
+  const submenu =
+    document.getElementById(
+      "study-nav-submenu"
+    );
+
+  if (
+    !group
+    || !toggle
+    || !submenu
+  ) {
+    return;
+  }
+
+  const pageInsideStudy =
+    [
+      "ambientacao",
+      "flashcards",
+      "erros",
+      "questoes"
+    ].includes(
+      page
+    );
+
+  let open =
+    pageInsideStudy;
+
+  try {
+    const saved =
+      localStorage.getItem(
+        studyNavKey(
+          userId
+        )
+      );
+
+    if (
+      saved !== null
+    ) {
+      open =
+        saved === "1";
+    }
+  } catch {}
+
+  const apply =
+    (nextOpen) => {
+      group.classList.toggle(
+        "nav-group-collapsed",
+        !nextOpen
+      );
+
+      submenu.hidden =
+        !nextOpen;
+
+      toggle.setAttribute(
+        "aria-expanded",
+        nextOpen
+          ? "true"
+          : "false"
+      );
+
+      try {
+        localStorage.setItem(
+          studyNavKey(
+            userId
+          ),
+          nextOpen
+            ? "1"
+            : "0"
+        );
+      } catch {}
+    };
+
+  apply(
+    open
+  );
+
+  toggle.addEventListener(
+    "click",
+    (event) => {
+      event.preventDefault();
+
+      apply(
+        toggle.getAttribute(
+          "aria-expanded"
+        ) !== "true"
+      );
+    }
+  );
+}
+
+
 function prepararMobileMenu() {
   const open = document.getElementById("menu-open");
   const close = document.getElementById("sidebar-close");
@@ -993,6 +1211,8 @@ async function iniciarApp() {
   });
 
   prepararMobileMenu();
+  prepararSidebarDesktop(user.id);
+  prepararStudyMenu(user.id);
   await registrarAcessoDiario();
   prepararConfiguracoes();
 

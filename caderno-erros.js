@@ -325,90 +325,37 @@ async function loadErrorMetrics() {
    ========================================================= */
 
 async function loadErrorAreas() {
-  const {
-    data,
-    error
-  } =
-    await errorSb
-      .from(
-        "error_notebook"
-      )
-      .select(
-        "area"
-      )
-      .eq(
-        "active",
-        true
-      );
-
-
-  if (error) {
-    console.warn(
-      "Não foi possível carregar as áreas:",
-      error.message
-    );
-
-    return;
-  }
-
+  const mode =
+    window.resibulandoStudyMode
+    || "medicine";
 
   allErrorAreas =
-    Array.from(
-      new Set(
-        (data || [])
-          .map(
-            (row) =>
-              row.area
-          )
-          .filter(
-            Boolean
-          )
+    window.ResibulandoStudyMode
+      ?.areasFor(
+        mode
       )
-    )
-      .sort(
-        (
-          a,
-          b
-        ) =>
-          a.localeCompare(
-            b,
-            "pt-BR"
-          )
-      );
-
+    || [];
 
   const select =
     document.getElementById(
       "error-area-filter"
     );
 
-
   if (!select) {
     return;
   }
 
-
   select.innerHTML =
-    `
-      <option value="">
-        Todas as áreas
-      </option>
-    `
+    `<option value="">Todas as áreas</option>`
     + allErrorAreas
         .map(
           (area) => `
-            <option value="${String(area)
-              .replaceAll("&", "&amp;")
-              .replaceAll('"', "&quot;")}">
-              ${String(area)
-                .replaceAll("&", "&amp;")
-                .replaceAll("<", "&lt;")
-                .replaceAll(">", "&gt;")}
+            <option value="${escapeErrorHtml(area)}">
+              ${escapeErrorHtml(area)}
             </option>
           `
         )
         .join("");
-
 
   if (
     errorAgendaDate
@@ -421,7 +368,6 @@ async function loadErrorAreas() {
       true;
   }
 }
-
 
 /* =========================================================
    IMAGEM — VISUALIZAÇÃO
@@ -684,7 +630,7 @@ async function compressErrorImage(
 
 
     const maxDimension =
-      1400;
+      1100;
 
 
     const scale =
@@ -764,18 +710,18 @@ async function compressErrorImage(
     let blob =
       await canvasToWebp(
         canvas,
-        0.72
+        0.68
       );
 
 
     if (
       blob.size
-      > 650 * 1024
+      > 420 * 1024
     ) {
       blob =
         await canvasToWebp(
           canvas,
-          0.62
+          0.55
         );
     }
 
@@ -897,6 +843,16 @@ async function prepareNewErrorImage(
       "extract-error-image-text"
     );
 
+  const keepButton =
+    document.getElementById(
+      "extract-error-image-text-keep"
+    );
+
+  const removeButton =
+    document.getElementById(
+      "remove-new-error-image"
+    );
+
 
   if (!file) {
     setNewErrorImageInfo(
@@ -906,6 +862,16 @@ async function prepareNewErrorImage(
 
     if (extractButton) {
       extractButton.disabled =
+        true;
+    }
+
+    if (keepButton) {
+      keepButton.disabled =
+        true;
+    }
+
+    if (removeButton) {
+      removeButton.disabled =
         true;
     }
 
@@ -931,6 +897,16 @@ async function prepareNewErrorImage(
         true;
     }
 
+    if (keepButton) {
+      keepButton.disabled =
+        true;
+    }
+
+    if (removeButton) {
+      removeButton.disabled =
+        true;
+    }
+
 
     return;
   }
@@ -938,6 +914,16 @@ async function prepareNewErrorImage(
 
   if (extractButton) {
     extractButton.disabled =
+      false;
+  }
+
+  if (keepButton) {
+    keepButton.disabled =
+      false;
+  }
+
+  if (removeButton) {
+    removeButton.disabled =
       false;
   }
 
@@ -1168,91 +1154,79 @@ function applyExtractedText(
 }
 
 
-async function extractNewErrorImageText() {
-  const input =
-    document.getElementById(
-      "new-error-image"
-    );
+function clearNewErrorSelectedImage(message = "") {
+  preparedNewErrorImage = null;
+  preparedNewErrorOriginalSize = null;
+
+  const input = document.getElementById("new-error-image");
+  if (input) input.value = "";
+
+  [
+    "extract-error-image-text",
+    "extract-error-image-text-keep",
+    "remove-new-error-image"
+  ].forEach((id) => {
+    const button = document.getElementById(id);
+    if (button) button.disabled = true;
+  });
+
+  setNewErrorImageInfo(message);
+}
 
 
-  const button =
-    document.getElementById(
-      "extract-error-image-text"
-    );
-
-
-  const file =
-    input?.files?.[0]
-    || null;
-
+async function extractNewErrorImageText(keepImage = false) {
+  const input = document.getElementById("new-error-image");
+  const primaryButton = document.getElementById("extract-error-image-text");
+  const keepButton = document.getElementById("extract-error-image-text-keep");
+  const file = input?.files?.[0] || null;
 
   if (!file) {
-    setNewErrorImageInfo(
-      "Selecione uma imagem primeiro.",
-      "error"
-    );
-
+    setNewErrorImageInfo("Selecione uma imagem primeiro.", "error");
     return;
   }
 
-
-  button.disabled =
-    true;
-
+  if (primaryButton) primaryButton.disabled = true;
+  if (keepButton) keepButton.disabled = true;
 
   try {
-    setNewErrorImageInfo(
-      "Extraindo texto: 0%..."
+    setNewErrorImageInfo("Extraindo texto: 0%...");
+
+    const source = preparedNewErrorImage || file;
+    const text = await extractTextFromErrorImage(source, (progress) => {
+      setNewErrorImageInfo(`Extraindo texto: ${progress}%...`);
+    });
+
+    const applied = applyExtractedText(
+      document.getElementById("new-error-question"),
+      text
     );
 
-
-    const text =
-      await extractTextFromErrorImage(
-        file,
-        (progress) => {
-          setNewErrorImageInfo(
-            `Extraindo texto: ${progress}%...`
-          );
-        }
+    if (applied && !keepImage) {
+      clearNewErrorSelectedImage(
+        `Texto extraído. ${text.length} caracteres adicionados e a imagem foi removida.`
       );
-
-
-    const applied =
-      applyExtractedText(
-        document.getElementById(
-          "new-error-question"
-        ),
-        text
-      );
-
+      return;
+    }
 
     setNewErrorImageInfo(
       applied
-        ? `Texto extraído. ${text.length} caracteres adicionados à Questão.`
+        ? `Texto extraído. ${text.length} caracteres adicionados. A imagem será mantida.`
         : "Extração concluída; o texto existente foi mantido.",
       "success"
     );
-
-
   } catch (error) {
-    console.error(
-      error
-    );
-
-
+    console.error(error);
     setNewErrorImageInfo(
-      error.message
-      || "Não foi possível extrair o texto.",
+      error.message || "Não foi possível extrair o texto.",
       "error"
     );
-
-
   } finally {
-    button.disabled =
-      false;
+    if (input?.files?.[0]) {
+      if (primaryButton) primaryButton.disabled = false;
+      if (keepButton) keepButton.disabled = false;
+    }
   }
 }
-
 
 async function downloadStoredErrorImage(
   path
@@ -1287,109 +1261,136 @@ async function downloadStoredErrorImage(
 }
 
 
-async function extractStoredErrorImageText() {
-  if (!editingErrorId) {
-    return;
+async function deleteStoredErrorImage(item, options = {}) {
+  if (!item?.question_image_path) return false;
+
+  const questionText =
+    document.getElementById("error-edit-question")?.value.trim()
+    || item.question_text
+    || "";
+
+  if (!questionText) {
+    throw new Error("Para excluir a imagem, mantenha algum texto no campo Questão.");
   }
 
+  const oldPath = item.question_image_path;
+
+  const { error: updateError } = await errorSb
+    .from("error_notebook")
+    .update({
+      question_text: questionText,
+      question_image_path: null
+    })
+    .eq("id", item.id);
+
+  if (updateError) throw updateError;
+
+  const { error: storageError } = await errorSb
+    .storage
+    .from("docmap")
+    .remove([oldPath]);
+
+  if (storageError) {
+    console.warn(
+      "A referência da imagem foi removida, mas o arquivo não pôde ser apagado do Storage:",
+      storageError.message
+    );
+  }
+
+  item.question_image_path = null;
+  item.question_text = questionText;
+
+  const tools = document.getElementById("error-edit-image-tools");
+  if (tools) tools.hidden = true;
+
+  if (!options.skipReload) {
+    await Promise.all([loadErrorLibrary(), loadErrorQueue()]);
+  }
+
+  return true;
+}
+
+
+async function extractStoredErrorImageText(keepImage = false) {
+  if (!editingErrorId) return;
 
   const item =
-    errorLibraryItems
-      .find(
-        (entry) =>
-          entry.id === editingErrorId
-      )
-    || errorQueue.find(
-      (entry) =>
-        entry.id === editingErrorId
-    );
+    errorLibraryItems.find((entry) => entry.id === editingErrorId)
+    || errorQueue.find((entry) => entry.id === editingErrorId);
 
+  if (!item?.question_image_path) return;
 
-  if (
-    !item
-    || !item.question_image_path
-  ) {
-    return;
-  }
+  const buttons = [
+    document.getElementById("error-edit-extract-image"),
+    document.getElementById("error-edit-extract-image-keep"),
+    document.getElementById("error-edit-delete-image")
+  ].filter(Boolean);
 
-
-  const button =
-    document.getElementById(
-      "error-edit-extract-image"
-    );
-
-  const status =
-    document.getElementById(
-      "error-edit-ocr-status"
-    );
-
-
-  button.disabled =
-    true;
-
+  const status = document.getElementById("error-edit-ocr-status");
+  buttons.forEach((button) => { button.disabled = true; });
 
   try {
-    status.textContent =
-      "Baixando imagem...";
+    status.textContent = "Baixando imagem...";
+    status.className = "error-status";
 
-    status.className =
-      "error-status";
+    const blob = await downloadStoredErrorImage(item.question_image_path);
+    const text = await extractTextFromErrorImage(blob, (progress) => {
+      status.textContent = `Extraindo texto: ${progress}%...`;
+    });
 
-
-    const blob =
-      await downloadStoredErrorImage(
-        item.question_image_path
-      );
-
-
-    const text =
-      await extractTextFromErrorImage(
-        blob,
-        (progress) => {
-          status.textContent =
-            `Extraindo texto: ${progress}%...`;
-        }
-      );
-
-
-    const applied =
-      applyExtractedText(
-        document.getElementById(
-          "error-edit-question"
-        ),
-        text
-      );
-
-
-    status.textContent =
-      applied
-        ? "Texto extraído e inserido no campo Questão."
-        : "Texto extraído; conteúdo existente mantido.";
-
-    status.className =
-      "error-status success";
-
-
-  } catch (error) {
-    console.error(
-      error
+    const applied = applyExtractedText(
+      document.getElementById("error-edit-question"),
+      text
     );
 
+    if (applied && !keepImage) {
+      status.textContent = "Texto extraído. Removendo imagem...";
+      await deleteStoredErrorImage(item, { skipReload: true });
+      status.textContent = "Texto extraído e imagem removida do Caderno.";
+    } else {
+      status.textContent = applied
+        ? "Texto extraído. A imagem foi mantida."
+        : "Texto extraído; conteúdo existente mantido.";
+    }
 
-    status.textContent =
-      error.message
-      || "Não foi possível extrair o texto.";
-
-    status.className =
-      "error-status error";
-
-
+    status.className = "error-status success";
+  } catch (error) {
+    console.error(error);
+    status.textContent = error.message || "Não foi possível extrair o texto.";
+    status.className = "error-status error";
   } finally {
-    button.disabled =
-      false;
+    buttons.forEach((button) => { button.disabled = false; });
   }
 }
 
+
+async function deleteEditingErrorImage() {
+  if (!editingErrorId) return;
+
+  const item =
+    errorLibraryItems.find((entry) => entry.id === editingErrorId)
+    || errorQueue.find((entry) => entry.id === editingErrorId);
+
+  if (!item?.question_image_path) return;
+
+  const confirmed = window.confirm(
+    "Excluir a imagem deste item? O arquivo será apagado do Storage."
+  );
+  if (!confirmed) return;
+
+  const status = document.getElementById("error-edit-ocr-status");
+
+  try {
+    status.textContent = "Excluindo imagem...";
+    await deleteStoredErrorImage(item);
+    status.textContent = "Imagem excluída.";
+    status.className = "error-status success";
+  } catch (error) {
+    console.error(error);
+    status.textContent = error.message || "Não foi possível excluir a imagem.";
+    status.className = "error-status error";
+  }
+}
 
 async function uploadErrorImage(
   file,
@@ -1826,7 +1827,25 @@ function wireNewError() {
     )
     ?.addEventListener(
       "click",
-      extractNewErrorImageText
+      () => extractNewErrorImageText(false)
+    );
+
+  document
+    .getElementById(
+      "extract-error-image-text-keep"
+    )
+    ?.addEventListener(
+      "click",
+      () => extractNewErrorImageText(true)
+    );
+
+  document
+    .getElementById(
+      "remove-new-error-image"
+    )
+    ?.addEventListener(
+      "click",
+      () => clearNewErrorSelectedImage("Imagem removida.")
     );
 
 
@@ -2458,62 +2477,39 @@ function populateLibraryAreas() {
       "error-library-area"
     );
 
-
   if (!select) {
     return;
   }
 
-
   const current =
     select.value;
 
+  const mode =
+    window.resibulandoStudyMode
+    || "medicine";
 
   const areas =
-    Array.from(
-      new Set(
-        errorLibraryItems
-          .map(
-            (item) =>
-              item.area
-              || "Sem área"
-          )
+    window.ResibulandoStudyMode
+      ?.areasFor(
+        mode
       )
-    )
-      .sort(
-        (
-          a,
-          b
-        ) =>
-          a.localeCompare(
-            b,
-            "pt-BR"
-          )
-      );
-
+    || [];
 
   select.innerHTML =
-    `
-      <option value="">
-        Todas as áreas
-      </option>
-    `
+    `<option value="">Todas as áreas</option>`
     + areas
         .map(
           (area) => `
-            <option value="${errorLibraryEscape(
-              area
-            )}">
-              ${errorLibraryEscape(
-                area
-              )}
+            <option value="${escapeErrorHtml(area)}">
+              ${escapeErrorHtml(area)}
             </option>
           `
         )
         .join("");
 
-
   if (
-    areas.includes(
+    current
+    && areas.includes(
       current
     )
   ) {
@@ -3257,6 +3253,11 @@ function updateErrorBulkToolbar() {
       "error-library-delete-selected"
     );
 
+  const exportButton =
+    document.getElementById(
+      "error-library-export-selected"
+    );
+
 
   const selectAll =
     document.getElementById(
@@ -3275,6 +3276,11 @@ function updateErrorBulkToolbar() {
       selectedErrorIds.size === 0;
   }
 
+  if (exportButton) {
+    exportButton.disabled =
+      selectedErrorIds.size === 0;
+  }
+
 
   if (selectAll) {
     selectAll.checked =
@@ -3287,6 +3293,176 @@ function updateErrorBulkToolbar() {
   }
 }
 
+
+async function errorPdfImageData(path) {
+  if (!path) return null;
+
+  try {
+    const blob = await downloadStoredErrorImage(path);
+    const dataUrl = await readImageDataUrl(blob);
+    const image = await loadImageElement(dataUrl);
+
+    const maxWidth = 1000;
+    const scale = Math.min(1, maxWidth / image.width);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(image.width * scale));
+    canvas.height = Math.max(1, Math.round(image.height * scale));
+
+    const context = canvas.getContext("2d", { alpha: false });
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    return {
+      dataUrl: canvas.toDataURL("image/jpeg", 0.78),
+      width: canvas.width,
+      height: canvas.height
+    };
+  } catch (error) {
+    console.warn("Imagem não incluída no PDF do Caderno:", error);
+    return null;
+  }
+}
+
+
+function errorPdfAddImage(doc, imageData, state) {
+  if (!imageData) return state;
+
+  const margin = 14;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const maxWidth = Math.min(95, pageWidth - margin * 2);
+  const maxHeight = 75;
+
+  const ratio = imageData.width / Math.max(1, imageData.height);
+  let width = maxWidth;
+  let height = width / ratio;
+
+  if (height > maxHeight) {
+    height = maxHeight;
+    width = height * ratio;
+  }
+
+  if (state.y + height + 8 > pageHeight - 14) {
+    doc.addPage();
+    state.y = 16;
+  }
+
+  const x = margin + Math.max(0, (pageWidth - margin * 2 - width) / 2);
+  doc.addImage(imageData.dataUrl, "JPEG", x, state.y, width, height, undefined, "FAST");
+  state.y += height + 6;
+  return state;
+}
+
+
+function errorPdfAddWrappedText(doc, label, value, state) {
+  if (!value) return state;
+
+  const margin = 14;
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const maxWidth = doc.internal.pageSize.getWidth() - margin * 2;
+  const labelLines = doc.splitTextToSize(`${label}:`, maxWidth);
+  const valueLines = doc.splitTextToSize(String(value), maxWidth);
+  const needed = (labelLines.length + valueLines.length + 1) * 5;
+
+  if (state.y + needed > pageHeight - 14) {
+    doc.addPage();
+    state.y = 16;
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.text(labelLines, margin, state.y);
+  state.y += labelLines.length * 4.5;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text(valueLines, margin, state.y);
+  state.y += valueLines.length * 4.5 + 4;
+
+  return state;
+}
+
+
+async function exportSelectedErrorsPdf() {
+  const ids = Array.from(selectedErrorIds);
+  if (!ids.length) return;
+
+  if (!window.jspdf?.jsPDF) {
+    setErrorLibraryStatus("Gerador de PDF não carregou. Atualize a página.", "error");
+    return;
+  }
+
+  const items = errorLibraryItems.filter((item) => selectedErrorIds.has(item.id));
+  if (!items.length) return;
+
+  const button = document.getElementById("error-library-export-selected");
+  if (button) button.disabled = true;
+  setErrorLibraryStatus("Gerando PDF...");
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    const margin = 14;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("Resibulando — Caderno de Erros", margin, 16);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(
+      `${items.length} item${items.length === 1 ? "" : "s"} selecionado${items.length === 1 ? "" : "s"}`,
+      margin,
+      23
+    );
+
+    let state = { y: 32 };
+
+    for (let index = 0; index < items.length; index += 1) {
+      const item = items[index];
+
+      if (state.y > 250) {
+        doc.addPage();
+        state.y = 16;
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text(
+        `${index + 1}. ${item.area || "Sem área"}${item.materia ? ` · ${item.materia}` : ""}`,
+        margin,
+        state.y
+      );
+      state.y += 7;
+
+      state = errorPdfAddWrappedText(doc, "Tema", item.theme, state);
+      state = errorPdfAddWrappedText(doc, "CCQ", item.ccq, state);
+      state = errorPdfAddWrappedText(doc, "Questão", item.question_text, state);
+
+      if (item.question_image_path) {
+        setErrorLibraryStatus(`Preparando imagem ${index + 1} de ${items.length}...`);
+        const imageData = await errorPdfImageData(item.question_image_path);
+        state = errorPdfAddImage(doc, imageData, state);
+      }
+
+      state = errorPdfAddWrappedText(doc, "Resposta correta", item.correct_answer, state);
+      state = errorPdfAddWrappedText(doc, "O que eu pensei", item.what_i_thought, state);
+
+      state.y += 4;
+      doc.setDrawColor(220);
+      doc.line(margin, state.y, doc.internal.pageSize.getWidth() - margin, state.y);
+      state.y += 8;
+    }
+
+    doc.save(`resibulando-caderno-erros-${errorTodayISO()}.pdf`);
+    setErrorLibraryStatus("PDF exportado.", "success");
+  } catch (error) {
+    console.error(error);
+    setErrorLibraryStatus(`Não foi possível gerar o PDF: ${error.message}`, "error");
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
 
 async function deleteSelectedErrors() {
   const ids =
@@ -4487,6 +4663,15 @@ function wireErrorLibrary() {
 
   document
     .getElementById(
+      "error-library-export-selected"
+    )
+    ?.addEventListener(
+      "click",
+      exportSelectedErrorsPdf
+    );
+
+  document
+    .getElementById(
       "error-library-delete-selected"
     )
     ?.addEventListener(
@@ -4511,7 +4696,25 @@ function wireErrorLibrary() {
     )
     ?.addEventListener(
       "click",
-      extractStoredErrorImageText
+      () => extractStoredErrorImageText(false)
+    );
+
+  document
+    .getElementById(
+      "error-edit-extract-image-keep"
+    )
+    ?.addEventListener(
+      "click",
+      () => extractStoredErrorImageText(true)
+    );
+
+  document
+    .getElementById(
+      "error-edit-delete-image"
+    )
+    ?.addEventListener(
+      "click",
+      deleteEditingErrorImage
     );
 
 
@@ -4759,6 +4962,15 @@ function wireErrorLibrary() {
 /* =========================================================
    INICIALIZAÇÃO
    ========================================================= */
+
+window.addEventListener(
+  "resibulando:study-mode",
+  () => {
+    loadErrorAreas();
+    populateLibraryAreas();
+  }
+);
+
 
 async function initErrorNotebook() {
   errorUser =

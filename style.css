@@ -1204,3 +1204,129 @@ body.sidebar-collapsed .nav-icon { font-size:18px; }
   body.sidebar-collapsed .nav-link,
   body.sidebar-collapsed .nav-group-label { justify-content:flex-start; padding:0 12px; }
 }
+
+
+/* =========================================================
+   FASE 12.1 — SIDEBAR REBATÍVEL DE VERDADE
+   ========================================================= */
+
+.sidebar,
+.main,
+.app-shell {
+  transition:
+    transform .20s ease,
+    grid-template-columns .20s ease,
+    opacity .20s ease;
+}
+
+.sidebar-desktop-toggle {
+  position: fixed;
+  left: 250px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 90;
+
+  width: 34px;
+  height: 54px;
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+
+  border: 1px solid var(--border);
+  border-left: 0;
+
+  border-radius:
+    0
+    12px
+    12px
+    0;
+
+  background: var(--sidebar);
+  color: var(--text);
+
+  box-shadow:
+    4px 0 18px
+    rgba(15, 23, 42, .08);
+
+  font-size: 24px;
+  line-height: 1;
+
+  transition:
+    left .20s ease,
+    background .15s ease;
+}
+
+.sidebar-desktop-toggle:hover {
+  background: var(--surface-2);
+}
+
+body.sidebar-hidden .app-shell {
+  grid-template-columns:
+    0
+    minmax(0, 1fr)
+    !important;
+}
+
+body.sidebar-hidden .sidebar {
+  transform:
+    translateX(-100%);
+
+  opacity: 0;
+
+  pointer-events: none;
+}
+
+body.sidebar-hidden
+.sidebar-desktop-toggle {
+  left: 0;
+}
+
+body.sidebar-hidden
+.main {
+  min-width: 0;
+}
+
+.nav-group-label {
+  border: 0;
+}
+
+.nav-group-chevron {
+  margin-left: auto;
+  transition:
+    transform .16s ease;
+}
+
+.nav-group.nav-group-collapsed
+.nav-group-chevron {
+  transform:
+    rotate(-90deg);
+}
+
+.nav-group.nav-group-collapsed
+.nav-submenu,
+.nav-submenu[hidden] {
+  display:
+    none
+    !important;
+}
+
+@media (max-width: 980px) {
+  .sidebar-desktop-toggle {
+    display: none !important;
+  }
+
+  body.sidebar-hidden
+  .app-shell {
+    grid-template-columns:
+      1fr
+      !important;
+  }
+
+  body.sidebar-hidden
+  .sidebar {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
