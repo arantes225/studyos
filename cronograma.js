@@ -5514,6 +5514,103 @@ function wireThemeLibraryBulkActions() {
   );
 }
 
+function themeFiltersAreActive() {
+  return Boolean(
+    scheduleState.themeAreaFilter
+    || scheduleState.themeDateFrom
+    || scheduleState.themeDateTo
+    || (
+      scheduleState.themeCompletionFilter
+      && scheduleState.themeCompletionFilter
+        !== "all"
+    )
+  );
+}
+
+
+function updateThemeFilterButtonState() {
+  const button =
+    document.getElementById(
+      "theme-filter-menu-toggle"
+    );
+
+  if (!button) {
+    return;
+  }
+
+  const active =
+    themeFiltersAreActive();
+
+  button.classList.toggle(
+    "has-active-filter",
+    active
+  );
+
+  button.title =
+    active
+      ? "Filtros ativos"
+      : "Filtros";
+}
+
+
+function closeThemeFilterMenu() {
+  const menu =
+    document.getElementById(
+      "theme-filter-menu"
+    );
+
+  const toggle =
+    document.getElementById(
+      "theme-filter-menu-toggle"
+    );
+
+  if (menu) {
+    menu.hidden =
+      true;
+  }
+
+  if (toggle) {
+    toggle.setAttribute(
+      "aria-expanded",
+      "false"
+    );
+  }
+}
+
+
+function toggleThemeFilterMenu() {
+  const menu =
+    document.getElementById(
+      "theme-filter-menu"
+    );
+
+  const toggle =
+    document.getElementById(
+      "theme-filter-menu-toggle"
+    );
+
+  if (
+    !menu
+    || !toggle
+  ) {
+    return;
+  }
+
+  const opening =
+    menu.hidden;
+
+  menu.hidden =
+    !opening;
+
+  toggle.setAttribute(
+    "aria-expanded",
+    opening
+      ? "true"
+      : "false"
+  );
+}
+
+
 function wireThemeLibraryFilters() {
   const search =
     document.getElementById(
@@ -5555,10 +5652,10 @@ function wireThemeLibraryFilters() {
   area?.addEventListener(
     "change",
     () => {
-      scheduleState
-        .themeAreaFilter =
-          area.value;
+      scheduleState.themeAreaFilter =
+        area.value;
 
+      updateThemeFilterButtonState();
       renderThemeLibrary();
     }
   );
@@ -5567,11 +5664,11 @@ function wireThemeLibraryFilters() {
   completion?.addEventListener(
     "change",
     () => {
-      scheduleState
-        .themeCompletionFilter =
-          completion.value
-          || "all";
+      scheduleState.themeCompletionFilter =
+        completion.value
+        || "all";
 
+      updateThemeFilterButtonState();
       renderThemeLibrary();
     }
   );
@@ -5580,11 +5677,11 @@ function wireThemeLibraryFilters() {
   dateFrom?.addEventListener(
     "change",
     () => {
-      scheduleState
-        .themeDateFrom =
-          dateFrom.value
-          || "";
+      scheduleState.themeDateFrom =
+        dateFrom.value
+        || "";
 
+      updateThemeFilterButtonState();
       renderThemeLibrary();
     }
   );
@@ -5593,14 +5690,51 @@ function wireThemeLibraryFilters() {
   dateTo?.addEventListener(
     "change",
     () => {
-      scheduleState
-        .themeDateTo =
-          dateTo.value
-          || "";
+      scheduleState.themeDateTo =
+        dateTo.value
+        || "";
 
+      updateThemeFilterButtonState();
       renderThemeLibrary();
     }
   );
+
+
+  document
+    .getElementById(
+      "theme-filter-menu-toggle"
+    )
+    ?.addEventListener(
+      "click",
+      (event) => {
+        event.stopPropagation();
+
+        toggleThemeFilterMenu();
+      }
+    );
+
+
+  document
+    .getElementById(
+      "theme-filter-menu-close"
+    )
+    ?.addEventListener(
+      "click",
+      closeThemeFilterMenu
+    );
+
+
+  document
+    .getElementById(
+      "theme-filter-apply"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+        closeThemeFilterMenu();
+        renderThemeLibrary();
+      }
+    );
 
 
   document
@@ -5610,13 +5744,28 @@ function wireThemeLibraryFilters() {
     ?.addEventListener(
       "click",
       () => {
-        scheduleState
-          .themeDateFrom =
-            "";
+        scheduleState.themeAreaFilter =
+          "";
 
-        scheduleState
-          .themeDateTo =
+        scheduleState.themeCompletionFilter =
+          "all";
+
+        scheduleState.themeDateFrom =
+          "";
+
+        scheduleState.themeDateTo =
+          "";
+
+
+        if (area) {
+          area.value =
             "";
+        }
+
+        if (completion) {
+          completion.value =
+            "all";
+        }
 
         if (dateFrom) {
           dateFrom.value =
@@ -5628,9 +5777,46 @@ function wireThemeLibraryFilters() {
             "";
         }
 
+
+        updateThemeFilterButtonState();
         renderThemeLibrary();
       }
     );
+
+
+  document.addEventListener(
+    "click",
+    (event) => {
+      const wrap =
+        document.querySelector(
+          ".theme-filter-menu-wrap"
+        );
+
+      if (
+        wrap
+        && !wrap.contains(
+          event.target
+        )
+      ) {
+        closeThemeFilterMenu();
+      }
+    }
+  );
+
+
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (
+        event.key === "Escape"
+      ) {
+        closeThemeFilterMenu();
+      }
+    }
+  );
+
+
+  updateThemeFilterButtonState();
 }
 
 

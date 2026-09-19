@@ -2199,11 +2199,266 @@ async function uploadQuestionPdf(setId, file) {
   return path;
 }
 
+
+const RESIBULANDO_IMAGE_TARGET_BYTES =
+  100 * 1024;
+
+const RESIBULANDO_IMAGE_SOFT_MAX_BYTES =
+  150 * 1024;
+
+const RESIBULANDO_IMAGE_MAX_DIMENSION =
+  1100;
+
+
+async function compressResibulandoImageBlob(
+  sourceBlob
+) {
+  if (
+    !sourceBlob
+    || !sourceBlob.type
+      ?.startsWith(
+        "image/"
+      )
+  ) {
+    return sourceBlob;
+  }
+
+
+  /*
+    Se já estiver abaixo da meta, não recomprime.
+    Evita perda de qualidade desnecessária.
+  */
+  if (
+    sourceBlob.size
+    <= RESIBULANDO_IMAGE_TARGET_BYTES
+  ) {
+    return sourceBlob;
+  }
+
+
+  try {
+    const bitmap =
+      await createImageBitmap(
+        sourceBlob
+      );
+
+
+    const originalWidth =
+      bitmap.width;
+
+    const originalHeight =
+      bitmap.height;
+
+
+    const dimensionSteps =
+      [
+        1100,
+        1000,
+        900,
+        820
+      ];
+
+
+    const qualitySteps =
+      [
+        0.82,
+        0.76,
+        0.70,
+        0.64,
+        0.58
+      ];
+
+
+    let bestReadable =
+      null;
+
+    let smallest =
+      null;
+
+
+    for (
+      const maxDimension
+      of dimensionSteps
+    ) {
+      const scale =
+        Math.min(
+          1,
+          maxDimension
+            / originalWidth,
+          maxDimension
+            / originalHeight
+        );
+
+
+      const width =
+        Math.max(
+          1,
+          Math.round(
+            originalWidth
+            * scale
+          )
+        );
+
+
+      const height =
+        Math.max(
+          1,
+          Math.round(
+            originalHeight
+            * scale
+          )
+        );
+
+
+      const canvas =
+        document.createElement(
+          "canvas"
+        );
+
+
+      canvas.width =
+        width;
+
+      canvas.height =
+        height;
+
+
+      const context =
+        canvas.getContext(
+          "2d",
+          {
+            alpha:
+              false
+          }
+        );
+
+
+      context.imageSmoothingEnabled =
+        true;
+
+      context.imageSmoothingQuality =
+        "high";
+
+      context.fillStyle =
+        "#ffffff";
+
+      context.fillRect(
+        0,
+        0,
+        width,
+        height
+      );
+
+      context.drawImage(
+        bitmap,
+        0,
+        0,
+        width,
+        height
+      );
+
+
+      for (
+        const quality
+        of qualitySteps
+      ) {
+        const candidate =
+          await new Promise(
+            (
+              resolve
+            ) => {
+              canvas.toBlob(
+                resolve,
+                "image/webp",
+                quality
+              );
+            }
+          );
+
+
+        if (!candidate) {
+          continue;
+        }
+
+
+        if (
+          !smallest
+          || candidate.size
+            < smallest.size
+        ) {
+          smallest =
+            candidate;
+        }
+
+
+        /*
+          Preserva um candidato nítido de até 150 KB.
+          Só usamos algo mais agressivo se não houver
+          opção legível nessa faixa.
+        */
+        if (
+          candidate.size
+            <= RESIBULANDO_IMAGE_SOFT_MAX_BYTES
+          && quality >= 0.64
+          && maxDimension >= 900
+        ) {
+          if (
+            !bestReadable
+            || candidate.size
+              < bestReadable.size
+          ) {
+            bestReadable =
+              candidate;
+          }
+        }
+
+
+        if (
+          candidate.size
+          <= RESIBULANDO_IMAGE_TARGET_BYTES
+        ) {
+          bitmap.close?.();
+
+          return candidate;
+        }
+      }
+    }
+
+
+    bitmap.close?.();
+
+
+    /*
+      Se 100 KB exigir perda excessiva,
+      aceita até 150 KB para manter texto/diagramas nítidos.
+    */
+    if (bestReadable) {
+      return bestReadable;
+    }
+
+
+    return smallest
+      || sourceBlob;
+
+
+  } catch (error) {
+    console.warn(
+      "Não foi possível otimizar a imagem:",
+      error
+    );
+
+    return sourceBlob;
+  }
+}
+
+
 async function uploadExtractedQuestionImages(
   setId,
   questionImages
 ) {
-  const paths = {};
+  const paths =
+    {};
+
 
   for (
     let index = 0;
@@ -2211,38 +2466,71 @@ async function uploadExtractedQuestionImages(
     index += 1
   ) {
     const image =
-      questionImages[index];
+      questionImages[
+        index
+      ];
 
     const questionNumber =
       image.question_number;
+
+
+    setImportStatus(
+      `Otimizando figura da questão ${questionNumber}...`
+    );
+
+
+    const optimizedBlob =
+      await compressResibulandoImageBlob(
+        image.blob
+      );
+
+
+    const isWebp =
+      optimizedBlob.type
+        === "image/webp";
+
+
+    const extension =
+      isWebp
+        ? "webp"
+        : "png";
+
+
+    const path =
+      `${qsState.user.id}/question_sets/${setId}/images/question-${questionNumber}.${extension}`;
+
 
     setImportStatus(
       `Enviando figura da questão ${questionNumber}...`
     );
 
-    const path =
-      `${qsState.user.id}/question_sets/${setId}/images/question-${questionNumber}.png`;
 
     const {
       error
     } =
       await qsSb
         .storage
-        .from("docmap")
+        .from(
+          "docmap"
+        )
         .upload(
           path,
-          image.blob,
+          optimizedBlob,
           {
             contentType:
-              "image/png",
+              optimizedBlob.type
+              || "image/webp",
+
             upsert:
               true
           }
         );
 
+
     if (error) {
       throw error;
     }
+
 
     paths[
       questionNumber
@@ -2250,9 +2538,9 @@ async function uploadExtractedQuestionImages(
       path;
   }
 
+
   return paths;
 }
-
 
 function chunkArray(array, size) {
   const chunks = [];
@@ -8036,43 +8324,12 @@ async function saveAnswerKey() {
   );
 }
 
-async function compressNotebookGalleryBlob(blob) {
-  if (!blob || !blob.type?.startsWith("image/")) return blob;
-
-  try {
-    const bitmap = await createImageBitmap(blob);
-    const maxDimension = 1100;
-    const scale = Math.min(
-      1,
-      maxDimension / bitmap.width,
-      maxDimension / bitmap.height
-    );
-
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-
-    const context = canvas.getContext("2d", { alpha: false });
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    bitmap.close?.();
-
-    const toBlob = (quality) =>
-      new Promise((resolve) =>
-        canvas.toBlob(resolve, "image/webp", quality)
-      );
-
-    let result = await toBlob(0.68);
-    if (result && result.size > 420 * 1024) {
-      result = await toBlob(0.55);
-    }
-
-    return result || blob;
-  } catch (error) {
-    console.warn("Não foi possível comprimir a imagem do Caderno:", error);
-    return blob;
-  }
+async function compressNotebookGalleryBlob(
+  blob
+) {
+  return compressResibulandoImageBlob(
+    blob
+  );
 }
 
 

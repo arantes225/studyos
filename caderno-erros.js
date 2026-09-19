@@ -569,6 +569,259 @@ function loadImageElement(
 }
 
 
+
+const RESIBULANDO_IMAGE_TARGET_BYTES =
+  100 * 1024;
+
+const RESIBULANDO_IMAGE_SOFT_MAX_BYTES =
+  150 * 1024;
+
+const RESIBULANDO_IMAGE_MAX_DIMENSION =
+  1100;
+
+
+async function compressResibulandoImageBlob(
+  sourceBlob
+) {
+  if (
+    !sourceBlob
+    || !sourceBlob.type
+      ?.startsWith(
+        "image/"
+      )
+  ) {
+    return sourceBlob;
+  }
+
+
+  /*
+    Se já estiver abaixo da meta, não recomprime.
+    Evita perda de qualidade desnecessária.
+  */
+  if (
+    sourceBlob.size
+    <= RESIBULANDO_IMAGE_TARGET_BYTES
+  ) {
+    return sourceBlob;
+  }
+
+
+  try {
+    const bitmap =
+      await createImageBitmap(
+        sourceBlob
+      );
+
+
+    const originalWidth =
+      bitmap.width;
+
+    const originalHeight =
+      bitmap.height;
+
+
+    const dimensionSteps =
+      [
+        1100,
+        1000,
+        900,
+        820
+      ];
+
+
+    const qualitySteps =
+      [
+        0.82,
+        0.76,
+        0.70,
+        0.64,
+        0.58
+      ];
+
+
+    let bestReadable =
+      null;
+
+    let smallest =
+      null;
+
+
+    for (
+      const maxDimension
+      of dimensionSteps
+    ) {
+      const scale =
+        Math.min(
+          1,
+          maxDimension
+            / originalWidth,
+          maxDimension
+            / originalHeight
+        );
+
+
+      const width =
+        Math.max(
+          1,
+          Math.round(
+            originalWidth
+            * scale
+          )
+        );
+
+
+      const height =
+        Math.max(
+          1,
+          Math.round(
+            originalHeight
+            * scale
+          )
+        );
+
+
+      const canvas =
+        document.createElement(
+          "canvas"
+        );
+
+
+      canvas.width =
+        width;
+
+      canvas.height =
+        height;
+
+
+      const context =
+        canvas.getContext(
+          "2d",
+          {
+            alpha:
+              false
+          }
+        );
+
+
+      context.imageSmoothingEnabled =
+        true;
+
+      context.imageSmoothingQuality =
+        "high";
+
+      context.fillStyle =
+        "#ffffff";
+
+      context.fillRect(
+        0,
+        0,
+        width,
+        height
+      );
+
+      context.drawImage(
+        bitmap,
+        0,
+        0,
+        width,
+        height
+      );
+
+
+      for (
+        const quality
+        of qualitySteps
+      ) {
+        const candidate =
+          await new Promise(
+            (
+              resolve
+            ) => {
+              canvas.toBlob(
+                resolve,
+                "image/webp",
+                quality
+              );
+            }
+          );
+
+
+        if (!candidate) {
+          continue;
+        }
+
+
+        if (
+          !smallest
+          || candidate.size
+            < smallest.size
+        ) {
+          smallest =
+            candidate;
+        }
+
+
+        /*
+          Preserva um candidato nítido de até 150 KB.
+          Só usamos algo mais agressivo se não houver
+          opção legível nessa faixa.
+        */
+        if (
+          candidate.size
+            <= RESIBULANDO_IMAGE_SOFT_MAX_BYTES
+          && quality >= 0.64
+          && maxDimension >= 900
+        ) {
+          if (
+            !bestReadable
+            || candidate.size
+              < bestReadable.size
+          ) {
+            bestReadable =
+              candidate;
+          }
+        }
+
+
+        if (
+          candidate.size
+          <= RESIBULANDO_IMAGE_TARGET_BYTES
+        ) {
+          bitmap.close?.();
+
+          return candidate;
+        }
+      }
+    }
+
+
+    bitmap.close?.();
+
+
+    /*
+      Se 100 KB exigir perda excessiva,
+      aceita até 150 KB para manter texto/diagramas nítidos.
+    */
+    if (bestReadable) {
+      return bestReadable;
+    }
+
+
+    return smallest
+      || sourceBlob;
+
+
+  } catch (error) {
+    console.warn(
+      "Não foi possível otimizar a imagem:",
+      error
+    );
+
+    return sourceBlob;
+  }
+}
+
+
 function canvasToWebp(
   canvas,
   quality
@@ -616,154 +869,38 @@ async function compressErrorImage(
   }
 
 
-  try {
-    const dataUrl =
-      await readImageDataUrl(
-        file
-      );
-
-
-    const source =
-      await loadImageElement(
-        dataUrl
-      );
-
-
-    const maxDimension =
-      1100;
-
-
-    const scale =
-      Math.min(
-        1,
-        maxDimension
-          / source.width,
-        maxDimension
-          / source.height
-      );
-
-
-    const width =
-      Math.max(
-        1,
-        Math.round(
-          source.width
-          * scale
-        )
-      );
-
-
-    const height =
-      Math.max(
-        1,
-        Math.round(
-          source.height
-          * scale
-        )
-      );
-
-
-    const canvas =
-      document.createElement(
-        "canvas"
-      );
-
-
-    canvas.width =
-      width;
-
-    canvas.height =
-      height;
-
-
-    const context =
-      canvas.getContext(
-        "2d",
-        {
-          alpha:
-            false
-        }
-      );
-
-
-    context.fillStyle =
-      "#ffffff";
-
-
-    context.fillRect(
-      0,
-      0,
-      width,
-      height
+  const blob =
+    await compressResibulandoImageBlob(
+      file
     );
 
 
-    context.drawImage(
-      source,
-      0,
-      0,
-      width,
-      height
-    );
-
-
-    let blob =
-      await canvasToWebp(
-        canvas,
-        0.68
-      );
-
-
-    if (
-      blob.size
-      > 420 * 1024
-    ) {
-      blob =
-        await canvasToWebp(
-          canvas,
-          0.55
-        );
-    }
-
-
-    if (
-      blob.size
-      >= file.size
-    ) {
-      return file;
-    }
-
-
-    return new File(
-      [
-        blob
-      ],
-
-      `${safeFileBase(
-        file.name
-      )}.webp`,
-
-      {
-        type:
-          "image/webp",
-
-        lastModified:
-          Date.now()
-      }
-    );
-
-
-  } catch (error) {
-    console.warn(
-      "Compressão da imagem falhou; usando original.",
-      error
-    );
-
-
+  if (
+    blob === file
+  ) {
     return file;
   }
-}
 
+
+  return new File(
+    [
+      blob
+    ],
+
+    `${safeFileBase(
+      file.name
+    )}.webp`,
+
+    {
+      type:
+        blob.type
+        || "image/webp",
+
+      lastModified:
+        Date.now()
+    }
+  );
+}
 
 
 function formatErrorFileSize(

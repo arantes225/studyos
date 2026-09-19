@@ -1626,6 +1626,169 @@
       margin-left: 0;
     }
   }
+
+  /* ========================================================
+     FASE 13.1 — FILTRO COMPACTO
+     ======================================================== */
+
+  .theme-library-controls-compact {
+    grid-template-columns:
+      minmax(0, 1fr)
+      auto
+      !important;
+
+    align-items: center;
+  }
+
+  .theme-filter-menu-wrap {
+    position: relative;
+  }
+
+  .theme-filter-menu-toggle {
+    width: 40px;
+    height: 40px;
+
+    display: grid;
+    place-items: center;
+
+    padding: 0;
+
+    border: 1px solid var(--border);
+    border-radius: 10px;
+
+    background: var(--surface);
+    color: var(--text);
+
+    cursor: pointer;
+  }
+
+  .theme-filter-menu-toggle:hover,
+  .theme-filter-menu-toggle.has-active-filter {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .theme-filter-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 60;
+
+    width: min(350px, 90vw);
+
+    display: grid;
+    gap: 12px;
+
+    padding: 14px;
+
+    border: 1px solid var(--border);
+    border-radius: 14px;
+
+    background: var(--surface);
+
+    box-shadow:
+      0 20px 60px
+      rgba(15, 23, 42, .18);
+  }
+
+  .theme-filter-menu[hidden] {
+    display: none !important;
+  }
+
+  .theme-filter-menu-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .theme-filter-menu-head > div {
+    display: grid;
+    gap: 3px;
+  }
+
+  .theme-filter-menu-head strong {
+    font-size: 13px;
+  }
+
+  .theme-filter-menu-head small {
+    color: var(--muted);
+    font-size: 9px;
+  }
+
+  .theme-filter-menu-close {
+    width: 30px;
+    height: 30px;
+
+    display: grid;
+    place-items: center;
+
+    padding: 0;
+
+    border: 0;
+    border-radius: 8px;
+
+    background: transparent;
+    color: var(--muted);
+
+    font-size: 20px;
+
+    cursor: pointer;
+  }
+
+  .theme-filter-menu-close:hover {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+
+  .theme-filter-field {
+    display: grid;
+    gap: 5px;
+  }
+
+  .theme-filter-field > span {
+    color: var(--muted);
+
+    font-size: 9px;
+    font-weight: 850;
+
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  .theme-filter-field select,
+  .theme-filter-field input {
+    width: 100%;
+    min-height: 38px;
+  }
+
+  .theme-filter-date-grid {
+    display: grid;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .theme-filter-menu-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  @media (max-width: 560px) {
+    .theme-library-controls-compact {
+      grid-template-columns:
+        minmax(0, 1fr)
+        auto
+        !important;
+    }
+
+    .theme-filter-date-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
 </style>
   <link rel="stylesheet" href="resibulando-brand-v5.css?v=5">
   <script defer src="resibulando-brand-v5.js?v=5"></script>
@@ -2086,7 +2249,8 @@
               </div>
             </div>
 
-            <div class="theme-library-controls">
+            <div class="theme-library-controls theme-library-controls-compact">
+
               <input
                 id="theme-search"
                 type="search"
@@ -2094,32 +2258,159 @@
                 autocomplete="off"
               >
 
-              <select id="theme-area-filter" data-resibulando-area-select data-blank-label="Todas as áreas">
-                <option value="">Todas as áreas</option>
-              </select>
 
-              <select
-                id="theme-completion-filter"
-                aria-label="Filtrar por conclusão"
-              >
-                <option value="all">Feitos e não feitos</option>
-                <option value="pending">Não feitos</option>
-                <option value="completed">Feitos</option>
-              </select>
+              <div class="theme-filter-menu-wrap">
 
-              <label class="theme-date-filter">
-                <span>De</span>
-                <input id="theme-date-from" type="date" aria-label="Data inicial">
-              </label>
+                <button
+                  id="theme-filter-menu-toggle"
+                  class="theme-filter-menu-toggle"
+                  type="button"
+                  aria-label="Abrir filtros"
+                  aria-haspopup="dialog"
+                  aria-expanded="false"
+                  title="Filtros"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M4 6h16M7 12h10M10 18h4"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </button>
 
-              <label class="theme-date-filter">
-                <span>Até</span>
-                <input id="theme-date-to" type="date" aria-label="Data final">
-              </label>
 
-              <button id="theme-clear-date-filter" class="button secondary theme-clear-filter" type="button">
-                Limpar datas
-              </button>
+                <div
+                  id="theme-filter-menu"
+                  class="theme-filter-menu"
+                  hidden
+                >
+
+                  <div class="theme-filter-menu-head">
+
+                    <div>
+                      <strong>Filtros</strong>
+
+                      <small>
+                        Área, status e período
+                      </small>
+                    </div>
+
+
+                    <button
+                      id="theme-filter-menu-close"
+                      class="theme-filter-menu-close"
+                      type="button"
+                      aria-label="Fechar filtros"
+                    >
+                      ×
+                    </button>
+
+                  </div>
+
+
+                  <label class="theme-filter-field">
+
+                    <span>Área</span>
+
+                    <select
+                      id="theme-area-filter"
+                      data-resibulando-area-select
+                      data-blank-label="Todas as áreas"
+                    >
+                      <option value="">
+                        Todas as áreas
+                      </option>
+                    </select>
+
+                  </label>
+
+
+                  <label class="theme-filter-field">
+
+                    <span>Status</span>
+
+                    <select
+                      id="theme-completion-filter"
+                      aria-label="Filtrar por conclusão"
+                    >
+                      <option value="all">
+                        Feitos e não feitos
+                      </option>
+
+                      <option value="pending">
+                        Não feitos
+                      </option>
+
+                      <option value="completed">
+                        Feitos
+                      </option>
+                    </select>
+
+                  </label>
+
+
+                  <div class="theme-filter-date-grid">
+
+                    <label class="theme-filter-field">
+
+                      <span>De</span>
+
+                      <input
+                        id="theme-date-from"
+                        type="date"
+                        aria-label="Data inicial"
+                      >
+
+                    </label>
+
+
+                    <label class="theme-filter-field">
+
+                      <span>Até</span>
+
+                      <input
+                        id="theme-date-to"
+                        type="date"
+                        aria-label="Data final"
+                      >
+
+                    </label>
+
+                  </div>
+
+
+                  <div class="theme-filter-menu-actions">
+
+                    <button
+                      id="theme-clear-date-filter"
+                      class="button secondary"
+                      type="button"
+                    >
+                      Limpar
+                    </button>
+
+                    <button
+                      id="theme-filter-apply"
+                      class="button primary"
+                      type="button"
+                    >
+                      Aplicar
+                    </button>
+
+                  </div>
+
+                </div>
+
+              </div>
+
             </div>
 
             <div class="theme-library-meta">
@@ -2253,6 +2544,6 @@
   <script src="app.js?v=12.1"></script>
   <script src="study-mode.js?v=12.1"></script>
   <script src="cronograma-base-data.js?v=12.6"></script>
-  <script src="cronograma.js?v=12.9"></script>
+  <script src="cronograma.js?v=13.1"></script>
 </body>
 </html>
