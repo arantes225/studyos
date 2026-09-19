@@ -8467,6 +8467,18 @@ async function recognizeAnswerGridByNumber(
       )
     );
 
+  /*
+    CAMINHO PRINCIPAL:
+    não depende de OCR dos números.
+
+    1. encontra bolinhas/quadradinhos;
+    2. ordena da esquerda para a direita e de cima para baixo;
+    3. aplica a sequência das questões;
+    4. usa apenas a COR para definir acerto/erro/anulada.
+
+    O OCR passa a ser apenas um fallback quando nenhuma forma
+    é encontrada.
+  */
   const orderedShapes =
     sortAnswerShapesAsGrid(
       detectAnswerShapesByGeometry(
@@ -8474,15 +8486,96 @@ async function recognizeAnswerGridByNumber(
       )
     );
 
+  if (
+    orderedShapes.length
+  ) {
+    const remaining =
+      Math.max(
+        0,
+        expectedItems.length
+        - Math.max(
+            0,
+            Number(
+              sequenceStartIndex
+              || 0
+            )
+          )
+      );
+
+    /*
+      Se por algum motivo apareceram mais formas que questões
+      restantes, não inventamos uma sequência. Nesse caso,
+      caímos no OCR global abaixo.
+    */
+    if (
+      orderedShapes.length
+      <= remaining
+    ) {
+      const mapped =
+        buildAnswerDetectionsFromShapes(
+          orderedShapes,
+          expectedItems,
+          sequenceStartIndex
+        );
+
+      if (
+        mapped.detections.length
+        === orderedShapes.length
+      ) {
+        setAnswerImportStatus(
+          `${orderedShapes.length} bolinha(s)/quadradinho(s) reconhecido(s). Aplicando as cores pela ordem visual...`
+        );
+
+        return {
+          detections:
+            mapped.detections.map(
+              item => ({
+                ...item,
+
+                /*
+                  Marca explicitamente que a numeração veio
+                  da posição da forma, não do OCR.
+                */
+                inferred_from_order:
+                  true,
+
+                ocr_confidence:
+                  0
+              })
+            ),
+
+          /*
+            Para o restante da interface, cada forma mapeada
+            equivale a uma questão localizada.
+          */
+          numberCount:
+            mapped.detections.length,
+
+          shapeCount:
+            orderedShapes.length,
+
+          inferredFromOrder:
+            true,
+
+          nextSequenceIndex:
+            mapped.nextSequenceIndex
+        };
+      }
+    }
+  }
+
+
   /*
-    Se encontrou formas, elas passam a ser a fonte principal.
-    OCR global NÃO é necessário para montar a sequência.
+    FALLBACK 2:
+    Se encontramos formas, mas a sequência não pôde ser fechada,
+    tenta ler somente alguns números dentro delas para criar
+    âncoras. Não é mais o caminho normal.
   */
   if (
     orderedShapes.length
   ) {
     setAnswerImportStatus(
-      `${orderedShapes.length} forma(s) encontrada(s). Tentando ler os números dentro delas...`
+      `Formas encontradas, mas preciso confirmar a sequência — print ${fileIndex + 1} de ${fileCount}...`
     );
 
     const worker =
@@ -8492,17 +8585,33 @@ async function recognizeAnswerGridByNumber(
       worker
     ) {
       try {
+        /*
+          Lê no máximo três âncoras:
+          primeira, meio e última forma.
+          Isso é muito mais rápido e robusto que OCR em todas.
+        */
+        const anchorIndexes =
+          Array.from(
+            new Set([
+              0,
+              Math.floor(
+                orderedShapes.length / 2
+              ),
+              orderedShapes.length - 1
+            ])
+          )
+            .filter(
+              index =>
+                index >= 0
+                && index < orderedShapes.length
+            );
+
         for (
-          let index = 0;
-          index < orderedShapes.length;
-          index += 1
+          const index
+          of anchorIndexes
         ) {
           const shape =
             orderedShapes[index];
-
-          setAnswerImportStatus(
-            `Lendo número ${index + 1}/${orderedShapes.length} — print ${fileIndex + 1} de ${fileCount}...`
-          );
 
           const local =
             await readNumberInsideAnswerShape(
@@ -8531,54 +8640,48 @@ async function recognizeAnswerGridByNumber(
       }
     }
 
-    const mapped =
+    const anchored =
       buildAnswerDetectionsFromShapes(
         orderedShapes,
         expectedItems,
         sequenceStartIndex
       );
 
-    const locallyRead =
-      orderedShapes.filter(
-        shape =>
-          Boolean(
-            shape.ocr_number
-          )
-      ).length;
+    if (
+      anchored.detections.length
+      === orderedShapes.length
+    ) {
+      setAnswerImportStatus(
+        `Sequência confirmada pelas bolinhas — print ${fileIndex + 1} de ${fileCount}...`
+      );
 
-    setAnswerImportStatus(
-      locallyRead
-        ? `${orderedShapes.length} forma(s) detectada(s); ${locallyRead} número(s) lido(s). Completando a sequência pela posição...`
-        : `${orderedShapes.length} forma(s) detectada(s). Números ilegíveis: sequência deduzida pela ordem visual...`
-    );
+      return {
+        detections:
+          anchored.detections,
 
-    return {
-      detections:
-        mapped.detections,
+        numberCount:
+          anchored.detections.length,
 
-      numberCount:
-        locallyRead,
+        shapeCount:
+          orderedShapes.length,
 
-      shapeCount:
-        orderedShapes.length,
+        inferredFromOrder:
+          true,
 
-      inferredFromOrder:
-        mapped.inferred
-        || locallyRead
-          < orderedShapes.length,
-
-      nextSequenceIndex:
-        mapped.nextSequenceIndex
-    };
+        nextSequenceIndex:
+          anchored.nextSequenceIndex
+      };
+    }
   }
 
 
   /*
-    ÚLTIMO fallback: se nem as formas foram detectadas,
-    tenta OCR global apenas dos números e usa a cor ao redor.
+    ÚLTIMO fallback:
+    só chega aqui se NÃO foi possível resolver pelas formas.
+    Tenta OCR global apenas dos números e analisa a cor ao redor.
   */
   setAnswerImportStatus(
-    `Não encontrei formas. Tentando OCR global dos números — print ${fileIndex + 1} de ${fileCount}...`
+    `Não consegui fechar a grade por formas. Tentando OCR global — print ${fileIndex + 1} de ${fileCount}...`
   );
 
   const originalResult =
@@ -8599,7 +8702,8 @@ async function recognizeAnswerGridByNumber(
     < Math.max(
         2,
         Math.ceil(
-          expectedNumbers.size * 0.60
+          expectedNumbers.size
+          * 0.50
         )
       )
   ) {
@@ -8669,7 +8773,7 @@ async function recognizeAnswerGridByNumber(
       detectedNumbers.length,
 
     shapeCount:
-      0,
+      orderedShapes.length,
 
     inferredFromOrder:
       false,
