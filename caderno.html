@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Caderno · Resibulando</title>
+
+  <link
+    rel="icon"
+    type="image/png"
+    href="favicon.png?v=resibulando2"
+  >
+
+  <link
+    rel="stylesheet"
+    href="style.css?v=13.3"
+  >
+
+  <link
+    rel="stylesheet"
+    href="caderno.css?v=13.3"
+  >
+
+  <link
+    rel="stylesheet"
+    href="resibulando-brand-v5.css?v=5"
+  >
+
+  <script
+    defer
+    src="resibulando-brand-v5.js?v=5"
+  ></script>
+</head>
+
+
+<body data-page="caderno">
+
+  <div class="app-shell">
+
+    <aside
+      id="sidebar"
+      class="sidebar"
+    ></aside>
+
+    <div
+      id="sidebar-backdrop"
+      class="sidebar-backdrop"
+    ></div>
+
+
+    <main class="main">
+
+      <div class="page">
+
+        <header class="topbar">
+
+          <button
+            id="menu-open"
+            class="menu-open"
+            type="button"
+            aria-label="Abrir menu"
+          >
+            ☰
+          </button>
+
+          <div class="page-heading">
+
+            <span
+              class="eyebrow"
+              data-page-eyebrow
+            ></span>
+
+            <h1 data-page-title></h1>
+
+          </div>
+
+        </header>
+
+
+        <section class="notebook-intro">
+
+          <div>
+
+            <span class="notebook-kicker">
+              Resumo por aula
+            </span>
+
+            <h2>
+              Seu caderno acompanha os temas do Cronograma
+            </h2>
+
+            <p>
+              Cada tema possui uma página própria. Selecione uma aula,
+              preencha o resumo e o conteúdo fica salvo automaticamente.
+            </p>
+
+          </div>
+
+
+          <div class="notebook-intro-stat">
+
+            <strong id="notebook-note-count">
+              —
+            </strong>
+
+            <span>
+              temas com anotações
+            </span>
+
+          </div>
+
+        </section>
+
+
+        <section class="notebook-layout">
+
+          <!-- ==============================================
+               LISTA DE TEMAS
+               ============================================== -->
+
+          <aside class="panel notebook-library">
+
+            <div class="notebook-library-head">
+
+              <div>
+                <h2>Temas das aulas</h2>
+
+                <p>
+                  Feitos e não feitos aparecem no mesmo caderno.
+                </p>
+              </div>
+
+            </div>
+
+
+            <div class="notebook-library-controls">
+
+              <input
+                id="notebook-topic-search"
+                type="search"
+                placeholder="Buscar tema..."
+                autocomplete="off"
+              >
+
+
+              <select
+                id="notebook-topic-status"
+                aria-label="Filtrar temas"
+              >
+                <option value="all">
+                  Todos
+                </option>
+
+                <option value="pending">
+                  Não feitos
+                </option>
+
+                <option value="completed">
+                  Feitos
+                </option>
+
+                <option value="with-notes">
+                  Com anotações
+                </option>
+              </select>
+
+            </div>
+
+
+            <div
+              id="notebook-topic-list"
+              class="notebook-topic-list"
+            >
+
+              <div class="notebook-loading">
+                Carregando temas...
+              </div>
+
+            </div>
+
+          </aside>
+
+
+          <!-- ==============================================
+               EDITOR
+               ============================================== -->
+
+          <section class="panel notebook-editor">
+
+            <div
+              id="notebook-empty"
+              class="notebook-empty"
+            >
+
+              <div class="notebook-empty-icon">
+                ▤
+              </div>
+
+              <strong>
+                Selecione um tema
+              </strong>
+
+              <p>
+                Escolha uma aula ao lado para abrir o caderno daquele tema.
+              </p>
+
+            </div>
+
+
+            <div
+              id="notebook-content"
+              class="notebook-content"
+              hidden
+            >
+
+              <header class="notebook-editor-head">
+
+                <div>
+
+                  <div class="notebook-editor-meta">
+
+                    <span
+                      id="notebook-area"
+                      class="notebook-chip"
+                    ></span>
+
+                    <span
+                      id="notebook-materia"
+                      class="notebook-chip"
+                      hidden
+                    ></span>
+
+                    <span
+                      id="notebook-topic-state"
+                      class="notebook-chip subtle"
+                    ></span>
+
+                  </div>
+
+
+                  <h2 id="notebook-topic-title">
+                    —
+                  </h2>
+
+                  <p id="notebook-topic-date">
+                    —
+                  </p>
+
+                </div>
+
+
+                <div class="notebook-save-shell">
+
+                  <span
+                    id="notebook-save-status"
+                    class="notebook-save-status"
+                    aria-live="polite"
+                  >
+                    Salvo
+                  </span>
+
+                  <button
+                    id="notebook-save"
+                    class="button primary"
+                    type="button"
+                  >
+                    Salvar
+                  </button>
+
+                </div>
+
+              </header>
+
+
+              <div class="notebook-sections">
+
+                <label class="notebook-section">
+
+                  <span class="notebook-section-number">
+                    01
+                  </span>
+
+                  <div class="notebook-section-title">
+
+                    <strong>
+                      Doença
+                    </strong>
+
+                    <small>
+                      Conceito, definição, fisiopatologia e classificação.
+                    </small>
+
+                  </div>
+
+                  <textarea
+                    id="note-disease"
+                    rows="5"
+                    data-note-field="disease"
+                    placeholder="Ex.: definição, mecanismo da doença, classificações importantes..."
+                  ></textarea>
+
+                </label>
+
+
+                <label class="notebook-section">
+
+                  <span class="notebook-section-number">
+                    02
+                  </span>
+
+                  <div class="notebook-section-title">
+
+                    <strong>
+                      Epidemiologia
+                    </strong>
+
+                    <small>
+                      Frequência, população, fatores de risco e contexto.
+                    </small>
+
+                  </div>
+
+                  <textarea
+                    id="note-epidemiology"
+                    rows="5"
+                    data-note-field="epidemiology"
+                    placeholder="Ex.: incidência, prevalência, faixa etária, fatores de risco..."
+                  ></textarea>
+
+                </label>
+
+
+                <label class="notebook-section">
+
+                  <span class="notebook-section-number">
+                    03
+                  </span>
+
+                  <div class="notebook-section-title">
+
+                    <strong>
+                      Quadro clínico
+                    </strong>
+
+                    <small>
+                      Sinais, sintomas, apresentações e achados importantes.
+                    </small>
+
+                  </div>
+
+                  <textarea
+                    id="note-clinical-picture"
+                    rows="6"
+                    data-note-field="clinical_picture"
+                    placeholder="Ex.: apresentação típica, sinais de alarme, achados de exame físico..."
+                  ></textarea>
+
+                </label>
+
+
+                <label class="notebook-section">
+
+                  <span class="notebook-section-number">
+                    04
+                  </span>
+
+                  <div class="notebook-section-title">
+
+                    <strong>
+                      Diagnóstico
+                    </strong>
+
+                    <small>
+                      Critérios, exames, diferenciais e investigação.
+                    </small>
+
+                  </div>
+
+                  <textarea
+                    id="note-diagnosis"
+                    rows="6"
+                    data-note-field="diagnosis"
+                    placeholder="Ex.: critérios diagnósticos, exames principais, diagnósticos diferenciais..."
+                  ></textarea>
+
+                </label>
+
+
+                <label class="notebook-section">
+
+                  <span class="notebook-section-number">
+                    05
+                  </span>
+
+                  <div class="notebook-section-title">
+
+                    <strong>
+                      Tratamento
+                    </strong>
+
+                    <small>
+                      Conduta inicial, tratamento definitivo e seguimento.
+                    </small>
+
+                  </div>
+
+                  <textarea
+                    id="note-treatment"
+                    rows="7"
+                    data-note-field="treatment"
+                    placeholder="Ex.: primeira linha, alternativas, doses importantes, indicações de procedimento..."
+                  ></textarea>
+
+                </label>
+
+
+                <label class="notebook-section">
+
+                  <span class="notebook-section-number">
+                    06
+                  </span>
+
+                  <div class="notebook-section-title">
+
+                    <strong>
+                      Profilaxia
+                    </strong>
+
+                    <small>
+                      Prevenção, rastreio e medidas de redução de risco.
+                    </small>
+
+                  </div>
+
+                  <textarea
+                    id="note-prophylaxis"
+                    rows="5"
+                    data-note-field="prophylaxis"
+                    placeholder="Ex.: vacinação, rastreio, prevenção primária/secundária..."
+                  ></textarea>
+
+                </label>
+
+
+                <label class="notebook-section observations">
+
+                  <span class="notebook-section-number">
+                    07
+                  </span>
+
+                  <div class="notebook-section-title">
+
+                    <strong>
+                      Observações
+                    </strong>
+
+                    <small>
+                      Pegadinhas, pontos de prova, exceções e lembretes.
+                    </small>
+
+                  </div>
+
+                  <textarea
+                    id="note-observations"
+                    rows="7"
+                    data-note-field="observations"
+                    placeholder="Ex.: ponto que costuma cair em prova, exceções, macetes..."
+                  ></textarea>
+
+                </label>
+
+              </div>
+
+
+              <footer class="notebook-editor-footer">
+
+                <span>
+                  As alterações são salvas automaticamente após você parar de digitar.
+                </span>
+
+                <button
+                  id="notebook-back-top"
+                  class="button secondary"
+                  type="button"
+                >
+                  Voltar ao topo
+                </button>
+
+              </footer>
+
+            </div>
+
+          </section>
+
+        </section>
+
+      </div>
+
+    </main>
+
+  </div>
+
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
+
+  <script src="supabase.js"></script>
+  <script src="app.js?v=13.3"></script>
+  <script src="study-mode.js?v=12.1"></script>
+  <script src="caderno.js?v=13.3"></script>
+
+</body>
+
+</html>

@@ -5123,6 +5123,14 @@ function renderThemeLibrary() {
 
           <div class="theme-library-actions">
 
+            <button
+              class="theme-library-action notebook-link"
+              type="button"
+              data-library-notebook="${escapeScheduleHtml(topic.id)}"
+            >
+              Caderno
+            </button>
+
             ${
               isCompleted
                 ? `
@@ -5206,6 +5214,29 @@ function renderThemeLibrary() {
 
 
   updateThemeBulkToolbar();
+
+
+  document
+    .querySelectorAll(
+      "[data-library-notebook]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            const topicId =
+              button.dataset
+                .libraryNotebook;
+
+            window.location.href =
+              `caderno.html?topic_id=${encodeURIComponent(
+                topicId
+              )}`;
+          }
+        );
+      }
+    );
 
 
   document
