@@ -1,78 +1,65 @@
 RESIBULANDO — FASE 13.3
-CADERNO VINCULADO AOS TEMAS DAS AULAS
+CADERNO DIGITAL TIPO DOCUMENTO
 
-IMPLEMENTADO
+O QUE FOI CRIADO
 
-1. NOVA PÁGINA
-caderno.html
+1. NOVA PÁGINA: caderno.html
+Editor em formato de folha/documento, sem cartões para cada parágrafo.
+O conteúdo fica corrido como em um Google Docs.
 
-Ela aparece dentro de:
-Estudar > Caderno
+2. CADA AULA/TEMA TEM SEU PRÓPRIO CADERNO
+Na lateral ficam os tópicos do Cronograma, inclusive aulas concluídas.
+Ao escolher uma aula, abre o documento correspondente.
 
-2. VÍNCULO COM O CRONOGRAMA
-O Caderno carrega automaticamente todos os temas existentes em study_topics.
+3. FORMATAÇÃO
+- Texto normal
+- Título 1
+- Título 2
+- Subtítulo
+- Negrito
+- Emojis
+- Post-it amarelo de alerta
 
-Cada aula tem um caderno próprio.
+O título da aula já aparece grande e em negrito no topo do documento.
+Dentro das anotações você pode criar outros títulos/subtítulos e manter o texto corrido.
 
-Na Lista de temas do Cronograma também foi adicionado o botão:
-Caderno
+4. AUTOSAVE
+O caderno salva automaticamente cerca de 650 ms depois que você para de digitar.
+Também existe botão Salvar.
 
-Ao clicar:
-caderno.html?topic_id=<id da aula>
+5. AMBIENTAÇÃO
+Ao dar play/iniciar uma AULA pelo Cronograma, na Ambientação aparece:
 
-abre diretamente o resumo daquele tema.
+[Abrir caderno]
 
-3. ESTRUTURA BÁSICA DE CADA RESUMO
-- Doença
-- Epidemiologia
-- Quadro clínico
-- Diagnóstico
-- Tratamento
-- Profilaxia
-- Observações
+O botão abre em nova aba o caderno já selecionado exatamente na aula atual,
+sem interromper o cronômetro/Pomodoro da Ambientação.
 
-4. SALVAMENTO
-- salva automaticamente após aproximadamente 0,9 s sem digitação;
-- possui também botão Salvar;
-- cada usuário só acessa o próprio caderno;
-- uma aula possui somente um caderno por usuário.
-
-5. LISTA DE TEMAS
-Filtros:
-- Todos
-- Não feitos
-- Feitos
-- Com anotações
-
-Também existe busca por nome do tema, área ou matéria.
-
-Temas concluídos continuam disponíveis no Caderno.
+6. MENU LATERAL
+Adicionado Caderno dentro de Estudar.
 
 INSTALAÇÃO
 
-1. Rode SOMENTE:
-fase13_3_caderno.sql
+1. Rode SOMENTE este SQL uma vez no Supabase:
+   fase13_3_caderno_digital.sql
 
-uma vez no Supabase SQL Editor.
-
-2. Copie para a raiz:
-- caderno.html
-- caderno.css
-- caderno.js
-- app.js
-- cronograma.html
-- cronograma.js
-- cronograma-base-data.js
+2. Adicione/substitua:
+   caderno.html
+   caderno.js
+   caderno.css
+   ambientacao.html
+   ambientacao.js
+   ambientacao.css
+   app.js
 
 3. Publique:
 
 git add -A
-git commit -m "Adiciona caderno por tema"
+git commit -m "Adiciona caderno digital por aula"
 git pull --rebase origin main
 git push origin main
 
-4. Depois:
-Ctrl + Shift + R
+4. Depois faça Ctrl + Shift + R.
 
 IMPORTANTE
-Não rode SQL mestre/reset.
+Não rode SQL mestre. Use apenas fase13_3_caderno_digital.sql.

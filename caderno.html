@@ -1,521 +1,168 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Caderno · Resibulando</title>
-
-  <link
-    rel="icon"
-    type="image/png"
-    href="favicon.png?v=resibulando2"
-  >
-
-  <link
-    rel="stylesheet"
-    href="style.css?v=13.3"
-  >
-
-  <link
-    rel="stylesheet"
-    href="caderno.css?v=13.3"
-  >
-
-  <link
-    rel="stylesheet"
-    href="resibulando-brand-v5.css?v=5"
-  >
-
-  <script
-    defer
-    src="resibulando-brand-v5.js?v=5"
-  ></script>
+  <link rel="icon" type="image/png" href="favicon.png?v=resibulando2">
+  <link rel="stylesheet" href="style.css?v=12.1">
+  <link rel="stylesheet" href="caderno.css?v=13.3">
+  <link rel="stylesheet" href="resibulando-brand-v5.css?v=5">
+  <script defer src="resibulando-brand-v5.js?v=5"></script>
 </head>
-
-
 <body data-page="caderno">
-
   <div class="app-shell">
+    <aside id="sidebar" class="sidebar"></aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
 
-    <aside
-      id="sidebar"
-      class="sidebar"
-    ></aside>
+    <main class="main notebook-main-shell">
+      <div class="page notebook-page">
 
-    <div
-      id="sidebar-backdrop"
-      class="sidebar-backdrop"
-    ></div>
-
-
-    <main class="main">
-
-      <div class="page">
-
-        <header class="topbar">
-
-          <button
-            id="menu-open"
-            class="menu-open"
-            type="button"
-            aria-label="Abrir menu"
-          >
-            ☰
-          </button>
+        <header class="topbar notebook-topbar">
+          <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
 
           <div class="page-heading">
-
-            <span
-              class="eyebrow"
-              data-page-eyebrow
-            ></span>
-
+            <span class="eyebrow" data-page-eyebrow></span>
             <h1 data-page-title></h1>
-
           </div>
 
+          <div class="notebook-save-wrap">
+            <span id="notebook-save-status" class="notebook-save-status">Selecione uma aula</span>
+          </div>
         </header>
 
+        <section class="notebook-workspace">
 
-        <section class="notebook-intro">
-
-          <div>
-
-            <span class="notebook-kicker">
-              Resumo por aula
-            </span>
-
-            <h2>
-              Seu caderno acompanha os temas do Cronograma
-            </h2>
-
-            <p>
-              Cada tema possui uma página própria. Selecione uma aula,
-              preencha o resumo e o conteúdo fica salvo automaticamente.
-            </p>
-
-          </div>
-
-
-          <div class="notebook-intro-stat">
-
-            <strong id="notebook-note-count">
-              —
-            </strong>
-
-            <span>
-              temas com anotações
-            </span>
-
-          </div>
-
-        </section>
-
-
-        <section class="notebook-layout">
-
-          <!-- ==============================================
-               LISTA DE TEMAS
-               ============================================== -->
-
-          <aside class="panel notebook-library">
-
-            <div class="notebook-library-head">
-
+          <aside class="notebook-topic-panel">
+            <div class="notebook-topic-head">
               <div>
-                <h2>Temas das aulas</h2>
-
-                <p>
-                  Feitos e não feitos aparecem no mesmo caderno.
-                </p>
+                <span class="badge accent">Aulas</span>
+                <h2>Tópicos</h2>
               </div>
 
+              <span id="notebook-topic-count" class="notebook-topic-count">0</span>
             </div>
 
-
-            <div class="notebook-library-controls">
-
+            <label class="notebook-search">
+              <span class="sr-only">Pesquisar tópicos</span>
               <input
                 id="notebook-topic-search"
                 type="search"
-                placeholder="Buscar tema..."
+                placeholder="Buscar aula, matéria ou área..."
                 autocomplete="off"
               >
+            </label>
 
-
-              <select
-                id="notebook-topic-status"
-                aria-label="Filtrar temas"
-              >
-                <option value="all">
-                  Todos
-                </option>
-
-                <option value="pending">
-                  Não feitos
-                </option>
-
-                <option value="completed">
-                  Feitos
-                </option>
-
-                <option value="with-notes">
-                  Com anotações
-                </option>
-              </select>
-
+            <div id="notebook-topic-list" class="notebook-topic-list">
+              <div class="notebook-empty-small">Carregando tópicos...</div>
             </div>
-
-
-            <div
-              id="notebook-topic-list"
-              class="notebook-topic-list"
-            >
-
-              <div class="notebook-loading">
-                Carregando temas...
-              </div>
-
-            </div>
-
           </aside>
 
-
-          <!-- ==============================================
-               EDITOR
-               ============================================== -->
-
-          <section class="panel notebook-editor">
-
-            <div
-              id="notebook-empty"
-              class="notebook-empty"
-            >
-
-              <div class="notebook-empty-icon">
-                ▤
-              </div>
-
-              <strong>
-                Selecione um tema
-              </strong>
-
-              <p>
-                Escolha uma aula ao lado para abrir o caderno daquele tema.
-              </p>
-
-            </div>
-
-
-            <div
-              id="notebook-content"
-              class="notebook-content"
-              hidden
-            >
-
-              <header class="notebook-editor-head">
-
-                <div>
-
-                  <div class="notebook-editor-meta">
-
-                    <span
-                      id="notebook-area"
-                      class="notebook-chip"
-                    ></span>
-
-                    <span
-                      id="notebook-materia"
-                      class="notebook-chip"
-                      hidden
-                    ></span>
-
-                    <span
-                      id="notebook-topic-state"
-                      class="notebook-chip subtle"
-                    ></span>
-
-                  </div>
-
-
-                  <h2 id="notebook-topic-title">
-                    —
-                  </h2>
-
-                  <p id="notebook-topic-date">
-                    —
-                  </p>
-
-                </div>
-
-
-                <div class="notebook-save-shell">
-
-                  <span
-                    id="notebook-save-status"
-                    class="notebook-save-status"
-                    aria-live="polite"
-                  >
-                    Salvo
-                  </span>
-
-                  <button
-                    id="notebook-save"
-                    class="button primary"
-                    type="button"
-                  >
-                    Salvar
-                  </button>
-
-                </div>
-
-              </header>
-
-
-              <div class="notebook-sections">
-
-                <label class="notebook-section">
-
-                  <span class="notebook-section-number">
-                    01
-                  </span>
-
-                  <div class="notebook-section-title">
-
-                    <strong>
-                      Doença
-                    </strong>
-
-                    <small>
-                      Conceito, definição, fisiopatologia e classificação.
-                    </small>
-
-                  </div>
-
-                  <textarea
-                    id="note-disease"
-                    rows="5"
-                    data-note-field="disease"
-                    placeholder="Ex.: definição, mecanismo da doença, classificações importantes..."
-                  ></textarea>
-
-                </label>
-
-
-                <label class="notebook-section">
-
-                  <span class="notebook-section-number">
-                    02
-                  </span>
-
-                  <div class="notebook-section-title">
-
-                    <strong>
-                      Epidemiologia
-                    </strong>
-
-                    <small>
-                      Frequência, população, fatores de risco e contexto.
-                    </small>
-
-                  </div>
-
-                  <textarea
-                    id="note-epidemiology"
-                    rows="5"
-                    data-note-field="epidemiology"
-                    placeholder="Ex.: incidência, prevalência, faixa etária, fatores de risco..."
-                  ></textarea>
-
-                </label>
-
-
-                <label class="notebook-section">
-
-                  <span class="notebook-section-number">
-                    03
-                  </span>
-
-                  <div class="notebook-section-title">
-
-                    <strong>
-                      Quadro clínico
-                    </strong>
-
-                    <small>
-                      Sinais, sintomas, apresentações e achados importantes.
-                    </small>
-
-                  </div>
-
-                  <textarea
-                    id="note-clinical-picture"
-                    rows="6"
-                    data-note-field="clinical_picture"
-                    placeholder="Ex.: apresentação típica, sinais de alarme, achados de exame físico..."
-                  ></textarea>
-
-                </label>
-
-
-                <label class="notebook-section">
-
-                  <span class="notebook-section-number">
-                    04
-                  </span>
-
-                  <div class="notebook-section-title">
-
-                    <strong>
-                      Diagnóstico
-                    </strong>
-
-                    <small>
-                      Critérios, exames, diferenciais e investigação.
-                    </small>
-
-                  </div>
-
-                  <textarea
-                    id="note-diagnosis"
-                    rows="6"
-                    data-note-field="diagnosis"
-                    placeholder="Ex.: critérios diagnósticos, exames principais, diagnósticos diferenciais..."
-                  ></textarea>
-
-                </label>
-
-
-                <label class="notebook-section">
-
-                  <span class="notebook-section-number">
-                    05
-                  </span>
-
-                  <div class="notebook-section-title">
-
-                    <strong>
-                      Tratamento
-                    </strong>
-
-                    <small>
-                      Conduta inicial, tratamento definitivo e seguimento.
-                    </small>
-
-                  </div>
-
-                  <textarea
-                    id="note-treatment"
-                    rows="7"
-                    data-note-field="treatment"
-                    placeholder="Ex.: primeira linha, alternativas, doses importantes, indicações de procedimento..."
-                  ></textarea>
-
-                </label>
-
-
-                <label class="notebook-section">
-
-                  <span class="notebook-section-number">
-                    06
-                  </span>
-
-                  <div class="notebook-section-title">
-
-                    <strong>
-                      Profilaxia
-                    </strong>
-
-                    <small>
-                      Prevenção, rastreio e medidas de redução de risco.
-                    </small>
-
-                  </div>
-
-                  <textarea
-                    id="note-prophylaxis"
-                    rows="5"
-                    data-note-field="prophylaxis"
-                    placeholder="Ex.: vacinação, rastreio, prevenção primária/secundária..."
-                  ></textarea>
-
-                </label>
-
-
-                <label class="notebook-section observations">
-
-                  <span class="notebook-section-number">
-                    07
-                  </span>
-
-                  <div class="notebook-section-title">
-
-                    <strong>
-                      Observações
-                    </strong>
-
-                    <small>
-                      Pegadinhas, pontos de prova, exceções e lembretes.
-                    </small>
-
-                  </div>
-
-                  <textarea
-                    id="note-observations"
-                    rows="7"
-                    data-note-field="observations"
-                    placeholder="Ex.: ponto que costuma cair em prova, exceções, macetes..."
-                  ></textarea>
-
-                </label>
-
-              </div>
-
-
-              <footer class="notebook-editor-footer">
-
-                <span>
-                  As alterações são salvas automaticamente após você parar de digitar.
-                </span>
-
+          <section class="notebook-editor-column">
+
+            <div id="notebook-toolbar" class="notebook-toolbar" aria-label="Ferramentas de edição">
+
+              <select id="notebook-block-style" class="notebook-style-select" aria-label="Estilo do texto" disabled>
+                <option value="p">Texto normal</option>
+                <option value="h1">Título 1</option>
+                <option value="h2">Título 2</option>
+                <option value="h3">Subtítulo</option>
+              </select>
+
+              <span class="notebook-toolbar-divider"></span>
+
+              <button
+                id="notebook-bold"
+                class="notebook-tool-button"
+                type="button"
+                title="Negrito"
+                aria-label="Negrito"
+                disabled
+              >
+                <strong>B</strong>
+              </button>
+
+              <div class="notebook-emoji-wrap">
                 <button
-                  id="notebook-back-top"
-                  class="button secondary"
+                  id="notebook-emoji-toggle"
+                  class="notebook-tool-button"
                   type="button"
+                  title="Inserir emoji"
+                  aria-label="Inserir emoji"
+                  aria-expanded="false"
+                  disabled
                 >
-                  Voltar ao topo
+                  ☺
                 </button>
 
-              </footer>
+                <div id="notebook-emoji-menu" class="notebook-emoji-menu" hidden></div>
+              </div>
 
+              <button
+                id="notebook-postit"
+                class="notebook-tool-button notebook-postit-tool"
+                type="button"
+                title="Inserir post-it de alerta"
+                aria-label="Inserir post-it de alerta"
+                disabled
+              >
+                ▣
+                <span>Post-it</span>
+              </button>
+
+              <span class="notebook-toolbar-spacer"></span>
+
+              <button
+                id="notebook-save-now"
+                class="button secondary compact-button"
+                type="button"
+                disabled
+              >
+                Salvar
+              </button>
+            </div>
+
+            <div id="notebook-empty-state" class="notebook-empty-state">
+              <div class="notebook-empty-icon">✎</div>
+              <strong>Escolha uma aula</strong>
+              <p>
+                O caderno é vinculado ao tema da aula. Se você abrir pela Ambientação,
+                a aula atual já vem selecionada.
+              </p>
+            </div>
+
+            <div id="notebook-document-wrap" class="notebook-document-wrap" hidden>
+              <article class="notebook-paper">
+
+                <header class="notebook-document-head">
+                  <div id="notebook-document-breadcrumb" class="notebook-document-breadcrumb"></div>
+                  <h1 id="notebook-document-title">Título da aula</h1>
+                  <p id="notebook-document-meta"></p>
+                </header>
+
+                <div
+                  id="notebook-editor"
+                  class="notebook-editor"
+                  contenteditable="true"
+                  role="textbox"
+                  aria-multiline="true"
+                  spellcheck="true"
+                  data-placeholder="Comece suas anotações aqui..."
+                ></div>
+
+              </article>
             </div>
 
           </section>
 
         </section>
-
       </div>
-
     </main>
-
   </div>
 
-
-  <script
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-  ></script>
-
-  <script src="supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
   <script src="app.js?v=13.3"></script>
-  <script src="study-mode.js?v=12.1"></script>
   <script src="caderno.js?v=13.3"></script>
-
 </body>
-
 </html>

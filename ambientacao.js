@@ -2854,6 +2854,51 @@ function renderAgendaLesson(
     );
 
 
+  const notebookButton =
+    document.getElementById(
+      "agenda-lesson-notebook"
+    );
+
+
+  if (notebookButton) {
+    if (
+      isUuid(
+        itemId
+      )
+    ) {
+      const notebookUrl =
+        new URL(
+          "caderno.html",
+          window.location.href
+        );
+
+
+      notebookUrl.searchParams.set(
+        "topic_id",
+        itemId
+      );
+
+
+      notebookUrl.searchParams.set(
+        "from",
+        "ambientacao"
+      );
+
+
+      notebookButton.href =
+        notebookUrl.toString();
+
+
+      notebookButton.hidden =
+        false;
+
+    } else {
+      notebookButton.hidden =
+        true;
+    }
+  }
+
+
   if (button) {
     button.disabled =
       !isUuid(
