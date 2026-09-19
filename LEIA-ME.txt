@@ -1,98 +1,49 @@
-RESIBULANDO V19 — REPARO COMPLETO
+RESIBULANDO V20 — BASE ESTÁVEL
 
-O QUE ESTE PACOTE CORRIGE
-=========================
+A integração do ChatGPT com o GitHub está retornando 403 para operações de escrita.
+As tentativas não alteraram o repositório.
 
-A versão anterior substituiu dashboard.js e ambientacao.js por arquivos
-complementares. Isso removeu a lógica original da Agenda.
+Este pacote parte diretamente do último estado estável em que a Agenda funcionava:
 
-A V19 recupera os CINCO arquivos completos da última versão estável:
-
-- ambientacao.html
-- ambientacao.css
-- ambientacao.js
-- dashboard.html
-- dashboard.js
-
-Base:
 c00b6f7deb56f6472b18b538268944a122f2a487
 
-Depois aplica somente as mudanças novas.
+ALTERAÇÕES
+==========
 
 DASHBOARD
-=========
-
-- Agenda completa restaurada.
-- Semana e mês restaurados.
-- Navegação anterior / próximo / hoje restaurada.
-- Arrastar e mover atividades preservado.
-- Botões Iniciar preservados.
-- "Maior dificuldade" removido.
-- Revisão passiva / CCQ fica FIXA no Dashboard.
-- CCQs trocam automaticamente a cada 30 segundos.
-- Texto do CCQ CENTRALIZADO.
-- Texto em 14,5 px, aproximadamente 10% maior que os 13 px anteriores.
-- Ofensiva com chama progressiva.
-- A chama cresce e muda de cor conforme os dias.
+- restaura a Agenda completa;
+- preserva Semana/Mês, anterior/próximo/hoje, mover atividades e botões Iniciar;
+- substitui "Maior dificuldade" por Revisão passiva / CCQ;
+- CCQ troca a cada 30 segundos;
+- texto do CCQ centralizado e com 14,5 px.
 
 AMBIENTAÇÃO
-===========
-
-- CCQ removido do HTML.
-- Lógica de consulta e rotação do CCQ removida do JavaScript.
-- CCQ existe somente no Dashboard.
-- Cronômetro simples restaurado.
-- Pomodoro restaurado.
-- Lo-fi preservado.
-- Ao iniciar uma aula, abre o Caderno daquela aula dentro da Ambientação.
-- O Caderno incorporado não mostra sua lista lateral nem as abas.
-- O bloco da aula fica mais discreto.
-- Botão Concluir aula continua funcionando.
+- restaura cronômetro e Pomodoro da versão estável;
+- remove o antigo bloco de CCQ;
+- quando a atividade é uma aula, abre o caderno daquela aula;
+- mostra somente o editor do Caderno, sem a lista lateral e sem as abas;
+- preserva "Concluir aula";
+- deixa o bloco da aula mais discreto.
 
 COMO APLICAR
 ============
 
-Recomendado: GitHub Codespaces.
+1. Abra um GitHub Codespace do repositório arantes225/studyos.
+2. Coloque APLICAR_V20.py na raiz do projeto.
+3. Rode:
 
-1. Extraia APLICAR_V19.py na RAIZ do repositório.
+   python APLICAR_V20.py
 
-2. Rode:
+4. O script cria backup em:
 
-   python APLICAR_V19.py
+   _backup_antes_v20/
 
-3. Se aparecerem todos os ✓, rode:
+5. Se todos os itens aparecerem com ✓:
 
-   git add ambientacao.html ambientacao.css ambientacao.js dashboard.html dashboard.js
-   git commit -m "Repara agenda, CCQ e ambientacao"
+   git add dashboard.html dashboard.js ambientacao.html ambientacao.js ambientacao.css
+   git commit -m "Restaura agenda e integra CCQ e caderno"
    git push
 
-4. Depois, no navegador:
+6. No site faça Ctrl + Shift + R.
 
-   Ctrl + Shift + R
-
-BACKUP
-======
-
-Antes de alterar qualquer arquivo, o script copia os arquivos atuais para:
-
-_backup_antes_v19/
-
-VALIDAÇÃO
-=========
-
-O instalador verifica:
-- agendaState;
-- loadAgenda;
-- controles Semana/Mês;
-- ausência do CCQ na Ambientação;
-- CCQ fixo no Dashboard;
-- integração do Caderno;
-- chama da ofensiva;
-- tamanho e centralização do CCQ.
-
-Se Node estiver disponível, também roda:
-
-node --check ambientacao.js
-node --check dashboard.js
-
-NÃO PRECISA RODAR SQL.
+Não precisa rodar SQL.
