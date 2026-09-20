@@ -1430,17 +1430,17 @@ body.sidebar-hidden
 }
 
 .streak-mini-flame {
-  width: 44px;
-  height: 47px;
-  flex: 0 0 44px;
+  width: 57px;
+  height: 61px;
+  flex: 0 0 57px;
   display: grid;
   place-items: center;
   color: var(--sidebar-streak-main);
 }
 
 .streak-mini-flame svg {
-  width: 33px;
-  height: 41px;
+  width: 43px;
+  height: 53px;
   overflow: visible;
   transform-origin: 50% 85%;
   filter: drop-shadow(0 4px 7px color-mix(in srgb, var(--sidebar-streak-main) 24%, transparent));
@@ -1490,7 +1490,7 @@ body.sidebar-hidden
 
 .streak-mini-copy small {
   color: #f59e0b;
-  font-size: 8px;
+  font-size: 9.2px;
   font-weight: 850;
   line-height: 1.1;
 }
