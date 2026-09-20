@@ -3253,7 +3253,7 @@ async function renderAgendaSubjectReview(
     ) {
       const notebookUrl =
         new URL(
-          "caderno.html",
+          "/caderno/",
           window.location.href
         );
 
@@ -3545,7 +3545,7 @@ function openActivityWorkspace(params) {
     kind === "flashcards_batch"
   ) {
     pageName =
-      "flashcards.html";
+      "/flashcards/";
 
 
     if (title) {
@@ -3569,7 +3569,7 @@ function openActivityWorkspace(params) {
     kind === "errors_batch"
   ) {
     pageName =
-      "caderno-erros.html";
+      "/caderno-erros/";
 
 
     if (title) {
@@ -3698,7 +3698,7 @@ function initSelectedActivity() {
         window.history.replaceState(
           {},
           "",
-          "ambientacao.html"
+          "/ambientacao/"
         );
 
         container.hidden =
