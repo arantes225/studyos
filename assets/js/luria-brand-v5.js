@@ -62,10 +62,10 @@
 
     if (
       title.textContent
-      !== "Luria"
+      !== "LURIA"
     ) {
       title.textContent =
-        "Luria";
+        "LURIA";
     }
 
     let subtitle =
