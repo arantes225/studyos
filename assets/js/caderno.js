@@ -14126,6 +14126,26 @@ async function renderNotebookPdfCanvasAttempt(
   paper,
   options = {}
 ) {
+  const width =
+    Math.max(
+      940,
+      Math.ceil(
+        paper.scrollWidth
+        || paper.getBoundingClientRect().width
+        || 940
+      )
+    );
+
+  const height =
+    Math.max(
+      1120,
+      Math.ceil(
+        paper.scrollHeight
+        || paper.getBoundingClientRect().height
+        || 1120
+      )
+    );
+
   return window.html2canvas(
     paper,
     {
@@ -14145,8 +14165,14 @@ async function renderNotebookPdfCanvasAttempt(
       backgroundColor:
         "#ffffff",
 
+      width,
+      height,
+
       windowWidth:
-        940,
+        width,
+
+      windowHeight:
+        height,
 
       scrollX:
         0,
@@ -14154,10 +14180,53 @@ async function renderNotebookPdfCanvasAttempt(
       scrollY:
         0,
 
+      imageTimeout:
+        15000,
+
+      removeContainer:
+        true,
+
       foreignObjectRendering:
         Boolean(
           options.foreignObjectRendering
-        )
+        ),
+
+      onclone:
+        (clonedDocument) => {
+          const clonedHost =
+            clonedDocument.querySelector(
+              ".notebook-pdf-export-host"
+            );
+
+          if (clonedHost) {
+            clonedHost.style.position =
+              "absolute";
+            clonedHost.style.left =
+              "0";
+            clonedHost.style.top =
+              "0";
+            clonedHost.style.zIndex =
+              "0";
+            clonedHost.style.visibility =
+              "visible";
+            clonedHost.style.opacity =
+              "1";
+          }
+
+          const clonedPaper =
+            clonedDocument.querySelector(
+              ".notebook-pdf-paper"
+            );
+
+          if (clonedPaper) {
+            clonedPaper.style.visibility =
+              "visible";
+            clonedPaper.style.opacity =
+              "1";
+            clonedPaper.style.transform =
+              "none";
+          }
+        }
     }
   );
 }
@@ -14194,8 +14263,34 @@ async function renderNotebookPdfCanvas(
       paper
     );
 
+    /*
+      Safari/iOS pode devolver canvas branco quando a folha está
+      muito fora do viewport ou ainda não passou por um ciclo de layout.
+      Forçamos layout e dois frames antes da captura.
+    */
+    void paper.offsetHeight;
+
+    await new Promise(
+      resolve =>
+        requestAnimationFrame(
+          () =>
+            requestAnimationFrame(
+              resolve
+            )
+        )
+    );
+
     stabilizeNotebookPdfStyles(
       paper
+    );
+
+    void paper.offsetHeight;
+
+    await new Promise(
+      resolve =>
+        requestAnimationFrame(
+          resolve
+        )
     );
 
     /*
