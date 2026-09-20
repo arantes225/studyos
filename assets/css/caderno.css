@@ -2868,3 +2868,39 @@
       );
   }
 }
+
+
+/* =========================================================
+   CADERNO v18.1 — CAMADAS DA TOOLBAR + FONTES
+   ========================================================= */
+
+.notebook-toolbar {
+  z-index: 320 !important;
+  isolation: isolate;
+}
+
+.notebook-tool-menu-wrap,
+.notebook-emoji-wrap {
+  position: relative;
+  z-index: 321;
+}
+
+.notebook-tool-menu,
+.notebook-emoji-menu,
+#notebook-callout-menu {
+  z-index: 500 !important;
+  pointer-events: auto;
+}
+
+.notebook-document-head,
+.notebook-document-menu-wrap {
+  z-index: 10;
+}
+
+.notebook-document-menu {
+  z-index: 40;
+}
+
+.notebook-font-select {
+  min-width: 92px;
+}
