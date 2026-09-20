@@ -70,7 +70,7 @@
 
     document
       .querySelectorAll(
-        "[data-resibulando-area-list]"
+        "[data-luria-area-list]"
       )
       .forEach(
         (list) => {
@@ -91,7 +91,7 @@
 
     document
       .querySelectorAll(
-        "[data-resibulando-area-select]"
+        "[data-luria-area-select]"
       )
       .forEach(
         (select) => {
@@ -135,7 +135,7 @@
 
     document
       .querySelectorAll(
-        'input[list][data-resibulando-area-input], input[list="medical-areas"], input[list="error-medical-areas"], input[list="manual-area-options"]'
+        'input[list][data-luria-area-input], input[list="medical-areas"], input[list="error-medical-areas"], input[list="manual-area-options"]'
       )
       .forEach(
         (input) => {
@@ -151,7 +151,7 @@
     const resolved =
       normalizeMode(mode);
 
-    window.resibulandoStudyMode =
+    window.luriaStudyMode =
       resolved;
 
     document.documentElement
@@ -195,7 +195,7 @@
 
     window.dispatchEvent(
       new CustomEvent(
-        "resibulando:study-mode",
+        "luria:study-mode",
         {
           detail
         }
@@ -257,7 +257,7 @@
     }
   }
 
-  window.ResibulandoStudyMode = {
+  window.LuriaStudyMode = {
     AREAS,
     normalizeMode,
     modeLabel,
