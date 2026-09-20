@@ -1143,3 +1143,103 @@
     width: 100%;
   }
 }
+
+
+/* =========================================================
+   NOVO ERRO — seletor de área refinado
+   ========================================================= */
+.error-field:has(#new-error-area) {
+  position: relative;
+}
+
+.error-field:has(#new-error-area) > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#new-error-area {
+  width: 100%;
+  min-height: 46px;
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0 42px 0 14px;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, var(--accent) 12%);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 96%, var(--accent-soft) 4%), var(--surface))
+    padding-box;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  outline: none;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, .02);
+  transition:
+    border-color .16s ease,
+    box-shadow .16s ease,
+    background .16s ease,
+    transform .16s ease;
+  cursor: pointer;
+}
+
+.error-field:has(#new-error-area)::after {
+  content: "";
+  position: absolute;
+  right: 16px;
+  bottom: 18px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg) translateY(-2px);
+  transform-origin: center;
+  pointer-events: none;
+  transition:
+    border-color .16s ease,
+    transform .16s ease;
+}
+
+#new-error-area:hover {
+  border-color: color-mix(in srgb, var(--accent) 44%, var(--border) 56%);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, var(--accent-soft) 8%), var(--surface))
+    padding-box;
+}
+
+#new-error-area:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.error-field:has(#new-error-area:focus)::after {
+  border-color: var(--accent);
+  transform: rotate(225deg) translate(-1px, -1px);
+}
+
+#new-error-area:invalid {
+  color: var(--muted);
+  font-weight: 650;
+}
+
+#new-error-area option {
+  color: var(--text);
+  background: var(--surface);
+  font-weight: 650;
+}
+
+@media (max-width: 760px) {
+  #new-error-area {
+    min-height: 48px;
+    border-radius: 13px;
+    padding-left: 13px;
+    padding-right: 44px;
+    font-size: 14px;
+  }
+
+  .error-field:has(#new-error-area)::after {
+    right: 17px;
+    bottom: 19px;
+  }
+}
