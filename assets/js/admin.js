@@ -892,6 +892,14 @@
     const app =
       $("admin-app");
 
+    document.body.classList.remove(
+      "admin-pin-locked"
+    );
+
+    document.body.classList.add(
+      "admin-unlocked"
+    );
+
     if (gate) {
       gate.hidden =
         true;
