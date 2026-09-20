@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Caderno · LURIA</title>
+
+  <link rel="manifest" href="manifest.webmanifest?v=3">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/img/pwa-icon-180.png?v=3">
+  <meta name="theme-color" content="#0A2342">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="LURIA">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria2">
+  <link rel="stylesheet" href="assets/css/style.css?v=luria-palette-11">
+  <link rel="stylesheet" href="assets/css/caderno.css?v=30.4">
+</head>
+
+<body data-page="caderno">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar"></aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <main class="main notebook-main-shell">
+      <div class="page notebook-page">
+
+        <header class="topbar notebook-topbar">
+          <button
+            id="menu-open"
+            class="menu-open"
+            type="button"
+            aria-label="Abrir menu"
+          >
+            ☰
+          </button>
+
+          <div class="page-heading">
+            <span class="eyebrow" data-page-eyebrow></span>
+            <h1 data-page-title></h1>
+          </div>
+
+          <span
+            id="notebook-save-status"
+            class="notebook-save-status"
+          ></span>
+        </header>
+
+        <nav class="notebook-tabs" aria-label="Seções do caderno">
+          <button
+            class="notebook-tab active"
+            type="button"
+            data-notebook-tab="editor"
+          >
+            Caderno
+          </button>
+
+          <button
+            class="notebook-tab"
+            type="button"
+            data-notebook-tab="library"
+          >
+            Biblioteca
+          </button>
+        </nav>
+
+        <section
+          id="notebook-view-editor"
+          class="notebook-view"
+        >
+          <div class="notebook-workspace">
+
+            <aside class="notebook-topic-panel">
+
+              <div class="notebook-topic-panel-head">
+                <div class="notebook-topic-panel-title">
+                  <span class="badge accent">Aulas</span>
+                  <h2>Temas</h2>
+                </div>
+
+                <div class="notebook-topic-panel-head-actions">
+                  <span
+                    id="notebook-topic-count"
+                    class="notebook-topic-count"
+                  >
+                    0
+                  </span>
+
+                  <button
+                    id="notebook-topic-panel-toggle"
+                    class="notebook-topic-panel-toggle"
+                    type="button"
+                    aria-label="Recolher lista de temas"
+                    aria-expanded="true"
+                    title="Recolher lista de temas"
+                  >
+                    ‹
+                  </button>
+                </div>
+              </div>
+
+              <div class="notebook-topic-controls">
+                <input
+                  id="notebook-topic-search"
+                  type="search"
+                  placeholder="Pesquisar tema..."
+                  autocomplete="off"
+                >
+
+                <div class="notebook-filter-wrap">
+                  <button
+                    id="notebook-filter-toggle"
+                    class="notebook-filter-toggle"
+                    type="button"
+                    aria-label="Filtrar por área"
+                    aria-expanded="false"
+                    title="Filtrar por área"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="18"
+                      height="18"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M4 6h16M7 12h10M10 18h4"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                      />
+                    </svg>
+                  </button>
+
+                  <div
+                    id="notebook-filter-menu"
+                    class="notebook-filter-menu"
+                    hidden
+                  >
+                    <div class="notebook-filter-head">
+                      <div>
+                        <strong>Filtrar temas</strong>
+                        <small>Área</small>
+                      </div>
+
+                      <button
+                        id="notebook-filter-close"
+                        class="notebook-filter-close"
+                        type="button"
+                        aria-label="Fechar filtro"
+                      >
+                        ×
+                      </button>
+                    </div>
+
+                    <label class="notebook-filter-field">
+                      <span>Área</span>
+
+                      <select id="notebook-area-filter">
+                        <option value="">Todas as áreas</option>
+                      </select>
+                    </label>
+
+                    <div class="notebook-filter-actions">
+                      <button
+                        id="notebook-filter-clear"
+                        class="button secondary compact-button"
+                        type="button"
+                      >
+                        Limpar
+                      </button>
+
+                      <button
+                        id="notebook-filter-apply"
+                        class="button primary compact-button"
+                        type="button"
+                      >
+                        Aplicar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                id="notebook-new-free-page"
+                class="notebook-new-free-page"
+                type="button"
+              >
+                + Página livre
+              </button>
+
+              <div
+                id="notebook-topic-list"
+                class="notebook-topic-list"
+              >
+                <div class="notebook-empty-small">
+                  Carregando temas...
+                </div>
+              </div>
+            </aside>
+
+            <section class="notebook-editor-column">
+
+              <div
+                id="notebook-toolbar"
+                class="notebook-toolbar"
+                aria-label="Ferramentas de edição"
+              >
+                <select
+                  id="notebook-block-style"
+                  class="notebook-style-select"
+                  aria-label="Estilo do texto"
+                  disabled
+                >
+                  <option value="p">Texto normal</option>
+                  <option value="h1">Título grande</option>
+                  <option value="h2">Título</option>
+                  <option value="h3">Subtítulo</option>
+                </select>
+
+                <span class="notebook-toolbar-divider"></span>
+
+                <button id="notebook-bold" class="notebook-tool-button" type="button" title="Negrito" disabled>
+                  <strong>B</strong>
+                </button>
+
+                <button id="notebook-italic" class="notebook-tool-button" type="button" title="Itálico" disabled>
+                  <em>I</em>
+                </button>
+
+                <button id="notebook-underline" class="notebook-tool-button" type="button" title="Sublinhado" disabled>
+                  <u>U</u>
+                </button>
+
+                <label
+                  class="notebook-color-control"
+                  title="Cor do texto"
+                >
+                  <span class="notebook-color-letter">A</span>
+                  <input
+                    id="notebook-text-color"
+                    type="color"
+                    value="#2563eb"
+                    aria-label="Cor do texto"
+                    disabled
+                  >
+                </label>
+
+                <label
+                  class="notebook-color-control notebook-highlight-control"
+                  title="Grifar texto"
+                >
+                  <span class="notebook-highlight-icon">▰</span>
+                  <input
+                    id="notebook-highlight-color"
+                    type="color"
+                    value="#fff59d"
+                    aria-label="Cor do grifo"
+                    disabled
+                  >
+                </label>
+
+                <span class="notebook-toolbar-divider"></span>
+
+                <div class="notebook-tool-menu-wrap">
+                  <button
+                    id="notebook-list-toggle"
+                    class="notebook-tool-button notebook-tool-text"
+                    type="button"
+                    title="Listas"
+                    aria-expanded="false"
+                    disabled
+                  >
+                    ☷ Lista
+                  </button>
+
+                  <div
+                    id="notebook-list-menu"
+                    class="notebook-tool-menu"
+                    hidden
+                  >
+                    <button
+                      type="button"
+                      data-list-command="insertUnorderedList"
+                    >
+                      <span>•</span>
+                      Lista com marcadores
+                    </button>
+
+                    <button
+                      type="button"
+                      data-list-command="insertOrderedList"
+                    >
+                      <span>1.</span>
+                      Lista numerada
+                    </button>
+                  </div>
+                </div>
+
+                <span class="notebook-toolbar-divider"></span>
+
+                <button
+                  id="notebook-template"
+                  class="notebook-tool-button notebook-tool-text notebook-template-button"
+                  type="button"
+                  title="Inserir estrutura do resumo"
+                  disabled
+                >
+                  + Estrutura
+                </button>
+
+                <button
+                  id="notebook-break"
+                  class="notebook-tool-button"
+                  type="button"
+                  title="Inserir quebra de texto"
+                  disabled
+                >
+                  ↵
+                </button>
+
+                <button
+                  id="notebook-divider"
+                  class="notebook-tool-button notebook-tool-text"
+                  type="button"
+                  title="Inserir linha divisória"
+                  disabled
+                >
+                  — Linha
+                </button>
+
+                <div class="notebook-tool-menu-wrap">
+                  <button
+                    id="notebook-table-toggle"
+                    class="notebook-tool-button notebook-tool-text"
+                    type="button"
+                    title="Tabelas"
+                    aria-expanded="false"
+                    disabled
+                  >
+                    ▦ Tabela
+                  </button>
+
+                  <div
+                    id="notebook-table-menu"
+                    class="notebook-tool-menu"
+                    hidden
+                  >
+                    <button
+                      type="button"
+                      data-table-action="manual"
+                    >
+                      <span>＋</span>
+                      Adicionar tabela
+                    </button>
+
+                    <button
+                      type="button"
+                      data-table-action="merge-row"
+                    >
+                      <span>▤</span>
+                      Unir linha atual (título)
+                    </button>
+
+                    <button
+                      type="button"
+                      data-table-action="split-row"
+                    >
+                      <span>▥</span>
+                      Separar linha atual
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  id="notebook-image-add"
+                  class="notebook-tool-button notebook-tool-text"
+                  type="button"
+                  title="Adicionar imagem (máximo 2 por caderno)"
+                  disabled
+                >
+                  ▧ Imagem
+                </button>
+
+                <input
+                  id="notebook-image-input"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  hidden
+                >
+
+                <span class="notebook-toolbar-divider"></span>
+
+                <div class="notebook-emoji-wrap">
+                  <button
+                    id="notebook-emoji-toggle"
+                    class="notebook-tool-button"
+                    type="button"
+                    title="Inserir emoji"
+                    aria-expanded="false"
+                    disabled
+                  >
+                    ☺
+                  </button>
+
+                  <div
+                    id="notebook-emoji-menu"
+                    class="notebook-emoji-menu"
+                    hidden
+                  ></div>
+                </div>
+
+                <span class="notebook-toolbar-divider"></span>
+
+                <div class="notebook-tool-menu-wrap">
+                  <button
+                    id="notebook-callout-toggle"
+                    class="notebook-tool-button notebook-tool-text"
+                    type="button"
+                    title="Callouts"
+                    aria-expanded="false"
+                    disabled
+                  >
+                    ◈ Callout
+                  </button>
+
+                  <div
+                    id="notebook-callout-menu"
+                    class="notebook-tool-menu"
+                    hidden
+                  >
+                    <button
+                      class="important"
+                      type="button"
+                      data-study-block="important"
+                    >
+                      <span>★</span>
+                      Importante
+                    </button>
+
+                    <button
+                      class="warning"
+                      type="button"
+                      data-study-block="warning"
+                    >
+                      <span>⚠</span>
+                      Atenção
+                    </button>
+
+                    <button
+                      class="memory"
+                      type="button"
+                      data-study-block="memory"
+                    >
+                      <span>🧠</span>
+                      Decore
+                    </button>
+                  </div>
+                </div>
+
+                <span class="notebook-toolbar-spacer"></span>
+
+                <button
+                  id="notebook-save-now"
+                  class="button secondary compact-button"
+                  type="button"
+                  disabled
+                >
+                  Salvar
+                </button>
+              </div>
+
+              <div
+                id="notebook-editor-hint"
+                class="notebook-editor-hint"
+              >
+                Selecione um tema ou crie uma página livre.
+              </div>
+
+              <div
+                id="notebook-document-wrap"
+                class="notebook-document-wrap"
+                hidden
+              >
+                <article class="notebook-paper">
+
+                  <header class="notebook-document-head">
+                    <div class="notebook-document-head-main">
+                      <div
+                        id="notebook-document-area"
+                        class="notebook-document-area"
+                      >
+                        Área
+                      </div>
+
+                      <h1 id="notebook-document-title">
+                        Tema
+                      </h1>
+
+                      <div
+                        id="notebook-document-date"
+                        class="notebook-document-date"
+                      ></div>
+                    </div>
+
+                    <div class="notebook-document-menu-wrap">
+                      <button
+                        id="notebook-document-menu-toggle"
+                        class="notebook-document-menu-toggle"
+                        type="button"
+                        aria-label="Opções do caderno"
+                        aria-expanded="false"
+                        title="Opções"
+                      >
+                        ⋯
+                      </button>
+
+                      <div
+                        id="notebook-document-menu"
+                        class="notebook-document-menu"
+                        hidden
+                      >
+                        <button
+                          id="notebook-document-edit"
+                          type="button"
+                        >
+                          Editar
+                        </button>
+
+                        <button
+                          id="notebook-document-delete"
+                          class="danger"
+                          type="button"
+                        >
+                          Apagar
+                        </button>
+                      </div>
+                    </div>
+                  </header>
+
+                  <div
+                    id="notebook-editor"
+                    class="notebook-editor"
+                    contenteditable="false"
+                    aria-readonly="true"
+                    role="textbox"
+                    aria-multiline="true"
+                    spellcheck="true"
+                    data-placeholder="Comece a escrever seu resumo..."
+                  ></div>
+
+                </article>
+              </div>
+
+            </section>
+          </div>
+        </section>
+
+        <section
+          id="notebook-view-library"
+          class="notebook-view"
+          hidden
+        >
+          <div class="notebook-view-head">
+            <div>
+              <h2>Biblioteca</h2>
+
+              <p>
+                Selecione os cadernos que deseja exportar em PDF.
+              </p>
+            </div>
+          </div>
+
+          <div class="notebook-library-search-controls">
+            <div class="notebook-searchbar">
+              <input
+                id="notebook-library-search"
+                type="search"
+                placeholder="Pesquisar título, área ou data..."
+                autocomplete="off"
+              >
+            </div>
+
+            <div class="notebook-filter-wrap notebook-library-filter-wrap">
+              <button
+                id="notebook-library-filter-toggle"
+                class="notebook-filter-toggle"
+                type="button"
+                aria-label="Filtrar biblioteca por área"
+                aria-expanded="false"
+                title="Filtrar por área"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 6h16M7 12h10M10 18h4"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </button>
+
+              <div
+                id="notebook-library-filter-menu"
+                class="notebook-filter-menu notebook-library-filter-menu"
+                hidden
+              >
+                <div class="notebook-filter-head">
+                  <div>
+                    <strong>Filtrar biblioteca</strong>
+                    <small>Área</small>
+                  </div>
+
+                  <button
+                    id="notebook-library-filter-close"
+                    class="notebook-filter-close"
+                    type="button"
+                    aria-label="Fechar filtro"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <label class="notebook-filter-field">
+                  <span>Área</span>
+
+                  <select id="notebook-library-area-filter">
+                    <option value="">Todas as áreas</option>
+                  </select>
+                </label>
+
+                <div class="notebook-filter-actions">
+                  <button
+                    id="notebook-library-filter-clear"
+                    class="button secondary compact-button"
+                    type="button"
+                  >
+                    Limpar
+                  </button>
+
+                  <button
+                    id="notebook-library-filter-apply"
+                    class="button primary compact-button"
+                    type="button"
+                  >
+                    Aplicar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="notebook-library-actions">
+            <label class="notebook-select-all">
+              <input
+                id="notebook-library-select-all"
+                type="checkbox"
+              >
+
+              <span>
+                Selecionar todos
+              </span>
+            </label>
+
+            <span
+              id="notebook-library-selected-count"
+              class="notebook-selected-count"
+            >
+              0 selecionados
+            </span>
+
+            <span class="notebook-library-spacer"></span>
+
+            <button
+              id="notebook-library-export"
+              class="button primary compact-button"
+              type="button"
+              disabled
+            >
+              Exportar PDF
+            </button>
+
+            <button
+              id="notebook-library-delete"
+              class="button secondary compact-button danger-button"
+              type="button"
+              disabled
+            >
+              Apagar
+            </button>
+          </div>
+
+          <div
+            id="notebook-library-list"
+            class="notebook-library-list"
+          >
+            <div class="notebook-empty-small">
+              Carregando biblioteca...
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <div
+    id="notebook-free-modal"
+    class="notebook-modal-backdrop"
+    hidden
+  >
+    <section
+      class="notebook-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="notebook-free-modal-title"
+    >
+      <div class="notebook-modal-head">
+        <div>
+          <span class="badge accent">
+            Página livre
+          </span>
+
+          <h2 id="notebook-free-modal-title">
+            Nova página
+          </h2>
+        </div>
+
+        <button
+          id="notebook-free-close"
+          class="notebook-modal-close"
+          type="button"
+          aria-label="Fechar"
+        >
+          ×
+        </button>
+      </div>
+
+      <label class="notebook-modal-field">
+        <span>
+          Título
+        </span>
+
+        <input
+          id="notebook-free-title"
+          type="text"
+          placeholder="Ex.: Antibioticoterapia"
+          maxlength="120"
+          autocomplete="off"
+        >
+      </label>
+
+      <label class="notebook-modal-field">
+        <span>
+          Área
+        </span>
+
+        <input
+          id="notebook-free-area"
+          type="text"
+          list="notebook-free-area-options"
+          placeholder="Ex.: Clínica Médica"
+          maxlength="80"
+          autocomplete="off"
+        >
+
+        <datalist id="notebook-free-area-options"></datalist>
+      </label>
+
+      <div class="notebook-modal-actions">
+        <button
+          id="notebook-free-cancel"
+          class="button secondary"
+          type="button"
+        >
+          Cancelar
+        </button>
+
+        <button
+          id="notebook-free-create"
+          class="button primary"
+          type="button"
+        >
+          Criar página
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <div
+    id="notebook-table-modal"
+    class="notebook-modal-backdrop"
+    hidden
+  >
+    <section
+      class="notebook-modal notebook-table-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="notebook-table-modal-title"
+    >
+      <div class="notebook-modal-head">
+        <div>
+          <span class="badge accent">
+            Tabela
+          </span>
+
+          <h2 id="notebook-table-modal-title">
+            Adicionar tabela
+          </h2>
+        </div>
+
+        <button
+          id="notebook-table-close"
+          class="notebook-modal-close"
+          type="button"
+          aria-label="Fechar"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="notebook-table-source-grid">
+        <section class="notebook-table-source-card">
+          <strong>Tabela manual</strong>
+          <small>Crie a tabela manualmente, ajuste linhas e colunas e insira no caderno.</small>
+
+          <button
+            id="notebook-table-new"
+            class="button secondary compact-button"
+            type="button"
+          >
+            Criar 3 × 3
+          </button>
+        </section>
+
+      </div>
+
+      <div
+        id="notebook-table-status"
+        class="notebook-table-status"
+      ></div>
+
+      <div class="notebook-table-builder-tools">
+        <button id="notebook-table-add-row" class="button secondary compact-button" type="button">
+          + Linha
+        </button>
+
+        <button id="notebook-table-remove-row" class="button secondary compact-button" type="button">
+          − Linha
+        </button>
+
+        <button id="notebook-table-add-col" class="button secondary compact-button" type="button">
+          + Coluna
+        </button>
+
+        <button id="notebook-table-remove-col" class="button secondary compact-button" type="button">
+          − Coluna
+        </button>
+
+        <button id="notebook-table-merge-row" class="button secondary compact-button" type="button">
+          Unir linha (título)
+        </button>
+
+        <button id="notebook-table-split-row" class="button secondary compact-button" type="button">
+          Separar linha
+        </button>
+      </div>
+
+      <div
+        id="notebook-table-editor"
+        class="notebook-table-builder"
+      ></div>
+
+      <div class="notebook-modal-actions">
+        <button
+          id="notebook-table-cancel"
+          class="button secondary"
+          type="button"
+        >
+          Cancelar
+        </button>
+
+        <button
+          id="notebook-table-insert"
+          class="button primary"
+          type="button"
+        >
+          Inserir no caderno
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+
+  <script src="assets/js/supabase.js"></script>
+  <script src="assets/js/app.js?v=13.1"></script>
+  <style>
+    .notebook-pdf-export-host {
+      position: fixed;
+      left: -20000px;
+      top: 0;
+      width: 940px;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .notebook-pdf-export-host .notebook-paper {
+      width: 940px;
+      min-height: 1120px;
+      margin: 0;
+      box-shadow: none;
+    }
+
+    .notebook-pdf-export-host .notebook-editor {
+      min-height: 0;
+    }
+
+    .notebook-pdf-export-host .notebook-document-head {
+      display: block;
+    }
+
+    .notebook-pdf-export-host .notebook-editor table {
+      max-width: 100%;
+    }
+  </style>
+
+  <script src="assets/js/caderno.js?v=30.4"></script>
+  <script defer src="assets/js/pwa.js?v=3"></script>
+</body>
+</html>
