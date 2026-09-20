@@ -6,11 +6,68 @@
   <title>Admin · Luria</title>
   <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria2">
   <link rel="stylesheet" href="assets/css/style.css?v=luria-palette-4">
-  <link rel="stylesheet" href="assets/css/admin.css?v=1.1">
+  <link rel="stylesheet" href="assets/css/admin.css?v=1.2">
 </head>
 
 <body data-page="admin">
-  <div class="app-shell">
+  <section id="admin-pin-gate" class="admin-pin-gate" aria-labelledby="admin-pin-title">
+    <form id="admin-pin-form" class="admin-pin-card" autocomplete="off">
+      <div class="admin-pin-brand">
+        <span class="admin-pin-mark" aria-hidden="true">L</span>
+        <div>
+          <strong>Luria Admin</strong>
+          <small>Acesso protegido</small>
+        </div>
+      </div>
+
+      <div class="admin-pin-copy">
+        <span class="eyebrow">Segurança</span>
+        <h1 id="admin-pin-title">Verificando acesso...</h1>
+        <p id="admin-pin-description">Confirme seu acesso administrativo para continuar.</p>
+      </div>
+
+      <div id="admin-pin-fields" class="admin-pin-fields" hidden>
+        <label class="admin-pin-field">
+          <span id="admin-pin-label">PIN de 6 dígitos</span>
+          <input
+            id="admin-pin"
+            type="password"
+            inputmode="numeric"
+            pattern="[0-9]{6}"
+            maxlength="6"
+            minlength="6"
+            autocomplete="off"
+            aria-describedby="admin-pin-message"
+          >
+        </label>
+
+        <label id="admin-pin-confirm-wrap" class="admin-pin-field" hidden>
+          <span>Confirmar PIN</span>
+          <input
+            id="admin-pin-confirm"
+            type="password"
+            inputmode="numeric"
+            pattern="[0-9]{6}"
+            maxlength="6"
+            minlength="6"
+            autocomplete="off"
+          >
+        </label>
+      </div>
+
+      <div id="admin-pin-message" class="admin-pin-message" aria-live="polite">
+        Verificando...
+      </div>
+
+      <button id="admin-pin-submit" class="button primary admin-pin-submit" type="submit" disabled>
+        Continuar
+      </button>
+
+      <a class="admin-pin-back" href="dashboard.html">Voltar ao Dashboard</a>
+    </form>
+  </section>
+
+  <div id="admin-app" class="app-shell" hidden>
     <aside id="sidebar" class="sidebar"></aside>
     <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
 
@@ -197,6 +254,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=13.0"></script>
-  <script src="assets/js/admin.js?v=1.3"></script>
+  <script src="assets/js/admin.js?v=1.4"></script>
 </body>
 </html>
