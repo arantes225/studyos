@@ -1,12 +1,12 @@
-const CACHE_VERSION = "luria-pwa-v3";
+const CACHE_VERSION = "luria-pwa-v4";
 const STATIC_CACHE = CACHE_VERSION + "-static";
 const RUNTIME_CACHE = CACHE_VERSION + "-runtime";
 
 const APP_SHELL = [
   "/",
   "/index.html",
-  "//login/",
-  "//dashboard/",
+  "/login/",
+  "/dashboard/",
   "/assets/css/style.css",
   "/assets/css/landing.css",
   "/assets/css/luria-brand-v5.css",
@@ -58,8 +58,8 @@ self.addEventListener("fetch", (event) => {
         })
         .catch(async () => {
           return (await caches.match(request))
-            || (await caches.match("//dashboard/"))
-            || (await caches.match("//login/"));
+            || (await caches.match("/dashboard/"))
+            || (await caches.match("/login/"));
         })
     );
     return;
