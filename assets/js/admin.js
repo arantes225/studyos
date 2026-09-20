@@ -1044,19 +1044,21 @@
         const seconds =
           Number(
             data.retry_after_seconds
-            || 300
+            || 3600
           );
 
-        const minutes =
-          Math.max(
-            1,
-            Math.ceil(
-              seconds / 60
-            )
-          );
+        const waitText =
+          seconds >= 3600
+            ? "1 hora"
+            : `${Math.max(
+                1,
+                Math.ceil(
+                  seconds / 60
+                )
+              )} min`;
 
         setPinMessage(
-          `Muitas tentativas incorretas. Tente novamente em cerca de ${minutes} min.`,
+          `Muitas tentativas incorretas. Tente novamente em ${waitText}.`,
           "error"
         );
 
