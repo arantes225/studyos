@@ -1430,22 +1430,48 @@ body.sidebar-hidden
 }
 
 .streak-mini-flame {
-  width: 29px;
-  height: 31px;
-  flex: 0 0 29px;
+  width: 44px;
+  height: 47px;
+  flex: 0 0 44px;
   display: grid;
   place-items: center;
   color: var(--sidebar-streak-main);
 }
 
 .streak-mini-flame svg {
-  width: 22px;
-  height: 27px;
+  width: 33px;
+  height: 41px;
   overflow: visible;
+  transform-origin: 50% 85%;
+  filter: drop-shadow(0 4px 7px color-mix(in srgb, var(--sidebar-streak-main) 24%, transparent));
+  animation: sidebarStreakFlamePulse 2.5s ease-in-out infinite;
 }
 
 .streak-mini-core {
   fill: var(--sidebar-streak-core);
+}
+
+@keyframes sidebarStreakFlamePulse {
+  0%,
+  100% {
+    transform:
+      translateY(1px)
+      scale(.97)
+      rotate(-1deg);
+  }
+
+  50% {
+    transform:
+      translateY(-2px)
+      scale(1.035)
+      rotate(1deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streak-mini-flame svg {
+    animation: none;
+  }
 }
 
 .streak-mini-copy {
