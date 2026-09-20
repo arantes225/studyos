@@ -20,7 +20,7 @@ const NOTEBOOK_EMOJIS = [
 const ALLOWED_TAGS = new Set([
   "P", "BR", "HR", "STRONG", "B", "EM", "I", "U",
   "H1", "H2", "H3", "UL", "OL", "LI",
-  "DIV", "SPAN", "BLOCKQUOTE",
+  "DIV", "SPAN", "BLOCKQUOTE", "IMG",
   "TABLE", "THEAD", "TBODY", "TR", "TH", "TD"
 ]);
 
@@ -418,6 +418,10 @@ function sanitizeHtml(
     );
 
 
+  let keptImages =
+    0;
+
+
   function clean(
     node
   ) {
@@ -495,6 +499,12 @@ function sanitizeHtml(
         "";
 
       let keepColspan =
+        "";
+
+      let keepImageSrc =
+        "";
+
+      let keepImageAlt =
         "";
 
       if (
@@ -603,6 +613,54 @@ function sanitizeHtml(
       }
 
 
+      if (
+        child.tagName ===
+        "IMG"
+      ) {
+        const src =
+          String(
+            child.getAttribute(
+              "src"
+            )
+            || ""
+          )
+            .trim();
+
+        const validDataImage =
+          /^data:image\/(?:png|jpeg|jpg|webp|gif);base64,/i
+            .test(
+              src
+            );
+
+        if (
+          !validDataImage
+          ||
+          keptImages >= 2
+        ) {
+          child.remove();
+          continue;
+        }
+
+        keptImages +=
+          1;
+
+        keepImageSrc =
+          src;
+
+        keepImageAlt =
+          String(
+            child.getAttribute(
+              "alt"
+            )
+            || "Imagem do caderno"
+          )
+            .slice(
+              0,
+              180
+            );
+      }
+
+
       for (
         const attribute
         of
@@ -642,6 +700,20 @@ function sanitizeHtml(
         child.setAttribute(
           "colspan",
           keepColspan
+        );
+      }
+
+      if (
+        keepImageSrc
+      ) {
+        child.setAttribute(
+          "src",
+          keepImageSrc
+        );
+
+        child.setAttribute(
+          "alt",
+          keepImageAlt
         );
       }
 
@@ -1346,6 +1418,7 @@ function setEditorEnabled(
     "notebook-break",
     "notebook-divider",
     "notebook-table-toggle",
+    "notebook-image-add",
     "notebook-emoji-toggle",
     "notebook-callout-toggle",
     "notebook-save-now"
@@ -2877,6 +2950,405 @@ function handleNotebookEditorTableEnter(
   );
 
   saveSelection();
+  scheduleSave();
+}
+
+
+/* =========================================================
+   IMAGENS DO CADERNO
+   ========================================================= */
+
+function notebookImageCount() {
+  const editor =
+    document.getElementById(
+      "notebook-editor"
+    );
+
+  return editor
+    ? editor.querySelectorAll(
+        "img"
+      ).length
+    : 0;
+}
+
+
+async function compressNotebookImageBlob(
+  sourceBlob
+) {
+  const maxBytes =
+    128 * 1024;
+
+
+  if (
+    !sourceBlob
+    ||
+    !sourceBlob.type
+      ?.startsWith(
+        "image/"
+      )
+  ) {
+    throw new Error(
+      "Arquivo de imagem inválido."
+    );
+  }
+
+
+  if (
+    sourceBlob.size
+    <= maxBytes
+  ) {
+    return sourceBlob;
+  }
+
+
+  const bitmap =
+    await createImageBitmap(
+      sourceBlob
+    );
+
+
+  try {
+    const originalWidth =
+      bitmap.width;
+
+    const originalHeight =
+      bitmap.height;
+
+
+    const dimensionSteps = [
+      1600,
+      1400,
+      1200,
+      1000,
+      900,
+      800,
+      700,
+      620,
+      540,
+      460
+    ];
+
+
+    const qualitySteps = [
+      0.90,
+      0.84,
+      0.78,
+      0.72,
+      0.66,
+      0.60,
+      0.54,
+      0.48,
+      0.42
+    ];
+
+
+    let smallest =
+      null;
+
+
+    for (
+      const maxDimension
+      of dimensionSteps
+    ) {
+      const scale =
+        Math.min(
+          1,
+          maxDimension
+          /
+          Math.max(
+            originalWidth,
+            originalHeight
+          )
+        );
+
+
+      const width =
+        Math.max(
+          1,
+          Math.round(
+            originalWidth
+            * scale
+          )
+        );
+
+
+      const height =
+        Math.max(
+          1,
+          Math.round(
+            originalHeight
+            * scale
+          )
+        );
+
+
+      const canvas =
+        document.createElement(
+          "canvas"
+        );
+
+
+      canvas.width =
+        width;
+
+      canvas.height =
+        height;
+
+
+      const context =
+        canvas.getContext(
+          "2d",
+          {
+            alpha:
+              false
+          }
+        );
+
+
+      context.fillStyle =
+        "#ffffff";
+
+      context.fillRect(
+        0,
+        0,
+        width,
+        height
+      );
+
+
+      context.imageSmoothingEnabled =
+        true;
+
+      context.imageSmoothingQuality =
+        "high";
+
+
+      context.drawImage(
+        bitmap,
+        0,
+        0,
+        width,
+        height
+      );
+
+
+      for (
+        const quality
+        of qualitySteps
+      ) {
+        const candidate =
+          await new Promise(
+            resolve =>
+              canvas.toBlob(
+                resolve,
+                "image/webp",
+                quality
+              )
+          );
+
+
+        if (!candidate) {
+          continue;
+        }
+
+
+        if (
+          !smallest
+          ||
+          candidate.size
+          < smallest.size
+        ) {
+          smallest =
+            candidate;
+        }
+
+
+        if (
+          candidate.size
+          <= maxBytes
+        ) {
+          return candidate;
+        }
+      }
+    }
+
+
+    return smallest
+      || sourceBlob;
+
+
+  } finally {
+    bitmap.close?.();
+  }
+}
+
+
+function notebookBlobToDataUrl(
+  blob
+) {
+  return new Promise(
+    (
+      resolve,
+      reject
+    ) => {
+      const reader =
+        new FileReader();
+
+
+      reader.onload =
+        () =>
+          resolve(
+            String(
+              reader.result
+              || ""
+            )
+          );
+
+
+      reader.onerror =
+        () =>
+          reject(
+            new Error(
+              "Não foi possível ler a imagem."
+            )
+          );
+
+
+      reader.readAsDataURL(
+        blob
+      );
+    }
+  );
+}
+
+
+async function addNotebookImages(
+  files
+) {
+  if (
+    !notebookState.editorEditable
+  ) {
+    return;
+  }
+
+
+  const editor =
+    document.getElementById(
+      "notebook-editor"
+    );
+
+
+  if (!editor) {
+    return;
+  }
+
+
+  const currentCount =
+    notebookImageCount();
+
+
+  const remaining =
+    Math.max(
+      0,
+      2 - currentCount
+    );
+
+
+  if (
+    remaining <= 0
+  ) {
+    alert(
+      "Este caderno já possui o máximo de 2 imagens."
+    );
+
+    return;
+  }
+
+
+  const selected =
+    Array.from(
+      files
+      || []
+    )
+      .filter(
+        file =>
+          file.type
+            ?.startsWith(
+              "image/"
+            )
+      )
+      .slice(
+        0,
+        remaining
+      );
+
+
+  if (
+    !selected.length
+  ) {
+    return;
+  }
+
+
+  if (
+    Array.from(
+      files
+      || []
+    ).length
+    > remaining
+  ) {
+    alert(
+      `Você pode adicionar no máximo 2 imagens por caderno. Serão inseridas apenas ${remaining}.`
+    );
+  }
+
+
+  setSaveStatus(
+    "Preparando imagem...",
+    "saving"
+  );
+
+
+  const htmlParts =
+    [];
+
+
+  for (
+    const file
+    of selected
+  ) {
+    const compressed =
+      await compressNotebookImageBlob(
+        file
+      );
+
+
+    const dataUrl =
+      await notebookBlobToDataUrl(
+        compressed
+      );
+
+
+    htmlParts.push(
+      `<p><img src="${dataUrl}" alt="Imagem do caderno"></p><p><br></p>`
+    );
+  }
+
+
+  restoreSelection();
+
+
+  document.execCommand(
+    "insertHTML",
+    false,
+    htmlParts.join(
+      ""
+    )
+  );
+
+
+  saveSelection();
+
   scheduleSave();
 }
 
@@ -13254,21 +13726,83 @@ function wireEvents() {
 
   document
     .getElementById(
-      "notebook-table-read-image"
-    )
-    ?.addEventListener(
-      "click",
-      readNotebookTableImage
-    );
-
-
-  document
-    .getElementById(
       "notebook-table-insert"
     )
     ?.addEventListener(
       "click",
       insertNotebookTable
+    );
+
+
+  const imageButton =
+    document.getElementById(
+      "notebook-image-add"
+    );
+
+
+  const imageInput =
+    document.getElementById(
+      "notebook-image-input"
+    );
+
+
+  imageButton
+    ?.addEventListener(
+      "mousedown",
+      event =>
+        event.preventDefault()
+    );
+
+
+  imageButton
+    ?.addEventListener(
+      "click",
+      () => {
+        if (
+          notebookImageCount()
+          >= 2
+        ) {
+          alert(
+            "Este caderno já possui o máximo de 2 imagens."
+          );
+
+          return;
+        }
+
+
+        saveSelection();
+
+        imageInput?.click();
+      }
+    );
+
+
+  imageInput
+    ?.addEventListener(
+      "change",
+      async () => {
+        try {
+          await addNotebookImages(
+            imageInput.files
+          );
+
+        } catch (
+          error
+        ) {
+          console.error(
+            error
+          );
+
+          setSaveStatus(
+            `Erro ao adicionar imagem: ${error.message}`,
+            "error"
+          );
+
+        } finally {
+          imageInput.value =
+            "";
+        }
+      }
     );
 
 
