@@ -6570,143 +6570,1123 @@ function mapNotebookCellsToLogicalColumns(
 }
 
 
-function buildNotebookTableStructureLineByLine(
+function notebookAtomicTokenType(
+  value
+) {
+  const text =
+    String(
+      value
+      || ""
+    )
+      .trim();
+
+
+  if (
+    !text
+  ) {
+    return null;
+  }
+
+
+  if (
+    /^[-+]?\d+(?:[.,]\d+)?%?$/
+      .test(
+        text
+      )
+  ) {
+    return "number";
+  }
+
+
+  if (
+    /^[A-Za-zÀ-ÿ]$/
+      .test(
+        text
+      )
+  ) {
+    return "letter";
+  }
+
+
+  if (
+    /^(?:[<>]=?|[≤≥=±]|\+|-)$/
+      .test(
+        text
+      )
+  ) {
+    return "symbol";
+  }
+
+
+  return null;
+}
+
+
+function notebookTableBounds(
   words,
   grid,
   canvas
 ) {
-  const originalBands =
+  const usable =
+    notebookTableWordData(
+      words
+    );
+
+
+  const vertical =
+    grid?.vertical
+      ?.slice()
+      ?.sort(
+        (
+          a,
+          b
+        ) =>
+          a - b
+      )
+    || [];
+
+
+  if (
+    vertical.length >= 2
+  ) {
+    return {
+      left:
+        vertical[0],
+
+      right:
+        vertical[
+          vertical.length - 1
+        ],
+
+      width:
+        Math.max(
+          1,
+          vertical[
+            vertical.length - 1
+          ]
+          - vertical[0]
+        )
+    };
+  }
+
+
+  if (
+    usable.length
+  ) {
+    const left =
+      Math.min(
+        ...usable.map(
+          word =>
+            word.x0
+        )
+      );
+
+
+    const right =
+      Math.max(
+        ...usable.map(
+          word =>
+            word.x1
+        )
+      );
+
+
+    return {
+      left,
+      right,
+      width:
+        Math.max(
+          1,
+          right - left
+        )
+    };
+  }
+
+
+  return {
+    left:
+      0,
+
+    right:
+      canvas?.width
+      || 1,
+
+    width:
+      canvas?.width
+      || 1
+  };
+}
+
+
+function clusterNotebookXPositions(
+  candidates,
+  tolerance
+) {
+  if (
+    !candidates.length
+  ) {
+    return [];
+  }
+
+
+  const ordered =
+    candidates
+      .slice()
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a.x - b.x
+      );
+
+
+  const clusters =
+    [];
+
+
+  for (
+    const candidate
+    of ordered
+  ) {
+    let cluster =
+      clusters.find(
+        item =>
+          Math.abs(
+            item.x
+            - candidate.x
+          )
+          <= tolerance
+      );
+
+
+    if (
+      !cluster
+    ) {
+      cluster = {
+        x:
+          candidate.x,
+
+        weight:
+          0,
+
+        lines:
+          new Set(),
+
+        atomicWeight:
+          0,
+
+        values:
+          []
+      };
+
+
+      clusters.push(
+        cluster
+      );
+    }
+
+
+    cluster.values.push(
+      candidate
+    );
+
+
+    cluster.weight +=
+      Number(
+        candidate.weight
+        || 1
+      );
+
+
+    if (
+      candidate.atomic
+    ) {
+      cluster.atomicWeight +=
+        Number(
+          candidate.weight
+          || 1
+        );
+    }
+
+
+    if (
+      Number.isInteger(
+        candidate.lineIndex
+      )
+    ) {
+      cluster.lines.add(
+        candidate.lineIndex
+      );
+    }
+
+
+    const totalWeight =
+      cluster.values.reduce(
+        (
+          sum,
+          item
+        ) =>
+          sum
+          + Number(
+              item.weight
+              || 1
+            ),
+        0
+      );
+
+
+    cluster.x =
+      cluster.values.reduce(
+        (
+          sum,
+          item
+        ) =>
+          sum
+          + item.x
+          * Number(
+              item.weight
+              || 1
+            ),
+        0
+      )
+      / Math.max(
+          1,
+          totalWeight
+        );
+  }
+
+
+  return clusters;
+}
+
+
+function notebookTextColumnAnchors(
+  words,
+  grid,
+  canvas
+) {
+  const usable =
+    notebookTableWordData(
+      words
+    );
+
+
+  if (
+    !usable.length
+  ) {
+    return {
+      anchors: [],
+      source:
+        "none"
+    };
+  }
+
+
+  const bounds =
+    notebookTableBounds(
+      usable,
+      grid,
+      canvas
+    );
+
+
+  const typicalHeight =
+    Math.max(
+      6,
+      medianNotebookNumber(
+        usable.map(
+          word =>
+            word.height
+        )
+      )
+    );
+
+
+  const lines =
+    groupNotebookWordsIntoVisualLines(
+      usable
+    );
+
+
+  const candidates =
+    [];
+
+
+  lines.forEach(
+    (
+      line,
+      lineIndex
+    ) => {
+      const segments =
+        notebookPhraseSegments(
+          line.words
+        );
+
+
+      segments.forEach(
+        segment => {
+          candidates.push({
+            x:
+              segment.x,
+
+            weight:
+              segments.length >= 2
+                ? 1.8
+                : 0.45,
+
+            lineIndex,
+
+            atomic:
+              false,
+
+            text:
+              segment.text
+          });
+        }
+      );
+
+
+      line.words.forEach(
+        word => {
+          const atomicType =
+            notebookAtomicTokenType(
+              word.text
+            );
+
+
+          if (
+            !atomicType
+          ) {
+            return;
+          }
+
+
+          /*
+            Número/letra isolada vale muito como âncora.
+            Em tabelas médicas, as colunas de pontos são
+            justamente compostas por 1, 2, 3, A, B etc.
+          */
+          candidates.push({
+            x:
+              word.x,
+
+            weight:
+              atomicType === "number"
+                ? 4
+                : 3.2,
+
+            lineIndex,
+
+            atomic:
+              true,
+
+            text:
+              word.text
+          });
+        }
+      );
+    }
+  );
+
+
+  const tolerance =
+    Math.max(
+      10,
+      typicalHeight * 1.5,
+      bounds.width * 0.025
+    );
+
+
+  const clusters =
+    clusterNotebookXPositions(
+      candidates,
+      tolerance
+    );
+
+
+  /*
+    Âncoras de colunas à direita precisam se repetir em linhas
+    diferentes OU ter forte evidência de números/letras.
+  */
+  const repeated =
+    clusters
+      .filter(
+        cluster =>
+          cluster.lines.size >= 2
+          ||
+          cluster.atomicWeight >= 7
+      )
+      .filter(
+        cluster =>
+          cluster.x
+          >
+          bounds.left
+          + bounds.width * 0.16
+      )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a.x - b.x
+      );
+
+
+  /*
+    Agrupa novamente clusters vizinhos, pois a palavra
+    "Original" e os números abaixo podem ter centros
+    ligeiramente diferentes.
+  */
+  const rightAnchors =
+    [];
+
+
+  repeated.forEach(
+    cluster => {
+      const previous =
+        rightAnchors[
+          rightAnchors.length - 1
+        ];
+
+
+      if (
+        previous
+        &&
+        Math.abs(
+          previous.x
+          - cluster.x
+        )
+        <= tolerance * 1.35
+      ) {
+        const total =
+          previous.weight
+          + cluster.weight;
+
+
+        previous.x =
+          (
+            previous.x
+            * previous.weight
+            + cluster.x
+            * cluster.weight
+          )
+          / Math.max(
+              1,
+              total
+            );
+
+
+        previous.weight =
+          total;
+
+
+        previous.lines =
+          new Set([
+            ...previous.lines,
+            ...cluster.lines
+          ]);
+
+      } else {
+        rightAnchors.push({
+          ...cluster,
+
+          lines:
+            new Set(
+              cluster.lines
+            )
+        });
+      }
+    }
+  );
+
+
+  /*
+    Primeira coluna é a coluna textual. Seu centro não é
+    confiável porque frases têm comprimentos diferentes.
+    Usamos a mediana dos inícios de linha.
+  */
+  const firstStarts =
+    lines
+      .map(
+        line =>
+          line.words[0]
+            ?.x0
+      )
+      .filter(
+        Number.isFinite
+      );
+
+
+  const firstAnchor =
+    firstStarts.length
+      ? medianNotebookNumber(
+          firstStarts
+        )
+        + typicalHeight * 2
+      : bounds.left
+        + typicalHeight * 2;
+
+
+  let anchors = [
+    firstAnchor,
+    ...rightAnchors.map(
+      cluster =>
+        cluster.x
+    )
+  ];
+
+
+  /*
+    Se a grade vertical parece consistente e indica MAIS
+    colunas do que o texto, usa seus centros como apoio.
+    Nunca reduz as colunas encontradas pelo texto.
+  */
+  const vertical =
+    grid?.vertical
+      ?.slice()
+      ?.sort(
+        (
+          a,
+          b
+        ) =>
+          a - b
+      )
+    || [];
+
+
+  if (
+    vertical.length >= 3
+  ) {
+    const gridAnchors =
+      [];
+
+
+    for (
+      let index = 0;
+      index < vertical.length - 1;
+      index += 1
+    ) {
+      gridAnchors.push(
+        (
+          vertical[index]
+          + vertical[
+              index + 1
+            ]
+        ) / 2
+      );
+    }
+
+
+    if (
+      gridAnchors.length
+      > anchors.length
+    ) {
+      anchors =
+        gridAnchors;
+    }
+  }
+
+
+  anchors =
+    anchors
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a - b
+      )
+      .filter(
+        (
+          value,
+          index,
+          array
+        ) =>
+          index === 0
+          ||
+          value
+          - array[
+              index - 1
+            ]
+          >
+          tolerance * 0.9
+      );
+
+
+  /*
+    Limite seguro: evita uma tabela de 8 colunas causada por
+    números internos da própria frase.
+  */
+  if (
+    anchors.length > 6
+  ) {
+    const scoredRight =
+      rightAnchors
+        .slice()
+        .sort(
+          (
+            a,
+            b
+          ) =>
+            (
+              b.lines.size * 5
+              + b.atomicWeight
+            )
+            -
+            (
+              a.lines.size * 5
+              + a.atomicWeight
+            )
+        )
+        .slice(
+          0,
+          5
+        )
+        .sort(
+          (
+            a,
+            b
+          ) =>
+            a.x - b.x
+        );
+
+
+    anchors = [
+      firstAnchor,
+      ...scoredRight.map(
+        item =>
+          item.x
+      )
+    ];
+  }
+
+
+  return {
+    anchors,
+
+    source:
+      rightAnchors.length
+        ? "texto repetido"
+        : vertical.length >= 3
+          ? "grade"
+          : "texto"
+  };
+}
+
+
+function notebookColumnCuts(
+  anchors
+) {
+  const cuts =
+    [];
+
+
+  for (
+    let index = 0;
+    index < anchors.length - 1;
+    index += 1
+  ) {
+    cuts.push(
+      (
+        anchors[index]
+        + anchors[
+            index + 1
+          ]
+      ) / 2
+    );
+  }
+
+
+  return cuts;
+}
+
+
+function notebookAssignWordsToAnchors(
+  words,
+  anchors
+) {
+  if (
+    !anchors.length
+  ) {
+    return [
+      notebookCellTextFromWords(
+        words
+      )
+    ];
+  }
+
+
+  const cuts =
+    notebookColumnCuts(
+      anchors
+    );
+
+
+  const buckets =
+    anchors.map(
+      () =>
+        []
+    );
+
+
+  notebookTableWordData(
+    words
+  )
+    .forEach(
+      word => {
+        let index =
+          0;
+
+
+        while (
+          index < cuts.length
+          &&
+          word.x > cuts[index]
+        ) {
+          index +=
+            1;
+        }
+
+
+        buckets[
+          Math.min(
+            buckets.length - 1,
+            index
+          )
+        ].push(
+          word
+        );
+      }
+    );
+
+
+  return buckets.map(
+    bucket =>
+      notebookCellTextFromWords(
+        bucket
+      )
+  );
+}
+
+
+function notebookBandVerticalEvidence(
+  band,
+  grid,
+  canvas
+) {
+  const vertical =
+    grid?.vertical
+      ?.slice()
+      ?.sort(
+        (
+          a,
+          b
+        ) =>
+          a - b
+      )
+    || [];
+
+
+  if (
+    vertical.length < 3
+  ) {
+    return 1;
+  }
+
+
+  let count =
+    1;
+
+
+  for (
+    let index = 1;
+    index < vertical.length - 1;
+    index += 1
+  ) {
+    const support =
+      notebookVerticalEdgeSupport(
+        canvas,
+        vertical[index],
+        band.top,
+        band.bottom
+      );
+
+
+    if (
+      support >= 0.24
+    ) {
+      count +=
+        1;
+    }
+  }
+
+
+  return count;
+}
+
+
+function buildNotebookTableStructureFromText(
+  words,
+  grid,
+  canvas
+) {
+  const usable =
+    notebookTableWordData(
+      words
+    );
+
+
+  if (
+    !usable.length
+  ) {
+    return null;
+  }
+
+
+  const anchorInfo =
+    notebookTextColumnAnchors(
+      usable,
+      grid,
+      canvas
+    );
+
+
+  const anchors =
+    anchorInfo.anchors;
+
+
+  if (
+    !anchors.length
+  ) {
+    return null;
+  }
+
+
+  const baseColumns =
+    Math.max(
+      1,
+      anchors.length
+    );
+
+
+  const bands =
     buildNotebookRowBands(
-      words,
+      usable,
       grid,
       canvas
     );
 
 
   if (
-    !originalBands.length
+    !bands.length
   ) {
     return null;
   }
 
 
-  /*
-    Cada faixa visual é reavaliada linha a linha.
-    Se houver duas linhas com números/colunas independentes,
-    elas viram duas linhas da tabela.
-    Se a segunda linha for só continuação de uma frase longa,
-    continua pertencendo à mesma linha.
-  */
-  const bands =
-    originalBands.flatMap(
-      band =>
-        splitNotebookBandIntoLogicalRows(
-          band,
-          grid,
-          canvas
-        )
-    );
-
-
-  const descriptors =
-    bands.map(
-      band =>
-        analyzeNotebookRow(
-          band,
-          grid,
-          canvas
-        )
-    );
-
-
-  const baseColumns =
-    Math.max(
-      1,
-      ...descriptors.map(
-        descriptor =>
-          descriptor.inferredCount
-      )
-    );
-
-
-  const anchors =
-    notebookReferenceAnchors(
-      descriptors,
-      baseColumns
-    );
-
-
   const rows =
-    descriptors
-      .map(
-        (
-          descriptor,
-          rowIndex
-        ) => {
-          const dividerCells =
-            notebookRowCellsFromDividers(
-              descriptor
-            );
+    [];
 
 
-          const phraseCells =
-            notebookRowCellsFromPhrases(
-              descriptor
-            );
+  bands.forEach(
+    (
+      band,
+      rowIndex
+    ) => {
+      const cellTexts =
+        notebookAssignWordsToAnchors(
+          band.words,
+          anchors
+        );
 
 
-          let cells =
-            dividerCells.length
-            >= phraseCells.length
-              ? dividerCells
-              : phraseCells;
-
-
-          cells =
-            cells.filter(
-              cell =>
+      const nonEmptyIndexes =
+        cellTexts
+          .map(
+            (
+              text,
+              index
+            ) => ({
+              text:
                 String(
-                  cell.text
+                  text
                   || ""
-                ).trim()
-            );
+                )
+                  .replace(
+                    /\s+/g,
+                    " "
+                  )
+                  .trim(),
+
+              index
+            })
+          )
+          .filter(
+            item =>
+              item.text
+          );
 
 
-          if (
-            !cells.length
-          ) {
-            return null;
-          }
+      if (
+        !nonEmptyIndexes.length
+      ) {
+        return;
+      }
 
 
-          const logical =
-            mapNotebookCellsToLogicalColumns(
-              cells,
-              anchors,
-              baseColumns
-            );
+      const verticalEvidence =
+        notebookBandVerticalEvidence(
+          band,
+          grid,
+          canvas
+        );
 
 
-          return {
-            cells:
-              logical.map(
-                cell => ({
-                  text:
-                    cell.text,
+      const phraseEvidence =
+        Math.max(
+          1,
+          ...groupNotebookWordsIntoVisualLines(
+            band.words
+          )
+            .map(
+              line =>
+                notebookPhraseSegments(
+                  line.words
+                ).length
+            )
+        );
 
-                  colspan:
-                    cell.colspan,
 
-                  header:
-                    rowIndex === 0
-                })
-              )
-          };
+      const explicitColumns =
+        Math.max(
+          verticalEvidence,
+          phraseEvidence,
+          nonEmptyIndexes.length
+        );
+
+
+      /*
+        Uma única frase/texto na linha, sem evidência de
+        divisões internas, vira título com colspan.
+      */
+      if (
+        explicitColumns === 1
+        &&
+        baseColumns > 1
+      ) {
+        rows.push({
+          cells: [
+            {
+              text:
+                nonEmptyIndexes
+                  .map(
+                    item =>
+                      item.text
+                  )
+                  .join(
+                    " "
+                  )
+                  .trim(),
+
+              colspan:
+                baseColumns,
+
+              header:
+                rowIndex === 0
+            }
+          ]
+        });
+
+
+        return;
+      }
+
+
+      /*
+        Mantém a posição real das células. Se só as colunas
+        1 e 3 têm texto, a coluna intermediária continua
+        existindo vazia — não juntamos os valores.
+      */
+      const cells =
+        [];
+
+
+      let index =
+        0;
+
+
+      while (
+        index < baseColumns
+      ) {
+        const text =
+          String(
+            cellTexts[index]
+            || ""
+          )
+            .replace(
+              /\s+/g,
+              " "
+            )
+            .trim();
+
+
+        if (
+          text
+        ) {
+          cells.push({
+            text,
+
+            colspan:
+              1,
+
+            header:
+              rowIndex === 0
+          });
+
+
+          index +=
+            1;
+
+
+          continue;
         }
-      )
-      .filter(
-        Boolean
-      );
+
+
+        /*
+          Célula vazia é preservada quando a linha tem
+          evidência estrutural de várias colunas.
+        */
+        if (
+          explicitColumns >= 2
+        ) {
+          cells.push({
+            text:
+              "",
+
+            colspan:
+              1,
+
+            header:
+              rowIndex === 0
+          });
+        }
+
+
+        index +=
+          1;
+      }
+
+
+      if (
+        cells.length
+      ) {
+        rows.push({
+          cells
+        });
+      }
+    }
+  );
 
 
   if (
@@ -6718,8 +7698,32 @@ function buildNotebookTableStructureLineByLine(
 
   return {
     baseColumns,
-    rows
+    rows,
+    anchorSource:
+      anchorInfo.source
   };
+}
+
+
+function buildNotebookTableStructureLineByLine(
+  words,
+  grid,
+  canvas
+) {
+  /*
+    A partir da v26, o TEXTO é a fonte principal:
+    - frases separadas;
+    - números isolados;
+    - letras isoladas;
+    - repetição de posições X entre linhas.
+
+    A grade serve apenas de confirmação.
+  */
+  return buildNotebookTableStructureFromText(
+    words,
+    grid,
+    canvas
+  );
 }
 
 
@@ -8045,7 +9049,7 @@ async function readNotebookTableImage() {
 
   try {
     setNotebookTableStatus(
-      "Detectando as linhas reais da tabela..."
+      "Lendo frases, números e letras da tabela..."
     );
 
 
@@ -8061,100 +9065,91 @@ async function readNotebookTableImage() {
       );
 
 
-    let words =
-      [];
-
-
-    let method =
-      "";
+    const enhancedCanvas =
+      createNotebookTableOcrCanvas(
+        sourceCanvas,
+        null
+      );
 
 
     /*
-      CAMINHO PRINCIPAL:
-      se há linhas horizontais, cada linha da imagem passa
-      por OCR separadamente. O fundo dominante é removido,
-      inclusive em cabeçalhos azuis com texto branco.
+      OCR global volta a ser a base, pois preserva a posição
+      relativa de frases + números + letras de toda a tabela.
+      Não apagamos a grade antes desta leitura.
+    */
+    const [
+      originalResult,
+      enhancedResult
+    ] =
+      await Promise.all([
+        window.Tesseract
+          .recognize(
+            sourceCanvas,
+            "por"
+          ),
+
+        window.Tesseract
+          .recognize(
+            enhancedCanvas,
+            "por"
+          )
+      ]);
+
+
+    let words =
+      mergeNotebookOcrWords(
+        originalResult
+          ?.data
+          ?.words
+        || [],
+        enhancedResult
+          ?.data
+          ?.words
+        || []
+      );
+
+
+    /*
+      OCR por linha é APENAS complemento, principalmente para
+      cabeçalhos com fundo colorido. A estrutura não depende
+      mais dele.
     */
     if (
       grid?.horizontal
         ?.length >= 2
     ) {
-      words =
-        await recognizeNotebookRowsIndividually(
-          sourceCanvas,
-          grid
+      try {
+        const rowWords =
+          await recognizeNotebookRowsIndividually(
+            sourceCanvas,
+            grid
+          );
+
+
+        words =
+          mergeNotebookOcrWords(
+            words,
+            rowWords
+          );
+
+      } catch (
+        rowError
+      ) {
+        console.warn(
+          "OCR complementar por linha falhou:",
+          rowError
         );
-
-
-      method =
-        "OCR individual por linha";
-    }
-
-
-    /*
-      Fallback para tabela sem grade horizontal confiável.
-      Mantém a leitura global antiga, mas a construção ainda
-      usa frases e números soltos como evidência de divisão.
-    */
-    if (
-      !words.length
-    ) {
-      setNotebookTableStatus(
-        "Sem grade horizontal confiável. Lendo texto e posições..."
-      );
-
-
-      const ocrCanvas =
-        createNotebookTableOcrCanvas(
-          sourceCanvas,
-          grid
-        );
-
-
-      const [
-        enhancedResult,
-        originalResult
-      ] =
-        await Promise.all([
-          window.Tesseract
-            .recognize(
-              ocrCanvas,
-              "por"
-            ),
-
-          window.Tesseract
-            .recognize(
-              sourceCanvas,
-              "por"
-            )
-        ]);
-
-
-      words =
-        mergeNotebookOcrWords(
-          enhancedResult
-            ?.data
-            ?.words
-          || [],
-          originalResult
-            ?.data
-            ?.words
-          || []
-        );
-
-
-      method =
-        "OCR global + posições";
+      }
     }
 
 
     setNotebookTableStatus(
-      "Reconstruindo cada linha com divisórias, frases e números isolados..."
+      "Agrupando frases e usando números/letras repetidos para descobrir as colunas..."
     );
 
 
-    let structure =
-      buildNotebookTableStructureLineByLine(
+    const structure =
+      buildNotebookTableStructureFromText(
         words,
         grid,
         sourceCanvas
@@ -8168,7 +9163,7 @@ async function readNotebookTableImage() {
         ?.length
     ) {
       throw new Error(
-        "Não consegui reconstruir a estrutura da tabela."
+        "Não consegui reconstruir a estrutura a partir do texto."
       );
     }
 
@@ -8192,7 +9187,7 @@ async function readNotebookTableImage() {
 
 
     setNotebookTableStatus(
-      `Tabela reconhecida por ${method}: ${rowPattern} célula(s) por linha. Frases e números isolados foram usados para confirmar as divisões.`,
+      `Tabela construída pelo conteúdo: ${rowPattern} célula(s) por linha. As colunas foram inferidas por frases, números/letras isolados e repetição de posição.`,
       "success"
     );
 
