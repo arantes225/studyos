@@ -3958,6 +3958,212 @@ function medianNotebookNumber(
 }
 
 
+function notebookOcrWordsFromData(
+  data
+) {
+  if (
+    Array.isArray(
+      data?.words
+    )
+    &&
+    data.words.length
+  ) {
+    return data.words;
+  }
+
+
+  /*
+    Algumas versões/configurações do Tesseract retornam o
+    texto e TSV, mas não preenchem data.words. O leitor antigo
+    interpretava isso como "nenhuma palavra" e falhava mesmo
+    tendo reconhecido o conteúdo.
+  */
+  if (
+    typeof data?.tsv === "string"
+    &&
+    data.tsv.trim()
+  ) {
+    const rows =
+      data.tsv
+        .split(
+          /\r?\n/
+        );
+
+
+    const words =
+      [];
+
+
+    for (
+      let index = 1;
+      index < rows.length;
+      index += 1
+    ) {
+      const columns =
+        rows[index]
+          .split(
+            "\t"
+          );
+
+
+      if (
+        columns.length < 12
+      ) {
+        continue;
+      }
+
+
+      const level =
+        Number(
+          columns[0]
+        );
+
+
+      const left =
+        Number(
+          columns[6]
+        );
+
+      const top =
+        Number(
+          columns[7]
+        );
+
+      const width =
+        Number(
+          columns[8]
+        );
+
+      const height =
+        Number(
+          columns[9]
+        );
+
+      const confidence =
+        Number(
+          columns[10]
+        );
+
+      const text =
+        columns
+          .slice(
+            11
+          )
+          .join(
+            "\t"
+          )
+          .trim();
+
+
+      if (
+        level !== 5
+        ||
+        !text
+        ||
+        !Number.isFinite(
+          left
+        )
+        ||
+        !Number.isFinite(
+          top
+        )
+        ||
+        !Number.isFinite(
+          width
+        )
+        ||
+        !Number.isFinite(
+          height
+        )
+      ) {
+        continue;
+      }
+
+
+      words.push({
+        text,
+        confidence,
+
+        bbox: {
+          x0:
+            left,
+
+          y0:
+            top,
+
+          x1:
+            left + width,
+
+          y1:
+            top + height
+        }
+      });
+    }
+
+
+    if (
+      words.length
+    ) {
+      return words;
+    }
+  }
+
+
+  /*
+    Fallback para saídas estruturadas em blocks.
+  */
+  const structured =
+    [];
+
+
+  const blocks =
+    Array.isArray(
+      data?.blocks
+    )
+      ? data.blocks
+      : [];
+
+
+  blocks.forEach(
+    block =>
+      (
+        block.paragraphs
+        || []
+      )
+        .forEach(
+          paragraph =>
+            (
+              paragraph.lines
+              || []
+            )
+              .forEach(
+                line =>
+                  (
+                    line.words
+                    || []
+                  )
+                    .forEach(
+                      word => {
+                        if (
+                          word?.text
+                          &&
+                          word?.bbox
+                        ) {
+                          structured.push(
+                            word
+                          );
+                        }
+                      }
+                    )
+              )
+        )
+  );
+
+
+  return structured;
+}
+
+
 function notebookTableWordData(
   words
 ) {
@@ -7513,6 +7719,10 @@ function buildNotebookTableStructureFromText(
   }
 
 
+  /*
+    Descobre as colunas globais pela repetição de posições
+    de frases, números e letras soltas.
+  */
   const anchorInfo =
     notebookTextColumnAnchors(
       usable,
@@ -7521,8 +7731,56 @@ function buildNotebookTableStructureFromText(
     );
 
 
-  const anchors =
-    anchorInfo.anchors;
+  let anchors =
+    anchorInfo.anchors
+      ?.slice()
+    || [];
+
+
+  /*
+    Fallback estrutural seguro:
+    se o texto só encontrou 1 coluna, mas a grade realmente
+    possui várias divisões verticais, usa os centros da grade.
+    Se o texto já encontrou 2+ colunas, a grade NÃO sobrescreve.
+  */
+  if (
+    anchors.length <= 1
+    &&
+    grid?.vertical
+      ?.length >= 3
+  ) {
+    const vertical =
+      grid.vertical
+        .slice()
+        .sort(
+          (
+            a,
+            b
+          ) =>
+            a - b
+        );
+
+
+    anchors =
+      [];
+
+
+    for (
+      let index = 0;
+      index < vertical.length - 1;
+      index += 1
+    ) {
+      anchors.push(
+        (
+          vertical[index]
+          +
+          vertical[
+            index + 1
+          ]
+        ) / 2
+      );
+    }
+  }
 
 
   if (
@@ -7539,12 +7797,39 @@ function buildNotebookTableStructureFromText(
     );
 
 
-  const bands =
+  /*
+    Quando temos linhas horizontais confiáveis, cada faixa
+    corresponde a uma linha da tabela. Isso evita o OCR unir
+    duas linhas diferentes ou ignorar o cabeçalho.
+  */
+  let bands =
     buildNotebookRowBands(
       usable,
       grid,
       canvas
     );
+
+
+  if (
+    !bands.length
+  ) {
+    bands =
+      groupNotebookWordsIntoVisualLines(
+        usable
+      )
+        .map(
+          line => ({
+            top:
+              line.top,
+
+            bottom:
+              line.bottom,
+
+            words:
+              line.words
+          })
+        );
+  }
 
 
   if (
@@ -7563,6 +7848,32 @@ function buildNotebookTableStructureFromText(
       band,
       rowIndex
     ) => {
+      const visualLines =
+        groupNotebookWordsIntoVisualLines(
+          band.words
+        );
+
+
+      const phraseGroups =
+        visualLines
+          .map(
+            line =>
+              notebookPhraseSegments(
+                line.words
+              )
+          );
+
+
+      const maxPhraseCells =
+        Math.max(
+          1,
+          ...phraseGroups.map(
+            groups =>
+              groups.length
+          )
+        );
+
+
       const cellTexts =
         notebookAssignWordsToAnchors(
           band.words,
@@ -7570,13 +7881,15 @@ function buildNotebookTableStructureFromText(
         );
 
 
-      const nonEmptyIndexes =
+      const nonEmpty =
         cellTexts
           .map(
             (
               text,
               index
             ) => ({
+              index,
+
               text:
                 String(
                   text
@@ -7586,9 +7899,7 @@ function buildNotebookTableStructureFromText(
                     /\s+/g,
                     " "
                   )
-                  .trim(),
-
-              index
+                  .trim()
             })
           )
           .filter(
@@ -7598,12 +7909,17 @@ function buildNotebookTableStructureFromText(
 
 
       if (
-        !nonEmptyIndexes.length
+        !nonEmpty.length
       ) {
         return;
       }
 
 
+      /*
+        Conta quantas divisórias verticais existem DE FATO
+        nesta linha. Em título/cabeçalho mesclado, as linhas
+        verticais internas podem desaparecer.
+       */
       const verticalEvidence =
         notebookBandVerticalEvidence(
           band,
@@ -7612,35 +7928,31 @@ function buildNotebookTableStructureFromText(
         );
 
 
-      const phraseEvidence =
+      /*
+        Frases separadas e números/letras em posições distintas
+        têm prioridade para provar que a linha possui colunas.
+        Ex.: "Escore de Genebra   Original   Simplificado"
+        continua sendo 3 células mesmo sem bordas verticais.
+      */
+      const contentEvidence =
         Math.max(
-          1,
-          ...groupNotebookWordsIntoVisualLines(
-            band.words
-          )
-            .map(
-              line =>
-                notebookPhraseSegments(
-                  line.words
-                ).length
-            )
+          maxPhraseCells,
+          nonEmpty.length
         );
 
 
-      const explicitColumns =
+      const rowColumnEvidence =
         Math.max(
           verticalEvidence,
-          phraseEvidence,
-          nonEmptyIndexes.length
+          contentEvidence
         );
 
 
       /*
-        Uma única frase/texto na linha, sem evidência de
-        divisões internas, vira título com colspan.
+        Linha realmente única: vira célula mesclada.
       */
       if (
-        explicitColumns === 1
+        rowColumnEvidence <= 1
         &&
         baseColumns > 1
       ) {
@@ -7648,7 +7960,7 @@ function buildNotebookTableStructureFromText(
           cells: [
             {
               text:
-                nonEmptyIndexes
+                nonEmpty
                   .map(
                     item =>
                       item.text
@@ -7673,87 +7985,91 @@ function buildNotebookTableStructureFromText(
 
 
       /*
-        Mantém a posição real das células. Se só as colunas
-        1 e 3 têm texto, a coluna intermediária continua
-        existindo vazia — não juntamos os valores.
+        Para linha com colunas, sempre cria a quantidade global
+        de células. Isso preserva células vazias e impede valores
+        da direita de serem colados no texto da primeira coluna.
       */
       const cells =
-        [];
-
-
-      let index =
-        0;
-
-
-      while (
-        index < baseColumns
-      ) {
-        const text =
-          String(
-            cellTexts[index]
-            || ""
-          )
-            .replace(
-              /\s+/g,
-              " "
-            )
-            .trim();
-
-
-        if (
-          text
-        ) {
-          cells.push({
-            text,
-
-            colspan:
-              1,
-
-            header:
-              rowIndex === 0
-          });
-
-
-          index +=
-            1;
-
-
-          continue;
-        }
-
-
-        /*
-          Célula vazia é preservada quando a linha tem
-          evidência estrutural de várias colunas.
-        */
-        if (
-          explicitColumns >= 2
-        ) {
-          cells.push({
+        Array.from(
+          {
+            length:
+              baseColumns
+          },
+          (
+            _,
+            index
+          ) => ({
             text:
-              "",
+              String(
+                cellTexts[index]
+                || ""
+              )
+                .replace(
+                  /\s+/g,
+                  " "
+                )
+                .trim(),
 
             colspan:
               1,
 
             header:
               rowIndex === 0
-          });
-        }
+          })
+        );
 
 
-        index +=
-          1;
-      }
-
-
+      /*
+        Se os anchors globais não separaram uma linha que o
+        próprio texto claramente dividiu, usa os segmentos da
+        linha mais informativa como recuperação local.
+      */
       if (
-        cells.length
+        nonEmpty.length <= 1
+        &&
+        maxPhraseCells >= 2
       ) {
-        rows.push({
-          cells
-        });
+        const bestGroups =
+          phraseGroups
+            .slice()
+            .sort(
+              (
+                a,
+                b
+              ) =>
+                b.length - a.length
+            )[0]
+          || [];
+
+
+        if (
+          bestGroups.length >= 2
+        ) {
+          const localTexts =
+            bestGroups.map(
+              group =>
+                group.text
+            );
+
+
+          for (
+            let index = 0;
+            index < Math.min(
+              baseColumns,
+              localTexts.length
+            );
+            index += 1
+          ) {
+            cells[index].text =
+              localTexts[index];
+          }
+        }
       }
+
+
+      rows.push({
+        cells
+      });
     }
   );
 
@@ -8768,10 +9084,9 @@ async function recognizeNotebookRowsIndividually(
 
       const mapped =
         notebookWordsBackToSource(
-          result
-            ?.data
-            ?.words
-          || [],
+          notebookOcrWordsFromData(
+            result?.data
+          ),
           prepared
         );
 
@@ -9167,14 +9482,12 @@ async function readNotebookTableImage() {
 
     let words =
       mergeNotebookOcrWords(
-        originalResult
-          ?.data
-          ?.words
-        || [],
-        enhancedResult
-          ?.data
-          ?.words
-        || []
+        notebookOcrWordsFromData(
+          originalResult?.data
+        ),
+        notebookOcrWordsFromData(
+          enhancedResult?.data
+        )
       );
 
 
@@ -9200,6 +9513,14 @@ async function readNotebookTableImage() {
             words,
             rowWords
           );
+
+
+        console.debug(
+          "[Caderno tabela] OCR por linha:",
+          rowWords.length,
+          "palavras; total combinado:",
+          words.length
+        );
 
       } catch (
         rowError
@@ -9256,7 +9577,7 @@ async function readNotebookTableImage() {
 
 
     setNotebookTableStatus(
-      `Tabela construída pelo conteúdo: ${rowPattern} célula(s) por linha. As colunas foram inferidas por frases, números/letras isolados e repetição de posição.`,
+      `Tabela construída: ${structure.baseColumns} coluna(s)-base · ${structure.rows.length} linha(s) · padrão ${rowPattern}. Frases, números/letras isolados, TSV do OCR e grade foram combinados.`,
       "success"
     );
 
