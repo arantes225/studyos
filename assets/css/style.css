@@ -1618,3 +1618,20 @@ optgroup {
   letter-spacing: -.02em !important;
 }
 
+
+
+/* LURIA — identidade do tema claro baseada no azul dos callouts */
+:root,
+:root[data-theme="light"] {
+  --brand-light-blue: #184888;
+}
+
+:root[data-theme="light"] .brand-copy strong,
+:root[data-theme="light"] .page-heading h1,
+:root[data-theme="light"] .auth-brand h1,
+:root[data-theme="light"] .loading-card strong,
+:root[data-theme="light"] h1,
+:root[data-theme="light"] h2,
+:root[data-theme="light"] h3 {
+  color: var(--brand-light-blue) !important;
+}
