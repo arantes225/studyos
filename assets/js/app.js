@@ -10,6 +10,7 @@ const PAGE_INFO = {
   questoes: { title: "Questões e Simulados", eyebrow: "Estudar" },
   estatisticas: { title: "Estatísticas", eyebrow: "Desempenho" },
   editais: { title: "Editais / Provas", eyebrow: "Planejamento" },
+  amigos: { title: "Amigos", eyebrow: "Compartilhar" },
   configuracoes: { title: "Configurações", eyebrow: "Conta e preferências" },
   admin: { title: "Admin", eyebrow: "Métricas do produto" }
 };
@@ -171,6 +172,10 @@ function sidebarMarkup(user, profile = null) {
 
       <a class="nav-link ${page === "editais" ? "active" : ""}" href="/editais/">
         <span class="nav-icon">▤</span><span>Editais / Provas</span>
+      </a>
+
+      <a class="nav-link ${page === "amigos" ? "active" : ""}" href="/amigos/">
+        <span class="nav-icon">◎</span><span>Amigos</span>
       </a>
 
       <a class="nav-link ${page === "configuracoes" ? "active" : ""}" href="/configuracoes/">
