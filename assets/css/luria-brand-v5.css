@@ -84,7 +84,7 @@
 }
 
 /* Caso algum CSS antigo tente exibir imagens extras */
-.brand > img:not(.luria-theme-logo) {
+.brand > img:not(.luria-theme-logo):not(#luria-brand-logo) {
   display: none !important;
 }
 
