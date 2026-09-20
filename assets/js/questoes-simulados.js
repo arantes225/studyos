@@ -392,6 +392,141 @@ function correctOptionHtml(selected = "") {
   `;
 }
 
+const QS_SOURCE_PROFILES = {
+  general: {
+    label: "Geral",
+    headers: []
+  },
+  medcof: {
+    label: "MEDCOF",
+    headers: [
+      /medcof\s*qbank/i,
+      /prova gerada pelo medcof/i
+    ]
+  },
+  aristo: {
+    label: "Aristo",
+    headers: [
+      /^aristo$/i,
+      /atividade:/i,
+      /impresso em:/i
+    ]
+  },
+  medway: {
+    label: "Medway",
+    headers: [
+      /medway/i
+    ]
+  },
+  "estrategia-med": {
+    label: "Estratégia MED",
+    headers: [
+      /estrat[eé]gia\s*med/i
+    ]
+  },
+  medcurso: {
+    label: "Medcurso",
+    headers: [
+      /medcurso/i,
+      /medgrupo/i
+    ]
+  },
+  other: {
+    label: "Outro",
+    headers: []
+  }
+};
+
+function currentExtractionSettings() {
+  return {
+    mode:
+      document.getElementById("qs-extraction-mode")?.value
+      || "detailed",
+    source:
+      document.getElementById("qs-source-profile")?.value
+      || "general"
+  };
+}
+
+function sourceProfileLabel(source) {
+  return QS_SOURCE_PROFILES[source]?.label
+    || QS_SOURCE_PROFILES.general.label;
+}
+
+function normalizeSourceSpecificLine(line, source) {
+  const value = normalizeLine(line);
+
+  if (!value) {
+    return value;
+  }
+
+  if (
+    ["aristo", "medway", "estrategia-med", "medcurso"]
+      .includes(source)
+  ) {
+    const match =
+      value.match(
+        /^(?:quest[aã]o|questao|q)\s*(\d{1,3})\s*(?:[\)\.\-:]\s*)?(.*)$/i
+      );
+
+    if (match) {
+      return `${match[1]}) ${match[2] || ""}`
+        .trim();
+    }
+  }
+
+  return value;
+}
+
+function isSourceSpecificHeaderLine(line, source) {
+  const profile =
+    QS_SOURCE_PROFILES[source]
+    || QS_SOURCE_PROFILES.general;
+
+  return profile.headers.some(
+    (pattern) =>
+      pattern.test(
+        normalizeLine(line)
+      )
+  );
+}
+
+function questionSetConfidence(questions) {
+  if (!questions?.length) {
+    return -Infinity;
+  }
+
+  let score =
+    questions.length * 100;
+
+  for (const question of questions) {
+    const alternatives =
+      Object.keys(
+        question.alternatives
+        || {}
+      ).length;
+
+    score +=
+      Math.min(
+        alternatives,
+        5
+      ) * 4;
+
+    if (question.stem) {
+      score += 4;
+    }
+
+    if (
+      question.raw_text
+      && question.raw_text.length > 80
+    ) {
+      score += 2;
+    }
+  }
+
+  return score;
+}
+
 function normalizeLine(text) {
   return String(text || "")
     .replace(/\s+/g, " ")
@@ -3825,6 +3960,107 @@ async function ocrQuestionLineRecordsFromCanvas(
 }
 
 
+async function extractQuestionImagesQuick(
+  page,
+  content,
+  pageNumber
+) {
+  const viewport =
+    page.getViewport({
+      scale: 2
+    });
+
+  const lineRecords =
+    groupTextItemsIntoLineRecords(
+      content.items,
+      viewport
+    );
+
+  const regions =
+    questionRegionsFromTextLayout(
+      lineRecords,
+      viewport
+    );
+
+  if (!regions.length) {
+    return [];
+  }
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+  canvas.width =
+    Math.ceil(
+      viewport.width
+    );
+
+  canvas.height =
+    Math.ceil(
+      viewport.height
+    );
+
+  const context =
+    canvas.getContext(
+      "2d",
+      {
+        alpha: false
+      }
+    );
+
+  context.fillStyle =
+    "#ffffff";
+
+  context.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  await page
+    .render({
+      canvasContext:
+        context,
+      viewport
+    })
+    .promise;
+
+  const results =
+    [];
+
+  for (
+    const region
+    of regions
+  ) {
+    setImportStatus(
+      `Extração rápida: recortando questão ${region.question_number} — página ${pageNumber}...`
+    );
+
+    const blob =
+      await cropRenderedPage(
+        canvas,
+        region
+      );
+
+    results.push({
+      question_number:
+        region.question_number,
+      blob,
+      source_rect:
+        region,
+      source:
+        "quick-text-gap",
+      page_number:
+        pageNumber
+    });
+  }
+
+  return results;
+}
+
+
 async function extractQuestionImagesFromPage(
   page,
   content,
@@ -4113,13 +4349,22 @@ async function consolidateQuestionImages(
 
 
 async function extractQuestionsFromPdf(
-  file
+  file,
+  options = {}
 ) {
   if (!window.pdfjsLib) {
     throw new Error(
       "Leitor de PDF não carregou. Atualize a página e tente novamente."
     );
   }
+
+  const extractionMode =
+    options.mode
+    || "detailed";
+
+  const sourceProfile =
+    options.source
+    || "general";
 
   window.pdfjsLib
     .GlobalWorkerOptions
@@ -4141,7 +4386,7 @@ async function extractQuestionsFromPdf(
   const extractedImageEntries = [];
 
   let medCofDetected =
-    false;
+    sourceProfile === "medcof";
 
   for (
     let pageNumber = 1;
@@ -4149,7 +4394,7 @@ async function extractQuestionsFromPdf(
     pageNumber += 1
   ) {
     setImportStatus(
-      `Lendo PDF: página ${pageNumber} de ${pdf.numPages}...`
+      `${extractionMode === "quick" ? "Extração rápida" : "Extração detalhada"} · ${sourceProfileLabel(sourceProfile)} · página ${pageNumber} de ${pdf.numPages}...`
     );
 
     const page =
@@ -4189,10 +4434,21 @@ async function extractQuestionsFromPdf(
       groupTextItemsIntoLines(
         content.items
       )
+        .map(
+          (line) =>
+            normalizeSourceSpecificLine(
+              line,
+              sourceProfile
+            )
+        )
         .filter(
           (line) =>
             !isPdfHeaderLine(
               line
+            )
+            && !isSourceSpecificHeaderLine(
+              line,
+              sourceProfile
             )
         );
 
@@ -4200,27 +4456,24 @@ async function extractQuestionsFromPdf(
       ...lines
     );
 
-    /*
-      Para cada questão, captura uma faixa da página entre
-      o texto do enunciado e o início das alternativas.
-      Não depende de detectar objetos de imagem no PDF.
-    */
     try {
       const pageImages =
-        await extractQuestionImagesFromPage(
-          page,
-          content,
-          pageNumber
-        );
+        extractionMode === "quick"
+          ? await extractQuestionImagesQuick(
+              page,
+              content,
+              pageNumber
+            )
+          : await extractQuestionImagesFromPage(
+              page,
+              content,
+              pageNumber
+            );
 
       extractedImageEntries.push(
         ...pageImages
       );
     } catch (imageError) {
-      /*
-        Falhar no recorte nunca deve impedir
-        a importação do texto.
-      */
       console.warn(
         `Não foi possível recortar imagens da página ${pageNumber}:`,
         imageError
@@ -4229,52 +4482,121 @@ async function extractQuestionsFromPdf(
   }
 
   const defaultSourceLabel =
-    medCofDetected
-      ? "MedCof QBank"
-      : null;
+    sourceProfile !== "general"
+      && sourceProfile !== "other"
+        ? sourceProfileLabel(
+            sourceProfile
+          )
+        : medCofDetected
+          ? "MEDCOF"
+          : null;
 
-  let blocks =
+  const strategies =
+    [];
+
+  const standardBlocks =
     extractQuestionBlocks(
       allLines
     );
 
-  let questions =
+  const standardQuestions =
     questionsFromBlocks(
-      blocks,
+      standardBlocks,
       defaultSourceLabel
     );
 
+  strategies.push({
+    name: "estrutura principal",
+    questions:
+      standardQuestions
+  });
+
   if (
-    questions.length < 2
+    extractionMode === "detailed"
   ) {
     const looseLines =
       buildLooseTextLines(
         pagesText
       )
+        .map(
+          (line) =>
+            normalizeSourceSpecificLine(
+              line,
+              sourceProfile
+            )
+        )
         .filter(
           (line) =>
             !isPdfHeaderLine(
               line
             )
+            && !isSourceSpecificHeaderLine(
+              line,
+              sourceProfile
+            )
         );
 
-    blocks =
-      extractQuestionBlocks(
-        looseLines
-      );
-
-    questions =
+    const looseQuestions =
       questionsFromBlocks(
-        blocks,
+        extractQuestionBlocks(
+          looseLines
+        ),
         defaultSourceLabel
       );
+
+    strategies.push({
+      name: "texto reconstruído",
+      questions:
+        looseQuestions
+    });
+
+    const profileLines =
+      allLines
+        .map(
+          (line) =>
+            normalizeSourceSpecificLine(
+              line,
+              sourceProfile
+            )
+        );
+
+    const profileQuestions =
+      questionsFromBlocks(
+        extractQuestionBlocks(
+          profileLines
+        ),
+        defaultSourceLabel
+      );
+
+    strategies.push({
+      name: `perfil ${sourceProfileLabel(sourceProfile)}`,
+      questions:
+        profileQuestions
+    });
   }
+
+  const bestStrategy =
+    strategies
+      .slice()
+      .sort(
+        (a, b) =>
+          questionSetConfidence(
+            b.questions
+          )
+          - questionSetConfidence(
+              a.questions
+            )
+      )[0];
+
+  const questions =
+    bestStrategy?.questions
+    || [];
 
   if (
     questions.length < 2
   ) {
     throw new Error(
-      "Não consegui identificar as questões deste PDF. O arquivo pode estar totalmente escaneado como imagem ou usar uma estrutura ainda não reconhecida."
+      "Não consegui identificar as questões deste PDF. Tente a Extração detalhada ou selecione o cursinho correto."
     );
   }
 
@@ -4296,26 +4618,26 @@ async function extractQuestionsFromPdf(
       );
 
   if (
-    medCofDetected
-    && Object.keys(
-      answerKey
-    ).length
+    extractionMode === "detailed"
   ) {
     setImportStatus(
-      `MedCof reconhecido: ${questions.length} questões, ${Object.keys(answerKey).length} respostas no gabarito e ${questionImages.length} recorte(s) de imagem preservado(s). Salvando...`
+      `Extração detalhada concluída com ${bestStrategy?.name || "estratégia principal"}: ${questions.length} questões e ${questionImages.length} recorte(s). Salvando...`
     );
-  } else if (
-    questionImages.length
-  ) {
+  } else {
     setImportStatus(
-      `${questions.length} questões e ${questionImages.length} recorte(s) de imagem preservado(s). Salvando simulado...`
+      `Extração rápida concluída: ${questions.length} questões e ${questionImages.length} recorte(s). Salvando...`
     );
   }
 
   return {
     questions,
     questionImages,
-    answerKey
+    answerKey,
+    extractionMode,
+    sourceProfile,
+    strategy:
+      bestStrategy?.name
+      || "estrutura principal"
   };
 }
 
@@ -5431,9 +5753,13 @@ async function importPdf() {
     );
 
 
+    const extractionSettings =
+      currentExtractionSettings();
+
     const extraction =
       await extractQuestionsFromPdf(
-        file
+        file,
+        extractionSettings
       );
 
 
@@ -5552,7 +5878,7 @@ async function importPdf() {
 
 
     setImportStatus(
-      `${questions.length} questões extraídas com sucesso. ${questionImages.length} recorte(s) de imagem preservado(s). O PDF original não foi armazenado.`,
+      `${questions.length} questões extraídas com sucesso em ${extraction.extractionMode === "quick" ? "Extração rápida" : "Extração detalhada"} · ${sourceProfileLabel(extraction.sourceProfile)}. ${questionImages.length} recorte(s) de imagem preservado(s). O PDF original não foi armazenado.`,
       "success"
     );
 
