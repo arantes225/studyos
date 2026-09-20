@@ -653,16 +653,82 @@
     const muted = css("--muted", "#7b8190");
     const border = css("--border", "#e0e3e8");
 
-    const palette = [accent, success, warning, danger, "#8b7cf6", "#55a6b8"];
+    /*
+      Paleta v20:
+      - séries diferentes usam cores diferentes;
+      - gráficos de disco/pizza recebem uma cor por categoria;
+      - evitamos tons visualmente quase idênticos lado a lado.
+    */
+    const palette = [
+      accent,
+      "#2f8f83",
+      warning,
+      danger,
+      "#7a67d8",
+      "#3f8fc9",
+      "#c05d92",
+      "#5f9b52",
+      "#d47b38",
+      "#6b7f9e",
+      success,
+      "#9a6bce"
+    ];
 
-    datasets = datasets.map((d, i) => ({
-      ...d,
-      borderColor: d.borderColor || palette[i % palette.length],
-      backgroundColor: d.backgroundColor || palette[i % palette.length],
-      borderWidth: d.borderWidth ?? 2,
-      tension: d.tension ?? .28,
-      pointRadius: d.pointRadius ?? 2
-    }));
+    const isCircular =
+      type === "doughnut"
+      || type === "pie";
+
+    datasets = datasets.map((d, i) => {
+      const seriesColor =
+        palette[i % palette.length];
+
+      const circularColors =
+        labels.map(
+          (_, pointIndex) =>
+            palette[
+              pointIndex
+              % palette.length
+            ]
+        );
+
+      return {
+        ...d,
+        borderColor:
+          d.borderColor
+          || (
+            isCircular
+              ? css("--surface", "#ffffff")
+              : seriesColor
+          ),
+        backgroundColor:
+          d.backgroundColor
+          || (
+            isCircular
+              ? circularColors
+              : seriesColor
+          ),
+        borderWidth:
+          d.borderWidth
+          ?? (
+            isCircular
+              ? 2
+              : 2
+          ),
+        hoverOffset:
+          d.hoverOffset
+          ?? (
+            isCircular
+              ? 5
+              : undefined
+          ),
+        tension:
+          d.tension
+          ?? .28,
+        pointRadius:
+          d.pointRadius
+          ?? 2
+      };
+    });
 
     charts.set(id, new Chart(canvas, {
       type,
