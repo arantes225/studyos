@@ -1246,7 +1246,23 @@ function prepararStudyMenu(
       );
     }
   );
-}
+
+  submenu
+    .querySelectorAll(
+      ".nav-sublink"
+    )
+    .forEach(
+      (link) => {
+        link.addEventListener(
+          "click",
+          () => {
+            apply(
+              false
+            );
+          }
+        );
+      }
+    );
 
 
 function prepararMobileMenu() {
