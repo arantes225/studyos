@@ -435,15 +435,7 @@ async function signedErrorImage(
     data,
     error
   } =
-    await errorSb
-      .storage
-      .from(
-        "docmap"
-      )
-      .createSignedUrl(
-        path,
-        3600
-      );
+    await window.LuriaStorage.createSignedUrl("error_images", path, 3600);
 
 
   if (error) {
@@ -1411,14 +1403,7 @@ async function downloadStoredErrorImage(
     data,
     error
   } =
-    await errorSb
-      .storage
-      .from(
-        "docmap"
-      )
-      .download(
-        path
-      );
+    await window.LuriaStorage.download("error_images", path);
 
 
   if (error) {
@@ -1454,10 +1439,7 @@ async function deleteStoredErrorImage(item, options = {}) {
 
   if (updateError) throw updateError;
 
-  const { error: storageError } = await errorSb
-    .storage
-    .from("docmap")
-    .remove([oldPath]);
+  const { error: storageError } = await window.LuriaStorage.remove("error_images",[oldPath]);
 
   if (storageError) {
     console.warn(
@@ -1595,15 +1577,7 @@ async function uploadErrorImage(
     )}.${extension}`;
 
 
-  const {
-    error
-  } =
-    await errorSb
-      .storage
-      .from(
-        "docmap"
-      )
-      .upload(
+  const { error, reference } = await window.LuriaStorage.upload("error_images",
         path,
         finalFile,
         {
@@ -1623,11 +1597,7 @@ async function uploadErrorImage(
 
   if (error) {
     throw error;
-  }
-
-
-  return path;
-}
+  }\n\n  return reference || path;\n}
 
 
 /* =========================================================
@@ -2175,12 +2145,7 @@ async function saveNewError() {
 
 
     if (imagePath) {
-      await errorSb
-        .storage
-        .from(
-          "docmap"
-        )
-        .remove([
+      await window.LuriaStorage.remove("error_images",[
           imagePath
         ]);
     }
@@ -3626,12 +3591,7 @@ async function deleteErrorFromLibrary(
       error:
         storageError
     } =
-      await errorSb
-        .storage
-        .from(
-          "docmap"
-        )
-        .remove([
+      await window.LuriaStorage.remove("error_images",[
           item.question_image_path
         ]);
 
@@ -4333,12 +4293,7 @@ async function deleteSelectedErrors() {
       error:
         storageError
     } =
-      await errorSb
-        .storage
-        .from(
-          "docmap"
-        )
-        .remove(
+      await window.LuriaStorage.remove("error_images",
           paths
         );
 
