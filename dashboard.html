@@ -990,6 +990,46 @@
     fill .35s ease;
 }
 
+.streak-snowflake {
+  display: none;
+  position: relative;
+  z-index: 2;
+  color: #60a5fa;
+  font-size: 44px;
+  line-height: 1;
+  filter: drop-shadow(0 5px 10px rgba(96,165,250,.22));
+  animation: streakSnowPulse 2.8s ease-in-out infinite;
+}
+
+.streak-card-v22[data-streak-tier="snow"] {
+  --flame-main: #60a5fa;
+  --flame-core: #bfdbfe;
+  --flame-glow: rgba(96,165,250,.22);
+}
+
+.streak-card-v22[data-streak-tier="snow"] .streak-flame-svg {
+  display: none;
+}
+
+.streak-card-v22[data-streak-tier="snow"] .streak-snowflake {
+  display: block;
+}
+
+.streak-card-v22[data-streak-tier="snow"] .streak-flame-aura {
+  background: #60a5fa;
+}
+
+@keyframes streakSnowPulse {
+  0%,
+  100% {
+    transform: translateY(1px) scale(.97) rotate(-3deg);
+  }
+
+  50% {
+    transform: translateY(-2px) scale(1.04) rotate(3deg);
+  }
+}
+
 .streak-stage-label {
   grid-area: stage;
 
@@ -1064,7 +1104,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .streak-flame-svg {
+  .streak-flame-svg,
+  .streak-snowflake {
     animation: none;
   }
 }
@@ -1589,10 +1630,11 @@
             class="dashboard-detail-card streak-card-v22 streak-card-vertical"
             data-streak-tier="0"
           >
-            <span class="dashboard-detail-label metric-label">Ofensiva</span>
+            <span id="dashboard-streak-title" class="dashboard-detail-label metric-label">Sequência</span>
 
             <div class="streak-flame-wrap" aria-hidden="true">
               <span class="streak-flame-aura"></span>
+              <span class="streak-snowflake">❄</span>
 
               <svg class="streak-flame-svg" viewBox="0 0 64 80">
                 <path
@@ -1716,6 +1758,6 @@
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=12.8"></script>
   <script src="assets/js/study-mode.js?v=12.1"></script>
-  <script src="assets/js/dashboard.js?v=27.5"></script>
+  <script src="assets/js/dashboard.js?v=27.6"></script>
 </body>
 </html>
