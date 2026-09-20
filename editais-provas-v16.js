@@ -274,7 +274,7 @@
             <div class="exam-dialog-head">
               <div>
                 <span class="badge accent">Resultado da prova</span>
-                <h2>Registrar / editar nota</h2>
+                <h2>Resultado da prova</h2>
                 <p
                   id="exam-score-quick-subtitle"
                   class="exam-score-dialog-subtitle"
