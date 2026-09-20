@@ -9,7 +9,7 @@ const APP_SHELL = [
   "/dashboard/",
   "/assets/css/style.css",
   "/assets/css/landing.css",
-  "/assets/css/pwa-mobile.css?v=2",
+  "/assets/css/pwa-mobile.css?v=9",
   "/assets/css/luria-brand-v5.css",
   "/assets/js/app.js",
   "/assets/js/pwa.js",
