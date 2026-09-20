@@ -1410,3 +1410,33 @@ body.sidebar-hidden
     padding-right: 0;
   }
 }
+
+
+/* =========================================================
+   LURIA GOLD ACCENTS — uso seletivo, premium e acadêmico
+   ========================================================= */
+.streak-mini {
+  border-color: color-mix(in srgb, var(--gold) 42%, var(--border));
+  background: linear-gradient(135deg, var(--surface) 70%, color-mix(in srgb, var(--gold-soft) 55%, var(--surface)));
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+
+.streak-mini > :first-child {
+  color: var(--gold);
+}
+
+.badge.premium,
+.badge.gold {
+  background: var(--gold-soft);
+  color: #8A6A08;
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+}
+
+:root[data-theme="dark"] .badge.premium,
+:root[data-theme="dark"] .badge.gold {
+  color: #F2D66C;
+}
+
+:root[data-theme="dark"] .streak-mini {
+  background: linear-gradient(135deg, var(--surface) 72%, color-mix(in srgb, var(--gold-soft) 42%, var(--surface)));
+}
