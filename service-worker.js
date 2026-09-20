@@ -1,4 +1,4 @@
-const CACHE_VERSION = "luria-pwa-v22";
+const CACHE_VERSION = "luria-pwa-v23";
 const STATIC_CACHE = CACHE_VERSION + "-static";
 const RUNTIME_CACHE = CACHE_VERSION + "-runtime";
 
