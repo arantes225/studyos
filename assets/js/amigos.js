@@ -68,7 +68,11 @@ async function loadInbox(){
         const {error}=await friendsSb.rpc("redeem_study_note_bundle_share",{p_token:btn.dataset.token,p_mode:personalize?"overlay":"view"});
         if(error)throw error;
       }
-      await friendsSb.from("direct_shares").update({opened_at:new Date().toISOString()}).eq("id",btn.dataset.openShare);
+      const { error: openedError } = await friendsSb.rpc(
+        "mark_direct_share_opened",
+        { p_share_id: btn.dataset.openShare }
+      );
+      if (openedError) throw openedError;
       setFriendsStatus("Material adicionado à sua biblioteca.","success");
       await loadInbox();
     }catch(error){console.error(error);setFriendsStatus(error.message||"Não foi possível adicionar.","error");}
