@@ -1460,3 +1460,15 @@ optgroup {
   font-style: normal !important;
 }
 
+/* LURIA — uppercase + 15% */
+.landing-brand strong {
+  text-transform: uppercase !important;
+  font-size: 18.4px !important; /* 16px + 15% */
+}
+
+.preview-brand-row strong,
+.footer-brand strong {
+  text-transform: uppercase !important;
+  font-size: 115% !important;
+}
+
