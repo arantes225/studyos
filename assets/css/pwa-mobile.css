@@ -2342,3 +2342,41 @@
     grid-template-columns: 1fr !important;
   }
 }
+
+
+/* PWA MOBILE v10 — abas de Estatísticas cabem sem rolagem */
+@media (max-width: 760px) {
+  .pwa-standalone body[data-page="estatisticas"] .stats-tabs-shell {
+    overflow-x: hidden !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tabs {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 2px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tab,
+  .pwa-standalone body[data-page="estatisticas"] .stats-tab:last-child {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 32px !important;
+    padding: 0 3px !important;
+    font-size: 7.2px !important;
+    line-height: 1.05 !important;
+    letter-spacing: -.01em !important;
+    white-space: normal !important;
+    text-align: center !important;
+    overflow-wrap: anywhere !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .pwa-standalone body[data-page="estatisticas"] .stats-tab,
+  .pwa-standalone body[data-page="estatisticas"] .stats-tab:last-child {
+    font-size: 6.6px !important;
+    padding-inline: 2px !important;
+  }
+}
