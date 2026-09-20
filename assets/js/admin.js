@@ -675,7 +675,7 @@
 
     if (!customers.length) {
       body.innerHTML =
-        '<tr><td colspan="9" class="admin-table-empty">Nenhum cliente encontrado.</td>';
+        '<tr><td colspan="10" class="admin-table-empty">Nenhum cliente encontrado.</td>';
       return;
     }
 
@@ -714,6 +714,11 @@
                     <span style="width:${retention.toFixed(1)}%"></span>
                   </div>
                 </div>
+              </td>
+              <td>
+                <span class="admin-storage-usage" title="${esc(formatNumber(customer.storage_bytes || 0))} bytes">
+                  ${esc(formatBytes(customer.storage_bytes || 0))}
+                </span>
               </td>
               <td>${esc(formatDate(customer.last_access))}</td>
             </tr>
@@ -770,7 +775,8 @@
     const [
       dashboardResponse,
       logisticsResponse,
-      costItemsResponse
+      costItemsResponse,
+      storageUsageResponse
     ] =
       await Promise.all([
         sb.rpc(
@@ -785,6 +791,9 @@
         ),
         sb.rpc(
           "admin_cost_items_snapshot"
+        ),
+        sb.rpc(
+          "admin_customer_storage_usage"
         )
       ]);
 
@@ -854,8 +863,50 @@
         : [];
     }
 
+    const storageByUser =
+      new Map(
+        Array.isArray(
+          storageUsageResponse?.data
+        )
+          ? storageUsageResponse.data.map(
+              row => [
+                row.user_id,
+                Number(row.storage_bytes || 0)
+              ]
+            )
+          : []
+      );
+
+    if (storageUsageResponse?.error) {
+      console.warn(
+        "Não foi possível carregar o consumo de memória por cliente:",
+        storageUsageResponse.error
+      );
+    }
+
+    const snapshot =
+      data || {};
+
+    if (
+      Array.isArray(
+        snapshot.customers
+      )
+    ) {
+      snapshot.customers =
+        snapshot.customers.map(
+          customer => ({
+            ...customer,
+            storage_bytes:
+              storageByUser.get(
+                customer.user_id
+              )
+              || 0
+          })
+        );
+    }
+
     render(
-      data || {}
+      snapshot
     );
 
     setStatus(
