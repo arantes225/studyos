@@ -1,0 +1,2558 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cronograma · LURIA</title>
+  <link rel="manifest" href="manifest.webmanifest?v=3">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/img/pwa-icon-180.png?v=3">
+  <meta name="theme-color" content="#0A2342">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="LURIA">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria2">
+  <link rel="stylesheet" href="assets/css/style.css?v=luria-palette-12">
+
+  <style>
+    .schedule-stack {
+      display: grid;
+      gap: 16px;
+    }
+
+    .import-box,
+    .planner-panel,
+    .deck-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .import-box,
+    .planner-panel,
+    .deck-panel {
+      padding: 20px;
+    }
+
+    .import-header,
+    .planner-header,
+    .deck-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .import-header h2,
+    .planner-header h2,
+    .deck-header h2 {
+      margin: 0;
+    }
+
+    .import-header p,
+    .planner-header p,
+    .deck-header p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .import-grid {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 18px;
+      margin-top: 20px;
+    }
+
+    .drop-file {
+      min-height: 160px;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      border: 1.5px dashed var(--border);
+      border-radius: 14px;
+      background: var(--surface-2);
+      text-align: center;
+    }
+
+    .drop-file.dragover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .drop-file input {
+      display: none;
+    }
+
+    .drop-file strong {
+      display: block;
+      margin-bottom: 7px;
+    }
+
+    .drop-file small {
+      display: block;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .drop-file .button {
+      min-height: 40px;
+      margin-top: 14px;
+      padding: 0 14px;
+    }
+
+    .mode-card {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .mode-option {
+      position: relative;
+    }
+
+    .mode-option input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .mode-option span {
+      display: block;
+      padding: 15px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      cursor: pointer;
+    }
+
+    .mode-option strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .mode-option small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .mode-option input:checked + span {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .import-preview {
+      display: none;
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    .import-preview.visible {
+      display: block;
+    }
+
+    .preview-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+
+    .preview-toolbar span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .preview-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .preview-table {
+      width: 100%;
+      min-width: 820px;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .preview-table th,
+    .preview-table td {
+      padding: 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .preview-table th {
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .preview-table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .row-error {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .done-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .import-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .import-actions .button {
+      min-height: 42px;
+      padding: 0 15px;
+    }
+
+    .import-status {
+      min-height: 20px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .import-status.error {
+      color: var(--danger);
+    }
+
+    .import-status.success {
+      color: var(--success);
+    }
+
+    .schedule-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .summary-card {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+    }
+
+    .summary-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 750;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .summary-card strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 25px;
+    }
+
+    .planner-nav {
+      display: inline-flex;
+      gap: 4px;
+      padding: 3px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: var(--surface-2);
+    }
+
+    .planner-nav button {
+      min-height: 36px;
+      border: 0;
+      border-radius: 8px;
+      padding: 0 11px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 750;
+    }
+
+    .planner-nav button:hover {
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    .week-planner {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .planner-day {
+      min-width: 0;
+      min-height: 310px;
+      border-right: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .planner-day:last-child {
+      border-right: 0;
+    }
+
+    .planner-day.drop-target {
+      outline: 2px dashed var(--accent);
+      outline-offset: -3px;
+      background: var(--accent-soft);
+    }
+
+    .planner-day-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 48px;
+      padding: 0 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+
+    .planner-day-header span {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .planner-day-header strong {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-size: 12px;
+    }
+
+    .planner-day.today .planner-day-header strong {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .planner-day-body {
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      padding: 8px;
+    }
+
+    .topic-card {
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+      background: var(--surface);
+      cursor: grab;
+    }
+
+    .topic-card.dragging {
+      opacity: .45;
+    }
+
+    .topic-card h3 {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .topic-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 7px;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .topic-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 9px;
+    }
+
+    .topic-action {
+      min-height: 29px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 0 8px;
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .topic-action.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .topic-action.done {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .topic-action.danger:hover {
+      color: var(--danger);
+      border-color: var(--danger);
+    }
+
+    .empty-planner {
+      padding: 16px 4px;
+      color: var(--muted);
+      font-size: 11px;
+      text-align: center;
+    }
+
+    .deck-dropzone {
+      margin-top: 16px;
+      padding: 14px;
+      border: 1.5px dashed var(--border);
+      border-radius: 13px;
+      background: var(--surface-2);
+    }
+
+    .deck-dropzone.drop-target {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .deck-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .deck-card {
+      padding: 13px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      cursor: grab;
+    }
+
+    .deck-card.dragging {
+      opacity: .45;
+    }
+
+    .deck-card h3 {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .deck-card p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .deck-schedule {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .deck-schedule input {
+      min-width: 0;
+      min-height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0 8px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 11px;
+    }
+
+    .deck-schedule button {
+      min-height: 36px;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 0 10px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .empty-deck {
+      padding: 18px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .done-dialog {
+      width: min(calc(100% - 32px), 490px);
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow);
+    }
+
+    .done-dialog::backdrop {
+      background: rgba(0,0,0,.45);
+    }
+
+    .done-dialog form {
+      padding: 22px;
+    }
+
+    .done-dialog h2 {
+      margin: 4px 0 0;
+      font-size: 20px;
+    }
+
+    .done-dialog p {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .done-dialog label {
+      display: grid;
+      gap: 8px;
+      margin-top: 18px;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .done-dialog input {
+      min-height: 44px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .done-dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 9px;
+      margin-top: 20px;
+    }
+
+    .done-dialog-actions .button {
+      min-height: 41px;
+      padding: 0 14px;
+    }
+
+    @media (max-width: 1120px) {
+      .import-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .week-planner {
+        overflow-x: auto;
+        grid-template-columns: repeat(7, minmax(175px, 1fr));
+      }
+
+      .deck-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 700px) {
+      .schedule-summary {
+        grid-template-columns: 1fr;
+      }
+
+      .deck-list {
+        grid-template-columns: 1fr;
+      }
+
+      .import-header,
+      .planner-header,
+      .deck-header {
+        flex-direction: column;
+      }
+
+      .planner-nav {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+
+    .manual-panel,
+    .theme-library-panel {
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+    }
+
+    .manual-head,
+    .theme-library-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .manual-head h2,
+    .theme-library-head h2 {
+      margin: 0;
+    }
+
+    .manual-head p,
+    .theme-library-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 12px;
+    }
+
+    .manual-form {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .manual-field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .manual-field.theme {
+      grid-column: span 2;
+    }
+
+    .manual-field span {
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .manual-field small {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .manual-field input,
+    .manual-field select {
+      width: 100%;
+      min-height: 42px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+    }
+
+    .manual-field input:focus,
+    .manual-field select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .manual-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .manual-actions .button {
+      min-height: 42px;
+      padding: 0 14px;
+    }
+
+    .manual-status {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .manual-status.success {
+      color: var(--success);
+    }
+
+    .manual-status.error {
+      color: var(--danger);
+    }
+
+    .theme-library-controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 220px;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .theme-library-controls input,
+    .theme-library-controls select {
+      min-height: 42px;
+      padding: 0 11px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+    }
+
+    .theme-library-controls input:focus,
+    .theme-library-controls select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .theme-library-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .theme-library-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .theme-library-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(120px, .8fr) minmax(120px, .8fr) 120px auto;
+      gap: 10px;
+      align-items: center;
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: var(--surface);
+    }
+
+    .theme-library-title strong {
+      display: block;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .theme-library-title small,
+    .theme-library-cell {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
+    .theme-library-date {
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .theme-library-date.deck {
+      color: var(--accent);
+    }
+
+    .theme-library-action {
+      min-height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0 9px;
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 9px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .theme-library-empty {
+      padding: 20px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 11px;
+    }
+
+    @media (max-width: 1000px) {
+      .manual-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .manual-field.theme {
+        grid-column: 1 / -1;
+      }
+
+      .theme-library-row {
+        grid-template-columns: minmax(0, 1fr) 120px auto;
+      }
+
+      .theme-library-cell.hide-medium {
+        display: none;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .manual-form {
+        grid-template-columns: 1fr;
+      }
+
+      .manual-field.theme {
+        grid-column: auto;
+      }
+
+      .theme-library-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .theme-library-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+
+      .theme-library-cell,
+      .theme-library-date {
+        display: none;
+      }
+
+      .manual-head,
+      .theme-library-head {
+        flex-direction: column;
+      }
+    }
+
+  
+    .schedule-summary {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .import-help {
+      display: flex;
+      gap: 8px 14px;
+      align-items: baseline;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      padding: 11px 13px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: var(--surface-2);
+      font-size: 11px;
+    }
+
+    .import-help span {
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .smart-preview-wrap {
+      max-height: 540px;
+      overflow: auto;
+    }
+
+    .smart-preview-table {
+      min-width: 1450px;
+    }
+
+    .preview-input,
+    .preview-select {
+      width: 100%;
+      min-width: 110px;
+      min-height: 34px;
+      padding: 5px 7px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      font-size: 11px;
+    }
+
+    .preview-input.title-input {
+      min-width: 270px;
+    }
+
+    .preview-check {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--accent);
+    }
+
+    .confidence-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 9px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .confidence-pill.high {
+      background: rgba(42, 157, 99, .12);
+      color: var(--success);
+    }
+
+    .confidence-pill.medium {
+      background: rgba(204, 139, 26, .14);
+      color: #a86c06;
+    }
+
+    .confidence-pill.low {
+      background: rgba(211, 74, 74, .10);
+      color: var(--danger);
+    }
+
+    .duplicate-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .schedule-event-card {
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-left: 4px solid #7f8da6;
+      border-radius: 10px;
+      background: var(--surface-2);
+    }
+
+    .schedule-event-card h3 {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .schedule-event-type {
+      display: inline-flex;
+      margin-top: 6px;
+      min-height: 22px;
+      align-items: center;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    @media (max-width: 900px) {
+      .schedule-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 700px) {
+      .schedule-summary {
+        grid-template-columns: 1fr;
+      }
+    }
+
+  
+/* =========================================================
+   FASE 11.2 — CRONOGRAMA
+   ========================================================= */
+
+.schedule-summary {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.overdue-summary-card strong {
+  color: var(--danger);
+}
+
+.overdue-organizer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px 18px;
+  padding: 15px 16px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface);
+}
+
+.overdue-organizer strong {
+  display: block;
+  font-size: 13px;
+}
+
+.overdue-organizer p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.overdue-organizer .manual-status {
+  grid-column: 1 / -1;
+}
+
+.theme-library-row {
+  grid-template-columns:
+    minmax(0, 1.7fr)
+    minmax(110px, .7fr)
+    minmax(110px, .7fr)
+    110px
+    minmax(235px, auto);
+}
+
+.theme-library-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.theme-library-action.to-deck {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.theme-library-action.done {
+  border-color: rgba(47, 155, 114, .35);
+  color: var(--success);
+}
+
+.topic-card.is-overdue {
+  border-color: rgba(211, 79, 79, .45);
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+.topic-overdue-label {
+  display: inline-flex;
+  margin-top: 6px;
+  min-height: 21px;
+  align-items: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: rgba(211, 79, 79, .10);
+  color: var(--danger);
+  font-size: 8px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1100px) {
+  .schedule-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .theme-library-row {
+    grid-template-columns: minmax(0, 1fr) 115px minmax(230px, auto);
+  }
+}
+
+@media (max-width: 760px) {
+  .schedule-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .overdue-organizer {
+    grid-template-columns: 1fr;
+  }
+
+  .overdue-organizer .manual-status {
+    grid-column: auto;
+  }
+
+  .theme-library-row {
+    grid-template-columns: 1fr;
+  }
+
+  .theme-library-actions {
+    justify-content: flex-start;
+  }
+}
+
+
+/* =========================================================
+   FASE 11.3 — MENU DE 3 PONTOS NO PLANNER
+   ========================================================= */
+
+.topic-card {
+  position: relative;
+  padding-right: 44px;
+}
+
+.topic-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.topic-card-head h3 {
+  flex: 1 1 auto;
+}
+
+.topic-overflow-wrap {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 12;
+}
+
+.topic-overflow-trigger {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.topic-overflow-trigger:hover,
+.topic-overflow-trigger[aria-expanded="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.topic-overflow-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 165px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  z-index: 30;
+}
+
+.topic-overflow-menu[hidden] {
+  display: none !important;
+}
+
+.topic-overflow-menu button {
+  width: 100%;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 760;
+  text-align: left;
+  cursor: pointer;
+}
+
+.topic-overflow-menu button:hover {
+  background: var(--surface-2);
+}
+
+.topic-overflow-menu button.danger {
+  color: var(--danger);
+}
+
+.topic-actions.planner-primary-action {
+  margin-top: 9px;
+}
+
+.topic-actions.planner-primary-action .topic-action.primary {
+  width: 100%;
+}
+
+
+.overdue-dialog {
+  width: min(520px, calc(100vw - 28px));
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.overdue-dialog::backdrop {
+  background: rgba(15, 20, 28, .46);
+  backdrop-filter: blur(2px);
+}
+
+.schedule-dialog-form {
+  padding: 20px;
+}
+
+.schedule-dialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.schedule-dialog-head h2 {
+  margin: 7px 0 0;
+  font-size: 18px;
+}
+
+.schedule-dialog-close {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.overdue-dialog-copy {
+  margin: 16px 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.overdue-dialog-field {
+  display: grid;
+  gap: 7px;
+}
+
+.overdue-dialog-field span {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.overdue-dialog-field input {
+  min-height: 42px;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.overdue-capacity-preview {
+  margin-top: 12px;
+  padding: 10px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.schedule-dialog-actions {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+/* =========================================================
+   FASE 11.10 — ADICIONAR AULAS + EXCLUSÃO EM GRUPO
+   ========================================================= */
+
+.schedule-add-hub {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.schedule-add-hub-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.schedule-add-hub-head h2 {
+  margin: 6px 0 0;
+}
+
+.schedule-add-hub-head p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.schedule-add-tabs {
+  display: inline-flex;
+  gap: 5px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.schedule-add-tab {
+  min-height: 35px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.schedule-add-tab:hover {
+  color: var(--text);
+}
+
+.schedule-add-tab.active {
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: 0 1px 5px rgba(20, 25, 35, .08);
+}
+
+.schedule-add-section {
+  display: none !important;
+}
+
+.schedule-add-section.active {
+  display: block !important;
+}
+
+.import-box.schedule-add-section,
+.manual-panel.schedule-add-section {
+  margin-top: 10px;
+}
+
+.theme-library-bulk {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.theme-bulk-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.theme-bulk-check input,
+.theme-library-select-check {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--accent);
+}
+
+#theme-selected-count {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.theme-bulk-danger {
+  margin-left: auto;
+  color: var(--danger);
+}
+
+.theme-library-row {
+  position: relative;
+}
+
+.theme-library-select {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-library-row.with-selection {
+  grid-template-columns:
+    34px
+    minmax(0, 1.7fr)
+    minmax(110px, .7fr)
+    minmax(110px, .7fr)
+    110px
+    minmax(235px, auto);
+}
+
+@media (max-width: 1100px) {
+  .schedule-add-hub-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .theme-library-row.with-selection {
+    grid-template-columns:
+      34px
+      minmax(0, 1fr)
+      115px
+      minmax(230px, auto);
+  }
+}
+
+@media (max-width: 760px) {
+  .schedule-add-tabs {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .theme-library-row.with-selection {
+    grid-template-columns: 34px 1fr;
+  }
+
+  .theme-library-actions {
+    grid-column: 1 / -1;
+  }
+
+  .theme-bulk-danger {
+    margin-left: 0;
+  }
+}
+
+
+  /* FASE 12 — CRONOGRAMA BASE + FILTROS */
+  .base-schedule-panel { padding:20px; border:1px solid var(--border); border-radius:16px; background:var(--surface); }
+  .base-schedule-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
+  .base-schedule-head h2 { margin:6px 0 0; }
+  .base-schedule-head p { max-width:760px; margin:6px 0 0; color:var(--muted); line-height:1.5; }
+  .base-schedule-controls { display:grid; grid-template-columns:minmax(180px,.8fr) minmax(220px,1.1fr) auto; gap:10px; align-items:end; margin-top:16px; }
+  .base-schedule-controls label,.base-schedule-days { display:grid; gap:5px; }
+  .base-schedule-controls label>span,.base-schedule-days strong { font-size:10px; font-weight:850; }
+  .base-schedule-controls input { min-height:42px; border:1px solid var(--border); border-radius:10px; background:var(--surface); color:var(--text); padding:0 10px; }
+  .base-schedule-days span { min-height:42px; display:flex; align-items:center; padding:0 11px; border:1px solid var(--border); border-radius:10px; background:var(--surface-2); color:var(--muted); font-size:10px; }
+  .base-schedule-deck { max-height:430px; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin-top:14px; padding:10px; border:1px solid var(--border); border-radius:13px; background:var(--surface-2); overflow:auto; }
+  .base-schedule-card { min-width:0; padding:11px; border:1px solid var(--border); border-radius:11px; background:var(--surface); }
+  .base-schedule-card span { color:var(--muted); font-size:8px; font-weight:850; text-transform:uppercase; }
+  .base-schedule-card strong { display:block; margin-top:5px; font-size:11px; line-height:1.35; }
+  .base-schedule-card small { display:block; margin-top:6px; color:var(--muted); font-size:9px; }
+  .theme-date-filter { display:grid; gap:3px; }
+  .theme-date-filter span { color:var(--muted); font-size:8px; font-weight:850; text-transform:uppercase; }
+  .theme-date-filter input { min-height:40px; border:1px solid var(--border); border-radius:10px; background:var(--surface); color:var(--text); padding:0 9px; }
+  .theme-clear-filter { min-height:40px; }
+  @media(max-width:980px){ .base-schedule-deck{grid-template-columns:repeat(2,minmax(0,1fr));}.base-schedule-controls{grid-template-columns:1fr;} }
+  @media(max-width:680px){ .base-schedule-deck{grid-template-columns:1fr;} }
+
+
+  .reorganize-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 700px) {
+    .reorganize-actions {
+      width: 100%;
+    }
+
+    .reorganize-actions .button {
+      width: 100%;
+    }
+  }
+
+  /* ========================================================
+     FASE 12.8 — TEMAS CONCLUÍDOS NA LISTA
+     ======================================================== */
+
+  .theme-library-row.completed {
+    opacity: .72;
+    background:
+      color-mix(
+        in srgb,
+        var(--success) 5%,
+        var(--surface)
+      );
+  }
+
+  .theme-library-date.completed {
+    color: var(--success);
+    font-weight: 850;
+  }
+
+  .theme-library-completed-badge {
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 9px;
+    border-radius: 999px;
+    background:
+      color-mix(
+        in srgb,
+        var(--success) 12%,
+        var(--surface)
+      );
+    color: var(--success);
+    font-size: 9px;
+    font-weight: 900;
+  }
+
+
+  /* ========================================================
+     FASE 12.9 — FILTRO FEITOS / MENU ⋯
+     ======================================================== */
+
+  .theme-bulk-menu-wrap {
+    position: relative;
+    margin-left: auto;
+  }
+
+  .theme-bulk-menu-toggle {
+    width: 38px;
+    height: 36px;
+
+    display: grid;
+    place-items: center;
+
+    padding: 0;
+
+    border: 1px solid var(--border);
+    border-radius: 10px;
+
+    background: var(--surface);
+    color: var(--text);
+
+    font-size: 23px;
+    font-weight: 900;
+    line-height: 1;
+
+    cursor: pointer;
+  }
+
+  .theme-bulk-menu-toggle:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .theme-bulk-menu-toggle:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+  }
+
+  .theme-bulk-menu {
+    position: absolute;
+    top: calc(100% + 7px);
+    right: 0;
+    z-index: 45;
+
+    width: min(290px, 86vw);
+
+    display: grid;
+    gap: 4px;
+
+    padding: 6px;
+
+    border: 1px solid var(--border);
+    border-radius: 12px;
+
+    background: var(--surface);
+
+    box-shadow:
+      0 18px 50px
+      rgba(15, 23, 42, .16);
+  }
+
+  .theme-bulk-menu[hidden] {
+    display: none !important;
+  }
+
+  .theme-bulk-menu-item {
+    min-height: 39px;
+
+    padding:
+      0
+      11px;
+
+    border: 0;
+    border-radius: 8px;
+
+    background: transparent;
+    color: var(--text);
+
+    text-align: left;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    cursor: pointer;
+  }
+
+  .theme-bulk-menu-item:hover:not(:disabled) {
+    background: var(--surface-2);
+  }
+
+  .theme-bulk-menu-item.danger {
+    color: var(--danger);
+  }
+
+  .theme-bulk-menu-item:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 680px) {
+    .theme-bulk-menu-wrap {
+      margin-left: 0;
+    }
+  }
+
+  /* ========================================================
+     FASE 13.1 — FILTRO COMPACTO
+     ======================================================== */
+
+  .theme-library-controls-compact {
+    grid-template-columns:
+      minmax(0, 1fr)
+      auto
+      !important;
+
+    align-items: center;
+  }
+
+  .theme-filter-menu-wrap {
+    position: relative;
+  }
+
+  .theme-filter-menu-toggle {
+    width: 40px;
+    height: 40px;
+
+    display: grid;
+    place-items: center;
+
+    padding: 0;
+
+    border: 1px solid var(--border);
+    border-radius: 10px;
+
+    background: var(--surface);
+    color: var(--text);
+
+    cursor: pointer;
+  }
+
+  .theme-filter-menu-toggle:hover,
+  .theme-filter-menu-toggle.has-active-filter {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .theme-filter-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 60;
+
+    width: min(350px, 90vw);
+
+    display: grid;
+    gap: 12px;
+
+    padding: 14px;
+
+    border: 1px solid var(--border);
+    border-radius: 14px;
+
+    background: var(--surface);
+
+    box-shadow:
+      0 20px 60px
+      rgba(15, 23, 42, .18);
+  }
+
+  .theme-filter-menu[hidden] {
+    display: none !important;
+  }
+
+  .theme-filter-menu-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .theme-filter-menu-head > div {
+    display: grid;
+    gap: 3px;
+  }
+
+  .theme-filter-menu-head strong {
+    font-size: 13px;
+  }
+
+  .theme-filter-menu-head small {
+    color: var(--muted);
+    font-size: 9px;
+  }
+
+  .theme-filter-menu-close {
+    width: 30px;
+    height: 30px;
+
+    display: grid;
+    place-items: center;
+
+    padding: 0;
+
+    border: 0;
+    border-radius: 8px;
+
+    background: transparent;
+    color: var(--muted);
+
+    font-size: 20px;
+
+    cursor: pointer;
+  }
+
+  .theme-filter-menu-close:hover {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+
+  .theme-filter-field {
+    display: grid;
+    gap: 5px;
+  }
+
+  .theme-filter-field > span {
+    color: var(--muted);
+
+    font-size: 9px;
+    font-weight: 850;
+
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  .theme-filter-field select,
+  .theme-filter-field input {
+    width: 100%;
+    min-height: 38px;
+  }
+
+  .theme-filter-date-grid {
+    display: grid;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .theme-filter-menu-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  @media (max-width: 560px) {
+    .theme-library-controls-compact {
+      grid-template-columns:
+        minmax(0, 1fr)
+        auto
+        !important;
+    }
+
+    .theme-filter-date-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+</style>
+  <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
+  <script defer src="assets/js/luria-brand-v5.js?v=8"></script>
+</head>
+
+<body data-page="cronograma">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar"></aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <main class="main">
+      <div class="page">
+        <header class="topbar">
+          <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
+
+          <div class="page-heading">
+            <span class="eyebrow" data-page-eyebrow></span>
+            <h1 data-page-title></h1>
+          </div>
+        </header>
+
+        <div class="schedule-stack">
+
+          <section class="schedule-summary">
+            <article class="summary-card">
+              <span>No deck</span>
+              <strong id="summary-deck">—</strong>
+            </article>
+
+            <article class="summary-card">
+              <span>Agendadas</span>
+              <strong id="summary-scheduled">—</strong>
+            </article>
+
+            <article class="summary-card overdue-summary-card">
+              <span>Aulas atrasadas</span>
+              <strong id="summary-overdue">—</strong>
+            </article>
+
+            <article class="summary-card">
+              <span>Concluídas / já feitas</span>
+              <strong id="summary-completed">—</strong>
+            </article>
+
+            <article class="summary-card">
+              <span>Eventos externos</span>
+              <strong id="summary-events">—</strong>
+            </article>
+          </section>
+
+
+
+          <section class="schedule-add-hub">
+
+            <div class="schedule-add-hub-head">
+              <div>
+                <span class="badge accent">Adicionar ao cronograma</span>
+                <h2>Adicionar aulas</h2>
+                <p>
+                  Escolha entre importar um cronograma automaticamente
+                  ou cadastrar uma aula manualmente.
+                </p>
+              </div>
+
+              <div
+                class="schedule-add-tabs"
+                aria-label="Forma de adicionar aulas"
+              >
+                <button
+                  class="schedule-add-tab active"
+                  type="button"
+                  data-schedule-add-mode="automatic"
+                >
+                  Automaticamente
+                </button>
+
+                <button
+                  class="schedule-add-tab"
+                  type="button"
+                  data-schedule-add-mode="manual"
+                >
+                  Manualmente
+                </button>
+
+                <button
+                  class="schedule-add-tab"
+                  type="button"
+                  data-schedule-add-mode="base"
+                >
+                  Cronograma base
+                </button>
+              </div>
+            </div>
+
+          </section>
+
+
+          <section
+            class="import-box schedule-add-section active"
+            data-schedule-add-section="automatic"
+          >
+            <div class="import-header">
+              <div>
+                <span class="badge accent">Excel · CSV · PDF</span>
+                <h2>Importador inteligente</h2>
+                <p>
+                  O LURIA tenta reconhecer datas, aulas, simulados e revisões.
+                  Antes de salvar, você pode corrigir tudo na prévia.
+                </p>
+              </div>
+            </div>
+
+            <div class="import-grid">
+              <div id="file-drop" class="drop-file">
+                <div>
+                  <strong id="file-name">Selecione um cronograma</strong>
+                  <small>
+                    Aceita .xlsx, .xls, .csv e .pdf.<br>
+                    PDFs em formato de planner mensal também são reconhecidos.
+                  </small>
+
+                  <label class="button secondary" for="schedule-file">Escolher arquivo</label>
+                  <input
+                    id="schedule-file"
+                    type="file"
+                    accept=".xlsx,.xls,.csv,.pdf,application/pdf"
+                  >
+                </div>
+              </div>
+
+              <div class="mode-card">
+                <label class="mode-option">
+                  <input type="radio" name="import-mode" value="dates" checked>
+                  <span>
+                    <strong>Importar datas</strong>
+                    <small>
+                      Mantém as datas encontradas no arquivo.
+                    </small>
+                  </span>
+                </label>
+
+                <label class="mode-option">
+                  <input type="radio" name="import-mode" value="deck">
+                  <span>
+                    <strong>Importar aulas como deck</strong>
+                    <small>
+                      Só as aulas ficam sem data. Eventos como simulados precisam de data.
+                    </small>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div class="import-help">
+              <strong>Como funciona com PDF?</strong>
+              <span>
+                O leitor usa texto + posição na página para reconstruir semanas.
+                Linhas com menor confiança ficam marcadas para revisão.
+              </span>
+            </div>
+
+            <div id="import-preview" class="import-preview">
+              <div class="preview-toolbar">
+                <strong>Prévia editável</strong>
+                <span id="preview-summary"></span>
+              </div>
+
+              <div class="preview-table-wrap smart-preview-wrap">
+                <table class="preview-table smart-preview-table">
+                  <thead>
+                    <tr>
+                      <th>Importar</th>
+                      <th>Origem</th>
+                      <th>Data</th>
+                      <th>Tipo</th>
+                      <th>Área</th>
+                      <th>Matéria</th>
+                      <th>Conteúdo</th>
+                      <th>Já feita?</th>
+                      <th>Data estudada</th>
+                      <th>Confiança</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="preview-body"></tbody>
+                </table>
+              </div>
+
+              <div class="import-actions">
+                <button id="cancel-import" class="button secondary" type="button">Cancelar</button>
+                <button id="confirm-import" class="button primary" type="button">Importar selecionados</button>
+              </div>
+            </div>
+
+            <div id="import-status" class="import-status" aria-live="polite"></div>
+          </section>
+
+
+          <section
+            class="manual-panel schedule-add-section"
+            data-schedule-add-section="manual"
+          >
+            <div class="manual-head">
+              <div>
+                <span class="badge accent">Manual</span>
+                <h2>Adicionar nova aula</h2>
+                <p>
+                  Cadastre uma aula sem precisar importar planilha. A aula manual já entra
+                  diretamente em uma data do cronograma.
+                </p>
+              </div>
+            </div>
+
+            <form id="manual-topic-form" class="manual-form">
+              <label class="manual-field">
+                <span>Área</span>
+                <input
+                  id="manual-area"
+                  type="text"
+                  maxlength="100"
+                  list="manual-area-options"
+                  placeholder="Ex.: Clínica Médica"
+                >
+                <datalist id="manual-area-options" data-luria-area-list>
+                  <option value="Clínica Médica">
+                  <option value="Pediatria">
+                  <option value="Ginecologia e Obstetrícia">
+                  <option value="Cirurgia Geral">
+                  <option value="Preventiva">
+                </datalist>
+              </label>
+
+              <label class="manual-field">
+                <span>Matéria <small>(opcional)</small></span>
+                <input
+                  id="manual-materia"
+                  type="text"
+                  maxlength="120"
+                  placeholder="Ex.: Cardiologia"
+                >
+              </label>
+
+              <label class="manual-field theme">
+                <span>Tema da aula *</span>
+                <input
+                  id="manual-theme"
+                  type="text"
+                  maxlength="180"
+                  required
+                  placeholder="Ex.: Insuficiência cardíaca"
+                >
+              </label>
+
+              <label class="manual-field">
+                <span>Data *</span>
+                <input id="manual-date" type="date" required>
+              </label>
+
+              <div class="manual-actions">
+                <button id="manual-add-topic" class="button primary" type="submit">
+                  Adicionar aula
+                </button>
+
+                <span id="manual-topic-status" class="manual-status" aria-live="polite"></span>
+              </div>
+            </form>
+          </section>
+
+
+          <section class="import-box base-schedule-panel schedule-add-section" data-schedule-add-section="base">
+            <div class="base-schedule-head">
+              <div>
+                <span class="badge accent">ENARE · <span data-study-mode-label>Medicina</span></span>
+                <h2>Utilizar cronograma genérico</h2>
+                <p>
+                  Use uma base pronta do LURIA quando ainda não tiver um
+                  cronograma próprio. A lista é distribuída até a data limite usando
+                  no máximo 3 dias de aula por semana.
+                </p>
+              </div>
+              <span id="base-schedule-count" class="badge">—</span>
+            </div>
+
+            <div class="base-schedule-controls">
+              <label>
+                <span>Data limite *</span>
+                <input id="base-schedule-end-date" type="date">
+              </label>
+
+              <div class="base-schedule-days">
+                <strong>Dias utilizados</strong>
+                <span id="base-schedule-days-label">Carregando...</span>
+              </div>
+
+              <button
+                id="apply-base-schedule"
+                class="button primary"
+                type="button"
+                onclick="window.applyLuriaGenericSchedule && window.applyLuriaGenericSchedule()"
+              >
+                Adicionar cronograma genérico
+              </button>
+            </div>
+
+            <div id="base-schedule-status" class="manual-status" aria-live="polite"></div>
+            <div id="base-schedule-deck" class="base-schedule-deck"></div>
+          </section>
+
+          <section class="planner-panel">
+            <div class="planner-header">
+              <div>
+                <h2>Planejador semanal</h2>
+                <p id="planner-range">Carregando...</p>
+              </div>
+
+              <div class="planner-nav">
+                <button id="week-prev" type="button">‹</button>
+                <button id="week-today" type="button">Esta semana</button>
+                <button id="week-next" type="button">›</button>
+              </div>
+            </div>
+
+            <div id="week-planner" class="week-planner"></div>
+          </section>
+
+          <section class="overdue-organizer">
+            <div>
+              <strong>Reorganizar aulas</strong>
+
+              <p>
+                Aulas atrasadas usam uma data limite. Aulas adiantadas são
+                compactadas para frente somente quando não existem atrasos,
+                usando no máximo 3 dias de aula por semana.
+              </p>
+            </div>
+
+            <div class="reorganize-actions">
+              <button
+                id="reorganize-overdue"
+                class="button secondary"
+                type="button"
+              >
+                Reorganizar aulas atrasadas
+              </button>
+
+              <button
+                id="reorganize-advanced"
+                class="button secondary"
+                type="button"
+              >
+                Reorganizar aulas adiantadas
+              </button>
+            </div>
+
+            <span
+              id="reorganize-overdue-status"
+              class="manual-status"
+              aria-live="polite"
+            ></span>
+          </section>
+
+
+          <dialog
+            id="reorganize-overdue-dialog"
+            class="schedule-dialog overdue-dialog"
+          >
+            <form
+              class="schedule-dialog-form"
+              method="dialog"
+            >
+              <div class="schedule-dialog-head">
+                <div>
+                  <span class="badge accent">Cronograma</span>
+                  <h2>Reorganizar aulas atrasadas</h2>
+                </div>
+
+                <button
+                  id="close-reorganize-overdue"
+                  class="schedule-dialog-close"
+                  type="button"
+                  aria-label="Fechar"
+                >
+                  ×
+                </button>
+              </div>
+
+              <p class="overdue-dialog-copy">
+                A data final abaixo vale somente para aulas atrasadas.
+                O LURIA redistribui o conteúdo atrasado entre hoje e essa data,
+                respeitando os dias de estudo teórico e o limite diário configurado.
+              </p>
+
+              <label class="overdue-dialog-field">
+                <span>Data final *</span>
+
+                <input
+                  id="reorganize-overdue-end-date"
+                  type="date"
+                  required
+                >
+              </label>
+
+              <div
+                id="reorganize-overdue-capacity"
+                class="overdue-capacity-preview"
+              >
+                Carregando configuração...
+              </div>
+
+              <div class="schedule-dialog-actions">
+
+                <button
+                  id="confirm-reorganize-overdue"
+                  class="button primary"
+                  type="button"
+                >
+                  Reorganizar
+                </button>
+
+                <button
+                  id="cancel-reorganize-overdue"
+                  class="button secondary"
+                  type="button"
+                >
+                  Cancelar
+                </button>
+
+              </div>
+            </form>
+          </dialog>
+
+          <section id="deck-panel" class="deck-panel" hidden>
+            <div class="deck-header">
+              <div>
+                <h2>Deck não programado</h2>
+                <p>
+                  Arraste para um dia, escolha uma data ou marque como “Aula já feita”.
+                </p>
+              </div>
+
+              <span id="deck-count" class="badge">0 temas</span>
+            </div>
+
+            <div id="deck-dropzone" class="deck-dropzone">
+              <strong>Solte aqui para devolver uma aula ao deck</strong>
+              <div id="deck-list" class="deck-list"></div>
+            </div>
+          </section>
+
+
+          <section class="theme-library-panel">
+            <div class="theme-library-head">
+              <div>
+                <h2>Lista de temas</h2>
+                <p>
+                  Pesquise qualquer aula do cronograma, inclusive as que estão em semanas mais distantes.
+                </p>
+              </div>
+            </div>
+
+            <div class="theme-library-controls theme-library-controls-compact">
+
+              <input
+                id="theme-search"
+                type="search"
+                placeholder="Pesquisar tema, matéria ou área..."
+                autocomplete="off"
+              >
+
+
+              <div class="theme-filter-menu-wrap">
+
+                <button
+                  id="theme-filter-menu-toggle"
+                  class="theme-filter-menu-toggle"
+                  type="button"
+                  aria-label="Abrir filtros"
+                  aria-haspopup="dialog"
+                  aria-expanded="false"
+                  title="Filtros"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M4 6h16M7 12h10M10 18h4"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </button>
+
+
+                <div
+                  id="theme-filter-menu"
+                  class="theme-filter-menu"
+                  hidden
+                >
+
+                  <div class="theme-filter-menu-head">
+
+                    <div>
+                      <strong>Filtros</strong>
+
+                      <small>
+                        Área, status e período
+                      </small>
+                    </div>
+
+
+                    <button
+                      id="theme-filter-menu-close"
+                      class="theme-filter-menu-close"
+                      type="button"
+                      aria-label="Fechar filtros"
+                    >
+                      ×
+                    </button>
+
+                  </div>
+
+
+                  <label class="theme-filter-field">
+
+                    <span>Área</span>
+
+                    <select
+                      id="theme-area-filter"
+                      data-luria-area-select
+                      data-blank-label="Todas as áreas"
+                    >
+                      <option value="">
+                        Todas as áreas
+                      </option>
+                    </select>
+
+                  </label>
+
+
+                  <label class="theme-filter-field">
+
+                    <span>Status</span>
+
+                    <select
+                      id="theme-completion-filter"
+                      aria-label="Filtrar por conclusão"
+                    >
+                      <option value="all">
+                        Feitos e não feitos
+                      </option>
+
+                      <option value="pending">
+                        Não feitos
+                      </option>
+
+                      <option value="completed">
+                        Feitos
+                      </option>
+                    </select>
+
+                  </label>
+
+
+                  <div class="theme-filter-date-grid">
+
+                    <label class="theme-filter-field">
+
+                      <span>De</span>
+
+                      <input
+                        id="theme-date-from"
+                        type="date"
+                        aria-label="Data inicial"
+                      >
+
+                    </label>
+
+
+                    <label class="theme-filter-field">
+
+                      <span>Até</span>
+
+                      <input
+                        id="theme-date-to"
+                        type="date"
+                        aria-label="Data final"
+                      >
+
+                    </label>
+
+                  </div>
+
+
+                  <div class="theme-filter-menu-actions">
+
+                    <button
+                      id="theme-clear-date-filter"
+                      class="button secondary"
+                      type="button"
+                    >
+                      Limpar
+                    </button>
+
+                    <button
+                      id="theme-filter-apply"
+                      class="button primary"
+                      type="button"
+                    >
+                      Aplicar
+                    </button>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <div class="theme-library-meta">
+              <span id="theme-list-count">0 aulas</span>
+              <span>Inclui aulas feitas e não feitas</span>
+            </div>
+
+
+            <div class="theme-library-bulk">
+
+              <label class="theme-bulk-check">
+
+                <input
+                  id="theme-select-all"
+                  type="checkbox"
+                >
+
+                <span>
+                  Selecionar visíveis
+                </span>
+
+              </label>
+
+
+              <span id="theme-selected-count">
+                0 selecionadas
+              </span>
+
+
+              <div class="theme-bulk-menu-wrap">
+
+                <button
+                  id="theme-bulk-menu-toggle"
+                  class="theme-bulk-menu-toggle"
+                  type="button"
+                  aria-label="Ações das aulas selecionadas"
+                  aria-haspopup="menu"
+                  aria-expanded="false"
+                  title="Ações"
+                  disabled
+                >
+                  ⋯
+                </button>
+
+
+                <div
+                  id="theme-bulk-menu"
+                  class="theme-bulk-menu"
+                  role="menu"
+                  hidden
+                >
+
+                  <button
+                    id="theme-deck-selected"
+                    class="theme-bulk-menu-item"
+                    type="button"
+                    role="menuitem"
+                    disabled
+                  >
+                    Remover para o deck
+                  </button>
+
+
+                  <button
+                    id="theme-done-selected"
+                    class="theme-bulk-menu-item"
+                    type="button"
+                    role="menuitem"
+                    disabled
+                  >
+                    Marcar selecionadas como já feitas
+                  </button>
+
+
+                  <button
+                    id="theme-delete-selected"
+                    class="theme-bulk-menu-item danger"
+                    type="button"
+                    role="menuitem"
+                    disabled
+                  >
+                    Excluir selecionadas
+                  </button>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <div id="theme-library-list" class="theme-library-list"></div>
+          </section>
+
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="already-done-dialog" class="done-dialog">
+    <form id="already-done-form" method="dialog">
+      <span class="badge accent">Aula já feita</span>
+      <h2 id="already-done-title">Marcar aula</h2>
+
+      <p>
+        O LURIA vai distribuir as revisões respeitando seus dias de revisão teórica
+        e o máximo diário definido em Configurações.
+      </p>
+
+      <label>
+        Quando você estudou essa aula? <small>(opcional)</small>
+        <input id="already-done-date" type="date">
+      </label>
+
+      <p>
+        Se não souber a data, deixe em branco. A primeira revisão de recuperação
+        será distribuída a partir dos próximos dias disponíveis.
+      </p>
+
+      <div class="done-dialog-actions">
+        <button id="already-done-cancel" class="button secondary" type="button">Cancelar</button>
+        <button class="button primary" type="submit">Marcar como já feita</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="assets/js/supabase.js"></script>
+  <script src="assets/js/app.js?v=13.1"></script>
+  <script src="assets/js/study-mode.js?v=12.1"></script>
+  <script src="assets/js/cronograma-base-data.js?v=12.6"></script>
+  <script src="assets/js/cronograma.js?v=13.1"></script>
+  <script defer src="assets/js/pwa.js?v=4"></script>
+</body>
+</html>
