@@ -2472,42 +2472,48 @@ input[type="file"]:focus-visible::file-selector-button {
 
 
 /* =========================================================
-   LURIA — PATTERN DE FUNDO EXPERIMENTAL
-   Login + Ambientação
-   Linhas inclinadas com fileiras intercaladas.
+   LURIA — PATTERN DE FUNDO GLOBAL
+   Símbolos inclinados com fileiras intercaladas.
    ========================================================= */
 
 :root {
-  --luria-pattern-image: url("../img/logo-icone-original.png?v=pattern2");
-  --luria-pattern-size-login: 112px;
-  --luria-pattern-size-ambientacao: 138px;
-  --luria-pattern-opacity-login: 0.032;
-  --luria-pattern-opacity-ambientacao: 0.020;
+  --luria-pattern-image: url("../img/logo-icone-original.png?v=pattern3");
+  --luria-pattern-size: 138px;
+  --luria-pattern-opacity: 0.020;
 }
 
 :root[data-theme="dark"] {
-  --luria-pattern-image: url("../img/logo-icone-azul-claro.png?v=pattern2");
-  --luria-pattern-opacity-login: 0.040;
-  --luria-pattern-opacity-ambientacao: 0.028;
+  --luria-pattern-image: url("../img/logo-icone-azul-claro.png?v=pattern3");
+  --luria-pattern-opacity: 0.028;
 }
 
 :root[data-theme="leila-mood"] {
-  --luria-pattern-image: url("../img/logo-icone-rosa-escuro.png?v=pattern2");
-  --luria-pattern-opacity-login: 0.034;
-  --luria-pattern-opacity-ambientacao: 0.024;
+  --luria-pattern-image: url("../img/logo-icone-rosa-escuro.png?v=pattern3");
+  --luria-pattern-opacity: 0.024;
 }
 
-.auth-page,
-body[data-page="ambientacao"] {
+/* Login mantém o padrão um pouco mais presente, como na versão aprovada. */
+body.auth-page {
+  --luria-pattern-size: 112px;
+  --luria-pattern-opacity: 0.032;
+}
+
+:root[data-theme="dark"] body.auth-page {
+  --luria-pattern-opacity: 0.040;
+}
+
+:root[data-theme="leila-mood"] body.auth-page {
+  --luria-pattern-opacity: 0.034;
+}
+
+body {
   position: relative;
   isolation: isolate;
 }
 
-/* duas camadas deslocadas criam fileiras intercaladas */
-.auth-page::before,
-.auth-page::after,
-body[data-page="ambientacao"]::before,
-body[data-page="ambientacao"]::after {
+/* Duas camadas deslocadas criam as fileiras intercaladas. */
+body::before,
+body::after {
   content: "";
   position: fixed;
   inset: -14%;
@@ -2515,60 +2521,57 @@ body[data-page="ambientacao"]::after {
   pointer-events: none;
   background-image: var(--luria-pattern-image);
   background-repeat: repeat;
+  background-size:
+    var(--luria-pattern-size)
+    var(--luria-pattern-size);
   transform: rotate(-8deg) scale(1.08);
   transform-origin: center;
 }
 
-/* LOGIN */
-.auth-page::before {
-  background-size:
-    var(--luria-pattern-size-login)
-    var(--luria-pattern-size-login);
+body::before {
   background-position: 0 0;
-  opacity: var(--luria-pattern-opacity-login);
+  opacity: var(--luria-pattern-opacity);
 }
 
-.auth-page::after {
-  background-size:
-    var(--luria-pattern-size-login)
-    var(--luria-pattern-size-login);
+body::after {
   background-position:
-    calc(var(--luria-pattern-size-login) / 2)
-    calc(var(--luria-pattern-size-login) / 2);
-  opacity: var(--luria-pattern-opacity-login);
+    calc(var(--luria-pattern-size) / 2)
+    calc(var(--luria-pattern-size) / 2);
+  opacity: var(--luria-pattern-opacity);
 }
 
-/* AMBIENTAÇÃO */
-body[data-page="ambientacao"]::before {
-  background-size:
-    var(--luria-pattern-size-ambientacao)
-    var(--luria-pattern-size-ambientacao);
-  background-position: 0 0;
-  opacity: var(--luria-pattern-opacity-ambientacao);
-}
-
-body[data-page="ambientacao"]::after {
-  background-size:
-    var(--luria-pattern-size-ambientacao)
-    var(--luria-pattern-size-ambientacao);
-  background-position:
-    calc(var(--luria-pattern-size-ambientacao) / 2)
-    calc(var(--luria-pattern-size-ambientacao) / 2);
-  opacity: var(--luria-pattern-opacity-ambientacao);
-}
-
-.auth-page .auth-card,
-body[data-page="ambientacao"] .app-shell {
+/* Mantém o conteúdo acima do pattern sem alterar o layout. */
+.app-shell,
+.auth-card,
+.loading-card {
   position: relative;
   z-index: 1;
 }
 
+/* A exportação do caderno nunca deve capturar o fundo decorativo. */
+.notebook-pdf-export-host::before,
+.notebook-pdf-export-host::after {
+  content: none !important;
+  display: none !important;
+}
+
 @media (max-width: 760px) {
   :root {
-    --luria-pattern-size-login: 96px;
-    --luria-pattern-size-ambientacao: 118px;
-    --luria-pattern-opacity-login: 0.028;
-    --luria-pattern-opacity-ambientacao: 0.017;
+    --luria-pattern-size: 118px;
+    --luria-pattern-opacity: 0.017;
+  }
+
+  body.auth-page {
+    --luria-pattern-size: 96px;
+    --luria-pattern-opacity: 0.028;
+  }
+
+  :root[data-theme="dark"] body.auth-page {
+    --luria-pattern-opacity: 0.036;
+  }
+
+  :root[data-theme="leila-mood"] body.auth-page {
+    --luria-pattern-opacity: 0.030;
   }
 }
 
