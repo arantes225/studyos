@@ -682,8 +682,17 @@
             <span class="notebook-library-spacer"></span>
 
             <button
-              id="notebook-library-export"
+              id="notebook-library-share"
               class="button primary compact-button"
+              type="button"
+              disabled
+            >
+              Compartilhar
+            </button>
+
+            <button
+              id="notebook-library-export"
+              class="button secondary compact-button"
               type="button"
               disabled
             >
@@ -908,7 +917,8 @@
 
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/pdf-branding.js?v=1"></script>
-  <script src="assets/js/app.js?v=13.1"></script>
+  <script src="assets/js/sharing.js?v=1"></script>
+  <script src="assets/js/app.js?v=14.1"></script>
   <style>
     .notebook-pdf-export-host {
       position: fixed;
@@ -939,7 +949,7 @@
     }
   </style>
 
-  <script src="assets/js/caderno.js?v=16.0"></script>
+  <script src="assets/js/caderno.js?v=16.1"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
 </html>
