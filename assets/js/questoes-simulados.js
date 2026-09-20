@@ -47,9 +47,9 @@ const qsState = {
 };
 
 let AREA_OPTIONS =
-  window.ResibulandoStudyMode
+  window.LuriaStudyMode
     ?.areasFor(
-      window.resibulandoStudyMode
+      window.luriaStudyMode
       || "medicine"
     )
   || [
@@ -4271,17 +4271,17 @@ async function createQuestionSet(title, file) {
   A leitura ocorre localmente no navegador.
 */
 
-const RESIBULANDO_IMAGE_TARGET_BYTES =
+const LURIA_IMAGE_TARGET_BYTES =
   100 * 1024;
 
-const RESIBULANDO_IMAGE_SOFT_MAX_BYTES =
+const LURIA_IMAGE_SOFT_MAX_BYTES =
   150 * 1024;
 
-const RESIBULANDO_IMAGE_MAX_DIMENSION =
+const LURIA_IMAGE_MAX_DIMENSION =
   1100;
 
 
-async function compressResibulandoImageBlob(
+async function compressLuriaImageBlob(
   sourceBlob
 ) {
   if (
@@ -4301,7 +4301,7 @@ async function compressResibulandoImageBlob(
   */
   if (
     sourceBlob.size
-    <= RESIBULANDO_IMAGE_TARGET_BYTES
+    <= LURIA_IMAGE_TARGET_BYTES
   ) {
     return sourceBlob;
   }
@@ -4469,7 +4469,7 @@ async function compressResibulandoImageBlob(
         */
         if (
           candidate.size
-            <= RESIBULANDO_IMAGE_SOFT_MAX_BYTES
+            <= LURIA_IMAGE_SOFT_MAX_BYTES
           && quality >= 0.64
           && maxDimension >= 900
         ) {
@@ -4486,7 +4486,7 @@ async function compressResibulandoImageBlob(
 
         if (
           candidate.size
-          <= RESIBULANDO_IMAGE_TARGET_BYTES
+          <= LURIA_IMAGE_TARGET_BYTES
         ) {
           bitmap.close?.();
 
@@ -12810,7 +12810,7 @@ function errorNotebookSkipStorageKey(
     return null;
   }
 
-  return `resibulando:error-notebook-skips:${qsState.user.id}:${setId}`;
+  return `luria:error-notebook-skips:${qsState.user.id}:${setId}`;
 }
 
 
@@ -14208,24 +14208,24 @@ async function initQuestionSets() {
     window.docmapUser;
 
   const mode =
-    await window.ResibulandoStudyMode
+    await window.LuriaStudyMode
       ?.load?.();
 
   if (
-    window.ResibulandoStudyMode
+    window.LuriaStudyMode
       ?.areasFor
   ) {
     AREA_OPTIONS =
-      window.ResibulandoStudyMode
+      window.LuriaStudyMode
         .areasFor(
           mode
-          || window.resibulandoStudyMode
+          || window.luriaStudyMode
           || "medicine"
         );
   }
 
   window.addEventListener(
-    "resibulando:study-mode",
+    "luria:study-mode",
     (event) => {
       AREA_OPTIONS =
         event.detail?.areas
