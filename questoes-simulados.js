@@ -3128,15 +3128,447 @@ function questionRegionsFromTextLayout(
 }
 
 
+function isQuestionAlternativeLine(
+  text
+) {
+  return /^[A-E]\s*[\)\.\-:]\s*/i
+    .test(
+      normalizeLine(
+        text
+      )
+    );
+}
+
+
+function isQuestionPageFooterLine(
+  text
+) {
+  const value =
+    normalizeLine(
+      text
+    );
+
+  return (
+    /p[aá]gina\s+\d+\s+de\s+\d+/i
+      .test(
+        value
+      )
+    ||
+    /prova gerada pelo/i
+      .test(
+        value
+      )
+    ||
+    /todos os direitos reservados/i
+      .test(
+        value
+      )
+  );
+}
+
+
+function questionTextCropBand(
+  lineRecords,
+  questionStarts,
+  questionIndex,
+  pageHeight
+) {
+  const question =
+    questionStarts[
+      questionIndex
+    ];
+
+
+  const nextQuestion =
+    questionStarts[
+      questionIndex + 1
+    ]
+    || null;
+
+
+  let endY =
+    nextQuestion
+      ? nextQuestion.top
+      : pageHeight;
+
+
+  /*
+    No último item da página, não deixa rodapé entrar
+    na região da questão.
+  */
+  const footerTop =
+    lineRecords
+      .filter(
+        line =>
+          line.top
+          > question.top
+          &&
+          isQuestionPageFooterLine(
+            line.text
+          )
+      )
+      .map(
+        line =>
+          line.top
+      )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a - b
+      )[0];
+
+
+  if (
+    Number.isFinite(
+      footerTop
+    )
+  ) {
+    endY =
+      Math.min(
+        endY,
+        footerTop
+      );
+  }
+
+
+  const lines =
+    lineRecords
+      .filter(
+        line =>
+          line.top
+          >= question.top - 3
+          &&
+          line.top
+          < endY - 2
+          &&
+          !isQuestionPageFooterLine(
+            line.text
+          )
+      )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a.top - b.top
+      );
+
+
+  const firstAlternativeIndex =
+    lines.findIndex(
+      line =>
+        isQuestionAlternativeLine(
+          line.text
+        )
+    );
+
+
+  if (
+    firstAlternativeIndex <= 0
+  ) {
+    return null;
+  }
+
+
+  const firstAlternative =
+    lines[
+      firstAlternativeIndex
+    ];
+
+
+  const beforeAlternative =
+    lines.slice(
+      0,
+      firstAlternativeIndex
+    );
+
+
+  if (
+    !beforeAlternative.length
+  ) {
+    return null;
+  }
+
+
+  /*
+    Inclui a primeira alternativa só como limite inferior.
+    Assim conseguimos medir todos os "vazios" do enunciado
+    até o início das respostas.
+  */
+  const sequence = [
+    ...beforeAlternative,
+    firstAlternative
+  ];
+
+
+  const gaps =
+    [];
+
+
+  for (
+    let index = 0;
+    index < sequence.length - 1;
+    index += 1
+  ) {
+    const current =
+      sequence[
+        index
+      ];
+
+
+    const next =
+      sequence[
+        index + 1
+      ];
+
+
+    const height =
+      next.top
+      - current.bottom;
+
+
+    if (
+      height > 1
+    ) {
+      gaps.push({
+        top:
+          current.bottom,
+
+        bottom:
+          next.top,
+
+        height,
+
+        beforeAlternative:
+          index
+          === sequence.length - 2
+      });
+    }
+  }
+
+
+  if (
+    !gaps.length
+  ) {
+    return null;
+  }
+
+
+  const positiveHeights =
+    gaps
+      .map(
+        gap =>
+          gap.height
+      )
+      .filter(
+        height =>
+          height > 0
+      )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a - b
+      );
+
+
+  const medianGap =
+    positiveHeights.length
+      ? positiveHeights[
+          Math.floor(
+            positiveHeights.length / 2
+          )
+        ]
+      : 0;
+
+
+  const typicalFontHeight =
+    beforeAlternative.length
+      ? beforeAlternative
+          .map(
+            line =>
+              Number(
+                line.fontHeight
+                || 0
+              )
+          )
+          .filter(
+            Number.isFinite
+          )
+          .sort(
+            (
+              a,
+              b
+            ) =>
+              a - b
+          )[
+            Math.floor(
+              beforeAlternative.length / 2
+            )
+          ]
+          || 0
+      : 0;
+
+
+  const largestGap =
+    gaps
+      .slice()
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          b.height - a.height
+      )[0];
+
+
+  const lastGap =
+    gaps[
+      gaps.length - 1
+    ];
+
+
+  /*
+    Se há um vão muito maior que o espaçamento normal,
+    assumimos que é onde está ECG/tabela/figura.
+    Caso contrário, usamos literalmente o espaço logo
+    acima da primeira alternativa — mesmo se estiver vazio.
+  */
+  const significantThreshold =
+    Math.max(
+      48,
+      typicalFontHeight * 2.1,
+      medianGap * 2.4
+    );
+
+
+  const chosen =
+    largestGap.height
+      >= significantThreshold
+        ? largestGap
+        : lastGap;
+
+
+  const verticalPadding =
+    Math.max(
+      3,
+      typicalFontHeight * 0.12
+    );
+
+
+  const top =
+    Math.max(
+      question.top,
+      chosen.top
+      + verticalPadding
+    );
+
+
+  const bottom =
+    Math.min(
+      firstAlternative.top,
+      chosen.bottom
+      - verticalPadding
+    );
+
+
+  if (
+    bottom <= top
+  ) {
+    return null;
+  }
+
+
+  return {
+    top,
+    bottom,
+    height:
+      bottom - top,
+
+    significant:
+      chosen
+      === largestGap
+      &&
+      largestGap.height
+        >= significantThreshold
+  };
+}
+
+
+function cropQuestionBandOrVisual(
+  pageCanvas,
+  band
+) {
+  const broadRect = {
+    left:
+      pageCanvas.width
+      * 0.045,
+
+    right:
+      pageCanvas.width
+      * 0.955,
+
+    top:
+      band.top,
+
+    bottom:
+      band.bottom
+  };
+
+
+  /*
+    Primeiro tenta APENAS aparar margens brancas.
+    A faixa vertical já foi decidida pelo texto, não pela
+    detecção de imagem. Se não houver conteúdo visual,
+    mantém a faixa completa como o usuário pediu.
+  */
+  const trimmed =
+    visualBlockInsideGap(
+      pageCanvas,
+      broadRect
+    );
+
+
+  if (
+    trimmed
+  ) {
+    return trimmed;
+  }
+
+
+  return {
+    ...broadRect,
+
+    width:
+      broadRect.right
+      - broadRect.left,
+
+    height:
+      broadRect.bottom
+      - broadRect.top
+  };
+}
+
+
 async function extractQuestionImagesFromPage(
   page,
   content,
   pageNumber
 ) {
   /*
-    Não existe mais reconhecimento de "imagem".
-    Para cada questão, tiramos um screenshot da maior faixa
-    sem texto entre o enunciado e a alternativa A.
+    Não tentamos mais descobrir se existe imagem/XObject.
+
+    Para CADA questão:
+    1. localiza o início da questão;
+    2. localiza a primeira alternativa;
+    3. encontra o espaço visual entre o enunciado e as alternativas;
+    4. recorta exatamente essa faixa da página renderizada.
+
+    Se houver ECG/tabela/figura, ela estará dentro do recorte.
+    Se não houver imagem, o recorte pode ser apenas uma faixa vazia.
   */
   const renderScale =
     3;
@@ -3156,20 +3588,15 @@ async function extractQuestionImagesFromPage(
     );
 
 
-  const regions =
-    questionRegionsFromTextLayout(
-      lineRecords,
-      viewport
+  const questionStarts =
+    questionStartsForPage(
+      lineRecords
     );
 
 
   if (
-    !regions.length
+    !questionStarts.length
   ) {
-    console.debug(
-      `[Questões] Página ${pageNumber}: nenhuma faixa entre questão e alternativas encontrada.`
-    );
-
     return [];
   }
 
@@ -3237,96 +3664,83 @@ async function extractQuestionImagesFromPage(
 
 
   for (
-    const region
-    of regions
+    let index = 0;
+    index < questionStarts.length;
+    index += 1
   ) {
-    const rect = {
-      left:
-        Math.max(
-          0,
-          Math.floor(
-            region.left
-          )
-        ),
-
-      top:
-        Math.max(
-          0,
-          Math.floor(
-            region.top
-          )
-        ),
-
-      right:
-        Math.min(
-          canvas.width,
-          Math.ceil(
-            region.right
-          )
-        ),
-
-      bottom:
-        Math.min(
-          canvas.height,
-          Math.ceil(
-            region.bottom
-          )
-        )
-    };
+    const question =
+      questionStarts[
+        index
+      ];
 
 
-    rect.width =
-      Math.max(
-        1,
-        rect.right - rect.left
-      );
-
-
-    rect.height =
-      Math.max(
-        1,
-        rect.bottom - rect.top
+    const band =
+      questionTextCropBand(
+        lineRecords,
+        questionStarts,
+        index,
+        viewport.height
       );
 
 
     if (
-      rect.width < 20
+      !band
+    ) {
+      console.debug(
+        `[Questões] Página ${pageNumber}, questão ${question.number}: não foi possível delimitar a faixa entre enunciado e alternativas.`
+      );
+
+      continue;
+    }
+
+
+    const cropRect =
+      cropQuestionBandOrVisual(
+        canvas,
+        band
+      );
+
+
+    if (
+      cropRect.height < 2
       ||
-      rect.height < 1
+      cropRect.width < 2
     ) {
       continue;
     }
 
 
     setImportStatus(
-      `Capturando faixa da questão ${region.question_number} — página ${pageNumber}...`
+      `Capturando região entre enunciado e alternativas — questão ${question.number}, página ${pageNumber}...`
     );
 
 
     const blob =
       await cropRenderedPage(
         canvas,
-        rect
+        cropRect
       );
 
 
     results.push({
       question_number:
-        region.question_number,
+        question.number,
 
       blob,
 
       source_rect:
-        rect,
+        cropRect,
 
       source:
-        "question-gap-screenshot"
+        band.significant
+          ? "text-band-visual-gap"
+          : "text-band-before-alternative"
     });
   }
 
 
   console.debug(
-    `[Questões] Página ${pageNumber}: ${regions.length} faixa(s) calculada(s), ${results.length} screenshot(s) criado(s).`
+    `[Questões] Página ${pageNumber}: ${results.length} faixa(s) capturada(s) a partir da estrutura textual.`
   );
 
 
