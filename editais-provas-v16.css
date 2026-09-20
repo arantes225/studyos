@@ -348,3 +348,58 @@
     width: 100%;
   }
 }
+
+
+/* =========================================================
+   V16.1 — SEMÁFORO NO CARD INTEIRO DA PROVA
+   ========================================================= */
+
+.exam-card {
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+/* Sem nota do aluno ou sem nota de corte: permanece neutro. */
+.exam-card:not(.exam-score-state-red):not(.exam-score-state-yellow):not(.exam-score-state-green) {
+  background: var(--surface);
+}
+
+/* 2 ou mais pontos abaixo da nota de corte. */
+.exam-card.exam-score-state-red {
+  border-color: color-mix(in srgb, var(--danger) 48%, var(--border));
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+}
+
+/* Entre -1,99 e +1,99 em relação à nota de corte. */
+.exam-card.exam-score-state-yellow {
+  border-color: color-mix(in srgb, #d6a400 52%, var(--border));
+  background: color-mix(in srgb, #f2c94c 16%, var(--surface));
+}
+
+/* 2 ou mais pontos acima da nota de corte. */
+.exam-card.exam-score-state-green {
+  border-color: color-mix(in srgb, var(--success) 50%, var(--border));
+  background: color-mix(in srgb, var(--success) 13%, var(--surface));
+}
+
+/* Os blocos internos acompanham o fundo do card, em vez de parecerem
+   callouts isolados com outra cor. */
+.exam-card.exam-score-state-red .exam-card-info,
+.exam-card.exam-score-state-red .exam-simulation-summary,
+.exam-card.exam-score-state-yellow .exam-card-info,
+.exam-card.exam-score-state-yellow .exam-simulation-summary,
+.exam-card.exam-score-state-green .exam-card-info,
+.exam-card.exam-score-state-green .exam-simulation-summary {
+  background: color-mix(in srgb, transparent 62%, var(--surface));
+}
+
+/* O resultado continua legível, mas a indicação principal passa a ser
+   a cor do card completo. */
+.exam-score-comparison.red,
+.exam-score-comparison.yellow,
+.exam-score-comparison.green {
+  border-color: var(--border);
+  background: transparent;
+}
