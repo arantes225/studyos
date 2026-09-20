@@ -34,6 +34,26 @@
   --sidebar: #081426;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #07111F;
+    --surface: #0D1B30;
+    --surface-2: #13233A;
+    --text: #F4F8FF;
+    --muted: #A8B8CD;
+    --border: #20344F;
+    --accent: #4F7FB8;
+    --accent-strong: #7FA6D1;
+    --accent-soft: #142A44;
+    --gold: #D4AF37;
+    --gold-soft: #3A321A;
+    --danger: #FF929C;
+    --success: #76D9B0;
+    --shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
+    --sidebar: #081426;
+  }
+}
+
 
 :root[data-theme="leila-mood"] {
   --bg: #fff6fa;
