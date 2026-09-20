@@ -1416,13 +1416,133 @@ body.sidebar-hidden
    LURIA GOLD ACCENTS — uso seletivo, premium e acadêmico
    ========================================================= */
 .streak-mini {
-  border-color: color-mix(in srgb, var(--gold) 42%, var(--border));
-  background: linear-gradient(135deg, var(--surface) 70%, color-mix(in srgb, var(--gold-soft) 55%, var(--surface)));
-  box-shadow: inset 3px 0 0 var(--gold);
+  --sidebar-streak-main: #f59e0b;
+  --sidebar-streak-core: #fde68a;
+  --sidebar-streak-glow: rgba(245, 158, 11, .20);
+
+  display: grid;
+  gap: 9px;
+  padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, var(--sidebar-streak-main) 18%, var(--border));
+  border-radius: 14px;
+  background:
+    radial-gradient(
+      circle at 18% 55%,
+      color-mix(in srgb, var(--sidebar-streak-main) 8%, transparent),
+      transparent 44%
+    ),
+    var(--surface);
+  box-shadow:
+    0 7px 20px rgba(15, 23, 42, .035),
+    inset 0 1px 0 rgba(255,255,255,.35);
 }
 
-.streak-mini > :first-child {
-  color: var(--gold);
+.streak-mini-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.streak-mini-title {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.streak-mini-status {
+  max-width: 94px;
+  padding: 3px 7px;
+  border: 1px solid color-mix(in srgb, var(--sidebar-streak-main) 22%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sidebar-streak-main) 9%, transparent);
+  color: var(--sidebar-streak-main);
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: .035em;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.streak-mini-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.streak-mini-flame {
+  position: relative;
+  width: 39px;
+  height: 42px;
+  flex: 0 0 39px;
+  display: grid;
+  place-items: center;
+  color: var(--sidebar-streak-main);
+}
+
+.streak-mini-flame svg {
+  position: relative;
+  z-index: 1;
+  width: 28px;
+  height: 35px;
+  overflow: visible;
+  filter: drop-shadow(0 4px 7px var(--sidebar-streak-glow));
+}
+
+.streak-mini-core {
+  fill: var(--sidebar-streak-core);
+}
+
+.streak-mini-aura {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--sidebar-streak-main);
+  opacity: .08;
+  filter: blur(8px);
+}
+
+.streak-mini-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.streak-mini-copy strong {
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.streak-mini-copy small {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.streak-mini[data-streak-tier="0"] {
+  --sidebar-streak-main: #94a3b8;
+  --sidebar-streak-core: #cbd5e1;
+  --sidebar-streak-glow: rgba(148, 163, 184, .15);
+}
+
+.streak-mini[data-streak-tier="2"] {
+  --sidebar-streak-main: #f97316;
+  --sidebar-streak-core: #fed7aa;
+  --sidebar-streak-glow: rgba(249, 115, 22, .22);
+}
+
+.streak-mini[data-streak-tier="3"],
+.streak-mini[data-streak-tier="4"],
+.streak-mini[data-streak-tier="5"] {
+  --sidebar-streak-main: #ef4444;
+  --sidebar-streak-core: #fdba74;
+  --sidebar-streak-glow: rgba(239, 68, 68, .24);
 }
 
 .badge.premium,
@@ -1438,5 +1558,14 @@ body.sidebar-hidden
 }
 
 :root[data-theme="dark"] .streak-mini {
-  background: linear-gradient(135deg, var(--surface) 72%, color-mix(in srgb, var(--gold-soft) 42%, var(--surface)));
+  background:
+    radial-gradient(
+      circle at 18% 55%,
+      color-mix(in srgb, var(--sidebar-streak-main) 10%, transparent),
+      transparent 46%
+    ),
+    var(--surface);
+  box-shadow:
+    0 9px 24px rgba(0,0,0,.16),
+    inset 0 1px 0 rgba(255,255,255,.025);
 }
