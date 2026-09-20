@@ -14,7 +14,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria7">
   <link rel="stylesheet" href="assets/css/style.css?v=luria-palette-11">
-  <link rel="stylesheet" href="assets/css/admin.css?v=1.3">
+  <link rel="stylesheet" href="assets/css/admin.css?v=1.4">
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=10">
   <link rel="canonical" href="/admin/">
 </head>
@@ -174,6 +174,53 @@
               <small>Carregando...</small>
             </article>
           </div>
+
+          <section
+            id="admin-storage-expansion-alert"
+            class="admin-storage-expansion-alert"
+            aria-live="polite"
+            hidden
+          >
+            <div class="admin-storage-expansion-row">
+              <span
+                id="admin-storage-expansion-percent"
+                class="admin-storage-expansion-badge"
+              >
+                80%
+              </span>
+
+              <div class="admin-storage-expansion-copy">
+                <strong>
+                  Storage próximo do limite — plano de expansão disponível
+                </strong>
+
+                <small id="admin-storage-expansion-summary">
+                  O guia de expansão ficará disponível quando o Storage atingir 80%.
+                </small>
+              </div>
+
+              <button
+                id="admin-storage-expansion-open"
+                class="button secondary admin-storage-expansion-open"
+                type="button"
+                aria-expanded="false"
+                aria-controls="admin-storage-expansion-content"
+              >
+                Abrir
+              </button>
+            </div>
+
+            <small
+              id="admin-storage-expansion-source"
+              class="admin-storage-expansion-source"
+            ></small>
+
+            <pre
+              id="admin-storage-expansion-content"
+              class="admin-storage-expansion-content"
+              hidden
+            ></pre>
+          </section>
 
           <div class="admin-finance-wrap">
             <div class="admin-finance-grid">
@@ -350,7 +397,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=14.4"></script>
-  <script src="assets/js/admin.js?v=1.3"></script>
+  <script src="assets/js/admin.js?v=1.4"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
