@@ -1138,66 +1138,95 @@ function formatSimulationAccuracy(value) {
 }
 
 async function loadSimulationMetrics() {
-  const value = document.getElementById("metric-simulations");
-  const helper = document.getElementById("metric-simulations-helper");
-  const accuracyElement = document.getElementById("metric-simulations-accuracy");
-  const accuracyRing = document.getElementById("simulation-accuracy-ring");
-
-  if (!value || !helper) return;
-
-  const start30 = new Date();
-  start30.setDate(start30.getDate() - 29);
-  start30.setHours(0, 0, 0, 0);
+  const today = startOfDay(new Date());
+  const currentStart = addDays(today, -29);
+  const previousStart = addDays(today, -59);
+  const previousEnd = addDays(today, -30);
 
   const { data, error } = await dashboardSb
     .from("question_set_metrics")
     .select("set_id,answered_count,correct_count,last_answered_at")
     .gt("answered_count", 0)
-    .gte("last_answered_at", start30.toISOString());
+    .gte("last_answered_at", previousStart.toISOString());
 
   if (error) {
     console.warn(error);
-    value.textContent = "—";
-    helper.textContent = "Não foi possível carregar";
-    if (accuracyElement) accuracyElement.textContent = "—";
-    if (accuracyRing) accuracyRing.style.setProperty("--metric-ring-value", 0);
+    setDashboardText("metric-simulations", "0");
+    setDashboardText("metric-simulations-accuracy", "—");
+    setDashboardText("metric-simulations-helper", "Não foi possível carregar");
     return;
   }
 
   const rows = data || [];
-  const setCount = rows.length;
 
-  const answered30 = rows.reduce(
-    (sum, row) => sum + Number(row.answered_count || 0),
-    0
+  const currentRows = rows.filter(
+    (row) => new Date(row.last_answered_at) >= currentStart
   );
 
-  const correct30 = rows.reduce(
-    (sum, row) => sum + Number(row.correct_count || 0),
-    0
-  );
+  const previousRows = rows.filter((row) => {
+    const date = new Date(row.last_answered_at);
+    return date >= previousStart && date <= previousEnd;
+  });
 
-  const accuracy30 =
-    answered30 > 0 ? (correct30 / answered30) * 100 : null;
-
-  value.textContent = setCount;
-
-  helper.textContent = setCount
-    ? `${setCount} simulado${setCount === 1 ? "" : "s"} nos últimos 30 dias`
-    : "Nenhum simulado nos últimos 30 dias";
-
-  if (accuracyElement) {
-    accuracyElement.textContent =
-      accuracy30 === null ? "—" : `${accuracy30.toFixed(0)}%`;
-  }
-
-  if (accuracyRing) {
-    accuracyRing.style.setProperty(
-      "--metric-ring-value",
-      accuracy30 === null ? 0 : Math.max(0, Math.min(100, accuracy30))
+  const summarize = (source) => {
+    const answered = source.reduce(
+      (sum, row) => sum + Number(row.answered_count || 0),
+      0
     );
+
+    const correct = source.reduce(
+      (sum, row) => sum + Number(row.correct_count || 0),
+      0
+    );
+
+    return {
+      count: source.length,
+      accuracy: answered > 0 ? (correct / answered) * 100 : null
+    };
+  };
+
+  const current = summarize(currentRows);
+  const previous = summarize(previousRows);
+
+  const accuracyText =
+    current.accuracy === null
+      ? "—"
+      : `${current.accuracy.toFixed(0)}%`;
+
+  let trend = "";
+
+  if (
+    current.accuracy !== null
+    && previous.accuracy !== null
+  ) {
+    const delta =
+      Math.round(
+        current.accuracy
+        - previous.accuracy
+      );
+
+    trend =
+      delta === 0
+        ? " · estável"
+        : ` · ${delta > 0 ? "↑" : "↓"} ${Math.abs(delta)}%`;
   }
+
+  setDashboardText(
+    "metric-simulations",
+    String(current.count)
+  );
+
+  setDashboardText(
+    "metric-simulations-accuracy",
+    accuracyText
+  );
+
+  setDashboardText(
+    "metric-simulations-helper",
+    `${current.count} simulado${current.count === 1 ? "" : "s"}${trend}`
+  );
 }
+
 
 /* =========================================================
    CCQ — REVISÃO PASSIVA
@@ -1613,9 +1642,9 @@ function updateDashboardSummaryFromDetails() {
         );
   }
 
-  const errorHelper =
+  const errorValue =
     document.getElementById(
-      "metric-errors-helper"
+      "metric-errors"
     )
       ?.textContent
       ?.trim()
@@ -1630,7 +1659,7 @@ function updateDashboardSummaryFromDetails() {
     summaryErrors
   ) {
     const match =
-      errorHelper.match(
+      errorValue.match(
         /(\d+)\s+CCQ/i
       );
 
@@ -1646,11 +1675,7 @@ function updateDashboardSummaryFromDetails() {
               : "s"
           )
         : (
-            document
-              .getElementById(
-                "metric-errors"
-              )
-              ?.textContent
+            errorValue
             || "—"
           );
   }
