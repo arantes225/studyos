@@ -2601,6 +2601,85 @@ function prepareEmbeddedStudyPage(
 
 
     /*
+      CADERNO DA REVISÃO
+    */
+
+    if (
+      kind === "subject_review"
+    ) {
+      [
+        ".notebook-tabs",
+        ".notebook-topic-panel",
+        "#notebook-view-library"
+      ].forEach((selector) => {
+        doc
+          .querySelectorAll(
+            selector
+          )
+          .forEach((element) => {
+            element.style.display =
+              "none";
+          });
+      });
+
+      const editorView =
+        doc.querySelector(
+          "#notebook-view-editor"
+        );
+
+      if (editorView) {
+        editorView.hidden =
+          false;
+
+        editorView.style.display =
+          "block";
+      }
+
+      const workspace =
+        doc.querySelector(
+          ".notebook-workspace"
+        );
+
+      if (workspace) {
+        workspace.style.display =
+          "block";
+
+        workspace.style.gridTemplateColumns =
+          "1fr";
+      }
+
+      const column =
+        doc.querySelector(
+          ".notebook-editor-column"
+        );
+
+      if (column) {
+        column.style.width =
+          "100%";
+
+        column.style.minWidth =
+          "0";
+      }
+
+      const paper =
+        doc.querySelector(
+          ".notebook-paper"
+        );
+
+      if (paper) {
+        paper.style.width =
+          "min(100%, 980px)";
+
+        paper.style.maxWidth =
+          "980px";
+
+        paper.style.margin =
+          "0 auto";
+      }
+    }
+
+
+    /*
       CADERNO DE ERROS
     */
 
@@ -3115,7 +3194,7 @@ async function renderAgendaSubjectReview(
           "study_topics"
         )
         .select(
-          "theme,area,materia"
+          "id,theme,area,materia"
         )
         .eq(
           "id",
@@ -3164,6 +3243,51 @@ async function renderAgendaSubjectReview(
               " · "
             );
       }
+    }
+
+    if (
+      frame
+      && isUuid(
+        review.topic_id
+      )
+    ) {
+      const notebookUrl =
+        new URL(
+          "caderno.html",
+          window.location.href
+        );
+
+      notebookUrl.searchParams.set(
+        "embed",
+        "ambientacao"
+      );
+
+      notebookUrl.searchParams.set(
+        "topic_id",
+        review.topic_id
+      );
+
+      frame.hidden =
+        false;
+
+      frame.title =
+        "Caderno da matéria em revisão";
+
+      frame.addEventListener(
+        "load",
+        () => {
+          prepareEmbeddedStudyPage(
+            frame,
+            "subject_review"
+          );
+        },
+        {
+          once: true
+        }
+      );
+
+      frame.src =
+        notebookUrl.toString();
     }
   }
 
@@ -3379,6 +3503,10 @@ function openActivityWorkspace(params) {
         "Revisão agendada da matéria.";
     }
 
+    workspace.classList.add(
+      "lesson-with-notebook"
+    );
+
     renderAgendaSubjectReview(
       params
     );
@@ -3386,6 +3514,10 @@ function openActivityWorkspace(params) {
     return;
   }
 
+
+  workspace.classList.remove(
+    "lesson-with-notebook"
+  );
 
   if (lesson) {
     lesson.hidden =
