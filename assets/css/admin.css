@@ -643,18 +643,18 @@
 }
 
 .admin-pin-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
   padding-bottom: 20px;
   margin-bottom: 24px;
   border-bottom: 1px solid var(--border);
+  text-align: center;
 }
 
 .admin-pin-logo {
-  width: 54px;
-  height: 54px;
-  flex: 0 0 54px;
+  width: min(100%, 190px);
+  height: auto;
   display: block;
   object-fit: contain;
   background: transparent;
@@ -667,12 +667,11 @@
 }
 
 .admin-pin-brand strong {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 900;
 }
 
 .admin-pin-brand small {
-  margin-top: 3px;
   color: var(--muted);
   font-size: 9px;
   font-weight: 700;
