@@ -76,6 +76,20 @@ function formatMonthYear(date) {
   );
 }
 
+function formatDayLabel(date) {
+  return capitalize(
+    new Intl.DateTimeFormat(
+      "pt-BR",
+      {
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric"
+      }
+    ).format(date)
+  );
+}
+
 function formatWeekRange(start, end) {
   if (start.getMonth() === end.getMonth()) {
     const monthYear = new Intl.DateTimeFormat("pt-BR", {
@@ -90,6 +104,20 @@ function formatWeekRange(start, end) {
 }
 
 function getVisibleRange() {
+  if (agendaState.view === "day") {
+    const day =
+      startOfDay(
+        agendaState.anchorDate
+      );
+
+    return {
+      displayStart: day,
+      displayEnd: day,
+      queryStart: day,
+      queryEnd: day
+    };
+  }
+
   if (agendaState.view === "week") {
     const start = startOfWeek(agendaState.anchorDate);
     return {
@@ -285,6 +313,68 @@ function itemsForDate(date) {
   return agendaState.items.filter((item) => item.activity_date === iso);
 }
 
+function renderDay() {
+  const date =
+    startOfDay(
+      agendaState.anchorDate
+    );
+
+  const today =
+    startOfDay(
+      new Date()
+    );
+
+  const dayItems =
+    itemsForDate(
+      date
+    );
+
+  const isToday =
+    sameDate(
+      date,
+      today
+    );
+
+  const weekday =
+    capitalize(
+      new Intl.DateTimeFormat(
+        "pt-BR",
+        {
+          weekday: "long"
+        }
+      )
+        .format(
+          date
+        )
+    );
+
+  return `
+    <div class="day-calendar">
+      <section
+        class="calendar-day ${isToday ? "today" : ""}"
+        data-drop-date="${toISODate(date)}"
+      >
+        <header class="calendar-day-header">
+          <span>${escapeDashboardHtml(weekday)}</span>
+          <strong>${date.getDate()}</strong>
+        </header>
+
+        <div class="calendar-day-body">
+          ${
+            dayItems.length
+              ? dayItems
+                  .map(
+                    renderActivityCard
+                  )
+                  .join("")
+              : '<div class="empty-day">Sem atividades</div>'
+          }
+        </div>
+      </section>
+    </div>
+  `;
+}
+
 function renderWeek() {
   const { displayStart } = getVisibleRange();
   const today = startOfDay(new Date());
@@ -355,6 +445,7 @@ function renderMonth() {
             <section
               class="month-day ${outside ? "outside" : ""} ${isToday ? "today" : ""}"
               data-drop-date="${toISODate(date)}"
+              data-calendar-date="${toISODate(date)}"
             >
               <header>
                 <span>${date.getDate()}</span>
@@ -373,6 +464,60 @@ function renderMonth() {
   `;
 }
 
+function updateCalendarViewControls() {
+  const dayButton =
+    document.getElementById(
+      "view-day"
+    );
+
+  const weekButton =
+    document.getElementById(
+      "view-week"
+    );
+
+  const monthButton =
+    document.getElementById(
+      "view-month"
+    );
+
+  const currentButton =
+    document.getElementById(
+      "calendar-today"
+    );
+
+  dayButton
+    ?.classList
+    .toggle(
+      "active",
+      agendaState.view === "day"
+    );
+
+  weekButton
+    ?.classList
+    .toggle(
+      "active",
+      agendaState.view === "week"
+    );
+
+  monthButton
+    ?.classList
+    .toggle(
+      "active",
+      agendaState.view === "month"
+    );
+
+  if (
+    currentButton
+  ) {
+    currentButton.textContent =
+      agendaState.view === "day"
+        ? "Hoje"
+        : agendaState.view === "week"
+          ? "Esta semana"
+          : "Este mês";
+  }
+}
+
 function renderCalendar() {
   const calendar = document.getElementById("calendar");
   const label = document.getElementById("calendar-range-label");
@@ -381,12 +526,39 @@ function renderCalendar() {
 
   const range = getVisibleRange();
 
-  if (agendaState.view === "week") {
-    label.textContent = formatWeekRange(range.displayStart, range.displayEnd);
-    calendar.innerHTML = renderWeek();
+  updateCalendarViewControls();
+
+  if (
+    agendaState.view === "day"
+  ) {
+    label.textContent =
+      formatDayLabel(
+        range.displayStart
+      );
+
+    calendar.innerHTML =
+      renderDay();
+
+  } else if (
+    agendaState.view === "week"
+  ) {
+    label.textContent =
+      formatWeekRange(
+        range.displayStart,
+        range.displayEnd
+      );
+
+    calendar.innerHTML =
+      renderWeek();
+
   } else {
-    label.textContent = formatMonthYear(range.displayStart);
-    calendar.innerHTML = renderMonth();
+    label.textContent =
+      formatMonthYear(
+        range.displayStart
+      );
+
+    calendar.innerHTML =
+      renderMonth();
   }
 
   wireCalendarInteractions();
@@ -401,6 +573,66 @@ function setCalendarStatus(text, type = "") {
 }
 
 function wireCalendarInteractions() {
+  if (
+    agendaState.view === "month"
+  ) {
+    document
+      .querySelectorAll(
+        "[data-calendar-date]"
+      )
+      .forEach(
+        day => {
+          day.addEventListener(
+            "click",
+            async event => {
+              /*
+                Cliques nos botões/links internos continuam executando
+                a própria ação e não mudam a visualização.
+              */
+              if (
+                event.target.closest(
+                  "a,button,input,select,textarea"
+                )
+              ) {
+                return;
+              }
+
+              const iso =
+                day.dataset
+                  .calendarDate;
+
+              if (
+                !iso
+              ) {
+                return;
+              }
+
+              const [
+                year,
+                month,
+                date
+              ] =
+                iso
+                  .split("-")
+                  .map(Number);
+
+              agendaState.anchorDate =
+                new Date(
+                  year,
+                  month - 1,
+                  date
+                );
+
+              agendaState.view =
+                "week";
+
+              await loadAgenda();
+            }
+          );
+        }
+      );
+  }
+
   document.querySelectorAll(".agenda-card[draggable='true']").forEach((card) => {
     card.addEventListener("dragstart", (event) => {
       const key = card.dataset.agendaKey;
@@ -1957,55 +2189,167 @@ async function loadDashboardMetrics() {
 }
 
 function wireDashboardControls() {
-  const weekButton = document.getElementById("view-week");
-  const monthButton = document.getElementById("view-month");
+  const dayButton =
+    document.getElementById(
+      "view-day"
+    );
 
-  weekButton.addEventListener("click", async () => {
-    if (agendaState.view === "week") return;
+  const weekButton =
+    document.getElementById(
+      "view-week"
+    );
 
-    agendaState.view = "week";
-    weekButton.classList.add("active");
-    monthButton.classList.remove("active");
+  const monthButton =
+    document.getElementById(
+      "view-month"
+    );
 
-    await loadAgenda();
-  });
+  async function setAgendaView(
+    view
+  ) {
+    if (
+      agendaState.view === view
+    ) {
+      updateCalendarViewControls();
+      return;
+    }
 
-  monthButton.addEventListener("click", async () => {
-    if (agendaState.view === "month") return;
+    agendaState.view =
+      view;
 
-    agendaState.view = "month";
-    monthButton.classList.add("active");
-    weekButton.classList.remove("active");
-
-    await loadAgenda();
-  });
-
-  document.getElementById("calendar-prev").addEventListener("click", async () => {
-    agendaState.anchorDate =
-      agendaState.view === "week"
-        ? addDays(agendaState.anchorDate, -7)
-        : addMonths(agendaState.anchorDate, -1);
-
-    await loadAgenda();
-  });
-
-  document.getElementById("calendar-next").addEventListener("click", async () => {
-    agendaState.anchorDate =
-      agendaState.view === "week"
-        ? addDays(agendaState.anchorDate, 7)
-        : addMonths(agendaState.anchorDate, 1);
+    updateCalendarViewControls();
 
     await loadAgenda();
-  });
+  }
 
-  document.getElementById("calendar-today").addEventListener("click", async () => {
-    agendaState.anchorDate = startOfDay(new Date());
-    await loadAgenda();
-  });
+  dayButton
+    ?.addEventListener(
+      "click",
+      async () => {
+        await setAgendaView(
+          "day"
+        );
+      }
+    );
 
-  document.getElementById("move-form").addEventListener("submit", handleMoveForm);
-  document.getElementById("move-cancel").addEventListener("click", closeMoveDialog);
-  document.getElementById("move-close").addEventListener("click", closeMoveDialog);
+  weekButton
+    ?.addEventListener(
+      "click",
+      async () => {
+        await setAgendaView(
+          "week"
+        );
+      }
+    );
+
+  monthButton
+    ?.addEventListener(
+      "click",
+      async () => {
+        await setAgendaView(
+          "month"
+        );
+      }
+    );
+
+  document
+    .getElementById(
+      "calendar-prev"
+    )
+    .addEventListener(
+      "click",
+      async () => {
+        agendaState.anchorDate =
+          agendaState.view === "day"
+            ? addDays(
+                agendaState.anchorDate,
+                -1
+              )
+            : agendaState.view === "week"
+              ? addDays(
+                  agendaState.anchorDate,
+                  -7
+                )
+              : addMonths(
+                  agendaState.anchorDate,
+                  -1
+                );
+
+        await loadAgenda();
+      }
+    );
+
+  document
+    .getElementById(
+      "calendar-next"
+    )
+    .addEventListener(
+      "click",
+      async () => {
+        agendaState.anchorDate =
+          agendaState.view === "day"
+            ? addDays(
+                agendaState.anchorDate,
+                1
+              )
+            : agendaState.view === "week"
+              ? addDays(
+                  agendaState.anchorDate,
+                  7
+                )
+              : addMonths(
+                  agendaState.anchorDate,
+                  1
+                );
+
+        await loadAgenda();
+      }
+    );
+
+  document
+    .getElementById(
+      "calendar-today"
+    )
+    .addEventListener(
+      "click",
+      async () => {
+        agendaState.anchorDate =
+          startOfDay(
+            new Date()
+          );
+
+        await loadAgenda();
+      }
+    );
+
+  document
+    .getElementById(
+      "move-form"
+    )
+    .addEventListener(
+      "submit",
+      handleMoveForm
+    );
+
+  document
+    .getElementById(
+      "move-cancel"
+    )
+    .addEventListener(
+      "click",
+      closeMoveDialog
+    );
+
+  document
+    .getElementById(
+      "move-close"
+    )
+    .addEventListener(
+      "click",
+      closeMoveDialog
+    );
+
+  updateCalendarViewControls();
 }
 
 async function initDashboard() {
