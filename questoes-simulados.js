@@ -708,10 +708,51 @@ function questionStartMatch(line) {
 }
 
 
-function alternativeStartMatch(line) {
-  return normalizeLine(line).match(
-    /^([A-E])\s*[\)\.\-:]\s*(.*)$/i
-  );
+function alternativeStartMatch(
+  line
+) {
+  const value =
+    normalizeLine(
+      line
+    );
+
+
+  const atStart =
+    value.match(
+      /^([A-E])\s*[\)\.\-:]\s*(.*)$/i
+    );
+
+
+  if (
+    atStart
+  ) {
+    return atStart;
+  }
+
+
+  /*
+    Alguns PDFs (como o MedCof enviado para teste) retornam
+    visualmente "A) texto", mas a ordem interna do texto vem
+    como "texto A)". Tratamos os dois formatos.
+  */
+  const atEnd =
+    value.match(
+      /^(.*?)\s+([A-E])\s*[\)\.\-:]\s*$/i
+    );
+
+
+  if (
+    atEnd
+  ) {
+    return [
+      atEnd[0],
+      atEnd[2],
+      atEnd[1]
+    ];
+  }
+
+
+  return null;
 }
 
 
@@ -2914,13 +2955,24 @@ function questionRegionsFromTextLayout(
     */
     let alternativeIndex =
       lines.findIndex(
-        line =>
-          /^A\s*[\)\.\-:]/i
-            .test(
-              normalizeLine(
-                line.text
-              )
+        line => {
+          const match =
+            alternativeStartMatch(
+              line.text
+            );
+
+
+          return (
+            match
+            &&
+            String(
+              match[1]
+              || ""
             )
+              .toUpperCase()
+            === "A"
+          );
+        }
       );
 
 
@@ -3131,12 +3183,11 @@ function questionRegionsFromTextLayout(
 function isQuestionAlternativeLine(
   text
 ) {
-  return /^[A-E]\s*[\)\.\-:]\s*/i
-    .test(
-      normalizeLine(
-        text
-      )
-    );
+  return Boolean(
+    alternativeStartMatch(
+      text
+    )
+  );
 }
 
 
@@ -3559,16 +3610,15 @@ async function extractQuestionImagesFromPage(
   pageNumber
 ) {
   /*
-    Não tentamos mais descobrir se existe imagem/XObject.
+    Estratégia simples e determinística:
 
-    Para CADA questão:
-    1. localiza o início da questão;
-    2. localiza a primeira alternativa;
-    3. encontra o espaço visual entre o enunciado e as alternativas;
-    4. recorta exatamente essa faixa da página renderizada.
+    - reconhece onde cada questão começa;
+    - reconhece onde começam as alternativas;
+    - procura a MAIOR faixa vertical vazia/visual entre
+      o enunciado e a alternativa A;
+    - tira uma "foto" dessa faixa, tenha figura ou não.
 
-    Se houver ECG/tabela/figura, ela estará dentro do recorte.
-    Se não houver imagem, o recorte pode ser apenas uma faixa vazia.
+    Não depende de XObject nem de reconhecer "imagem".
   */
   const renderScale =
     3;
@@ -3588,15 +3638,20 @@ async function extractQuestionImagesFromPage(
     );
 
 
-  const questionStarts =
-    questionStartsForPage(
-      lineRecords
+  const regions =
+    questionRegionsFromTextLayout(
+      lineRecords,
+      viewport
     );
 
 
   if (
-    !questionStarts.length
+    !regions.length
   ) {
+    console.debug(
+      `[Questões] Página ${pageNumber}: nenhuma região entre enunciado e alternativas foi delimitada.`
+    );
+
     return [];
   }
 
@@ -3664,83 +3719,38 @@ async function extractQuestionImagesFromPage(
 
 
   for (
-    let index = 0;
-    index < questionStarts.length;
-    index += 1
+    const region
+    of regions
   ) {
-    const question =
-      questionStarts[
-        index
-      ];
-
-
-    const band =
-      questionTextCropBand(
-        lineRecords,
-        questionStarts,
-        index,
-        viewport.height
-      );
-
-
-    if (
-      !band
-    ) {
-      console.debug(
-        `[Questões] Página ${pageNumber}, questão ${question.number}: não foi possível delimitar a faixa entre enunciado e alternativas.`
-      );
-
-      continue;
-    }
-
-
-    const cropRect =
-      cropQuestionBandOrVisual(
-        canvas,
-        band
-      );
-
-
-    if (
-      cropRect.height < 2
-      ||
-      cropRect.width < 2
-    ) {
-      continue;
-    }
-
-
     setImportStatus(
-      `Capturando região entre enunciado e alternativas — questão ${question.number}, página ${pageNumber}...`
+      `Capturando faixa da questão ${region.question_number} — página ${pageNumber}...`
     );
 
 
     const blob =
       await cropRenderedPage(
         canvas,
-        cropRect
+        region
       );
 
 
     results.push({
       question_number:
-        question.number,
+        region.question_number,
 
       blob,
 
       source_rect:
-        cropRect,
+        region,
 
       source:
-        band.significant
-          ? "text-band-visual-gap"
-          : "text-band-before-alternative"
+        "question-gap-screenshot"
     });
   }
 
 
   console.debug(
-    `[Questões] Página ${pageNumber}: ${results.length} faixa(s) capturada(s) a partir da estrutura textual.`
+    `[Questões] Página ${pageNumber}: ${results.length} captura(s) criada(s) entre enunciado e alternativas.`
   );
 
 
@@ -7808,44 +7818,69 @@ function renderSetHistory() {
 async function attachQuestionImageUrls(
   items
 ) {
+  const ownPrefix =
+    `${qsState.user.id}/`;
+
+
   return Promise.all(
     items.map(
-      async (item) => {
+      async item => {
         if (
           !item.image_path
+          ||
+          !String(
+            item.image_path
+          ).startsWith(
+            ownPrefix
+          )
         ) {
           return {
             ...item,
-            image_url: null
+            image_url:
+              null
           };
         }
 
+
+        /*
+          O bucket deve permanecer PRIVADO.
+          A imagem só abre através de URL assinada curta.
+        */
         const {
           data,
           error
         } =
           await qsSb
             .storage
-            .from("docmap")
+            .from(
+              "docmap"
+            )
             .createSignedUrl(
               item.image_path,
-              3600
+              300
             );
 
-        if (error) {
+
+        if (
+          error
+        ) {
           console.warn(
-            "Não foi possível abrir a imagem da questão:",
+            "Não foi possível abrir a imagem privada da questão:",
             error
           );
 
+
           return {
             ...item,
-            image_url: null
+            image_url:
+              null
           };
         }
 
+
         return {
           ...item,
+
           image_url:
             data?.signedUrl
             || null
