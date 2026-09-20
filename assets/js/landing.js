@@ -33,29 +33,7 @@
       const { data, error } = await sb.auth.getSession();
       if (error || !data.session) return;
 
-      const targets = [
-        document.getElementById("header-cta"),
-        document.getElementById("hero-cta"),
-        document.getElementById("bottom-cta")
-      ].filter(Boolean);
-
-      targets.forEach((link) => {
-        link.href = "dashboard.html";
-      });
-
-      const header = document.getElementById("header-cta");
-      const hero = document.getElementById("hero-cta");
-      const bottom = document.getElementById("bottom-cta");
-      const login = document.getElementById("login-link");
-
-      if (header) header.textContent = "Abrir plataforma";
-      if (hero) hero.innerHTML = 'Abrir plataforma <span aria-hidden="true">→</span>';
-      if (bottom) bottom.innerHTML = 'Abrir plataforma <span aria-hidden="true">→</span>';
-
-      if (login) {
-        login.href = "dashboard.html";
-        login.textContent = "Minha conta";
-      }
+      window.location.replace("dashboard.html");
     } catch (error) {
       console.warn("Não foi possível verificar a sessão na landing page:", error);
     }
