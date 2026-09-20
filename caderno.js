@@ -75,7 +75,10 @@ const notebookState = {
     null,
 
   savedRange:
-    null
+    null,
+
+  topicPanelCollapsed:
+    false
 };
 
 
@@ -395,6 +398,131 @@ function getCurrentDocument() {
 
   return null;
 
+}
+
+
+function notebookTopicPanelKey() {
+  return notebookState.user?.id
+    ? `resibulando:notebook-topic-panel:${notebookState.user.id}`
+    : "resibulando:notebook-topic-panel";
+}
+
+
+function applyNotebookTopicPanelState(
+  collapsed,
+  persist = true
+) {
+  notebookState.topicPanelCollapsed =
+    Boolean(
+      collapsed
+    );
+
+
+  const workspace =
+    document.querySelector(
+      ".notebook-workspace"
+    );
+
+
+  const panel =
+    document.querySelector(
+      ".notebook-topic-panel"
+    );
+
+
+  const button =
+    document.getElementById(
+      "notebook-topic-panel-toggle"
+    );
+
+
+  workspace
+    ?.classList
+    .toggle(
+      "topic-panel-collapsed",
+      notebookState.topicPanelCollapsed
+    );
+
+
+  panel
+    ?.classList
+    .toggle(
+      "is-collapsed",
+      notebookState.topicPanelCollapsed
+    );
+
+
+  if (
+    button
+  ) {
+    button.textContent =
+      notebookState.topicPanelCollapsed
+        ? "›"
+        : "‹";
+
+
+    button.setAttribute(
+      "aria-expanded",
+      notebookState.topicPanelCollapsed
+        ? "false"
+        : "true"
+    );
+
+
+    button.setAttribute(
+      "aria-label",
+      notebookState.topicPanelCollapsed
+        ? "Abrir lista de temas"
+        : "Recolher lista de temas"
+    );
+
+
+    button.title =
+      notebookState.topicPanelCollapsed
+        ? "Abrir lista de temas"
+        : "Recolher lista de temas";
+  }
+
+
+  if (
+    persist
+  ) {
+    try {
+      localStorage.setItem(
+        notebookTopicPanelKey(),
+        notebookState.topicPanelCollapsed
+          ? "1"
+          : "0"
+      );
+    } catch {}
+  }
+}
+
+
+function initNotebookTopicPanelState() {
+  let collapsed =
+    false;
+
+
+  try {
+    collapsed =
+      localStorage.getItem(
+        notebookTopicPanelKey()
+      ) === "1";
+  } catch {}
+
+
+  applyNotebookTopicPanelState(
+    collapsed,
+    false
+  );
+}
+
+
+function toggleNotebookTopicPanel() {
+  applyNotebookTopicPanelState(
+    !notebookState.topicPanelCollapsed
+  );
 }
 
 
@@ -2883,6 +3011,193 @@ function splitCurrentNotebookEditorTableRow() {
 
   saveSelection();
   scheduleSave();
+}
+
+
+function notebookTableRowIsBlank(
+  row
+) {
+  if (!row) {
+    return false;
+  }
+
+
+  return Array.from(
+    row.cells
+    || []
+  )
+    .every(
+      cell => {
+        const text =
+          String(
+            cell.innerText
+            || cell.textContent
+            || ""
+          )
+            .replace(
+              /\u00a0/g,
+              " "
+            )
+            .trim();
+
+
+        const hasMeaningfulContent =
+          Boolean(
+            cell.querySelector(
+              "img,table,hr,ul,ol"
+            )
+          );
+
+
+        return (
+          !text
+          &&
+          !hasMeaningfulContent
+        );
+      }
+    );
+}
+
+
+function removeBlankNotebookTableRowAndFocusPrevious(
+  row,
+  preferredCellIndex = 0
+) {
+  const table =
+    row
+      ?.closest(
+        "table"
+      );
+
+
+  if (
+    !row
+    || !table
+    || !notebookTableRowIsBlank(
+      row
+    )
+  ) {
+    return false;
+  }
+
+
+  const rowIndex =
+    row.rowIndex;
+
+
+  if (
+    rowIndex <= 0
+  ) {
+    return false;
+  }
+
+
+  const previousRow =
+    table.rows[
+      rowIndex - 1
+    ];
+
+
+  if (!previousRow) {
+    return false;
+  }
+
+
+  row.remove();
+
+
+  const targetIndex =
+    Math.max(
+      0,
+      Math.min(
+        Number(
+          preferredCellIndex
+          || 0
+        ),
+        previousRow.cells.length - 1
+      )
+    );
+
+
+  focusNotebookCell(
+    previousRow.cells[
+      targetIndex
+    ]
+    || previousRow.cells[
+      previousRow.cells.length - 1
+    ]
+  );
+
+
+  return true;
+}
+
+
+function handleNotebookEditorTableBackspace(
+  event
+) {
+  if (
+    event.key !== "Backspace"
+    || !notebookState.editorEditable
+  ) {
+    return;
+  }
+
+
+  const element =
+    notebookEditorSelectionElement();
+
+
+  const cell =
+    element
+      ?.closest(
+        "td,th"
+      );
+
+
+  const row =
+    cell
+      ?.closest(
+        "tr"
+      );
+
+
+  if (
+    !cell
+    || !row
+    || !notebookTableRowIsBlank(
+      row
+    )
+  ) {
+    return;
+  }
+
+
+  const selection =
+    window.getSelection();
+
+
+  if (
+    selection
+    &&
+    !selection.isCollapsed
+  ) {
+    return;
+  }
+
+
+  event.preventDefault();
+
+
+  if (
+    removeBlankNotebookTableRowAndFocusPrevious(
+      row,
+      cell.cellIndex
+    )
+  ) {
+    saveSelection();
+    scheduleSave();
+  }
 }
 
 
@@ -12991,6 +13306,16 @@ async function deleteSelectedNotes() {
 function wireEvents() {
 
   document
+    .getElementById(
+      "notebook-topic-panel-toggle"
+    )
+    ?.addEventListener(
+      "click",
+      toggleNotebookTopicPanel
+    );
+
+
+  document
     .querySelectorAll(
       "[data-notebook-tab]"
     )
@@ -13305,7 +13630,23 @@ function wireEvents() {
   editor
     ?.addEventListener(
       "keydown",
-      handleNotebookEditorTableEnter
+      (event) => {
+        handleNotebookEditorTableBackspace(
+          event
+        );
+
+
+        if (
+          event.defaultPrevented
+        ) {
+          return;
+        }
+
+
+        handleNotebookEditorTableEnter(
+          event
+        );
+      }
     );
 
 
@@ -13620,13 +13961,6 @@ function wireEvents() {
     ?.addEventListener(
       "keydown",
       (event) => {
-        if (
-          event.key !== "Enter"
-          || event.shiftKey
-        ) {
-          return;
-        }
-
         const cell =
           event.target
             ?.closest
@@ -13634,8 +13968,10 @@ function wireEvents() {
               "td,th"
             );
 
+
         const table =
           getNotebookTableElement();
+
 
         const row =
           cell
@@ -13643,9 +13979,50 @@ function wireEvents() {
               "tr"
             );
 
+
         if (
           !table
           || !row
+          || !cell
+        ) {
+          return;
+        }
+
+
+        if (
+          event.key === "Backspace"
+          &&
+          notebookTableRowIsBlank(
+            row
+          )
+        ) {
+          event.preventDefault();
+
+
+          if (
+            removeBlankNotebookTableRowAndFocusPrevious(
+              row,
+              cell.cellIndex
+            )
+          ) {
+            markNotebookTableBuilderRow(
+              table.rows[
+                Math.max(
+                  0,
+                  row.rowIndex - 1
+                )
+              ]
+            );
+          }
+
+
+          return;
+        }
+
+
+        if (
+          event.key !== "Enter"
+          || event.shiftKey
           || row !==
             table.rows[
               table.rows.length - 1
@@ -13654,7 +14031,9 @@ function wireEvents() {
           return;
         }
 
+
         event.preventDefault();
+
 
         appendNotebookTableRow(
           table,
@@ -14412,6 +14791,8 @@ async function initNotebook() {
   renderEmojiMenu();
 
   wireEvents();
+
+  initNotebookTopicPanelState();
 
   setEditorEnabled(
     false
