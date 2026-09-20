@@ -1,13 +1,13 @@
 :root {
   --landing-bg: #F8FAFC;
   --landing-surface: #FFFFFF;
-  --landing-surface-2: #EEF4FB;
-  --landing-text: #0B1F3B;
+  --landing-surface-2: #ECF3FC;
+  --landing-text: #0A2342;
   --landing-muted: #64748B;
-  --landing-border: #D9E3F0;
+  --landing-border: #D5E2F2;
   --landing-accent: #2563EB;
   --landing-accent-strong: #1749B3;
-  --landing-accent-soft: #E8F1FF;
+  --landing-accent-soft: #E5EFFF;
   --landing-dark: #0B1F3B;
   --landing-gold: #D4AF37;
   --landing-gold-soft: #FFF7D6;
