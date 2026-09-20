@@ -11546,7 +11546,7 @@ function insertStudyBlock(
       "★ Importante",
 
     warning:
-      "⚠ Pegadinha de prova",
+      "⚠ Atenção",
 
     memory:
       "🧠 Decore"
