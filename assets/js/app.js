@@ -125,8 +125,8 @@ function sidebarMarkup(user, profile = null) {
       <a class="brand" href="/dashboard/">
         <img
           id="luria-brand-logo"
-          class="brand-logo-single"
-          src="assets/img/logo-icone-original.png?v=luria7"
+          class="brand-logo-single luria-theme-logo"
+          src="assets/img/logo-icone-original.png?v=luria10"
           alt="Logo LURIA"
         >
 
@@ -257,16 +257,16 @@ function updateLuriaLogo(theme) {
   }
 
   let source =
-    "assets/img/logo-icone-original.png?v=luria7";
+    "assets/img/logo-icone-original.png?v=luria10";
 
   if (theme === "dark") {
     source =
-      "assets/img/logo-icone-azul-claro.png?v=luria2";
+      "assets/img/logo-icone-azul-claro.png?v=luria10";
   }
 
   if (theme === "leila-mood") {
     source =
-      "assets/img/logo-icone-rosa-escuro.png?v=luria2";
+      "assets/img/logo-icone-rosa-escuro.png?v=luria10";
   }
 
   if (
