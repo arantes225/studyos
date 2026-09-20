@@ -425,6 +425,239 @@ function groupTextItemsIntoLines(items) {
     .filter(Boolean);
 }
 
+
+function groupTextItemsIntoLineRecords(
+  items,
+  viewport
+) {
+  const rows =
+    [];
+
+
+  for (
+    const item
+    of items
+  ) {
+    const text =
+      normalizeLine(
+        item.str
+      );
+
+
+    if (!text) {
+      continue;
+    }
+
+
+    const transform =
+      window.pdfjsLib
+        .Util
+        .transform(
+          viewport.transform,
+          item.transform
+        );
+
+
+    const x =
+      Number(
+        transform[4]
+        || 0
+      );
+
+
+    const baselineY =
+      Number(
+        transform[5]
+        || 0
+      );
+
+
+    const fontHeight =
+      Math.max(
+        5,
+        Math.hypot(
+          Number(
+            transform[2]
+            || 0
+          ),
+          Number(
+            transform[3]
+            || 0
+          )
+        )
+      );
+
+
+    const width =
+      Math.max(
+        1,
+        Number(
+          item.width
+          || 0
+        )
+        * Number(
+            viewport.scale
+            || 1
+          )
+      );
+
+
+    const top =
+      baselineY
+      - fontHeight
+      * 0.88;
+
+
+    const bottom =
+      baselineY
+      + fontHeight
+      * 0.20;
+
+
+    let row =
+      rows.find(
+        candidate =>
+          Math.abs(
+            candidate.baselineY
+            - baselineY
+          )
+          <= Math.max(
+              3,
+              Math.min(
+                candidate.fontHeight,
+                fontHeight
+              ) * 0.42
+            )
+      );
+
+
+    if (!row) {
+      row = {
+        baselineY,
+        fontHeight,
+        items:
+          []
+      };
+
+
+      rows.push(
+        row
+      );
+    }
+
+
+    row.items.push({
+      x,
+      right:
+        x + width,
+      top,
+      bottom,
+      text,
+      fontHeight
+    });
+
+
+    row.baselineY =
+      row.items.reduce(
+        (
+          sum,
+          current
+        ) =>
+          sum
+          + (
+              current.top
+              + current.bottom
+            ) / 2,
+        0
+      )
+      / row.items.length;
+
+
+    row.fontHeight =
+      Math.max(
+        row.fontHeight,
+        fontHeight
+      );
+  }
+
+
+  return rows
+    .map(
+      row => {
+        row.items.sort(
+          (
+            a,
+            b
+          ) =>
+            a.x - b.x
+        );
+
+
+        return {
+          text:
+            normalizeLine(
+              row.items
+                .map(
+                  item =>
+                    item.text
+                )
+                .join(
+                  " "
+                )
+            ),
+
+          left:
+            Math.min(
+              ...row.items.map(
+                item =>
+                  item.x
+              )
+            ),
+
+          right:
+            Math.max(
+              ...row.items.map(
+                item =>
+                  item.right
+              )
+            ),
+
+          top:
+            Math.min(
+              ...row.items.map(
+                item =>
+                  item.top
+              )
+            ),
+
+          bottom:
+            Math.max(
+              ...row.items.map(
+                item =>
+                  item.bottom
+              )
+            ),
+
+          fontHeight:
+            row.fontHeight
+        };
+      }
+    )
+    .filter(
+      row =>
+        row.text
+    )
+    .sort(
+      (
+        a,
+        b
+      ) =>
+        a.top - b.top
+        ||
+        a.left - b.left
+    );
+}
+
 function isPdfHeaderLine(line) {
   const normalized =
     normalizeLine(line)
@@ -2591,119 +2824,336 @@ function detectQuestionImagesFromTextGaps(
 }
 
 
-async function extractQuestionImagesFromPage(
-  page,
-  content,
-  pageNumber
+function questionRegionsFromTextLayout(
+  lineRecords
 ) {
-  const detectionScale =
-    2;
-
-  const renderScale =
-    3;
-
-
-  const detectionViewport =
-    page.getViewport({
-      scale:
-        detectionScale
-    });
-
-
-  const detectionLines =
-    groupTextItemsIntoLineRecords(
-      content.items,
-      detectionViewport
-    );
-
-
-  const questionStarts =
+  const starts =
     questionStartsForPage(
-      detectionLines
+      lineRecords
     );
 
 
   if (
-    !questionStarts.length
+    !starts.length
   ) {
     return [];
   }
 
 
-  let imageRects =
-    await extractEmbeddedImageRects(
-      page,
-      detectionViewport,
-      false
-    );
+  const regions =
+    [];
 
 
-  if (
-    !imageRects.length
+  for (
+    let questionIndex = 0;
+    questionIndex < starts.length;
+    questionIndex += 1
   ) {
-    imageRects =
-      await extractEmbeddedImageRects(
-        page,
-        detectionViewport,
-        true
-      );
-  }
+    const start =
+      starts[
+        questionIndex
+      ];
 
 
-  const matchedRects =
-    imageRects
-      .map(
-        rect => ({
-          rect,
+    const next =
+      starts[
+        questionIndex + 1
+      ];
 
-          question_number:
-            matchImageRectToQuestion(
-              rect,
-              questionStarts
-            ),
 
-          source:
-            "xobject"
-        })
-      )
-      .filter(
-        item =>
-          Number.isInteger(
-            item.question_number
+    const questionBottom =
+      next
+        ? next.top - 2
+        : Number.POSITIVE_INFINITY;
+
+
+    const lines =
+      lineRecords
+        .filter(
+          line =>
+            line.top
+              >= start.top - 2
+            &&
+            line.top
+              < questionBottom
+            &&
+            !isQuestionFooterLine(
+              line.text
+            )
+        )
+        .sort(
+          (
+            a,
+            b
+          ) =>
+            a.top - b.top
+        );
+
+
+    if (
+      lines.length < 2
+    ) {
+      continue;
+    }
+
+
+    const alternativeIndex =
+      lines.findIndex(
+        line =>
+          Boolean(
+            alternativeStartMatch(
+              line.text
+            )
           )
       );
 
 
-  const groupedXObjects =
-    groupQuestionImageRects(
-      matchedRects,
-      detectionViewport
-    );
+    if (
+      alternativeIndex <= 0
+    ) {
+      continue;
+    }
 
 
-  const renderViewport =
+    const beforeAlternatives =
+      lines.slice(
+        0,
+        alternativeIndex
+      );
+
+
+    const firstAlternative =
+      lines[
+        alternativeIndex
+      ];
+
+
+    const gapCandidates =
+      [];
+
+
+    /*
+      Procuramos TODAS as lacunas dentro do enunciado.
+      Isso captura casos em que a imagem aparece no meio
+      do texto, como ECG seguido de sinais vitais.
+    */
+    for (
+      let lineIndex = 0;
+      lineIndex < beforeAlternatives.length - 1;
+      lineIndex += 1
+    ) {
+      const current =
+        beforeAlternatives[
+          lineIndex
+        ];
+
+
+      const nextLine =
+        beforeAlternatives[
+          lineIndex + 1
+        ];
+
+
+      const top =
+        current.bottom + 2;
+
+
+      const bottom =
+        nextLine.top - 2;
+
+
+      const height =
+        bottom - top;
+
+
+      if (
+        height > 4
+      ) {
+        gapCandidates.push({
+          top,
+          bottom,
+          height,
+          kind:
+            "inside-stem"
+        });
+      }
+    }
+
+
+    /*
+      Também considera a faixa entre a última linha do
+      enunciado e a primeira alternativa.
+    */
+    const lastStemLine =
+      beforeAlternatives[
+        beforeAlternatives.length - 1
+      ];
+
+
+    const finalTop =
+      lastStemLine.bottom + 2;
+
+
+    const finalBottom =
+      firstAlternative.top - 2;
+
+
+    const finalHeight =
+      finalBottom - finalTop;
+
+
+    if (
+      finalHeight > 4
+    ) {
+      gapCandidates.push({
+        top:
+          finalTop,
+
+        bottom:
+          finalBottom,
+
+        height:
+          finalHeight,
+
+        kind:
+          "before-alternatives"
+      });
+    }
+
+
+    if (
+      !gapCandidates.length
+    ) {
+      continue;
+    }
+
+
+    /*
+      A maior lacuna é o local mais provável da figura/tabela.
+      Não tentamos mais reconhecer se há imagem: tiramos o
+      screenshot da região pela posição do texto.
+    */
+    const bestGap =
+      gapCandidates
+        .slice()
+        .sort(
+          (
+            a,
+            b
+          ) =>
+            b.height - a.height
+        )[0];
+
+
+    const contentLeft =
+      Math.max(
+        0,
+        Math.min(
+          ...lines.map(
+            line =>
+              line.left
+          )
+        )
+        - 8
+      );
+
+
+    const contentRight =
+      Math.max(
+        ...lines.map(
+          line =>
+            line.right
+        )
+      )
+      + 8;
+
+
+    regions.push({
+      question_number:
+        start.number,
+
+      left:
+        contentLeft,
+
+      right:
+        contentRight,
+
+      top:
+        bestGap.top,
+
+      bottom:
+        bestGap.bottom,
+
+      width:
+        Math.max(
+          1,
+          contentRight
+          - contentLeft
+        ),
+
+      height:
+        Math.max(
+          1,
+          bestGap.bottom
+          - bestGap.top
+        ),
+
+      source:
+        "between-question-and-alternatives"
+    });
+  }
+
+
+  return regions;
+}
+
+
+async function extractQuestionImagesFromPage(
+  page,
+  content,
+  pageNumber
+) {
+  /*
+    Método propositalmente simples:
+    1. encontra a questão pelo texto;
+    2. encontra a primeira alternativa A);
+    3. procura a maior lacuna vertical no enunciado/antes
+       das alternativas;
+    4. faz um screenshot dessa faixa da página renderizada.
+
+    Não existe mais "detecção de imagem". Assim funciona
+    para ECG, tabela, radiografia, gráfico ou qualquer
+    elemento visual que esteja nessa faixa.
+  */
+  const renderScale =
+    3;
+
+
+  const viewport =
     page.getViewport({
       scale:
         renderScale
     });
 
 
-  const scaleFactor =
-    renderScale
-    / detectionScale;
-
-
-  const renderLines =
+  const lineRecords =
     groupTextItemsIntoLineRecords(
       content.items,
-      renderViewport
+      viewport
     );
 
 
-  const renderQuestionStarts =
-    questionStartsForPage(
-      renderLines
+  const regions =
+    questionRegionsFromTextLayout(
+      lineRecords
     );
+
+
+  if (
+    !regions.length
+  ) {
+    return [];
+  }
 
 
   const canvas =
@@ -2714,13 +3164,13 @@ async function extractQuestionImagesFromPage(
 
   canvas.width =
     Math.ceil(
-      renderViewport.width
+      viewport.width
     );
 
 
   canvas.height =
     Math.ceil(
-      renderViewport.height
+      viewport.height
     );
 
 
@@ -2759,82 +3209,9 @@ async function extractQuestionImagesFromPage(
       canvasContext:
         context,
 
-      viewport:
-        renderViewport
+      viewport
     })
     .promise;
-
-
-  const candidates =
-    [];
-
-
-  for (
-    const item
-    of groupedXObjects
-  ) {
-    candidates.push({
-      question_number:
-        item.question_number,
-
-      rect:
-        scaleQuestionImageRect(
-          item.rect,
-          scaleFactor
-        ),
-
-      source:
-        "xobject"
-    });
-  }
-
-
-  /*
-    Fallback independente dos XObjects:
-    usa a posição do texto para encontrar lacunas onde a
-    própria página renderizada contém um bloco visual.
-    Isso resolve PDFs em que o PDF.js não expõe a figura
-    como paintImageXObject da maneira esperada.
-  */
-  const gapCandidates =
-    detectQuestionImagesFromTextGaps(
-      canvas,
-      renderLines,
-      renderQuestionStarts
-    );
-
-
-  const questionsAlreadyFound =
-    new Set(
-      candidates.map(
-        item =>
-          item.question_number
-      )
-    );
-
-
-  for (
-    const item
-    of gapCandidates
-  ) {
-    if (
-      questionsAlreadyFound.has(
-        item.question_number
-      )
-    ) {
-      continue;
-    }
-
-
-    candidates.push(
-      item
-    );
-
-
-    questionsAlreadyFound.add(
-      item.question_number
-    );
-  }
 
 
   const results =
@@ -2842,48 +3219,102 @@ async function extractQuestionImagesFromPage(
 
 
   for (
-    const item
-    of candidates
+    const region
+    of regions
   ) {
+    /*
+      Evita apenas faixas praticamente inexistentes.
+      Fora isso, recorta mesmo que visualmente pareça vazia,
+      como solicitado.
+    */
+    if (
+      region.height < 6
+    ) {
+      continue;
+    }
+
+
+    const rect = {
+      left:
+        Math.max(
+          0,
+          region.left
+        ),
+
+      top:
+        Math.max(
+          0,
+          region.top
+        ),
+
+      right:
+        Math.min(
+          canvas.width,
+          region.right
+        ),
+
+      bottom:
+        Math.min(
+          canvas.height,
+          region.bottom
+        )
+    };
+
+
+    rect.width =
+      Math.max(
+        1,
+        rect.right
+        - rect.left
+      );
+
+
+    rect.height =
+      Math.max(
+        1,
+        rect.bottom
+        - rect.top
+      );
+
+
+    if (
+      rect.width < 20
+      ||
+      rect.height < 6
+    ) {
+      continue;
+    }
+
+
     setImportStatus(
-      `Recortando imagem da questão ${item.question_number} — página ${pageNumber}...`
+      `Capturando faixa da questão ${region.question_number} — página ${pageNumber}...`
     );
-
-
-    const safeRect =
-      item.source === "text-gap"
-        ? item.rect
-        : safeQuestionImageCropRect(
-            item.rect,
-            renderLines,
-            renderViewport
-          );
 
 
     const blob =
       await cropRenderedPage(
         canvas,
-        safeRect
+        rect
       );
 
 
     results.push({
       question_number:
-        item.question_number,
+        region.question_number,
 
       blob,
 
       source_rect:
-        safeRect,
+        rect,
 
       source:
-        item.source
+        region.source
     });
   }
 
 
   console.debug(
-    `[Questões] Página ${pageNumber}: ${imageRects.length} XObject(s), ${gapCandidates.length} fallback(s) visual(is), ${results.length} imagem(ns) final(is).`
+    `[Questões] Página ${pageNumber}: ${regions.length} região(ões) entre enunciado e alternativas, ${results.length} screenshot(s).`
   );
 
 
