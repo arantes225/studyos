@@ -16,7 +16,7 @@
   <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria2">
   <link rel="stylesheet" href="assets/css/style.css?v=luria-pattern-12">
   <link rel="stylesheet" href="assets/css/image-lightbox.css?v=1">
-  <link rel="stylesheet" href="assets/css/caderno.css?v=17.0">
+  <link rel="stylesheet" href="assets/css/caderno.css?v=17.1">
   <link rel="canonical" href="/caderno/">
   <script>(function(){try{if(location.pathname.endsWith("/caderno.html"))history.replaceState(null,"","/caderno/"+location.search+location.hash);}catch(e){}})();</script>
 </head>
@@ -221,6 +221,79 @@
                   <option value="h1">Título grande</option>
                   <option value="h2">Título</option>
                   <option value="h3">Subtítulo</option>
+                </select>
+
+                <select
+                  id="notebook-font-family"
+                  class="notebook-style-select notebook-font-select"
+                  aria-label="Fonte"
+                  title="Fonte"
+                  disabled
+                >
+                  <option value="">Fonte</option>
+                  <option value="Arial">Arial</option>
+                  <option value="Times New Roman">Times</option>
+                  <option value="Georgia">Georgia</option>
+                  <option value="Verdana">Verdana</option>
+                </select>
+
+                <div class="notebook-tool-menu-wrap">
+                  <button
+                    id="notebook-align-toggle"
+                    class="notebook-tool-button notebook-tool-text notebook-premium-tool"
+                    type="button"
+                    title="Alinhamento"
+                    aria-expanded="false"
+                    disabled
+                  >
+                    <span class="notebook-tool-glyph">≡</span>
+                    Alinhar
+                  </button>
+
+                  <div
+                    id="notebook-align-menu"
+                    class="notebook-tool-menu notebook-align-menu"
+                    hidden
+                  >
+                    <div class="notebook-tool-menu-head">
+                      <strong>Alinhamento</strong>
+                      <small>Defina a posição do parágrafo.</small>
+                    </div>
+
+                    <button type="button" data-align="left">
+                      <span class="notebook-align-glyph">☰</span>
+                      <span>Esquerda</span>
+                    </button>
+
+                    <button type="button" data-align="center">
+                      <span class="notebook-align-glyph">≡</span>
+                      <span>Centralizado</span>
+                    </button>
+
+                    <button type="button" data-align="right">
+                      <span class="notebook-align-glyph">☷</span>
+                      <span>Direita</span>
+                    </button>
+
+                    <button type="button" data-align="justify">
+                      <span class="notebook-align-glyph">▤</span>
+                      <span>Justificado</span>
+                    </button>
+                  </div>
+                </div>
+
+                <select
+                  id="notebook-line-spacing"
+                  class="notebook-style-select notebook-spacing-select"
+                  aria-label="Espaçamento entre linhas"
+                  title="Espaçamento entre linhas"
+                  disabled
+                >
+                  <option value="">Espaçamento</option>
+                  <option value="1">1,0</option>
+                  <option value="1.15">1,15</option>
+                  <option value="1.5">1,5</option>
+                  <option value="2">2,0</option>
                 </select>
 
                 <span class="notebook-toolbar-divider"></span>
@@ -1035,7 +1108,7 @@
     }
   </style>
 
-  <script src="assets/js/caderno.js?v=17.0"></script>
+  <script src="assets/js/caderno.js?v=17.1"></script>
     <script src="assets/js/image-lightbox.js?v=1"></script>
 <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
