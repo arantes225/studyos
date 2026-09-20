@@ -1269,7 +1269,8 @@ async function uploadFlashImage(
     throw error;
   }
 
-  return reference || path;\n}
+  return reference || path;
+}
 
 function clearCreateForm() {
   [
