@@ -2474,7 +2474,28 @@ input[type="file"]:focus-visible::file-selector-button {
 /* =========================================================
    LURIA — PATTERN DE FUNDO EXPERIMENTAL
    Login + Ambientação
+   Linhas inclinadas com fileiras intercaladas.
    ========================================================= */
+
+:root {
+  --luria-pattern-image: url("../img/logo-icone-original.png?v=pattern2");
+  --luria-pattern-size-login: 112px;
+  --luria-pattern-size-ambientacao: 138px;
+  --luria-pattern-opacity-login: 0.032;
+  --luria-pattern-opacity-ambientacao: 0.020;
+}
+
+:root[data-theme="dark"] {
+  --luria-pattern-image: url("../img/logo-icone-azul-claro.png?v=pattern2");
+  --luria-pattern-opacity-login: 0.040;
+  --luria-pattern-opacity-ambientacao: 0.028;
+}
+
+:root[data-theme="leila-mood"] {
+  --luria-pattern-image: url("../img/logo-icone-rosa-escuro.png?v=pattern2");
+  --luria-pattern-opacity-login: 0.034;
+  --luria-pattern-opacity-ambientacao: 0.024;
+}
 
 .auth-page,
 body[data-page="ambientacao"] {
@@ -2482,30 +2503,58 @@ body[data-page="ambientacao"] {
   isolation: isolate;
 }
 
+/* duas camadas deslocadas criam fileiras intercaladas */
 .auth-page::before,
-body[data-page="ambientacao"]::before {
+.auth-page::after,
+body[data-page="ambientacao"]::before,
+body[data-page="ambientacao"]::after {
   content: "";
   position: fixed;
-  inset: 0;
+  inset: -14%;
   z-index: -1;
   pointer-events: none;
-  background-image: url("../img/logo-icone-original.png?v=pattern1");
+  background-image: var(--luria-pattern-image);
   background-repeat: repeat;
-  background-position: 22px 18px;
-  opacity: .028;
-}
-
-.auth-page::before {
-  background-size: 132px 132px;
   transform: rotate(-8deg) scale(1.08);
   transform-origin: center;
-  opacity: .035;
 }
 
+/* LOGIN */
+.auth-page::before {
+  background-size:
+    var(--luria-pattern-size-login)
+    var(--luria-pattern-size-login);
+  background-position: 0 0;
+  opacity: var(--luria-pattern-opacity-login);
+}
+
+.auth-page::after {
+  background-size:
+    var(--luria-pattern-size-login)
+    var(--luria-pattern-size-login);
+  background-position:
+    calc(var(--luria-pattern-size-login) / 2)
+    calc(var(--luria-pattern-size-login) / 2);
+  opacity: var(--luria-pattern-opacity-login);
+}
+
+/* AMBIENTAÇÃO */
 body[data-page="ambientacao"]::before {
-  background-size: 168px 168px;
-  background-position: 34px 30px;
-  opacity: .022;
+  background-size:
+    var(--luria-pattern-size-ambientacao)
+    var(--luria-pattern-size-ambientacao);
+  background-position: 0 0;
+  opacity: var(--luria-pattern-opacity-ambientacao);
+}
+
+body[data-page="ambientacao"]::after {
+  background-size:
+    var(--luria-pattern-size-ambientacao)
+    var(--luria-pattern-size-ambientacao);
+  background-position:
+    calc(var(--luria-pattern-size-ambientacao) / 2)
+    calc(var(--luria-pattern-size-ambientacao) / 2);
+  opacity: var(--luria-pattern-opacity-ambientacao);
 }
 
 .auth-page .auth-card,
@@ -2514,25 +2563,12 @@ body[data-page="ambientacao"] .app-shell {
   z-index: 1;
 }
 
-/* No escuro e no tema rosa, o pattern acompanha a identidade. */
-:root[data-theme="dark"] body[data-page="ambientacao"]::before {
-  background-image: url("../img/logo-icone-azul-claro.png?v=pattern1");
-  opacity: .032;
-}
-
-:root[data-theme="leila-mood"] body[data-page="ambientacao"]::before {
-  background-image: url("../img/logo-icone-rosa-escuro.png?v=pattern1");
-  opacity: .026;
-}
-
 @media (max-width: 760px) {
-  .auth-page::before {
-    background-size: 108px 108px;
-    opacity: .03;
-  }
-
-  body[data-page="ambientacao"]::before {
-    background-size: 138px 138px;
-    opacity: .018;
+  :root {
+    --luria-pattern-size-login: 96px;
+    --luria-pattern-size-ambientacao: 118px;
+    --luria-pattern-opacity-login: 0.028;
+    --luria-pattern-opacity-ambientacao: 0.017;
   }
 }
+
