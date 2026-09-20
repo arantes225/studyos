@@ -13100,6 +13100,61 @@ function createNotebookPdfPage(entry) {
   host.className =
     "notebook-pdf-export-host";
 
+  /*
+    A exportação precisa ser independente do tema ativo.
+    Sem isso, no modo escuro o navegador pode congelar
+    texto branco e depois colocá-lo sobre uma folha branca.
+  */
+  host.style.setProperty(
+    "color-scheme",
+    "light"
+  );
+
+  host.style.setProperty(
+    "--surface",
+    "#ffffff"
+  );
+
+  host.style.setProperty(
+    "--surface-2",
+    "#f5f7fa"
+  );
+
+  host.style.setProperty(
+    "--text",
+    "#10243e"
+  );
+
+  host.style.setProperty(
+    "--muted",
+    "#64748b"
+  );
+
+  host.style.setProperty(
+    "--border",
+    "#d8e1eb"
+  );
+
+  host.style.setProperty(
+    "--accent",
+    "#184888"
+  );
+
+  host.style.setProperty(
+    "--accent-soft",
+    "#eaf0f8"
+  );
+
+  host.style.setProperty(
+    "--success",
+    "#18864b"
+  );
+
+  host.style.setProperty(
+    "--danger",
+    "#c33a3a"
+  );
+
   const paper =
     document.createElement(
       "article"
@@ -13460,28 +13515,29 @@ async function renderNotebookPdfCanvas(
     );
 
     /*
-      Primeiro tenta o modo ForeignObject, que deixa o
-      navegador renderizar estilos modernos. Se o Safari
-      não aceitar, cai automaticamente no modo canvas
-      tradicional com escala menor.
+      O canvas tradicional é mais confiável no Safari/PWA
+      e preserva bem tabelas, callouts e estilos depois da
+      estabilização acima. ForeignObject fica como fallback,
+      pois em alguns WebKit ele pode retornar uma página
+      totalmente branca sem lançar erro.
     */
     try {
       return await renderNotebookPdfCanvasAttempt(
         paper,
         {
           scale:
-            2.2,
+            2.1,
 
           foreignObjectRendering:
-            true
+            false
         }
       );
     } catch (
-      foreignObjectError
+      canvasError
     ) {
       console.warn(
-        "Captura ForeignObject falhou; tentando modo compatível:",
-        foreignObjectError
+        "Captura canvas falhou; tentando ForeignObject:",
+        canvasError
       );
 
       return await renderNotebookPdfCanvasAttempt(
@@ -13491,7 +13547,7 @@ async function renderNotebookPdfCanvas(
             1.8,
 
           foreignObjectRendering:
-            false
+            true
         }
       );
     }
