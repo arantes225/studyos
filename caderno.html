@@ -16,7 +16,7 @@
   <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria2">
   <link rel="stylesheet" href="assets/css/style.css?v=luria-palette-11">
   <link rel="stylesheet" href="assets/css/image-lightbox.css?v=1">
-  <link rel="stylesheet" href="assets/css/caderno.css?v=31.4">
+  <link rel="stylesheet" href="assets/css/caderno.css?v=17.0">
   <link rel="canonical" href="/caderno/">
   <script>(function(){try{if(location.pathname.endsWith("/caderno.html"))history.replaceState(null,"","/caderno/"+location.search+location.hash);}catch(e){}})();</script>
 </head>
@@ -304,35 +304,95 @@
 
                 <span class="notebook-toolbar-divider"></span>
 
-                <button
-                  id="notebook-template"
-                  class="notebook-tool-button notebook-tool-text notebook-template-button"
-                  type="button"
-                  title="Inserir estrutura do resumo"
-                  disabled
-                >
-                  + Estrutura
-                </button>
+                <div class="notebook-tool-menu-wrap">
+                  <button
+                    id="notebook-template"
+                    class="notebook-tool-button notebook-tool-text notebook-premium-tool"
+                    type="button"
+                    title="Inserir estrutura"
+                    aria-expanded="false"
+                    disabled
+                  >
+                    <span class="notebook-tool-glyph">◇</span>
+                    Estrutura
+                  </button>
 
-                <button
-                  id="notebook-break"
-                  class="notebook-tool-button"
-                  type="button"
-                  title="Inserir quebra de texto"
-                  disabled
-                >
-                  ↵
-                </button>
+                  <div
+                    id="notebook-template-menu"
+                    class="notebook-tool-menu notebook-template-menu"
+                    hidden
+                  >
+                    <div class="notebook-tool-menu-head">
+                      <strong>Estruturas</strong>
+                      <small>Insira um roteiro pronto no ponto do cursor.</small>
+                    </div>
 
-                <button
-                  id="notebook-divider"
-                  class="notebook-tool-button notebook-tool-text"
-                  type="button"
-                  title="Inserir linha divisória"
-                  disabled
-                >
-                  — Linha
-                </button>
+                    <button type="button" data-template-type="disease">
+                      <span class="notebook-menu-icon">▤</span>
+                      <span><strong>Critérios da doença</strong><small>Resumo clássico de uma condição.</small></span>
+                    </button>
+
+                    <button type="button" data-template-type="illness-script">
+                      <span class="notebook-menu-icon">◎</span>
+                      <span><strong>Illness Script</strong><small>Organiza pistas e raciocínio diagnóstico.</small></span>
+                    </button>
+
+                    <button type="button" data-template-type="clinical-reasoning">
+                      <span class="notebook-menu-icon">↗</span>
+                      <span><strong>Raciocínio clínico</strong><small>Problema, hipóteses, evidências e conduta.</small></span>
+                    </button>
+
+                    <button type="button" data-template-type="soap">
+                      <span class="notebook-menu-icon">≡</span>
+                      <span><strong>SOAP</strong><small>Subjetivo, objetivo, avaliação e plano.</small></span>
+                    </button>
+
+                    <button type="button" data-template-type="rapid-review">
+                      <span class="notebook-menu-icon">✦</span>
+                      <span><strong>Revisão rápida</strong><small>Pontos-chave para revisão de prova.</small></span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="notebook-tool-menu-wrap">
+                  <button
+                    id="notebook-divider"
+                    class="notebook-tool-button notebook-tool-text notebook-premium-tool"
+                    type="button"
+                    title="Inserir linha"
+                    aria-expanded="false"
+                    disabled
+                  >
+                    <span class="notebook-tool-glyph">━</span>
+                    Linha
+                  </button>
+
+                  <div
+                    id="notebook-divider-menu"
+                    class="notebook-tool-menu notebook-divider-menu"
+                    hidden
+                  >
+                    <div class="notebook-tool-menu-head">
+                      <strong>Linha divisória</strong>
+                      <small>Escolha o estilo da separação.</small>
+                    </div>
+
+                    <button type="button" data-divider-style="solid">
+                      <span class="notebook-line-preview solid"></span>
+                      <span>Linha reta</span>
+                    </button>
+
+                    <button type="button" data-divider-style="dotted">
+                      <span class="notebook-line-preview dotted"></span>
+                      <span>Linha pontilhada</span>
+                    </button>
+
+                    <button type="button" data-divider-style="arabesque">
+                      <span class="notebook-line-preview arabesque">❦</span>
+                      <span>Arabescos</span>
+                    </button>
+                  </div>
+                </div>
 
                 <div class="notebook-tool-menu-wrap">
                   <button
@@ -377,23 +437,49 @@
                   </div>
                 </div>
 
-                <button
-                  id="notebook-image-add"
-                  class="notebook-tool-button notebook-tool-text"
-                  type="button"
-                  title="Adicionar imagem (máximo 2 por caderno)"
-                  disabled
-                >
-                  ▧ Imagem
-                </button>
+                <div class="notebook-tool-menu-wrap">
+                  <button
+                    id="notebook-image-add"
+                    class="notebook-tool-button notebook-tool-text notebook-premium-tool"
+                    type="button"
+                    title="Adicionar imagem (máximo 2 por caderno)"
+                    aria-expanded="false"
+                    disabled
+                  >
+                    <span class="notebook-tool-glyph">▧</span>
+                    Imagem
+                  </button>
 
-                <input
-                  id="notebook-image-input"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  hidden
-                >
+                  <div
+                    id="notebook-image-menu"
+                    class="notebook-tool-menu notebook-image-menu"
+                    hidden
+                  >
+                    <div class="notebook-tool-menu-head">
+                      <strong>Adicionar imagem</strong>
+                      <small>Escolha de onde a imagem virá.</small>
+                    </div>
+
+                    <button type="button" data-image-source="camera">
+                      <span class="notebook-menu-icon">◉</span>
+                      <span><strong>Tirar foto</strong><small>Abre a câmera do aparelho.</small></span>
+                    </button>
+
+                    <button type="button" data-image-source="gallery">
+                      <span class="notebook-menu-icon">▦</span>
+                      <span><strong>Galeria</strong><small>Escolha uma ou mais fotos.</small></span>
+                    </button>
+
+                    <button type="button" data-image-source="file">
+                      <span class="notebook-menu-icon">↥</span>
+                      <span><strong>Ficheiro</strong><small>Procure uma imagem nos arquivos.</small></span>
+                    </button>
+                  </div>
+                </div>
+
+                <input id="notebook-image-camera-input" type="file" accept="image/*" capture="environment" hidden>
+                <input id="notebook-image-gallery-input" type="file" accept="image/*" multiple hidden>
+                <input id="notebook-image-file-input" type="file" accept=".png,.jpg,.jpeg,.webp,.gif,image/*" multiple hidden>
 
                 <span class="notebook-toolbar-divider"></span>
 
@@ -949,7 +1035,7 @@
     }
   </style>
 
-  <script src="assets/js/caderno.js?v=16.4"></script>
+  <script src="assets/js/caderno.js?v=17.0"></script>
     <script src="assets/js/image-lightbox.js?v=1"></script>
 <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
