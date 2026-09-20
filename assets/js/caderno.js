@@ -2284,6 +2284,10 @@ function renderTopicList() {
                 .topicId
             );
 
+            applyNotebookTopicPanelState(
+              true
+            );
+
           }
         );
 
