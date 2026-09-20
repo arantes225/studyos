@@ -874,7 +874,7 @@ function formatHours(totalSeconds) {
   if (hours === 0) return `${minutes}min`;
   if (minutes === 0) return `${hours}h`;
 
-  return `${hours}h ${minutes}min`;
+  return `${hours}h${minutes}min`;
 }
 
 async function loadStudyHours() {
@@ -956,7 +956,7 @@ async function loadRetention() {
 
   setDashboardText(
     "metric-retention-helper",
-    `${reviews} revis${reviews === 1 ? "ão" : "ões"} · 30 dias`
+    `${reviews} revis${reviews === 1 ? "ão" : "ões"}`
   );
 }
 
@@ -1014,14 +1014,12 @@ async function loadLessonMetrics() {
 
   setDashboardText(
     "metric-overdue-lessons-helper",
-    overdueDelta === 0
-      ? "sem mudança nesta semana"
-      : `${overdueDelta > 0 ? "+" : ""}${overdueDelta} nesta semana`
+    `${overdueDelta > 0 ? "+" : ""}${overdueDelta} nesta semana`
   );
 
   setDashboardText(
     "metric-lessons-progress-copy",
-    `${completed.length} / ${total}`
+    `${completed.length}/${total}`
   );
 
   setDashboardText(
@@ -1036,9 +1034,7 @@ async function loadLessonMetrics() {
 
   setDashboardText(
     "metric-lessons-progress-helper",
-    completedThisWeek
-      ? `+${completedThisWeek} esta semana`
-      : "sem novas conclusões nesta semana"
+    ""
   );
 }
 
@@ -1073,7 +1069,7 @@ async function loadErrorMetrics() {
 
   setDashboardText(
     "metric-errors-helper",
-    `${reviewed} revisado${reviewed === 1 ? "" : "s"} · ${overdue} atrasado${overdue === 1 ? "" : "s"}`
+    `${reviewed} dominado${reviewed === 1 ? "" : "s"} · ${overdue} atrasado${overdue === 1 ? "" : "s"}`
   );
 }
 
@@ -1232,7 +1228,7 @@ async function loadSimulationMetrics() {
    CCQ — REVISÃO PASSIVA
    ========================================================= */
 
-const DASHBOARD_CCQ_ROTATION_MS = 30000;
+const DASHBOARD_CCQ_ROTATION_MS = 15000;
 
 const dashboardCcqState = {
   items: [],
