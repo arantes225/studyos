@@ -124,14 +124,14 @@ function sidebarMarkup(user, profile = null) {
     <div class="sidebar-top">
       <a class="brand" href="dashboard.html">
         <img
-          id="resibulando-brand-logo"
+          id="luria-brand-logo"
           class="brand-logo-single"
-          src="assets/img/logo-icone-original.png?v=resibulando2"
-          alt="Logo Resibulando"
+          src="assets/img/logo-icone-original.png?v=luria2"
+          alt="Logo Luria"
         >
 
         <span class="brand-copy">
-          <strong>Resibulando</strong>
+          <strong>Luria</strong>
           <small>Mapa até a residência</small>
         </span>
       </a>
@@ -246,10 +246,10 @@ async function carregarPerfil(userId) {
   return cached || null;
 }
 
-function updateResibulandoLogo(theme) {
+function updateLuriaLogo(theme) {
   const logo =
     document.getElementById(
-      "resibulando-brand-logo"
+      "luria-brand-logo"
     );
 
   if (!logo) {
@@ -257,16 +257,16 @@ function updateResibulandoLogo(theme) {
   }
 
   let source =
-    "assets/img/logo-icone-original.png?v=resibulando2";
+    "assets/img/logo-icone-original.png?v=luria2";
 
   if (theme === "dark") {
     source =
-      "assets/img/logo-icone-azul-claro.png?v=resibulando2";
+      "assets/img/logo-icone-azul-claro.png?v=luria2";
   }
 
   if (theme === "leila-mood") {
     source =
-      "assets/img/logo-icone-rosa-escuro.png?v=resibulando2";
+      "assets/img/logo-icone-rosa-escuro.png?v=luria2";
   }
 
   if (
@@ -285,7 +285,7 @@ function applyResolvedTheme(theme) {
   document.documentElement.dataset.theme =
     theme;
 
-  updateResibulandoLogo(
+  updateLuriaLogo(
     theme
   );
 }
@@ -433,7 +433,7 @@ async function carregarAudioTracks() {
 
   if (error) {
     console.warn(
-      "Não foi possível carregar os sons do Resibulando:",
+      "Não foi possível carregar os sons do Luria:",
       error.message
     );
     return [];
@@ -1540,7 +1540,7 @@ async function iniciarApp() {
   document.getElementById("sidebar").innerHTML =
     sidebarMarkup(user, profile);
 
-  updateResibulandoLogo(
+  updateLuriaLogo(
     document.documentElement.dataset.theme
     || "light"
   );
