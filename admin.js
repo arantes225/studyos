@@ -480,14 +480,22 @@
       );
   }
 
-  window.addEventListener(
-    "docmap:ready",
-    async () => {
-      wire();
-      await load();
-    },
-    {
-      once: true
-    }
-  );
+  async function startAdminDashboard() {
+    wire();
+    await load();
+  }
+
+  if (
+    window.docmapUser
+  ) {
+    startAdminDashboard();
+  } else {
+    window.addEventListener(
+      "docmap:ready",
+      startAdminDashboard,
+      {
+        once: true
+      }
+    );
+  }
 })();
