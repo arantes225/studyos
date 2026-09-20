@@ -311,7 +311,7 @@
               <div class="exam-cutoff-field">
                 <div class="exam-cutoff-field-head">
                   <div>
-                    <span>Últimas notas de corte</span>
+                    <span>Última nota de corte</span>
                     <small>
                       Informe ano/edição e nota. A edição mais recente
                       é usada como referência do semáforo.
@@ -742,13 +742,6 @@
         >
           <button
             type="button"
-            data-v16-score="${esc(examId)}"
-          >
-            Registrar / editar nota
-          </button>
-
-          <button
-            type="button"
             data-v16-edit="${esc(examId)}"
           >
             Editar prova
@@ -941,9 +934,26 @@
       );
 
     cutoffCard.innerHTML = `
-      <span>Últimas notas de corte</span>
-      <strong>${esc(cutoffText.main)}</strong>
-      <small>${esc(cutoffText.helper)}</small>
+      <span>Última nota de corte</span>
+      <div class="exam-inline-score">
+        <input
+          type="number"
+          min="0"
+          max="100"
+          step="0.1"
+          inputmode="decimal"
+          data-v16-cutoff-inline="${esc(examId)}"
+          value="${
+            latest
+              ? esc(latest.score)
+              : ""
+          }"
+          placeholder="—"
+          aria-label="Última nota de corte"
+        >
+        <span>%</span>
+      </div>
+      <small>edite diretamente</small>
     `;
 
     cutoffCard.title =
@@ -977,10 +987,27 @@
         "green"
       );
 
-      resultCard.querySelector(
-        ".exam-score-delta"
-      )
-        ?.remove();
+      resultCard.innerHTML = `
+        <span>Sua nota</span>
+        <div class="exam-inline-score">
+          <input
+            type="number"
+            min="0"
+            max="100"
+            step="0.1"
+            inputmode="decimal"
+            data-v16-score-inline="${esc(examId)}"
+            value="${
+              hasScore
+                ? esc(row.score_percent)
+                : ""
+            }"
+            placeholder="—"
+            aria-label="Sua nota"
+          >
+          <span>%</span>
+        </div>
+      `;
 
       const helper =
         document.createElement(
@@ -1082,6 +1109,136 @@
       || "Prova";
   }
 
+  async function saveInlineScore(
+    input,
+    kind
+  ) {
+    const examId =
+      kind === "score"
+        ? input.dataset.v16ScoreInline
+        : input.dataset.v16CutoffInline;
+
+    if (!examId) return;
+
+    const raw =
+      input.value.trim();
+
+    const value =
+      raw === ""
+        ? null
+        : Number(raw);
+
+    if (
+      value !== null
+      && (
+        !Number.isFinite(value)
+        || value < 0
+        || value > 100
+      )
+    ) {
+      input.classList.add(
+        "invalid"
+      );
+      return;
+    }
+
+    input.classList.remove(
+      "invalid"
+    );
+
+    input.disabled =
+      true;
+
+    const row =
+      state.rows.get(examId)
+      || {
+        id: examId,
+        score_percent: null,
+        cutoff_history: []
+      };
+
+    const payload =
+      kind === "score"
+        ? {
+            score_percent:
+              value
+          }
+        : {
+            cutoff_history:
+              value === null
+                ? []
+                : [
+                    {
+                      year: "",
+                      score: value
+                    }
+                  ]
+          };
+
+    const {
+      error
+    } =
+      await sb
+        .from("exams")
+        .update(payload)
+        .eq("id", examId);
+
+    input.disabled =
+      false;
+
+    if (error) {
+      console.error(
+        error
+      );
+
+      input.classList.add(
+        "invalid"
+      );
+
+      return;
+    }
+
+    state.rows.set(
+      examId,
+      {
+        ...row,
+        score_percent:
+          kind === "score"
+            ? value
+            : row.score_percent,
+        cutoff_history:
+          kind === "cutoff"
+            ? payload.cutoff_history
+            : normalizeHistory(
+                row.cutoff_history
+              )
+      }
+    );
+
+    if (
+      kind === "score"
+      && typeof window.loadExamMetrics
+        === "function"
+    ) {
+      try {
+        await window.loadExamMetrics();
+      } catch {}
+    }
+
+    if (
+      typeof window.loadExams
+      === "function"
+    ) {
+      try {
+        await window.loadExams();
+      } catch {}
+    }
+
+    await loadExamData();
+    decorateCards();
+  }
+
+
   function wireEvents() {
     document.addEventListener(
       "click",
@@ -1122,35 +1279,6 @@
             opening
               ? "true"
               : "false"
-          );
-
-          return;
-        }
-
-        const scoreAction =
-          event.target
-            .closest(
-              "[data-v16-score]"
-            );
-
-        if (scoreAction) {
-          event.preventDefault();
-          closeMenus();
-
-          const examId =
-            scoreAction.dataset
-              .v16Score;
-
-          const card =
-            scoreAction.closest(
-              "[data-exam-card]"
-            );
-
-          openQuickDialog(
-            examId,
-            institutionFromCard(
-              card
-            )
           );
 
           return;
@@ -1271,6 +1399,38 @@
     );
 
     document.addEventListener(
+      "change",
+      async event => {
+        const scoreInput =
+          event.target.closest(
+            "[data-v16-score-inline]"
+          );
+
+        if (scoreInput) {
+          await saveInlineScore(
+            scoreInput,
+            "score"
+          );
+
+          return;
+        }
+
+        const cutoffInput =
+          event.target.closest(
+            "[data-v16-cutoff-inline]"
+          );
+
+        if (cutoffInput) {
+          await saveInlineScore(
+            cutoffInput,
+            "cutoff"
+          );
+        }
+      }
+    );
+
+
+    document.addEventListener(
       "keydown",
       event => {
         if (event.key === "Escape") {
@@ -1281,7 +1441,6 @@
   }
 
   async function init() {
-    ensureQuickDialog();
     wireEvents();
     observeList();
 
