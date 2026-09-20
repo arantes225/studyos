@@ -7,7 +7,7 @@
 
   <link rel="icon" type="image/png" href="favicon.png?v=resibulando2">
   <link rel="stylesheet" href="style.css?v=12.1">
-  <link rel="stylesheet" href="caderno.css?v=22.0">
+  <link rel="stylesheet" href="caderno.css?v=29.0">
 </head>
 
 <body data-page="caderno">
@@ -337,14 +337,6 @@
 
                     <button
                       type="button"
-                      data-table-action="reader"
-                    >
-                      <span>▦</span>
-                      Ler tabela da imagem
-                    </button>
-
-                    <button
-                      type="button"
                       data-table-action="merge-row"
                     >
                       <span>▤</span>
@@ -360,6 +352,24 @@
                     </button>
                   </div>
                 </div>
+
+                <button
+                  id="notebook-image-add"
+                  class="notebook-tool-button notebook-tool-text"
+                  type="button"
+                  title="Adicionar imagem (máximo 2 por caderno)"
+                  disabled
+                >
+                  ▧ Imagem
+                </button>
+
+                <input
+                  id="notebook-image-input"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  hidden
+                >
 
                 <span class="notebook-toolbar-divider"></span>
 
@@ -800,7 +810,7 @@
       <div class="notebook-table-source-grid">
         <section class="notebook-table-source-card">
           <strong>Tabela manual</strong>
-          <small>Crie a grade e edite cada célula antes de inserir.</small>
+          <small>Crie a tabela manualmente, ajuste linhas e colunas e insira no caderno.</small>
 
           <button
             id="notebook-table-new"
@@ -811,24 +821,6 @@
           </button>
         </section>
 
-        <section class="notebook-table-source-card">
-          <strong>Leitor de tabela</strong>
-          <small>Envie uma foto ou print. O resultado poderá ser corrigido antes de inserir.</small>
-
-          <input
-            id="notebook-table-image"
-            type="file"
-            accept="image/*"
-          >
-
-          <button
-            id="notebook-table-read-image"
-            class="button secondary compact-button"
-            type="button"
-          >
-            Ler imagem
-          </button>
-        </section>
       </div>
 
       <div
@@ -889,10 +881,9 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <script src="supabase.js"></script>
   <script src="app.js?v=12.1"></script>
-  <script src="caderno.js?v=28.0"></script>
+  <script src="caderno.js?v=29.0"></script>
 </body>
 </html>
