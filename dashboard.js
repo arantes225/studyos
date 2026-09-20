@@ -490,6 +490,51 @@ async function loadAgenda() {
   );
 }
 
+function normalizeAgendaAreaValue(
+  value
+) {
+  const normalized =
+    String(
+      value
+      ?? ""
+    )
+      .trim()
+      .toLowerCase()
+      .normalize(
+        "NFD"
+      )
+      .replace(
+        /[\u0300-\u036f]/g,
+        ""
+      );
+
+  if (
+    !normalized
+    || normalized === "sem area"
+  ) {
+    return "";
+  }
+
+  return normalized;
+}
+
+
+function sameAgendaArea(
+  first,
+  second
+) {
+  return (
+    normalizeAgendaAreaValue(
+      first
+    )
+    ===
+    normalizeAgendaAreaValue(
+      second
+    )
+  );
+}
+
+
 async function moveAgendaReviewSource(
   item,
   newDate
@@ -573,15 +618,26 @@ async function moveAgendaReviewSource(
       : "error_notebook";
 
 
-  let query =
-    dashboardSb
+  /*
+    Não filtramos a área diretamente no SQL, porque a agenda
+    pode representar área nula como "Sem área" e também pode
+    haver diferenças de espaços/acentos. Primeiro buscamos os
+    itens da data original e depois comparamos a área de forma
+    normalizada.
+  */
+  const {
+    data:
+      sourceRows,
+    error:
+      sourceError
+  } =
+    await dashboardSb
       .from(
         table
       )
-      .update({
-        due_date:
-          newDate
-      })
+      .select(
+        "id,area,due_date"
+      )
       .eq(
         "active",
         true
@@ -593,46 +649,97 @@ async function moveAgendaReviewSource(
 
 
   if (
-    item.area
+    sourceError
   ) {
-    query =
-      query.eq(
-        "area",
-        item.area
+    throw sourceError;
+  }
+
+
+  const matchingIds =
+    (
+      sourceRows
+      || []
+    )
+      .filter(
+        row =>
+          sameAgendaArea(
+            row.area,
+            item.area
+          )
+      )
+      .map(
+        row =>
+          row.id
       );
-  } else {
-    query =
-      query.is(
-        "area",
-        null
-      );
+
+
+  if (
+    !matchingIds.length
+  ) {
+    throw new Error(
+      isFlashcards
+        ? "Não encontrei os flashcards dessa atividade na data original."
+        : "Não encontrei os CCQs dessa atividade na data original."
+    );
   }
 
 
   const {
-    data,
-    error
+    data:
+      updatedRows,
+    error:
+      updateError
   } =
-    await query
+    await dashboardSb
+      .from(
+        table
+      )
+      .update({
+        due_date:
+          newDate
+      })
+      .in(
+        "id",
+        matchingIds
+      )
       .select(
-        "id"
+        "id,due_date"
       );
 
 
   if (
-    error
+    updateError
   ) {
-    throw error;
+    throw updateError;
   }
 
 
+  const updatedIds =
+    new Set(
+      (
+        updatedRows
+        || []
+      )
+        .filter(
+          row =>
+            row.due_date
+            === newDate
+        )
+        .map(
+          row =>
+            row.id
+        )
+    );
+
+
   if (
-    !data?.length
+    updatedIds.size
+    !== matchingIds.length
   ) {
     throw new Error(
       isFlashcards
-        ? "Nenhum flashcard dessa atividade foi encontrado na data original."
-        : "Nenhum CCQ dessa atividade foi encontrado na data original."
+        ? "A nova data não foi aplicada a todos os flashcards."
+        : "A nova data não foi aplicada a todos os CCQs."
     );
   }
 
