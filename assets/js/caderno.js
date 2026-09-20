@@ -78,7 +78,13 @@ const notebookState = {
     null,
 
   topicPanelCollapsed:
-    false
+    false,
+
+  sharedMemberships:
+    new Map(),
+
+  overlays:
+    new Map()
 };
 
 
@@ -523,6 +529,314 @@ function toggleNotebookTopicPanel() {
   applyNotebookTopicPanelState(
     !notebookState.topicPanelCollapsed
   );
+}
+
+
+async function notebookHashText(value) {
+  try {
+    const data =
+      new TextEncoder()
+        .encode(
+          String(value || "")
+        );
+
+    const digest =
+      await crypto.subtle.digest(
+        "SHA-256",
+        data
+      );
+
+    return Array.from(
+      new Uint8Array(digest)
+    )
+      .map(byte => byte.toString(16).padStart(2, "0"))
+      .join("");
+  } catch {
+    return null;
+  }
+}
+
+function sharedMembershipFor(noteId) {
+  return notebookState.sharedMemberships.get(noteId) || null;
+}
+
+function sharedOverlayFor(noteId) {
+  return notebookState.overlays.get(noteId) || null;
+}
+
+function applySharedNotebookPatch(note) {
+  const base =
+    String(
+      note?.content_html
+      || ""
+    );
+
+  const overlay =
+    sharedOverlayFor(
+      note?.id
+    );
+
+  if (
+    !overlay?.patch_text
+    || typeof window.diff_match_patch !== "function"
+  ) {
+    return base;
+  }
+
+  try {
+    const dmp =
+      new window.diff_match_patch();
+
+    const patches =
+      dmp.patch_fromText(
+        overlay.patch_text
+      );
+
+    const [
+      result
+    ] =
+      dmp.patch_apply(
+        patches,
+        base
+      );
+
+    return result;
+  } catch (error) {
+    console.warn(
+      "Não foi possível reaplicar a personalização do caderno:",
+      error
+    );
+
+    return base;
+  }
+}
+
+async function saveSharedNotebookOverlay(
+  note,
+  personalizedHtml
+) {
+  const membership =
+    sharedMembershipFor(
+      note.id
+    );
+
+  if (
+    !membership
+    || membership.mode !== "overlay"
+  ) {
+    throw new Error(
+      "Este material compartilhado está somente para leitura."
+    );
+  }
+
+  if (
+    typeof window.diff_match_patch !== "function"
+  ) {
+    throw new Error(
+      "O mecanismo de personalização não carregou."
+    );
+  }
+
+  const base =
+    String(
+      note.content_html
+      || ""
+    );
+
+  const dmp =
+    new window.diff_match_patch();
+
+  const patchText =
+    dmp.patch_toText(
+      dmp.patch_make(
+        base,
+        personalizedHtml
+      )
+    );
+
+  const baseHash =
+    await notebookHashText(
+      base
+    );
+
+  const payload = {
+    note_id:
+      note.id,
+
+    user_id:
+      notebookState.user.id,
+
+    share_id:
+      membership.share_id,
+
+    patch_text:
+      patchText,
+
+    base_hash:
+      baseHash,
+
+    updated_at:
+      new Date()
+        .toISOString()
+  };
+
+  const {
+    data,
+    error
+  } =
+    await notebookSb
+      .from(
+        "study_note_overlays"
+      )
+      .upsert(
+        payload,
+        {
+          onConflict:
+            "note_id,user_id"
+        }
+      )
+      .select(
+        "note_id,user_id,share_id,patch_text,base_hash,updated_at"
+      )
+      .single();
+
+  if (error) {
+    throw error;
+  }
+
+  notebookState.overlays.set(
+    note.id,
+    data
+  );
+
+  return data;
+}
+
+async function createNotebookShareLink(
+  noteId
+) {
+  const note =
+    noteById(
+      noteId
+    );
+
+  if (
+    !note
+    || note.is_shared
+  ) {
+    return;
+  }
+
+  const {
+    data,
+    error
+  } =
+    await notebookSb.rpc(
+      "create_study_note_share",
+      {
+        p_note_id:
+          noteId
+      }
+    );
+
+  if (error) {
+    console.error(error);
+    alert(
+      `Não foi possível compartilhar: ${error.message}`
+    );
+    return;
+  }
+
+  const url =
+    new URL(
+      "/caderno/",
+      window.location.origin
+    );
+
+  url.searchParams.set(
+    "share",
+    data
+  );
+
+  try {
+    await navigator.clipboard
+      .writeText(
+        url.toString()
+      );
+
+    setSaveStatus(
+      "Link de compartilhamento copiado",
+      "saved"
+    );
+  } catch {
+    window.prompt(
+      "Copie o link do material:",
+      url.toString()
+    );
+  }
+}
+
+async function redeemNotebookShareFromUrl() {
+  const url =
+    new URL(
+      window.location.href
+    );
+
+  const token =
+    url.searchParams.get(
+      "share"
+    );
+
+  if (!token) {
+    return null;
+  }
+
+  const personalize =
+    window.confirm(
+      "Deseja personalizar este material?\n\nOK = adicionar e editar em cima\nCancelar = adicionar somente para leitura"
+    );
+
+  const {
+    data,
+    error
+  } =
+    await notebookSb.rpc(
+      "redeem_study_note_share",
+      {
+        p_token:
+          token,
+
+        p_mode:
+          personalize
+            ? "overlay"
+            : "view"
+      }
+    );
+
+  if (error) {
+    console.error(error);
+    alert(
+      `Não foi possível adicionar o material: ${error.message}`
+    );
+    return null;
+  }
+
+  url.searchParams.delete(
+    "share"
+  );
+
+  url.searchParams.set(
+    "view",
+    "library"
+  );
+
+  window.history.replaceState(
+    {},
+    "",
+    url
+  );
+
+  return data;
 }
 
 
@@ -1788,10 +2102,29 @@ function renderDocument() {
   notebookState.editorEditable =
     false;
 
+  const sharedMembership =
+    current.note?.is_shared
+      ? sharedMembershipFor(
+          current.note.id
+        )
+      : null;
+
+
+  const effectiveContent =
+    current.note?.is_shared
+      ? applySharedNotebookPatch(
+          current.note
+        )
+      : String(
+          current.note
+            ?.content_html
+          || ""
+        );
+
+
   const storedContent =
     String(
-      current.note
-        ?.content_html
+      effectiveContent
       || ""
     )
       .trim();
@@ -1814,15 +2147,17 @@ function renderDocument() {
     - depois de Salvar explicitamente -> trava.
   */
   notebookState.editorEditable =
-    (
-      !current.note
-      ||
-      (
-        !storedContent
-        &&
-        !lockedInSession
-      )
-    );
+    current.note?.is_shared
+      ? sharedMembership?.mode === "overlay"
+      : (
+          !current.note
+          ||
+          (
+            !storedContent
+            &&
+            !lockedInSession
+          )
+        );
 
   setEditorEnabled(
     notebookState.editorEditable
@@ -1885,10 +2220,8 @@ function renderDocument() {
 
     editor.innerHTML =
       sanitizeHtml(
-        current.note
-          ?.content_html
-        ||
-        ""
+        effectiveContent
+        || ""
       );
 
   }
@@ -1907,7 +2240,13 @@ function renderDocument() {
   ) {
 
     setSaveStatus(
-      "Salvo",
+      current.note.is_shared
+        ? (
+            sharedMembership?.mode === "overlay"
+              ? "Compartilhado · suas alterações são privadas"
+              : "Compartilhado · somente leitura"
+          )
+        : "Salvo",
       "saved"
     );
 
@@ -2021,8 +2360,12 @@ async function openFreeNote(
 
 
   if (
-    !note ||
-    note.topic_id
+    !note
+    ||
+    (
+      note.topic_id
+      && !note.is_shared
+    )
   ) {
 
     return;
@@ -2387,6 +2730,38 @@ async function saveCurrentNotebook(
     sanitizeHtml(
       editor.innerHTML
     );
+
+
+  if (
+    current.note?.is_shared
+  ) {
+    try {
+      await saveSharedNotebookOverlay(
+        current.note,
+        contentHtml
+      );
+
+      notebookState.editorDirty =
+        false;
+
+      setSaveStatus(
+        "Personalização salva sobre o material original",
+        "saved"
+      );
+
+      renderLibrary();
+
+    } catch (error) {
+      console.error(error);
+
+      setSaveStatus(
+        `Erro ao salvar personalização: ${error.message}`,
+        "error"
+      );
+    }
+
+    return;
+  }
 
 
   let result;
@@ -11901,7 +12276,8 @@ function getLibraryEntries() {
 
 
         const isFree =
-          !note.topic_id;
+          !note.topic_id
+          || note.is_shared;
 
 
         return {
@@ -12078,7 +12454,7 @@ function renderLibrary() {
     entries
       .map(
         (entry) => `
-          <div class="notebook-library-row">
+          <div class="notebook-library-row ${entry.note.is_shared ? "notebook-shared-note" : ""}">
 
             <input
               class="notebook-library-check"
@@ -12111,6 +12487,16 @@ function renderLibrary() {
                   `
                   : ""
               }
+
+              ${
+                entry.note.is_shared
+                  ? `
+                    <span class="notebook-shared-badge">
+                      ${sharedMembershipFor(entry.note.id)?.mode === "overlay" ? "Compartilhado · personalizado" : "Compartilhado"}
+                    </span>
+                  `
+                  : ""
+              }
             </strong>
 
             <span class="notebook-page-area">
@@ -12136,6 +12522,20 @@ function renderLibrary() {
             >
               Abrir
             </button>
+
+            ${
+              entry.note.is_shared
+                ? ""
+                : `
+                  <button
+                    class="notebook-share-button"
+                    type="button"
+                    data-share-note="${escapeHtml(entry.note.id)}"
+                  >
+                    Compartilhar
+                  </button>
+                `
+            }
 
           </div>
         `
@@ -12222,6 +12622,7 @@ function renderLibrary() {
 
             if (
               note.topic_id
+              && !note.is_shared
             ) {
 
               openTopic(
@@ -12241,6 +12642,23 @@ function renderLibrary() {
           }
         );
 
+      }
+    );
+
+
+  list
+    .querySelectorAll(
+      "[data-share-note]"
+    )
+    .forEach(
+      button => {
+        button.addEventListener(
+          "click",
+          () =>
+            createNotebookShareLink(
+              button.dataset.shareNote
+            )
+        );
       }
     );
 
@@ -14741,6 +15159,135 @@ async function loadData() {
   }
 
 
+  const membershipsResult =
+    await notebookSb
+      .from(
+        "study_note_members"
+      )
+      .select(
+        "note_id,share_id,user_id,mode,created_at"
+      )
+      .eq(
+        "user_id",
+        userId
+      );
+
+
+  if (
+    membershipsResult.error
+  ) {
+    throw membershipsResult.error;
+  }
+
+
+  const memberships =
+    membershipsResult.data
+    || [];
+
+
+  const sharedIds =
+    memberships.map(
+      item => item.note_id
+    );
+
+
+  let sharedNotes =
+    [];
+
+
+  if (
+    sharedIds.length
+  ) {
+    const sharedResult =
+      await notebookSb
+        .from(
+          "study_notes"
+        )
+        .select(
+          "id,user_id,topic_id,topic_title,area,materia,content_html,created_at,updated_at"
+        )
+        .in(
+          "id",
+          sharedIds
+        );
+
+
+    if (
+      sharedResult.error
+    ) {
+      throw sharedResult.error;
+    }
+
+
+    sharedNotes =
+      (sharedResult.data || [])
+        .map(
+          note => ({
+            ...note,
+            is_shared:
+              true
+          })
+        );
+  }
+
+
+  const overlaysResult =
+    await notebookSb
+      .from(
+        "study_note_overlays"
+      )
+      .select(
+        "note_id,user_id,share_id,patch_text,base_hash,updated_at"
+      )
+      .eq(
+        "user_id",
+        userId
+      );
+
+
+  if (
+    overlaysResult.error
+  ) {
+    throw overlaysResult.error;
+  }
+
+
+  notebookState.sharedMemberships =
+    new Map(
+      memberships.map(
+        item => [
+          item.note_id,
+          item
+        ]
+      )
+    );
+
+
+  notebookState.overlays =
+    new Map(
+      (overlaysResult.data || [])
+        .map(
+          item => [
+            item.note_id,
+            item
+          ]
+        )
+    );
+
+
+  const allNotes = [
+    ...(notesResult.data || [])
+      .map(
+        note => ({
+          ...note,
+          is_shared:
+            false
+        })
+      ),
+    ...sharedNotes
+  ];
+
+
   notebookState.topics =
     topicsResult.data ||
     [];
@@ -14749,8 +15296,7 @@ async function loadData() {
   notebookState.notesByTopic =
     new Map(
       (
-        notesResult.data ||
-        []
+        allNotes
       )
         .filter(
           (note) =>
@@ -14768,8 +15314,7 @@ async function loadData() {
   notebookState.notesById =
     new Map(
       (
-        notesResult.data ||
-        []
+        allNotes
       )
         .map(
           (note) => [
@@ -14820,6 +15365,8 @@ async function initNotebook() {
 
 
   try {
+
+    await redeemNotebookShareFromUrl();
 
     await loadData();
 
