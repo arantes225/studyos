@@ -159,7 +159,7 @@ function buildAmbientacaoUrl(item) {
   if (item.materia) params.set("materia", item.materia);
   if (item.subtitle) params.set("subtitle", item.subtitle);
 
-  return `ambientacao.html?${params.toString()}`;
+  return `/ambientacao/?${params.toString()}`;
 }
 
 function escapeDashboardHtml(value) {
@@ -185,8 +185,8 @@ function renderActivityCard(item) {
   } else if (item.kind === "exam" || item.kind === "registration_deadline") {
     const examUrl =
       item.item_id
-        ? `editais.html?exam_id=${encodeURIComponent(item.item_id)}`
-        : "editais.html";
+        ? `/editais/?exam_id=${encodeURIComponent(item.item_id)}`
+        : "/editais/";
 
     actions.push(
       `<a class="agenda-card-action" href="${escapeDashboardHtml(examUrl)}">Abrir</a>`
