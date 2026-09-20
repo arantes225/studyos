@@ -6948,7 +6948,10 @@ function notebookTextColumnAnchors(
 
 
       line.words.forEach(
-        word => {
+        (
+          word,
+          wordIndex
+        ) => {
           const atomicType =
             notebookAtomicTokenType(
               word.text
@@ -6962,10 +6965,74 @@ function notebookTextColumnAnchors(
           }
 
 
+          const previous =
+            line.words[
+              wordIndex - 1
+            ]
+            || null;
+
+
+          const next =
+            line.words[
+              wordIndex + 1
+            ]
+            || null;
+
+
+          const leftGap =
+            previous
+              ? word.x0
+                - previous.x1
+              : Number.POSITIVE_INFINITY;
+
+
+          const rightGap =
+            next
+              ? next.x0
+                - word.x1
+              : Number.POSITIVE_INFINITY;
+
+
           /*
-            Número/letra isolada vale muito como âncora.
-            Em tabelas médicas, as colunas de pontos são
-            justamente compostas por 1, 2, 3, A, B etc.
+            Letras soltas só contam como coluna quando estão
+            realmente isoladas. Assim, um "e" no meio de uma
+            frase não vira uma coluna falsa.
+          */
+          const visiblyIsolated =
+            (
+              leftGap >=
+                Math.max(
+                  8,
+                  typicalHeight * 0.75
+                )
+              ||
+              !previous
+            )
+            &&
+            (
+              rightGap >=
+                Math.max(
+                  8,
+                  typicalHeight * 0.75
+                )
+              ||
+              !next
+            );
+
+
+          if (
+            atomicType !== "number"
+            &&
+            !visiblyIsolated
+          ) {
+            return;
+          }
+
+
+          /*
+            Números isolados são a evidência mais forte.
+            Letras/símbolos isolados também ajudam a formar
+            colunas, mas com peso um pouco menor.
           */
           candidates.push({
             x:
@@ -6973,8 +7040,8 @@ function notebookTextColumnAnchors(
 
             weight:
               atomicType === "number"
-                ? 4
-                : 3.2,
+                ? 4.5
+                : 3.1,
 
             lineIndex,
 
@@ -7156,8 +7223,15 @@ function notebookTextColumnAnchors(
 
 
   if (
+    anchors.length <= 1
+    &&
     vertical.length >= 3
   ) {
+    /*
+      A grade NÃO pode mais substituir uma estrutura descoberta
+      pelas frases/números. Só entra como último fallback quando
+      o conteúdo não conseguiu achar colunas.
+    */
     const gridAnchors =
       [];
 
@@ -7178,13 +7252,8 @@ function notebookTextColumnAnchors(
     }
 
 
-    if (
-      gridAnchors.length
-      > anchors.length
-    ) {
-      anchors =
-        gridAnchors;
-    }
+    anchors =
+      gridAnchors;
   }
 
 
