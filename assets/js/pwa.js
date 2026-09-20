@@ -1,11 +1,19 @@
 (() => {
+  const standalone =
+    window.matchMedia?.("(display-mode: standalone)")?.matches
+    || window.navigator.standalone === true;
+
+  if (standalone) {
+    document.documentElement.classList.add("pwa-standalone");
+  }
+
   if (!("serviceWorker" in navigator)) return;
 
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register("/service-worker.js", { scope: "/" })
       .catch((error) => {
-        console.warn("Não foi possível ativar o modo PWA da LURIA:", error);
+        console.warn("Não foi possível ativar o modo PWA do LURIA:", error);
       });
   });
 })();
