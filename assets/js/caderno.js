@@ -13438,6 +13438,130 @@ function stabilizeNotebookPdfStyles(
 }
 
 
+function notebookPdfHasMeaningfulContent(
+  entry
+) {
+  const html =
+    String(
+      entry?.note?.is_shared
+        ? applySharedNotebookPatch(
+            entry.note
+          )
+        : (
+            entry?.note?.content_html
+            || ""
+          )
+    );
+
+  const probe =
+    document.createElement(
+      "div"
+    );
+
+  probe.innerHTML =
+    sanitizeHtml(
+      html
+    );
+
+  return Boolean(
+    probe.textContent
+      ?.trim()
+    || probe.querySelector(
+      "img,table,hr,.notebook-study-block"
+    )
+  );
+}
+
+
+function notebookPdfCanvasLooksBlank(
+  canvas
+) {
+  if (
+    !canvas
+    || !canvas.width
+    || !canvas.height
+  ) {
+    return true;
+  }
+
+  const sample =
+    document.createElement(
+      "canvas"
+    );
+
+  sample.width =
+    48;
+
+  sample.height =
+    48;
+
+  const context =
+    sample.getContext(
+      "2d",
+      {
+        willReadFrequently:
+          true
+      }
+    );
+
+  context.drawImage(
+    canvas,
+    0,
+    0,
+    sample.width,
+    sample.height
+  );
+
+  const pixels =
+    context.getImageData(
+      0,
+      0,
+      sample.width,
+      sample.height
+    ).data;
+
+  let nonWhite =
+    0;
+
+  for (
+    let index = 0;
+    index < pixels.length;
+    index += 4
+  ) {
+    const red =
+      pixels[index];
+
+    const green =
+      pixels[index + 1];
+
+    const blue =
+      pixels[index + 2];
+
+    const alpha =
+      pixels[index + 3];
+
+    if (
+      alpha > 20
+      &&
+      (
+        red < 246
+        || green < 246
+        || blue < 246
+      )
+    ) {
+      nonWhite +=
+        1;
+    }
+  }
+
+  return (
+    nonWhite
+    <
+    10
+  );
+}
+
+
 async function renderNotebookPdfCanvasAttempt(
   paper,
   options = {}
@@ -13521,35 +13645,71 @@ async function renderNotebookPdfCanvas(
       pois em alguns WebKit ele pode retornar uma página
       totalmente branca sem lançar erro.
     */
-    try {
-      return await renderNotebookPdfCanvasAttempt(
-        paper,
-        {
-          scale:
-            2.1,
-
-          foreignObjectRendering:
-            false
-        }
+    const hasContent =
+      notebookPdfHasMeaningfulContent(
+        entry
       );
+
+    try {
+      const canvas =
+        await renderNotebookPdfCanvasAttempt(
+          paper,
+          {
+            scale:
+              2.1,
+
+            foreignObjectRendering:
+              false
+          }
+        );
+
+      if (
+        hasContent
+        &&
+        notebookPdfCanvasLooksBlank(
+          canvas
+        )
+      ) {
+        throw new Error(
+          "A captura visual voltou vazia apesar de o caderno possuir conteúdo."
+        );
+      }
+
+      return canvas;
+
     } catch (
       canvasError
     ) {
       console.warn(
-        "Captura canvas falhou; tentando ForeignObject:",
+        "Captura canvas falhou ou voltou vazia; tentando ForeignObject:",
         canvasError
       );
 
-      return await renderNotebookPdfCanvasAttempt(
-        paper,
-        {
-          scale:
-            1.8,
+      const fallbackCanvas =
+        await renderNotebookPdfCanvasAttempt(
+          paper,
+          {
+            scale:
+              1.8,
 
-          foreignObjectRendering:
-            true
-        }
-      );
+            foreignObjectRendering:
+              true
+          }
+        );
+
+      if (
+        hasContent
+        &&
+        notebookPdfCanvasLooksBlank(
+          fallbackCanvas
+        )
+      ) {
+        throw new Error(
+          "Os dois métodos de captura retornaram uma página vazia."
+        );
+      }
+
+      return fallbackCanvas;
     }
   }
 
