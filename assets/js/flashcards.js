@@ -2359,7 +2359,7 @@ function renderAnkiDeckMap() {
               data-anki-deck-area="${index}"
               list="medical-areas"
               data-luria-area-input
-              placeholder="Área no Luria"
+              placeholder="Área no LURIA"
             >
 
             <span class="anki-deck-count">
@@ -3946,7 +3946,7 @@ async function exportSelectedFlashcardsPdf() {
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text("Luria — Flashcards", margin, 16);
+    doc.text("LURIA — Flashcards", margin, 16);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.text(
