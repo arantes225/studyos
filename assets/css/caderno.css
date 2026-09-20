@@ -2060,11 +2060,11 @@
    ========================================================= */
 
 .notebook-pdf-export-host {
-  position: fixed;
-  left: -100000px;
-  top: 0;
+  position: absolute;
+  left: 0;
+  top: calc(100% + 2000px);
   width: 940px;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
   overflow: visible;
 
