@@ -1025,11 +1025,6 @@ async function prepareNewErrorImage(
       "extract-error-image-text"
     );
 
-  const keepButton =
-    document.getElementById(
-      "extract-error-image-text-keep"
-    );
-
   const removeButton =
     document.getElementById(
       "remove-new-error-image"
@@ -1044,11 +1039,6 @@ async function prepareNewErrorImage(
 
     if (extractButton) {
       extractButton.disabled =
-        true;
-    }
-
-    if (keepButton) {
-      keepButton.disabled =
         true;
     }
 
@@ -1079,11 +1069,6 @@ async function prepareNewErrorImage(
         true;
     }
 
-    if (keepButton) {
-      keepButton.disabled =
-        true;
-    }
-
     if (removeButton) {
       removeButton.disabled =
         true;
@@ -1096,11 +1081,6 @@ async function prepareNewErrorImage(
 
   if (extractButton) {
     extractButton.disabled =
-      false;
-  }
-
-  if (keepButton) {
-    keepButton.disabled =
       false;
   }
 
@@ -1345,21 +1325,30 @@ function clearNewErrorSelectedImage(message = "") {
 
   [
     "extract-error-image-text",
-    "extract-error-image-text-keep",
     "remove-new-error-image"
   ].forEach((id) => {
     const button = document.getElementById(id);
     if (button) button.disabled = true;
   });
 
+  const keepCheckbox =
+    document.getElementById(
+      "keep-new-error-image"
+    );
+
+  if (keepCheckbox) {
+    keepCheckbox.checked = false;
+  }
+
   setNewErrorImageInfo(message);
 }
 
 
-async function extractNewErrorImageText(keepImage = false) {
+async function extractNewErrorImageText() {
   const input = document.getElementById("new-error-image");
   const primaryButton = document.getElementById("extract-error-image-text");
-  const keepButton = document.getElementById("extract-error-image-text-keep");
+  const keepCheckbox = document.getElementById("keep-new-error-image");
+  const keepImage = Boolean(keepCheckbox?.checked);
   const file = input?.files?.[0] || null;
 
   if (!file) {
@@ -1368,7 +1357,6 @@ async function extractNewErrorImageText(keepImage = false) {
   }
 
   if (primaryButton) primaryButton.disabled = true;
-  if (keepButton) keepButton.disabled = true;
 
   try {
     setNewErrorImageInfo("Extraindo texto: 0%...");
@@ -1405,7 +1393,6 @@ async function extractNewErrorImageText(keepImage = false) {
   } finally {
     if (input?.files?.[0]) {
       if (primaryButton) primaryButton.disabled = false;
-      if (keepButton) keepButton.disabled = false;
     }
   }
 }
@@ -1744,6 +1731,16 @@ function clearNewErrorForm() {
       true;
   }
 
+  const keepImage =
+    document.getElementById(
+      "keep-new-error-image"
+    );
+
+  if (keepImage) {
+    keepImage.checked =
+      false;
+  }
+
 
   setNewErrorImageInfo(
     ""
@@ -1826,13 +1823,26 @@ async function saveNewError() {
       .trim();
 
 
+  const keepImage =
+    Boolean(
+      document
+        .getElementById(
+          "keep-new-error-image"
+        )
+        ?.checked
+    );
+
   const imageFile =
-    document
-      .getElementById(
-        "new-error-image"
-      )
-      .files[0]
-    || null;
+    keepImage
+      ? (
+          document
+            .getElementById(
+              "new-error-image"
+            )
+            .files[0]
+          || null
+        )
+      : null;
 
 
   if (!ccq) {
@@ -2009,16 +2019,7 @@ function wireNewError() {
     )
     ?.addEventListener(
       "click",
-      () => extractNewErrorImageText(false)
-    );
-
-  document
-    .getElementById(
-      "extract-error-image-text-keep"
-    )
-    ?.addEventListener(
-      "click",
-      () => extractNewErrorImageText(true)
+      extractNewErrorImageText
     );
 
   document
