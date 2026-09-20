@@ -4,6 +4,8 @@ let flashUser = null;
 
 let reviewQueue = [];
 let reviewIndex = 0;
+let reviewMode = "scheduled";
+let reviewModeLabel = "";
 
 let importRows = [];
 
@@ -867,6 +869,9 @@ async function renderCurrentReview() {
 }
 
 async function loadReviewQueue() {
+  reviewMode = "scheduled";
+  reviewModeLabel = "";
+
   let query =
     flashSb
       .from(
@@ -874,6 +879,7 @@ async function loadReviewQueue() {
       )
       .select(`
         id,
+        user_id,
         area,
         materia,
         theme,
@@ -882,8 +888,11 @@ async function loadReviewQueue() {
         front_image_path,
         back_image_path,
         due_date,
-        review_count
+        review_count,
+        active,
+        created_at
       `)
+      .eq("user_id", flashUser.id)
       .eq(
         "active",
         true
@@ -971,8 +980,38 @@ async function loadReviewQueue() {
   }
 
 
-  reviewQueue =
-    data || [];
+  const sharedDueCards =
+    (await loadSharedFlashcards())
+      .filter(card => {
+        if (!card.active) {
+          return false;
+        }
+
+        if (flashAgendaDate) {
+          if (card.due_date !== flashAgendaDate) {
+            return false;
+          }
+
+          return flashAgendaArea
+            ? card.area === flashAgendaArea
+            : !card.area;
+        }
+
+        return card.due_date <= todayISO();
+      });
+
+  reviewQueue = [
+    ...(data || []).map(card => ({
+      ...card,
+      shared: false,
+      owner_user_id: card.user_id
+    })),
+    ...sharedDueCards
+  ]
+    .sort(
+      (a,b) =>
+        String(a.due_date || "").localeCompare(String(b.due_date || ""))
+    );
 
 
   reviewIndex =
@@ -1059,10 +1098,17 @@ function wireReview() {
             "Salvando revisão..."
           );
 
+          const rpcName =
+            reviewMode === "extra"
+              ? "review_flashcard_extra"
+              : card.shared
+                ? "review_shared_flashcard"
+                : "review_flashcard";
+
           const {
             error
           } = await flashSb.rpc(
-            "review_flashcard",
+            rpcName,
             {
               p_flashcard_id:
                 card.id,
@@ -3187,6 +3233,22 @@ function filteredLibraryCards() {
       )
       .value;
 
+  const materia =
+    document
+      .getElementById(
+        "library-materia"
+      )
+      ?.value
+    || "";
+
+  const theme =
+    document
+      .getElementById(
+        "library-theme"
+      )
+      ?.value
+    || "";
+
   const activeFilter =
     document
       .getElementById(
@@ -3201,6 +3263,20 @@ function filteredLibraryCards() {
         area
         && card.area
           !== area
+      ) {
+        return false;
+      }
+
+      if (
+        materia
+        && card.materia !== materia
+      ) {
+        return false;
+      }
+
+      if (
+        theme
+        && card.theme !== theme
       ) {
         return false;
       }
@@ -4323,6 +4399,7 @@ function renderLibrary() {
 
 
   updateFlashBulkToolbar();
+  renderLibraryDecks();
 
 
   list
@@ -4435,43 +4512,379 @@ function renderLibrary() {
     );
 }
 
-async function loadLibrary() {
+async function loadSharedFlashcards() {
   const {
     data,
     error
   } = await flashSb
-    .from("flashcards")
+    .from("flashcard_shared_state")
     .select(`
-      id,
-      area,
-      materia,
-      theme,
-      front_text,
-      back_text,
-      front_image_path,
-      back_image_path,
+      flashcard_id,
+      share_id,
       due_date,
       review_count,
       active,
-      created_at
+      current_interval_days,
+      stability_days,
+      last_reviewed_at,
+      last_rating,
+      flashcards (
+        id,
+        user_id,
+        area,
+        materia,
+        theme,
+        front_text,
+        back_text,
+        front_image_path,
+        back_image_path,
+        created_at
+      )
     `)
-    .order(
-      "created_at",
-      {
-        ascending: false
-      }
-    )
-    .limit(500);
+    .eq("user_id", flashUser.id);
 
   if (error) {
-    console.error(error);
+    console.warn("Não foi possível carregar flashcards compartilhados:", error.message);
+    return [];
+  }
+
+  return (data || [])
+    .filter((row) => row.flashcards)
+    .map((row) => ({
+      ...row.flashcards,
+      due_date: row.due_date,
+      review_count: row.review_count,
+      active: row.active,
+      current_interval_days: row.current_interval_days,
+      stability_days: row.stability_days,
+      last_reviewed_at: row.last_reviewed_at,
+      last_rating: row.last_rating,
+      shared: true,
+      share_id: row.share_id,
+      owner_user_id: row.flashcards.user_id
+    }));
+}
+
+function flashDeckKey(card) {
+  return [
+    card.area || "Sem área",
+    card.materia || "Sem matéria",
+    card.theme || "Sem tema"
+  ].join("|||");
+}
+
+function flashDeckLabel(card) {
+  return [
+    card.area,
+    card.materia,
+    card.theme
+  ].filter(Boolean).join(" · ") || "Deck sem classificação";
+}
+
+function populateLibraryTaxonomyFilters() {
+  const area =
+    document.getElementById("library-area")?.value || "";
+
+  const materiaSelect =
+    document.getElementById("library-materia");
+
+  const themeSelect =
+    document.getElementById("library-theme");
+
+  if (!materiaSelect || !themeSelect) {
     return;
   }
 
-  libraryCards =
-    data || [];
+  const previousMateria = materiaSelect.value;
+  const previousTheme = themeSelect.value;
+
+  const areaCards =
+    libraryCards.filter(
+      card => !area || card.area === area
+    );
+
+  const materias =
+    [...new Set(
+      areaCards
+        .map(card => card.materia)
+        .filter(Boolean)
+    )].sort((a,b) => a.localeCompare(b,"pt-BR"));
+
+  materiaSelect.innerHTML =
+    '<option value="">Todas as matérias</option>'
+    + materias.map(
+        value => `<option value="${escapeFlashHtml(value)}">${escapeFlashHtml(value)}</option>`
+      ).join("");
+
+  if (materias.includes(previousMateria)) {
+    materiaSelect.value = previousMateria;
+  }
+
+  const materia =
+    materiaSelect.value;
+
+  const themes =
+    [...new Set(
+      areaCards
+        .filter(card => !materia || card.materia === materia)
+        .map(card => card.theme)
+        .filter(Boolean)
+    )].sort((a,b) => a.localeCompare(b,"pt-BR"));
+
+  themeSelect.innerHTML =
+    '<option value="">Todos os temas</option>'
+    + themes.map(
+        value => `<option value="${escapeFlashHtml(value)}">${escapeFlashHtml(value)}</option>`
+      ).join("");
+
+  if (themes.includes(previousTheme)) {
+    themeSelect.value = previousTheme;
+  }
+}
+
+function renderLibraryDecks() {
+  const host =
+    document.getElementById("library-decks");
+
+  if (!host) {
+    return;
+  }
+
+  const cards =
+    filteredLibraryCards();
+
+  const groups =
+    new Map();
+
+  for (const card of cards) {
+    const key =
+      flashDeckKey(card);
+
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+
+    groups.get(key).push(card);
+  }
+
+  if (!groups.size) {
+    host.innerHTML = "";
+    return;
+  }
+
+  host.innerHTML =
+    [...groups.values()]
+      .map(deck => {
+        const sample = deck[0];
+        const owned = deck.filter(card => !card.shared);
+        const sharedCount = deck.length - owned.length;
+
+        return `
+          <article class="flash-deck-card">
+            <div class="flash-deck-taxonomy">
+              ${sample.area ? `<span class="taxonomy-chip">${escapeFlashHtml(sample.area)}</span>` : ""}
+              ${sample.materia ? `<span class="taxonomy-chip">${escapeFlashHtml(sample.materia)}</span>` : ""}
+              ${sample.theme ? `<span class="taxonomy-chip accent">${escapeFlashHtml(sample.theme)}</span>` : ""}
+              ${sharedCount ? `<span class="flash-shared-badge">${sharedCount} compartilhado${sharedCount === 1 ? "" : "s"}</span>` : ""}
+            </div>
+            <strong>${escapeFlashHtml(flashDeckLabel(sample))}</strong>
+            <small>${deck.length} flashcard${deck.length === 1 ? "" : "s"}</small>
+            <div class="flash-deck-buttons">
+              <button class="button primary" type="button" data-review-deck="${escapeFlashHtml(flashDeckKey(sample))}">
+                Revisar agora
+              </button>
+              ${owned.length ? `
+                <button class="button secondary" type="button" data-share-deck="${escapeFlashHtml(flashDeckKey(sample))}">
+                  Compartilhar
+                </button>
+              ` : ""}
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+
+  host.querySelectorAll("[data-review-deck]")
+    .forEach(button => {
+      button.addEventListener("click", () => {
+        const key = button.dataset.reviewDeck;
+        startExtraReview(
+          cards.filter(card => flashDeckKey(card) === key),
+          flashDeckLabel(
+            cards.find(card => flashDeckKey(card) === key)
+          )
+        );
+      });
+    });
+
+  host.querySelectorAll("[data-share-deck]")
+    .forEach(button => {
+      button.addEventListener("click", async () => {
+        const key = button.dataset.shareDeck;
+        const deck = cards.filter(
+          card => flashDeckKey(card) === key && !card.shared
+        );
+
+        await shareFlashcardDeck(
+          deck,
+          flashDeckLabel(deck[0])
+        );
+      });
+    });
+}
+
+async function shareFlashcardDeck(cards, title) {
+  const owned =
+    (cards || []).filter(card => !card.shared);
+
+  if (!owned.length) {
+    setLibraryStatus("Este deck não contém flashcards seus para compartilhar.", "error");
+    return;
+  }
+
+  setLibraryStatus("Gerando link do deck...");
+
+  const {
+    data,
+    error
+  } = await flashSb.rpc(
+    "create_flashcard_deck_share",
+    {
+      p_flashcard_ids: owned.map(card => card.id),
+      p_title: title || "Deck LURIA"
+    }
+  );
+
+  if (error) {
+    console.error(error);
+    setLibraryStatus(`Não foi possível compartilhar: ${error.message}`, "error");
+    return;
+  }
+
+  const url =
+    new URL("/flashcards/", window.location.origin);
+
+  url.searchParams.set("share", data);
+
+  try {
+    await navigator.clipboard.writeText(url.toString());
+    setLibraryStatus("Link do deck copiado. O conteúdo será compartilhado por referência.", "success");
+  } catch {
+    window.prompt("Copie o link do deck:", url.toString());
+    setLibraryStatus("Link do deck gerado.", "success");
+  }
+}
+
+async function redeemFlashcardShareFromUrl() {
+  const url =
+    new URL(window.location.href);
+
+  const token =
+    url.searchParams.get("share");
+
+  if (!token) {
+    return;
+  }
+
+  setFlashStatus("review-status", "Adicionando deck compartilhado...");
+
+  const {
+    data,
+    error
+  } = await flashSb.rpc(
+    "redeem_flashcard_deck_share",
+    {
+      p_token: token
+    }
+  );
+
+  if (error) {
+    console.error(error);
+    setFlashStatus("review-status", `Não foi possível adicionar o deck: ${error.message}`, "error");
+    return;
+  }
+
+  url.searchParams.delete("share");
+  window.history.replaceState({}, "", url);
+
+  setFlashStatus(
+    "review-status",
+    `${Number(data || 0)} flashcard${Number(data || 0) === 1 ? "" : "s"} adicionado${Number(data || 0) === 1 ? "" : "s"} por referência.`,
+    "success"
+  );
+}
+
+function startExtraReview(cards, label = "revisão extraordinária") {
+  const activeCards =
+    (cards || []).filter(card => card.active !== false);
+
+  if (!activeCards.length) {
+    setLibraryStatus("Nenhum flashcard ativo nesta seleção.", "error");
+    return;
+  }
+
+  reviewMode = "extra";
+  reviewModeLabel = label;
+  reviewQueue = activeCards;
+  reviewIndex = 0;
+
+  switchFlashTab("review");
+
+  const sessionCopy =
+    document.getElementById("review-session-copy");
+
+  if (sessionCopy) {
+    sessionCopy.textContent =
+      `Revisão extra · ${label}`;
+  }
+
+  renderCurrentReview();
+}
+
+async function loadLibrary() {
+  const [
+    ownedResult,
+    sharedCards
+  ] = await Promise.all([
+    flashSb
+      .from("flashcards")
+      .select(`
+        id,
+        user_id,
+        area,
+        materia,
+        theme,
+        front_text,
+        back_text,
+        front_image_path,
+        back_image_path,
+        due_date,
+        review_count,
+        active,
+        created_at
+      `)
+      .eq("user_id", flashUser.id)
+      .order("created_at", { ascending: false })
+      .limit(500),
+    loadSharedFlashcards()
+  ]);
+
+  if (ownedResult.error) {
+    console.error(ownedResult.error);
+    return;
+  }
+
+  libraryCards = [
+    ...(ownedResult.data || []).map(card => ({
+      ...card,
+      shared: false,
+      owner_user_id: card.user_id
+    })),
+    ...sharedCards
+  ];
 
   populateLibraryAreas();
+  populateLibraryTaxonomyFilters();
   renderLibrary();
 }
 
@@ -4628,7 +5041,72 @@ function wireLibrary() {
     )
     ?.addEventListener(
       "change",
+      () => {
+        populateLibraryTaxonomyFilters();
+        renderLibrary();
+      }
+    );
+
+  document
+    .getElementById(
+      "library-materia"
+    )
+    ?.addEventListener(
+      "change",
+      () => {
+        populateLibraryTaxonomyFilters();
+        renderLibrary();
+      }
+    );
+
+  document
+    .getElementById(
+      "library-theme"
+    )
+    ?.addEventListener(
+      "change",
       renderLibrary
+    );
+
+  document
+    .getElementById(
+      "flash-review-filtered"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+        const cards = filteredLibraryCards();
+        const area = document.getElementById("library-area")?.value;
+        const materia = document.getElementById("library-materia")?.value;
+        const theme = document.getElementById("library-theme")?.value;
+
+        startExtraReview(
+          cards,
+          [area,materia,theme].filter(Boolean).join(" · ") || "Biblioteca"
+        );
+      }
+    );
+
+  document
+    .getElementById(
+      "flash-share-filtered"
+    )
+    ?.addEventListener(
+      "click",
+      async () => {
+        const cards =
+          filteredLibraryCards()
+            .filter(card => !card.shared);
+
+        const area = document.getElementById("library-area")?.value;
+        const materia = document.getElementById("library-materia")?.value;
+        const theme = document.getElementById("library-theme")?.value;
+
+        await shareFlashcardDeck(
+          cards,
+          [area,materia,theme].filter(Boolean).join(" · ") || "Deck LURIA"
+        );
+      }
     );
 
 
@@ -4769,6 +5247,7 @@ async function initFlashcards() {
   wireLibrary();
 
   await loadFlashSettings();
+  await redeemFlashcardShareFromUrl();
 
   await Promise.all([
     loadMetrics(),
