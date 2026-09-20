@@ -2900,22 +2900,10 @@ async function createQuestionSet(title, file) {
   return data;
 }
 
-async function uploadQuestionPdf(setId, file) {
-  const path =
-    `${qsState.user.id}/question_sets/${setId}/${Date.now()}_${safeStorageName(file.name)}`;
-
-  const { error } = await qsSb.storage
-    .from("docmap")
-    .upload(path, file, {
-      contentType: "application/pdf",
-      upsert: false
-    });
-
-  if (error) throw error;
-
-  return path;
-}
-
+/*
+  PDFs brutos não são enviados ao Supabase.
+  A leitura ocorre localmente no navegador.
+*/
 
 const RESIBULANDO_IMAGE_TARGET_BYTES =
   100 * 1024;
@@ -3661,35 +3649,61 @@ function chunkArray(array, size) {
 }
 
 async function importPdf() {
-  const file = qsState.file;
+  const file =
+    qsState.file;
 
   if (!file) {
-    setImportStatus("Selecione um PDF.", "error");
+    setImportStatus(
+      "Selecione um PDF.",
+      "error"
+    );
+
     return;
   }
 
+
   const title =
-    document.getElementById("qs-title").value.trim()
-    || cleanFileTitle(file.name)
+    document
+      .getElementById(
+        "qs-title"
+      )
+      .value
+      .trim()
+    || cleanFileTitle(
+        file.name
+      )
     || "Simulado";
 
-  const button = document.getElementById("qs-import");
-  button.disabled = true;
 
-  let setRecord = null;
-
-  try {
-    setImportStatus("Criando simulado...");
-
-    setRecord = await createQuestionSet(
-      title,
-      file
+  const button =
+    document.getElementById(
+      "qs-import"
     );
 
-    const [extraction, filePath] = await Promise.all([
-      extractQuestionsFromPdf(file),
-      uploadQuestionPdf(setRecord.id, file)
-    ]);
+
+  button.disabled =
+    true;
+
+
+  let setRecord =
+    null;
+
+
+  try {
+    /*
+      Primeiro reconhece tudo localmente.
+      Nenhum PDF bruto é enviado ao Storage/Supabase.
+    */
+    setImportStatus(
+      "Lendo PDF localmente e reconhecendo as questões..."
+    );
+
+
+    const extraction =
+      await extractQuestionsFromPdf(
+        file
+      );
+
 
     const {
       questions,
@@ -3698,89 +3712,218 @@ async function importPdf() {
     } =
       extraction;
 
+
+    setImportStatus(
+      "Questões reconhecidas. Salvando somente os dados extraídos..."
+    );
+
+
+    setRecord =
+      await createQuestionSet(
+        title,
+        file
+      );
+
+
     const imagePaths =
       await uploadExtractedQuestionImages(
         setRecord.id,
         questionImages
       );
 
-    const payload = questions.map((question) => ({
-      user_id: qsState.user.id,
-      set_id: setRecord.id,
-      ...question,
 
-      official_answer:
-        answerKey[
-          question.question_number
-        ]
-        || null,
+    const payload =
+      questions.map(
+        question => ({
+          user_id:
+            qsState.user.id,
 
-      image_path:
-        imagePaths[
-          question.question_number
-        ]
-        || null
-    }));
+          set_id:
+            setRecord.id,
 
-    for (const chunk of chunkArray(payload, 150)) {
-      const { error } = await qsSb
-        .from("question_items")
-        .insert(chunk);
+          ...question,
 
-      if (error) throw error;
+          official_answer:
+            answerKey[
+              question.question_number
+            ]
+            || null,
+
+          image_path:
+            imagePaths[
+              question.question_number
+            ]
+            || null
+        })
+      );
+
+
+    for (
+      const chunk
+      of chunkArray(
+        payload,
+        150
+      )
+    ) {
+      const {
+        error
+      } =
+        await qsSb
+          .from(
+            "question_items"
+          )
+          .insert(
+            chunk
+          );
+
+
+      if (
+        error
+      ) {
+        throw error;
+      }
     }
 
-    const { error: updateError } = await qsSb
-      .from("question_sets")
-      .update({
-        source_file_path: filePath,
-        total_questions: questions.length,
-        status: "ready",
-        error_message: null
-      })
-      .eq("id", setRecord.id);
 
-    if (updateError) throw updateError;
+    const {
+      error:
+        updateError
+    } =
+      await qsSb
+        .from(
+          "question_sets"
+        )
+        .update({
+          source_file_path:
+            null,
+
+          total_questions:
+            questions.length,
+
+          status:
+            "ready",
+
+          error_message:
+            null
+        })
+        .eq(
+          "id",
+          setRecord.id
+        );
+
+
+    if (
+      updateError
+    ) {
+      throw updateError;
+    }
+
 
     setImportStatus(
-      `${questions.length} questões extraídas com sucesso. ${questionImages.length} questão(ões) com figura(s) recortada(s).`,
+      `${questions.length} questões extraídas com sucesso. ${questionImages.length} questão(ões) com figura(s) recortada(s). O PDF original não foi armazenado.`,
       "success"
     );
 
-    qsState.file = null;
-    document.getElementById("qs-file").value = "";
-    document.getElementById("qs-file-name").textContent =
-      "Selecione um PDF";
-    document.getElementById("qs-title").value = "";
+
+    document
+      .getElementById(
+        "qs-title"
+      )
+      .value =
+        "";
+
 
     await loadSets();
+
 
     switchQsMode(
       "mine"
     );
 
+
     await openSet(
       setRecord.id
     );
-  } catch (error) {
-    console.error(error);
 
-    if (setRecord?.id) {
+
+  } catch (
+    error
+  ) {
+    console.error(
+      error
+    );
+
+
+    if (
+      setRecord?.id
+    ) {
       await qsSb
-        .from("question_sets")
+        .from(
+          "question_sets"
+        )
         .update({
-          status: "failed",
-          error_message: error.message || "Erro ao importar"
+          status:
+            "failed",
+
+          source_file_path:
+            null,
+
+          error_message:
+            error.message
+            || "Erro ao importar"
         })
-        .eq("id", setRecord.id);
+        .eq(
+          "id",
+          setRecord.id
+        );
     }
 
+
     setImportStatus(
-      error.message || "Não foi possível importar o PDF.",
+      error.message
+      || "Não foi possível importar o PDF.",
       "error"
     );
+
+
   } finally {
-    button.disabled = false;
+    /*
+      Sucesso ou erro: libera o arquivo bruto do navegador.
+    */
+    qsState.file =
+      null;
+
+
+    const input =
+      document.getElementById(
+        "qs-file"
+      );
+
+
+    if (
+      input
+    ) {
+      input.value =
+        "";
+    }
+
+
+    const fileName =
+      document.getElementById(
+        "qs-file-name"
+      );
+
+
+    if (
+      fileName
+    ) {
+      fileName.textContent =
+        "Selecione um PDF";
+    }
+
+
+    button.disabled =
+      false;
   }
 }
 
@@ -6929,6 +7072,62 @@ function bindErrorImagePickerEvents(
         );
       }
     );
+}
+
+
+function releaseAnswerScreenshotSourceFiles() {
+  /*
+    Os prints do gabarito nunca são enviados ao Supabase.
+    Após a tentativa de leitura, descartamos os arquivos
+    originais e Object URLs, mas preservamos o resultado
+    reconhecido para o usuário revisar/aplicar.
+  */
+  for (
+    const url
+    of qsState.answerScreenshotUrls
+  ) {
+    try {
+      URL.revokeObjectURL(
+        url
+      );
+    } catch {}
+  }
+
+
+  qsState.answerScreenshotFiles =
+    [];
+
+
+  qsState.answerScreenshotUrls =
+    [];
+
+
+  const input =
+    document.getElementById(
+      "qs-answer-screenshot-files"
+    );
+
+
+  if (
+    input
+  ) {
+    input.value =
+      "";
+  }
+
+
+  const preview =
+    document.getElementById(
+      "qs-answer-screenshot-preview"
+    );
+
+
+  if (
+    preview
+  ) {
+    preview.innerHTML =
+      "";
+  }
 }
 
 
@@ -10556,6 +10755,13 @@ async function readAnswerScreenshots() {
     );
 
   } finally {
+    /*
+      Sucesso ou erro: elimina os prints originais da memória
+      do navegador. A tabela de resultados reconhecidos fica.
+    */
+    releaseAnswerScreenshotSourceFiles();
+
+
     if (button) {
       button.disabled =
         false;
