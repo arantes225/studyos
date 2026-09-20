@@ -636,7 +636,7 @@
 }
 
 .notebook-study-tool.important {
-  color: var(--accent);
+  color: #3b82f6;
 }
 
 .notebook-study-tool.warning {
@@ -644,7 +644,7 @@
 }
 
 .notebook-study-tool.memory {
-  color: #7956c6;
+  color: #dc2626;
 }
 
 /* =========================================================
@@ -889,7 +889,14 @@
 }
 
 .notebook-study-block.important {
-  border-left-color: var(--accent);
+  border-left-color: #60a5fa;
+
+  background:
+    color-mix(
+      in srgb,
+      #60a5fa 13%,
+      var(--surface)
+    );
 }
 
 .notebook-study-block.warning {
@@ -898,18 +905,18 @@
   background:
     color-mix(
       in srgb,
-      #f2b647 9%,
+      #f2b647 14%,
       var(--surface)
     );
 }
 
 .notebook-study-block.memory {
-  border-left-color: #8768cf;
+  border-left-color: #dc2626;
 
   background:
     color-mix(
       in srgb,
-      #8768cf 8%,
+      #ef4444 11%,
       var(--surface)
     );
 }
@@ -1761,7 +1768,7 @@
 }
 
 .notebook-tool-menu button.important {
-  color: var(--accent);
+  color: #3b82f6;
 }
 
 .notebook-tool-menu button.warning {
@@ -1769,7 +1776,7 @@
 }
 
 .notebook-tool-menu button.memory {
-  color: #7956c6;
+  color: #dc2626;
 }
 
 /*
