@@ -400,7 +400,7 @@ async function loadStudyModeSetting() {
   const mode = data?.study_mode === "dentistry" ? "dentistry" : "medicine";
   const radio = document.querySelector(`input[name="study-mode"][value="${mode}"]`);
   if (radio) radio.checked = true;
-  window.ResibulandoStudyMode?.apply(mode);
+  window.LuriaStudyMode?.apply(mode);
 }
 
 async function saveStudyModeSetting() {
@@ -421,7 +421,7 @@ async function saveStudyModeSetting() {
     return;
   }
 
-  window.ResibulandoStudyMode?.apply(mode);
+  window.LuriaStudyMode?.apply(mode);
   setStudyModeStatus(mode === "dentistry" ? "Modo Odontologia salvo." : "Modo Medicina salvo.", "success");
 }
 
