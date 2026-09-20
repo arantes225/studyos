@@ -510,11 +510,7 @@ function updateCalendarViewControls() {
     currentButton
   ) {
     currentButton.textContent =
-      agendaState.view === "day"
-        ? "Hoje"
-        : agendaState.view === "week"
-          ? "Esta semana"
-          : "Este mês";
+      "Hoje";
   }
 }
 
