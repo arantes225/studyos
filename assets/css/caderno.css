@@ -2055,18 +2055,21 @@
 
 
 /* =========================================================
-   EXPORTAÇÃO PDF — TEMA CLARO ISOLADO
-   Mantém callouts, tabelas, cores e estilos legíveis.
+   EXPORTAÇÃO PDF — ESPELHO VISUAL DO CADERNO
+   A folha exportada usa a mesma hierarquia, tipografia,
+   espaçamentos, tabelas, divisores e callouts do editor.
    ========================================================= */
 
 .notebook-pdf-export-host {
-  position: absolute;
+  position: fixed;
   left: 0;
-  top: calc(100% + 2000px);
+  top: 0;
   width: 940px;
-  z-index: 0;
+  z-index: -2147483647;
   pointer-events: none;
   overflow: visible;
+  visibility: visible;
+  opacity: 1;
 
   background: #ffffff;
   color: #10243e;
@@ -2088,91 +2091,142 @@
   width: 940px;
   min-height: 1120px;
   margin: 0;
-  padding: 68px 72px 88px;
-  border: 0;
-  border-radius: 0;
+  padding: 72px 78px 100px;
+  border: 1px solid #d8e1eb;
+  border-radius: 4px;
   background: #ffffff;
   color: #10243e;
   box-shadow: none;
+}
+
+.notebook-pdf-export-host .notebook-document-head {
+  padding-bottom: 24px;
+  margin-bottom: 30px;
+  border-bottom: 1px solid #d8e1eb;
+}
+
+.notebook-pdf-export-host .notebook-document-area {
+  margin-bottom: 10px;
+  color: #184888;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  text-align: left;
+}
+
+.notebook-pdf-export-host .notebook-document-head h1 {
+  margin: 0;
+  max-width: 900px;
+  color: #10243e;
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1.12;
+  letter-spacing: -.035em;
+  text-align: left;
+}
+
+.notebook-pdf-export-host .notebook-document-date {
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 650;
+  text-align: left;
 }
 
 .notebook-pdf-export-host .notebook-editor {
   min-height: 0;
   overflow: visible;
   color: #10243e;
+  font-size: 15px;
+  line-height: 1.72;
+}
+
+.notebook-pdf-export-host .notebook-editor h1 {
+  margin: 36px 0 13px;
+  font-size: 29px;
+  line-height: 1.2;
+  font-weight: 900;
+}
+
+.notebook-pdf-export-host .notebook-editor h2 {
+  margin: 32px 0 12px;
+  font-size: 23px;
+  line-height: 1.25;
+  font-weight: 900;
+}
+
+.notebook-pdf-export-host .notebook-editor h3 {
+  margin: 26px 0 10px;
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 850;
 }
 
 .notebook-pdf-export-host .notebook-editor table {
   width: 100%;
-  min-width: 0;
-  margin: 22px 0;
+  min-width: 420px;
+  max-width: 100%;
+  margin: 24px 0;
   border-collapse: collapse;
   table-layout: auto;
+  font-size: 13px;
   background: #ffffff;
 }
 
 .notebook-pdf-export-host .notebook-editor th,
 .notebook-pdf-export-host .notebook-editor td {
   padding: 10px 11px;
-  border: 1px solid #cfd9e4;
-  background: #ffffff;
+  border: 1px solid #d8e1eb;
   color: #10243e;
+  text-align: left;
   vertical-align: top;
+  line-height: 1.45;
 }
 
 .notebook-pdf-export-host .notebook-editor th {
-  background: #eef2f6;
+  background: #f5f7fa;
   font-weight: 850;
 }
 
 .notebook-pdf-export-host .notebook-study-block {
+  position: relative;
+  overflow: hidden;
+  margin: 20px 0;
+  padding: 16px 18px;
   border: 1px solid #d8e1eb;
-  border-left-width: 5px;
-  background: #f7f9fb;
+  border-left-width: 4px;
+  border-radius: 12px;
+  background: #f5f7fa;
   color: #10243e;
   box-shadow: none;
 }
 
+.notebook-pdf-export-host .notebook-study-block > strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
 .notebook-pdf-export-host .notebook-study-block.important {
-  border-color: #cfe0f6;
   border-left-color: #60a5fa;
   background: #edf5ff;
 }
 
 .notebook-pdf-export-host .notebook-study-block.warning {
-  border-color: #eed9a9;
   border-left-color: #e7a126;
   background: #fff7e7;
 }
 
 .notebook-pdf-export-host .notebook-study-block.memory {
-  border-color: #efcaca;
   border-left-color: #dc2626;
   background: #fff0f0;
-}
-
-.notebook-pdf-export-host .notebook-editor hr {
-  border-top-color: #d8e1eb;
-}
-
-.notebook-pdf-export-host .notebook-document-area {
-  color: #184888;
-}
-
-.notebook-pdf-export-host .notebook-document-head h1,
-.notebook-pdf-export-host .notebook-editor h1,
-.notebook-pdf-export-host .notebook-editor h2,
-.notebook-pdf-export-host .notebook-editor h3,
-.notebook-pdf-export-host .notebook-editor strong,
-.notebook-pdf-export-host .notebook-editor b {
-  color: inherit;
 }
 
 .notebook-pdf-export-host .notebook-editor img {
   max-width: 100%;
   height: auto;
 }
-
 
 /* =========================================================
    CADERNO TOOLBAR PREMIUM v17
