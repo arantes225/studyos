@@ -2397,3 +2397,177 @@
     text-align: center !important;
   }
 }
+
+
+/* =========================================================
+   PWA Sidebar padrão — Cronograma e Estatísticas
+   Remove a compactação extra do pwa-mobile e iguala às
+   demais páginas, que usam diretamente o sidebar global.
+   ========================================================= */
+@media (max-width: 760px) {
+  .pwa-standalone body[data-page="cronograma"] .sidebar,
+  .pwa-standalone body[data-page="estatisticas"] .sidebar {
+    width: min(86vw, 290px) !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    padding:
+      max(18px, env(safe-area-inset-top))
+      18px
+      calc(18px + env(safe-area-inset-bottom))
+      18px !important;
+    border-right: 1px solid var(--border) !important;
+    box-shadow: var(--shadow) !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .sidebar-top,
+  .pwa-standalone body[data-page="estatisticas"] .sidebar-top {
+    min-height: 0 !important;
+    gap: 10px !important;
+    margin-bottom: 24px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .brand,
+  .pwa-standalone body[data-page="estatisticas"] .brand {
+    gap: 12px !important;
+    overflow: visible !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .brand-logo-single,
+  .pwa-standalone body[data-page="cronograma"] .luria-theme-logo,
+  .pwa-standalone body[data-page="cronograma"] .brand-logo-stack,
+  .pwa-standalone body[data-page="estatisticas"] .brand-logo-single,
+  .pwa-standalone body[data-page="estatisticas"] .luria-theme-logo,
+  .pwa-standalone body[data-page="estatisticas"] .brand-logo-stack {
+    width: 54px !important;
+    height: 54px !important;
+    flex: 0 0 54px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .brand-copy strong,
+  .pwa-standalone body[data-page="estatisticas"] .brand-copy strong {
+    font-size: 17px !important;
+    line-height: normal !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .brand-copy small,
+  .pwa-standalone body[data-page="estatisticas"] .brand-copy small {
+    display: block !important;
+    margin-top: 0 !important;
+    font-size: 11px !important;
+    line-height: normal !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .sidebar-close,
+  .pwa-standalone body[data-page="estatisticas"] .sidebar-close {
+    width: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    font-size: 28px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .nav,
+  .pwa-standalone body[data-page="estatisticas"] .nav {
+    display: grid !important;
+    gap: 6px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .nav-link,
+  .pwa-standalone body[data-page="cronograma"] .nav-group-label,
+  .pwa-standalone body[data-page="estatisticas"] .nav-link,
+  .pwa-standalone body[data-page="estatisticas"] .nav-group-label {
+    min-height: 44px !important;
+    gap: 12px !important;
+    padding: 0 12px !important;
+    border-radius: 11px !important;
+    font-size: 14px !important;
+    font-weight: 650 !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .nav-icon,
+  .pwa-standalone body[data-page="estatisticas"] .nav-icon {
+    width: 20px !important;
+    font-size: 17px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .nav-group,
+  .pwa-standalone body[data-page="estatisticas"] .nav-group {
+    margin: 2px 0 !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .nav-group-chevron,
+  .pwa-standalone body[data-page="estatisticas"] .nav-group-chevron {
+    font-size: 14px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .nav-submenu,
+  .pwa-standalone body[data-page="estatisticas"] .nav-submenu {
+    gap: 3px !important;
+    margin: 2px 0 7px 42px !important;
+    padding: 0 !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .nav-sublink,
+  .pwa-standalone body[data-page="estatisticas"] .nav-sublink {
+    min-height: 36px !important;
+    padding: 0 10px !important;
+    border-radius: 9px !important;
+    font-size: 13px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .sidebar-footer,
+  .pwa-standalone body[data-page="estatisticas"] .sidebar-footer {
+    gap: 12px !important;
+    padding-top: 20px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .streak-mini,
+  .pwa-standalone body[data-page="estatisticas"] .streak-mini {
+    display: flex !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .user-mini,
+  .pwa-standalone body[data-page="estatisticas"] .user-mini {
+    min-height: 0 !important;
+    gap: 11px !important;
+    padding: 11px !important;
+    border-radius: 12px !important;
+    background: var(--surface) !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .user-avatar,
+  .pwa-standalone body[data-page="estatisticas"] .user-avatar {
+    width: 34px !important;
+    height: 34px !important;
+    flex: 0 0 34px !important;
+    font-size: inherit !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .user-copy strong,
+  .pwa-standalone body[data-page="estatisticas"] .user-copy strong {
+    font-size: 13px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .user-copy small,
+  .pwa-standalone body[data-page="estatisticas"] .user-copy small {
+    margin-top: 2px !important;
+    font-size: 11px !important;
+    line-height: normal !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .logout-button,
+  .pwa-standalone body[data-page="estatisticas"] .logout-button {
+    min-height: 40px !important;
+    border-radius: 10px !important;
+    font-size: inherit !important;
+    font-weight: 700 !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .sidebar-backdrop,
+  .pwa-standalone body[data-page="estatisticas"] .sidebar-backdrop {
+    background: rgba(0, 0, 0, .36) !important;
+    backdrop-filter: none !important;
+  }
+}
