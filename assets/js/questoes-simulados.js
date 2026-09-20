@@ -5290,8 +5290,10 @@ async function compressQuestionFigureBlob(
 
 
   /*
-    Limite rígido para figuras temporárias de questões.
-    128 KiB dá uma margem segura abaixo de 130 KB.
+    LIMITE RÍGIDO:
+    toda imagem de questão enviada ao Storage deve ficar
+    abaixo de 130 KB. Usamos 128 KiB como teto interno
+    para manter margem de segurança.
   */
   const maxBytes =
     128 * 1024;
@@ -5333,6 +5335,10 @@ async function compressQuestionFigureBlob(
     }
 
 
+    /*
+      Primeiro tenta preservar resolução e qualidade.
+      Só avança para reduções maiores quando necessário.
+    */
     const dimensionSteps = [
       1800,
       1600,
@@ -5350,7 +5356,15 @@ async function compressQuestionFigureBlob(
       360,
       320,
       280,
-      240
+      240,
+      210,
+      180,
+      160,
+      140,
+      120,
+      100,
+      80,
+      64
     ];
 
 
@@ -5366,7 +5380,13 @@ async function compressQuestionFigureBlob(
       0.42,
       0.36,
       0.30,
-      0.26
+      0.26,
+      0.22,
+      0.18,
+      0.14,
+      0.10,
+      0.07,
+      0.05
     ];
 
 
@@ -5469,11 +5489,6 @@ async function compressQuestionFigureBlob(
         const quality
         of qualitySteps
       ) {
-        /*
-          WebP primeiro. Se o navegador não gerar WebP,
-          tenta JPEG. Ambos são muito menores que PNG para
-          recortes de páginas.
-        */
         let candidate =
           await canvasBlob(
             canvas,
@@ -5482,6 +5497,10 @@ async function compressQuestionFigureBlob(
           );
 
 
+        /*
+          Safari pode ignorar WebP em alguns contextos.
+          Se isso acontecer, JPEG vira o fallback obrigatório.
+        */
         if (
           !candidate
           ||
@@ -5524,15 +5543,218 @@ async function compressQuestionFigureBlob(
 
 
     /*
-      Nunca envia uma imagem fora do limite.
-      Se nem a redução agressiva conseguir cumprir,
-      o upload é interrompido em vez de gravar um arquivo grande.
+      Fallback final: em condições normais nunca chega aqui,
+      mas ainda assim não rejeitamos por tamanho.
+      Reencodamos o menor candidato novamente até cumprir o teto.
     */
-    throw new Error(
+    if (
       smallest
-        ? `A imagem não pôde ser reduzida abaixo de 130 KB (menor versão: ${Math.ceil(smallest.size / 1024)} KB).`
-        : "A imagem não pôde ser comprimida abaixo de 130 KB."
+      &&
+      smallest.size
+      > maxBytes
+    ) {
+      const emergency =
+        await loadQuestionImageDrawable(
+          smallest
+        );
+
+
+      try {
+        for (
+          const maxDimension
+          of [
+            96,
+            80,
+            64,
+            48,
+            32
+          ]
+        ) {
+          const scale =
+            Math.min(
+              1,
+              maxDimension
+              /
+              Math.max(
+                emergency.width,
+                emergency.height
+              )
+            );
+
+
+          const canvas =
+            document.createElement(
+              "canvas"
+            );
+
+
+          canvas.width =
+            Math.max(
+              1,
+              Math.round(
+                emergency.width
+                * scale
+              )
+            );
+
+
+          canvas.height =
+            Math.max(
+              1,
+              Math.round(
+                emergency.height
+                * scale
+              )
+            );
+
+
+          const context =
+            canvas.getContext(
+              "2d",
+              {
+                alpha:
+                  false
+              }
+            );
+
+
+          if (!context) {
+            continue;
+          }
+
+
+          context.fillStyle =
+            "#ffffff";
+
+          context.fillRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
+
+
+          context.drawImage(
+            emergency.source,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
+
+
+          for (
+            const quality
+            of [
+              0.08,
+              0.05,
+              0.03,
+              0.01
+            ]
+          ) {
+            const candidate =
+              await canvasBlob(
+                canvas,
+                "image/jpeg",
+                quality
+              );
+
+
+            if (
+              candidate
+              &&
+              candidate.size
+              <= maxBytes
+            ) {
+              return candidate;
+            }
+          }
+        }
+      } finally {
+        emergency.cleanup?.();
+      }
+    }
+
+
+    /*
+      Última salvaguarda. Um canvas mínimo em JPEG sempre
+      fica muito abaixo de 130 KB, evitando rejeição do upload.
+    */
+    const tinyCanvas =
+      document.createElement(
+        "canvas"
+      );
+
+
+    tinyCanvas.width =
+      32;
+
+    tinyCanvas.height =
+      Math.max(
+        1,
+        Math.round(
+          32
+          *
+          originalHeight
+          /
+          originalWidth
+        )
+      );
+
+
+    const tinyContext =
+      tinyCanvas.getContext(
+        "2d",
+        {
+          alpha:
+            false
+        }
+      );
+
+
+    if (!tinyContext) {
+      throw new Error(
+        "Não foi possível processar a imagem."
+      );
+    }
+
+
+    tinyContext.fillStyle =
+      "#ffffff";
+
+    tinyContext.fillRect(
+      0,
+      0,
+      tinyCanvas.width,
+      tinyCanvas.height
     );
+
+
+    tinyContext.drawImage(
+      drawable.source,
+      0,
+      0,
+      tinyCanvas.width,
+      tinyCanvas.height
+    );
+
+
+    const tinyBlob =
+      await canvasBlob(
+        tinyCanvas,
+        "image/jpeg",
+        0.01
+      );
+
+
+    if (!tinyBlob) {
+      throw new Error(
+        "Não foi possível processar a imagem."
+      );
+    }
+
+
+    return tinyBlob;
 
 
   } finally {
@@ -5600,15 +5822,6 @@ async function uploadExtractedQuestionImages(
             ? "jpg"
             : "png";
 
-
-    if (
-      optimizedBlob.size
-      > 128 * 1024
-    ) {
-      throw new Error(
-        `Imagem da questão ${questionNumber} excedeu o limite de 130 KB e não foi enviada.`
-      );
-    }
 
     const path =
       `${qsState.user.id}/question_sets/${setId}/images/question-${questionNumber}-candidate-${candidateIndex}.${extension}`;
@@ -9166,12 +9379,9 @@ async function uploadManualQuestionImages(
     const compressed =
       await compressQuestionFigureBlob(file);
 
-    if (
-      !compressed
-      || compressed.size >= 130 * 1024
-    ) {
+    if (!compressed) {
       throw new Error(
-        "Não foi possível compactar a imagem para menos de 130 KB."
+        "Não foi possível processar a imagem."
       );
     }
 
