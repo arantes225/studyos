@@ -3,7 +3,7 @@
   "use strict";
 
   const LOGOS = {
-    light: "assets/img/logo-icone-original.png?v=luria5",
+    light: "assets/img/logo-icone-original.png?v=luria6",
     dark: "assets/img/logo-icone-azul-claro.png?v=luria5",
     "leila-mood": "assets/img/logo-icone-rosa-escuro.png?v=luria5"
   };
