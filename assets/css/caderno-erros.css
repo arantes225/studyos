@@ -1067,3 +1067,79 @@
 #error-library-export-selected + #error-library-delete-selected {
   margin-left: 0;
 }
+
+
+/* =========================================================
+   NOVO CADERNO DE ERROS — IMAGEM / OCR v11.6
+   ========================================================= */
+.error-image-field {
+  display: grid;
+  gap: 9px;
+}
+
+.error-image-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+}
+
+.error-image-input-row input[type="file"] {
+  min-width: 0;
+  width: 100%;
+}
+
+.error-image-remove {
+  min-height: 38px;
+  white-space: nowrap;
+  color: var(--danger) !important;
+}
+
+.error-image-keep-option {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.error-image-keep-option input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.error-image-extract {
+  width: fit-content;
+  min-width: 132px;
+  min-height: 38px;
+}
+
+.error-image-field .error-image-info {
+  min-height: 0;
+  margin: 0;
+}
+
+@media (max-width: 620px) {
+  .error-image-input-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px;
+  }
+
+  .error-image-remove {
+    padding-inline: 10px;
+    font-size: 10px;
+  }
+
+  .error-image-keep-option {
+    font-size: 11px;
+  }
+
+  .error-image-extract {
+    width: 100%;
+  }
+}
