@@ -1234,3 +1234,67 @@
     min-width: 590px !important;
   }
 }
+
+
+/* =========================================================
+   PWA MOBILE v5 — Estatísticas: callouts mais estreitos
+   Inspirado no Dashboard: 2 colunas no iPhone, 1 só em telas muito estreitas.
+   ========================================================= */
+@media (max-width: 760px) {
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card {
+    min-height: 108px !important;
+    padding: 13px 11px !important;
+    border-radius: 13px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card span {
+    font-size: 8.5px !important;
+    line-height: 1.2 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card strong {
+    margin-top: 6px !important;
+    font-size: 24px !important;
+    line-height: 1.05 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card small {
+    margin-top: 5px !important;
+    font-size: 9.5px !important;
+    line-height: 1.3 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-viz {
+    margin-top: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini {
+    min-height: 92px !important;
+    padding: 12px 10px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini strong {
+    font-size: 20px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini small {
+    font-size: 9px !important;
+  }
+}
+
+@media (max-width: 350px) {
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-grid,
+  .pwa-standalone body[data-page="estatisticas"] .metric-strip {
+    grid-template-columns: 1fr !important;
+  }
+}
