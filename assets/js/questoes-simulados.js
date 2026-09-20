@@ -8738,9 +8738,200 @@ function imageSourceLabel(
     return "Imagem detectada";
   }
 
+  if (
+    source === "user-upload"
+  ) {
+    return "Adicionada por você";
+  }
+
   return "Imagem";
 }
 
+
+async function uploadManualQuestionImages(
+  item,
+  files
+) {
+  if (
+    !item
+    || !qsState.currentSet?.id
+    || !files?.length
+  ) {
+    return;
+  }
+
+  const imageFiles =
+    Array.from(files)
+      .filter(
+        file =>
+          file?.type
+            ?.startsWith("image/")
+      );
+
+  if (!imageFiles.length) {
+    setAnswerStatus(
+      "Selecione uma imagem válida.",
+      "error"
+    );
+    return;
+  }
+
+  const existingForQuestion =
+    (qsState.imageGallery || [])
+      .filter(
+        candidate =>
+          Number(candidate.question_number)
+          === Number(item.question_number)
+      );
+
+  let nextIndex =
+    existingForQuestion.reduce(
+      (max, candidate) =>
+        Math.max(
+          max,
+          Number(candidate.candidate_index || 0)
+        ),
+      0
+    ) + 1;
+
+  let lastUploadedPath = null;
+
+  for (const file of imageFiles) {
+    setAnswerStatus(
+      "Compactando imagem da questão "
+      + item.question_number
+      + "..."
+    );
+
+    const compressed =
+      await compressQuestionFigureBlob(file);
+
+    if (
+      !compressed
+      || compressed.size >= 130 * 1024
+    ) {
+      throw new Error(
+        "Não foi possível compactar a imagem para menos de 130 KB."
+      );
+    }
+
+    const extension =
+      compressed.type === "image/png"
+        ? "png"
+        : compressed.type === "image/jpeg"
+          ? "jpg"
+          : "webp";
+
+    const unique =
+      Date.now()
+      + "-"
+      + Math.random().toString(36).slice(2, 8);
+
+    const path =
+      qsState.user.id
+      + "/question_sets/"
+      + qsState.currentSet.id
+      + "/images/question-"
+      + item.question_number
+      + "-manual-"
+      + nextIndex
+      + "-"
+      + unique
+      + "."
+      + extension;
+
+    setAnswerStatus(
+      "Enviando imagem da questão "
+      + item.question_number
+      + "..."
+    );
+
+    const { error: uploadError } =
+      await qsSb
+        .storage
+        .from("docmap")
+        .upload(
+          path,
+          compressed,
+          {
+            contentType:
+              compressed.type
+              || "image/webp",
+            upsert: false
+          }
+        );
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const {
+      data: inserted,
+      error: insertError
+    } =
+      await qsSb
+        .from("question_image_candidates")
+        .insert({
+          user_id: qsState.user.id,
+          set_id: qsState.currentSet.id,
+          question_number:
+            Number(item.question_number),
+          image_path: path,
+          source: "user-upload",
+          candidate_index: nextIndex
+        })
+        .select("*")
+        .single();
+
+    if (insertError) {
+      await qsSb
+        .storage
+        .from("docmap")
+        .remove([path]);
+
+      throw insertError;
+    }
+
+    const signedRows =
+      await attachGalleryImageUrls([inserted]);
+
+    const signed =
+      signedRows?.[0];
+
+    if (signed) {
+      qsState.imageGallery.push(signed);
+
+      qsState.imageGallery.sort(
+        (a, b) =>
+          Number(a.question_number || 0)
+          - Number(b.question_number || 0)
+          ||
+          Number(a.candidate_index || 0)
+          - Number(b.candidate_index || 0)
+      );
+    }
+
+    lastUploadedPath = path;
+    nextIndex += 1;
+  }
+
+  if (lastUploadedPath) {
+    qsState.imageSelections.set(
+      item.id,
+      lastUploadedPath
+    );
+  }
+
+  setAnswerStatus(
+    imageFiles.length === 1
+      ? "Imagem adicionada e compactada para menos de 130 KB."
+      : imageFiles.length
+        + " imagens adicionadas e compactadas para menos de 130 KB.",
+    "success"
+  );
+
+  refreshErrorImagePicker(item.id);
+}
 
 function renderErrorImagePicker(
   item
