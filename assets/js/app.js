@@ -26,7 +26,7 @@
         overflow-x: hidden !important;
         transform: translateX(-105%) !important;
         transition: transform 180ms ease !important;
-        z-index: 30 !important;
+        z-index: 260 !important;
       }
 
       html.pwa-standalone body.sidebar-open #sidebar.sidebar {
@@ -182,6 +182,7 @@
       }
 
       html.pwa-standalone body .sidebar-backdrop {
+        z-index: 250 !important;
         background: rgba(0, 0, 0, .36) !important;
         backdrop-filter: none !important;
       }
