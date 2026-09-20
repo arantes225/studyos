@@ -3,9 +3,9 @@
   "use strict";
 
   const LOGOS = {
-    light: "assets/img/logo-icone-original.png?v=luria8",
-    dark: "assets/img/logo-icone-azul-claro.png?v=luria5",
-    "leila-mood": "assets/img/logo-icone-rosa-escuro.png?v=luria5"
+    light: "assets/img/logo-icone-original.png?v=luria9",
+    dark: "assets/img/logo-icone-azul-claro.png?v=luria9",
+    "leila-mood": "assets/img/logo-icone-rosa-escuro.png?v=luria9"
   };
 
   function getTheme() {
@@ -133,8 +133,16 @@
       return false;
     }
 
+    /*
+      Usa a própria imagem criada pelo app como fonte única da marca.
+      Isso evita a disputa entre app.js e este script, que antes podia
+      remover/substituir a logo do sidebar logo após a montagem.
+    */
     let logo =
       brand.querySelector(
+        "#luria-brand-logo"
+      )
+      || brand.querySelector(
         ".luria-theme-logo"
       );
 
@@ -142,8 +150,8 @@
       logo =
         document.createElement("img");
 
-      logo.className =
-        "luria-theme-logo";
+      logo.id =
+        "luria-brand-logo";
 
       logo.alt =
         "Logo LURIA";
@@ -164,6 +172,10 @@
         );
       }
     }
+
+    logo.classList.add(
+      "luria-theme-logo"
+    );
 
     removeOldBrandElements(
       brand,
