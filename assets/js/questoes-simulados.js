@@ -8945,8 +8945,18 @@ function renderErrorImagePicker(
         <div class="qs-error-image-picker-head">
           <div>
             <strong>Imagem para o Caderno de Erros</strong>
-            <small>Nenhuma imagem detectada neste simulado.</small>
+            <small>Nenhuma imagem detectada. Você pode adicionar uma imagem por conta própria.</small>
           </div>
+
+          <label class="qs-manual-image-button">
+            Adicionar imagem
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              data-manual-question-image="${qsEscape(item.id)}"
+            >
+          </label>
         </div>
       </div>
     `;
@@ -9071,19 +9081,31 @@ function renderErrorImagePicker(
           </small>
         </div>
 
-        ${
-          selectedPath
-            ? `
-              <button
-                class="qs-clear-error-image"
-                type="button"
-                data-clear-error-image="${qsEscape(item.id)}"
-              >
-                Remover seleção
-              </button>
-            `
-            : ""
-        }
+        <div class="qs-error-image-picker-actions">
+          <label class="qs-manual-image-button">
+            Adicionar imagem
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              data-manual-question-image="${qsEscape(item.id)}"
+            >
+          </label>
+
+          ${
+            selectedPath
+              ? `
+                <button
+                  class="qs-clear-error-image"
+                  type="button"
+                  data-clear-error-image="${qsEscape(item.id)}"
+                >
+                  Remover seleção
+                </button>
+              `
+              : ""
+          }
+        </div>
       </div>
 
       <div
@@ -9208,6 +9230,66 @@ function bindErrorImagePickerEvents(
             refreshErrorImagePicker(
               itemId
             );
+          }
+        );
+      }
+    );
+
+  scope
+    .querySelectorAll(
+      "[data-manual-question-image]"
+    )
+    .forEach(
+      input => {
+        if (
+          input.dataset.boundManualQuestionImage
+          === "1"
+        ) {
+          return;
+        }
+
+        input.dataset.boundManualQuestionImage =
+          "1";
+
+        input.addEventListener(
+          "change",
+          async () => {
+            const itemId =
+              input.dataset.manualQuestionImage;
+
+            const item =
+              qsState.items.find(
+                candidate =>
+                  candidate.id === itemId
+              );
+
+            if (
+              !item
+              || !input.files?.length
+            ) {
+              input.value = "";
+              return;
+            }
+
+            input.disabled = true;
+
+            try {
+              await uploadManualQuestionImages(
+                item,
+                input.files
+              );
+            } catch (error) {
+              console.error(error);
+
+              setAnswerStatus(
+                error.message
+                || "Não foi possível adicionar a imagem.",
+                "error"
+              );
+            } finally {
+              input.value = "";
+              input.disabled = false;
+            }
           }
         );
       }
