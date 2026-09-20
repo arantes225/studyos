@@ -3999,6 +3999,12 @@ function updateFlashBulkToolbar() {
       "flash-library-delete-selected"
     );
 
+  const shareButton =
+    document.getElementById(
+      "flash-library-share-selected"
+    );
+
+
   const exportButton =
     document.getElementById(
       "flash-library-export-selected"
@@ -4021,6 +4027,22 @@ function updateFlashBulkToolbar() {
     button.disabled =
       selectedFlashcardIds.size === 0;
   }
+
+  if (shareButton) {
+    const selectedOwned =
+      libraryCards.filter(
+        card =>
+          selectedFlashcardIds.has(
+            card.id
+          )
+          &&
+          !card.shared
+      ).length;
+
+    shareButton.disabled =
+      selectedOwned === 0;
+  }
+
 
   if (exportButton) {
     exportButton.disabled =
@@ -5180,16 +5202,18 @@ function renderLibraryDecks() {
     });
 }
 
-async function shareFlashcardDeck(cards, title) {
+async function createFlashcardShareToken(cards, title) {
   const owned =
-    (cards || []).filter(card => !card.shared);
+    (cards || []).filter(
+      card =>
+        !card.shared
+    );
 
   if (!owned.length) {
-    setLibraryStatus("Este deck não contém flashcards seus para compartilhar.", "error");
-    return;
+    throw new Error(
+      "A seleção não contém flashcards seus para compartilhar."
+    );
   }
-
-  setLibraryStatus("Gerando link do deck...");
 
   const {
     data,
@@ -5197,29 +5221,207 @@ async function shareFlashcardDeck(cards, title) {
   } = await flashSb.rpc(
     "create_flashcard_deck_share",
     {
-      p_flashcard_ids: owned.map(card => card.id),
-      p_title: title || "Deck LURIA"
+      p_flashcard_ids:
+        owned.map(
+          card =>
+            card.id
+        ),
+
+      p_title:
+        title
+        || "Deck LURIA"
     }
   );
 
   if (error) {
-    console.error(error);
-    setLibraryStatus(`Não foi possível compartilhar: ${error.message}`, "error");
+    throw error;
+  }
+
+  return data;
+}
+
+
+async function exportFlashcardCards(
+  cards
+) {
+  const previous =
+    new Set(
+      selectedFlashcardIds
+    );
+
+  selectedFlashcardIds.clear();
+
+  for (
+    const card
+    of cards
+  ) {
+    selectedFlashcardIds.add(
+      card.id
+    );
+  }
+
+  try {
+    await exportSelectedFlashcardsPdf();
+  } finally {
+    selectedFlashcardIds.clear();
+
+    for (
+      const id
+      of previous
+    ) {
+      selectedFlashcardIds.add(
+        id
+      );
+    }
+
+    updateFlashBulkToolbar();
+  }
+}
+
+
+async function openFlashShareDialog(
+  cards,
+  title
+) {
+  const owned =
+    (cards || []).filter(
+      card =>
+        !card.shared
+    );
+
+  if (!owned.length) {
+    setLibraryStatus(
+      "A seleção não contém flashcards seus para compartilhar.",
+      "error"
+    );
+
     return;
   }
 
-  const url =
-    new URL("/flashcards/", window.location.origin);
+  if (!window.LuriaSharing) {
+    setLibraryStatus(
+      "O compartilhamento não carregou. Atualize a página.",
+      "error"
+    );
 
-  url.searchParams.set("share", data);
-
-  try {
-    await navigator.clipboard.writeText(url.toString());
-    setLibraryStatus("Link do deck copiado. O conteúdo será compartilhado por referência.", "success");
-  } catch {
-    window.prompt("Copie o link do deck:", url.toString());
-    setLibraryStatus("Link do deck gerado.", "success");
+    return;
   }
+
+  let cachedToken =
+    null;
+
+  const getToken =
+    async () => {
+      if (!cachedToken) {
+        cachedToken =
+          await createFlashcardShareToken(
+            owned,
+            title
+          );
+      }
+
+      return cachedToken;
+    };
+
+  await window.LuriaSharing.open({
+    title:
+      title
+      || "Flashcards selecionados",
+
+    count:
+      owned.length,
+
+    onLink:
+      async () => {
+        const token =
+          await getToken();
+
+        const url =
+          new URL(
+            "/flashcards/",
+            window.location.origin
+          );
+
+        url.searchParams.set(
+          "share",
+          token
+        );
+
+        try {
+          await navigator.clipboard
+            .writeText(
+              url.toString()
+            );
+
+          setLibraryStatus(
+            "Link copiado. Os flashcards serão compartilhados por referência.",
+            "success"
+          );
+
+        } catch {
+          window.prompt(
+            "Copie o link:",
+            url.toString()
+          );
+        }
+      },
+
+    onFriend:
+      async (
+        friendUserId
+      ) => {
+        const token =
+          await getToken();
+
+        const {
+          error
+        } =
+          await flashSb.rpc(
+            "send_direct_share",
+            {
+              p_friend_user_id:
+                friendUserId,
+
+              p_resource_type:
+                "flashcard_deck",
+
+              p_share_token:
+                token,
+
+              p_title:
+                title
+                || "Deck de Flashcards"
+            }
+          );
+
+        if (error) {
+          throw error;
+        }
+
+        setLibraryStatus(
+          "Deck enviado dentro do LURIA.",
+          "success"
+        );
+      },
+
+    onExport:
+      async () => {
+        await exportFlashcardCards(
+          owned
+        );
+      }
+  });
+}
+
+
+async function shareFlashcardDeck(
+  cards,
+  title
+) {
+  return openFlashShareDialog(
+    cards,
+    title
+  );
 }
 
 async function redeemFlashcardShareFromUrl() {
@@ -5592,6 +5794,33 @@ function wireLibrary() {
 
 
         renderLibrary();
+      }
+    );
+
+
+  document
+    .getElementById(
+      "flash-library-share-selected"
+    )
+    ?.addEventListener(
+      "click",
+      async () => {
+        const cards =
+          libraryCards.filter(
+            card =>
+              selectedFlashcardIds.has(
+                card.id
+              )
+              &&
+              !card.shared
+          );
+
+        await openFlashShareDialog(
+          cards,
+          cards.length === 1
+            ? "Flashcard selecionado"
+            : "Flashcards selecionados"
+        );
       }
     );
 
