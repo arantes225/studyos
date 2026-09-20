@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria2">
   <link rel="stylesheet" href="assets/css/style.css?v=luria-palette-10">
-  <link rel="stylesheet" href="assets/css/admin.css?v=1.6">
+  <link rel="stylesheet" href="assets/css/admin.css?v=1.7">
 </head>
 
 <body data-page="admin" class="admin-pin-locked">
@@ -229,6 +229,50 @@
                 placeholder="Buscar cliente, e-mail ou plano"
                 autocomplete="off"
               >
+
+              <div class="admin-filter-wrap">
+                <button
+                  id="admin-customer-filter-toggle"
+                  class="admin-filter-button"
+                  type="button"
+                  aria-label="Filtrar clientes"
+                  aria-expanded="false"
+                  aria-controls="admin-customer-filter-panel"
+                  title="Filtrar clientes"
+                >
+                  <span aria-hidden="true">⌯</span>
+                </button>
+
+                <div id="admin-customer-filter-panel" class="admin-filter-panel" hidden>
+                  <label>
+                    <span>Plano</span>
+                    <select id="admin-customer-plan-filter">
+                      <option value="">Todos</option>
+                      <option value="free">Grátis</option>
+                      <option value="essential">Essencial</option>
+                      <option value="plus">Plus</option>
+                      <option value="pro">Pro</option>
+                    </select>
+                  </label>
+
+                  <label>
+                    <span>Status</span>
+                    <select id="admin-customer-status-filter">
+                      <option value="">Todos</option>
+                      <option value="active">Ativo</option>
+                      <option value="trial">Teste</option>
+                      <option value="past_due">Pendente</option>
+                      <option value="canceled">Cancelado</option>
+                      <option value="expired">Expirado</option>
+                    </select>
+                  </label>
+
+                  <button id="admin-customer-filter-clear" class="admin-filter-clear" type="button">
+                    Limpar filtros
+                  </button>
+                </div>
+              </div>
+
               <span id="admin-customer-count">0 clientes</span>
             </div>
           </div>
@@ -263,7 +307,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=13.1"></script>
-  <script src="assets/js/admin.js?v=1.6"></script>
+  <script src="assets/js/admin.js?v=1.7"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
 </html>
