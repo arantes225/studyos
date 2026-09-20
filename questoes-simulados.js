@@ -2825,7 +2825,8 @@ function detectQuestionImagesFromTextGaps(
 
 
 function questionRegionsFromTextLayout(
-  lineRecords
+  lineRecords,
+  viewport
 ) {
   const starts =
     questionStartsForPage(
@@ -2838,6 +2839,13 @@ function questionRegionsFromTextLayout(
   ) {
     return [];
   }
+
+
+  const pageWidth =
+    Number(
+      viewport?.width
+      || 0
+    );
 
 
   const regions =
@@ -2855,15 +2863,15 @@ function questionRegionsFromTextLayout(
       ];
 
 
-    const next =
+    const nextQuestion =
       starts[
         questionIndex + 1
       ];
 
 
-    const questionBottom =
-      next
-        ? next.top - 2
+    const questionLimit =
+      nextQuestion
+        ? nextQuestion.top - 2
         : Number.POSITIVE_INFINITY;
 
 
@@ -2872,10 +2880,10 @@ function questionRegionsFromTextLayout(
         .filter(
           line =>
             line.top
-              >= start.top - 2
+              >= start.top - 3
             &&
             line.top
-              < questionBottom
+              < questionLimit
             &&
             !isQuestionFooterLine(
               line.text
@@ -2887,6 +2895,8 @@ function questionRegionsFromTextLayout(
             b
           ) =>
             a.top - b.top
+            ||
+            a.left - b.left
         );
 
 
@@ -2897,15 +2907,36 @@ function questionRegionsFromTextLayout(
     }
 
 
-    const alternativeIndex =
+    /*
+      Preferimos explicitamente a alternativa A porque ela
+      marca o começo das alternativas. Se o PDF tiver a letra
+      separada do texto, cai no primeiro padrão de alternativa.
+    */
+    let alternativeIndex =
       lines.findIndex(
         line =>
-          Boolean(
-            alternativeStartMatch(
-              line.text
+          /^A\s*[\)\.\-:]/i
+            .test(
+              normalizeLine(
+                line.text
+              )
             )
-          )
       );
+
+
+    if (
+      alternativeIndex < 0
+    ) {
+      alternativeIndex =
+        lines.findIndex(
+          line =>
+            Boolean(
+              alternativeStartMatch(
+                line.text
+              )
+            )
+        );
+    }
 
 
     if (
@@ -2915,51 +2946,55 @@ function questionRegionsFromTextLayout(
     }
 
 
-    const beforeAlternatives =
-      lines.slice(
-        0,
-        alternativeIndex
-      );
-
-
     const firstAlternative =
       lines[
         alternativeIndex
       ];
 
 
-    const gapCandidates =
+    const stemLines =
+      lines.slice(
+        0,
+        alternativeIndex
+      );
+
+
+    const gaps =
       [];
 
 
     /*
-      Procuramos TODAS as lacunas dentro do enunciado.
-      Isso captura casos em que a imagem aparece no meio
-      do texto, como ECG seguido de sinais vitais.
+      Examina cada quebra vertical dentro do enunciado.
+      A maior quebra é o ponto mais provável onde existe
+      ECG/tabela/radiografia/gráfico, mesmo que haja texto
+      depois da imagem e antes das alternativas.
     */
     for (
-      let lineIndex = 0;
-      lineIndex < beforeAlternatives.length - 1;
-      lineIndex += 1
+      let index = 0;
+      index < stemLines.length;
+      index += 1
     ) {
       const current =
-        beforeAlternatives[
-          lineIndex
+        stemLines[
+          index
         ];
 
 
       const nextLine =
-        beforeAlternatives[
-          lineIndex + 1
-        ];
+        index
+          < stemLines.length - 1
+            ? stemLines[
+                index + 1
+              ]
+            : firstAlternative;
 
 
       const top =
-        current.bottom + 2;
+        current.bottom + 1;
 
 
       const bottom =
-        nextLine.top - 2;
+        nextLine.top - 1;
 
 
       const height =
@@ -2967,74 +3002,20 @@ function questionRegionsFromTextLayout(
 
 
       if (
-        height > 4
+        height > 0
       ) {
-        gapCandidates.push({
+        gaps.push({
           top,
           bottom,
           height,
-          kind:
-            "inside-stem"
+          index
         });
       }
     }
 
 
-    /*
-      Também considera a faixa entre a última linha do
-      enunciado e a primeira alternativa.
-    */
-    const lastStemLine =
-      beforeAlternatives[
-        beforeAlternatives.length - 1
-      ];
-
-
-    const finalTop =
-      lastStemLine.bottom + 2;
-
-
-    const finalBottom =
-      firstAlternative.top - 2;
-
-
-    const finalHeight =
-      finalBottom - finalTop;
-
-
-    if (
-      finalHeight > 4
-    ) {
-      gapCandidates.push({
-        top:
-          finalTop,
-
-        bottom:
-          finalBottom,
-
-        height:
-          finalHeight,
-
-        kind:
-          "before-alternatives"
-      });
-    }
-
-
-    if (
-      !gapCandidates.length
-    ) {
-      continue;
-    }
-
-
-    /*
-      A maior lacuna é o local mais provável da figura/tabela.
-      Não tentamos mais reconhecer se há imagem: tiramos o
-      screenshot da região pela posição do texto.
-    */
-    const bestGap =
-      gapCandidates
+    let bestGap =
+      gaps
         .slice()
         .sort(
           (
@@ -3042,41 +3023,81 @@ function questionRegionsFromTextLayout(
             b
           ) =>
             b.height - a.height
-        )[0];
+        )[0]
+      || null;
 
 
-    const contentLeft =
-      Math.max(
-        0,
-        Math.min(
-          ...lines.map(
-            line =>
-              line.left
+    /*
+      Garantia absoluta: se não houver quebra relevante,
+      ainda cria uma faixa imediatamente acima da alternativa A.
+      Assim toda questão recebe captura, com imagem ou sem imagem.
+    */
+    if (
+      !bestGap
+      ||
+      bestGap.height < 8
+    ) {
+      const fallbackHeight =
+        Math.max(
+          30,
+          Number(
+            viewport?.scale
+            || 1
+          ) * 12
+        );
+
+
+      bestGap = {
+        bottom:
+          firstAlternative.top - 1,
+
+        top:
+          Math.max(
+            start.bottom + 1,
+            firstAlternative.top
+            - fallbackHeight
           )
-        )
-        - 8
-      );
+      };
 
 
-    const contentRight =
-      Math.max(
-        ...lines.map(
-          line =>
-            line.right
-        )
-      )
-      + 8;
+      bestGap.height =
+        Math.max(
+          1,
+          bestGap.bottom
+          - bestGap.top
+        );
+    }
+
+
+    /*
+      Usa quase toda a largura da página, e não apenas a
+      largura do texto. Isso impede cortar ECG/tabela centralizados.
+    */
+    const left =
+      pageWidth > 0
+        ? pageWidth * 0.03
+        : 0;
+
+
+    const right =
+      pageWidth > 0
+        ? pageWidth * 0.97
+        : Math.max(
+            ...lines.map(
+              line =>
+                line.right
+            )
+          )
+          + 12;
 
 
     regions.push({
       question_number:
         start.number,
 
-      left:
-        contentLeft,
+      left,
 
-      right:
-        contentRight,
+      right,
 
       top:
         bestGap.top,
@@ -3087,8 +3108,7 @@ function questionRegionsFromTextLayout(
       width:
         Math.max(
           1,
-          contentRight
-          - contentLeft
+          right - left
         ),
 
       height:
@@ -3099,7 +3119,7 @@ function questionRegionsFromTextLayout(
         ),
 
       source:
-        "between-question-and-alternatives"
+        "question-gap-screenshot"
     });
   }
 
@@ -3114,16 +3134,9 @@ async function extractQuestionImagesFromPage(
   pageNumber
 ) {
   /*
-    Método propositalmente simples:
-    1. encontra a questão pelo texto;
-    2. encontra a primeira alternativa A);
-    3. procura a maior lacuna vertical no enunciado/antes
-       das alternativas;
-    4. faz um screenshot dessa faixa da página renderizada.
-
-    Não existe mais "detecção de imagem". Assim funciona
-    para ECG, tabela, radiografia, gráfico ou qualquer
-    elemento visual que esteja nessa faixa.
+    Não existe mais reconhecimento de "imagem".
+    Para cada questão, tiramos um screenshot da maior faixa
+    sem texto entre o enunciado e a alternativa A.
   */
   const renderScale =
     3;
@@ -3145,13 +3158,18 @@ async function extractQuestionImagesFromPage(
 
   const regions =
     questionRegionsFromTextLayout(
-      lineRecords
+      lineRecords,
+      viewport
     );
 
 
   if (
     !regions.length
   ) {
+    console.debug(
+      `[Questões] Página ${pageNumber}: nenhuma faixa entre questão e alternativas encontrada.`
+    );
+
     return [];
   }
 
@@ -3222,41 +3240,37 @@ async function extractQuestionImagesFromPage(
     const region
     of regions
   ) {
-    /*
-      Evita apenas faixas praticamente inexistentes.
-      Fora isso, recorta mesmo que visualmente pareça vazia,
-      como solicitado.
-    */
-    if (
-      region.height < 6
-    ) {
-      continue;
-    }
-
-
     const rect = {
       left:
         Math.max(
           0,
-          region.left
+          Math.floor(
+            region.left
+          )
         ),
 
       top:
         Math.max(
           0,
-          region.top
+          Math.floor(
+            region.top
+          )
         ),
 
       right:
         Math.min(
           canvas.width,
-          region.right
+          Math.ceil(
+            region.right
+          )
         ),
 
       bottom:
         Math.min(
           canvas.height,
-          region.bottom
+          Math.ceil(
+            region.bottom
+          )
         )
     };
 
@@ -3264,23 +3278,21 @@ async function extractQuestionImagesFromPage(
     rect.width =
       Math.max(
         1,
-        rect.right
-        - rect.left
+        rect.right - rect.left
       );
 
 
     rect.height =
       Math.max(
         1,
-        rect.bottom
-        - rect.top
+        rect.bottom - rect.top
       );
 
 
     if (
       rect.width < 20
       ||
-      rect.height < 6
+      rect.height < 1
     ) {
       continue;
     }
@@ -3308,13 +3320,13 @@ async function extractQuestionImagesFromPage(
         rect,
 
       source:
-        region.source
+        "question-gap-screenshot"
     });
   }
 
 
   console.debug(
-    `[Questões] Página ${pageNumber}: ${regions.length} região(ões) entre enunciado e alternativas, ${results.length} screenshot(s).`
+    `[Questões] Página ${pageNumber}: ${regions.length} faixa(s) calculada(s), ${results.length} screenshot(s) criado(s).`
   );
 
 
@@ -3461,10 +3473,9 @@ async function extractQuestionsFromPdf(
     );
 
     /*
-      Detecta imagens raster embutidas e recorta
-      diretamente da página renderizada.
-      Cabeçalhos, rodapés e logos são ignorados
-      por tamanho e posição.
+      Para cada questão, captura uma faixa da página entre
+      o texto do enunciado e o início das alternativas.
+      Não depende de detectar objetos de imagem no PDF.
     */
     try {
       const pageImages =
