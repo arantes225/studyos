@@ -189,8 +189,10 @@ function sidebarMarkup(user, profile = null) {
 
     <div class="sidebar-footer">
       <div class="streak-mini" data-sidebar-streak-card>
-        <div class="streak-mini-flame" aria-hidden="true">
-          <svg viewBox="0 0 64 80" role="presentation">
+        <div class="streak-mini-icon" aria-hidden="true">
+          <span class="streak-mini-snow">❄</span>
+
+          <svg class="streak-mini-flame" viewBox="0 0 64 80" role="presentation">
             <path
               fill="currentColor"
               d="M34 3C35 15 26 19 26 29C26 35 30 38 33 40C27 40 22 35 21 29C13 37 8 46 8 56C8 69 18 77 32 77C46 77 56 68 56 54C56 41 48 30 40 22C39 30 36 34 32 36C35 27 43 18 34 3Z"
@@ -203,7 +205,7 @@ function sidebarMarkup(user, profile = null) {
         </div>
 
         <div class="streak-mini-copy">
-          <strong><span data-streak-value>—</span> dias de ofensiva</strong>
+          <strong data-sidebar-streak-copy><span data-streak-value>—</span> dias</strong>
           <small data-sidebar-streak-status>Comece hoje</small>
         </div>
       </div>
@@ -943,26 +945,29 @@ async function registrarAcessoDiario() {
     );
 
   let status =
-    "Comece hoje";
+    "Esquentando";
 
   let tier =
-    "0";
+    "snow";
 
-  if (currentDays > 0 && currentDays < 7) {
+  if (currentDays >= 4 && currentDays < 7) {
     status = "Aquecendo";
     tier = "1";
-  } else if (currentDays < 30 && currentDays >= 7) {
-    status = "1 semana+";
+  } else if (currentDays >= 7 && currentDays < 30) {
+    status = "Em ritmo";
     tier = "2";
-  } else if (currentDays < 90 && currentDays >= 30) {
-    status = "1 mês+";
+  } else if (currentDays >= 30 && currentDays < 90) {
+    status = "Em chamas";
     tier = "3";
-  } else if (currentDays < 180 && currentDays >= 90) {
-    status = "3 meses+";
+  } else if (currentDays >= 90 && currentDays < 180) {
+    status = "Imparável";
     tier = "4";
-  } else if (currentDays >= 180) {
-    status = "6 meses+";
+  } else if (currentDays >= 180 && currentDays < 365) {
+    status = "Incendiário";
     tier = "5";
+  } else if (currentDays >= 365) {
+    status = "Lendário";
+    tier = "6";
   }
 
   document
@@ -984,6 +989,27 @@ async function registrarAcessoDiario() {
       el => {
         el.dataset.streakTier =
           tier;
+
+        const copy =
+          el.querySelector(
+            "[data-sidebar-streak-copy]"
+          );
+
+        if (copy) {
+          copy.textContent =
+            currentDays
+            + " dia"
+            + (
+              currentDays === 1
+                ? ""
+                : "s"
+            )
+            + (
+              currentDays >= 4
+                ? " de ofensiva"
+                : ""
+            );
+        }
       }
     );
 }
