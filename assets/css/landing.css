@@ -1472,3 +1472,19 @@ optgroup {
   font-size: 115% !important;
 }
 
+
+
+/* LURIA — identidade do tema claro baseada no azul dos callouts */
+:root {
+  --brand-light-blue: #184888;
+}
+
+.landing-brand strong,
+.preview-brand-row strong,
+.footer-brand strong,
+.hero-copy h1,
+.section-heading h2,
+.final-cta h2,
+.landing-feature h3 {
+  color: var(--brand-light-blue) !important;
+}
