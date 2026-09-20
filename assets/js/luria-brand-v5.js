@@ -3,7 +3,7 @@
   "use strict";
 
   const LOGOS = {
-    light: "assets/img/logo-icone-original.png?v=luria7",
+    light: "assets/img/logo-icone-original.png?v=luria8",
     dark: "assets/img/logo-icone-azul-claro.png?v=luria5",
     "leila-mood": "assets/img/logo-icone-rosa-escuro.png?v=luria5"
   };
@@ -214,7 +214,7 @@
       "image/png";
 
     const source =
-      "assets/img/favicon.png?v=luria7";
+      "assets/img/favicon.png?v=luria8";
 
     if (
       favicon.getAttribute("href")
