@@ -1516,34 +1516,3 @@ optgroup {
   border-color: var(--landing-button-secondary-border) !important;
   color: var(--landing-button-secondary-text) !important;
 }
-
-
-/* LURIA — landing alinhada ao tema escuro global */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --landing-bg: #07111F;
-    --landing-surface: #0D1B30;
-    --landing-surface-2: #13233A;
-    --landing-text: #F4F8FF;
-    --landing-muted: #A8B8CD;
-    --landing-border: #20344F;
-    --landing-accent: #4F7FB8;
-    --landing-accent-strong: #7FA6D1;
-    --landing-accent-soft: #142A44;
-    --landing-dark: #081426;
-    --landing-gold-soft: #3A321A;
-    --landing-success: #76D9B0;
-    --landing-shadow: 0 24px 70px rgba(0, 0, 0, .28);
-  }
-
-  body {
-    background:
-      radial-gradient(circle at 70% 4%, rgba(79, 127, 184, .12), transparent 28rem),
-      var(--landing-bg);
-  }
-
-  .landing-header {
-    border-bottom-color: rgba(32, 52, 79, .82);
-    background: rgba(7, 17, 31, .88);
-  }
-}
