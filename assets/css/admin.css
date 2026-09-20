@@ -193,7 +193,7 @@
 
 .admin-customer-table {
   width: 100%;
-  min-width: 1120px;
+  min-width: 1220px;
   border-collapse: collapse;
 }
 
@@ -1425,4 +1425,18 @@ body.admin-unlocked #admin-app {
     padding: 7px 8px !important;
     font-size: 8px !important;
   }
+}
+
+.admin-storage-usage {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
 }
