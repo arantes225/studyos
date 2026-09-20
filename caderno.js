@@ -9346,6 +9346,1078 @@ function splitNotebookBandIntoLogicalRows(
 }
 
 
+function detectNotebookTableGeometryLoose(
+  canvas
+) {
+  const context =
+    canvas.getContext(
+      "2d",
+      {
+        willReadFrequently:
+          true
+      }
+    );
+
+
+  const width =
+    canvas.width;
+
+  const height =
+    canvas.height;
+
+
+  if (
+    width < 20
+    ||
+    height < 20
+  ) {
+    return null;
+  }
+
+
+  const image =
+    context.getImageData(
+      0,
+      0,
+      width,
+      height
+    );
+
+
+  const pixels =
+    image.data;
+
+
+  const horizontalCandidates =
+    [];
+
+
+  for (
+    let y = 1;
+    y < height;
+    y += 1
+  ) {
+    let hits =
+      0;
+
+    let run =
+      0;
+
+    let longest =
+      0;
+
+
+    for (
+      let x = 0;
+      x < width;
+      x += 1
+    ) {
+      const current =
+        (
+          y * width
+          + x
+        ) * 4;
+
+
+      const previous =
+        (
+          (
+            y - 1
+          ) * width
+          + x
+        ) * 4;
+
+
+      const edge =
+        notebookPixelDifference(
+          pixels,
+          current,
+          previous
+        )
+        >= 6;
+
+
+      if (
+        edge
+      ) {
+        hits +=
+          1;
+
+        run +=
+          1;
+
+        longest =
+          Math.max(
+            longest,
+            run
+          );
+
+      } else {
+        run =
+          0;
+      }
+    }
+
+
+    if (
+      (
+        hits / width >= 0.32
+      )
+      ||
+      longest >= width * 0.42
+    ) {
+      horizontalCandidates.push(
+        y
+      );
+    }
+  }
+
+
+  const verticalCandidates =
+    [];
+
+
+  for (
+    let x = 1;
+    x < width;
+    x += 1
+  ) {
+    let hits =
+      0;
+
+    let run =
+      0;
+
+    let longest =
+      0;
+
+
+    for (
+      let y = 0;
+      y < height;
+      y += 1
+    ) {
+      const current =
+        (
+          y * width
+          + x
+        ) * 4;
+
+
+      const previous =
+        (
+          y * width
+          + (
+            x - 1
+          )
+        ) * 4;
+
+
+      const edge =
+        notebookPixelDifference(
+          pixels,
+          current,
+          previous
+        )
+        >= 6;
+
+
+      if (
+        edge
+      ) {
+        hits +=
+          1;
+
+        run +=
+          1;
+
+        longest =
+          Math.max(
+            longest,
+            run
+          );
+
+      } else {
+        run =
+          0;
+      }
+    }
+
+
+    if (
+      (
+        hits / height >= 0.10
+        &&
+        longest >= height * 0.055
+      )
+      ||
+      longest >= height * 0.30
+    ) {
+      verticalCandidates.push(
+        x
+      );
+    }
+  }
+
+
+  const gap =
+    Math.max(
+      3,
+      Math.round(
+        Math.min(
+          width,
+          height
+        ) * 0.006
+      )
+    );
+
+
+  let horizontal =
+    groupNotebookLinePositions(
+      horizontalCandidates,
+      gap
+    );
+
+
+  let vertical =
+    groupNotebookLinePositions(
+      verticalCandidates,
+      gap
+    );
+
+
+  const normalize =
+    (
+      values,
+      minimumSpacing
+    ) => {
+      const result =
+        [];
+
+
+      values
+        .slice()
+        .sort(
+          (
+            a,
+            b
+          ) =>
+            a - b
+        )
+        .forEach(
+          value => {
+            if (
+              !result.length
+              ||
+              value
+              - result[
+                  result.length - 1
+                ]
+              >= minimumSpacing
+            ) {
+              result.push(
+                value
+              );
+
+            } else {
+              const last =
+                result.length - 1;
+
+
+              result[last] =
+                Math.round(
+                  (
+                    result[last]
+                    + value
+                  ) / 2
+                );
+            }
+          }
+        );
+
+
+      return result;
+    };
+
+
+  horizontal =
+    normalize(
+      horizontal,
+      Math.max(
+        5,
+        Math.round(
+          height * 0.018
+        )
+      )
+    );
+
+
+  vertical =
+    normalize(
+      vertical,
+      Math.max(
+        7,
+        Math.round(
+          width * 0.018
+        )
+      )
+    );
+
+
+  /*
+    Bordas externas nem sempre geram diferença de pixel,
+    porque ficam exatamente no limite da imagem.
+  */
+  if (
+    !horizontal.length
+    ||
+    horizontal[0]
+      > height * 0.05
+  ) {
+    horizontal.unshift(
+      0
+    );
+  }
+
+
+  if (
+    horizontal[
+      horizontal.length - 1
+    ]
+    < height * 0.95
+  ) {
+    horizontal.push(
+      height - 1
+    );
+  }
+
+
+  if (
+    !vertical.length
+    ||
+    vertical[0]
+      > width * 0.08
+  ) {
+    vertical.unshift(
+      0
+    );
+  }
+
+
+  if (
+    vertical[
+      vertical.length - 1
+    ]
+    < width * 0.92
+  ) {
+    vertical.push(
+      width - 1
+    );
+  }
+
+
+  horizontal =
+    normalize(
+      horizontal,
+      Math.max(
+        5,
+        Math.round(
+          height * 0.018
+        )
+      )
+    );
+
+
+  vertical =
+    normalize(
+      vertical,
+      Math.max(
+        7,
+        Math.round(
+          width * 0.018
+        )
+      )
+    );
+
+
+  if (
+    horizontal.length < 2
+    ||
+    vertical.length < 2
+    ||
+    horizontal.length > 80
+    ||
+    vertical.length > 16
+  ) {
+    return null;
+  }
+
+
+  return {
+    horizontal,
+    vertical,
+    method:
+      "geometry-loose"
+  };
+}
+
+
+function buildNotebookGeometryStructure(
+  canvas,
+  grid
+) {
+  if (
+    !grid
+    ||
+    grid.horizontal.length < 2
+    ||
+    grid.vertical.length < 2
+  ) {
+    return null;
+  }
+
+
+  const horizontal =
+    grid.horizontal
+      .slice()
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a - b
+      );
+
+
+  const vertical =
+    grid.vertical
+      .slice()
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a - b
+      );
+
+
+  const baseColumns =
+    vertical.length - 1;
+
+
+  const rows =
+    [];
+
+
+  for (
+    let rowIndex = 0;
+    rowIndex < horizontal.length - 1;
+    rowIndex += 1
+  ) {
+    const top =
+      horizontal[
+        rowIndex
+      ];
+
+    const bottom =
+      horizontal[
+        rowIndex + 1
+      ];
+
+
+    if (
+      bottom - top < 5
+    ) {
+      continue;
+    }
+
+
+    const boundaries = [
+      {
+        x:
+          vertical[0],
+
+        logicalIndex:
+          0
+      }
+    ];
+
+
+    for (
+      let columnIndex = 1;
+      columnIndex < vertical.length - 1;
+      columnIndex += 1
+    ) {
+      const x =
+        vertical[
+          columnIndex
+        ];
+
+
+      const support =
+        notebookVerticalEdgeSupport(
+          canvas,
+          x,
+          top + 2,
+          bottom - 2
+        );
+
+
+      if (
+        support >= 0.16
+      ) {
+        boundaries.push({
+          x,
+          logicalIndex:
+            columnIndex
+        });
+      }
+    }
+
+
+    boundaries.push({
+      x:
+        vertical[
+          vertical.length - 1
+        ],
+
+      logicalIndex:
+        baseColumns
+    });
+
+
+    const cells =
+      [];
+
+
+    for (
+      let index = 0;
+      index < boundaries.length - 1;
+      index += 1
+    ) {
+      const leftBoundary =
+        boundaries[index];
+
+      const rightBoundary =
+        boundaries[
+          index + 1
+        ];
+
+
+      cells.push({
+        text:
+          "",
+
+        colspan:
+          Math.max(
+            1,
+            rightBoundary.logicalIndex
+            - leftBoundary.logicalIndex
+          ),
+
+        header:
+          rowIndex === 0,
+
+        sourceRect: {
+          left:
+            leftBoundary.x,
+
+          top,
+
+          right:
+            rightBoundary.x,
+
+          bottom
+        }
+      });
+    }
+
+
+    if (
+      cells.length
+    ) {
+      rows.push({
+        cells
+      });
+    }
+  }
+
+
+  if (
+    !rows.length
+  ) {
+    return null;
+  }
+
+
+  return {
+    baseColumns,
+    rows,
+    geometry:
+      true
+  };
+}
+
+
+function createNotebookCellOcrCanvas(
+  source,
+  rect
+) {
+  const inset =
+    3;
+
+
+  const left =
+    Math.max(
+      0,
+      Math.floor(
+        rect.left + inset
+      )
+    );
+
+
+  const top =
+    Math.max(
+      0,
+      Math.floor(
+        rect.top + inset
+      )
+    );
+
+
+  const right =
+    Math.min(
+      source.width,
+      Math.ceil(
+        rect.right - inset
+      )
+    );
+
+
+  const bottom =
+    Math.min(
+      source.height,
+      Math.ceil(
+        rect.bottom - inset
+      )
+    );
+
+
+  const width =
+    Math.max(
+      1,
+      right - left
+    );
+
+
+  const height =
+    Math.max(
+      1,
+      bottom - top
+    );
+
+
+  const sourceContext =
+    source.getContext(
+      "2d",
+      {
+        willReadFrequently:
+          true
+      }
+    );
+
+
+  const image =
+    sourceContext.getImageData(
+      left,
+      top,
+      width,
+      height
+    );
+
+
+  const background =
+    notebookDominantRowColor(
+      source,
+      left,
+      top,
+      width,
+      height
+    );
+
+
+  const binary =
+    document.createElement(
+      "canvas"
+    );
+
+
+  binary.width =
+    width;
+
+  binary.height =
+    height;
+
+
+  const outputContext =
+    binary.getContext(
+      "2d",
+      {
+        alpha:
+          false,
+        willReadFrequently:
+          true
+      }
+    );
+
+
+  const output =
+    outputContext.createImageData(
+      width,
+      height
+    );
+
+
+  for (
+    let offset = 0;
+    offset < image.data.length;
+    offset += 4
+  ) {
+    const r =
+      image.data[
+        offset
+      ];
+
+    const g =
+      image.data[
+        offset + 1
+      ];
+
+    const b =
+      image.data[
+        offset + 2
+      ];
+
+
+    const distance =
+      Math.sqrt(
+        (
+          r - background.r
+        ) ** 2
+        +
+        (
+          g - background.g
+        ) ** 2
+        +
+        (
+          b - background.b
+        ) ** 2
+      );
+
+
+    const luminance =
+      (
+        r * 0.299
+        + g * 0.587
+        + b * 0.114
+      );
+
+
+    const backgroundLuminance =
+      (
+        background.r * 0.299
+        + background.g * 0.587
+        + background.b * 0.114
+      );
+
+
+    /*
+      Texto preto em fundo claro e texto branco em fundo azul
+      viram ambos "tinta preta" no canvas OCR.
+    */
+    const ink =
+      distance >= 24
+      &&
+      Math.abs(
+        luminance
+        - backgroundLuminance
+      ) >= 18;
+
+
+    const value =
+      ink
+        ? 0
+        : 255;
+
+
+    output.data[
+      offset
+    ] =
+      value;
+
+    output.data[
+      offset + 1
+    ] =
+      value;
+
+    output.data[
+      offset + 2
+    ] =
+      value;
+
+    output.data[
+      offset + 3
+    ] =
+      255;
+  }
+
+
+  outputContext.putImageData(
+    output,
+    0,
+    0
+  );
+
+
+  const targetHeight =
+    Math.max(
+      90,
+      Math.min(
+        150,
+        height * 3
+      )
+    );
+
+
+  const scale =
+    Math.max(
+      1,
+      targetHeight
+      /
+      Math.max(
+        1,
+        height
+      )
+    );
+
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+
+  canvas.width =
+    Math.max(
+      1,
+      Math.round(
+        width * scale
+      )
+    );
+
+
+  canvas.height =
+    Math.max(
+      1,
+      Math.round(
+        height * scale
+      )
+    );
+
+
+  const context =
+    canvas.getContext(
+      "2d",
+      {
+        alpha:
+          false
+      }
+    );
+
+
+  context.fillStyle =
+    "#ffffff";
+
+
+  context.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  context.imageSmoothingEnabled =
+    false;
+
+
+  context.drawImage(
+    binary,
+    0,
+    0,
+    width,
+    height,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  return canvas;
+}
+
+
+function notebookOcrPlainText(
+  data
+) {
+  const direct =
+    String(
+      data?.text
+      || ""
+    )
+      .replace(
+        /\s+/g,
+        " "
+      )
+      .trim();
+
+
+  if (
+    direct
+  ) {
+    return direct;
+  }
+
+
+  return notebookOcrWordsFromData(
+    data
+  )
+    .map(
+      word =>
+        String(
+          word.text
+          || ""
+        )
+          .trim()
+    )
+    .filter(
+      Boolean
+    )
+    .join(
+      " "
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
+    .trim();
+}
+
+
+async function recognizeNotebookGeometryCells(
+  source,
+  structure
+) {
+  const worker =
+    await createNotebookTableWorker();
+
+
+  let total =
+    0;
+
+
+  structure.rows
+    .forEach(
+      row =>
+        row.cells
+          .forEach(
+            () => {
+              total +=
+                1;
+            }
+          )
+    );
+
+
+  let done =
+    0;
+
+
+  try {
+    for (
+      const row
+      of structure.rows
+    ) {
+      for (
+        const cell
+        of row.cells
+      ) {
+        done +=
+          1;
+
+
+        setNotebookTableStatus(
+          `Lendo célula ${done} de ${total}...`
+        );
+
+
+        const ocrCanvas =
+          createNotebookCellOcrCanvas(
+            source,
+            cell.sourceRect
+          );
+
+
+        let result;
+
+
+        if (
+          worker
+        ) {
+          result =
+            await worker
+              .recognize(
+                ocrCanvas
+              );
+
+        } else {
+          result =
+            await window.Tesseract
+              .recognize(
+                ocrCanvas,
+                "por"
+              );
+        }
+
+
+        cell.text =
+          notebookOcrPlainText(
+            result?.data
+          );
+
+
+        delete cell.sourceRect;
+      }
+    }
+
+
+  } finally {
+    if (
+      worker
+    ) {
+      try {
+        await worker
+          .terminate();
+      } catch {}
+    }
+  }
+
+
+  return structure;
+}
+
+
 function notebookOcrScore(
   result
 ) {
@@ -9433,7 +10505,7 @@ async function readNotebookTableImage() {
 
   try {
     setNotebookTableStatus(
-      "Lendo frases, números e letras da tabela..."
+      "Detectando linhas e colunas pela própria imagem..."
     );
 
 
@@ -9443,10 +10515,86 @@ async function readNotebookTableImage() {
       );
 
 
-    const grid =
+    /*
+      NOVO CAMINHO:
+      primeiro reconstrói a geometria da tabela pelos pixels.
+      Só depois faz OCR dentro de cada célula.
+      Não depende de data.words / TSV para descobrir estrutura.
+    */
+    let grid =
       detectNotebookTableGrid(
         sourceCanvas
       );
+
+
+    if (
+      !grid
+    ) {
+      grid =
+        detectNotebookTableGeometryLoose(
+          sourceCanvas
+        );
+    }
+
+
+    let structure =
+      buildNotebookGeometryStructure(
+        sourceCanvas,
+        grid
+      );
+
+
+    if (
+      structure
+      &&
+      structure.rows.length
+    ) {
+      setNotebookTableStatus(
+        `Estrutura detectada: ${structure.rows.length} linha(s), ${structure.baseColumns} coluna(s)-base. Agora lendo cada célula...`
+      );
+
+
+      structure =
+        await recognizeNotebookGeometryCells(
+          sourceCanvas,
+          structure
+        );
+
+
+      renderNotebookTableBuilder(
+        structure
+      );
+
+
+      const rowPattern =
+        structure.rows
+          .map(
+            row =>
+              row.cells.length
+          )
+          .join(
+            " / "
+          );
+
+
+      setNotebookTableStatus(
+        `Tabela reconstruída pela geometria: padrão ${rowPattern} célula(s) por linha. Revise o texto antes de inserir.`,
+        "success"
+      );
+
+
+      return;
+    }
+
+
+    /*
+      Fallback: se a imagem realmente não tiver grade detectável,
+      usa o conteúdo textual antigo. Mas não é mais o caminho
+      principal para tabelas com bordas/linhas.
+    */
+    setNotebookTableStatus(
+      "Sem grade confiável. Tentando reconstrução pelo conteúdo..."
+    );
 
 
     const enhancedCanvas =
@@ -9456,11 +10604,6 @@ async function readNotebookTableImage() {
       );
 
 
-    /*
-      OCR global volta a ser a base, pois preserva a posição
-      relativa de frases + números + letras de toda a tabela.
-      Não apagamos a grade antes desta leitura.
-    */
     const [
       originalResult,
       enhancedResult
@@ -9480,7 +10623,7 @@ async function readNotebookTableImage() {
       ]);
 
 
-    let words =
+    const words =
       mergeNotebookOcrWords(
         notebookOcrWordsFromData(
           originalResult?.data
@@ -9491,57 +10634,10 @@ async function readNotebookTableImage() {
       );
 
 
-    /*
-      OCR por linha é APENAS complemento, principalmente para
-      cabeçalhos com fundo colorido. A estrutura não depende
-      mais dele.
-    */
-    if (
-      grid?.horizontal
-        ?.length >= 2
-    ) {
-      try {
-        const rowWords =
-          await recognizeNotebookRowsIndividually(
-            sourceCanvas,
-            grid
-          );
-
-
-        words =
-          mergeNotebookOcrWords(
-            words,
-            rowWords
-          );
-
-
-        console.debug(
-          "[Caderno tabela] OCR por linha:",
-          rowWords.length,
-          "palavras; total combinado:",
-          words.length
-        );
-
-      } catch (
-        rowError
-      ) {
-        console.warn(
-          "OCR complementar por linha falhou:",
-          rowError
-        );
-      }
-    }
-
-
-    setNotebookTableStatus(
-      "Agrupando frases e usando números/letras repetidos para descobrir as colunas..."
-    );
-
-
-    const structure =
+    structure =
       buildNotebookTableStructureFromText(
         words,
-        grid,
+        null,
         sourceCanvas
       );
 
@@ -9552,9 +10648,65 @@ async function readNotebookTableImage() {
       !structure.rows
         ?.length
     ) {
-      throw new Error(
-        "Não consegui reconstruir a estrutura a partir do texto."
-      );
+      /*
+        Último recurso: não devolve erro vazio.
+        Cria linhas editáveis a partir do texto OCR puro.
+      */
+      const plain =
+        String(
+          originalResult
+            ?.data
+            ?.text
+          ||
+          enhancedResult
+            ?.data
+            ?.text
+          ||
+          ""
+        )
+          .split(
+            /\n+/
+          )
+          .map(
+            line =>
+              line.trim()
+          )
+          .filter(
+            Boolean
+          );
+
+
+      if (
+        !plain.length
+      ) {
+        throw new Error(
+          "A imagem não contém uma grade ou texto legível suficiente."
+        );
+      }
+
+
+      structure = {
+        baseColumns:
+          1,
+
+        rows:
+          plain.map(
+            (
+              text,
+              rowIndex
+            ) => ({
+              cells: [
+                {
+                  text,
+                  colspan:
+                    1,
+                  header:
+                    rowIndex === 0
+                }
+              ]
+            })
+          )
+      };
     }
 
 
@@ -9563,21 +10715,8 @@ async function readNotebookTableImage() {
     );
 
 
-    const rowPattern =
-      structure.rows
-        .map(
-          row =>
-            row.cells
-              ?.length
-            || 0
-        )
-        .join(
-          " / "
-        );
-
-
     setNotebookTableStatus(
-      `Tabela construída: ${structure.baseColumns} coluna(s)-base · ${structure.rows.length} linha(s) · padrão ${rowPattern}. Frases, números/letras isolados, TSV do OCR e grade foram combinados.`,
+      "A grade não pôde ser detectada; montei uma versão editável pelo texto reconhecido.",
       "success"
     );
 
