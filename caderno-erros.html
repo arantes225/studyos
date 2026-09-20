@@ -29,7 +29,7 @@
 
   <link
     rel="stylesheet"
-    href="assets/css/caderno-erros.css?v=11.5"
+    href="assets/css/caderno-erros.css?v=11.6"
   >
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
   <script defer src="assets/js/luria-brand-v5.js?v=9"></script>
@@ -267,54 +267,51 @@
               </label>
 
 
-              <label class="error-field full">
+              <label class="error-field full error-image-field">
                 <span>
                   Imagem da questão
                   <small>(opcional)</small>
                 </span>
 
-                <input
-                  id="new-error-image"
-                  type="file"
-                  accept="image/*"
-                >
-
-                <div class="error-image-tools">
-
-                  <button
-                    id="extract-error-image-text"
-                    class="button secondary"
-                    type="button"
-                    disabled
+                <div class="error-image-input-row">
+                  <input
+                    id="new-error-image"
+                    type="file"
+                    accept="image/*"
                   >
-                    Extrair texto e remover imagem
-                  </button>
-
-                  <button
-                    id="extract-error-image-text-keep"
-                    class="button secondary"
-                    type="button"
-                    disabled
-                  >
-                    Extrair texto e manter imagem
-                  </button>
 
                   <button
                     id="remove-new-error-image"
-                    class="button secondary"
+                    class="button secondary error-image-remove"
                     type="button"
                     disabled
                   >
-                    Remover imagem
+                    Apagar imagem
                   </button>
-
-                  <span
-                    id="new-error-image-info"
-                    class="error-image-info"
-                    aria-live="polite"
-                  ></span>
-
                 </div>
+
+                <label class="error-image-keep-option">
+                  <input
+                    id="keep-new-error-image"
+                    type="checkbox"
+                  >
+                  <span>Manter imagem no Caderno de Erros</span>
+                </label>
+
+                <button
+                  id="extract-error-image-text"
+                  class="button secondary error-image-extract"
+                  type="button"
+                  disabled
+                >
+                  Extrair texto
+                </button>
+
+                <span
+                  id="new-error-image-info"
+                  class="error-image-info"
+                  aria-live="polite"
+                ></span>
               </label>
 
             </div>
@@ -961,7 +958,7 @@
   <script src="assets/js/app.js?v=14.0"></script>
   <script src="assets/js/study-mode.js?v=13.0"></script>
 
-  <script src="assets/js/caderno-erros.js?v=13.3"></script>
+  <script src="assets/js/caderno-erros.js?v=13.4"></script>
 
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
