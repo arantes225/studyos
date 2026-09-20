@@ -1331,6 +1331,77 @@ function sanitizeHtml(
 
 
       if (
+        [
+          "P",
+          "H1",
+          "H2",
+          "H3",
+          "LI",
+          "BLOCKQUOTE",
+          "TD",
+          "TH"
+        ]
+          .includes(
+            child.tagName
+          )
+      ) {
+        const safeStyle = [];
+
+        const textAlign =
+          child.style.textAlign
+          || "";
+
+        const lineHeight =
+          child.style.lineHeight
+          || "";
+
+
+        if (
+          [
+            "left",
+            "center",
+            "right",
+            "justify"
+          ]
+            .includes(
+              textAlign
+            )
+        ) {
+          safeStyle.push(
+            `text-align: ${textAlign}`
+          );
+        }
+
+
+        if (
+          [
+            "1",
+            "1.15",
+            "1.5",
+            "2"
+          ]
+            .includes(
+              lineHeight
+            )
+        ) {
+          safeStyle.push(
+            `line-height: ${lineHeight}`
+          );
+        }
+
+
+        if (
+          safeStyle.length
+        ) {
+          keepStyle =
+            safeStyle.join(
+              "; "
+            );
+        }
+      }
+
+
+      if (
         child.tagName ===
         "DIV"
         &&
@@ -2233,6 +2304,8 @@ function setEditorEnabled(
   [
     "notebook-block-style",
     "notebook-font-family",
+    "notebook-align-toggle",
+    "notebook-line-spacing",
     "notebook-bold",
     "notebook-italic",
     "notebook-underline",
@@ -3647,6 +3720,224 @@ function applyNotebookFont(
         );
       }
     );
+
+
+  saveSelection();
+
+
+  scheduleSave();
+}
+
+function notebookSelectedTextBlocks() {
+  const editor =
+    document.getElementById(
+      "notebook-editor"
+    );
+
+  const selection =
+    window.getSelection();
+
+
+  if (
+    !editor
+    || !selection
+    || !selection.rangeCount
+  ) {
+    return [];
+  }
+
+
+  const range =
+    selection.getRangeAt(
+      0
+    );
+
+
+  if (
+    !editor.contains(
+      range.commonAncestorContainer
+    )
+  ) {
+    return [];
+  }
+
+
+  const selector =
+    "p,h1,h2,h3,li,blockquote,td,th";
+
+
+  if (
+    selection.isCollapsed
+  ) {
+    let node =
+      selection.anchorNode;
+
+
+    if (
+      node?.nodeType ===
+      Node.TEXT_NODE
+    ) {
+      node =
+        node.parentElement;
+    }
+
+
+    const block =
+      node
+        ?.closest
+        ?.(selector);
+
+
+    return (
+      block
+      && editor.contains(
+        block
+      )
+    )
+      ? [block]
+      : [];
+  }
+
+
+  return Array.from(
+    editor.querySelectorAll(
+      selector
+    )
+  )
+    .filter(
+      block => {
+        try {
+          return range.intersectsNode(
+            block
+          );
+        } catch {
+          return false;
+        }
+      }
+    );
+}
+
+
+function applyNotebookAlignment(
+  alignment
+) {
+  const allowed =
+    new Set([
+      "left",
+      "center",
+      "right",
+      "justify"
+    ]);
+
+
+  if (
+    !allowed.has(
+      alignment
+    )
+  ) {
+    return;
+  }
+
+
+  restoreSelection();
+
+
+  const blocks =
+    notebookSelectedTextBlocks();
+
+
+  if (
+    blocks.length
+  ) {
+    blocks.forEach(
+      block => {
+        block.style.textAlign =
+          alignment;
+      }
+    );
+  } else {
+    const command =
+      {
+        left:
+          "justifyLeft",
+        center:
+          "justifyCenter",
+        right:
+          "justifyRight",
+        justify:
+          "justifyFull"
+      }[
+        alignment
+      ];
+
+
+    document.execCommand(
+      command,
+      false
+    );
+  }
+
+
+  saveSelection();
+
+
+  scheduleSave();
+}
+
+
+function applyNotebookLineSpacing(
+  spacing
+) {
+  const allowed =
+    new Set([
+      "1",
+      "1.15",
+      "1.5",
+      "2"
+    ]);
+
+
+  if (
+    !allowed.has(
+      String(
+        spacing
+      )
+    )
+  ) {
+    return;
+  }
+
+
+  restoreSelection();
+
+
+  let blocks =
+    notebookSelectedTextBlocks();
+
+
+  if (
+    !blocks.length
+  ) {
+    document.execCommand(
+      "formatBlock",
+      false,
+      "p"
+    );
+
+
+    blocks =
+      notebookSelectedTextBlocks();
+  }
+
+
+  blocks.forEach(
+    block => {
+      block.style.lineHeight =
+        String(
+          spacing
+        );
+    }
+  );
 
 
   saveSelection();
@@ -12666,6 +12957,7 @@ function closeNotebookToolMenus(
     "divider",
     "table",
     "image",
+    "align",
     "callout"
   ]
     .forEach(
@@ -15583,6 +15875,58 @@ function wireEvents() {
     );
 
 
+  document
+    .querySelectorAll(
+      "[data-align]"
+    )
+    .forEach(
+      button => {
+        button.addEventListener(
+          "mousedown",
+          event =>
+            event.preventDefault()
+        );
+
+
+        button.addEventListener(
+          "click",
+          () => {
+            applyNotebookAlignment(
+              button.dataset
+                .align
+            );
+
+            closeNotebookToolMenus();
+          }
+        );
+      }
+    );
+
+
+  document
+    .getElementById(
+      "notebook-line-spacing"
+    )
+    ?.addEventListener(
+      "change",
+      event => {
+        const spacing =
+          event.target.value;
+
+
+        if (spacing) {
+          applyNotebookLineSpacing(
+            spacing
+          );
+        }
+
+
+        event.target.value =
+          "";
+      }
+    );
+
+
   [
     [
       "notebook-bold",
@@ -15666,6 +16010,7 @@ function wireEvents() {
     "divider",
     "table",
     "image",
+    "align",
     "callout"
   ]
     .forEach(
