@@ -1274,7 +1274,7 @@
                     <strong id="qs-file-name">Selecione um PDF</strong>
 
                     <small>
-                      O Resibulando extrai as questões do PDF e monta o gabarito rápido.<br>
+                      O Resibulando lê o PDF localmente, extrai as questões e não armazena o arquivo original.<br>
                       PDFs com texto selecionável funcionam melhor.
                     </small>
 
@@ -1491,7 +1491,7 @@
       <div class="qs-answer-import-privacy">
         <strong>Privacidade</strong>
         <span>
-          Os prints são processados localmente no navegador e não são enviados ao Supabase.
+          Os prints são processados localmente, nunca são enviados ao Supabase e são descartados da memória após a leitura, inclusive se ocorrer erro.
         </span>
       </div>
 
@@ -1593,7 +1593,7 @@
   <script src="supabase.js"></script>
   <script src="app.js?v=12.3"></script>
   <script src="study-mode.js?v=12.1"></script>
-  <script src="questoes-simulados.js?v=26.0"></script>
+  <script src="questoes-simulados.js?v=27.0"></script>
 
   <script>
     /* O JS principal já calcula a taxa de acerto semanal.
