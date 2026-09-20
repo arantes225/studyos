@@ -5156,6 +5156,124 @@ async function compressLuriaImageBlob(
 }
 
 
+async function loadQuestionImageDrawable(
+  sourceBlob
+) {
+  if (
+    typeof createImageBitmap
+    === "function"
+  ) {
+    try {
+      const bitmap =
+        await createImageBitmap(
+          sourceBlob
+        );
+
+      return {
+        source:
+          bitmap,
+
+        width:
+          bitmap.width,
+
+        height:
+          bitmap.height,
+
+        cleanup:
+          () =>
+            bitmap.close?.()
+      };
+    } catch (
+      error
+    ) {
+      console.warn(
+        "createImageBitmap indisponível para esta imagem; usando fallback compatível:",
+        error
+      );
+    }
+  }
+
+
+  const objectUrl =
+    URL.createObjectURL(
+      sourceBlob
+    );
+
+
+  const image =
+    new Image();
+
+
+  try {
+    await new Promise(
+      (
+        resolve,
+        reject
+      ) => {
+        image.onload =
+          resolve;
+
+        image.onerror =
+          () =>
+            reject(
+              new Error(
+                "Não foi possível decodificar a imagem da questão."
+              )
+            );
+
+        image.src =
+          objectUrl;
+      }
+    );
+
+
+    return {
+      source:
+        image,
+
+      width:
+        image.naturalWidth
+        || image.width,
+
+      height:
+        image.naturalHeight
+        || image.height,
+
+      cleanup:
+        () =>
+          URL.revokeObjectURL(
+            objectUrl
+          )
+    };
+  } catch (
+    error
+  ) {
+    URL.revokeObjectURL(
+      objectUrl
+    );
+
+    throw error;
+  }
+}
+
+
+function canvasBlob(
+  canvas,
+  type,
+  quality
+) {
+  return new Promise(
+    resolve => {
+      canvas.toBlob(
+        resolve,
+        type,
+        quality
+      );
+    }
+  );
+}
+
+
 async function compressQuestionFigureBlob(
   sourceBlob
 ) {
@@ -5172,9 +5290,8 @@ async function compressQuestionFigureBlob(
 
 
   /*
-    Limite rígido pedido para figuras de questões.
-    Mantemos uma pequena margem para garantir que o arquivo
-    fique realmente ABAIXO de 130 KB.
+    Limite rígido para figuras temporárias de questões.
+    128 KiB dá uma margem segura abaixo de 130 KB.
   */
   const maxBytes =
     128 * 1024;
@@ -5188,25 +5305,34 @@ async function compressQuestionFigureBlob(
   }
 
 
+  const drawable =
+    await loadQuestionImageDrawable(
+      sourceBlob
+    );
+
+
   try {
-    const bitmap =
-      await createImageBitmap(
-        sourceBlob
+    const originalWidth =
+      Number(
+        drawable.width
+      );
+
+    const originalHeight =
+      Number(
+        drawable.height
       );
 
 
-    const originalWidth =
-      bitmap.width;
+    if (
+      !originalWidth
+      || !originalHeight
+    ) {
+      throw new Error(
+        "Imagem sem dimensões válidas."
+      );
+    }
 
-    const originalHeight =
-      bitmap.height;
 
-
-    /*
-      Começa preservando bastante resolução e reduz somente
-      quando necessário. Em cada dimensão, tenta primeiro
-      qualidades altas para manter textos, gráficos e detalhes.
-    */
     const dimensionSteps = [
       1800,
       1600,
@@ -5218,23 +5344,29 @@ async function compressQuestionFigureBlob(
       800,
       700,
       620,
-      540
+      540,
+      480,
+      420,
+      360,
+      320,
+      280,
+      240
     ];
 
 
     const qualitySteps = [
       0.90,
-      0.86,
-      0.82,
+      0.84,
       0.78,
-      0.74,
-      0.70,
+      0.72,
       0.66,
-      0.62,
-      0.58,
+      0.60,
       0.54,
-      0.50,
-      0.46
+      0.48,
+      0.42,
+      0.36,
+      0.30,
+      0.26
     ];
 
 
@@ -5301,6 +5433,11 @@ async function compressQuestionFigureBlob(
         );
 
 
+      if (!context) {
+        continue;
+      }
+
+
       context.fillStyle =
         "#ffffff";
 
@@ -5320,7 +5457,7 @@ async function compressQuestionFigureBlob(
 
 
       context.drawImage(
-        bitmap,
+        drawable.source,
         0,
         0,
         width,
@@ -5332,21 +5469,35 @@ async function compressQuestionFigureBlob(
         const quality
         of qualitySteps
       ) {
-        const candidate =
-          await new Promise(
-            resolve => {
-              canvas.toBlob(
-                resolve,
-                "image/webp",
-                quality
-              );
-            }
+        /*
+          WebP primeiro. Se o navegador não gerar WebP,
+          tenta JPEG. Ambos são muito menores que PNG para
+          recortes de páginas.
+        */
+        let candidate =
+          await canvasBlob(
+            canvas,
+            "image/webp",
+            quality
           );
 
 
         if (
           !candidate
+          ||
+          candidate.type
+            !== "image/webp"
         ) {
+          candidate =
+            await canvasBlob(
+              canvas,
+              "image/jpeg",
+              quality
+            );
+        }
+
+
+        if (!candidate) {
           continue;
         }
 
@@ -5366,8 +5517,6 @@ async function compressQuestionFigureBlob(
           candidate.size
           <= maxBytes
         ) {
-          bitmap.close?.();
-
           return candidate;
         }
       }
@@ -5375,175 +5524,21 @@ async function compressQuestionFigureBlob(
 
 
     /*
-      Último recurso: continua reduzindo até garantir o limite.
-      É preferível diminuir a dimensão a salvar acima de 130 KB.
+      Nunca envia uma imagem fora do limite.
+      Se nem a redução agressiva conseguir cumprir,
+      o upload é interrompido em vez de gravar um arquivo grande.
     */
-    for (
-      const maxDimension
-      of [
-        480,
-        420,
-        360
-      ]
-    ) {
-      const scale =
-        Math.min(
-          1,
-          maxDimension
-          /
-          Math.max(
-            originalWidth,
-            originalHeight
-          )
-        );
-
-
-      const width =
-        Math.max(
-          1,
-          Math.round(
-            originalWidth
-            * scale
-          )
-        );
-
-
-      const height =
-        Math.max(
-          1,
-          Math.round(
-            originalHeight
-            * scale
-          )
-        );
-
-
-      const canvas =
-        document.createElement(
-          "canvas"
-        );
-
-
-      canvas.width =
-        width;
-
-      canvas.height =
-        height;
-
-
-      const context =
-        canvas.getContext(
-          "2d",
-          {
-            alpha:
-              false
-          }
-        );
-
-
-      context.fillStyle =
-        "#ffffff";
-
-      context.fillRect(
-        0,
-        0,
-        width,
-        height
-      );
-
-
-      context.imageSmoothingEnabled =
-        true;
-
-      context.imageSmoothingQuality =
-        "high";
-
-
-      context.drawImage(
-        bitmap,
-        0,
-        0,
-        width,
-        height
-      );
-
-
-      for (
-        const quality
-        of [
-          0.44,
-          0.40,
-          0.36,
-          0.32
-        ]
-      ) {
-        const candidate =
-          await new Promise(
-            resolve => {
-              canvas.toBlob(
-                resolve,
-                "image/webp",
-                quality
-              );
-            }
-          );
-
-
-        if (
-          !candidate
-        ) {
-          continue;
-        }
-
-
-        if (
-          !smallest
-          ||
-          candidate.size
-          < smallest.size
-        ) {
-          smallest =
-            candidate;
-        }
-
-
-        if (
-          candidate.size
-          <= maxBytes
-        ) {
-          bitmap.close?.();
-
-          return candidate;
-        }
-      }
-    }
-
-
-    bitmap.close?.();
-
-
-    /*
-      Na prática, os passos acima devem produzir <128 KB.
-      Se o navegador gerar algo excepcionalmente maior,
-      devolvemos o menor candidato obtido.
-    */
-    return smallest
-      || sourceBlob;
-
-
-  } catch (
-    error
-  ) {
-    console.warn(
-      "Não foi possível comprimir a figura da questão:",
-      error
+    throw new Error(
+      smallest
+        ? `A imagem não pôde ser reduzida abaixo de 130 KB (menor versão: ${Math.ceil(smallest.size / 1024)} KB).`
+        : "A imagem não pôde ser comprimida abaixo de 130 KB."
     );
 
 
-    return sourceBlob;
+  } finally {
+    drawable.cleanup?.();
   }
 }
-
 
 async function uploadExtractedQuestionImages(
   setId,
@@ -5596,14 +5591,24 @@ async function uploadExtractedQuestionImages(
         image.blob
       );
 
-    const isWebp =
-      optimizedBlob.type
-        === "image/webp";
-
     const extension =
-      isWebp
-        ? "webp"
-        : "png";
+      optimizedBlob.type
+        === "image/webp"
+          ? "webp"
+          : optimizedBlob.type
+              === "image/jpeg"
+            ? "jpg"
+            : "png";
+
+
+    if (
+      optimizedBlob.size
+      > 128 * 1024
+    ) {
+      throw new Error(
+        `Imagem da questão ${questionNumber} excedeu o limite de 130 KB e não foi enviada.`
+      );
+    }
 
     const path =
       `${qsState.user.id}/question_sets/${setId}/images/question-${questionNumber}-candidate-${candidateIndex}.${extension}`;
