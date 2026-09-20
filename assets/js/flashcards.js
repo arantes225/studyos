@@ -2358,8 +2358,8 @@ function renderAnkiDeckMap() {
               )}"
               data-anki-deck-area="${index}"
               list="medical-areas"
-              data-resibulando-area-input
-              placeholder="Área no Resibulando"
+              data-luria-area-input
+              placeholder="Área no Luria"
             >
 
             <span class="anki-deck-count">
@@ -3137,11 +3137,11 @@ function populateLibraryAreas() {
     select.value;
 
   const mode =
-    window.resibulandoStudyMode
+    window.luriaStudyMode
     || "medicine";
 
   const areas =
-    window.ResibulandoStudyMode
+    window.LuriaStudyMode
       ?.areasFor(
         mode
       )
@@ -3946,7 +3946,7 @@ async function exportSelectedFlashcardsPdf() {
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text("Resibulando — Flashcards", margin, 16);
+    doc.text("Luria — Flashcards", margin, 16);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.text(
@@ -3996,7 +3996,7 @@ async function exportSelectedFlashcardsPdf() {
       state.y += 8;
     }
 
-    doc.save(`resibulando-flashcards-${todayISO()}.pdf`);
+    doc.save(`luria-flashcards-${todayISO()}.pdf`);
     setLibraryStatus("PDF exportado.", "success");
   } catch (error) {
     console.error(error);
@@ -4744,7 +4744,7 @@ function wireLibrary() {
 }
 
 window.addEventListener(
-  "resibulando:study-mode",
+  "luria:study-mode",
   () => {
     populateLibraryAreas();
 
