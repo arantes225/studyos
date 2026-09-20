@@ -3612,6 +3612,219 @@ function cropQuestionBandOrVisual(
 }
 
 
+async function ocrQuestionLineRecordsFromCanvas(
+  canvas,
+  pageNumber
+) {
+  if (
+    !window.Tesseract
+  ) {
+    return [];
+  }
+
+  setImportStatus(
+    `OCR de apoio: lendo a página ${pageNumber} para localizar questão e alternativas...`
+  );
+
+  try {
+    const {
+      data
+    } =
+      await window.Tesseract
+        .recognize(
+          canvas,
+          "por"
+        );
+
+    const words =
+      (data?.words || [])
+        .map(
+          word => {
+            const text =
+              normalizeLine(
+                word.text
+              );
+
+            const bbox =
+              word.bbox;
+
+            if (
+              !text
+              || !bbox
+            ) {
+              return null;
+            }
+
+            return {
+              text,
+              left:
+                Number(bbox.x0 || 0),
+              top:
+                Number(bbox.y0 || 0),
+              right:
+                Number(bbox.x1 || 0),
+              bottom:
+                Number(bbox.y1 || 0)
+            };
+          }
+        )
+        .filter(Boolean);
+
+    const rows =
+      [];
+
+    for (
+      const word
+      of words
+    ) {
+      const centerY =
+        (
+          word.top
+          + word.bottom
+        )
+        / 2;
+
+      let row =
+        rows.find(
+          candidate =>
+            Math.abs(
+              candidate.centerY
+              - centerY
+            )
+            <= Math.max(
+              7,
+              (
+                word.bottom
+                - word.top
+              )
+              * 0.55
+            )
+        );
+
+      if (
+        !row
+      ) {
+        row = {
+          centerY,
+          words:
+            []
+        };
+
+        rows.push(
+          row
+        );
+      }
+
+      row.words.push(
+        word
+      );
+
+      row.centerY =
+        row.words.reduce(
+          (
+            sum,
+            current
+          ) =>
+            sum
+            + (
+                current.top
+                + current.bottom
+              )
+              / 2,
+          0
+        )
+        / row.words.length;
+    }
+
+    return rows
+      .map(
+        row => {
+          row.words.sort(
+            (
+              a,
+              b
+            ) =>
+              a.left - b.left
+          );
+
+          return {
+            text:
+              normalizeLine(
+                row.words
+                  .map(
+                    word =>
+                      word.text
+                  )
+                  .join(
+                    " "
+                  )
+              ),
+            left:
+              Math.min(
+                ...row.words.map(
+                  word =>
+                    word.left
+                )
+              ),
+            right:
+              Math.max(
+                ...row.words.map(
+                  word =>
+                    word.right
+                )
+              ),
+            top:
+              Math.min(
+                ...row.words.map(
+                  word =>
+                    word.top
+                )
+              ),
+            bottom:
+              Math.max(
+                ...row.words.map(
+                  word =>
+                    word.bottom
+                )
+              ),
+            fontHeight:
+              Math.max(
+                ...row.words.map(
+                  word =>
+                    word.bottom
+                    - word.top
+                )
+              )
+          };
+        }
+      )
+      .filter(
+        row =>
+          row.text
+      )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a.top - b.top
+          ||
+          a.left - b.left
+      );
+
+  } catch (
+    error
+  ) {
+    console.warn(
+      `OCR de apoio falhou na página ${pageNumber}:`,
+      error
+    );
+
+    return [];
+  }
+}
+
+
 async function extractQuestionImagesFromPage(
   page,
   content,
@@ -3642,18 +3855,18 @@ async function extractQuestionImagesFromPage(
         renderScale
     });
 
-  const lineRecords =
+  let lineRecords =
     groupTextItemsIntoLineRecords(
       content.items,
       viewport
     );
 
-  const questionStarts =
+  let questionStarts =
     questionStartsForPage(
       lineRecords
     );
 
-  const regions =
+  let regions =
     questionRegionsFromTextLayout(
       lineRecords,
       viewport
@@ -3706,6 +3919,40 @@ async function extractQuestionImagesFromPage(
       viewport
     })
     .promise;
+
+  /*
+    Se a camada de texto do PDF não delimitar bem a questão,
+    fazemos OCR somente como fallback. Assim PDFs normais
+    continuam rápidos e PDFs escaneados ganham coordenadas.
+  */
+  if (
+    !questionStarts.length
+    || !regions.length
+  ) {
+    const ocrRecords =
+      await ocrQuestionLineRecordsFromCanvas(
+        canvas,
+        pageNumber
+      );
+
+    if (
+      ocrRecords.length
+    ) {
+      lineRecords =
+        ocrRecords;
+
+      questionStarts =
+        questionStartsForPage(
+          lineRecords
+        );
+
+      regions =
+        questionRegionsFromTextLayout(
+          lineRecords,
+          viewport
+        );
+    }
+  }
 
   const results =
     [];
