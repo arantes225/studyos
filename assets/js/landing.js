@@ -33,7 +33,7 @@
       const { data, error } = await sb.auth.getSession();
       if (error || !data.session) return;
 
-      window.location.replace("dashboard.html");
+      window.location.replace("/dashboard/");
     } catch (error) {
       console.warn("Não foi possível verificar a sessão na landing page:", error);
     }
