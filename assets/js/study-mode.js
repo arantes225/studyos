@@ -84,6 +84,20 @@
     ]
   };
 
+  const GENERAL_AREAS = {
+    medicine: [
+      "Clínica Médica",
+      "Ginecologia e Obstetrícia",
+      "Cirurgia Geral",
+      "Pediatria",
+      "Preventiva"
+    ],
+
+    dentistry: [
+      ...AREAS.dentistry
+    ]
+  };
+
   function normalizeMode(value) {
     return value === "dentistry"
       ? "dentistry"
@@ -99,6 +113,14 @@
   function areasFor(mode) {
     return [
       ...AREAS[
+        normalizeMode(mode)
+      ]
+    ];
+  }
+
+  function generalAreasFor(mode) {
+    return [
+      ...GENERAL_AREAS[
         normalizeMode(mode)
       ]
     ];
@@ -129,6 +151,70 @@
                   `<option value="${escapeOption(area)}"></option>`
               )
               .join("");
+        }
+      );
+  }
+
+  function fillGeneralAreaDatalists(mode) {
+    const areas =
+      generalAreasFor(mode);
+
+    document
+      .querySelectorAll(
+        "[data-luria-general-area-list]"
+      )
+      .forEach(
+        (list) => {
+          list.innerHTML =
+            areas
+              .map(
+                (area) =>
+                  `<option value="${escapeOption(area)}"></option>`
+              )
+              .join("");
+        }
+      );
+  }
+
+  function fillGeneralAreaSelects(mode) {
+    const areas =
+      generalAreasFor(mode);
+
+    document
+      .querySelectorAll(
+        "[data-luria-general-area-select]"
+      )
+      .forEach(
+        (select) => {
+          const previous =
+            select.value;
+
+          const blankLabel =
+            select.dataset
+              .blankLabel
+            || "Todas as áreas";
+
+          select.innerHTML =
+            `<option value="">${escapeOption(blankLabel)}</option>`
+            + areas
+                .map(
+                  (area) => `
+                    <option value="${escapeOption(area)}">
+                      ${escapeOption(area)}
+                    </option>
+                  `
+                )
+                .join("");
+
+          if (
+            previous
+            && areas.includes(
+              previous
+            )
+          ) {
+            select.value =
+              previous;
+          }
         }
       );
   }
@@ -183,7 +269,7 @@
 
     document
       .querySelectorAll(
-        'input[list][data-luria-area-input], input[list="medical-areas"], input[list="error-medical-areas"], input[list="manual-area-options"]'
+        'input[list][data-luria-area-input], input[list][data-luria-general-area-input], input[list="medical-areas"], input[list="error-medical-areas"], input[list="manual-area-options"]'
       )
       .forEach(
         (input) => {
@@ -214,6 +300,14 @@
       resolved
     );
 
+    fillGeneralAreaDatalists(
+      resolved
+    );
+
+    fillGeneralAreaSelects(
+      resolved
+    );
+
     updateAreaPlaceholders(
       resolved
     );
@@ -237,6 +331,11 @@
 
       areas:
         areasFor(
+          resolved
+        ),
+
+      generalAreas:
+        generalAreasFor(
           resolved
         )
     };
@@ -307,9 +406,11 @@
 
   window.LuriaStudyMode = {
     AREAS,
+    GENERAL_AREAS,
     normalizeMode,
     modeLabel,
     areasFor,
+    generalAreasFor,
     apply,
     load
   };
