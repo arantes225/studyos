@@ -3501,7 +3501,7 @@ function renderTopicCard(
 
               <a
                 class="topic-action primary"
-                href="ambientacao.html?${escapeScheduleHtml(
+                href="/ambientacao/?${escapeScheduleHtml(
                   startParams.toString()
                 )}"
               >
@@ -3515,7 +3515,7 @@ function renderTopicCard(
 
               <a
                 class="topic-action primary"
-                href="ambientacao.html?${escapeScheduleHtml(
+                href="/ambientacao/?${escapeScheduleHtml(
                   startParams.toString()
                 )}"
               >
