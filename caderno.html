@@ -16,7 +16,7 @@
   <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria2">
   <link rel="stylesheet" href="assets/css/style.css?v=luria-pattern-12">
   <link rel="stylesheet" href="assets/css/image-lightbox.css?v=1">
-  <link rel="stylesheet" href="assets/css/caderno.css?v=18.1">
+  <link rel="stylesheet" href="assets/css/caderno.css?v=18.2">
   <link rel="canonical" href="/caderno/">
   <script>(function(){try{if(location.pathname.endsWith("/caderno.html"))history.replaceState(null,"","/caderno/"+location.search+location.hash);}catch(e){}})();</script>
 </head>
@@ -1079,12 +1079,21 @@
   <script src="assets/js/app.js?v=14.4"></script>
   <style>
     .notebook-pdf-export-host {
+      /*
+        Mantemos a folha dentro do viewport para o Safari/iOS conseguir
+        rasterizar o conteúdo. Ela fica atrás da aplicação, sem interferir
+        visualmente nem receber cliques.
+      */
       position: fixed;
-      left: -20000px;
+      left: 0;
       top: 0;
       width: 940px;
       pointer-events: none;
-      z-index: -1;
+      z-index: -2147483647;
+      overflow: visible;
+      visibility: visible;
+      opacity: 1;
+      background: #ffffff;
     }
 
     .notebook-pdf-export-host .notebook-paper {
@@ -1096,6 +1105,7 @@
 
     .notebook-pdf-export-host .notebook-editor {
       min-height: 0;
+      overflow: visible;
     }
 
     .notebook-pdf-export-host .notebook-document-head {
@@ -1107,7 +1117,7 @@
     }
   </style>
 
-  <script src="assets/js/caderno.js?v=17.3"></script>
+  <script src="assets/js/caderno.js?v=17.4"></script>
     <script src="assets/js/image-lightbox.js?v=1"></script>
 <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
