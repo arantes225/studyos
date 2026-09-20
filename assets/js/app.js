@@ -1537,11 +1537,20 @@ async function iniciarApp() {
       requiredFeature
     )
   ) {
-    window.location.replace(
-      "/dashboard/"
-    );
+    // Nunca redirecione o Dashboard para ele mesmo.
+    // Se o RPC de entitlements vier incompleto/temporariamente indisponível,
+    // manter o Dashboard acessível evita um loop infinito /dashboard/ -> /dashboard/.
+    if (page !== "dashboard") {
+      window.location.replace(
+        "/dashboard/"
+      );
 
-    return;
+      return;
+    }
+
+    console.warn(
+      "Entitlement de dashboard ausente; mantendo o Dashboard acessível para evitar loop de redirecionamento."
+    );
   }
 
   const cachedTheme = readCachedTheme(user.id);
