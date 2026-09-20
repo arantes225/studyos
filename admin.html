@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria2">
   <link rel="stylesheet" href="assets/css/style.css?v=luria-palette-10">
-  <link rel="stylesheet" href="assets/css/admin.css?v=1.7">
+  <link rel="stylesheet" href="assets/css/admin.css?v=1.8">
 </head>
 
 <body data-page="admin" class="admin-pin-locked">
@@ -193,6 +193,16 @@
               </article>
             </div>
 
+            <div class="admin-cost-breakdown-head">
+              <div>
+                <strong>Composição dos custos mensais</strong>
+                <small>Valores usados na projeção financeira</small>
+              </div>
+              <button id="admin-edit-costs" class="button secondary admin-edit-costs" type="button">
+                Editar custos
+              </button>
+            </div>
+
             <div id="admin-cost-breakdown" class="admin-cost-breakdown"></div>
           </div>
 
@@ -304,10 +314,39 @@
     </main>
   </div>
 
+  <dialog id="admin-cost-editor" class="admin-cost-dialog">
+    <form id="admin-cost-form" method="dialog">
+      <div class="admin-cost-dialog-head">
+        <div>
+          <span class="eyebrow">Financeiro</span>
+          <h2>Editar custos</h2>
+          <p>Custos anuais são divididos por 12. Custos por pessoa são multiplicados pelo total de clientes cadastrados.</p>
+        </div>
+        <button id="admin-cost-close" class="dialog-close" type="button" aria-label="Fechar">×</button>
+      </div>
+
+      <div class="admin-cost-editor-grid-head" aria-hidden="true">
+        <span>Custo</span>
+        <span>Valor</span>
+        <span>Período</span>
+        <span>Aplicação</span>
+      </div>
+
+      <div id="admin-cost-editor-list" class="admin-cost-editor-list"></div>
+
+      <div id="admin-cost-editor-message" class="admin-cost-editor-message" aria-live="polite"></div>
+
+      <div class="admin-cost-editor-actions">
+        <button id="admin-cost-cancel" class="button secondary" type="button">Cancelar</button>
+        <button id="admin-cost-save" class="button primary" type="submit">Salvar custos</button>
+      </div>
+    </form>
+  </dialog>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=13.1"></script>
-  <script src="assets/js/admin.js?v=1.7"></script>
+  <script src="assets/js/admin.js?v=1.8"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
 </html>
