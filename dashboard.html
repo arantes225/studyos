@@ -1375,17 +1375,23 @@
   justify-self: center;
 }
 
-/* DASHBOARD V27.3 — DISCO DE PROGRESSO DA OFENSIVA */
-.streak-progress-ring {
-  position: relative;
-  width: 92px;
-  height: 92px;
-  display: grid;
-  place-items: center;
-  margin: 1px 0 2px;
+/* DASHBOARD V27.3 — DISCO DE PROGRESSO */
+.dashboard-progress-card {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
-.streak-progress-svg {
+.dashboard-progress-ring {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  display: grid;
+  place-items: center;
+  margin: 7px 0 5px;
+}
+
+.dashboard-progress-svg {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -1394,61 +1400,31 @@
   overflow: visible;
 }
 
-.streak-progress-track,
-.streak-progress-value {
+.dashboard-progress-track,
+.dashboard-progress-value-ring {
   fill: none;
   stroke-width: 7;
 }
 
-.streak-progress-track {
-  stroke: color-mix(in srgb, var(--border) 86%, transparent);
+.dashboard-progress-track {
+  stroke: color-mix(in srgb, var(--border) 88%, transparent);
 }
 
-.streak-progress-value {
-  stroke: var(--flame-main);
+.dashboard-progress-value-ring {
+  stroke: var(--accent);
   stroke-linecap: round;
   stroke-dasharray: 326.73;
   stroke-dashoffset: 326.73;
-  filter: drop-shadow(0 2px 5px var(--flame-glow));
-  transition:
-    stroke-dashoffset .45s ease,
-    stroke .35s ease;
+  transition: stroke-dashoffset .45s ease;
 }
 
-.streak-progress-ring .streak-flame-wrap {
-  width: 70px !important;
-  height: 70px !important;
-  margin: 0 !important;
+.dashboard-progress-ring-label {
   position: relative;
-}
-
-.streak-progress-ring .streak-flame-svg {
-  width: calc(var(--flame-size) * .78);
-  height: calc(var(--flame-size) * .78);
-}
-
-.streak-progress-label {
-  position: absolute;
-  left: 50%;
-  bottom: 3px;
-  z-index: 3;
-  transform: translateX(-50%);
-  min-width: 42px;
-  padding: 2px 5px;
-  border: 1px solid color-mix(in srgb, var(--flame-main) 24%, var(--border));
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
-  color: var(--muted);
-  font-size: 7px;
+  z-index: 2;
+  color: var(--text);
+  font-size: 18px;
   font-weight: 900;
-  line-height: 1.15;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.streak-status-label {
-  color: var(--flame-main) !important;
-  font-weight: 850 !important;
+  line-height: 1;
 }
 
 /* DASHBOARD V27 — grade única 3x3 */
@@ -1563,9 +1539,18 @@
             <small id="metric-errors-helper" class="dashboard-detail-helper">Carregando...</small>
           </article>
 
-          <article class="dashboard-detail-card">
+          <article class="dashboard-detail-card dashboard-progress-card">
             <span class="dashboard-detail-label">Progresso</span>
-            <strong id="metric-lessons-progress-copy" class="dashboard-detail-value">—</strong>
+
+            <div class="dashboard-progress-ring">
+              <svg class="dashboard-progress-svg" viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="dashboard-progress-track" cx="60" cy="60" r="52"></circle>
+                <circle id="dashboard-progress-ring-value" class="dashboard-progress-value-ring" cx="60" cy="60" r="52"></circle>
+              </svg>
+
+              <strong id="metric-lessons-progress-copy" class="dashboard-progress-ring-label">—</strong>
+            </div>
+
             <small id="metric-lessons-progress" class="dashboard-detail-helper">—</small>
             <span id="metric-lessons-progress-helper" hidden></span>
           </article>
@@ -1583,41 +1568,20 @@
           >
             <span class="dashboard-detail-label metric-label">Ofensiva</span>
 
-            <div class="streak-progress-ring" aria-hidden="true">
-              <svg class="streak-progress-svg" viewBox="0 0 120 120">
-                <circle
-                  class="streak-progress-track"
-                  cx="60"
-                  cy="60"
-                  r="52"
-                ></circle>
+            <div class="streak-flame-wrap" aria-hidden="true">
+              <span class="streak-flame-aura"></span>
 
-                <circle
-                  id="dashboard-streak-progress"
-                  class="streak-progress-value"
-                  cx="60"
-                  cy="60"
-                  r="52"
-                ></circle>
+              <svg class="streak-flame-svg" viewBox="0 0 64 80">
+                <path
+                  fill="currentColor"
+                  d="M34 3C35 15 26 19 26 29C26 35 30 38 33 40C27 40 22 35 21 29C13 37 8 46 8 56C8 69 18 77 32 77C46 77 56 68 56 54C56 41 48 30 40 22C39 30 36 34 32 36C35 27 43 18 34 3Z"
+                ></path>
+
+                <path
+                  class="streak-flame-core"
+                  d="M33 40C27 47 23 52 23 59C23 67 27 71 33 71C40 71 44 66 44 59C44 52 39 47 35 43C35 48 33 51 30 53C31 48 34 45 33 40Z"
+                ></path>
               </svg>
-
-              <div class="streak-flame-wrap">
-                <span class="streak-flame-aura"></span>
-
-                <svg class="streak-flame-svg" viewBox="0 0 64 80">
-                  <path
-                    fill="currentColor"
-                    d="M34 3C35 15 26 19 26 29C26 35 30 38 33 40C27 40 22 35 21 29C13 37 8 46 8 56C8 69 18 77 32 77C46 77 56 68 56 54C56 41 48 30 40 22C39 30 36 34 32 36C35 27 43 18 34 3Z"
-                  ></path>
-
-                  <path
-                    class="streak-flame-core"
-                    d="M33 40C27 47 23 52 23 59C23 67 27 71 33 71C40 71 44 66 44 59C44 52 39 47 35 43C35 48 33 51 30 53C31 48 34 45 33 40Z"
-                  ></path>
-                </svg>
-
-                <span id="dashboard-streak-progress-label" class="streak-progress-label">0/180</span>
-              </div>
             </div>
 
             <strong class="dashboard-detail-value metric-value">
@@ -1729,6 +1693,6 @@
   <script src="supabase.js"></script>
   <script src="app.js?v=12.8"></script>
   <script src="study-mode.js?v=12.1"></script>
-  <script src="dashboard.js?v=27.2"></script>
+  <script src="dashboard.js?v=27.3"></script>
 </body>
 </html>
