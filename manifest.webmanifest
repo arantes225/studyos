@@ -3,7 +3,7 @@
   "short_name": "LURIA",
   "description": "Organize cronograma, revisões, caderno, flashcards, questões e desempenho em um único sistema de estudos.",
   "id": "/",
-  "start_url": "/dashboard.html",
+  "start_url": "/dashboard/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
