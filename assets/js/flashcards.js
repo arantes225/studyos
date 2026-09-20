@@ -329,6 +329,8 @@ async function loadMetrics() {
   const [
     dueResult,
     overdueResult,
+    sharedDueResult,
+    sharedOverdueResult,
     reviewResult,
     retentionResult
   ] = await Promise.all([
@@ -340,6 +342,10 @@ async function loadMetrics() {
           count: "exact",
           head: true
         }
+      )
+      .eq(
+        "user_id",
+        flashUser.id
       )
       .eq(
         "active",
@@ -358,6 +364,54 @@ async function loadMetrics() {
           count: "exact",
           head: true
         }
+      )
+      .eq(
+        "user_id",
+        flashUser.id
+      )
+      .eq(
+        "active",
+        true
+      )
+      .lt(
+        "due_date",
+        today
+      ),
+
+    flashSb
+      .from("flashcard_shared_state")
+      .select(
+        "flashcard_id",
+        {
+          count: "exact",
+          head: true
+        }
+      )
+      .eq(
+        "user_id",
+        flashUser.id
+      )
+      .eq(
+        "active",
+        true
+      )
+      .lte(
+        "due_date",
+        today
+      ),
+
+    flashSb
+      .from("flashcard_shared_state")
+      .select(
+        "flashcard_id",
+        {
+          count: "exact",
+          head: true
+        }
+      )
+      .eq(
+        "user_id",
+        flashUser.id
       )
       .eq(
         "active",
@@ -414,11 +468,21 @@ async function loadMetrics() {
     Number(
       dueResult.count
       || 0
+    )
+    +
+    Number(
+      sharedDueResult.count
+      || 0
     );
 
   const overdue =
     Number(
       overdueResult.count
+      || 0
+    )
+    +
+    Number(
+      sharedOverdueResult.count
       || 0
     );
 
@@ -785,6 +849,30 @@ async function renderCurrentReview() {
     reviewQueue[
       reviewIndex
     ];
+
+  const reviewEdit =
+    document.getElementById(
+      "review-card-edit"
+    );
+
+  const reviewDelete =
+    document.getElementById(
+      "review-card-delete"
+    );
+
+  if (reviewEdit) {
+    reviewEdit.hidden =
+      Boolean(
+        card.shared
+      );
+  }
+
+  if (reviewDelete) {
+    reviewDelete.textContent =
+      card.shared
+        ? "Remover da biblioteca"
+        : "Excluir";
+  }
 
   document
     .getElementById(
@@ -3703,16 +3791,84 @@ async function deleteFlashcardFromLibrary(
 ) {
   const card =
     libraryCards.find(
-      (item) =>
+      item =>
         item.id === cardId
     )
     || reviewQueue.find(
-      (item) =>
+      item =>
         item.id === cardId
     );
 
 
   if (!card) {
+    return;
+  }
+
+
+  if (card.shared) {
+    const confirmed =
+      window.confirm(
+        "Remover este flashcard compartilhado da sua biblioteca? O original continuará com o autor."
+      );
+
+
+    if (!confirmed) {
+      return;
+    }
+
+
+    setLibraryStatus(
+      "Removendo flashcard compartilhado..."
+    );
+
+
+    const {
+      error
+    } =
+      await flashSb
+        .from(
+          "flashcard_shared_state"
+        )
+        .delete()
+        .eq(
+          "user_id",
+          flashUser.id
+        )
+        .eq(
+          "flashcard_id",
+          cardId
+        );
+
+
+    if (error) {
+      console.error(error);
+
+      setLibraryStatus(
+        `Não foi possível remover: ${error.message}`,
+        "error"
+      );
+
+      return;
+    }
+
+
+    selectedFlashcardIds.delete(
+      cardId
+    );
+
+
+    setLibraryStatus(
+      "Flashcard compartilhado removido da sua biblioteca.",
+      "success"
+    );
+
+
+    await Promise.all([
+      loadLibrary(),
+      loadMetrics(),
+      loadReviewQueue()
+    ]);
+
     return;
   }
 
@@ -3744,13 +3900,15 @@ async function deleteFlashcardFromLibrary(
       .eq(
         "id",
         cardId
+      )
+      .eq(
+        "user_id",
+        flashUser.id
       );
 
 
   if (error) {
-    console.error(
-      error
-    );
+    console.error(error);
 
     setLibraryStatus(
       `Não foi possível excluir: ${error.message}`,
@@ -3766,14 +3924,10 @@ async function deleteFlashcardFromLibrary(
       card.front_image_path,
       card.back_image_path
     ]
-      .filter(
-        Boolean
-      );
+      .filter(Boolean);
 
 
-  if (
-    storagePaths.length
-  ) {
+  if (storagePaths.length) {
     const {
       error:
         storageError
@@ -3801,23 +3955,6 @@ async function deleteFlashcardFromLibrary(
     cardId
   );
 
-  reviewQueue =
-    reviewQueue.filter(
-      (item) =>
-        item.id !== cardId
-    );
-
-  if (
-    reviewIndex
-    >= reviewQueue.length
-  ) {
-    reviewIndex =
-      Math.max(
-        0,
-        reviewQueue.length - 1
-      );
-  }
-
 
   setLibraryStatus(
     "Flashcard excluído.",
@@ -3831,7 +3968,6 @@ async function deleteFlashcardFromLibrary(
     loadReviewQueue()
   ]);
 }
-
 
 
 function updateFlashBulkToolbar() {
@@ -4083,121 +4219,180 @@ async function exportSelectedFlashcardsPdf() {
 }
 
 async function deleteSelectedFlashcards() {
-  const ids =
-    Array.from(
-      selectedFlashcardIds
-    );
-
-
-  if (!ids.length) {
-    return;
-  }
-
-
-  const confirmed =
-    window.confirm(
-      `Excluir ${ids.length} flashcard${ids.length === 1 ? "" : "s"} permanentemente?`
-    );
-
-
-  if (!confirmed) {
-    return;
-  }
-
-
   const cards =
     libraryCards.filter(
-      (card) =>
+      card =>
         selectedFlashcardIds.has(
           card.id
         )
     );
 
 
-  setLibraryStatus(
-    "Excluindo selecionados..."
-  );
-
-
-  const {
-    error
-  } =
-    await flashSb
-      .from(
-        "flashcards"
-      )
-      .delete()
-      .in(
-        "id",
-        ids
-      );
-
-
-  if (error) {
-    console.error(
-      error
-    );
-
-
-    setLibraryStatus(
-      `Não foi possível excluir: ${error.message}`,
-      "error"
-    );
-
+  if (!cards.length) {
     return;
   }
 
 
-  const paths =
-    cards
-      .flatMap(
-        (card) => [
-          card.front_image_path,
-          card.back_image_path
-        ]
-      )
-      .filter(
-        Boolean
+  const owned =
+    cards.filter(
+      card =>
+        !card.shared
+    );
+
+
+  const shared =
+    cards.filter(
+      card =>
+        card.shared
+    );
+
+
+  const parts = [];
+
+  if (owned.length) {
+    parts.push(
+      `${owned.length} flashcard${owned.length === 1 ? "" : "s"} seu${owned.length === 1 ? "" : "s"} será${owned.length === 1 ? "" : "ão"} excluído${owned.length === 1 ? "" : "s"} permanentemente`
+    );
+  }
+
+  if (shared.length) {
+    parts.push(
+      `${shared.length} compartilhado${shared.length === 1 ? "" : "s"} será${shared.length === 1 ? "" : "ão"} apenas removido${shared.length === 1 ? "" : "s"} da sua biblioteca`
+    );
+  }
+
+
+  if (
+    !window.confirm(
+      `${parts.join(". ")}. Continuar?`
+    )
+  ) {
+    return;
+  }
+
+
+  setLibraryStatus(
+    "Atualizando biblioteca..."
+  );
+
+
+  if (owned.length) {
+    const ownedIds =
+      owned.map(
+        card =>
+          card.id
       );
 
 
-  if (paths.length) {
     const {
-      error:
-        storageError
+      error
     } =
       await flashSb
-        .storage
         .from(
-          "docmap"
+          "flashcards"
         )
-        .remove(
-          paths
+        .delete()
+        .eq(
+          "user_id",
+          flashUser.id
+        )
+        .in(
+          "id",
+          ownedIds
         );
 
 
-    if (storageError) {
-      console.warn(
-        storageError
+    if (error) {
+      console.error(error);
+
+      setLibraryStatus(
+        `Não foi possível excluir seus flashcards: ${error.message}`,
+        "error"
       );
+
+      return;
+    }
+
+
+    const paths =
+      owned
+        .flatMap(
+          card => [
+            card.front_image_path,
+            card.back_image_path
+          ]
+        )
+        .filter(Boolean);
+
+
+    if (paths.length) {
+      const {
+        error:
+          storageError
+      } =
+        await flashSb
+          .storage
+          .from(
+            "docmap"
+          )
+          .remove(
+            paths
+          );
+
+
+      if (storageError) {
+        console.warn(
+          storageError
+        );
+      }
     }
   }
 
 
-  reviewQueue =
-    reviewQueue.filter(
-      (card) =>
-        !selectedFlashcardIds.has(
+  if (shared.length) {
+    const sharedIds =
+      shared.map(
+        card =>
           card.id
+      );
+
+
+    const {
+      error
+    } =
+      await flashSb
+        .from(
+          "flashcard_shared_state"
         )
-    );
+        .delete()
+        .eq(
+          "user_id",
+          flashUser.id
+        )
+        .in(
+          "flashcard_id",
+          sharedIds
+        );
+
+
+    if (error) {
+      console.error(error);
+
+      setLibraryStatus(
+        `Não foi possível remover os compartilhados: ${error.message}`,
+        "error"
+      );
+
+      return;
+    }
+  }
 
 
   selectedFlashcardIds.clear();
 
 
   setLibraryStatus(
-    `${ids.length} flashcard${ids.length === 1 ? "" : "s"} excluído${ids.length === 1 ? "" : "s"}.`,
+    "Biblioteca atualizada.",
     "success"
   );
 
@@ -4208,7 +4403,6 @@ async function deleteSelectedFlashcards() {
     loadReviewQueue()
   ]);
 }
-
 
 function renderLibrary() {
   const cards =
@@ -4241,6 +4435,7 @@ function renderLibrary() {
       false;
 
     updateFlashBulkToolbar();
+    renderLibraryDecks();
 
     return;
   }
@@ -4289,19 +4484,25 @@ function renderLibrary() {
                 hidden
               >
 
-                <button
-                  type="button"
-                  data-flash-edit="${escapeFlashHtml(card.id)}"
-                >
-                  Editar
-                </button>
+                ${
+                  card.shared
+                    ? ""
+                    : `
+                      <button
+                        type="button"
+                        data-flash-edit="${escapeFlashHtml(card.id)}"
+                      >
+                        Editar
+                      </button>
+                    `
+                }
 
                 <button
                   class="danger"
                   type="button"
                   data-flash-delete="${escapeFlashHtml(card.id)}"
                 >
-                  Excluir
+                  ${card.shared ? "Remover da biblioteca" : "Excluir"}
                 </button>
 
               </div>
@@ -4328,6 +4529,12 @@ function renderLibrary() {
                 ${
                   card.theme
                     ? `<span class="taxonomy-chip accent">${escapeFlashHtml(card.theme)}</span>`
+                    : ""
+                }
+
+                ${
+                  card.shared
+                    ? '<span class="flash-shared-badge">Compartilhado</span>'
                     : ""
                 }
 
