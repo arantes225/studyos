@@ -1350,6 +1350,31 @@
   height: 66px;
 }
 
+/* DASHBOARD V27.2 — OFENSIVA EM COLUNA */
+.dashboard-detail-grid .streak-card-v22.streak-card-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  text-align: center;
+}
+
+.dashboard-detail-grid .streak-card-v22.streak-card-vertical .metric-label,
+.dashboard-detail-grid .streak-card-v22.streak-card-vertical .metric-value,
+.dashboard-detail-grid .streak-card-v22.streak-card-vertical .metric-helper {
+  width: 100%;
+  margin: 0;
+  text-align: center;
+}
+
+.dashboard-detail-grid .streak-card-v22.streak-card-vertical .streak-flame-wrap {
+  width: 66px;
+  height: 66px;
+  margin: 2px 0 1px;
+  justify-self: center;
+}
+
 /* DASHBOARD V27 — grade única 3x3 */
 .dashboard-summary-grid-hidden {
   display: none !important;
@@ -1477,18 +1502,10 @@
 
           <article
             id="dashboard-streak-card"
-            class="dashboard-detail-card streak-card-v22"
+            class="dashboard-detail-card streak-card-v22 streak-card-vertical"
             data-streak-tier="0"
           >
             <span class="dashboard-detail-label metric-label">Ofensiva</span>
-
-            <strong class="dashboard-detail-value metric-value">
-              <span data-streak-value>—</span> dias
-            </strong>
-
-            <small class="dashboard-detail-helper metric-helper">
-              Recorde: <span data-longest-streak>—</span> dias
-            </small>
 
             <div class="streak-flame-wrap" aria-hidden="true">
               <span class="streak-flame-aura"></span>
@@ -1506,9 +1523,13 @@
               </svg>
             </div>
 
-            <div id="dashboard-streak-stage" class="streak-stage-label">
-              Comece hoje
-            </div>
+            <strong class="dashboard-detail-value metric-value">
+              <span data-streak-value>—</span> dias
+            </strong>
+
+            <small class="dashboard-detail-helper metric-helper">
+              Recorde: <span data-longest-streak>—</span> dias
+            </small>
           </article>
 
           <article class="dashboard-detail-card">
