@@ -122,11 +122,11 @@
 
     const diff = result - reference;
 
-    // Regras solicitadas:
-    // vermelho: mais de 2 pontos abaixo
-    // amarelo: de -2 até menos de +2
-    // verde: +2 ou mais
-    if (diff < -2) return "red";
+    // Regras:
+    // vermelho: 2 ou mais pontos abaixo
+    // amarelo: entre -1,99 e +1,99
+    // verde: 2 ou mais pontos acima
+    if (diff <= -2) return "red";
     if (diff >= 2) return "green";
     return "yellow";
   }
@@ -341,11 +341,11 @@
 
             <div class="exam-score-legend">
               <span class="red">
-                Mais de 2 pontos abaixo
+                2 ou mais pontos abaixo
               </span>
 
               <span class="yellow">
-                De −2 até menos de +2
+                Entre −1,99 e +1,99
               </span>
 
               <span class="green">
@@ -806,6 +806,42 @@
         row.cutoff_history
       );
 
+    const latest =
+      latestCutoff(
+        history
+      );
+
+    const hasScore =
+      row.score_percent !== null
+      && row.score_percent !== undefined
+      && row.score_percent !== ""
+      && Number.isFinite(
+        Number(
+          row.score_percent
+        )
+      );
+
+    const color =
+      latest
+      && hasScore
+        ? comparisonClass(
+            row.score_percent,
+            latest.score
+          )
+        : "";
+
+    card.classList.remove(
+      "exam-score-state-red",
+      "exam-score-state-yellow",
+      "exam-score-state-green"
+    );
+
+    if (color) {
+      card.classList.add(
+        `exam-score-state-${color}`
+      );
+    }
+
     const fingerprint =
       JSON.stringify([
         row.score_percent ?? null,
@@ -946,11 +982,6 @@
       )
         ?.remove();
 
-      const latest =
-        latestCutoff(
-          history
-        );
-
       const helper =
         document.createElement(
           "small"
@@ -961,18 +992,8 @@
 
       if (
         latest
-        && Number.isFinite(
-          Number(
-            row.score_percent
-          )
-        )
+        && hasScore
       ) {
-        const color =
-          comparisonClass(
-            row.score_percent,
-            latest.score
-          );
-
         resultCard.classList.add(
           "exam-score-comparison",
           color
