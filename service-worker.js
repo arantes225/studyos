@@ -1,8 +1,10 @@
-const CACHE_VERSION = "luria-pwa-v17";
+const CACHE_VERSION = "luria-pwa-v18";
 const STATIC_CACHE = CACHE_VERSION + "-static";
 const RUNTIME_CACHE = CACHE_VERSION + "-runtime";
 
 const APP_SHELL = [
+  "/assets/js/image-lightbox.js?v=1",
+  "/assets/css/image-lightbox.css?v=1",
   "/",
   "/index.html",
   "/login/",
