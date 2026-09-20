@@ -1,0 +1,97 @@
+
+/* =========================================================
+   LURIA — BRAND FIX V5
+   ========================================================= */
+
+.brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.brand .brand-mark,
+.brand .brand-logo-stack {
+  display: none !important;
+}
+
+.brand .luria-theme-logo {
+  position: static !important;
+  inset: auto !important;
+
+  display: block !important;
+
+  width: 62px !important;
+  height: 62px !important;
+
+  flex: 0 0 62px !important;
+
+  object-fit: contain !important;
+
+  background: transparent !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  box-shadow: none !important;
+
+  filter: none;
+
+  transition:
+    transform .18s ease,
+    filter .18s ease;
+}
+
+.brand:hover .luria-theme-logo {
+  transform: scale(1.05);
+}
+
+:root[data-theme="dark"]
+.brand .luria-theme-logo {
+  filter:
+    drop-shadow(
+      0 4px 14px
+      rgba(96, 165, 250, .22)
+    );
+}
+
+:root[data-theme="leila-mood"]
+.brand .luria-theme-logo {
+  filter:
+    drop-shadow(
+      0 4px 14px
+      rgba(220, 55, 125, .22)
+    );
+}
+
+.brand .brand-copy {
+  display: grid !important;
+  min-width: 0;
+}
+
+.brand .brand-copy strong {
+  font-size: 18px !important;
+  font-weight: 850 !important;
+  line-height: 1.1 !important;
+  letter-spacing: -.02em !important;
+}
+
+.brand .brand-copy small {
+  margin-top: 4px !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  color: var(--muted) !important;
+}
+
+/* Caso algum CSS antigo tente exibir imagens extras */
+.brand > img:not(.luria-theme-logo) {
+  display: none !important;
+}
+
+@media (max-width: 700px) {
+  .brand .luria-theme-logo {
+    width: 54px !important;
+    height: 54px !important;
+    flex-basis: 54px !important;
+  }
+}
