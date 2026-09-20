@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin · Resibulando</title>
+  <link rel="icon" type="image/png" href="favicon.png?v=resibulando2">
+  <link rel="stylesheet" href="style.css?v=12.5">
+  <link rel="stylesheet" href="admin.css?v=1.0">
+</head>
+
+<body data-page="admin">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar"></aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <main class="main">
+      <div class="page admin-page">
+        <header class="topbar admin-topbar">
+          <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
+
+          <div class="page-heading">
+            <span class="eyebrow" data-page-eyebrow></span>
+            <h1 data-page-title></h1>
+          </div>
+
+          <div class="admin-range">
+            <label for="admin-range">Período</label>
+            <select id="admin-range">
+              <option value="7">7 dias</option>
+              <option value="30" selected>30 dias</option>
+              <option value="90">90 dias</option>
+            </select>
+          </div>
+        </header>
+
+        <div id="admin-status" class="admin-status">Carregando painel administrativo...</div>
+
+        <section class="admin-plan-grid" aria-label="Clientes e planos">
+          <article class="admin-plan-card">
+            <span>Clientes total</span>
+            <strong id="admin-total-clients">—</strong>
+            <small>Contas cadastradas</small>
+          </article>
+
+          <article class="admin-plan-card">
+            <span>Plano Essencial</span>
+            <strong id="admin-plan-essential">—</strong>
+            <small>Assinaturas ativas</small>
+          </article>
+
+          <article class="admin-plan-card">
+            <span>Plano Plus</span>
+            <strong id="admin-plan-plus">—</strong>
+            <small>Assinaturas ativas</small>
+          </article>
+
+          <article class="admin-plan-card">
+            <span>Plano Pro</span>
+            <strong id="admin-plan-pro">—</strong>
+            <small>Assinaturas ativas</small>
+          </article>
+        </section>
+
+        <section class="admin-section">
+          <div class="admin-section-head">
+            <div>
+              <span class="eyebrow">Produto e negócio</span>
+              <h2>Funil, retenção e receita</h2>
+            </div>
+            <small id="admin-generated-at"></small>
+          </div>
+
+          <div id="admin-metrics-grid" class="admin-metrics-grid"></div>
+        </section>
+
+        <section class="admin-section">
+          <div class="admin-section-head">
+            <div>
+              <span class="eyebrow">Uso por recurso</span>
+              <h2>Usuários ativos por funcionalidade</h2>
+            </div>
+          </div>
+
+          <div id="admin-feature-grid" class="admin-feature-grid"></div>
+        </section>
+
+        <section class="admin-section">
+          <div class="admin-section-head admin-customer-head">
+            <div>
+              <span class="eyebrow">Clientes</span>
+              <h2>Métricas individuais</h2>
+            </div>
+
+            <div class="admin-customer-tools">
+              <input
+                id="admin-customer-search"
+                type="search"
+                placeholder="Buscar cliente, e-mail ou plano"
+                autocomplete="off"
+              >
+              <span id="admin-customer-count">0 clientes</span>
+            </div>
+          </div>
+
+          <div class="admin-table-wrap">
+            <table class="admin-customer-table">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Plano</th>
+                  <th>Tempo de assinatura</th>
+                  <th>Estudo no mês</th>
+                  <th>Novos flashcards</th>
+                  <th>Novos CCQs</th>
+                  <th>Aulas atrasadas</th>
+                  <th>Retenção de estudos</th>
+                  <th>Último acesso</th>
+                </tr>
+              </thead>
+              <tbody id="admin-customer-body">
+                <tr>
+                  <td colspan="9" class="admin-table-empty">Carregando clientes...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <script src="app.js?v=12.5"></script>
+  <script src="admin.js?v=1.0"></script>
+</body>
+</html>
