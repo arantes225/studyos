@@ -776,6 +776,264 @@ async function createNotebookShareLink(
   }
 }
 
+async function createNotebookBundleToken(
+  entries,
+  title = "Cadernos LURIA"
+) {
+  const owned =
+    (entries || []).filter(
+      entry =>
+        !entry.note.is_shared
+    );
+
+  if (!owned.length) {
+    throw new Error(
+      "A seleção não contém cadernos seus para compartilhar."
+    );
+  }
+
+  const {
+    data,
+    error
+  } =
+    await notebookSb.rpc(
+      "create_study_note_bundle_share",
+      {
+        p_note_ids:
+          owned.map(
+            entry =>
+              entry.note.id
+          ),
+
+        p_title:
+          title
+      }
+    );
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+
+async function openNotebookShareDialog(
+  entries,
+  title = "Cadernos selecionados"
+) {
+  const owned =
+    (entries || []).filter(
+      entry =>
+        !entry.note.is_shared
+    );
+
+  if (!owned.length) {
+    setSaveStatus(
+      "A seleção não contém cadernos seus para compartilhar.",
+      "error"
+    );
+
+    return;
+  }
+
+  if (!window.LuriaSharing) {
+    setSaveStatus(
+      "O compartilhamento não carregou. Atualize a página.",
+      "error"
+    );
+
+    return;
+  }
+
+  let cachedToken =
+    null;
+
+  const getToken =
+    async () => {
+      if (!cachedToken) {
+        cachedToken =
+          await createNotebookBundleToken(
+            owned,
+            title
+          );
+      }
+
+      return cachedToken;
+    };
+
+  await window.LuriaSharing.open({
+    title,
+
+    count:
+      owned.length,
+
+    onLink:
+      async () => {
+        const token =
+          await getToken();
+
+        const url =
+          new URL(
+            "/caderno/",
+            window.location.origin
+          );
+
+        url.searchParams.set(
+          "bundle",
+          token
+        );
+
+        try {
+          await navigator.clipboard
+            .writeText(
+              url.toString()
+            );
+
+          setSaveStatus(
+            "Link dos cadernos copiado",
+            "saved"
+          );
+
+        } catch {
+          window.prompt(
+            "Copie o link:",
+            url.toString()
+          );
+        }
+      },
+
+    onFriend:
+      async (
+        friendUserId
+      ) => {
+        const token =
+          await getToken();
+
+        const {
+          error
+        } =
+          await notebookSb.rpc(
+            "send_direct_share",
+            {
+              p_friend_user_id:
+                friendUserId,
+
+              p_resource_type:
+                "study_note_bundle",
+
+              p_share_token:
+                token,
+
+              p_title:
+                title
+            }
+          );
+
+        if (error) {
+          throw error;
+        }
+
+        setSaveStatus(
+          "Material enviado dentro do LURIA",
+          "saved"
+        );
+      },
+
+    onExport:
+      async () => {
+        const previous =
+          new Set(
+            notebookState.librarySelected
+          );
+
+        notebookState.librarySelected =
+          new Set(
+            owned.map(
+              entry =>
+                entry.note.id
+            )
+          );
+
+        try {
+          await exportSelectedPdf();
+        } finally {
+          notebookState.librarySelected =
+            previous;
+
+          updateLibraryActions();
+        }
+      }
+  });
+}
+
+
+async function redeemNotebookBundleFromUrl() {
+  const url =
+    new URL(
+      window.location.href
+    );
+
+  const token =
+    url.searchParams.get(
+      "bundle"
+    );
+
+  if (!token) {
+    return null;
+  }
+
+  const personalize =
+    window.confirm(
+      "Deseja personalizar os cadernos recebidos?\n\nOK = editar em cima\nCancelar = somente leitura"
+    );
+
+  const {
+    data,
+    error
+  } =
+    await notebookSb.rpc(
+      "redeem_study_note_bundle_share",
+      {
+        p_token:
+          token,
+
+        p_mode:
+          personalize
+            ? "overlay"
+            : "view"
+      }
+    );
+
+  if (error) {
+    console.error(error);
+
+    alert(
+      `Não foi possível adicionar os cadernos: ${error.message}`
+    );
+
+    return null;
+  }
+
+  url.searchParams.delete(
+    "bundle"
+  );
+
+  url.searchParams.set(
+    "view",
+    "library"
+  );
+
+  window.history.replaceState(
+    {},
+    "",
+    url
+  );
+
+  return data;
+}
+
+
 async function redeemNotebookShareFromUrl() {
   const url =
     new URL(
@@ -12654,10 +12912,22 @@ function renderLibrary() {
       button => {
         button.addEventListener(
           "click",
-          () =>
-            createNotebookShareLink(
-              button.dataset.shareNote
-            )
+          () => {
+            const entry =
+              getLibraryEntries()
+                .find(
+                  item =>
+                    item.note.id ===
+                    button.dataset.shareNote
+                );
+
+            if (entry) {
+              openNotebookShareDialog(
+                [entry],
+                entry.title || "Caderno LURIA"
+              );
+            }
+          }
         );
       }
     );
@@ -12697,6 +12967,12 @@ function updateLibraryActions() {
     );
 
 
+  const shareButton =
+    document.getElementById(
+      "notebook-library-share"
+    );
+
+
   const exportButton =
     document.getElementById(
       "notebook-library-export"
@@ -12726,6 +13002,22 @@ function updateLibraryActions() {
           : "s"
       }`;
 
+  }
+
+
+  if (
+    shareButton
+  ) {
+    const shareableCount =
+      selectedEntries()
+        .filter(
+          entry =>
+            !entry.note.is_shared
+        )
+        .length;
+
+    shareButton.disabled =
+      shareableCount === 0;
   }
 
 
@@ -15039,6 +15331,30 @@ function wireEvents() {
 
   document
     .getElementById(
+      "notebook-library-share"
+    )
+    ?.addEventListener(
+      "click",
+      async () => {
+        const entries =
+          selectedEntries()
+            .filter(
+              entry =>
+                !entry.note.is_shared
+            );
+
+        await openNotebookShareDialog(
+          entries,
+          entries.length === 1
+            ? entries[0]?.title || "Caderno LURIA"
+            : "Cadernos selecionados"
+        );
+      }
+    );
+
+
+  document
+    .getElementById(
       "notebook-library-export"
     )
     ?.addEventListener(
@@ -15533,6 +15849,7 @@ async function initNotebook() {
 
   try {
 
+    await redeemNotebookBundleFromUrl();
     await redeemNotebookShareFromUrl();
 
     await loadData();
