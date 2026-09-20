@@ -2172,3 +2172,354 @@
   max-width: 100%;
   height: auto;
 }
+
+
+/* =========================================================
+   CADERNO TOOLBAR PREMIUM v17
+   ========================================================= */
+
+.notebook-toolbar {
+  gap: 6px;
+  padding: 9px 11px;
+  border-radius: 14px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 98%, var(--accent) 2%),
+      var(--surface)
+    );
+  box-shadow:
+    0 8px 24px rgba(15, 23, 42, .06),
+    inset 0 1px 0 rgba(255, 255, 255, .45);
+}
+
+.notebook-style-select,
+.notebook-font-select,
+.notebook-spacing-select {
+  min-height: 36px;
+  border-radius: 9px;
+  background:
+    color-mix(
+      in srgb,
+      var(--surface) 96%,
+      var(--accent) 4%
+    );
+  transition:
+    border-color .15s ease,
+    box-shadow .15s ease,
+    background .15s ease;
+}
+
+.notebook-font-select {
+  min-width: 105px;
+}
+
+.notebook-spacing-select {
+  min-width: 112px;
+}
+
+.notebook-style-select:hover:not(:disabled),
+.notebook-font-select:hover:not(:disabled),
+.notebook-spacing-select:hover:not(:disabled) {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--accent) 42%,
+      var(--border)
+    );
+}
+
+.notebook-style-select:focus,
+.notebook-font-select:focus,
+.notebook-spacing-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.notebook-premium-tool {
+  min-height: 36px;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--border) 86%,
+      var(--accent) 14%
+    );
+  border-radius: 9px;
+  background:
+    color-mix(
+      in srgb,
+      var(--surface) 97%,
+      var(--accent) 3%
+    );
+}
+
+.notebook-premium-tool:hover:not(:disabled),
+.notebook-premium-tool[aria-expanded="true"] {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--accent) 45%,
+      var(--border)
+    );
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.notebook-tool-glyph {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.notebook-tool-menu {
+  min-width: 220px;
+  padding: 8px;
+  border-radius: 14px;
+  box-shadow:
+    0 22px 60px rgba(15, 23, 42, .16),
+    0 2px 8px rgba(15, 23, 42, .05);
+}
+
+.notebook-template-menu,
+.notebook-image-menu {
+  min-width: 285px;
+}
+
+.notebook-tool-menu-head {
+  display: grid;
+  gap: 3px;
+  padding: 7px 9px 9px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.notebook-tool-menu-head strong {
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--text);
+}
+
+.notebook-tool-menu-head small {
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.notebook-template-menu button,
+.notebook-image-menu button {
+  min-height: 48px;
+  grid-template-columns: 31px minmax(0, 1fr);
+  padding: 7px 9px;
+}
+
+.notebook-template-menu button > span:last-child,
+.notebook-image-menu button > span:last-child {
+  display: grid;
+  gap: 2px;
+}
+
+.notebook-template-menu button strong,
+.notebook-image-menu button strong {
+  font-size: 10px;
+  color: var(--text);
+}
+
+.notebook-template-menu button small,
+.notebook-image-menu button small {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.notebook-menu-icon,
+.notebook-align-glyph {
+  width: 28px;
+  height: 28px;
+  display: grid !important;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.notebook-divider-menu button {
+  min-height: 42px;
+  grid-template-columns: 72px minmax(0, 1fr);
+}
+
+.notebook-line-preview {
+  width: 62px !important;
+  min-width: 62px !important;
+  height: 12px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.notebook-line-preview.solid {
+  border-top: 2px solid var(--text);
+}
+
+.notebook-line-preview.dotted {
+  border-top: 2px dotted var(--text);
+}
+
+.notebook-line-preview.arabesque {
+  color: var(--accent);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px !important;
+}
+
+.notebook-align-menu {
+  min-width: 190px;
+}
+
+.notebook-align-menu button {
+  grid-template-columns: 30px minmax(0, 1fr);
+}
+
+.notebook-editor hr.notebook-divider {
+  height: 0;
+  margin: 32px 0;
+  background: transparent;
+}
+
+.notebook-editor hr.notebook-divider.solid {
+  border: 0;
+  border-top: 2px solid
+    color-mix(
+      in srgb,
+      var(--text) 32%,
+      var(--border)
+    );
+}
+
+.notebook-editor hr.notebook-divider.dotted {
+  border: 0;
+  border-top: 2px dotted
+    color-mix(
+      in srgb,
+      var(--text) 42%,
+      var(--border)
+    );
+}
+
+.notebook-editor .notebook-divider.arabesque {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 30px 0;
+  color: var(--accent);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24px;
+  line-height: 1;
+  text-align: center;
+}
+
+.notebook-editor .notebook-divider.arabesque::before,
+.notebook-editor .notebook-divider.arabesque::after {
+  content: "";
+  width: min(34%, 210px);
+  height: 1px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--accent) 45%, var(--border))
+    );
+}
+
+.notebook-editor .notebook-divider.arabesque::after {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--accent) 45%, var(--border)),
+      transparent
+    );
+}
+
+/* Menus antigos também recebem acabamento consistente. */
+.notebook-list-menu button,
+#notebook-table-menu button,
+#notebook-callout-menu button,
+.notebook-align-menu button,
+.notebook-divider-menu button {
+  border-radius: 9px;
+}
+
+.notebook-emoji-menu {
+  padding: 10px;
+  border-radius: 14px;
+  box-shadow:
+    0 22px 60px rgba(15, 23, 42, .16);
+}
+
+.notebook-emoji-button {
+  height: 38px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+}
+
+.notebook-emoji-button:hover {
+  border-color: var(--border);
+  background: var(--accent-soft);
+  transform: translateY(-1px);
+}
+
+#notebook-callout-menu button {
+  min-height: 42px;
+}
+
+/* Callouts com acabamento mais editorial. */
+.notebook-study-block {
+  position: relative;
+  overflow: hidden;
+  padding: 16px 18px;
+  border-radius: 12px;
+  box-shadow:
+    0 5px 18px rgba(15, 23, 42, .045);
+}
+
+.notebook-study-block::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--text) 8%, transparent),
+      transparent
+    );
+  pointer-events: none;
+}
+
+@media (max-width: 760px) {
+  .notebook-toolbar {
+    gap: 5px;
+    padding: 8px;
+  }
+
+  .notebook-font-select {
+    min-width: 92px;
+  }
+
+  .notebook-spacing-select {
+    min-width: 100px;
+  }
+
+  .notebook-template-menu,
+  .notebook-image-menu {
+    min-width: min(285px, calc(100vw - 28px));
+  }
+}
