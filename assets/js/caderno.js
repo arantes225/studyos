@@ -403,8 +403,8 @@ function getCurrentDocument() {
 
 function notebookTopicPanelKey() {
   return notebookState.user?.id
-    ? `resibulando:notebook-topic-panel:${notebookState.user.id}`
-    : "resibulando:notebook-topic-panel";
+    ? `luria:notebook-topic-panel:${notebookState.user.id}`
+    : "luria:notebook-topic-panel";
 }
 
 
@@ -12826,7 +12826,7 @@ async function exportSelectedPdf() {
 
 
   doc.save(
-    "resibulando-cadernos.pdf"
+    "luria-cadernos.pdf"
   );
 
 }
