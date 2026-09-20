@@ -12876,9 +12876,15 @@ function createNotebookPdfPage(entry) {
 
   editor.innerHTML =
     sanitizeHtml(
-      entry.note
-        ?.content_html
-      || ""
+      entry.note?.is_shared
+        ? applySharedNotebookPatch(
+            entry.note
+          )
+        : (
+            entry.note
+              ?.content_html
+            || ""
+          )
     );
 
   headMain.append(
@@ -13391,6 +13397,21 @@ async function deleteCurrentNotebook() {
     getCurrentDocument();
 
   if (
+    current?.note?.is_shared
+  ) {
+    notebookState.librarySelected =
+      new Set([
+        current.note.id
+      ]);
+
+    await deleteSelectedNotes();
+
+    closeDocumentMenu();
+
+    return;
+  }
+
+  if (
     !current?.note?.id
   ) {
     alert(
@@ -13598,86 +13619,171 @@ async function deleteSelectedNotes() {
   if (
     !entries.length
   ) {
-
     return;
+  }
 
+
+  const sharedEntries =
+    entries.filter(
+      entry =>
+        entry.note.is_shared
+    );
+
+
+  const ownedEntries =
+    entries.filter(
+      entry =>
+        !entry.note.is_shared
+    );
+
+
+  const parts = [];
+
+  if (ownedEntries.length) {
+    parts.push(
+      `${ownedEntries.length} caderno${ownedEntries.length === 1 ? "" : "s"} seu${ownedEntries.length === 1 ? "" : "s"} será${ownedEntries.length === 1 ? "" : "ão"} apagado${ownedEntries.length === 1 ? "" : "s"}`
+    );
+  }
+
+  if (sharedEntries.length) {
+    parts.push(
+      `${sharedEntries.length} material${sharedEntries.length === 1 ? "" : "is"} compartilhado${sharedEntries.length === 1 ? "" : "s"} será${sharedEntries.length === 1 ? "" : "ão"} removido${sharedEntries.length === 1 ? "" : "s"} da sua biblioteca sem apagar o original`
+    );
   }
 
 
   const confirmed =
     window.confirm(
-      `Apagar ${entries.length} caderno${
-        entries.length === 1
-          ? ""
-          : "s"
-      }? As aulas do cronograma não serão apagadas.`
+      `${parts.join(". ")}. Continuar?`
     );
 
 
-  if (
-    !confirmed
-  ) {
-
+  if (!confirmed) {
     return;
-
   }
-
-
-  const ids =
-    entries.map(
-      (entry) =>
-        entry.note.id
-    );
 
 
   const currentNoteId =
     getCurrentDocument()
       ?.note
       ?.id
-    ||
-    null;
+    || null;
 
 
-  const {
-    error
-  } =
-    await notebookSb
-      .from(
-        "study_notes"
-      )
-      .delete()
-      .in(
-        "id",
-        ids
-      )
-      .eq(
-        "user_id",
-        notebookState.user.id
+  if (ownedEntries.length) {
+    const ownedIds =
+      ownedEntries.map(
+        entry =>
+          entry.note.id
       );
 
 
-  if (
-    error
-  ) {
+    const {
+      error:
+        deleteOwnedError
+    } =
+      await notebookSb
+        .from(
+          "study_notes"
+        )
+        .delete()
+        .in(
+          "id",
+          ownedIds
+        )
+        .eq(
+          "user_id",
+          notebookState.user.id
+        );
 
-    console.error(
-      error
-    );
 
+    if (deleteOwnedError) {
+      console.error(
+        deleteOwnedError
+      );
 
-    alert(
-      `Não foi possível apagar: ${error.message}`
-    );
+      alert(
+        `Não foi possível apagar seus cadernos: ${deleteOwnedError.message}`
+      );
 
-
-    return;
-
+      return;
+    }
   }
 
 
-  entries.forEach(
-    (entry) => {
+  if (sharedEntries.length) {
+    const sharedIds =
+      sharedEntries.map(
+        entry =>
+          entry.note.id
+      );
 
+
+    const [
+      overlayResult,
+      memberResult
+    ] =
+      await Promise.all([
+        notebookSb
+          .from(
+            "study_note_overlays"
+          )
+          .delete()
+          .eq(
+            "user_id",
+            notebookState.user.id
+          )
+          .in(
+            "note_id",
+            sharedIds
+          ),
+
+        notebookSb
+          .from(
+            "study_note_members"
+          )
+          .delete()
+          .eq(
+            "user_id",
+            notebookState.user.id
+          )
+          .in(
+            "note_id",
+            sharedIds
+          )
+      ]);
+
+
+    if (
+      overlayResult.error
+      || memberResult.error
+    ) {
+      const error =
+        overlayResult.error
+        || memberResult.error;
+
+      console.error(
+        error
+      );
+
+      alert(
+        `Não foi possível remover o material compartilhado: ${error.message}`
+      );
+
+      return;
+    }
+  }
+
+
+  const ids =
+    entries.map(
+      entry =>
+        entry.note.id
+    );
+
+
+  entries.forEach(
+    entry => {
       notebookState
         .notesById
         .delete(
@@ -13688,15 +13794,39 @@ async function deleteSelectedNotes() {
       if (
         entry.note.topic_id
       ) {
+        const mapped =
+          notebookState
+            .notesByTopic
+            .get(
+              entry.note.topic_id
+            );
 
-        notebookState
-          .notesByTopic
-          .delete(
-            entry.note.topic_id
-          );
 
+        if (
+          mapped?.id ===
+          entry.note.id
+        ) {
+          notebookState
+            .notesByTopic
+            .delete(
+              entry.note.topic_id
+            );
+        }
       }
 
+
+      notebookState
+        .sharedMemberships
+        .delete(
+          entry.note.id
+        );
+
+
+      notebookState
+        .overlays
+        .delete(
+          entry.note.id
+        );
     }
   );
 
@@ -13713,28 +13843,21 @@ async function deleteSelectedNotes() {
       currentNoteId
     )
   ) {
-
     notebookState.selectedType =
       null;
-
 
     notebookState.selectedTopicId =
       null;
 
-
     notebookState.selectedNoteId =
       null;
 
-
     renderDocument();
-
   }
 
 
   renderTopicList();
-
   renderLibrary();
-
 }
 
 
@@ -15427,9 +15550,15 @@ async function initNotebook() {
         requestedNote
       )
       &&
-      !noteById(
-        requestedNote
-      ).topic_id
+      (
+        !noteById(
+          requestedNote
+        ).topic_id
+        ||
+        noteById(
+          requestedNote
+        ).is_shared
+      )
     ) {
 
       await openFreeNote(
