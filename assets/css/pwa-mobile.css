@@ -303,3 +303,321 @@
     font-size: 7.5px !important;
   }
 }
+
+/* =========================================================
+   PWA MOBILE v2 — Estatísticas e Admin
+   Corrige escala, respiro e legibilidade em iPhone/PWA.
+   Mantém 2 colunas onde faz sentido, sem "miniaturizar" a UI.
+   ========================================================= */
+@media (max-width: 760px) {
+  .pwa-standalone body[data-page="estatisticas"] .main,
+  .pwa-standalone body[data-page="admin"] .main {
+    padding:
+      max(14px, env(safe-area-inset-top))
+      12px
+      calc(28px + env(safe-area-inset-bottom))
+      12px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .topbar,
+  .pwa-standalone body[data-page="admin"] .topbar {
+    min-height: 54px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .page-heading h1,
+  .pwa-standalone body[data-page="admin"] .page-heading h1 {
+    font-size: 22px !important;
+    line-height: 1.12 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .page-heading .eyebrow,
+  .pwa-standalone body[data-page="admin"] .page-heading .eyebrow {
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+  }
+
+  /* ---------- Estatísticas ---------- */
+  .pwa-standalone body[data-page="estatisticas"] .stats-page {
+    gap: 12px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-hero,
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-box,
+  .pwa-standalone body[data-page="estatisticas"] .stats-block {
+    padding: 13px !important;
+    border-radius: 14px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-hero {
+    gap: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-hero h2 {
+    font-size: 20px !important;
+    line-height: 1.15 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-hero p {
+    font-size: 11px !important;
+    line-height: 1.45 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .badge {
+    font-size: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-range {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+    padding: 4px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-range button {
+    min-height: 34px !important;
+    padding: 0 4px !important;
+    font-size: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tabs-shell {
+    padding: 4px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tabs {
+    min-width: 620px !important;
+    grid-template-columns: repeat(5, minmax(116px, 1fr)) !important;
+    gap: 4px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tab {
+    min-height: 38px !important;
+    padding: 0 8px !important;
+    font-size: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-status {
+    font-size: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-section-head h3 {
+    font-size: 16px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-section-head p {
+    font-size: 10px !important;
+    line-height: 1.4 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-kicker {
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card {
+    min-height: 96px !important;
+    padding: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card span {
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card strong {
+    margin-top: 6px !important;
+    font-size: 20px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card small {
+    font-size: 9px !important;
+    line-height: 1.35 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini {
+    padding: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini span {
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini strong {
+    font-size: 16px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini small {
+    font-size: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .chart-box {
+    min-height: 220px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .chart-box.compact {
+    min-height: 190px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-heatmap,
+  .pwa-standalone body[data-page="estatisticas"] .stats-table-wrap {
+    margin-left: -2px !important;
+    margin-right: -2px !important;
+    padding-bottom: 4px !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ---------- Admin ---------- */
+  .pwa-standalone body[data-page="admin"] .admin-page {
+    gap: 12px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-topbar {
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+    gap: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-range select {
+    min-height: 34px !important;
+    padding: 0 8px !important;
+    font-size: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-status {
+    min-height: 18px !important;
+    font-size: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-grid,
+  .pwa-standalone body[data-page="admin"] .admin-metrics-grid,
+  .pwa-standalone body[data-page="admin"] .admin-feature-grid,
+  .pwa-standalone body[data-page="admin"] .admin-infra-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-card,
+  .pwa-standalone body[data-page="admin"] .admin-metric-card,
+  .pwa-standalone body[data-page="admin"] .admin-feature-card,
+  .pwa-standalone body[data-page="admin"] .admin-infra-card {
+    min-height: 92px !important;
+    padding: 11px !important;
+    border-radius: 12px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-card span,
+  .pwa-standalone body[data-page="admin"] .admin-metric-card span,
+  .pwa-standalone body[data-page="admin"] .admin-feature-card span,
+  .pwa-standalone body[data-page="admin"] .admin-infra-card > span {
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-card strong,
+  .pwa-standalone body[data-page="admin"] .admin-metric-card strong,
+  .pwa-standalone body[data-page="admin"] .admin-feature-card strong,
+  .pwa-standalone body[data-page="admin"] .admin-infra-card > strong {
+    margin-top: 6px !important;
+    font-size: 20px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-card small,
+  .pwa-standalone body[data-page="admin"] .admin-metric-card small,
+  .pwa-standalone body[data-page="admin"] .admin-feature-card small,
+  .pwa-standalone body[data-page="admin"] .admin-infra-card > small {
+    margin-top: 6px !important;
+    min-height: 0 !important;
+    font-size: 9px !important;
+    line-height: 1.35 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-section {
+    padding: 13px !important;
+    border-radius: 14px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-section-head {
+    margin-bottom: 11px !important;
+    gap: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-section-head h2 {
+    font-size: 18px !important;
+    line-height: 1.18 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-section-head > small,
+  .pwa-standalone body[data-page="admin"] .admin-logistics-head-meta small {
+    font-size: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-finance-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-finance-card {
+    min-height: 92px !important;
+    padding: 11px 12px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-finance-card > span {
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-finance-card > strong {
+    font-size: 20px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-finance-card > small {
+    min-height: 0 !important;
+    font-size: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-cost-breakdown {
+    padding: 10px !important;
+    gap: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-cost-items {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-customer-tools {
+    grid-template-columns: 1fr auto !important;
+    gap: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-customer-tools input {
+    min-height: 38px !important;
+    font-size: 11px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-customer-table {
+    min-width: 820px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-customer-table th,
+  .pwa-standalone body[data-page="admin"] .admin-customer-table td {
+    padding: 8px !important;
+    font-size: 9px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-grid,
+  .pwa-standalone body[data-page="admin"] .admin-plan-grid,
+  .pwa-standalone body[data-page="admin"] .admin-metrics-grid,
+  .pwa-standalone body[data-page="admin"] .admin-feature-grid,
+  .pwa-standalone body[data-page="admin"] .admin-infra-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
