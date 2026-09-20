@@ -1371,39 +1371,55 @@
         }))
         .sort((a, b) => b.errors - a.errors);
 
-    const mostErrorsArea =
-      wrongByArea[0]
-      || null;
-
     const bestSet = sets
       .filter(x=>Number.isFinite(Number(x.accuracy_percent)))
       .slice()
       .sort((a,b)=>Number(b.accuracy_percent)-Number(a.accuracy_percent))[0];
 
+    const averageSetAccuracy =
+      setAccuracies.length
+        ? setAccuracies.reduce((sum,value)=>sum+value,0) / setAccuracies.length
+        : null;
+
     renderSummary("question-summary", [
-      {label:"Simulados realizados",value:num(completedSets),helper:`${sets.length} com atividade`,progress:Math.min(100,completedSets*12)},
-      {label:"Questões respondidas",value:num(attempts.length),helper:compare(attempts.length,prevAttempts.length),progress:Math.min(100,attempts.length/500*100)},
-      {label:"Aproveitamento",value:percent(accuracy,1),helper:comparePP(accuracy,prevAccuracy),progress:accuracy},
-      {label:"Acertos",value:num(correct),helper:`${percent(accuracy,1)} das respostas`,progress:accuracy},
-      {label:"Erros",value:num(wrong),helper:`${percent(pct(wrong,attempts.length),1)} das respostas`,progress:pct(wrong,attempts.length)},
-      {label:"Erros enviados ao Caderno",value:num(sent),helper:`${percent(conversion,1)} dos erros`,progress:conversion},
-      {label:"Conversão para o Caderno",value:percent(conversion,1),helper:`${sent}/${wrong} erros`,progress:conversion},
+      {
+        label:"Questões respondidas",
+        value:num(attempts.length),
+        helper:compare(attempts.length,prevAttempts.length),
+        progress:Math.min(100,attempts.length/500*100)
+      },
+      {
+        label:"Aproveitamento",
+        value:percent(accuracy,1),
+        helper:comparePP(accuracy,prevAccuracy),
+        progress:accuracy
+      },
+      {
+        label:"Erros",
+        value:num(wrong),
+        helper:`${percent(pct(wrong,attempts.length),1)} das respostas`,
+        progress:pct(wrong,attempts.length)
+      },
+      {
+        label:"Simulados realizados",
+        value:num(completedSets),
+        helper:`${sets.length} com atividade`,
+        progress:Math.min(100,completedSets*12)
+      },
+      {
+        label:"Média dos simulados",
+        value:averageSetAccuracy==null?"—":percent(averageSetAccuracy,1),
+        helper:setAccuracies.length?`${setAccuracies.length} resultado${setAccuracies.length===1?"":"s"}`:"sem resultados",
+        progress:averageSetAccuracy||0
+      },
       {
         label:"Melhor simulado",
         value:bestSet?.title||"—",
-        helper:bestSet?`${percent(Number(bestSet.accuracy_percent),1)} · ${num(bestSet.answered_count)} respondidas`:"sem simulado concluído",
+        helper:bestSet?`${percent(Number(bestSet.accuracy_percent),1)} de aproveitamento`:"sem simulado concluído",
         progress:Number(bestSet?.accuracy_percent)||0
-      },
-      {
-        label:"Área com mais erros",
-        value:mostErrorsArea?.label||"—",
-        helper:mostErrorsArea?`${mostErrorsArea.errors} erro${mostErrorsArea.errors===1?"":"s"} · ${mostErrorsArea.sent} ao Caderno`:"sem erros com área registrada",
-        progress:wrong?Math.min(100,pct(mostErrorsArea?.errors||0,wrong)):0
       }
     ]);
 
-    renderMetricStrip("question-performance-metrics",[]);
-    renderMetricStrip("question-error-metrics",[]);
 
     const series = dateSeries(attempts,"answered_at");
     const dailyAcc = Array.from(group(attempts,x=>dateKey(x.answered_at)).entries())
@@ -1417,58 +1433,62 @@
 
     const areas = wrongByArea;
 
+    const orderedSets =
+      sets
+        .slice()
+        .sort((a,b)=>String(a.last_answered_at||"").localeCompare(String(b.last_answered_at||"")));
+
     chart(
-      "chart-question-area",
-      "bar",
-      areas.slice(0,10).map(x=>x.label),
+      "chart-question-sets",
+      "line",
+      orderedSets.map(x=>x.title||"Simulado"),
       [
         {
-          label:"Erros",
-          data:areas.slice(0,10).map(x=>x.errors)
+          label:"Aproveitamento %",
+          data:orderedSets.map(x=>
+            Number.isFinite(Number(x.accuracy_percent))
+              ? Number(Number(x.accuracy_percent).toFixed(1))
+              : null
+          )
         }
-      ]
+      ],
+      {
+        max:100
+      }
     );
 
     table(
-      "question-area-table",
+      "question-set-table",
       [
-        {label:"Área"},
+        {label:"Simulado"},
+        {label:"Respondidas",num:true},
         {label:"Erros",num:true},
-        {label:"Enviados ao Caderno",num:true},
-        {label:"Conversão",num:true}
+        {label:"Aproveitamento",num:true}
       ],
-      areas.map(x=>[
-        `<strong>${esc(x.label)}</strong>`,
-        num(x.errors),
-        num(x.sent),
-        percent(pct(x.sent,x.errors),1)
-      ])
-    );
-
-    table("question-set-table",
-      [{label:"Simulado"},{label:"Questões",num:true},{label:"Respondidas",num:true},{label:"Acertos",num:true},{label:"Erros",num:true},{label:"Aproveitamento",num:true},{label:"Ao Caderno",num:true}],
-      sets.slice().sort((a,b)=>String(b.last_answered_at||"").localeCompare(String(a.last_answered_at||""))).map(x=>[
-        `<strong>${esc(x.title||"Simulado")}</strong>`,
-        num(x.total_questions),num(x.answered_count),num(x.correct_count),num(x.wrong_count),
-        x.accuracy_percent==null?"—":percent(Number(x.accuracy_percent),1),num(x.sent_to_error_count)
-      ])
+      sets
+        .slice()
+        .sort((a,b)=>String(b.last_answered_at||"").localeCompare(String(a.last_answered_at||"")))
+        .map(x=>[
+          `<strong>${esc(x.title||"Simulado")}</strong>`,
+          num(x.answered_count),
+          num(x.wrong_count),
+          x.accuracy_percent==null?"—":percent(Number(x.accuracy_percent),1)
+        ])
     );
 
     const out=[];
-    if(mostErrorsArea) {
+    if(wrong) {
       out.push({
-        title:"Maior concentração de erros",
-        text:`${mostErrorsArea.label} concentra ${mostErrorsArea.errors} erro${mostErrorsArea.errors===1?"":"s"} com área registrada.`
+        title:"Transformação em revisão",
+        text:`${sent} de ${wrong} erros foram enviados ao Caderno de Erros (${percent(conversion,1)}).`
       });
     }
-    if(bestSet) {
+    if(state.range!=="all"&&prevAttempts.length) {
       out.push({
-        title:"Melhor simulado",
-        text:`${bestSet.title||"Simulado"} teve ${percent(Number(bestSet.accuracy_percent),1)} de aproveitamento.`
+        title:"Tendência",
+        text:`O aproveitamento ${accuracy>=prevAccuracy?"subiu":"caiu"} ${num(Math.abs(accuracy-prevAccuracy),1)} p.p. em relação ao período anterior.`
       });
     }
-    if(wrong) out.push({title:"Conversão para o Caderno",text:`${sent} de ${wrong} erros foram transformados em revisão (${percent(conversion,1)}).`});
-    if(state.range!=="all"&&prevAttempts.length) out.push({title:"Tendência",text:`O aproveitamento ${accuracy>=prevAccuracy?"subiu":"caiu"} ${num(Math.abs(accuracy-prevAccuracy),1)} p.p. em relação ao período anterior.`});
     insights("question-insights",out);
 
     renderQuestionAreaWeekHeatmap("question-area-week-heatmap", attempts);
