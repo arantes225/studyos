@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurações · LURIA</title>
+  <link rel="manifest" href="manifest.webmanifest?v=3">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/img/pwa-icon-180.png?v=3">
+  <meta name="theme-color" content="#0A2342">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="LURIA">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria2">
+  <link rel="stylesheet" href="assets/css/style.css?v=luria-palette-11">
+
+  <style>
+    .settings-section {
+      max-width: 900px;
+    }
+
+    .study-days-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .study-days-row {
+      display: grid;
+      grid-template-columns: 180px minmax(0, 1fr);
+      gap: 16px;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .study-days-row:last-child {
+      border-bottom: 0;
+    }
+
+    .study-days-label strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .study-days-label small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .weekday-options {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(48px, 1fr));
+      gap: 7px;
+    }
+
+    .weekday-option {
+      position: relative;
+    }
+
+    .weekday-option input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .weekday-option span {
+      display: grid;
+      place-items: center;
+      min-height: 42px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .weekday-option input:checked + span {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .capacity-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .capacity-row input {
+      width: 90px;
+      min-height: 42px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .settings-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .settings-actions .button {
+      min-height: 42px;
+      padding: 0 15px;
+    }
+
+    .settings-save-status {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .settings-save-status.error {
+      color: var(--danger);
+    }
+
+    .settings-save-status.success {
+      color: var(--success);
+    }
+
+
+    .interval-editor {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .interval-row {
+      display: grid;
+      grid-template-columns: 150px repeat(3, minmax(72px, 1fr));
+      gap: 9px;
+      align-items: end;
+    }
+
+    .interval-label strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .interval-label small {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .interval-field {
+      display: grid;
+      gap: 5px;
+    }
+
+    .interval-field span {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .interval-field input {
+      width: 100%;
+      min-height: 40px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+    }
+
+    .interval-field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+
+    .pomodoro-settings-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .pomodoro-setting-field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .pomodoro-setting-field span {
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .pomodoro-setting-field small {
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .pomodoro-setting-field input {
+      width: 100%;
+      min-height: 42px;
+      padding: 0 11px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+    }
+
+    .pomodoro-setting-field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+
+    .single-setting-grid {
+      display: grid;
+      grid-template-columns: minmax(180px, 280px);
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .single-setting-field,
+    .security-field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .single-setting-field > span,
+    .security-field > span {
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .single-setting-field small,
+    .security-field small,
+    .settings-note {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .single-setting-field input,
+    .security-field input {
+      width: 100%;
+      min-height: 42px;
+      padding: 0 11px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+    }
+
+    .single-setting-field input:focus,
+    .security-field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .security-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .security-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .security-email {
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      padding: 0 11px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .settings-section-title {
+      margin: 8px 0 -4px;
+      padding: 2px 2px 0;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 760px) {
+      .security-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .security-field.full {
+        grid-column: auto;
+      }
+
+      .single-setting-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .study-days-row {
+        grid-template-columns: 1fr;
+      }
+
+      .weekday-options {
+        grid-template-columns: repeat(4, minmax(48px, 1fr));
+      }
+
+      .interval-row {
+        grid-template-columns: 1fr;
+      }
+
+      .pomodoro-settings-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  
+    .profile-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .profile-field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .profile-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .profile-field span {
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .profile-field input,
+    .profile-field select {
+      width: 100%;
+      min-height: 44px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+    }
+
+    .profile-field input:focus,
+    .profile-field select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .profile-preview {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-2);
+    }
+
+    .profile-preview-avatar {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .profile-preview strong,
+    .profile-preview small {
+      display: block;
+    }
+
+    .profile-preview small {
+      margin-top: 3px;
+      color: var(--muted);
+    }
+
+    .profile-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .profile-actions .button {
+      min-height: 42px;
+      padding: 0 15px;
+    }
+
+    .profile-status {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .profile-status.error {
+      color: var(--danger);
+    }
+
+    .profile-status.success {
+      color: var(--success);
+    }
+
+    @media (max-width: 700px) {
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .profile-field.full {
+        grid-column: auto;
+      }
+    }
+
+  
+    .capacity-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .capacity-row label {
+      display: grid;
+      gap: 3px;
+      flex: 1 1 240px;
+    }
+
+    .capacity-row label small {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 500;
+    }
+  
+    .study-mode-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .study-mode-option { position:relative; }
+    .study-mode-option input { position:absolute; opacity:0; pointer-events:none; }
+    .study-mode-option span { min-height:82px; display:grid; align-content:center; gap:4px; padding:14px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2); cursor:pointer; }
+    .study-mode-option strong { font-size:14px; }
+    .study-mode-option small { color:var(--muted); font-size:10px; line-height:1.4; }
+    .study-mode-option input:checked + span { border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 12%,transparent); }
+    @media (max-width:680px) { .study-mode-options { grid-template-columns:1fr; } }
+
+  
+    .error-review-interval-row {
+      grid-template-columns:
+        150px
+        repeat(6, minmax(64px, 1fr));
+    }
+
+    @media (max-width: 1050px) {
+      .error-review-interval-row {
+        grid-template-columns:
+          repeat(3, minmax(90px, 1fr));
+      }
+
+      .error-review-interval-row .interval-label {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .error-review-interval-row {
+        grid-template-columns:
+          repeat(2, minmax(0, 1fr));
+      }
+    }
+
+  </style>
+  <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
+  <script defer src="assets/js/luria-brand-v5.js?v=8"></script>
+</head>
+
+<body data-page="configuracoes">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar"></aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <main class="main">
+      <div class="page">
+        <header class="topbar">
+          <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
+
+          <div class="page-heading">
+            <span class="eyebrow" data-page-eyebrow></span>
+            <h1 data-page-title></h1>
+          </div>
+        </header>
+
+        <section class="settings-section">
+
+          <article class="setting-row">
+            <div>
+              <h2>Perfil</h2>
+              <p>
+                Essas informações aparecem no menu lateral do LURIA.
+              </p>
+            </div>
+
+            <div class="profile-grid">
+              <label class="profile-field full">
+                <span>Nome de usuário</span>
+                <input
+                  id="profile-name"
+                  type="text"
+                  maxlength="80"
+                  placeholder="Ex.: Luiz Arantes"
+                  autocomplete="name"
+                >
+              </label>
+
+              <label class="profile-field">
+                <span>Sexo</span>
+                <select id="profile-gender">
+                  <option value="">Selecione</option>
+                  <option value="male">Masculino</option>
+                  <option value="female">Feminino</option>
+                  <option value="other">Outro</option>
+                  <option value="prefer_not_to_say">Prefiro não informar</option>
+                </select>
+              </label>
+
+              <label class="profile-field">
+                <span>Especialidade</span>
+                <input
+                  id="profile-specialty"
+                  type="text"
+                  maxlength="100"
+                  list="specialty-options"
+                  placeholder="Ex.: Cirurgia Geral"
+                >
+
+                <datalist id="specialty-options" data-luria-area-list>
+                  <option value="Alergia e Imunologia">
+                  <option value="Anestesiologia">
+                  <option value="Angiologia">
+                  <option value="Cardiologia">
+                  <option value="Cirurgia Cardiovascular">
+                  <option value="Cirurgia da Mão">
+                  <option value="Cirurgia de Cabeça e Pescoço">
+                  <option value="Cirurgia do Aparelho Digestivo">
+                  <option value="Cirurgia Geral">
+                  <option value="Cirurgia Oncológica">
+                  <option value="Cirurgia Pediátrica">
+                  <option value="Cirurgia Plástica">
+                  <option value="Cirurgia Torácica">
+                  <option value="Cirurgia Vascular">
+                  <option value="Clínica Médica">
+                  <option value="Coloproctologia">
+                  <option value="Dermatologia">
+                  <option value="Endocrinologia e Metabologia">
+                  <option value="Endoscopia">
+                  <option value="Gastroenterologia">
+                  <option value="Genética Médica">
+                  <option value="Geriatria">
+                  <option value="Ginecologia e Obstetrícia">
+                  <option value="Hematologia e Hemoterapia">
+                  <option value="Homeopatia">
+                  <option value="Infectologia">
+                  <option value="Mastologia">
+                  <option value="Medicina de Emergência">
+                  <option value="Medicina de Família e Comunidade">
+                  <option value="Medicina do Esporte">
+                  <option value="Medicina do Trabalho">
+                  <option value="Medicina Física e Reabilitação">
+                  <option value="Medicina Intensiva">
+                  <option value="Medicina Legal e Perícia Médica">
+                  <option value="Medicina Nuclear">
+                  <option value="Medicina Preventiva">
+                  <option value="Nefrologia">
+                  <option value="Neurocirurgia">
+                  <option value="Neurologia">
+                  <option value="Nutrologia">
+                  <option value="Oftalmologia">
+                  <option value="Oncologia Clínica">
+                  <option value="Ortopedia e Traumatologia">
+                  <option value="Otorrinolaringologia">
+                  <option value="Patologia">
+                  <option value="Patologia Clínica / Medicina Laboratorial">
+                  <option value="Pediatria">
+                  <option value="Pneumologia">
+                  <option value="Psiquiatria">
+                  <option value="Radiologia e Diagnóstico por Imagem">
+                  <option value="Radioterapia">
+                  <option value="Reumatologia">
+                  <option value="Urologia">
+                </datalist>
+              </label>
+            </div>
+
+            <div class="profile-preview">
+              <div id="profile-preview-avatar" class="profile-preview-avatar">U</div>
+              <div>
+                <strong id="profile-preview-name">Seu nome</strong>
+                <small id="profile-preview-specialty">Sua especialidade</small>
+              </div>
+            </div>
+
+            <div class="profile-actions">
+              <button id="save-profile" class="button primary" type="button">
+                Salvar perfil
+              </button>
+
+              <span id="profile-status" class="profile-status" aria-live="polite"></span>
+            </div>
+          </article>
+
+          <article class="setting-row">
+            <div>
+              <h2>Aparência</h2>
+              <p>O tema fica salvo na sua conta.</p>
+            </div>
+
+            <form id="theme-form" class="theme-options">
+              <label class="theme-option">
+                <input type="radio" name="theme" value="light">
+                <span>Claro</span>
+              </label>
+
+              <label class="theme-option">
+                <input type="radio" name="theme" value="dark">
+                <span>Escuro</span>
+              </label>
+
+              <label class="theme-option">
+                <input type="radio" name="theme" value="system">
+                <span>Sistema</span>
+              </label>
+
+              <label class="theme-option leila-preview">
+                <input type="radio" name="theme" value="leila-mood">
+                <span>
+                  <strong>Leila Mood</strong>
+                  <small>tons de rosa</small>
+                </span>
+              </label>
+            </form>
+
+            <div id="theme-status" class="inline-status"></div>
+          </article>
+
+
+          <article class="setting-row study-mode-setting">
+            <div>
+              <h2>Modo de estudo</h2>
+              <p>
+                Define as áreas sugeridas pelo LURIA e qual Cronograma Base
+                será oferecido na aba Cronograma.
+              </p>
+            </div>
+
+            <div class="study-mode-options">
+              <label class="study-mode-option">
+                <input type="radio" name="study-mode" value="medicine">
+                <span>
+                  <strong>Medicina</strong>
+                  <small>ENARE · 180 aulas no Cronograma Base</small>
+                </span>
+              </label>
+
+              <label class="study-mode-option">
+                <input type="radio" name="study-mode" value="dentistry">
+                <span>
+                  <strong>Odontologia</strong>
+                  <small>ENARE · 108 aulas no Cronograma Base</small>
+                </span>
+              </label>
+            </div>
+
+            <div class="settings-actions">
+              <button id="save-study-mode" class="button primary" type="button">Salvar modo</button>
+              <span id="study-mode-status" class="settings-save-status" aria-live="polite"></span>
+            </div>
+          </article>
+
+          <article class="setting-row">
+            <div>
+              <h2>Dias de estudo</h2>
+              <p>
+                Revisões automáticas serão deslocadas para o próximo dia permitido.
+                Movimentos manuais na agenda continuam livres.
+              </p>
+            </div>
+
+            <div class="study-days-grid">
+
+              <div class="study-days-row">
+                <div class="study-days-label">
+                  <strong>Flashcards</strong>
+                  <small>Dias em que revisões de flashcards podem cair.</small>
+                </div>
+                <div class="weekday-options" data-weekday-group="flashcard_weekdays"></div>
+              </div>
+
+              <div class="study-days-row">
+                <div class="study-days-label">
+                  <strong>Estudo teórico</strong>
+                  <small>Dias preferenciais para aulas e distribuição automática futura.</small>
+                </div>
+                <div class="weekday-options" data-weekday-group="theory_study_weekdays"></div>
+              </div>
+
+              <div class="study-days-row">
+                <div class="study-days-label">
+                  <strong>Revisão teórica</strong>
+                  <small>Dias usados para revisões das matérias já estudadas.</small>
+                </div>
+                <div class="weekday-options" data-weekday-group="theory_review_weekdays"></div>
+              </div>
+
+              <div class="study-days-row">
+                <div class="study-days-label">
+                  <strong>Caderno de erros</strong>
+                  <small>Dias permitidos para a revisão dos CCQs.</small>
+                </div>
+                <div class="weekday-options" data-weekday-group="error_weekdays"></div>
+              </div>
+
+              <div class="study-days-row">
+                <div class="study-days-label">
+                  <strong>Questões</strong>
+                  <small>Dias destinados às sessões de questões.</small>
+                </div>
+                <div class="weekday-options" data-weekday-group="question_weekdays"></div>
+              </div>
+
+            </div>
+
+            <div class="capacity-grid">
+
+              <div class="capacity-row">
+                <label for="max-lessons-per-day">
+                  <strong>Máximo de aulas teóricas por dia</strong>
+                  <small>
+                    Usado ao reorganizar aulas atrasadas no Cronograma.
+                  </small>
+                </label>
+
+                <input
+                  id="max-lessons-per-day"
+                  type="number"
+                  min="1"
+                  max="50"
+                  step="1"
+                  value="1"
+                >
+              </div>
+
+              <div class="capacity-row">
+                <label for="max-subject-reviews">
+                  <strong>Máximo de revisões teóricas por dia</strong>
+                </label>
+
+                <input
+                  id="max-subject-reviews"
+                  type="number"
+                  min="1"
+                  max="50"
+                  step="1"
+                  value="3"
+                >
+              </div>
+
+            </div>
+
+            <div class="settings-actions">
+              <button id="save-study-days" class="button primary" type="button">
+                Salvar dias de estudo
+              </button>
+
+              <span id="study-days-status" class="settings-save-status" aria-live="polite"></span>
+            </div>
+          </article>
+
+          <article class="setting-row">
+            <div>
+              <h2>Pomodoro</h2>
+              <p>
+                Defina a duração padrão dos ciclos de foco e das pausas.
+                O tempo contabilizado no Dashboard considera somente o foco efetivo.
+              </p>
+            </div>
+
+            <div class="pomodoro-settings-grid">
+              <label class="pomodoro-setting-field">
+                <span>Foco</span>
+                <input
+                  id="pomodoro-focus-minutes"
+                  type="number"
+                  min="1"
+                  max="240"
+                  step="1"
+                  value="25"
+                >
+                <small>minutos por ciclo</small>
+              </label>
+
+              <label class="pomodoro-setting-field">
+                <span>Pausa</span>
+                <input
+                  id="pomodoro-break-minutes"
+                  type="number"
+                  min="1"
+                  max="120"
+                  step="1"
+                  value="5"
+                >
+                <small>minutos por pausa</small>
+              </label>
+            </div>
+
+            <div class="settings-actions">
+              <button
+                id="save-pomodoro-settings"
+                class="button primary"
+                type="button"
+              >
+                Salvar Pomodoro
+              </button>
+
+              <span
+                id="pomodoro-settings-status"
+                class="settings-save-status"
+                aria-live="polite"
+              ></span>
+            </div>
+          </article>
+
+          <article class="setting-row">
+            <div>
+              <h2>Periodização dos flashcards</h2>
+              <p>
+                Defina os intervalos usados nas três primeiras etapas.
+                Depois da terceira etapa, o intervalo continua crescendo gradativamente.
+              </p>
+            </div>
+
+            <div class="interval-editor">
+
+              <div class="interval-row">
+                <div class="interval-label">
+                  <strong>Difícil</strong>
+                  <small>Conta como erro.</small>
+                </div>
+
+                <label class="interval-field">
+                  <span>1ª etapa</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="flashcard_intervals_hard"
+                    data-interval-index="0"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>2ª etapa</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="flashcard_intervals_hard"
+                    data-interval-index="1"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>3ª etapa</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="flashcard_intervals_hard"
+                    data-interval-index="2"
+                  >
+                </label>
+              </div>
+
+              <div class="interval-row">
+                <div class="interval-label">
+                  <strong>Intermediário</strong>
+                  <small>Conta como acerto.</small>
+                </div>
+
+                <label class="interval-field">
+                  <span>1ª etapa</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="flashcard_intervals_medium"
+                    data-interval-index="0"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>2ª etapa</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="flashcard_intervals_medium"
+                    data-interval-index="1"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>3ª etapa</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="flashcard_intervals_medium"
+                    data-interval-index="2"
+                  >
+                </label>
+              </div>
+
+              <div class="interval-row">
+                <div class="interval-label">
+                  <strong>Fácil</strong>
+                  <small>Conta como acerto.</small>
+                </div>
+
+                <label class="interval-field">
+                  <span>1ª etapa</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="flashcard_intervals_easy"
+                    data-interval-index="0"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>2ª etapa</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="flashcard_intervals_easy"
+                    data-interval-index="1"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>3ª etapa</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="flashcard_intervals_easy"
+                    data-interval-index="2"
+                  >
+                </label>
+              </div>
+
+            </div>
+
+            <div class="settings-actions">
+              <button
+                id="save-flashcard-intervals"
+                class="button primary"
+                type="button"
+              >
+                Salvar intervalos
+              </button>
+
+              <span
+                id="flashcard-intervals-status"
+                class="settings-save-status"
+                aria-live="polite"
+              ></span>
+            </div>
+          </article>
+
+          <article class="setting-row">
+            <div>
+              <h2>Caderno de erros</h2>
+              <p>
+                Configure a sequência de revisões dos CCQs. Cada valor representa
+                quantos dias serão adicionados depois de clicar em <strong>Lido</strong>.
+              </p>
+            </div>
+
+            <div class="interval-editor">
+              <div class="interval-row error-review-interval-row">
+
+                <div class="interval-label">
+                  <strong>Revisões</strong>
+                  <small>Sequência padrão: 7 + 21 + 21 + 21 + 21 + 21 dias.</small>
+                </div>
+
+                <label class="interval-field">
+                  <span>1ª</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="error_review_intervals"
+                    data-interval-index="0"
+                    value="7"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>2ª</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="error_review_intervals"
+                    data-interval-index="1"
+                    value="21"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>3ª</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="error_review_intervals"
+                    data-interval-index="2"
+                    value="21"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>4ª</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="error_review_intervals"
+                    data-interval-index="3"
+                    value="21"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>5ª</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="error_review_intervals"
+                    data-interval-index="4"
+                    value="21"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>6ª+</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="error_review_intervals"
+                    data-interval-index="5"
+                    value="21"
+                  >
+                </label>
+
+              </div>
+            </div>
+
+            <p class="settings-note">
+              Depois da 6ª revisão, o último intervalo continua sendo reutilizado.
+              Os dias permitidos para o Caderno de Erros continuam sendo respeitados.
+            </p>
+
+            <div class="settings-actions">
+              <button
+                id="save-error-review-settings"
+                class="button primary"
+                type="button"
+              >
+                Salvar Caderno de Erros
+              </button>
+
+              <span
+                id="error-review-settings-status"
+                class="settings-save-status"
+                aria-live="polite"
+              ></span>
+            </div>
+          </article>
+
+          <article class="setting-row">
+            <div>
+              <h2>Revisão de matérias</h2>
+              <p>
+                Configure quando as revisões teóricas serão criadas após
+                concluir uma aula.
+              </p>
+            </div>
+
+            <div class="interval-editor">
+              <div class="interval-row">
+                <div class="interval-label">
+                  <strong>Revisões</strong>
+                  <small>Dias depois da aula.</small>
+                </div>
+
+                <label class="interval-field">
+                  <span>1ª revisão</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="subject_review_intervals"
+                    data-interval-index="0"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>2ª revisão</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="subject_review_intervals"
+                    data-interval-index="1"
+                  >
+                </label>
+
+                <label class="interval-field">
+                  <span>3ª revisão</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="3650"
+                    data-interval-field="subject_review_intervals"
+                    data-interval-index="2"
+                  >
+                </label>
+              </div>
+            </div>
+
+            <p class="settings-note">
+              Os dias permitidos e o limite diário continuam sendo respeitados.
+              Revisões já agendadas não são movidas automaticamente.
+            </p>
+
+            <div class="settings-actions">
+              <button
+                id="save-subject-review-settings"
+                class="button primary"
+                type="button"
+              >
+                Salvar revisões teóricas
+              </button>
+
+              <span
+                id="subject-review-settings-status"
+                class="settings-save-status"
+                aria-live="polite"
+              ></span>
+            </div>
+          </article>
+
+          <article class="setting-row">
+            <div>
+              <h2>Login e segurança</h2>
+              <p>
+                Veja a conta conectada e altere sua senha de acesso ao LURIA.
+              </p>
+            </div>
+
+            <div class="security-grid">
+              <label class="security-field full">
+                <span>E-mail da conta</span>
+                <div
+                  id="account-email"
+                  class="security-email"
+                >
+                  —
+                </div>
+              </label>
+
+              <label class="security-field full">
+                <span>Senha atual</span>
+                <input
+                  id="current-password"
+                  type="password"
+                  autocomplete="current-password"
+                  placeholder="Digite sua senha atual"
+                >
+                <small>
+                  Necessária para confirmar sua identidade antes da alteração.
+                </small>
+              </label>
+
+              <label class="security-field">
+                <span>Nova senha</span>
+                <input
+                  id="new-password"
+                  type="password"
+                  minlength="8"
+                  autocomplete="new-password"
+                  placeholder="Mínimo de 8 caracteres"
+                >
+              </label>
+
+              <label class="security-field">
+                <span>Confirmar nova senha</span>
+                <input
+                  id="confirm-password"
+                  type="password"
+                  minlength="8"
+                  autocomplete="new-password"
+                  placeholder="Repita a nova senha"
+                >
+              </label>
+            </div>
+
+            <div class="settings-actions">
+              <button
+                id="save-password"
+                class="button primary"
+                type="button"
+              >
+                Alterar senha
+              </button>
+
+              <span
+                id="password-status"
+                class="settings-save-status"
+                aria-live="polite"
+              ></span>
+            </div>
+          </article>
+
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/supabase.js"></script>
+  <script src="assets/js/app.js?v=13.1"></script>
+  <script src="assets/js/study-mode.js?v=12.1"></script>
+  <script src="assets/js/configuracoes.js?v=12.8"></script>
+  <script defer src="assets/js/pwa.js?v=3"></script>
+</body>
+</html>
