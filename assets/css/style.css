@@ -1,13 +1,13 @@
 :root {
-  --bg: #F8FAFC;
+  --bg: #F7F9FC;
   --surface: #FFFFFF;
-  --surface-2: #EEF4FB;
-  --text: #123055;
-  --muted: #64748B;
-  --border: #DAE6F4;
-  --accent: #07111F;
-  --accent-strong: #0D1B30;
-  --accent-soft: #EAF2FC;
+  --surface-2: #F1F5F9;
+  --text: #10243E;
+  --muted: #5F6F82;
+  --border: #D9E2EC;
+  --accent: #184888;
+  --accent-strong: #123A70;
+  --accent-soft: #E7EEF7;
   --gold: #D4AF37;
   --gold-soft: #FFF7D6;
   --danger: #C83E4D;
@@ -1643,16 +1643,16 @@ optgroup {
 :root,
 :root[data-theme="light"] {
   --brand-light-blue: #184888;
-  --button-primary: #2563EB;
-  --button-primary-hover: #1D4ED8;
+  --button-primary: #184888;
+  --button-primary-hover: #123A70;
   --button-secondary-bg: #FFFFFF;
   --button-secondary-border: #184888;
   --button-secondary-text: #184888;
   --button-success: #16815C;
   --button-warning: #D89B24;
   --button-danger: #C83E4D;
-  --button-neutral-bg: #EEF3F8;
-  --button-neutral-text: #425466;
+  --button-neutral-bg: #F1F5F9;
+  --button-neutral-text: #5F6F82;
 }
 
 :root[data-theme="light"] .button.primary,
