@@ -1,0 +1,22 @@
+{
+  "name": "LURIA — Aprenda. Conecte. Consolide.",
+  "short_name": "LURIA",
+  "description": "Organize cronograma, revisões, caderno, flashcards, questões e desempenho em um único sistema de estudos.",
+  "id": "/",
+  "start_url": "/dashboard.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F8FAFC",
+  "theme_color": "#0A2342",
+  "lang": "pt-BR",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/assets/img/favicon.png?v=luria2",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
