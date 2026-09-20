@@ -8766,6 +8766,10 @@ async function uploadManualQuestionImages(
         file =>
           file?.type
             ?.startsWith("image/")
+      )
+      .slice(
+        0,
+        1
       );
 
   if (!imageFiles.length) {
@@ -8783,6 +8787,24 @@ async function uploadManualQuestionImages(
           Number(candidate.question_number)
           === Number(item.question_number)
       );
+
+  const existingManual =
+    existingForQuestion.find(
+      candidate =>
+        candidate.source
+        === "user-upload"
+    );
+
+  if (
+    existingManual
+  ) {
+    setAnswerStatus(
+      "Esta questão já possui uma imagem adicionada manualmente.",
+      "error"
+    );
+
+    return;
+  }
 
   let nextIndex =
     existingForQuestion.reduce(
@@ -8923,10 +8945,7 @@ async function uploadManualQuestionImages(
   }
 
   setAnswerStatus(
-    imageFiles.length === 1
-      ? "Imagem adicionada e compactada para menos de 130 KB."
-      : imageFiles.length
-        + " imagens adicionadas e compactadas para menos de 130 KB.",
+    "Imagem adicionada e compactada para menos de 130 KB.",
     "success"
   );
 
@@ -8953,8 +8972,7 @@ function renderErrorImagePicker(
             <input
               type="file"
               accept="image/*"
-              multiple
-              data-manual-question-image="${qsEscape(item.id)}"
+                            data-manual-question-image="${qsEscape(item.id)}"
             >
           </label>
         </div>
@@ -9087,8 +9105,7 @@ function renderErrorImagePicker(
             <input
               type="file"
               accept="image/*"
-              multiple
-              data-manual-question-image="${qsEscape(item.id)}"
+                            data-manual-question-image="${qsEscape(item.id)}"
             >
           </label>
 
