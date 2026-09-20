@@ -2329,3 +2329,17 @@ optgroup {
     font-size: 8px !important;
   }
 }
+
+
+/* =========================================================
+   DASHBOARD PWA — ÚLTIMO CARD CENTRALIZADO
+   ========================================================= */
+@media (max-width: 760px) {
+  .pwa-standalone body[data-page="dashboard"]
+  .dashboard-detail-grid
+  > .dashboard-detail-card:last-child {
+    grid-column: 1 / -1 !important;
+    width: calc(50% - 4px) !important;
+    justify-self: center !important;
+  }
+}
