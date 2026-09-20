@@ -3719,7 +3719,7 @@ async function exportSelectedErrorsPdf() {
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text("Luria — Caderno de Erros", margin, 16);
+    doc.text("LURIA — Caderno de Erros", margin, 16);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.text(
