@@ -7266,7 +7266,8 @@ async function loadSets() {
   const [
     setsResult,
     itemsResult,
-    attemptsResult
+    attemptsResult,
+    galleryResult
   ] = await Promise.all([
     qsSb
       .from("question_sets")
@@ -7280,7 +7281,13 @@ async function loadSets() {
 
     qsSb
       .from("question_attempts")
-      .select("question_item_id,result,sent_to_error")
+      .select("question_item_id,result,sent_to_error"),
+
+    qsSb
+      .from("question_image_candidates")
+      .select("*")
+      .order("question_number", { ascending: true })
+      .order("candidate_index", { ascending: true })
   ]);
 
   if (setsResult.error) {
