@@ -1224,6 +1224,19 @@ function showDashboardCcq() {
     text.textContent = item.ccq || "";
   }
 
+  const summaryText =
+    document.getElementById(
+      "summary-ccq-text"
+    );
+
+  if (
+    summaryText
+  ) {
+    summaryText.textContent =
+      item.ccq
+      || "—";
+  }
+
   if (meta) {
     meta.textContent = [
       item.area,
@@ -1267,6 +1280,19 @@ async function loadDashboardPassiveCcq() {
     empty.textContent = "Sem CCQs disponíveis.";
     empty.hidden = false;
     stage.hidden = true;
+
+    const summaryText =
+      document.getElementById(
+        "summary-ccq-text"
+      );
+
+    if (
+      summaryText
+    ) {
+      summaryText.textContent =
+        "Sem CCQs disponíveis";
+    }
+
     return;
   }
 
@@ -1278,6 +1304,19 @@ async function loadDashboardPassiveCcq() {
     empty.textContent = "Nenhum CCQ ativo no Caderno de Erros.";
     empty.hidden = false;
     stage.hidden = true;
+
+    const summaryText =
+      document.getElementById(
+        "summary-ccq-text"
+      );
+
+    if (
+      summaryText
+    ) {
+      summaryText.textContent =
+        "Nenhum CCQ ativo";
+    }
+
     return;
   }
 
@@ -1425,6 +1464,290 @@ function initDashboardStreakVisual() {
 }
 
 
+function dashboardCopyText(
+  fromId,
+  toId,
+  transform = null
+) {
+  const from =
+    document.getElementById(
+      fromId
+    );
+
+  const to =
+    document.getElementById(
+      toId
+    );
+
+  if (
+    !from
+    || !to
+  ) {
+    return;
+  }
+
+  const value =
+    from.textContent
+      ?.trim()
+    || "—";
+
+  to.textContent =
+    typeof transform
+    === "function"
+      ? transform(
+          value
+        )
+      : value;
+}
+
+
+function updateDashboardSummaryFromDetails() {
+  dashboardCopyText(
+    "metric-overdue-lessons",
+    "summary-overdue-lessons"
+  );
+
+  dashboardCopyText(
+    "metric-flashcards",
+    "summary-flashcards"
+  );
+
+  dashboardCopyText(
+    "metric-lessons-progress",
+    "summary-progress"
+  );
+
+  dashboardCopyText(
+    "metric-hours",
+    "summary-hours"
+  );
+
+  dashboardCopyText(
+    "metric-simulations-accuracy",
+    "summary-simulations"
+  );
+
+  const simulationCount =
+    Number(
+      document
+        .getElementById(
+          "metric-simulations"
+        )
+        ?.textContent
+      || 0
+    );
+
+  const simulationHelper =
+    document.getElementById(
+      "summary-simulations-helper"
+    );
+
+  if (
+    simulationHelper
+  ) {
+    simulationHelper.textContent =
+      simulationCount
+        + " prova"
+        + (
+          simulationCount === 1
+            ? ""
+            : "s"
+        );
+  }
+
+  const errorHelper =
+    document.getElementById(
+      "metric-errors-helper"
+    )
+      ?.textContent
+      ?.trim()
+    || "";
+
+  const summaryErrors =
+    document.getElementById(
+      "summary-errors"
+    );
+
+  if (
+    summaryErrors
+  ) {
+    const match =
+      errorHelper.match(
+        /(\d+)\s+CCQ/i
+      );
+
+    summaryErrors.textContent =
+      match
+        ? match[1]
+          + " CCQ"
+          + (
+            Number(
+              match[1]
+            ) === 1
+              ? ""
+              : "s"
+          )
+        : (
+            document
+              .getElementById(
+                "metric-errors"
+              )
+              ?.textContent
+            || "—"
+          );
+  }
+}
+
+
+async function loadTodaySummary() {
+  const today =
+    toISODate(
+      new Date()
+    );
+
+  const [
+    agendaResult,
+    hoursResult
+  ] =
+    await Promise.all([
+      dashboardSb
+        .from(
+          "agenda_feed"
+        )
+        .select(
+          "kind,item_count"
+        )
+        .eq(
+          "activity_date",
+          today
+        ),
+
+      dashboardSb
+        .from(
+          "study_hours_daily"
+        )
+        .select(
+          "total_seconds"
+        )
+        .eq(
+          "study_date",
+          today
+        )
+        .maybeSingle()
+    ]);
+
+  if (
+    agendaResult.error
+  ) {
+    console.warn(
+      agendaResult.error
+    );
+  }
+
+  if (
+    hoursResult.error
+  ) {
+    console.warn(
+      hoursResult.error
+    );
+  }
+
+  const items =
+    agendaResult.data
+    || [];
+
+  const lessonCount =
+    items
+      .filter(
+        item =>
+          item.kind
+          === "lesson"
+      )
+      .reduce(
+        (
+          sum,
+          item
+        ) =>
+          sum
+          + Math.max(
+              1,
+              Number(
+                item.item_count
+                || 1
+              )
+            ),
+        0
+      );
+
+  const activityCount =
+    items.reduce(
+      (
+        sum,
+        item
+      ) =>
+        sum
+        + Math.max(
+            1,
+            Number(
+              item.item_count
+              || 1
+            )
+          ),
+      0
+    );
+
+  const primary =
+    lessonCount > 0
+      ? lessonCount
+        + " aula"
+        + (
+          lessonCount === 1
+            ? ""
+            : "s"
+        )
+      : activityCount > 0
+        ? activityCount
+          + " atividade"
+          + (
+            activityCount === 1
+              ? ""
+              : "s"
+          )
+        : "Sem atividades";
+
+  const main =
+    document.getElementById(
+      "summary-today"
+    );
+
+  const helper =
+    document.getElementById(
+      "summary-today-helper"
+    );
+
+  if (
+    main
+  ) {
+    main.textContent =
+      primary;
+  }
+
+  if (
+    helper
+  ) {
+    helper.textContent =
+      formatHours(
+        Number(
+          hoursResult.data
+            ?.total_seconds
+          || 0
+        )
+      )
+      + " estudadas hoje";
+  }
+}
+
+
 async function loadDashboardMetrics() {
   await Promise.all([
     loadStudyHours(),
@@ -1434,6 +1757,10 @@ async function loadDashboardMetrics() {
     loadErrorMetrics(),
     loadSimulationMetrics()
   ]);
+
+  updateDashboardSummaryFromDetails();
+
+  await loadTodaySummary();
 }
 
 function wireDashboardControls() {
