@@ -878,13 +878,15 @@ function formatHours(totalSeconds) {
 }
 
 async function loadStudyHours() {
-  const start = startOfWeek(new Date());
   const today = startOfDay(new Date());
+  const weekStart = startOfWeek(today);
+  const previousStart = addDays(weekStart, -7);
+  const previousEnd = addDays(previousStart, Math.round((today - weekStart) / 86400000));
 
   const { data, error } = await dashboardSb
     .from("study_hours_daily")
-    .select("total_seconds")
-    .gte("study_date", toISODate(start))
+    .select("study_date,total_seconds")
+    .gte("study_date", toISODate(previousStart))
     .lte("study_date", toISODate(today));
 
   if (error) {
@@ -892,108 +894,156 @@ async function loadStudyHours() {
     return;
   }
 
-  const seconds = (data || []).reduce(
-    (sum, row) => sum + Number(row.total_seconds || 0),
+  const rows = data || [];
+
+  const current = rows
+    .filter((row) => row.study_date >= toISODate(weekStart))
+    .reduce((sum, row) => sum + Number(row.total_seconds || 0), 0);
+
+  const previous = rows
+    .filter(
+      (row) =>
+        row.study_date >= toISODate(previousStart)
+        && row.study_date <= toISODate(previousEnd)
+    )
+    .reduce((sum, row) => sum + Number(row.total_seconds || 0), 0);
+
+  const formatted = formatHours(current);
+  const helper =
+    previous > 0
+      ? `${dashboardTrendText(current, previous)} vs semana passada`
+      : "Nesta semana";
+
+  setDashboardText("metric-hours", formatted);
+  setDashboardText("metric-hours-helper", helper);
+  setDashboardText("summary-hours", formatted);
+}
+
+
+async function loadRetention() {
+  const start30 = addDays(startOfDay(new Date()), -29);
+
+  const [retentionResult, reviewResult] = await Promise.all([
+    dashboardSb
+      .from("flashcard_retention_overall")
+      .select("retention_percent")
+      .maybeSingle(),
+
+    dashboardSb
+      .from("flashcard_metrics_daily")
+      .select("total_reviews")
+      .gte("review_date", toISODate(start30))
+  ]);
+
+  if (retentionResult.error) console.warn(retentionResult.error);
+  if (reviewResult.error) console.warn(reviewResult.error);
+
+  const retention =
+    retentionResult.data?.retention_percent === null
+    || retentionResult.data?.retention_percent === undefined
+      ? null
+      : Number(retentionResult.data.retention_percent);
+
+  const reviews = (reviewResult.data || []).reduce(
+    (sum, row) => sum + Number(row.total_reviews || 0),
     0
   );
 
-  document.getElementById("metric-hours").textContent = formatHours(seconds);
+  setDashboardText(
+    "metric-retention",
+    retention === null ? "—" : `${retention.toFixed(0)}%`
+  );
+
+  setDashboardText(
+    "metric-retention-helper",
+    `${reviews} revis${reviews === 1 ? "ão" : "ões"} · 30 dias`
+  );
 }
 
-async function loadRetention() {
-  const value = document.getElementById("metric-retention");
-  const helper = document.getElementById("metric-retention-helper");
+
+async function loadLessonMetrics() {
+  const today = startOfDay(new Date());
+  const todayIso = toISODate(today);
+  const weekStartIso = toISODate(startOfWeek(today));
 
   const { data, error } = await dashboardSb
-    .from("flashcard_retention_overall")
-    .select("reviewed_cards,retention_percent")
-    .maybeSingle();
+    .from("study_topics")
+    .select("id,status,scheduled_date,completed_at");
 
   if (error) {
     console.warn(error);
-    if (value) value.textContent = "—";
-    if (helper) helper.textContent = "Sem dados suficientes";
     return;
   }
 
-  if (!data || data.retention_percent === null) {
-    if (value) value.textContent = "—";
-    if (helper) helper.textContent = "Revise flashcards para estimar";
-    return;
-  }
+  const rows = data || [];
+  const total = rows.length;
 
-  const retention = Number(data.retention_percent || 0);
-  const reviewed = Number(data.reviewed_cards || 0);
+  const completed = rows.filter(
+    (row) => row.status === "completed" || Boolean(row.completed_at)
+  );
 
-  if (value) value.textContent = `${retention.toFixed(0)}%`;
-  if (helper) helper.textContent =
-    `${reviewed} card${reviewed === 1 ? "" : "s"} com memória estimada`;
+  const overdue = rows.filter(
+    (row) =>
+      row.scheduled_date
+      && row.scheduled_date < todayIso
+      && !row.completed_at
+      && row.status !== "completed"
+  ).length;
+
+  const overdueAtWeekStart = rows.filter(
+    (row) =>
+      row.scheduled_date
+      && row.scheduled_date < weekStartIso
+      && (
+        !row.completed_at
+        || String(row.completed_at).slice(0, 10) >= weekStartIso
+      )
+  ).length;
+
+  const completedThisWeek = completed.filter(
+    (row) =>
+      row.completed_at
+      && String(row.completed_at).slice(0, 10) >= weekStartIso
+  ).length;
+
+  const progress = total > 0 ? (completed.length / total) * 100 : 0;
+  const overdueDelta = overdue - overdueAtWeekStart;
+
+  setDashboardText("metric-overdue-lessons", overdue);
+  setDashboardText("summary-overdue-lessons", overdue);
+
+  setDashboardText(
+    "metric-overdue-lessons-helper",
+    overdueDelta === 0
+      ? "sem mudança nesta semana"
+      : `${overdueDelta > 0 ? "+" : ""}${overdueDelta} nesta semana`
+  );
+
+  setDashboardText(
+    "metric-lessons-progress-copy",
+    `${completed.length} / ${total}`
+  );
+
+  setDashboardText(
+    "metric-lessons-progress",
+    `${progress.toFixed(0)}%`
+  );
+
+  setDashboardText(
+    "summary-progress",
+    `${progress.toFixed(0)}%`
+  );
+
+  setDashboardText(
+    "metric-lessons-progress-helper",
+    completedThisWeek
+      ? `+${completedThisWeek} esta semana`
+      : "sem novas conclusões nesta semana"
+  );
 }
 
-async function loadLessonMetrics() {
-  const today = toISODate(new Date());
-
-  const [totalResult, completedResult, overdueResult] = await Promise.all([
-    dashboardSb.from("study_topics").select("id", { count: "exact", head: true }),
-
-    dashboardSb.from("study_topics")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "completed"),
-
-    dashboardSb.from("study_topics")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "scheduled")
-      .is("completed_at", null)
-      .lt("scheduled_date", today)
-  ]);
-
-  [totalResult, completedResult, overdueResult].forEach((result) => {
-    if (result.error) console.warn(result.error);
-  });
-
-  const total = totalResult.count ?? 0;
-  const completed = completedResult.count ?? 0;
-  const overdue = overdueResult.count ?? 0;
-  const progress = total > 0 ? (completed / total) * 100 : 0;
-
-  const overdueValue = document.getElementById("metric-overdue-lessons");
-  const overdueHelper = document.getElementById("metric-overdue-lessons-helper");
-
-  if (overdueValue) overdueValue.textContent = overdue;
-  if (overdueHelper) {
-    overdueHelper.textContent = overdue === 0
-      ? "Cronograma em dia"
-      : `${overdue} aula${overdue === 1 ? "" : "s"} com data anterior a hoje`;
-  }
-
-  const progressValue = document.getElementById("metric-lessons-progress");
-  const progressCopy = document.getElementById("metric-lessons-progress-copy");
-  const progressHelper = document.getElementById("metric-lessons-progress-helper");
-  const progressRing = document.getElementById("lesson-progress-ring");
-
-  if (progressValue) progressValue.textContent = `${progress.toFixed(0)}%`;
-  if (progressCopy) progressCopy.textContent = `${completed}/${total}`;
-
-  if (progressHelper) {
-    progressHelper.textContent = total
-      ? "Aulas feitas / aulas totais"
-      : "Nenhuma aula cadastrada";
-  }
-
-  if (progressRing) {
-    progressRing.style.setProperty(
-      "--metric-ring-value",
-      Math.max(0, Math.min(100, progress))
-    );
-  }
-}
 
 async function loadErrorMetrics() {
-  const value = document.getElementById("metric-errors");
-  const helper = document.getElementById("metric-errors-helper");
-  const retentionValue = document.getElementById("metric-error-retention");
-  const ring = document.getElementById("error-retention-ring");
-
   const { data, error } = await dashboardSb
     .from("error_notebook_metrics")
     .select("registered_errors,reviewed_errors,overdue_errors,retention_percent")
@@ -1001,37 +1051,32 @@ async function loadErrorMetrics() {
 
   if (error) {
     console.warn(error);
-    if (value) value.textContent = "—";
-    if (helper) helper.textContent = "Sem dados do Caderno";
-    if (retentionValue) retentionValue.textContent = "—";
+    setDashboardText("metric-errors", "—");
+    setDashboardText("summary-errors", "—");
+    setDashboardText("metric-errors-helper", "Sem dados do Caderno");
     return;
   }
 
+  const active = Number(data?.registered_errors || 0);
+  const reviewed = Number(data?.reviewed_errors || 0);
   const overdue = Number(data?.overdue_errors || 0);
-  const total = Number(data?.registered_errors || 0);
-  const retention =
-    data?.retention_percent === null || data?.retention_percent === undefined
-      ? null
-      : Number(data.retention_percent);
 
-  if (value) value.textContent =
-    overdue === 1 ? "1 atrasado" : `${overdue} atrasados`;
+  setDashboardText(
+    "metric-errors",
+    `${active} CCQ${active === 1 ? "" : "s"} ativo${active === 1 ? "" : "s"}`
+  );
 
-  if (helper) helper.textContent =
-    `${total} CCQ${total === 1 ? "" : "s"} ativo${total === 1 ? "" : "s"}`;
+  setDashboardText(
+    "summary-errors",
+    `${active} CCQ${active === 1 ? "" : "s"}`
+  );
 
-  if (retentionValue) {
-    retentionValue.textContent =
-      retention === null ? "—" : `${retention.toFixed(0)}%`;
-  }
-
-  if (ring) {
-    ring.style.setProperty(
-      "--metric-ring-value",
-      retention === null ? 0 : Math.max(0, Math.min(100, retention))
-    );
-  }
+  setDashboardText(
+    "metric-errors-helper",
+    `${reviewed} revisado${reviewed === 1 ? "" : "s"} · ${overdue} atrasado${overdue === 1 ? "" : "s"}`
+  );
 }
+
 
 async function loadFlashcardMetrics() {
   const today = toISODate(new Date());
@@ -1060,12 +1105,25 @@ async function loadFlashcardMetrics() {
     incorrect: 0
   };
 
-  document.getElementById("metric-flashcards").textContent =
+  const totalReviews = Number(daily.total_reviews || 0);
+  const correct = Number(daily.correct || 0);
+  const accuracy =
+    totalReviews > 0 ? Math.round((correct / totalReviews) * 100) : 0;
+
+  const pendingText =
     `${pending} pendente${pending === 1 ? "" : "s"}`;
 
-  document.getElementById("metric-flashcards-helper").textContent =
-    `Hoje: ${daily.correct || 0} acertos · ${daily.incorrect || 0} erros`;
+  setDashboardText("metric-flashcards", pendingText);
+  setDashboardText("summary-flashcards", pendingText);
+
+  setDashboardText(
+    "metric-flashcards-helper",
+    totalReviews
+      ? `${totalReviews} revisados hoje · ${accuracy}%`
+      : "0 revisados hoje"
+  );
 }
+
 
 function formatSimulationAccuracy(value) {
   if (
