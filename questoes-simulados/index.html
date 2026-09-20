@@ -345,6 +345,18 @@
       padding: 0 14px;
     }
 
+    .qs-extraction-settings {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .qs-field-help {
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.35;
+    }
+
     .qs-import-options,
     .qs-manual-grid {
       display: grid;
@@ -1114,7 +1126,8 @@
         flex-direction: column;
       }
 
-      .qs-manual-grid {
+      .qs-manual-grid,
+      .qs-extraction-settings {
         grid-template-columns: 1fr;
       }
 
@@ -1305,6 +1318,35 @@
                       placeholder="Ex.: Simulado Aristo - 18/09/2026"
                     >
                   </label>
+
+                  <div class="qs-extraction-settings">
+                    <label class="qs-field">
+                      <span>Tipo de extração</span>
+                      <select id="qs-extraction-mode">
+                        <option value="quick">Extração rápida</option>
+                        <option value="detailed" selected>Extração detalhada</option>
+                      </select>
+                      <small class="qs-field-help">
+                        Rápida usa o extrator principal. Detalhada cruza estratégias, imagens e fallbacks.
+                      </small>
+                    </label>
+
+                    <label class="qs-field">
+                      <span>Origem do material</span>
+                      <select id="qs-source-profile">
+                        <option value="general" selected>Geral</option>
+                        <option value="medcof">MEDCOF</option>
+                        <option value="aristo">Aristo</option>
+                        <option value="medway">Medway</option>
+                        <option value="estrategia-med">Estratégia MED</option>
+                        <option value="medcurso">Medcurso</option>
+                        <option value="other">Outro</option>
+                      </select>
+                      <small class="qs-field-help">
+                        O perfil adapta a leitura aos padrões mais comuns de cada cursinho.
+                      </small>
+                    </label>
+                  </div>
 
                   <div class="qs-import-actions">
                     <button id="qs-import" class="button primary" type="button">
@@ -1602,7 +1644,7 @@
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=14.0"></script>
   <script src="assets/js/study-mode.js?v=13.0"></script>
-  <script src="assets/js/questoes-simulados.js?v=28.2"></script>
+  <script src="assets/js/questoes-simulados.js?v=29.0"></script>
 
   <script>
     /* O JS principal já calcula a taxa de acerto semanal.
