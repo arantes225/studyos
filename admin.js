@@ -480,7 +480,62 @@
       );
   }
 
+  async function ensureAdminAccess() {
+    if (
+      window.docmapIsAdmin === true
+    ) {
+      return true;
+    }
+
+    try {
+      const {
+        data,
+        error
+      } =
+        await sb.rpc(
+          "is_admin"
+        );
+
+      if (
+        error
+        || data !== true
+      ) {
+        window.location.replace(
+          "dashboard.html"
+        );
+
+        return false;
+      }
+
+      window.docmapIsAdmin =
+        true;
+
+      return true;
+
+    } catch (
+      error
+    ) {
+      console.warn(
+        "Não foi possível confirmar acesso administrativo:",
+        error
+      );
+
+      window.location.replace(
+        "dashboard.html"
+      );
+
+      return false;
+    }
+  }
+
   async function startAdminDashboard() {
+    const allowed =
+      await ensureAdminAccess();
+
+    if (!allowed) {
+      return;
+    }
+
     wire();
     await load();
   }
