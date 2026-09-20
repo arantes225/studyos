@@ -1283,6 +1283,73 @@
 }
 
 
+/* DASHBOARD V27.1 — CONTEÚDO CENTRALIZADO NOS CALLOUTS */
+.dashboard-summary-card,
+.dashboard-detail-card {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.dashboard-summary-card > *,
+.dashboard-detail-card > * {
+  text-align: center;
+}
+
+.dashboard-detail-label,
+.dashboard-detail-value,
+.dashboard-detail-helper,
+.dashboard-summary-card > span,
+.dashboard-summary-card > strong,
+.dashboard-summary-card > small {
+  width: 100%;
+  text-align: center;
+}
+
+.dashboard-detail-ccq {
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-detail-ccq .dashboard-ccq-head {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+.dashboard-detail-ccq .dashboard-ccq-auto {
+  right: 0;
+}
+
+.dashboard-detail-grid .streak-card-v22 {
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "label"
+    "flame"
+    "value"
+    "helper"
+    "stage";
+  justify-items: center;
+  align-content: center;
+  row-gap: 4px;
+  column-gap: 0;
+  text-align: center;
+}
+
+.dashboard-detail-grid .streak-card-v22 > .dashboard-detail-label,
+.dashboard-detail-grid .streak-card-v22 > .dashboard-detail-value,
+.dashboard-detail-grid .streak-card-v22 > .dashboard-detail-helper,
+.dashboard-detail-grid .streak-card-v22 .streak-stage-label {
+  width: 100%;
+  text-align: center;
+}
+
+.dashboard-detail-grid .streak-card-v22 .streak-flame-wrap {
+  justify-self: center;
+  width: 66px;
+  height: 66px;
+}
+
 /* DASHBOARD V27 — grade única 3x3 */
 .dashboard-summary-grid-hidden {
   display: none !important;
