@@ -39,7 +39,7 @@ async function entrar(event) {
     return;
   }
 
-  window.location.replace("dashboard.html");
+  window.location.replace("/dashboard/");
 }
 
 async function criarConta() {
@@ -76,7 +76,7 @@ async function criarConta() {
   }
 
   if (data.session) {
-    window.location.replace("dashboard.html");
+    window.location.replace("/dashboard/");
     return;
   }
 
@@ -91,7 +91,7 @@ async function criarConta() {
   const { data } = await sb.auth.getSession();
 
   if (data.session) {
-    window.location.replace("dashboard.html");
+    window.location.replace("/dashboard/");
   }
 })();
 
