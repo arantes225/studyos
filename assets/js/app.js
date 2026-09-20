@@ -27,10 +27,10 @@ const PAGE_FEATURES = {
 };
 
 const PLUS_NAV_FEATURES = {
-  "flashcards.html": "flashcards",
-  "questoes-simulados.html": "questions",
-  "registrar-questoes.html": "questions",
-  "estatisticas.html": "advanced_statistics"
+  "/flashcards/": "flashcards",
+  "/questoes-simulados/": "questions",
+  "/registrar-questoes/": "questions",
+  "/estatisticas/": "advanced_statistics"
 };
 
 const page = document.body.dataset.page || "dashboard";
@@ -122,7 +122,7 @@ function sidebarMarkup(user, profile = null) {
 
   return `
     <div class="sidebar-top">
-      <a class="brand" href="dashboard.html">
+      <a class="brand" href="/dashboard/">
         <img
           id="luria-brand-logo"
           class="brand-logo-single"
@@ -141,11 +141,11 @@ function sidebarMarkup(user, profile = null) {
     </div>
 
     <nav class="nav">
-      <a class="nav-link ${page === "dashboard" ? "active" : ""}" href="dashboard.html">
+      <a class="nav-link ${page === "dashboard" ? "active" : ""}" href="/dashboard/">
         <span class="nav-icon">◫</span><span>Dashboard</span>
       </a>
 
-      <a class="nav-link ${page === "cronograma" ? "active" : ""}" href="cronograma.html">
+      <a class="nav-link ${page === "cronograma" ? "active" : ""}" href="/cronograma/">
         <span class="nav-icon">▦</span><span>Cronograma</span>
       </a>
 
@@ -157,30 +157,30 @@ function sidebarMarkup(user, profile = null) {
         </button>
 
         <div class="nav-submenu" id="study-nav-submenu">
-          <a class="nav-sublink ${page === "ambientacao" ? "active" : ""}" href="ambientacao.html">Ambientação</a>
-          <a class="nav-sublink ${page === "caderno" ? "active" : ""}" href="caderno.html">Caderno</a>
-          <a class="nav-sublink ${page === "flashcards" ? "active" : ""}" href="flashcards.html">Flashcards</a>
-          <a class="nav-sublink ${page === "erros" ? "active" : ""}" href="caderno-erros.html">Caderno de erros</a>
-          <a class="nav-sublink ${page === "questoes" ? "active" : ""}" href="questoes-simulados.html">Questões e Simulados</a>
+          <a class="nav-sublink ${page === "ambientacao" ? "active" : ""}" href="/ambientacao/">Ambientação</a>
+          <a class="nav-sublink ${page === "caderno" ? "active" : ""}" href="/caderno/">Caderno</a>
+          <a class="nav-sublink ${page === "flashcards" ? "active" : ""}" href="/flashcards/">Flashcards</a>
+          <a class="nav-sublink ${page === "erros" ? "active" : ""}" href="/caderno-erros/">Caderno de erros</a>
+          <a class="nav-sublink ${page === "questoes" ? "active" : ""}" href="/questoes-simulados/">Questões e Simulados</a>
         </div>
       </div>
 
-      <a class="nav-link ${page === "estatisticas" ? "active" : ""}" href="estatisticas.html">
+      <a class="nav-link ${page === "estatisticas" ? "active" : ""}" href="/estatisticas/">
         <span class="nav-icon">▥</span><span>Estatísticas</span>
       </a>
 
-      <a class="nav-link ${page === "editais" ? "active" : ""}" href="editais.html">
+      <a class="nav-link ${page === "editais" ? "active" : ""}" href="/editais/">
         <span class="nav-icon">▤</span><span>Editais / Provas</span>
       </a>
 
-      <a class="nav-link ${page === "configuracoes" ? "active" : ""}" href="configuracoes.html">
+      <a class="nav-link ${page === "configuracoes" ? "active" : ""}" href="/configuracoes/">
         <span class="nav-icon">⚙</span><span>Configurações</span>
       </a>
 
       <a
         id="admin-nav-link"
         class="nav-link ${page === "admin" ? "active" : ""}"
-        href="admin.html"
+        href="/admin/"
         hidden
       >
         <span class="nav-icon">◆</span><span>Admin</span>
@@ -1497,7 +1497,7 @@ async function iniciarApp() {
   const { data, error } = await sb.auth.getSession();
 
   if (error || !data.session) {
-    window.location.replace("login.html");
+    window.location.replace("/login/");
     return;
   }
 
@@ -1516,7 +1516,7 @@ async function iniciarApp() {
       !acessoAdmin
     ) {
       window.location.replace(
-        "dashboard.html"
+        "/dashboard/"
       );
 
       return;
@@ -1538,7 +1538,7 @@ async function iniciarApp() {
     )
   ) {
     window.location.replace(
-      "dashboard.html"
+      "/dashboard/"
     );
 
     return;
@@ -1581,7 +1581,7 @@ async function iniciarApp() {
 
   document.getElementById("logout")?.addEventListener("click", async () => {
     await sb.auth.signOut();
-    window.location.replace("login.html");
+    window.location.replace("/login/");
   });
 
   prepararMobileMenu();
