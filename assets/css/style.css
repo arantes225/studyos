@@ -1609,3 +1609,12 @@ optgroup {
   font-style: normal !important;
 }
 
+/* LURIA — SIDEBAR GLOBAL */
+.sidebar .brand .brand-copy strong {
+  font-size: 20.7px !important;
+  line-height: 1.1 !important;
+  font-weight: 850 !important;
+  text-transform: uppercase !important;
+  letter-spacing: -.02em !important;
+}
+
