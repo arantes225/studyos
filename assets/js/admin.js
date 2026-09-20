@@ -1321,6 +1321,177 @@
         }
       );
 
+    $("admin-edit-costs")
+      ?.addEventListener(
+        "click",
+        () => {
+          renderCostEditor();
+          $("admin-cost-editor")
+            ?.showModal();
+        }
+      );
+
+    $("admin-cost-close")
+      ?.addEventListener(
+        "click",
+        () => {
+          $("admin-cost-editor")
+            ?.close();
+        }
+      );
+
+    $("admin-cost-cancel")
+      ?.addEventListener(
+        "click",
+        () => {
+          $("admin-cost-editor")
+            ?.close();
+        }
+      );
+
+    $("admin-cost-form")
+      ?.addEventListener(
+        "submit",
+        async event => {
+          event.preventDefault();
+
+          const rows =
+            Array.from(
+              document.querySelectorAll(
+                ".admin-cost-editor-row"
+              )
+            );
+
+          const items =
+            rows.map(row => {
+              const key =
+                row.dataset.costKey;
+
+              const amount =
+                Number(
+                  row.querySelector(
+                    '[data-cost-field="amount"]'
+                  )?.value
+                  || 0
+                );
+
+              return {
+                key,
+                amount_cents:
+                  Math.max(
+                    0,
+                    Math.round(
+                      amount * 100
+                    )
+                  ),
+                cadence:
+                  row.querySelector(
+                    '[data-cost-field="cadence"]'
+                  )?.value
+                  || "monthly",
+                scope:
+                  row.querySelector(
+                    '[data-cost-field="scope"]'
+                  )?.value
+                  || "general"
+              };
+            });
+
+          const save =
+            $("admin-cost-save");
+
+          const message =
+            $("admin-cost-editor-message");
+
+          if (save) {
+            save.disabled = true;
+            save.textContent =
+              "Salvando...";
+          }
+
+          if (message) {
+            message.textContent = "";
+            message.className =
+              "admin-cost-editor-message";
+          }
+
+          try {
+            const {
+              data,
+              error
+            } =
+              await sb.rpc(
+                "admin_save_cost_items",
+                {
+                  p_items:
+                    items
+                }
+              );
+
+            if (
+              error
+              || data !== true
+            ) {
+              throw error
+              || new Error(
+                "Não foi possível salvar os custos."
+              );
+            }
+
+            const refreshed =
+              await sb.rpc(
+                "admin_cost_items_snapshot"
+              );
+
+            if (refreshed.error) {
+              throw refreshed.error;
+            }
+
+            state.costItems =
+              Array.isArray(refreshed.data)
+                ? refreshed.data
+                : [];
+
+            renderLogistics(
+              state.logistics || {},
+              state.snapshot?.metrics || {}
+            );
+
+            if (message) {
+              message.textContent =
+                "Custos atualizados.";
+              message.className =
+                "admin-cost-editor-message success";
+            }
+
+            setTimeout(
+              () => {
+                $("admin-cost-editor")
+                  ?.close();
+              },
+              350
+            );
+
+          } catch (error) {
+            console.error(error);
+
+            if (message) {
+              message.textContent =
+                "Não foi possível salvar os custos.";
+              message.className =
+                "admin-cost-editor-message error";
+            }
+
+          } finally {
+            if (save) {
+              save.disabled = false;
+              save.textContent =
+                "Salvar custos";
+            }
+          }
+        }
+      );
+
     document.addEventListener(
       "click",
       event => {
