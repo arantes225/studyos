@@ -3,9 +3,9 @@
   "use strict";
 
   const LOGOS = {
-    light: "logo-icone-original.png?v=resibulando4",
-    dark: "logo-icone-azul-claro.png?v=resibulando4",
-    "leila-mood": "logo-icone-rosa-escuro.png?v=resibulando4"
+    light: "assets/img/logo-icone-original.png?v=resibulando4",
+    dark: "assets/img/logo-icone-azul-claro.png?v=resibulando4",
+    "leila-mood": "assets/img/logo-icone-rosa-escuro.png?v=resibulando4"
   };
 
   function resolvedTheme() {
@@ -196,7 +196,7 @@
       "image/png";
 
     favicon.href =
-      "favicon.png?v=resibulando4";
+      "assets/img/favicon.png?v=resibulando4";
   }
 
   function run() {

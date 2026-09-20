@@ -126,7 +126,7 @@ function sidebarMarkup(user, profile = null) {
         <img
           id="resibulando-brand-logo"
           class="brand-logo-single"
-          src="logo-icone-original.png?v=resibulando2"
+          src="assets/img/logo-icone-original.png?v=resibulando2"
           alt="Logo Resibulando"
         >
 
@@ -243,16 +243,16 @@ function updateResibulandoLogo(theme) {
   }
 
   let source =
-    "logo-icone-original.png?v=resibulando2";
+    "assets/img/logo-icone-original.png?v=resibulando2";
 
   if (theme === "dark") {
     source =
-      "logo-icone-azul-claro.png?v=resibulando2";
+      "assets/img/logo-icone-azul-claro.png?v=resibulando2";
   }
 
   if (theme === "leila-mood") {
     source =
-      "logo-icone-rosa-escuro.png?v=resibulando2";
+      "assets/img/logo-icone-rosa-escuro.png?v=resibulando2";
   }
 
   if (
