@@ -10199,10 +10199,6 @@ async function recognizeNotebookRowsIndividually(
 
 
   try {
-    const assets =
-      await window.LuriaPdfBranding
-        ?.getAssets?.();
-
     for (
       let index = 0;
       index < ranges.length;
@@ -13270,6 +13266,10 @@ async function exportSelectedPdf() {
     });
 
   try {
+    const assets =
+      await window.LuriaPdfBranding
+        ?.getAssets?.();
+
     for (
       let index = 0;
       index < entries.length;
