@@ -5,8 +5,8 @@ const RUNTIME_CACHE = CACHE_VERSION + "-runtime";
 const APP_SHELL = [
   "/",
   "/index.html",
-  "/login.html",
-  "/dashboard.html",
+  "//login/",
+  "//dashboard/",
   "/assets/css/style.css",
   "/assets/css/landing.css",
   "/assets/css/luria-brand-v5.css",
@@ -58,8 +58,8 @@ self.addEventListener("fetch", (event) => {
         })
         .catch(async () => {
           return (await caches.match(request))
-            || (await caches.match("/dashboard.html"))
-            || (await caches.match("/login.html"));
+            || (await caches.match("//dashboard/"))
+            || (await caches.match("//login/"));
         })
     );
     return;
