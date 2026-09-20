@@ -2940,6 +2940,321 @@ function renderAgendaLesson(
 }
 
 
+async function renderAgendaSubjectReview(
+  params
+) {
+  const container =
+    document.getElementById(
+      "ambientacao-lesson-activity"
+    );
+
+  const frame =
+    document.getElementById(
+      "ambientacao-study-frame"
+    );
+
+  if (
+    !container
+  ) {
+    return;
+  }
+
+  container.hidden =
+    false;
+
+  if (
+    frame
+  ) {
+    frame.hidden =
+      true;
+
+    frame.removeAttribute(
+      "src"
+    );
+  }
+
+  const itemId =
+    params.get(
+      "item_id"
+    );
+
+  const titleElement =
+    document.getElementById(
+      "agenda-lesson-title"
+    );
+
+  const metaElement =
+    document.getElementById(
+      "agenda-lesson-meta"
+    );
+
+  const subtitleElement =
+    document.getElementById(
+      "agenda-lesson-subtitle"
+    );
+
+  const button =
+    document.getElementById(
+      "agenda-lesson-complete"
+    );
+
+  if (
+    titleElement
+  ) {
+    titleElement.textContent =
+      params.get(
+        "title"
+      )
+      || "Revisão";
+  }
+
+  if (
+    metaElement
+  ) {
+    metaElement.textContent =
+      [
+        params.get(
+          "area"
+        ),
+        params.get(
+          "materia"
+        ),
+        parseAmbientacaoDate(
+          params.get(
+            "date"
+          )
+        )
+      ]
+        .filter(
+          Boolean
+        )
+        .join(
+          " · "
+        );
+  }
+
+  if (
+    subtitleElement
+  ) {
+    subtitleElement.textContent =
+      params.get(
+        "subtitle"
+      )
+      || "Revisão programada da matéria.";
+
+    subtitleElement.hidden =
+      false;
+  }
+
+  if (
+    !isUuid(
+      itemId
+    )
+  ) {
+    if (
+      button
+    ) {
+      button.disabled =
+        true;
+
+      button.textContent =
+        "Concluir revisão";
+    }
+
+    setAgendaLessonStatus(
+      "Não foi possível identificar esta revisão.",
+      "error"
+    );
+
+    return;
+  }
+
+  const {
+    data:
+      review,
+    error:
+      reviewError
+  } =
+    await ambientacaoSb
+      .from(
+        "subject_reviews"
+      )
+      .select(
+        "id,topic_id,stage,scheduled_date,completed_at"
+      )
+      .eq(
+        "id",
+        itemId
+      )
+      .maybeSingle();
+
+  if (
+    reviewError
+  ) {
+    console.error(
+      reviewError
+    );
+
+    setAgendaLessonStatus(
+      `Não foi possível carregar a revisão: ${reviewError.message}`,
+      "error"
+    );
+
+    return;
+  }
+
+  if (
+    review?.topic_id
+  ) {
+    const {
+      data:
+        topic
+    } =
+      await ambientacaoSb
+        .from(
+          "study_topics"
+        )
+        .select(
+          "theme,area,materia"
+        )
+        .eq(
+          "id",
+          review.topic_id
+        )
+        .maybeSingle();
+
+    if (
+      topic
+    ) {
+      if (
+        titleElement
+      ) {
+        titleElement.textContent =
+          topic.theme
+          || params.get(
+            "title"
+          )
+          || "Revisão";
+      }
+
+      if (
+        metaElement
+      ) {
+        metaElement.textContent =
+          [
+            topic.area
+            || params.get(
+              "area"
+            ),
+            topic.materia
+            || params.get(
+              "materia"
+            ),
+            parseAmbientacaoDate(
+              review.scheduled_date
+              || params.get(
+                "date"
+              )
+            )
+          ]
+            .filter(
+              Boolean
+            )
+            .join(
+              " · "
+            );
+      }
+    }
+  }
+
+  if (
+    button
+  ) {
+    button.textContent =
+      review?.completed_at
+        ? "Revisão concluída"
+        : "Concluir revisão";
+
+    button.disabled =
+      Boolean(
+        review?.completed_at
+      );
+
+    button.onclick =
+      review?.completed_at
+        ? null
+        : async () => {
+            button.disabled =
+              true;
+
+            setAgendaLessonStatus(
+              "Concluindo revisão..."
+            );
+
+            const {
+              error
+            } =
+              await ambientacaoSb
+                .from(
+                  "subject_reviews"
+                )
+                .update({
+                  completed_at:
+                    new Date()
+                      .toISOString()
+                })
+                .eq(
+                  "id",
+                  itemId
+                )
+                .is(
+                  "completed_at",
+                  null
+                );
+
+            if (
+              error
+            ) {
+              console.error(
+                error
+              );
+
+              button.disabled =
+                false;
+
+              setAgendaLessonStatus(
+                `Não foi possível concluir a revisão: ${error.message}`,
+                "error"
+              );
+
+              return;
+            }
+
+            button.textContent =
+              "Revisão concluída";
+
+            setAgendaLessonStatus(
+              "Revisão concluída.",
+              "success"
+            );
+          };
+  }
+
+  if (
+    review?.completed_at
+  ) {
+    setAgendaLessonStatus(
+      "Esta revisão já foi concluída.",
+      "success"
+    );
+  } else {
+    setAgendaLessonStatus(
+      ""
+    );
+  }
+}
+
+
 function openActivityWorkspace(params) {
   const kind =
     params.get("kind");
@@ -2985,6 +3300,7 @@ function openActivityWorkspace(params) {
 
   const supported = [
     "lesson",
+    "subject_review",
     "flashcards_batch",
     "errors_batch"
   ];
@@ -3041,6 +3357,31 @@ function openActivityWorkspace(params) {
       params
     );
 
+
+    return;
+  }
+
+
+  if (
+    kind === "subject_review"
+  ) {
+    if (
+      title
+    ) {
+      title.textContent =
+        "Revisão";
+    }
+
+    if (
+      copy
+    ) {
+      copy.textContent =
+        "Revisão agendada da matéria.";
+    }
+
+    renderAgendaSubjectReview(
+      params
+    );
 
     return;
   }
