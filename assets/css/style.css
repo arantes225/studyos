@@ -1701,3 +1701,221 @@ optgroup {
   border-color: var(--border) !important;
   color: var(--button-neutral-text) !important;
 }
+
+
+/* =========================================================
+   LURIA — DASHBOARD PWA PREMIUM
+   Compactação exclusiva do app instalado.
+   ========================================================= */
+@media (max-width: 760px) {
+  .pwa-standalone body[data-page="dashboard"] .page {
+    padding: 14px 12px 24px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .topbar {
+    min-height: 54px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .page-heading .eyebrow {
+    font-size: 8px !important;
+    letter-spacing: .08em !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .page-heading h1 {
+    font-size: 22px !important;
+    line-height: 1.08 !important;
+    letter-spacing: -.03em !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .dashboard-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .dashboard-detail-card {
+    min-height: 104px !important;
+    padding: 12px !important;
+    border-radius: 13px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .dashboard-detail-label,
+  .pwa-standalone body[data-page="dashboard"] .metric-label {
+    font-size: 9px !important;
+    letter-spacing: .025em !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .dashboard-detail-value,
+  .pwa-standalone body[data-page="dashboard"] .metric-value {
+    font-size: 21px !important;
+    line-height: 1.05 !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .dashboard-detail-helper,
+  .pwa-standalone body[data-page="dashboard"] .metric-helper {
+    font-size: 8.5px !important;
+    line-height: 1.25 !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .dashboard-progress-ring {
+    width: 66px !important;
+    height: 66px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .streak-flame-wrap {
+    transform: scale(.78) !important;
+    margin-block: -7px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .dashboard-detail-ccq {
+    min-height: 104px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .dashboard-passive-ccq-text {
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .dashboard-passive-ccq-meta,
+  .pwa-standalone body[data-page="dashboard"] .dashboard-ccq-auto {
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .calendar-panel {
+    margin-top: 10px !important;
+    padding: 12px !important;
+    border-radius: 14px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .calendar-toolbar {
+    gap: 9px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .calendar-toolbar h2 {
+    font-size: 16px !important;
+    letter-spacing: -.02em !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .calendar-toolbar p,
+  .pwa-standalone body[data-page="dashboard"] .calendar-status {
+    font-size: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .calendar-actions {
+    gap: 6px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .segmented-control,
+  .pwa-standalone body[data-page="dashboard"] .calendar-nav {
+    padding: 2px !important;
+    border-radius: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .segmented-control button,
+  .pwa-standalone body[data-page="dashboard"] .calendar-nav button {
+    min-height: 30px !important;
+    padding: 0 9px !important;
+    font-size: 9px !important;
+    border-radius: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .week-calendar {
+    grid-template-columns: repeat(7, minmax(128px, 1fr)) !important;
+    border-radius: 12px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .calendar-day {
+    min-height: 310px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .calendar-day-header {
+    min-height: 40px !important;
+    padding: 0 8px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .calendar-day-header span {
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .calendar-day-header strong {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .calendar-day-body {
+    min-height: 268px !important;
+    gap: 6px !important;
+    padding: 6px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .agenda-card {
+    padding: 7px !important;
+    border-left-width: 3px !important;
+    border-radius: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .agenda-kind {
+    font-size: 7.5px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .agenda-title {
+    margin-top: 4px !important;
+    font-size: 9.5px !important;
+    line-height: 1.28 !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .agenda-meta,
+  .pwa-standalone body[data-page="dashboard"] .agenda-subtitle {
+    margin-top: 4px !important;
+    font-size: 7.5px !important;
+    line-height: 1.25 !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .agenda-card-actions {
+    gap: 4px !important;
+    margin-top: 6px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .agenda-card-action {
+    min-height: 24px !important;
+    padding: 0 6px !important;
+    font-size: 7.5px !important;
+    border-radius: 6px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .agenda-count {
+    min-width: 18px !important;
+    min-height: 18px !important;
+    padding: 0 4px !important;
+    font-size: 7.5px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .empty-day {
+    padding: 10px 3px !important;
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .month-weekdays,
+  .pwa-standalone body[data-page="dashboard"] .month-grid {
+    min-width: 690px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .month-day {
+    min-height: 108px !important;
+    padding: 5px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .month-day .agenda-card {
+    padding: 5px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .month-day .agenda-title {
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="dashboard"] .month-day .agenda-kind {
+    font-size: 7px !important;
+  }
+}
