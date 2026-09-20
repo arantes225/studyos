@@ -14006,12 +14006,11 @@ function wireEvents() {
             )
           ) {
             markNotebookTableBuilderRow(
-              table.rows[
-                Math.max(
-                  0,
-                  row.rowIndex - 1
+              document.activeElement
+                ?.closest
+                ?.(
+                  "tr"
                 )
-              ]
             );
           }
 
