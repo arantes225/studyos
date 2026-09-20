@@ -131,7 +131,7 @@ function sidebarMarkup(user, profile = null) {
         >
 
         <span class="brand-copy">
-          <strong>Luria</strong>
+          <strong>LURIA</strong>
           <small>Aprenda. Conecte. Consolide.</small>
         </span>
       </a>
