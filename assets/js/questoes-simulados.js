@@ -56,7 +56,7 @@ const qsState = {
 
 let AREA_OPTIONS =
   window.LuriaStudyMode
-    ?.areasFor(
+    ?.generalAreasFor(
       window.luriaStudyMode
       || "medicine"
     )
@@ -15188,11 +15188,11 @@ async function initQuestionSets() {
 
   if (
     window.LuriaStudyMode
-      ?.areasFor
+      ?.generalAreasFor
   ) {
     AREA_OPTIONS =
       window.LuriaStudyMode
-        .areasFor(
+        .generalAreasFor(
           mode
           || window.luriaStudyMode
           || "medicine"
@@ -15203,7 +15203,7 @@ async function initQuestionSets() {
     "luria:study-mode",
     (event) => {
       AREA_OPTIONS =
-        event.detail?.areas
+        event.detail?.generalAreas
         || AREA_OPTIONS;
 
       if (qsState.currentSet) {
