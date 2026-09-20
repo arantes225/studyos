@@ -5290,13 +5290,17 @@ async function compressQuestionFigureBlob(
 
 
   /*
-    LIMITE RÍGIDO:
-    toda imagem de questão enviada ao Storage deve ficar
-    abaixo de 130 KB. Usamos 128 KiB como teto interno
-    para manter margem de segurança.
+    Regras das imagens de questões:
+    - teto interno de 128 KiB (margem abaixo de 130 KB);
+    - nunca reduzir o maior lado abaixo de 800 px;
+    - priorizar resolução e só então reduzir qualidade.
+    Imagens originalmente menores que 800 px não são ampliadas.
   */
   const maxBytes =
     128 * 1024;
+
+  const minLongestSide =
+    800;
 
 
   if (
@@ -5335,58 +5339,83 @@ async function compressQuestionFigureBlob(
     }
 
 
+    const originalLongestSide =
+      Math.max(
+        originalWidth,
+        originalHeight
+      );
+
+
     /*
-      Primeiro tenta preservar resolução e qualidade.
-      Só avança para reduções maiores quando necessário.
+      Nunca reduz abaixo de 800 px.
+      Se a imagem original já tiver menos que 800 px,
+      preserva a resolução original e trabalha apenas
+      com a compressão de qualidade/formato.
     */
-    const dimensionSteps = [
-      1800,
-      1600,
-      1450,
-      1300,
-      1150,
-      1000,
-      900,
-      800,
-      700,
-      620,
-      540,
-      480,
-      420,
-      360,
-      320,
-      280,
-      240,
-      210,
-      180,
-      160,
-      140,
-      120,
-      100,
-      80,
-      64
-    ];
+    const dimensionSteps =
+      originalLongestSide
+        <= minLongestSide
+          ? [
+              originalLongestSide
+            ]
+          : [
+              originalLongestSide,
+              1800,
+              1600,
+              1450,
+              1300,
+              1150,
+              1000,
+              900,
+              850,
+              800
+            ]
+              .filter(
+                (
+                  value,
+                  index,
+                  array
+                ) =>
+                  value
+                    <= originalLongestSide
+                  &&
+                  value
+                    >= minLongestSide
+                  &&
+                  array.indexOf(
+                    value
+                  )
+                    === index
+              );
 
 
     const qualitySteps = [
-      0.90,
+      0.92,
+      0.88,
       0.84,
-      0.78,
+      0.80,
+      0.76,
       0.72,
-      0.66,
+      0.68,
+      0.64,
       0.60,
-      0.54,
+      0.56,
+      0.52,
       0.48,
-      0.42,
+      0.44,
+      0.40,
       0.36,
-      0.30,
-      0.26,
-      0.22,
-      0.18,
-      0.14,
-      0.10,
+      0.32,
+      0.28,
+      0.24,
+      0.20,
+      0.16,
+      0.12,
+      0.09,
       0.07,
-      0.05
+      0.05,
+      0.03,
+      0.01
     ];
 
 
@@ -5403,10 +5432,7 @@ async function compressQuestionFigureBlob(
           1,
           maxDimension
           /
-          Math.max(
-            originalWidth,
-            originalHeight
-          )
+          originalLongestSide
         );
 
 
@@ -5428,6 +5454,25 @@ async function compressQuestionFigureBlob(
             * scale
           )
         );
+
+
+      /*
+        Proteção explícita: uma imagem que começou com
+        >= 800 px nunca pode sair deste algoritmo com
+        o maior lado abaixo de 800 px.
+      */
+      if (
+        originalLongestSide
+          >= minLongestSide
+        &&
+        Math.max(
+          width,
+          height
+        )
+          < minLongestSide
+      ) {
+        continue;
+      }
 
 
       const canvas =
@@ -5498,8 +5543,8 @@ async function compressQuestionFigureBlob(
 
 
         /*
-          Safari pode ignorar WebP em alguns contextos.
-          Se isso acontecer, JPEG vira o fallback obrigatório.
+          Safari/iOS: se WebP não for produzido corretamente,
+          usa JPEG sem alterar a resolução escolhida.
         */
         if (
           !candidate
@@ -5543,167 +5588,61 @@ async function compressQuestionFigureBlob(
 
 
     /*
-      Fallback final: em condições normais nunca chega aqui,
-      mas ainda assim não rejeitamos por tamanho.
-      Reencodamos o menor candidato novamente até cumprir o teto.
+      Segunda passagem exclusivamente na resolução mínima
+      permitida. Não reduz dimensão abaixo de 800 px:
+      insiste apenas na qualidade JPEG para cumprir o teto.
     */
-    if (
-      smallest
-      &&
-      smallest.size
-      > maxBytes
-    ) {
-      const emergency =
-        await loadQuestionImageDrawable(
-          smallest
-        );
+    const finalLongestSide =
+      originalLongestSide
+        >= minLongestSide
+          ? minLongestSide
+          : originalLongestSide;
 
 
-      try {
-        for (
-          const maxDimension
-          of [
-            96,
-            80,
-            64,
-            48,
-            32
-          ]
-        ) {
-          const scale =
-            Math.min(
-              1,
-              maxDimension
-              /
-              Math.max(
-                emergency.width,
-                emergency.height
-              )
-            );
+    const finalScale =
+      Math.min(
+        1,
+        finalLongestSide
+        /
+        originalLongestSide
+      );
 
 
-          const canvas =
-            document.createElement(
-              "canvas"
-            );
+    const finalWidth =
+      Math.max(
+        1,
+        Math.round(
+          originalWidth
+          * finalScale
+        )
+      );
 
 
-          canvas.width =
-            Math.max(
-              1,
-              Math.round(
-                emergency.width
-                * scale
-              )
-            );
+    const finalHeight =
+      Math.max(
+        1,
+        Math.round(
+          originalHeight
+          * finalScale
+        )
+      );
 
 
-          canvas.height =
-            Math.max(
-              1,
-              Math.round(
-                emergency.height
-                * scale
-              )
-            );
-
-
-          const context =
-            canvas.getContext(
-              "2d",
-              {
-                alpha:
-                  false
-              }
-            );
-
-
-          if (!context) {
-            continue;
-          }
-
-
-          context.fillStyle =
-            "#ffffff";
-
-          context.fillRect(
-            0,
-            0,
-            canvas.width,
-            canvas.height
-          );
-
-
-          context.drawImage(
-            emergency.source,
-            0,
-            0,
-            canvas.width,
-            canvas.height
-          );
-
-
-          for (
-            const quality
-            of [
-              0.08,
-              0.05,
-              0.03,
-              0.01
-            ]
-          ) {
-            const candidate =
-              await canvasBlob(
-                canvas,
-                "image/jpeg",
-                quality
-              );
-
-
-            if (
-              candidate
-              &&
-              candidate.size
-              <= maxBytes
-            ) {
-              return candidate;
-            }
-          }
-        }
-      } finally {
-        emergency.cleanup?.();
-      }
-    }
-
-
-    /*
-      Última salvaguarda. Um canvas mínimo em JPEG sempre
-      fica muito abaixo de 130 KB, evitando rejeição do upload.
-    */
-    const tinyCanvas =
+    const finalCanvas =
       document.createElement(
         "canvas"
       );
 
 
-    tinyCanvas.width =
-      32;
+    finalCanvas.width =
+      finalWidth;
 
-    tinyCanvas.height =
-      Math.max(
-        1,
-        Math.round(
-          32
-          *
-          originalHeight
-          /
-          originalWidth
-        )
-      );
+    finalCanvas.height =
+      finalHeight;
 
 
-    const tinyContext =
-      tinyCanvas.getContext(
+    const finalContext =
+      finalCanvas.getContext(
         "2d",
         {
           alpha:
@@ -5712,49 +5651,96 @@ async function compressQuestionFigureBlob(
       );
 
 
-    if (!tinyContext) {
+    if (!finalContext) {
       throw new Error(
         "Não foi possível processar a imagem."
       );
     }
 
 
-    tinyContext.fillStyle =
+    finalContext.fillStyle =
       "#ffffff";
 
-    tinyContext.fillRect(
+    finalContext.fillRect(
       0,
       0,
-      tinyCanvas.width,
-      tinyCanvas.height
+      finalWidth,
+      finalHeight
     );
 
 
-    tinyContext.drawImage(
+    finalContext.imageSmoothingEnabled =
+      true;
+
+    finalContext.imageSmoothingQuality =
+      "high";
+
+
+    finalContext.drawImage(
       drawable.source,
       0,
       0,
-      tinyCanvas.width,
-      tinyCanvas.height
+      finalWidth,
+      finalHeight
     );
 
 
-    const tinyBlob =
-      await canvasBlob(
-        tinyCanvas,
-        "image/jpeg",
+    for (
+      const quality
+      of [
+        0.025,
+        0.02,
+        0.015,
         0.01
-      );
+      ]
+    ) {
+      const candidate =
+        await canvasBlob(
+          finalCanvas,
+          "image/jpeg",
+          quality
+        );
 
 
-    if (!tinyBlob) {
-      throw new Error(
-        "Não foi possível processar a imagem."
-      );
+      if (!candidate) {
+        continue;
+      }
+
+
+      if (
+        !smallest
+        ||
+        candidate.size
+        < smallest.size
+      ) {
+        smallest =
+          candidate;
+      }
+
+
+      if (
+        candidate.size
+        <= maxBytes
+      ) {
+        return candidate;
+      }
     }
 
 
-    return tinyBlob;
+    /*
+      Não existe fallback abaixo de 800 px.
+      Em navegadores normais, JPEG/WebP a 800 px e qualidade
+      mínima fica bem abaixo do teto. Caso o encoder falhe,
+      retorna o menor resultado obtido sem violar resolução.
+    */
+    if (smallest) {
+      return smallest;
+    }
+
+
+    throw new Error(
+      "Não foi possível processar a imagem."
+    );
 
 
   } finally {
