@@ -95,3 +95,15 @@
     flex-basis: 54px !important;
   }
 }
+
+/* LURIA — uppercase + 15% */
+.brand .brand-copy strong {
+  text-transform: uppercase !important;
+  font-size: 20.7px !important; /* 18px + 15% */
+}
+
+.auth-brand h1 {
+  text-transform: uppercase !important;
+  font-size: 32.2px !important; /* 28px + 15% */
+}
+
