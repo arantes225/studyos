@@ -8,7 +8,10 @@
     days: 30,
     snapshot: null,
     logistics: null,
-    customers: []
+    customers: [],
+    pinConfigured: false,
+    pinUnlocked: false,
+    wired: false
   };
 
   const METRICS = [
@@ -764,6 +767,378 @@
     );
   }
 
+  function normalizePin(value) {
+    return String(value || "")
+      .replace(/\D/g, "")
+      .slice(0, 6);
+  }
+
+  function setPinMessage(text, type = "") {
+    const message =
+      $("admin-pin-message");
+
+    if (!message) {
+      return;
+    }
+
+    message.textContent =
+      text;
+
+    message.className =
+      `admin-pin-message ${type}`.trim();
+  }
+
+  function setPinGateMode(hasPin) {
+    state.pinConfigured =
+      Boolean(hasPin);
+
+    const fields =
+      $("admin-pin-fields");
+
+    const confirmWrap =
+      $("admin-pin-confirm-wrap");
+
+    const title =
+      $("admin-pin-title");
+
+    const description =
+      $("admin-pin-description");
+
+    const label =
+      $("admin-pin-label");
+
+    const submit =
+      $("admin-pin-submit");
+
+    if (fields) {
+      fields.hidden =
+        false;
+    }
+
+    if (confirmWrap) {
+      confirmWrap.hidden =
+        state.pinConfigured;
+    }
+
+    if (title) {
+      title.textContent =
+        state.pinConfigured
+          ? "Digite seu PIN"
+          : "Cadastre seu PIN";
+    }
+
+    if (description) {
+      description.textContent =
+        state.pinConfigured
+          ? "Digite os 6 dígitos cadastrados para abrir o painel administrativo."
+          : "Este é seu primeiro acesso protegido. Crie um PIN numérico de 6 dígitos para o Admin.";
+    }
+
+    if (label) {
+      label.textContent =
+        state.pinConfigured
+          ? "PIN de 6 dígitos"
+          : "Criar PIN";
+    }
+
+    if (submit) {
+      submit.textContent =
+        state.pinConfigured
+          ? "Desbloquear Admin"
+          : "Cadastrar PIN";
+      submit.disabled =
+        false;
+    }
+
+    setPinMessage(
+      state.pinConfigured
+        ? "O painel permanece bloqueado até a validação."
+        : "O PIN será armazenado de forma protegida."
+    );
+
+    requestAnimationFrame(
+      () => {
+        $("admin-pin")
+          ?.focus();
+      }
+    );
+  }
+
+  async function loadPinStatus() {
+    const {
+      data,
+      error
+    } =
+      await sb.rpc(
+        "admin_pin_status"
+      );
+
+    if (error) {
+      throw error;
+    }
+
+    setPinGateMode(
+      data?.has_pin === true
+    );
+  }
+
+  async function unlockAdminPage() {
+    state.pinUnlocked =
+      true;
+
+    const gate =
+      $("admin-pin-gate");
+
+    const app =
+      $("admin-app");
+
+    if (gate) {
+      gate.hidden =
+        true;
+    }
+
+    if (app) {
+      app.hidden =
+        false;
+    }
+
+    if (!state.wired) {
+      wire();
+      state.wired =
+        true;
+    }
+
+    await load();
+  }
+
+  async function submitAdminPin(event) {
+    event.preventDefault();
+
+    const pinInput =
+      $("admin-pin");
+
+    const confirmInput =
+      $("admin-pin-confirm");
+
+    const submit =
+      $("admin-pin-submit");
+
+    const pin =
+      normalizePin(
+        pinInput?.value
+      );
+
+    const confirmPin =
+      normalizePin(
+        confirmInput?.value
+      );
+
+    if (pinInput) {
+      pinInput.value =
+        pin;
+    }
+
+    if (confirmInput) {
+      confirmInput.value =
+        confirmPin;
+    }
+
+    if (pin.length !== 6) {
+      setPinMessage(
+        "Digite exatamente 6 números.",
+        "error"
+      );
+
+      pinInput?.focus();
+      return;
+    }
+
+    if (
+      !state.pinConfigured
+      &&
+      pin !== confirmPin
+    ) {
+      setPinMessage(
+        "Os PINs digitados não coincidem.",
+        "error"
+      );
+
+      confirmInput?.focus();
+      return;
+    }
+
+    if (submit) {
+      submit.disabled =
+        true;
+
+      submit.textContent =
+        state.pinConfigured
+          ? "Verificando..."
+          : "Salvando...";
+    }
+
+    try {
+      if (!state.pinConfigured) {
+        const {
+          data,
+          error
+        } =
+          await sb.rpc(
+            "admin_set_pin",
+            {
+              p_pin:
+                pin
+            }
+          );
+
+        if (
+          error
+          ||
+          data !== true
+        ) {
+          throw error
+          || new Error(
+            "Não foi possível cadastrar o PIN."
+          );
+        }
+
+        setPinMessage(
+          "PIN cadastrado com sucesso.",
+          "success"
+        );
+
+        await unlockAdminPage();
+        return;
+      }
+
+      const {
+        data,
+        error
+      } =
+        await sb.rpc(
+          "admin_verify_pin",
+          {
+            p_pin:
+              pin
+          }
+        );
+
+      if (error) {
+        throw error;
+      }
+
+      if (data?.ok === true) {
+        setPinMessage(
+          "Acesso liberado.",
+          "success"
+        );
+
+        await unlockAdminPage();
+        return;
+      }
+
+      if (
+        data?.reason ===
+        "locked"
+      ) {
+        const seconds =
+          Number(
+            data.retry_after_seconds
+            || 300
+          );
+
+        const minutes =
+          Math.max(
+            1,
+            Math.ceil(
+              seconds / 60
+            )
+          );
+
+        setPinMessage(
+          `Muitas tentativas incorretas. Tente novamente em cerca de ${minutes} min.`,
+          "error"
+        );
+
+      } else if (
+        data?.reason ===
+        "incorrect"
+      ) {
+        setPinMessage(
+          `PIN incorreto. ${Number(data.attempts_remaining || 0)} tentativa(s) restante(s).`,
+          "error"
+        );
+
+      } else {
+        setPinMessage(
+          "Não foi possível validar o PIN.",
+          "error"
+        );
+      }
+
+      if (pinInput) {
+        pinInput.value =
+          "";
+
+        pinInput.focus();
+      }
+
+    } catch (error) {
+      console.error(
+        error
+      );
+
+      setPinMessage(
+        "Não foi possível validar o acesso administrativo.",
+        "error"
+      );
+
+    } finally {
+      if (
+        submit
+        &&
+        !state.pinUnlocked
+      ) {
+        submit.disabled =
+          false;
+
+        submit.textContent =
+          state.pinConfigured
+            ? "Desbloquear Admin"
+            : "Cadastrar PIN";
+      }
+    }
+  }
+
+  function wirePinGate() {
+    [
+      "admin-pin",
+      "admin-pin-confirm"
+    ]
+      .forEach(
+        (id) => {
+          const input =
+            $(id);
+
+          input?.addEventListener(
+            "input",
+            () => {
+              input.value =
+                normalizePin(
+                  input.value
+                );
+            }
+          );
+        }
+      );
+
+    $("admin-pin-form")
+      ?.addEventListener(
+        "submit",
+        submitAdminPin
+      );
+  }
+
   function wire() {
     $("admin-range")
       ?.addEventListener(
@@ -840,8 +1215,29 @@
       return;
     }
 
-    wire();
-    await load();
+    wirePinGate();
+
+    try {
+      await loadPinStatus();
+
+    } catch (error) {
+      console.error(
+        error
+      );
+
+      setPinMessage(
+        "Não foi possível verificar a proteção do Admin.",
+        "error"
+      );
+
+      const submit =
+        $("admin-pin-submit");
+
+      if (submit) {
+        submit.disabled =
+          true;
+      }
+    }
   }
 
   if (
