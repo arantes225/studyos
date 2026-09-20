@@ -1939,3 +1939,393 @@ optgroup {
     font-size: 7px !important;
   }
 }
+
+
+/* =========================================================
+   LURIA — PWA MOBILE: CRONOGRAMA + ESTATÍSTICAS
+   Layout específico do app instalado em telas pequenas.
+   ========================================================= */
+@media (max-width: 760px) {
+  .pwa-standalone body[data-page="cronograma"] .main,
+  .pwa-standalone body[data-page="estatisticas"] .main {
+    padding: 12px 10px 28px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .topbar,
+  .pwa-standalone body[data-page="estatisticas"] .topbar {
+    min-height: 48px !important;
+    gap: 9px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .menu-open,
+  .pwa-standalone body[data-page="estatisticas"] .menu-open {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .page-heading .eyebrow,
+  .pwa-standalone body[data-page="estatisticas"] .page-heading .eyebrow {
+    font-size: 7.5px !important;
+    letter-spacing: .065em !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .page-heading h1,
+  .pwa-standalone body[data-page="estatisticas"] .page-heading h1 {
+    font-size: 20px !important;
+    line-height: 1.08 !important;
+  }
+
+  /* ---------- CRONOGRAMA ---------- */
+  .pwa-standalone body[data-page="cronograma"] .schedule-stack {
+    gap: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .schedule-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .summary-card {
+    min-height: 72px !important;
+    padding: 10px 11px !important;
+    border-radius: 12px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .summary-card span {
+    font-size: 7.5px !important;
+    letter-spacing: .035em !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .summary-card strong {
+    margin-top: 5px !important;
+    font-size: 20px !important;
+    line-height: 1 !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .schedule-add-hub,
+  .pwa-standalone body[data-page="cronograma"] .import-box,
+  .pwa-standalone body[data-page="cronograma"] .manual-panel,
+  .pwa-standalone body[data-page="cronograma"] .base-schedule-panel,
+  .pwa-standalone body[data-page="cronograma"] .planner-panel,
+  .pwa-standalone body[data-page="cronograma"] .overdue-organizer,
+  .pwa-standalone body[data-page="cronograma"] .deck-panel,
+  .pwa-standalone body[data-page="cronograma"] .theme-library-panel {
+    padding: 12px !important;
+    border-radius: 13px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .schedule-add-hub-head,
+  .pwa-standalone body[data-page="cronograma"] .import-header,
+  .pwa-standalone body[data-page="cronograma"] .planner-header,
+  .pwa-standalone body[data-page="cronograma"] .deck-header,
+  .pwa-standalone body[data-page="cronograma"] .theme-library-head {
+    gap: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] h2 {
+    font-size: 16px !important;
+    line-height: 1.15 !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] p,
+  .pwa-standalone body[data-page="cronograma"] .import-help {
+    font-size: 9px !important;
+    line-height: 1.4 !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .badge {
+    min-height: 22px !important;
+    margin-bottom: 8px !important;
+    padding: 0 7px !important;
+    font-size: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .schedule-add-tabs {
+    width: 100% !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 3px !important;
+    padding: 3px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .schedule-add-tab {
+    min-height: 31px !important;
+    padding: 0 5px !important;
+    font-size: 8px !important;
+    border-radius: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .import-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    margin-top: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .drop-file {
+    min-height: 105px !important;
+    padding: 12px !important;
+    border-radius: 11px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .drop-file strong {
+    font-size: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .drop-file small,
+  .pwa-standalone body[data-page="cronograma"] .mode-option small {
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .mode-card {
+    gap: 6px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .mode-option span {
+    padding: 10px !important;
+    border-radius: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .mode-option strong {
+    font-size: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .planner-panel {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .planner-header {
+    min-width: 640px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .planner-nav {
+    min-width: 270px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .planner-nav button {
+    min-height: 30px !important;
+    padding: 0 8px !important;
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .week-planner {
+    width: 100% !important;
+    min-width: 720px !important;
+    margin-top: 9px !important;
+    border-radius: 11px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .planner-day {
+    min-height: 235px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .planner-day-header {
+    min-height: 36px !important;
+    padding: 0 7px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .planner-day-header span {
+    font-size: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .planner-day-header strong {
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .planner-day-body {
+    gap: 5px !important;
+    padding: 5px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .topic-card {
+    padding: 7px 28px 7px 7px !important;
+    border-radius: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .topic-card h3 {
+    font-size: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .topic-meta,
+  .pwa-standalone body[data-page="cronograma"] .topic-action {
+    font-size: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .overdue-organizer {
+    gap: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .reorganize-actions .button {
+    min-height: 34px !important;
+    font-size: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .theme-library-controls {
+    margin-top: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .theme-library-controls input,
+  .pwa-standalone body[data-page="cronograma"] .theme-filter-menu-toggle {
+    min-height: 36px !important;
+    height: 36px !important;
+    font-size: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .theme-library-meta,
+  .pwa-standalone body[data-page="cronograma"] #theme-selected-count {
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .theme-library-row,
+  .pwa-standalone body[data-page="cronograma"] .theme-library-row.with-selection {
+    grid-template-columns: 28px minmax(0, 1fr) !important;
+    gap: 7px !important;
+    padding: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .theme-library-actions {
+    grid-column: 1 / -1 !important;
+    gap: 5px !important;
+  }
+
+  /* ---------- ESTATÍSTICAS ---------- */
+  .pwa-standalone body[data-page="estatisticas"] .stats-page {
+    gap: 9px !important;
+    padding-bottom: 26px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-hero,
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-box,
+  .pwa-standalone body[data-page="estatisticas"] .stats-block {
+    padding: 11px !important;
+    border-radius: 13px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-hero {
+    gap: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-hero h2 {
+    font-size: 18px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-hero p {
+    margin-top: 5px !important;
+    font-size: 9px !important;
+    line-height: 1.38 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-range {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 2px !important;
+    padding: 3px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-range button {
+    min-height: 30px !important;
+    padding: 0 4px !important;
+    font-size: 7.5px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tabs-shell {
+    padding: 3px !important;
+    border-radius: 11px !important;
+    overflow-x: auto !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tabs {
+    min-width: 520px !important;
+    grid-template-columns: repeat(5, minmax(100px, 1fr)) !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tab {
+    min-height: 34px !important;
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card {
+    min-height: 84px !important;
+    padding: 9px !important;
+    border-radius: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card span,
+  .pwa-standalone body[data-page="estatisticas"] .stats-kicker {
+    font-size: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card strong {
+    margin-top: 5px !important;
+    font-size: 18px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card small {
+    font-size: 7.5px !important;
+    line-height: 1.28 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-block-grid {
+    gap: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-section-head h3 {
+    font-size: 13px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-section-head p {
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    margin-top: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini {
+    padding: 8px !important;
+    border-radius: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini span,
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini small {
+    font-size: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini strong {
+    font-size: 15px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .chart-box {
+    min-height: 190px !important;
+    margin-top: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .chart-box.compact {
+    min-height: 165px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-table {
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-table th,
+  .pwa-standalone body[data-page="estatisticas"] .stats-table td {
+    padding: 7px 6px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .insight {
+    padding: 9px !important;
+    font-size: 8px !important;
+  }
+}
