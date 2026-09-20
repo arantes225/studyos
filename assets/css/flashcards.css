@@ -1142,3 +1142,67 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================
+   FLASH DECKS / REVISÃO EXTRAORDINÁRIA
+   ========================================================= */
+.flash-deck-actions {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:12px 0;
+}
+.flash-deck-actions small {
+  width:100%;
+  color:var(--muted);
+  font-size:9px;
+}
+.flash-deck-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+  gap:9px;
+  margin:10px 0 14px;
+}
+.flash-deck-card {
+  display:grid;
+  gap:7px;
+  min-width:0;
+  padding:11px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface-2);
+}
+.flash-deck-card strong { font-size:11px; }
+.flash-deck-card small { color:var(--muted); font-size:8px; }
+.flash-deck-card .flash-deck-taxonomy {
+  display:flex;
+  gap:4px;
+  flex-wrap:wrap;
+}
+.flash-deck-card .flash-deck-buttons {
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.flash-deck-card .flash-deck-buttons button {
+  min-height:31px;
+  padding:0 9px;
+  font-size:8px;
+}
+.flash-shared-badge {
+  display:inline-flex;
+  align-items:center;
+  min-height:20px;
+  padding:0 7px;
+  border-radius:999px;
+  background:var(--accent-soft);
+  color:var(--accent);
+  font-size:7px;
+  font-weight:800;
+}
+@media(max-width:760px){
+  .flash-deck-grid { grid-template-columns:1fr; }
+  .library-filters { grid-template-columns:1fr 1fr !important; }
+  .library-filters input { grid-column:1 / -1; }
+}
