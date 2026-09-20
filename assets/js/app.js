@@ -132,7 +132,7 @@ function sidebarMarkup(user, profile = null) {
 
         <span class="brand-copy">
           <strong>Luria</strong>
-          <small>Mapa até a residência</small>
+          <small>Aprenda. Conecte. Consolide.</small>
         </span>
       </a>
       <div class="sidebar-top-actions">
