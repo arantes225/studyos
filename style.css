@@ -1330,3 +1330,68 @@ body.sidebar-hidden
     pointer-events: auto;
   }
 }
+
+
+/* =========================================================
+   SIDEBAR V12.3 — BOTÃO HAMBÚRGUER NO TOPO
+   ========================================================= */
+
+.sidebar-desktop-toggle {
+  position: fixed;
+  top: 12px;
+  left: 276px;
+  transform: none;
+  z-index: 110;
+
+  width: 42px;
+  height: 42px;
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+
+  border: 1px solid var(--border);
+  border-radius: 11px;
+
+  background: var(--surface);
+  color: var(--text);
+
+  box-shadow:
+    0 4px 16px
+    rgba(15, 23, 42, .08);
+
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    left .20s ease,
+    background .15s ease,
+    border-color .15s ease,
+    color .15s ease;
+}
+
+.sidebar-desktop-toggle:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.sidebar-desktop-toggle > span {
+  display: block;
+  transform: translateY(-1px);
+}
+
+body.sidebar-hidden
+.sidebar-desktop-toggle {
+  left: 12px;
+}
+
+@media (max-width: 980px) {
+  .sidebar-desktop-toggle {
+    display: none !important;
+  }
+}
