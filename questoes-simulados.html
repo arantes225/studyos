@@ -788,6 +788,62 @@
       grid-column: 1 / -1;
     }
 
+    .qs-error-skip {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .qs-error-skip input {
+      width: 17px;
+      height: 17px;
+      flex: 0 0 auto;
+      accent-color: var(--accent);
+    }
+
+    .qs-error-skip span,
+    .qs-error-skip strong,
+    .qs-error-skip small {
+      display: block;
+    }
+
+    .qs-error-skip strong {
+      font-size: 10px;
+      font-weight: 850;
+    }
+
+    .qs-error-skip small {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 8px;
+      line-height: 1.4;
+    }
+
+    .qs-question.skip-error-notebook
+    .qs-error-skip {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .qs-question.skip-error-notebook
+    .qs-error-fields {
+      grid-template-columns: 1fr;
+    }
+
+    .qs-question.skip-error-notebook
+    .qs-error-fields > .qs-field,
+    .qs-question.skip-error-notebook
+    .qs-error-fields > .qs-error-image-picker {
+      display: none !important;
+    }
+
     .qs-sent-badge {
       display: none;
       margin: 0 12px 12px;
@@ -1537,7 +1593,7 @@
   <script src="supabase.js"></script>
   <script src="app.js?v=12.3"></script>
   <script src="study-mode.js?v=12.1"></script>
-  <script src="questoes-simulados.js?v=24.0"></script>
+  <script src="questoes-simulados.js?v=25.0"></script>
 
   <script>
     /* O JS principal já calcula a taxa de acerto semanal.
