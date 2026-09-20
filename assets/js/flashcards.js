@@ -3142,7 +3142,7 @@ function populateLibraryAreas() {
 
   const areas =
     window.LuriaStudyMode
-      ?.areasFor(
+      ?.generalAreasFor(
         mode
       )
     || [];
