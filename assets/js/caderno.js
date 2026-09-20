@@ -10199,6 +10199,10 @@ async function recognizeNotebookRowsIndividually(
 
 
   try {
+    const assets =
+      await window.LuriaPdfBranding
+        ?.getAssets?.();
+
     for (
       let index = 0;
       index < ranges.length;
@@ -13012,7 +13016,7 @@ async function renderNotebookPdfCanvas(
       paper,
       {
         scale:
-          2,
+          2.7,
 
         useCORS:
           true,
@@ -13049,7 +13053,8 @@ async function renderNotebookPdfCanvas(
 function addNotebookCanvasToPdf(
   doc,
   canvas,
-  firstPage = false
+  firstPage = false,
+  assets = null
 ) {
   const pageWidth =
     210;
@@ -13057,22 +13062,29 @@ function addNotebookCanvasToPdf(
   const pageHeight =
     297;
 
-  const margin =
-    8;
+  const horizontalMargin =
+    12;
+
+  const contentTop =
+    26;
+
+  const contentBottom =
+    16;
 
   const drawWidth =
     pageWidth
     -
     (
-      margin * 2
+      horizontalMargin
+      * 2
     );
 
   const drawHeight =
     pageHeight
     -
-    (
-      margin * 2
-    );
+    contentTop
+    -
+    contentBottom;
 
   const sourcePageHeight =
     Math.floor(
@@ -13127,8 +13139,22 @@ function addNotebookCanvasToPdf(
 
     const context =
       pageCanvas.getContext(
-        "2d"
+        "2d",
+        {
+          alpha:
+            false
+        }
       );
+
+    context.fillStyle =
+      "#ffffff";
+
+    context.fillRect(
+      0,
+      0,
+      pageCanvas.width,
+      pageCanvas.height
+    );
 
     context.drawImage(
       canvas,
@@ -13156,13 +13182,25 @@ function addNotebookCanvasToPdf(
         "image/png"
       ),
       "PNG",
-      margin,
-      margin,
+      horizontalMargin,
+      contentTop,
       drawWidth,
       renderedHeight,
       undefined,
-      "FAST"
+      "MEDIUM"
     );
+
+    window.LuriaPdfBranding
+      ?.decoratePage(
+        doc,
+        assets,
+        {
+          title:
+            "Caderno",
+          subtitle:
+            "Exportação visual"
+        }
+      );
 
     sourceY +=
       sliceHeight;
@@ -13245,9 +13283,15 @@ async function exportSelectedPdf() {
       addNotebookCanvasToPdf(
         doc,
         canvas,
-        index === 0
+        index === 0,
+        assets
       );
     }
+
+    window.LuriaPdfBranding
+      ?.finalize(
+        doc
+      );
 
     doc.save(
       "luria-cadernos.pdf"
