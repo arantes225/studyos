@@ -146,7 +146,7 @@
         "luria-theme-logo";
 
       logo.alt =
-        "Logo Luria";
+        "Logo LURIA";
 
       const copy =
         brand.querySelector(
