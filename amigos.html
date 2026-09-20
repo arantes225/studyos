@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <base href="/">
+  <title>Amigos · LURIA</title>
+  <link rel="icon" type="image/png" href="assets/img/favicon.png">
+  <link rel="stylesheet" href="assets/css/style.css?v=luria-palette-11">
+  <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=10">
+  <link rel="stylesheet" href="assets/css/amigos.css?v=1">
+  <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=10">
+  <script defer src="assets/js/luria-brand-v5.js?v=10"></script>
+  <link rel="canonical" href="/amigos/">
+</head>
+<body data-page="amigos">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar"></aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+    <main class="main">
+      <div class="page friends-page">
+        <header class="topbar">
+          <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
+          <div class="page-heading">
+            <span class="eyebrow" data-page-eyebrow></span>
+            <h1 data-page-title></h1>
+          </div>
+        </header>
+
+        <div class="friends-grid">
+          <section class="friends-card">
+            <h2>Seu ID LURIA</h2>
+            <p>Envie este código para alguém te adicionar dentro do LURIA.</p>
+            <div class="friends-id-box">
+              <strong id="my-luria-id">—</strong>
+              <button id="copy-my-id" class="button secondary" type="button">Copiar</button>
+            </div>
+
+            <h2 style="margin-top:18px">Adicionar amigo</h2>
+            <p>Digite o ID LURIA da pessoa.</p>
+            <div class="friends-add-row">
+              <input id="friend-id-input" type="text" maxlength="8" placeholder="Ex.: A1B2C3D4" autocapitalize="characters">
+              <button id="add-friend" class="button primary" type="button">Adicionar</button>
+            </div>
+            <div id="friends-status" class="friends-status" aria-live="polite"></div>
+
+            <h2 style="margin-top:18px">Meus amigos</h2>
+            <div id="friends-list" class="friends-list"></div>
+          </section>
+
+          <section class="friends-card">
+            <h2>Materiais recebidos</h2>
+            <p>Decks de Flashcards e cadernos enviados diretamente pelos seus amigos aparecem aqui.</p>
+            <div id="friends-inbox" class="friends-inbox"></div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/supabase.js"></script>
+  <script src="assets/js/app.js?v=14.1"></script>
+  <script src="assets/js/amigos.js?v=1"></script>
+  <script defer src="assets/js/pwa.js?v=3"></script>
+</body>
+</html>
