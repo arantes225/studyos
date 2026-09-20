@@ -1298,3 +1298,260 @@
     grid-template-columns: 1fr !important;
   }
 }
+
+
+/* =========================================================
+   PWA MOBILE v6 — Estatísticas com densidade de app
+   Menos "site": navegação compacta, 3 callouts por linha e
+   painéis mais baixos.
+   ========================================================= */
+@media (max-width: 760px) {
+  .pwa-standalone body[data-page="estatisticas"] .main {
+    padding:
+      max(10px, env(safe-area-inset-top))
+      10px
+      calc(24px + env(safe-area-inset-bottom))
+      10px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .topbar {
+    min-height: 42px !important;
+    margin-bottom: 10px !important;
+    gap: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .menu-open {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .page-heading h1 {
+    font-size: 21px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .page-heading .eyebrow {
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-page {
+    gap: 10px !important;
+  }
+
+  /* Período como barra segmentada compacta */
+  .pwa-standalone body[data-page="estatisticas"] .stats-hero {
+    padding: 5px !important;
+    border-radius: 12px !important;
+    background: var(--surface) !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-range {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 3px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-range button {
+    min-height: 34px !important;
+    padding: 0 3px !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    background: transparent !important;
+    font-size: 9px !important;
+    white-space: nowrap !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-range button.active {
+    background: var(--surface-2) !important;
+    border: 0 !important;
+    box-shadow: 0 1px 4px rgba(15,23,42,.08) !important;
+  }
+
+  /* Abas em uma única faixa horizontal rolável, estilo app */
+  .pwa-standalone body[data-page="estatisticas"] .stats-tabs-shell {
+    padding: 4px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    border-radius: 12px !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tabs-shell::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tabs {
+    width: max-content !important;
+    min-width: max-content !important;
+    display: flex !important;
+    gap: 4px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tab,
+  .pwa-standalone body[data-page="estatisticas"] .stats-tab:last-child {
+    width: auto !important;
+    min-width: auto !important;
+    min-height: 34px !important;
+    padding: 0 12px !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    background: transparent !important;
+    font-size: 9.5px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tab.active {
+    background: var(--surface-2) !important;
+    border: 0 !important;
+    box-shadow: 0 1px 4px rgba(15,23,42,.08) !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-status {
+    min-height: 0 !important;
+    font-size: 8.5px !important;
+  }
+
+  /* Tira a sensação de "card dentro de card" */
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-box {
+    padding: 10px !important;
+    border-radius: 13px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-section-head h3 {
+    font-size: 14px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-section-head p {
+    margin-top: 3px !important;
+    font-size: 9px !important;
+    line-height: 1.35 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-kicker {
+    margin-bottom: 3px !important;
+    font-size: 7px !important;
+  }
+
+  /* 9 indicadores = 3 x 3, como um dashboard de app */
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card {
+    min-height: 82px !important;
+    padding: 8px 6px !important;
+    border-radius: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card span {
+    font-size: 6.8px !important;
+    line-height: 1.15 !important;
+    letter-spacing: .035em !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card strong {
+    margin-top: 4px !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card small {
+    margin-top: 4px !important;
+    font-size: 7.5px !important;
+    line-height: 1.2 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-viz {
+    margin-top: 5px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-mini-track {
+    height: 4px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-block-grid {
+    gap: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-block {
+    padding: 11px !important;
+    border-radius: 13px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    margin-top: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini {
+    min-height: 70px !important;
+    padding: 8px !important;
+    border-radius: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini span {
+    font-size: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini strong {
+    margin-top: 4px !important;
+    font-size: 17px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini small {
+    margin-top: 3px !important;
+    font-size: 7.8px !important;
+    line-height: 1.2 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .chart-box,
+  .pwa-standalone body[data-page="estatisticas"] .chart-box.compact {
+    height: 175px !important;
+    min-height: 175px !important;
+    max-height: 175px !important;
+    margin-top: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .chart-box canvas,
+  .pwa-standalone body[data-page="estatisticas"] .chart-box.compact canvas {
+    height: 175px !important;
+    max-height: 175px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .insights {
+    gap: 6px !important;
+    margin-top: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .insight {
+    padding: 9px !important;
+    border-radius: 10px !important;
+    font-size: 9px !important;
+    line-height: 1.35 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-link {
+    min-height: 34px !important;
+    font-size: 8.5px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-table-wrap,
+  .pwa-standalone body[data-page="estatisticas"] .stats-heatmap {
+    margin-top: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .heatmap-head,
+  .pwa-standalone body[data-page="estatisticas"] .heatmap-row-label,
+  .pwa-standalone body[data-page="estatisticas"] .heatmap-cell {
+    min-height: 42px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
