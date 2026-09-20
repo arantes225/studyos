@@ -881,47 +881,74 @@ function imageRectFromCtm(
 
 function isUsefulQuestionImageRect(
   rect,
-  viewport
+  viewport,
+  relaxed = false
 ) {
   if (
     !rect
-    || rect.width < 110
-    || rect.height < 45
   ) {
     return false;
   }
+
+
+  const minWidth =
+    relaxed
+      ? 48
+      : 110;
+
+  const minHeight =
+    relaxed
+      ? 24
+      : 45;
+
+  const minArea =
+    relaxed
+      ? 2200
+      : 12000;
+
 
   if (
-    rect.width * rect.height
-    < 12000
+    rect.width < minWidth
+    || rect.height < minHeight
+    || rect.width * rect.height < minArea
   ) {
     return false;
   }
 
+
   /*
-    Ignora cabeçalho/rodapé/logos.
+    Em modo relaxado, não descartamos imagens próximas
+    do topo/rodapé tão agressivamente. Alguns bancos de
+    questões posicionam figuras bem perto dessas áreas.
   */
   if (
-    rect.top
-    < viewport.height * 0.025
-    || rect.bottom
-    > viewport.height * 0.92
+    !relaxed
+    &&
+    (
+      rect.top
+        < viewport.height * 0.025
+      ||
+      rect.bottom
+        > viewport.height * 0.92
+    )
   ) {
     return false;
   }
 
+
   /*
-    Evita capturar uma página inteira
-    renderizada como fundo.
+    Continua ignorando fundos/páginas inteiras.
   */
   if (
     rect.width
-      > viewport.width * 0.92
-    && rect.height
-      > viewport.height * 0.80
+      > viewport.width * 0.94
+    &&
+    rect.height
+      > viewport.height * 0.84
   ) {
     return false;
   }
+
 
   return true;
 }
@@ -929,7 +956,8 @@ function isUsefulQuestionImageRect(
 
 async function extractEmbeddedImageRects(
   page,
-  viewport
+  viewport,
+  relaxed = false
 ) {
   const operatorList =
     await page
@@ -1008,7 +1036,8 @@ async function extractEmbeddedImageRects(
     if (
       isUsefulQuestionImageRect(
         rect,
-        viewport
+        viewport,
+        relaxed
       )
     ) {
       rects.push(
@@ -1576,6 +1605,32 @@ function shouldMergeQuestionImageRects(
 }
 
 
+function scaleQuestionImageRect(
+  rect,
+  factor
+) {
+  return {
+    left:
+      rect.left * factor,
+
+    top:
+      rect.top * factor,
+
+    right:
+      rect.right * factor,
+
+    bottom:
+      rect.bottom * factor,
+
+    width:
+      rect.width * factor,
+
+    height:
+      rect.height * factor
+  };
+}
+
+
 function groupQuestionImageRects(
   entries,
   viewport
@@ -2036,24 +2091,37 @@ async function extractQuestionImagesFromPage(
   content,
   pageNumber
 ) {
-  const scale =
+  /*
+    Detecção volta para 2x, que era a escala estável
+    antes da regressão. O recorte continua em 3x para
+    preservar nitidez.
+  */
+  const detectionScale =
+    2;
+
+  const renderScale =
     3;
 
-  const viewport =
+
+  const detectionViewport =
     page.getViewport({
-      scale
+      scale:
+        detectionScale
     });
 
-  const lineRecords =
+
+  const detectionLines =
     groupTextItemsIntoLineRecords(
       content.items,
-      viewport
+      detectionViewport
     );
+
 
   const questionStarts =
     questionStartsForPage(
-      lineRecords
+      detectionLines
     );
+
 
   if (
     !questionStarts.length
@@ -2061,19 +2129,43 @@ async function extractQuestionImagesFromPage(
     return [];
   }
 
-  const imageRects =
+
+  /*
+    Primeiro tenta o filtro normal.
+    Se não achar nada, tenta um filtro relaxado.
+  */
+  let imageRects =
     await extractEmbeddedImageRects(
       page,
-      viewport
+      detectionViewport,
+      false
     );
+
 
   if (
     !imageRects.length
   ) {
+    imageRects =
+      await extractEmbeddedImageRects(
+        page,
+        detectionViewport,
+        true
+      );
+  }
+
+
+  if (
+    !imageRects.length
+  ) {
+    console.debug(
+      `[Questões] Página ${pageNumber}: nenhum XObject de imagem útil encontrado.`
+    );
+
     return [];
   }
 
-  const matchedRects =
+
+  let matchedRects =
     imageRects
       .map(
         rect => ({
@@ -2093,22 +2185,98 @@ async function extractQuestionImagesFromPage(
           )
       );
 
+
+  /*
+    Segundo fallback:
+    se as imagens existem mas o vínculo com a questão
+    falhou, associa à última questão iniciada acima do
+    centro da imagem, com tolerância maior.
+  */
   if (
     !matchedRects.length
   ) {
+    matchedRects =
+      imageRects
+        .map(
+          rect => {
+            const centerY =
+              rect.top
+              + rect.height / 2;
+
+
+            const candidate =
+              questionStarts
+                .filter(
+                  question =>
+                    question.top
+                    <= centerY
+                    + detectionViewport.height * 0.04
+                )
+                .sort(
+                  (
+                    a,
+                    b
+                  ) =>
+                    b.top - a.top
+                )[0];
+
+
+            return {
+              rect,
+
+              question_number:
+                candidate?.number
+                ?? null
+            };
+          }
+        )
+        .filter(
+          item =>
+            Number.isInteger(
+              item.question_number
+            )
+        );
+  }
+
+
+  if (
+    !matchedRects.length
+  ) {
+    console.debug(
+      `[Questões] Página ${pageNumber}: ${imageRects.length} imagem(ns) detectada(s), mas nenhuma vinculada a uma questão.`
+    );
+
     return [];
   }
 
 
   /*
-    PDFs podem armazenar uma única figura em vários blocos.
-    Reagrupamos os blocos ANTES de recortar para não cortar
-    a figura no meio nem empilhar metades depois.
+    Reagrupa pedaços da mesma figura ainda na escala
+    de detecção.
   */
   const groupedRects =
     groupQuestionImageRects(
       matchedRects,
-      viewport
+      detectionViewport
+    );
+
+
+  const renderViewport =
+    page.getViewport({
+      scale:
+        renderScale
+    });
+
+
+  const scaleFactor =
+    renderScale
+    / detectionScale;
+
+
+  const renderLines =
+    groupTextItemsIntoLineRecords(
+      content.items,
+      renderViewport
     );
 
 
@@ -2117,15 +2285,17 @@ async function extractQuestionImagesFromPage(
       "canvas"
     );
 
+
   canvas.width =
     Math.ceil(
-      viewport.width
+      renderViewport.width
     );
 
   canvas.height =
     Math.ceil(
-      viewport.height
+      renderViewport.height
     );
+
 
   const context =
     canvas.getContext(
@@ -2136,6 +2306,7 @@ async function extractQuestionImagesFromPage(
       }
     );
 
+
   context.fillStyle =
     "#ffffff";
 
@@ -2145,6 +2316,7 @@ async function extractQuestionImagesFromPage(
     canvas.width,
     canvas.height
   );
+
 
   context.imageSmoothingEnabled =
     true;
@@ -2157,7 +2329,8 @@ async function extractQuestionImagesFromPage(
     .render({
       canvasContext:
         context,
-      viewport
+      viewport:
+        renderViewport
     })
     .promise;
 
@@ -2167,24 +2340,26 @@ async function extractQuestionImagesFromPage(
 
 
   for (
-    let index = 0;
-    index < groupedRects.length;
-    index += 1
+    const item
+    of groupedRects
   ) {
-    const item =
-      groupedRects[index];
-
-
     setImportStatus(
-      `Recortando figura completa da questão ${item.question_number} — página ${pageNumber}...`
+      `Recortando figura da questão ${item.question_number} — página ${pageNumber}...`
     );
+
+
+    const renderRect =
+      scaleQuestionImageRect(
+        item.rect,
+        scaleFactor
+      );
 
 
     const safeRect =
       safeQuestionImageCropRect(
-        item.rect,
-        lineRecords,
-        viewport
+        renderRect,
+        renderLines,
+        renderViewport
       );
 
 
@@ -2205,6 +2380,11 @@ async function extractQuestionImagesFromPage(
         safeRect
     });
   }
+
+
+  console.debug(
+    `[Questões] Página ${pageNumber}: ${imageRects.length} imagem(ns) detectada(s), ${groupedRects.length} figura(s) vinculada(s).`
+  );
 
 
   return results;
