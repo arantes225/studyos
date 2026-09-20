@@ -6647,7 +6647,7 @@ async function reorganizeAdvancedLessons() {
 
   const confirmed =
     window.confirm(
-      "Adiantar o cronograma agora? O Luria compactará as aulas futuras para frente, usando no máximo 3 dias de aula por semana e respeitando o máximo diário configurado."
+      "Adiantar o cronograma agora? O LURIA compactará as aulas futuras para frente, usando no máximo 3 dias de aula por semana e respeitando o máximo diário configurado."
     );
 
   if (!confirmed) {
