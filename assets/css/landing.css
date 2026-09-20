@@ -1488,3 +1488,31 @@ optgroup {
 .landing-feature h3 {
   color: var(--brand-light-blue) !important;
 }
+
+
+/* LURIA — HIERARQUIA DE BOTÕES DA LANDING */
+:root {
+  --landing-button-primary: #2563EB;
+  --landing-button-primary-hover: #1D4ED8;
+  --landing-button-secondary-bg: #FFFFFF;
+  --landing-button-secondary-border: #184888;
+  --landing-button-secondary-text: #184888;
+}
+
+.landing-button.primary {
+  background: var(--landing-button-primary) !important;
+  border-color: var(--landing-button-primary) !important;
+  color: #fff !important;
+}
+
+.landing-button.primary:hover {
+  background: var(--landing-button-primary-hover) !important;
+  border-color: var(--landing-button-primary-hover) !important;
+}
+
+.landing-button.ghost,
+.landing-button.secondary {
+  background: var(--landing-button-secondary-bg) !important;
+  border-color: var(--landing-button-secondary-border) !important;
+  color: var(--landing-button-secondary-text) !important;
+}
