@@ -80,10 +80,10 @@
 
     if (
       subtitle.textContent
-      !== "Mapa até a residência"
+      !== "Aprenda. Conecte. Consolide."
     ) {
       subtitle.textContent =
-        "Mapa até a residência";
+        "Aprenda. Conecte. Consolide.";
     }
   }
 
