@@ -2055,3 +2055,290 @@
     height: 5px !important;
   }
 }
+
+
+/* =========================================================
+   PWA MOBILE v10 — Admin no padrão estreito de Estatísticas
+   Mantém desktop intacto e aplica somente ao PWA/mobile.
+   ========================================================= */
+@media (max-width: 760px) {
+  .pwa-standalone body[data-page="admin"] .main {
+    width: 100% !important;
+    padding:
+      max(10px, env(safe-area-inset-top))
+      12px
+      calc(24px + env(safe-area-inset-bottom))
+      12px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .page.admin-page {
+    width: min(100%, 360px) !important;
+    max-width: 360px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    gap: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-topbar {
+    width: 100% !important;
+    min-width: 0 !important;
+    grid-template-columns: auto minmax(0,1fr) auto !important;
+    gap: 8px !important;
+    min-height: 42px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .menu-open {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .page-heading h1 {
+    font-size: 21px !important;
+    line-height: 1.1 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .page-heading .eyebrow {
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-range {
+    min-width: 0 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-range select {
+    width: auto !important;
+    max-width: 96px !important;
+    min-height: 32px !important;
+    padding: 0 7px !important;
+    border-radius: 9px !important;
+    font-size: 8.5px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-status {
+    min-height: 0 !important;
+    padding: 0 2px !important;
+    font-size: 8.5px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-grid,
+  .pwa-standalone body[data-page="admin"] .admin-metrics-grid,
+  .pwa-standalone body[data-page="admin"] .admin-feature-grid,
+  .pwa-standalone body[data-page="admin"] .admin-infra-grid {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-card,
+  .pwa-standalone body[data-page="admin"] .admin-metric-card,
+  .pwa-standalone body[data-page="admin"] .admin-feature-card,
+  .pwa-standalone body[data-page="admin"] .admin-infra-card {
+    min-width: 0 !important;
+    min-height: 76px !important;
+    padding: 8px !important;
+    border-radius: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-card span,
+  .pwa-standalone body[data-page="admin"] .admin-metric-card span,
+  .pwa-standalone body[data-page="admin"] .admin-feature-card span,
+  .pwa-standalone body[data-page="admin"] .admin-infra-card > span {
+    font-size: 6.8px !important;
+    line-height: 1.15 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-card strong,
+  .pwa-standalone body[data-page="admin"] .admin-metric-card strong,
+  .pwa-standalone body[data-page="admin"] .admin-feature-card strong,
+  .pwa-standalone body[data-page="admin"] .admin-infra-card > strong {
+    margin-top: 4px !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-card small,
+  .pwa-standalone body[data-page="admin"] .admin-metric-card small,
+  .pwa-standalone body[data-page="admin"] .admin-feature-card small,
+  .pwa-standalone body[data-page="admin"] .admin-infra-card small {
+    margin-top: 4px !important;
+    font-size: 7.5px !important;
+    line-height: 1.2 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-section {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 10px !important;
+    border-radius: 12px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-section-head {
+    gap: 7px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-section-head h2 {
+    font-size: 14px !important;
+    line-height: 1.2 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-section-head .eyebrow,
+  .pwa-standalone body[data-page="admin"] .admin-section-head > small,
+  .pwa-standalone body[data-page="admin"] .admin-logistics-head-meta small {
+    font-size: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-logistics-head-meta {
+    max-width: 100% !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-infra-plan {
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-finance-wrap {
+    margin-top: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-finance-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-finance-card {
+    min-width: 0 !important;
+    min-height: 70px !important;
+    padding: 9px 10px !important;
+    border-radius: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-finance-card > span {
+    font-size: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-finance-card > strong {
+    font-size: 18px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-finance-card > small {
+    font-size: 7.5px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-cost-breakdown-head {
+    gap: 7px !important;
+    margin-top: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-cost-breakdown-head strong {
+    font-size: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-cost-breakdown-head small {
+    font-size: 7.5px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-edit-costs {
+    min-height: 32px !important;
+    padding: 0 9px !important;
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-cost-breakdown {
+    padding: 8px !important;
+    gap: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-cost-items {
+    grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+    gap: 5px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-logistics-note {
+    gap: 7px !important;
+    margin-top: 9px !important;
+    padding: 9px !important;
+    border-radius: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-logistics-note p,
+  .pwa-standalone body[data-page="admin"] .admin-logistics-note a {
+    font-size: 8px !important;
+    line-height: 1.35 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-customer-head {
+    display: block !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-customer-tools {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0,1fr) auto !important;
+    gap: 6px !important;
+    margin-top: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-customer-tools input {
+    min-width: 0 !important;
+    min-height: 34px !important;
+    padding: 0 9px !important;
+    font-size: 8.5px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-filter-button {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] #admin-customer-count {
+    grid-column: 1 / -1 !important;
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-table-wrap {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-customer-table {
+    min-width: 700px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-customer-table th,
+  .pwa-standalone body[data-page="admin"] .admin-customer-table td {
+    padding: 6px 7px !important;
+    font-size: 7.5px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-pin-card {
+    width: min(100%, 340px) !important;
+    max-width: 340px !important;
+    padding: 18px !important;
+    border-radius: 14px !important;
+  }
+}
+
+@media (max-width: 374px) {
+  .pwa-standalone body[data-page="admin"] .page.admin-page {
+    width: min(100%, 344px) !important;
+    max-width: 344px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-grid,
+  .pwa-standalone body[data-page="admin"] .admin-metrics-grid,
+  .pwa-standalone body[data-page="admin"] .admin-feature-grid,
+  .pwa-standalone body[data-page="admin"] .admin-infra-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
