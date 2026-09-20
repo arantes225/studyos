@@ -877,6 +877,72 @@ function formatHours(totalSeconds) {
   return `${hours}h${minutes}min`;
 }
 
+
+function setDashboardText(
+  id,
+  value
+) {
+  const element =
+    document.getElementById(
+      id
+    );
+
+  if (!element) {
+    return;
+  }
+
+  element.textContent =
+    value === null
+    || value === undefined
+      ? "—"
+      : String(value);
+}
+
+
+function dashboardTrendText(
+  current,
+  previous
+) {
+  const currentValue =
+    Number(current);
+
+  const previousValue =
+    Number(previous);
+
+  if (
+    !Number.isFinite(currentValue)
+    || !Number.isFinite(previousValue)
+    || previousValue <= 0
+  ) {
+    return "—";
+  }
+
+  const change =
+    (
+      (
+        currentValue
+        - previousValue
+      )
+      / previousValue
+    )
+    * 100;
+
+  if (
+    Math.abs(change)
+    < 0.5
+  ) {
+    return "estável";
+  }
+
+  return `${
+    change > 0
+      ? "↑"
+      : "↓"
+  } ${Math.abs(
+    Math.round(change)
+  )}%`;
+}
+
 async function loadStudyHours() {
   const today = startOfDay(new Date());
   const weekStart = startOfWeek(today);
