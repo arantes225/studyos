@@ -185,15 +185,21 @@
             <div class="error-form-grid">
 
               <label class="error-field">
-                <span>Área</span>
+                <span>Área *</span>
 
-                <input
+                <select
                   id="new-error-area"
-                  type="text"
-                  data-luria-general-area-input
-                  list="error-medical-areas"
-                  placeholder="Ex.: Clínica Médica"
+                  data-luria-general-area-select
+                  data-blank-label="Selecione uma área"
+                  required
                 >
+                  <option value="">Selecione uma área</option>
+                  <option value="Clínica Médica">Clínica Médica</option>
+                  <option value="Pediatria">Pediatria</option>
+                  <option value="Ginecologia e Obstetrícia">Ginecologia e Obstetrícia</option>
+                  <option value="Cirurgia Geral">Cirurgia Geral</option>
+                  <option value="Preventiva">Preventiva</option>
+                </select>
               </label>
 
 
@@ -958,7 +964,7 @@
   <script src="assets/js/app.js?v=14.2"></script>
   <script src="assets/js/study-mode.js?v=13.0"></script>
 
-  <script src="assets/js/caderno-erros.js?v=14.0"></script>
+  <script src="assets/js/caderno-erros.js?v=13.4"></script>
 
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
