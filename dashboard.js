@@ -490,27 +490,229 @@ async function loadAgenda() {
   );
 }
 
+async function moveAgendaReviewSource(
+  item,
+  newDate
+) {
+  /*
+    Revisões não devem ser apenas "movidas visualmente" na agenda.
+    A data real da próxima revisão precisa acompanhar o drag.
+    Isso também garante que, ao clicar em Iniciar, a fila daquela
+    data encontre os itens corretos.
+  */
+
+  if (
+    item.kind ===
+    "subject_review"
+  ) {
+    if (
+      !item.item_id
+    ) {
+      throw new Error(
+        "Revisão sem identificador."
+      );
+    }
+
+    const {
+      data,
+      error
+    } =
+      await dashboardSb
+        .from(
+          "subject_reviews"
+        )
+        .update({
+          scheduled_date:
+            newDate
+        })
+        .eq(
+          "id",
+          item.item_id
+        )
+        .select(
+          "id"
+        );
+
+    if (
+      error
+    ) {
+      throw error;
+    }
+
+    if (
+      !data?.length
+    ) {
+      throw new Error(
+        "A revisão não foi encontrada para remarcação."
+      );
+    }
+
+    return true;
+  }
+
+
+  const isFlashcards =
+    item.kind ===
+    "flashcards_batch";
+
+  const isErrors =
+    item.kind ===
+    "errors_batch";
+
+  if (
+    !isFlashcards
+    && !isErrors
+  ) {
+    return false;
+  }
+
+
+  const table =
+    isFlashcards
+      ? "flashcards"
+      : "error_notebook";
+
+
+  let query =
+    dashboardSb
+      .from(
+        table
+      )
+      .update({
+        due_date:
+          newDate
+      })
+      .eq(
+        "active",
+        true
+      )
+      .eq(
+        "due_date",
+        item.activity_date
+      );
+
+
+  if (
+    item.area
+  ) {
+    query =
+      query.eq(
+        "area",
+        item.area
+      );
+  } else {
+    query =
+      query.is(
+        "area",
+        null
+      );
+  }
+
+
+  const {
+    data,
+    error
+  } =
+    await query
+      .select(
+        "id"
+      );
+
+
+  if (
+    error
+  ) {
+    throw error;
+  }
+
+
+  if (
+    !data?.length
+  ) {
+    throw new Error(
+      isFlashcards
+        ? "Nenhum flashcard dessa atividade foi encontrado na data original."
+        : "Nenhum CCQ dessa atividade foi encontrado na data original."
+    );
+  }
+
+
+  return true;
+}
+
+
 async function moveAgendaItem(item, newDate) {
   if (!activityCanMove(item)) return;
 
   setCalendarStatus("Remarcando atividade...");
 
-  const { error } = await dashboardSb.rpc("move_agenda_item", {
-    p_kind: item.kind,
-    p_item_id: item.item_id || null,
-    p_from_date: item.activity_date,
-    p_to_date: newDate,
-    p_area: item.area || null
-  });
+  try {
+    const movedReviewSource =
+      await moveAgendaReviewSource(
+        item,
+        newDate
+      );
 
-  if (error) {
-    console.error(error);
-    setCalendarStatus(`Erro ao mover: ${error.message}`, "error");
-    return;
+
+    if (
+      !movedReviewSource
+    ) {
+      const {
+        error
+      } =
+        await dashboardSb.rpc(
+          "move_agenda_item",
+          {
+            p_kind:
+              item.kind,
+
+            p_item_id:
+              item.item_id
+              || null,
+
+            p_from_date:
+              item.activity_date,
+
+            p_to_date:
+              newDate,
+
+            p_area:
+              item.area
+              || null
+          }
+        );
+
+      if (
+        error
+      ) {
+        throw error;
+      }
+    }
+
+
+    setCalendarStatus(
+      "Atividade remarcada. A próxima revisão foi atualizada.",
+      "success"
+    );
+
+
+    await Promise.all([
+      loadAgenda(),
+      loadDashboardMetrics()
+    ]);
+
+  } catch (
+    error
+  ) {
+    console.error(
+      error
+    );
+
+    setCalendarStatus(
+      `Erro ao mover: ${error.message}`,
+      "error"
+    );
   }
-
-  setCalendarStatus("Atividade remarcada.", "success");
-  await Promise.all([loadAgenda(), loadDashboardMetrics()]);
 }
 
 function openMoveDialog(key) {
