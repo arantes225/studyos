@@ -1,13 +1,563 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="robots" content="noindex">
-  <meta http-equiv="refresh" content="0;url=/ambientacao/">
-  <title>Redirecionando...</title>
-  <script>
-    location.replace("/ambientacao/" + location.search + location.hash);
-  </script>
+  <base href="/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ambientação · LURIA</title>
+  <link rel="manifest" href="manifest.webmanifest?v=3">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/img/pwa-icon-180.png?v=3">
+  <meta name="theme-color" content="#0A2342">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="LURIA">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria2">
+  <link rel="stylesheet" href="assets/css/style.css?v=luria-palette-11">
+  <link rel="stylesheet" href="assets/css/ambientacao.css?v=12.9">
+  <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
+  <script defer src="assets/js/luria-brand-v5.js?v=8"></script>
+
+  <style>
+    /* Aula mais discreta */
+    .ambientacao-workspace.lesson-with-notebook {
+      padding: 12px;
+      overflow: visible;
+    }
+
+    .ambientacao-workspace.lesson-with-notebook > .panel-header {
+      display: none;
+    }
+
+    .lesson-with-notebook .agenda-lesson-activity {
+      margin-bottom: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--surface-2);
+    }
+
+    .lesson-with-notebook .agenda-lesson-activity > .badge {
+      display: none;
+    }
+
+    .lesson-with-notebook .agenda-lesson-activity h3 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.3;
+    }
+
+    .lesson-with-notebook .agenda-lesson-meta {
+      margin-top: 3px;
+      font-size: 9px;
+    }
+
+    .lesson-with-notebook .agenda-lesson-subtitle {
+      margin: 5px 0 0;
+      font-size: 9px;
+      line-height: 1.4;
+    }
+
+    .lesson-with-notebook .agenda-lesson-actions {
+      margin-top: 8px;
+      gap: 8px;
+    }
+
+    .lesson-with-notebook .agenda-lesson-actions .button {
+      min-height: 31px;
+      padding: 0 11px;
+      font-size: 9px;
+    }
+
+    .lesson-with-notebook .ambientacao-workspace-frame {
+      width: 100%;
+      min-height: 820px;
+      margin: 0;
+      border-radius: 10px;
+    }
+  </style>
+  <link rel="canonical" href="/ambientacao/">
+  <script>(function(){try{if(location.pathname.endsWith("/ambientacao.html"))history.replaceState(null,"","/ambientacao/"+location.search+location.hash);}catch(e){}})();</script>
 </head>
-<body></body>
+
+<body data-page="ambientacao">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar"></aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <main class="main">
+      <div class="page">
+        <header class="topbar">
+          <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
+
+          <div class="page-heading">
+            <span class="eyebrow" data-page-eyebrow></span>
+            <h1 data-page-title></h1>
+          </div>
+        </header>
+
+        <section id="selected-activity" class="selected-activity" hidden>
+          <div>
+            <span class="badge accent">Atividade selecionada</span>
+            <h2 id="selected-activity-title"></h2>
+            <p id="selected-activity-meta"></p>
+          </div>
+
+          <button id="clear-selected-activity" class="button secondary compact-button" type="button">
+            Limpar
+          </button>
+        </section>
+
+        <section class="feature-grid">
+          <article class="feature-card pomodoro-card study-timer-card">
+
+            <div class="study-timer-topline">
+              <div>
+                <span class="badge">Cronômetro</span>
+                <h2>Tempo de estudo</h2>
+                <p>
+                  Escolha entre cronômetro simples ou Pomodoro.
+                  O tempo efetivo de estudo é registrado no Dashboard.
+                </p>
+              </div>
+
+              <div
+                class="study-timer-type-menu"
+                role="tablist"
+                aria-label="Tipo de cronômetro"
+              >
+                <button
+                  id="timer-view-simple"
+                  class="study-timer-type active"
+                  type="button"
+                  data-timer-view="simple"
+                  role="tab"
+                  aria-selected="true"
+                >
+                  Cronômetro
+                </button>
+
+                <button
+                  id="timer-view-pomodoro"
+                  class="study-timer-type"
+                  type="button"
+                  data-timer-view="pomodoro"
+                  role="tab"
+                  aria-selected="false"
+                >
+                  Pomodoro
+                </button>
+              </div>
+            </div>
+
+            <section
+              id="simple-timer-panel"
+              class="study-timer-panel simple-timer-panel"
+              data-timer-panel="simple"
+              role="tabpanel"
+            >
+              <div class="simple-timer-head">
+                <div>
+                  <strong>Cronômetro simples</strong>
+                  <small id="simple-timer-activity-copy">
+                    Estudo livre.
+                  </small>
+                </div>
+
+                <span id="simple-timer-state" class="pomodoro-state">
+                  pronto
+                </span>
+              </div>
+
+              <div class="simple-timer-clock-wrap">
+                <div id="simple-timer-clock" class="pomodoro-clock simple-timer-clock">
+                  00:00
+                </div>
+
+                <div class="simple-timer-visual-track">
+                  <span></span>
+                </div>
+
+                <div class="pomodoro-clock-meta">
+                  <span>Tempo corrido</span>
+                  <span>Sem limite</span>
+                </div>
+              </div>
+
+              <div class="pomodoro-actions">
+                <button id="simple-timer-start" class="button primary" type="button">
+                  Iniciar
+                </button>
+
+                <button id="simple-timer-pause" class="button secondary" type="button" disabled>
+                  Pausar
+                </button>
+
+                <button id="simple-timer-finish" class="button secondary" type="button" disabled>
+                  Finalizar sessão
+                </button>
+              </div>
+
+              <div class="pomodoro-summary">
+                <div>
+                  <span>Nesta sessão</span>
+                  <strong id="simple-timer-effective-time">0 min</strong>
+                </div>
+
+                <div>
+                  <span>Registrado hoje</span>
+                  <strong id="simple-today-time">0 min</strong>
+                </div>
+              </div>
+
+              <div id="simple-timer-status" class="pomodoro-status" aria-live="polite"></div>
+            </section>
+
+            <section
+              id="pomodoro-timer-panel"
+              class="study-timer-panel"
+              data-timer-panel="pomodoro"
+              role="tabpanel"
+              hidden
+            >
+              <div class="pomodoro-head">
+                <div>
+                  <strong>Pomodoro</strong>
+                  <p id="pomodoro-activity-copy">
+                    O tempo efetivo de foco será registrado no Dashboard.
+                  </p>
+                </div>
+
+                <span id="pomodoro-session-state" class="pomodoro-state">
+                  pronto
+                </span>
+              </div>
+
+              <div class="pomodoro-modes">
+                <button id="pomodoro-focus-mode" class="pomodoro-mode active" type="button" data-pomodoro-mode="focus">
+                  Foco
+                </button>
+
+                <button id="pomodoro-break-mode" class="pomodoro-mode" type="button" data-pomodoro-mode="break">
+                  Pausa
+                </button>
+              </div>
+
+              <div class="pomodoro-clock-wrap">
+                <div id="pomodoro-clock" class="pomodoro-clock">
+                  25:00
+                </div>
+
+                <div class="pomodoro-progress-track">
+                  <div id="pomodoro-progress-bar" class="pomodoro-progress-bar"></div>
+                </div>
+
+                <div class="pomodoro-clock-meta">
+                  <span id="pomodoro-mode-copy">Foco</span>
+                  <span id="pomodoro-duration-copy">25 min</span>
+                </div>
+              </div>
+
+              <div class="pomodoro-actions">
+                <button id="pomodoro-start" class="button primary" type="button">
+                  Iniciar
+                </button>
+
+                <button id="pomodoro-pause" class="button secondary" type="button" disabled>
+                  Pausar
+                </button>
+
+                <button id="pomodoro-finish" class="button secondary" type="button" disabled>
+                  Finalizar sessão
+                </button>
+              </div>
+
+              <div class="pomodoro-summary">
+                <div>
+                  <span>Foco nesta sessão</span>
+                  <strong id="pomodoro-effective-time">0 min</strong>
+                </div>
+
+                <div>
+                  <span>Registrado hoje</span>
+                  <strong id="pomodoro-today-time">0 min</strong>
+                </div>
+              </div>
+
+              <div id="pomodoro-status" class="pomodoro-status" aria-live="polite"></div>
+            </section>
+
+          </article>
+
+          <article class="feature-card">
+            <span class="badge">Lo-fi</span>
+            <h2>Lofi 1</h2>
+            <p>Faixa do próprio LURIA, armazenada no Supabase e reproduzida em loop.</p>
+
+            <div class="lofi-player" data-lofi-shell>
+              <label class="lofi-track-picker">
+                <span>Som ambiente</span>
+                <select data-lofi-select>
+                  <option value="">Carregando sons...</option>
+                </select>
+              </label>
+
+              <div class="lofi-player-main">
+                <button class="lofi-main-toggle" type="button" data-lofi-toggle aria-label="Tocar lo-fi">
+                  ▶
+                </button>
+
+                <div class="lofi-player-copy">
+                  <strong data-lofi-title>Lofi 1</strong>
+                  <small data-lofi-status>carregando...</small>
+                </div>
+              </div>
+
+              <div class="lofi-progress">
+                <input type="range" min="0" max="0" step="1" value="0" data-lofi-progress aria-label="Posição da música">
+
+                <div class="lofi-time">
+                  <span data-lofi-current>0:00</span>
+                  <span data-lofi-duration>0:00</span>
+                </div>
+              </div>
+
+              <div class="lofi-volume">
+                <span>Volume</span>
+                <input type="range" min="0" max="1" step="0.01" value="0.45" data-lofi-volume aria-label="Volume do lo-fi">
+              </div>
+
+              <div class="lofi-note-row">
+                <span class="lofi-loop-note">Loop contínuo</span>
+                <small>Para ondas binaurais, use fones de ouvido.</small>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section id="ambientacao-workspace" class="panel ambientacao-workspace" hidden>
+          <div class="panel-header">
+            <div>
+              <span class="badge accent">Sessão de estudo</span>
+              <h2 id="ambientacao-workspace-title">Sessão de estudo</h2>
+              <p id="ambientacao-workspace-copy">
+                Revise a atividade programada na agenda sem sair da Ambientação.
+              </p>
+            </div>
+          </div>
+
+          <div id="ambientacao-lesson-activity" class="agenda-lesson-activity" hidden>
+            <span class="badge accent">Aula</span>
+
+            <h3 id="agenda-lesson-title">Aula</h3>
+
+            <div id="agenda-lesson-meta" class="agenda-lesson-meta"></div>
+
+            <p id="agenda-lesson-subtitle" class="agenda-lesson-subtitle" hidden></p>
+
+            <div class="agenda-lesson-actions">
+              <button id="agenda-lesson-complete" class="button primary" type="button">
+                Concluir aula
+              </button>
+
+              <span id="agenda-lesson-status" class="agenda-lesson-status" aria-live="polite"></span>
+            </div>
+          </div>
+
+          <iframe
+            id="ambientacao-study-frame"
+            class="ambientacao-workspace-frame"
+            title="Sessão de estudo"
+          ></iframe>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/supabase.js"></script>
+  <script src="assets/js/app.js?v=13.1"></script>
+  <script src="assets/js/study-mode.js?v=12.1"></script>
+  <script src="assets/js/ambientacao.js?v=13.1"></script>
+
+  <script>
+    (function () {
+      function isUuid(value) {
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+          .test(String(value || ""));
+      }
+
+      function disableOldCcq() {
+        document.querySelector(".ccq-showcase-panel")?.remove();
+
+        try {
+          if (typeof stopCcqRotation === "function") {
+            stopCcqRotation();
+          }
+
+          if (typeof startCcqRotation === "function") {
+            startCcqRotation = function () {};
+          }
+        } catch {}
+      }
+
+      function prepareNotebook(frame) {
+        try {
+          const doc = frame.contentDocument;
+          if (!doc) return;
+
+          [
+            ".sidebar",
+            ".sidebar-backdrop",
+            ".topbar",
+            ".notebook-tabs",
+            ".notebook-topic-panel",
+            "#notebook-view-library"
+          ].forEach((selector) => {
+            doc.querySelectorAll(selector).forEach((element) => {
+              element.style.display = "none";
+            });
+          });
+
+          const shell = doc.querySelector(".app-shell");
+          if (shell) {
+            shell.style.display = "block";
+            shell.style.gridTemplateColumns = "1fr";
+            shell.style.minHeight = "0";
+          }
+
+          const main = doc.querySelector(".main");
+          if (main) {
+            main.style.margin = "0";
+            main.style.padding = "0";
+            main.style.width = "100%";
+            main.style.opacity = "1";
+          }
+
+          const page = doc.querySelector(".notebook-page, .page");
+          if (page) {
+            page.style.width = "100%";
+            page.style.maxWidth = "none";
+            page.style.margin = "0";
+            page.style.padding = "0";
+          }
+
+          const editorView = doc.querySelector("#notebook-view-editor");
+          if (editorView) {
+            editorView.hidden = false;
+            editorView.style.display = "block";
+          }
+
+          const workspace = doc.querySelector(".notebook-workspace");
+          if (workspace) {
+            workspace.style.display = "block";
+            workspace.style.gridTemplateColumns = "1fr";
+          }
+
+          const column = doc.querySelector(".notebook-editor-column");
+          if (column) {
+            column.style.width = "100%";
+            column.style.minWidth = "0";
+          }
+
+          const toolbar = doc.querySelector(".notebook-toolbar");
+          if (toolbar) {
+            toolbar.style.top = "0";
+          }
+
+          const paper = doc.querySelector(".notebook-paper");
+          if (paper) {
+            paper.style.width = "min(100%, 980px)";
+            paper.style.maxWidth = "980px";
+            paper.style.margin = "0 auto";
+          }
+
+          if (doc.body) {
+            doc.body.style.margin = "0";
+            doc.body.style.padding = "0";
+            doc.body.style.background = "transparent";
+          }
+
+          const resize = () => {
+            const height = Math.max(
+              720,
+              doc.documentElement?.scrollHeight || 0,
+              doc.body?.scrollHeight || 0
+            );
+
+            frame.style.height = `${height + 20}px`;
+          };
+
+          resize();
+
+          if ("ResizeObserver" in window && doc.body) {
+            const observer = new ResizeObserver(resize);
+            observer.observe(doc.body);
+          }
+
+        } catch (error) {
+          console.warn("Não foi possível preparar o Caderno da aula:", error);
+        }
+      }
+
+      function openLessonNotebook() {
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.get("kind") !== "lesson") {
+          return;
+        }
+
+        const topicId = params.get("item_id");
+
+        if (!isUuid(topicId)) {
+          return;
+        }
+
+        const workspace = document.getElementById("ambientacao-workspace");
+        const lesson = document.getElementById("ambientacao-lesson-activity");
+        const frame = document.getElementById("ambientacao-study-frame");
+
+        if (!workspace || !frame) {
+          return;
+        }
+
+        workspace.hidden = false;
+        workspace.classList.add("lesson-with-notebook");
+
+        if (lesson) {
+          lesson.hidden = false;
+        }
+
+        const url = new URL("caderno.html", window.location.href);
+        url.searchParams.set("topic_id", topicId);
+        url.searchParams.set("view", "editor");
+
+        frame.hidden = false;
+        frame.title = "Caderno da aula";
+
+        frame.addEventListener(
+          "load",
+          () => prepareNotebook(frame),
+          { once: true }
+        );
+
+        frame.src = url.toString();
+      }
+
+      function boot() {
+        disableOldCcq();
+
+        window.setTimeout(openLessonNotebook, 0);
+        window.setTimeout(openLessonNotebook, 250);
+      }
+
+      if (window.docmapUser) {
+        boot();
+      } else {
+        window.addEventListener("docmap:ready", boot, { once: true });
+      }
+    })();
+  </script>
+  <script defer src="assets/js/pwa.js?v=3"></script>
+</body>
 </html>
