@@ -127,7 +127,7 @@ function sidebarMarkup(user, profile = null) {
           id="luria-brand-logo"
           class="brand-logo-single"
           src="assets/img/logo-icone-original.png?v=luria2"
-          alt="Logo Luria"
+          alt="Logo LURIA"
         >
 
         <span class="brand-copy">
@@ -433,7 +433,7 @@ async function carregarAudioTracks() {
 
   if (error) {
     console.warn(
-      "Não foi possível carregar os sons do Luria:",
+      "Não foi possível carregar os sons do LURIA:",
       error.message
     );
     return [];
