@@ -1597,7 +1597,10 @@ async function uploadErrorImage(
 
   if (error) {
     throw error;
-  }\n\n  return reference || path;\n}
+  }
+
+  return reference || path;
+}
 
 
 /* =========================================================
