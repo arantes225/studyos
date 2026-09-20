@@ -13269,6 +13269,161 @@ async function waitForPdfImages(root) {
 }
 
 
+function stabilizeNotebookPdfStyles(
+  root
+) {
+  if (!root) {
+    return;
+  }
+
+  const nodes =
+    [
+      root,
+      ...root.querySelectorAll("*")
+    ];
+
+  for (
+    const node
+    of nodes
+  ) {
+    if (
+      !(node instanceof HTMLElement)
+    ) {
+      continue;
+    }
+
+    const style =
+      getComputedStyle(
+        node
+      );
+
+    /*
+      html2canvas 1.4.1 pode falhar no Safari/PWA ao
+      interpretar color-mix()/cores modernas presentes
+      nos estilos do app. Copiamos apenas valores já
+      computados pelo navegador e removemos efeitos
+      decorativos desnecessários para o PDF.
+    */
+    if (style.color) {
+      node.style.color =
+        style.color;
+    }
+
+    if (style.backgroundColor) {
+      node.style.backgroundColor =
+        style.backgroundColor;
+    }
+
+    if (
+      style.borderTopColor
+      &&
+      style.borderTopStyle !== "none"
+    ) {
+      node.style.borderTopColor =
+        style.borderTopColor;
+    }
+
+    if (
+      style.borderRightColor
+      &&
+      style.borderRightStyle !== "none"
+    ) {
+      node.style.borderRightColor =
+        style.borderRightColor;
+    }
+
+    if (
+      style.borderBottomColor
+      &&
+      style.borderBottomStyle !== "none"
+    ) {
+      node.style.borderBottomColor =
+        style.borderBottomColor;
+    }
+
+    if (
+      style.borderLeftColor
+      &&
+      style.borderLeftStyle !== "none"
+    ) {
+      node.style.borderLeftColor =
+        style.borderLeftColor;
+    }
+
+    node.style.boxShadow =
+      "none";
+
+    node.style.textShadow =
+      "none";
+
+    node.style.filter =
+      "none";
+
+    if (
+      style.backgroundImage
+      &&
+      /color-mix\(|oklch\(|oklab\(/i
+        .test(
+          style.backgroundImage
+        )
+    ) {
+      node.style.backgroundImage =
+        "none";
+    }
+  }
+
+  root.style.background =
+    "#ffffff";
+
+  root.style.color =
+    "#10243e";
+
+  root.style.boxShadow =
+    "none";
+}
+
+
+async function renderNotebookPdfCanvasAttempt(
+  paper,
+  options = {}
+) {
+  return window.html2canvas(
+    paper,
+    {
+      scale:
+        options.scale
+        || 2,
+
+      useCORS:
+        true,
+
+      allowTaint:
+        false,
+
+      logging:
+        false,
+
+      backgroundColor:
+        "#ffffff",
+
+      windowWidth:
+        940,
+
+      scrollX:
+        0,
+
+      scrollY:
+        0,
+
+      foreignObjectRendering:
+        Boolean(
+          options.foreignObjectRendering
+        )
+    }
+  );
+}
+
+
 async function renderNotebookPdfCanvas(
   entry
 ) {
@@ -13300,43 +13455,52 @@ async function renderNotebookPdfCanvas(
       paper
     );
 
-    return await window.html2canvas(
-      paper,
-      {
-        scale:
-          2.7,
-
-        useCORS:
-          true,
-
-        allowTaint:
-          false,
-
-        logging:
-          false,
-
-        backgroundColor:
-          getComputedStyle(
-            paper
-          ).backgroundColor,
-
-        windowWidth:
-          940,
-
-        scrollX:
-          0,
-
-        scrollY:
-          0
-      }
+    stabilizeNotebookPdfStyles(
+      paper
     );
+
+    /*
+      Primeiro tenta o modo ForeignObject, que deixa o
+      navegador renderizar estilos modernos. Se o Safari
+      não aceitar, cai automaticamente no modo canvas
+      tradicional com escala menor.
+    */
+    try {
+      return await renderNotebookPdfCanvasAttempt(
+        paper,
+        {
+          scale:
+            2.2,
+
+          foreignObjectRendering:
+            true
+        }
+      );
+    } catch (
+      foreignObjectError
+    ) {
+      console.warn(
+        "Captura ForeignObject falhou; tentando modo compatível:",
+        foreignObjectError
+      );
+
+      return await renderNotebookPdfCanvasAttempt(
+        paper,
+        {
+          scale:
+            1.8,
+
+          foreignObjectRendering:
+            false
+        }
+      );
+    }
   }
 
   finally {
     host.remove();
   }
 }
-
 
 function addNotebookCanvasToPdf(
   doc,
@@ -13499,6 +13663,280 @@ function addNotebookCanvasToPdf(
 }
 
 
+function notebookExportPlainText(
+  entry
+) {
+  const wrapper =
+    document.createElement(
+      "div"
+    );
+
+  wrapper.innerHTML =
+    sanitizeHtml(
+      entry.note?.is_shared
+        ? applySharedNotebookPatch(
+            entry.note
+          )
+        : (
+            entry.note
+              ?.content_html
+            || ""
+          )
+    );
+
+  wrapper
+    .querySelectorAll(
+      "br"
+    )
+    .forEach(
+      br =>
+        br.replaceWith(
+          "\n"
+        )
+    );
+
+  wrapper
+    .querySelectorAll(
+      "p,div,h1,h2,h3,h4,h5,h6,li,tr"
+    )
+    .forEach(
+      node => {
+        node.append(
+          document.createTextNode(
+            "\n"
+          )
+        );
+      }
+    );
+
+  return String(
+    wrapper.textContent
+    || ""
+  )
+    .replace(
+      /\n[ \t]+/g,
+      "\n"
+    )
+    .replace(
+      /\n{3,}/g,
+      "\n\n"
+    )
+    .trim();
+}
+
+
+function addNotebookStructuredFallback(
+  doc,
+  entry,
+  firstPage = false,
+  assets = null
+) {
+  if (!firstPage) {
+    doc.addPage();
+  }
+
+  const left =
+    16;
+
+  const right =
+    16;
+
+  const top =
+    29;
+
+  const bottom =
+    18;
+
+  const pageWidth =
+    doc.internal.pageSize
+      .getWidth();
+
+  const pageHeight =
+    doc.internal.pageSize
+      .getHeight();
+
+  const contentWidth =
+    pageWidth
+    -
+    left
+    -
+    right;
+
+  let y =
+    top;
+
+  const decorate =
+    () => {
+      window.LuriaPdfBranding
+        ?.decoratePage(
+          doc,
+          assets,
+          {
+            title:
+              "Caderno",
+            subtitle:
+              "Exportação compatível"
+          }
+        );
+    };
+
+  decorate();
+
+  doc.setTextColor(
+    16,
+    36,
+    62
+  );
+
+  doc.setFont(
+    "helvetica",
+    "bold"
+  );
+
+  doc.setFontSize(
+    14
+  );
+
+  const title =
+    entry.title
+    || "Caderno";
+
+  const titleLines =
+    doc.splitTextToSize(
+      title,
+      contentWidth
+    );
+
+  doc.text(
+    titleLines,
+    left,
+    y
+  );
+
+  y +=
+    titleLines.length
+    * 6
+    +
+    2;
+
+  const meta =
+    [
+      entry.area,
+      formatDate(
+        entry.date
+      )
+    ]
+      .filter(
+        Boolean
+      )
+      .join(
+        " · "
+      );
+
+  if (meta) {
+    doc.setTextColor(
+      100,
+      116,
+      139
+    );
+
+    doc.setFont(
+      "helvetica",
+      "normal"
+    );
+
+    doc.setFontSize(
+      8.5
+    );
+
+    doc.text(
+      meta,
+      left,
+      y
+    );
+
+    y +=
+      7;
+  }
+
+  const text =
+    notebookExportPlainText(
+      entry
+    )
+    || "Caderno sem conteúdo textual.";
+
+  const paragraphs =
+    text.split(
+      /\n+/g
+    )
+      .map(
+        item =>
+          item.trim()
+      )
+      .filter(
+        Boolean
+      );
+
+  doc.setTextColor(
+    15,
+    23,
+    42
+  );
+
+  for (
+    const paragraph
+    of paragraphs
+  ) {
+    doc.setFont(
+      "helvetica",
+      "normal"
+    );
+
+    doc.setFontSize(
+      9.5
+    );
+
+    const lines =
+      doc.splitTextToSize(
+        paragraph,
+        contentWidth
+      );
+
+    const blockHeight =
+      lines.length
+      * 4.6
+      +
+      2.5;
+
+    if (
+      y
+      +
+      blockHeight
+      >
+      pageHeight
+      -
+      bottom
+    ) {
+      doc.addPage();
+
+      decorate();
+
+      y =
+        top;
+    }
+
+    doc.text(
+      lines,
+      left,
+      y
+    );
+
+    y +=
+      blockHeight;
+  }
+}
+
+
 async function exportSelectedPdf() {
   const entries =
     selectedEntries();
@@ -13557,27 +13995,62 @@ async function exportSelectedPdf() {
         true
     });
 
+  let assets =
+    null;
+
   try {
-    const assets =
-      await window.LuriaPdfBranding
-        ?.getAssets?.();
+    try {
+      assets =
+        await window.LuriaPdfBranding
+          ?.getAssets?.();
+    } catch (
+      brandingError
+    ) {
+      console.warn(
+        "Branding do PDF indisponível; exportando sem imagem de marca:",
+        brandingError
+      );
+
+      assets =
+        null;
+    }
 
     for (
       let index = 0;
       index < entries.length;
       index += 1
     ) {
-      const canvas =
-        await renderNotebookPdfCanvas(
-          entries[index]
+      const entry =
+        entries[index];
+
+      try {
+        const canvas =
+          await renderNotebookPdfCanvas(
+            entry
+          );
+
+        addNotebookCanvasToPdf(
+          doc,
+          canvas,
+          index === 0,
+          assets
         );
 
-      addNotebookCanvasToPdf(
-        doc,
-        canvas,
-        index === 0,
-        assets
-      );
+      } catch (
+        visualError
+      ) {
+        console.warn(
+          "Captura visual do caderno falhou; usando exportação compatível:",
+          visualError
+        );
+
+        addNotebookStructuredFallback(
+          doc,
+          entry,
+          index === 0,
+          assets
+        );
+      }
     }
 
     window.LuriaPdfBranding
@@ -13596,7 +14069,7 @@ async function exportSelectedPdf() {
     );
 
     alert(
-      "Não foi possível gerar o PDF mantendo o layout do caderno."
+      `Não foi possível gerar o PDF: ${error.message || "erro desconhecido"}`
     );
   }
 
@@ -13612,7 +14085,6 @@ async function exportSelectedPdf() {
     }
   }
 }
-
 
 /* =========================================================
    MENU DO DOCUMENTO
