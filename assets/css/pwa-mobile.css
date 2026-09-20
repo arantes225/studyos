@@ -1555,3 +1555,136 @@
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
+
+
+/* =========================================================
+   PWA MOBILE v7 — Sidebar compacta
+   Reduz largura e altura visual do menu lateral no app.
+   ========================================================= */
+@media (max-width: 760px) {
+  .pwa-standalone .sidebar {
+    width: min(76vw, 252px) !important;
+    height: 100dvh !important;
+    padding:
+      max(12px, env(safe-area-inset-top))
+      12px
+      calc(12px + env(safe-area-inset-bottom))
+      12px !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+
+  .pwa-standalone .sidebar-top {
+    gap: 8px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .pwa-standalone .brand {
+    gap: 8px !important;
+  }
+
+  .pwa-standalone .brand-logo-single,
+  .pwa-standalone .luria-theme-logo,
+  .pwa-standalone .brand-logo-stack {
+    width: 44px !important;
+    height: 44px !important;
+    flex: 0 0 44px !important;
+  }
+
+  .pwa-standalone .brand-copy strong {
+    font-size: 15px !important;
+  }
+
+  .pwa-standalone .brand-copy small {
+    margin-top: 2px !important;
+    font-size: 8px !important;
+    line-height: 1.15 !important;
+  }
+
+  .pwa-standalone .sidebar-close {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 24px !important;
+    line-height: 1 !important;
+  }
+
+  .pwa-standalone .nav {
+    gap: 3px !important;
+  }
+
+  .pwa-standalone .nav-link,
+  .pwa-standalone .nav-group-label {
+    min-height: 38px !important;
+    gap: 9px !important;
+    padding: 0 9px !important;
+    border-radius: 9px !important;
+    font-size: 12px !important;
+  }
+
+  .pwa-standalone .nav-icon {
+    width: 17px !important;
+    font-size: 14px !important;
+  }
+
+  .pwa-standalone .nav-group {
+    margin: 1px 0 !important;
+  }
+
+  .pwa-standalone .nav-submenu {
+    padding-left: 26px !important;
+    gap: 2px !important;
+  }
+
+  .pwa-standalone .nav-sublink {
+    min-height: 32px !important;
+    padding: 0 8px !important;
+    border-radius: 8px !important;
+    font-size: 10.5px !important;
+  }
+
+  .pwa-standalone .nav-group-chevron {
+    font-size: 12px !important;
+  }
+
+  .pwa-standalone .sidebar-footer {
+    gap: 7px !important;
+    padding-top: 12px !important;
+  }
+
+  .pwa-standalone .streak-mini,
+  .pwa-standalone .user-mini {
+    gap: 8px !important;
+    min-height: 52px !important;
+    padding: 8px 9px !important;
+    border-radius: 10px !important;
+  }
+
+  .pwa-standalone .streak-mini-icon,
+  .pwa-standalone .user-avatar {
+    width: 34px !important;
+    height: 34px !important;
+    flex: 0 0 34px !important;
+  }
+
+  .pwa-standalone .streak-mini strong,
+  .pwa-standalone .user-copy strong {
+    font-size: 11.5px !important;
+  }
+
+  .pwa-standalone .streak-mini small,
+  .pwa-standalone .user-copy small {
+    margin-top: 1px !important;
+    font-size: 9px !important;
+  }
+
+  .pwa-standalone .logout-button {
+    min-height: 36px !important;
+    border-radius: 9px !important;
+    font-size: 11px !important;
+  }
+
+  .pwa-standalone .sidebar-backdrop {
+    background: rgba(0, 0, 0, .30) !important;
+    backdrop-filter: blur(1px);
+  }
+}
