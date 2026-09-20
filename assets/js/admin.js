@@ -811,7 +811,7 @@
 
         setTimeout(() => {
           window.location.replace(
-            "dashboard.html"
+            "/dashboard/"
           );
         }, 900);
 
@@ -1547,7 +1547,7 @@
         || data !== true
       ) {
         window.location.replace(
-          "dashboard.html"
+          "/dashboard/"
         );
 
         return false;
@@ -1567,7 +1567,7 @@
       );
 
       window.location.replace(
-        "dashboard.html"
+        "/dashboard/"
       );
 
       return false;
