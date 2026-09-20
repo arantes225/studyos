@@ -1513,51 +1513,58 @@ async function loadDashboardPassiveCcq() {
    ========================================================= */
 
 function dashboardStreakTier(days) {
-  if (days <= 0) {
+  if (days < 4) {
     return {
-      tier: "0",
-      label: "Comece hoje"
+      tier: "snow",
+      label: "Esquentando",
+      title: "Sequência"
     };
   }
 
   if (days < 7) {
     return {
       tier: "1",
-      label: "Aquecendo"
+      label: "Aquecendo",
+      title: "Ofensiva"
     };
   }
 
   if (days < 30) {
     return {
       tier: "2",
-      label: "1 semana+"
+      label: "Em ritmo",
+      title: "Ofensiva"
     };
   }
 
   if (days < 90) {
     return {
       tier: "3",
-      label: "1 mês+"
+      label: "Em chamas",
+      title: "Ofensiva"
     };
   }
 
   if (days < 180) {
     return {
       tier: "4",
-      label: "3 meses+"
+      label: "Imparável",
+      title: "Ofensiva"
     };
   }
 
   if (days < 365) {
     return {
       tier: "5",
-      label: "6 meses+"
+      label: "Incendiário",
+      title: "Ofensiva"
     };
   }
 
   return {
     tier: "6",
-    label: "1 ano+"
+    label: "Lendário",
+    title: "Ofensiva"
   };
 }
 
@@ -1578,6 +1585,11 @@ function initDashboardStreakVisual() {
   const label =
     document.getElementById(
       "dashboard-streak-stage"
+    );
+
+  const title =
+    document.getElementById(
+      "dashboard-streak-title"
     );
 
 
@@ -1619,6 +1631,11 @@ function initDashboardStreakVisual() {
       if (label) {
         label.textContent =
           info.label;
+      }
+
+      if (title) {
+        title.textContent =
+          info.title;
       }
 
     };
