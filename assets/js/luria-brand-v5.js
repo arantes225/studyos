@@ -319,13 +319,13 @@
         const parent = node.parentElement;
         if (!parent) return NodeFilter.FILTER_REJECT;
         if (parent.closest("script, style, textarea, input, option, .luria-wordmark")) return NodeFilter.FILTER_REJECT;
-        return /\\bLuria\\b/.test(node.nodeValue || "") ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+        return /\bLuria\b/.test(node.nodeValue || "") ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
       }
     });
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
     nodes.forEach((node) => {
-      const parts = node.nodeValue.split(/(\\bLuria\\b)/g);
+      const parts = node.nodeValue.split(/(\bLuria\b)/g);
       const fragment = document.createDocumentFragment();
       parts.forEach((part) => {
         if (part === "Luria") {
