@@ -2958,31 +2958,120 @@ function setNotebookTableStatus(
 }
 
 
-function renderNotebookTableBuilder(
-  rows = null
+function normalizeNotebookTableBuilderData(
+  input
 ) {
-  const container =
-    document.getElementById(
-      "notebook-table-editor"
-    );
+  if (
+    input
+    &&
+    !Array.isArray(
+      input
+    )
+    &&
+    Array.isArray(
+      input.rows
+    )
+  ) {
+    const baseColumns =
+      Math.max(
+        1,
+        Number(
+          input.baseColumns
+          || 1
+        )
+      );
 
-  if (!container) {
-    return;
+    return {
+      baseColumns,
+
+      rows:
+        input.rows.map(
+          (
+            row,
+            rowIndex
+          ) => {
+            const cells =
+              Array.isArray(
+                row?.cells
+              )
+                ? row.cells
+                : [];
+
+            if (
+              !cells.length
+            ) {
+              return {
+                cells: [
+                  {
+                    text: "",
+                    colspan:
+                      baseColumns,
+                    header:
+                      rowIndex === 0
+                  }
+                ]
+              };
+            }
+
+            return {
+              cells:
+                cells.map(
+                  cell => ({
+                    text:
+                      String(
+                        cell?.text
+                        ?? ""
+                      ),
+
+                    colspan:
+                      Math.max(
+                        1,
+                        Number(
+                          cell?.colspan
+                          || 1
+                        )
+                      ),
+
+                    header:
+                      cell?.header
+                      === true
+                      ||
+                      rowIndex === 0
+                  })
+                )
+            };
+          }
+        )
+    };
   }
+
 
   const data =
     Array.isArray(
-      rows
+      input
     )
-    && rows.length
-      ? rows
+    && input.length
+      ? input
       : [
-          ["Coluna 1", "Coluna 2", "Coluna 3"],
-          ["", "", ""],
-          ["", "", ""]
+          [
+            "Coluna 1",
+            "Coluna 2",
+            "Coluna 3"
+          ],
+          [
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
         ];
 
-  const width =
+
+  const baseColumns =
     Math.max(
       1,
       ...data.map(
@@ -2995,53 +3084,106 @@ function renderNotebookTableBuilder(
       )
     );
 
-  const normalized =
-    data.map(
-      row => [
-        ...(Array.isArray(row)
-          ? row
-          : []),
-        ...Array(
-          Math.max(
-            0,
-            width
-            - (
-              Array.isArray(row)
-                ? row.length
-                : 0
+
+  return {
+    baseColumns,
+
+    rows:
+      data.map(
+        (
+          row,
+          rowIndex
+        ) => ({
+          cells:
+            (
+              Array.isArray(
+                row
+              )
+                ? row
+                : []
             )
-          )
-        ).fill("")
-      ]
+              .map(
+                cell => ({
+                  text:
+                    String(
+                      cell
+                      ?? ""
+                    ),
+
+                  colspan:
+                    1,
+
+                  header:
+                    rowIndex === 0
+                })
+              )
+        })
+      )
+  };
+}
+
+
+function renderNotebookTableBuilder(
+  rows = null
+) {
+  const container =
+    document.getElementById(
+      "notebook-table-editor"
     );
+
+  if (!container) {
+    return;
+  }
+
+
+  const structure =
+    normalizeNotebookTableBuilderData(
+      rows
+    );
+
 
   container.innerHTML =
     `
       <table
         data-notebook-table-builder
-        data-base-cols="${width}"
+        data-base-cols="${structure.baseColumns}"
       >
         <tbody>
           ${
-            normalized
+            structure.rows
               .map(
-                (row, rowIndex) =>
+                row =>
                   `
                     <tr>
                       ${
-                        row
+                        row.cells
                           .map(
                             cell => {
                               const tag =
-                                rowIndex === 0
+                                cell.header
                                   ? "th"
                                   : "td";
+
+                              const colspan =
+                                Math.max(
+                                  1,
+                                  Number(
+                                    cell.colspan
+                                    || 1
+                                  )
+                                );
+
+                              const colspanAttr =
+                                colspan > 1
+                                  ? ` colspan="${colspan}"`
+                                  : "";
 
                               return `
                                 <${tag}
                                   contenteditable="true"
+                                  ${colspanAttr}
                                 >${escapeHtml(
-                                  cell
+                                  cell.text
                                 )}</${tag}>
                               `;
                             }
@@ -4953,301 +5095,574 @@ function createNotebookTableOcrCanvas(
 }
 
 
+function notebookVerticalEdgeSupport(
+  canvas,
+  x,
+  y0,
+  y1
+) {
+  const context =
+    canvas.getContext(
+      "2d",
+      {
+        willReadFrequently:
+          true
+      }
+    );
+
+  const width =
+    canvas.width;
+
+  const height =
+    canvas.height;
+
+  const safeX =
+    Math.max(
+      2,
+      Math.min(
+        width - 3,
+        Math.round(
+          x
+        )
+      )
+    );
+
+  const top =
+    Math.max(
+      0,
+      Math.round(
+        y0
+      )
+    );
+
+  const bottom =
+    Math.min(
+      height - 1,
+      Math.round(
+        y1
+      )
+    );
+
+  if (
+    bottom <= top
+  ) {
+    return 0;
+  }
+
+
+  const image =
+    context.getImageData(
+      0,
+      top,
+      width,
+      bottom - top + 1
+    );
+
+  const pixels =
+    image.data;
+
+  let hits =
+    0;
+
+  let total =
+    0;
+
+
+  for (
+    let localY = 0;
+    localY <= bottom - top;
+    localY += 1
+  ) {
+    let strongest =
+      0;
+
+
+    for (
+      let dx = -2;
+      dx <= 2;
+      dx += 1
+    ) {
+      const currentX =
+        safeX + dx;
+
+      const leftOffset =
+        (
+          localY * width
+          + (
+            currentX - 1
+          )
+        ) * 4;
+
+      const rightOffset =
+        (
+          localY * width
+          + currentX
+        ) * 4;
+
+      const diff =
+        notebookPixelDifference(
+          pixels,
+          leftOffset,
+          rightOffset
+        );
+
+      if (
+        diff > strongest
+      ) {
+        strongest =
+          diff;
+      }
+    }
+
+
+    if (
+      strongest >= 10
+    ) {
+      hits +=
+        1;
+    }
+
+    total +=
+      1;
+  }
+
+
+  return total
+    ? hits / total
+    : 0;
+}
+
+
+function notebookRowBoundaries(
+  canvas,
+  globalVertical,
+  y0,
+  y1
+) {
+  if (
+    globalVertical.length < 2
+  ) {
+    return [];
+  }
+
+
+  const outerLeft =
+    globalVertical[0];
+
+  const outerRight =
+    globalVertical[
+      globalVertical.length - 1
+    ];
+
+
+  const rowHeight =
+    Math.max(
+      1,
+      y1 - y0
+    );
+
+  const margin =
+    Math.min(
+      rowHeight * 0.16,
+      8
+    );
+
+  const scanTop =
+    y0 + margin;
+
+  const scanBottom =
+    y1 - margin;
+
+
+  const boundaries = [
+    outerLeft
+  ];
+
+
+  for (
+    let index = 1;
+    index < globalVertical.length - 1;
+    index += 1
+  ) {
+    const x =
+      globalVertical[index];
+
+    const support =
+      notebookVerticalEdgeSupport(
+        canvas,
+        x,
+        scanTop,
+        scanBottom
+      );
+
+    /*
+      Só considera a divisória se ela realmente existir
+      NESTA LINHA. Assim, um cabeçalho mesclado não herda
+      as colunas das linhas inferiores.
+    */
+    if (
+      support >= 0.34
+    ) {
+      boundaries.push(
+        x
+      );
+    }
+  }
+
+
+  boundaries.push(
+    outerRight
+  );
+
+
+  return boundaries;
+}
+
+
+function notebookCellTextFromWords(
+  words
+) {
+  if (
+    !words.length
+  ) {
+    return "";
+  }
+
+
+  const lineTolerance =
+    Math.max(
+      6,
+      medianNotebookNumber(
+        words.map(
+          word =>
+            word.height
+        )
+      ) * 0.65
+    );
+
+
+  const lines =
+    [];
+
+
+  for (
+    const word
+    of words
+      .slice()
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a.y - b.y
+          ||
+          a.x - b.x
+      )
+  ) {
+    let line =
+      lines.find(
+        candidate =>
+          Math.abs(
+            candidate.y
+            - word.y
+          )
+          <= lineTolerance
+      );
+
+
+    if (
+      !line
+    ) {
+      line = {
+        y:
+          word.y,
+        words:
+          []
+      };
+
+      lines.push(
+        line
+      );
+    }
+
+
+    line.words.push(
+      word
+    );
+  }
+
+
+  return lines
+    .sort(
+      (
+        a,
+        b
+      ) =>
+        a.y - b.y
+    )
+    .map(
+      line =>
+        line.words
+          .sort(
+            (
+              a,
+              b
+            ) =>
+              a.x - b.x
+          )
+          .map(
+            word =>
+              word.text
+          )
+          .join(
+            " "
+          )
+    )
+    .join(
+      " "
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
+    .trim();
+}
+
+
 function rowsFromNotebookGrid(
   words,
-  grid
+  grid,
+  canvas
 ) {
   if (
     !grid
+    ||
+    !canvas
     ||
     grid.vertical.length < 2
     ||
     grid.horizontal.length < 2
   ) {
-    return [];
+    return null;
   }
+
 
   const vertical =
     grid.vertical
       .slice()
       .sort(
-        (a, b) =>
+        (
+          a,
+          b
+        ) =>
           a - b
       );
+
 
   const horizontal =
     grid.horizontal
       .slice()
       .sort(
-        (a, b) =>
+        (
+          a,
+          b
+        ) =>
           a - b
       );
 
-  const rowCount =
-    horizontal.length - 1;
 
-  const colCount =
+  const baseColumns =
     vertical.length - 1;
 
+
   if (
-    rowCount < 1
+    baseColumns < 1
     ||
-    colCount < 1
+    baseColumns > 15
     ||
-    colCount > 15
-    ||
-    rowCount > 50
+    horizontal.length - 1 > 50
   ) {
-    return [];
+    return null;
   }
 
-  const buckets =
-    Array.from(
-      {
-        length:
-          rowCount
-      },
-      () =>
-        Array.from(
-          {
-            length:
-              colCount
-          },
-          () => []
-        )
-    );
 
   const normalizedWords =
     notebookTableWordData(
       words
     );
 
+
+  const structuredRows =
+    [];
+
+
   for (
-    const word
-    of normalizedWords
+    let rowIndex = 0;
+    rowIndex < horizontal.length - 1;
+    rowIndex += 1
   ) {
-    let rowIndex =
-      -1;
+    const y0 =
+      horizontal[rowIndex];
 
-    let colIndex =
-      -1;
+    const y1 =
+      horizontal[
+        rowIndex + 1
+      ];
 
-    for (
-      let row = 0;
-      row < rowCount;
-      row += 1
-    ) {
-      if (
-        word.y
-        > horizontal[row]
-        &&
-        word.y
-        < horizontal[
-            row + 1
-          ]
-      ) {
-        rowIndex =
-          row;
 
-        break;
-      }
-    }
+    const rowWords =
+      normalizedWords.filter(
+        word =>
+          word.y > y0
+          &&
+          word.y < y1
+      );
 
-    for (
-      let col = 0;
-      col < colCount;
-      col += 1
-    ) {
-      if (
-        word.x
-        > vertical[col]
-        &&
-        word.x
-        < vertical[
-            col + 1
-          ]
-      ) {
-        colIndex =
-          col;
 
-        break;
-      }
-    }
+    const rowBoundaries =
+      notebookRowBoundaries(
+        canvas,
+        vertical,
+        y0,
+        y1
+      );
+
 
     if (
-      rowIndex >= 0
-      &&
-      colIndex >= 0
+      rowBoundaries.length < 2
     ) {
-      buckets[
-        rowIndex
-      ][
-        colIndex
-      ].push(
-        word
-      );
+      continue;
+    }
+
+
+    const cells =
+      [];
+
+
+    for (
+      let cellIndex = 0;
+      cellIndex < rowBoundaries.length - 1;
+      cellIndex += 1
+    ) {
+      const left =
+        rowBoundaries[
+          cellIndex
+        ];
+
+      const right =
+        rowBoundaries[
+          cellIndex + 1
+        ];
+
+
+      const cellWords =
+        rowWords.filter(
+          word =>
+            word.x > left
+            &&
+            word.x < right
+        );
+
+
+      /*
+        Calcula quantas colunas lógicas esta célula ocupa.
+        Ex.: primeira linha sem divisórias em uma tabela de
+        3 colunas => colspan 3.
+      */
+      let startLogical =
+        0;
+
+      let endLogical =
+        baseColumns;
+
+
+      for (
+        let index = 0;
+        index < vertical.length;
+        index += 1
+      ) {
+        if (
+          Math.abs(
+            vertical[index]
+            - left
+          )
+          <= 8
+        ) {
+          startLogical =
+            index;
+
+          break;
+        }
+      }
+
+
+      for (
+        let index = 0;
+        index < vertical.length;
+        index += 1
+      ) {
+        if (
+          Math.abs(
+            vertical[index]
+            - right
+          )
+          <= 8
+        ) {
+          endLogical =
+            index;
+
+          break;
+        }
+      }
+
+
+      cells.push({
+        text:
+          notebookCellTextFromWords(
+            cellWords
+          ),
+
+        colspan:
+          Math.max(
+            1,
+            endLogical
+            - startLogical
+          ),
+
+        header:
+          rowIndex === 0
+      });
+    }
+
+
+    if (
+      cells.some(
+        cell =>
+          String(
+            cell.text
+            || ""
+          ).trim()
+      )
+    ) {
+      structuredRows.push({
+        cells
+      });
     }
   }
 
-  const rows =
-    buckets.map(
-      cells =>
-        cells.map(
-          cellWords => {
-            if (
-              !cellWords.length
-            ) {
-              return "";
-            }
-
-            const lineTolerance =
-              Math.max(
-                6,
-                medianNotebookNumber(
-                  cellWords.map(
-                    word =>
-                      word.height
-                  )
-                ) * 0.65
-              );
-
-            const lines =
-              [];
-
-            for (
-              const word
-              of cellWords
-                .slice()
-                .sort(
-                  (a, b) =>
-                    a.y - b.y
-                    ||
-                    a.x - b.x
-                )
-            ) {
-              let line =
-                lines.find(
-                  candidate =>
-                    Math.abs(
-                      candidate.y
-                      - word.y
-                    )
-                    <= lineTolerance
-                );
-
-              if (
-                !line
-              ) {
-                line = {
-                  y:
-                    word.y,
-                  words: []
-                };
-
-                lines.push(
-                  line
-                );
-              }
-
-              line.words.push(
-                word
-              );
-            }
-
-            return lines
-              .sort(
-                (a, b) =>
-                  a.y - b.y
-              )
-              .map(
-                line =>
-                  line.words
-                    .sort(
-                      (a, b) =>
-                        a.x - b.x
-                    )
-                    .map(
-                      word =>
-                        word.text
-                    )
-                    .join(
-                      " "
-                    )
-              )
-              .join(
-                " "
-              )
-              .replace(
-                /\s+/g,
-                " "
-              )
-              .trim();
-          }
-        )
-    );
-
-  /*
-    Remove linhas/colunas completamente vazias, que podem
-    aparecer quando há uma borda decorativa fora da tabela.
-  */
-  let cleaned =
-    rows.filter(
-      row =>
-        row.some(
-          cell =>
-            String(
-              cell
-              || ""
-            ).trim()
-        )
-    );
 
   if (
-    !cleaned.length
+    !structuredRows.length
   ) {
-    return [];
+    return null;
   }
 
-  const usedColumns =
-    Array(
-      colCount
-    ).fill(
-      false
-    );
 
-  cleaned.forEach(
-    row =>
-      row.forEach(
-        (
-          cell,
-          index
-        ) => {
-          if (
-            String(
-              cell
-              || ""
-            ).trim()
-          ) {
-            usedColumns[index] =
-              true;
-          }
-        }
-      )
-  );
-
-  cleaned =
-    cleaned.map(
-      row =>
-        row.filter(
-          (
-            _cell,
-            index
-          ) =>
-            usedColumns[index]
-        )
-    );
-
-  return cleaned;
+  return {
+    baseColumns,
+    rows:
+      structuredRows
+  };
 }
 
 
@@ -5514,52 +5929,23 @@ function tableRowsFromOcrWords(
   }
 
   /*
-    Número provável de colunas = valor mais recorrente entre
-    as linhas, dando preferência às linhas com 2+ células.
+    A estrutura não é definida pela primeira linha.
+    Procuramos a linha MAIS subdividida como referência.
+    Isso preserva cabeçalhos com uma única célula.
   */
-  const counts =
-    new Map();
-
-  segmentedRows.forEach(
-    segments => {
-      const count =
-        Math.min(
-          10,
-          segments.length
-        );
-
-      counts.set(
-        count,
-        (
-          counts.get(
-            count
+  const baseColumns =
+    Math.max(
+      1,
+      ...segmentedRows.map(
+        segments =>
+          Math.min(
+            10,
+            segments.length
           )
-          || 0
-        )
-        + 1
-      );
-    }
-  );
+      )
+    );
 
-  const targetColumns =
-    Array.from(
-      counts.entries()
-    )
-      .sort(
-        (
-          a,
-          b
-        ) =>
-          b[1] - a[1]
-          ||
-          b[0] - a[0]
-      )[0]?.[0]
-    || 1;
 
-  /*
-    Usa a linha cuja quantidade mais se aproxima do número de
-    colunas esperado para definir os centros-base.
-  */
   const reference =
     segmentedRows
       .slice()
@@ -5568,63 +5954,94 @@ function tableRowsFromOcrWords(
           a,
           b
         ) =>
-          Math.abs(
-            a.length
-            - targetColumns
-          )
-          -
-          Math.abs(
-            b.length
-            - targetColumns
-          )
-          ||
           b.length
           - a.length
       )[0];
+
 
   const anchors =
     reference
       .slice(
         0,
-        targetColumns
+        baseColumns
       )
       .map(
         segment =>
           segment.x
       )
       .sort(
-        (a, b) =>
+        (
+          a,
+          b
+        ) =>
           a - b
       );
+
 
   if (
     !anchors.length
   ) {
-    return [];
+    return null;
   }
 
-  return segmentedRows
-    .map(
-      segments => {
+
+  const structuredRows =
+    segmentedRows.map(
+      (
+        segments,
+        rowIndex
+      ) => {
+        /*
+          Uma linha com um único bloco de texto em uma tabela
+          de 2+ colunas é tratada como linha mesclada/título.
+        */
+        if (
+          segments.length === 1
+          &&
+          baseColumns > 1
+        ) {
+          return {
+            cells: [
+              {
+                text:
+                  segments[0]
+                    .text,
+
+                colspan:
+                  baseColumns,
+
+                header:
+                  rowIndex === 0
+              }
+            ]
+          };
+        }
+
+
         const cells =
-          Array(
-            anchors.length
-          ).fill("");
+          [];
+
 
         for (
-          const segment
-          of segments
+          let index = 0;
+          index < segments.length;
+          index += 1
         ) {
-          let bestIndex =
+          const segment =
+            segments[index];
+
+
+          let nearest =
             0;
 
-          let bestDistance =
+          let nearestDistance =
             Number.POSITIVE_INFINITY;
+
 
           anchors.forEach(
             (
               anchor,
-              index
+              anchorIndex
             ) => {
               const distance =
                 Math.abs(
@@ -5634,48 +6051,104 @@ function tableRowsFromOcrWords(
 
               if (
                 distance
-                < bestDistance
+                < nearestDistance
               ) {
-                bestDistance =
+                nearestDistance =
                   distance;
 
-                bestIndex =
-                  index;
+                nearest =
+                  anchorIndex;
               }
             }
           );
 
-          cells[
-            bestIndex
-          ] =
-            [
-              cells[
-                bestIndex
-              ],
-              segment.text
-            ]
-              .filter(
-                Boolean
-              )
-              .join(
-                " "
-              )
-              .trim();
+
+          let nextNearest =
+            baseColumns;
+
+
+          if (
+            index
+            < segments.length - 1
+          ) {
+            const next =
+              segments[
+                index + 1
+              ];
+
+
+            nextNearest =
+              anchors.reduce(
+                (
+                  best,
+                  anchor,
+                  anchorIndex
+                ) => {
+                  const currentDistance =
+                    Math.abs(
+                      anchor
+                      - next.x
+                    );
+
+                  const bestDistance =
+                    Math.abs(
+                      anchors[best]
+                      - next.x
+                    );
+
+                  return currentDistance
+                    < bestDistance
+                      ? anchorIndex
+                      : best;
+                },
+                Math.min(
+                  baseColumns - 1,
+                  nearest + 1
+                )
+              );
+          }
+
+
+          const span =
+            index
+              === segments.length - 1
+              ? Math.max(
+                  1,
+                  baseColumns
+                  - nearest
+                )
+              : Math.max(
+                  1,
+                  nextNearest
+                  - nearest
+                );
+
+
+          cells.push({
+            text:
+              segment.text,
+
+            colspan:
+              span,
+
+            header:
+              rowIndex === 0
+          });
         }
 
-        return cells;
+
+        return {
+          cells
+        };
       }
-    )
-    .filter(
-      row =>
-        row.some(
-          cell =>
-            String(
-              cell
-              || ""
-            ).trim()
-        )
     );
+
+
+  return {
+    baseColumns,
+    rows:
+      structuredRows
+  };
 }
 
 
@@ -5726,6 +6199,7 @@ async function readNotebookTableImage() {
     input?.files?.[0]
     || null;
 
+
   if (!file) {
     setNotebookTableStatus(
       "Selecione uma imagem da tabela.",
@@ -5734,6 +6208,7 @@ async function readNotebookTableImage() {
 
     return;
   }
+
 
   if (
     !window.Tesseract
@@ -5746,10 +6221,12 @@ async function readNotebookTableImage() {
     return;
   }
 
+
   const button =
     document.getElementById(
       "notebook-table-read-image"
     );
+
 
   if (
     button
@@ -5758,20 +6235,24 @@ async function readNotebookTableImage() {
       true;
   }
 
+
   try {
     setNotebookTableStatus(
-      "Preparando a imagem e procurando a grade..."
+      "Analisando a estrutura de cada linha da tabela..."
     );
+
 
     const sourceCanvas =
       await prepareNotebookTableCanvas(
         file
       );
 
+
     const grid =
       detectNotebookTableGrid(
         sourceCanvas
       );
+
 
     const ocrCanvas =
       createNotebookTableOcrCanvas(
@@ -5779,16 +6260,14 @@ async function readNotebookTableImage() {
         grid
       );
 
+
     setNotebookTableStatus(
       grid
-        ? `Grade detectada: ${grid.horizontal.length - 1} linha(s) × ${grid.vertical.length - 1} coluna(s). Lendo o texto...`
-        : "Grade sem bordas claras. Lendo o texto e reconstruindo colunas..."
+        ? "Grade encontrada. Verificando separadamente quantas colunas existem em cada linha..."
+        : "Grade parcial. Reconstruindo a estrutura linha por linha..."
     );
 
-    /*
-      Primeira leitura: versão ampliada, com contraste melhorado
-      e linhas da grade apagadas.
-    */
+
     const enhancedResult =
       await window.Tesseract
         .recognize(
@@ -5796,25 +6275,24 @@ async function readNotebookTableImage() {
           "por"
         );
 
+
     let bestResult =
       enhancedResult;
+
 
     const enhancedScore =
       notebookOcrScore(
         enhancedResult
       );
 
-    /*
-      Segunda passagem somente quando a primeira parece fraca.
-      O original ampliado preserva detalhes que um filtro de
-      contraste pode eventualmente apagar.
-    */
+
     if (
       enhancedScore < 115
     ) {
       setNotebookTableStatus(
-        "Refinando a leitura do texto..."
+        "Refinando o texto sem perder a estrutura da tabela..."
       );
+
 
       const originalResult =
         await window.Tesseract
@@ -5822,6 +6300,7 @@ async function readNotebookTableImage() {
             sourceCanvas,
             "por"
           );
+
 
       if (
         notebookOcrScore(
@@ -5834,45 +6313,50 @@ async function readNotebookTableImage() {
       }
     }
 
+
     const words =
       bestResult
         ?.data
         ?.words
       || [];
 
-    let rows =
+
+    let structure =
       grid
         ? rowsFromNotebookGrid(
             words,
-            grid
+            grid,
+            sourceCanvas
           )
-        : [];
+        : null;
+
 
     let method =
-      rows.length
-        ? "grade"
-        : "alinhamento";
+      structure
+        ? "grade por linha"
+        : "alinhamento por linha";
 
-    /*
-      Se a grade foi detectada mas a leitura caiu fora das
-      células, usa o reconstruidor sem bordas como fallback.
-    */
+
     if (
-      rows.length < 2
+      !structure
+      ||
+      !structure.rows
+        ?.length
     ) {
-      rows =
+      structure =
         tableRowsFromOcrWords(
           words
         );
-
-      method =
-        "alinhamento";
     }
 
+
     if (
-      rows.length < 2
+      !structure
+      ||
+      !structure.rows
+        ?.length
     ) {
-      rows =
+      const rawRows =
         String(
           bestResult
             ?.data
@@ -5884,8 +6368,7 @@ async function readNotebookTableImage() {
           )
           .map(
             line =>
-              line
-                .trim()
+              line.trim()
           )
           .filter(
             Boolean
@@ -5909,48 +6392,102 @@ async function readNotebookTableImage() {
               row.length
           );
 
-      method =
-        "texto";
+
+      if (
+        rawRows.length
+      ) {
+        const baseColumns =
+          Math.max(
+            1,
+            ...rawRows.map(
+              row =>
+                row.length
+            )
+          );
+
+
+        structure = {
+          baseColumns,
+
+          rows:
+            rawRows.map(
+              (
+                row,
+                rowIndex
+              ) => ({
+                cells:
+                  row.length === 1
+                  && baseColumns > 1
+                    ? [
+                        {
+                          text:
+                            row[0],
+
+                          colspan:
+                            baseColumns,
+
+                          header:
+                            rowIndex === 0
+                        }
+                      ]
+                    : row.map(
+                        cell => ({
+                          text:
+                            cell,
+
+                          colspan:
+                            1,
+
+                          header:
+                            rowIndex === 0
+                        })
+                      )
+              })
+            )
+        };
+
+
+        method =
+          "texto por linha";
+      }
     }
 
+
     if (
-      !rows.length
+      !structure
+      ||
+      !structure.rows
+        ?.length
     ) {
       throw new Error(
         "Nenhuma célula foi reconhecida."
       );
     }
 
-    const maxColumns =
-      Math.max(
-        ...rows.map(
-          row =>
-            row.length
-        )
-      );
-
-    const normalizedRows =
-      rows.map(
-        row => [
-          ...row,
-          ...Array(
-            Math.max(
-              0,
-              maxColumns
-              - row.length
-            )
-          ).fill("")
-        ]
-      );
 
     renderNotebookTableBuilder(
-      normalizedRows
+      structure
     );
 
+
+    const rowPattern =
+      structure.rows
+        .map(
+          row =>
+            row.cells
+              ?.length
+            || 0
+        )
+        .join(
+          " / "
+        );
+
+
     setNotebookTableStatus(
-      `Tabela reconhecida por ${method}: ${normalizedRows.length} linha(s) × ${maxColumns} coluna(s). Revise as células antes de inserir.`,
+      `Tabela reconhecida por ${method}: ${structure.rows.length} linha(s), estrutura ${rowPattern} célula(s) por linha. Revise antes de inserir.`,
       "success"
     );
+
 
   } catch (
     error
@@ -5959,10 +6496,12 @@ async function readNotebookTableImage() {
       error
     );
 
+
     setNotebookTableStatus(
       `Não foi possível ler a tabela: ${error.message || "erro desconhecido"}`,
       "error"
     );
+
 
   } finally {
     if (
