@@ -6,7 +6,7 @@
   <title>Admin · Resibulando</title>
   <link rel="icon" type="image/png" href="favicon.png?v=resibulando2">
   <link rel="stylesheet" href="style.css?v=luria-palette-1">
-  <link rel="stylesheet" href="admin.css?v=1.0">
+  <link rel="stylesheet" href="admin.css?v=1.1">
 </head>
 
 <body data-page="admin">
@@ -85,6 +85,70 @@
           <div id="admin-feature-grid" class="admin-feature-grid"></div>
         </section>
 
+        <section class="admin-section admin-logistics-section">
+          <div class="admin-section-head">
+            <div>
+              <span class="eyebrow">Logística & financeiro</span>
+              <h2>Infraestrutura, tráfego e projeção mensal</h2>
+            </div>
+
+            <div class="admin-logistics-head-meta">
+              <span id="admin-logistics-plan" class="admin-infra-plan">Supabase —</span>
+              <small id="admin-logistics-updated"></small>
+            </div>
+          </div>
+
+          <div id="admin-infra-grid" class="admin-infra-grid">
+            <article class="admin-infra-card">
+              <span>Base de dados</span>
+              <strong>—</strong>
+              <small>Carregando...</small>
+            </article>
+          </div>
+
+          <div class="admin-finance-wrap">
+            <div class="admin-finance-grid">
+              <article class="admin-finance-card income">
+                <span>Entradas projetadas</span>
+                <strong id="admin-projected-revenue">—</strong>
+                <small>MRR estimado para o mês</small>
+              </article>
+
+              <article class="admin-finance-card cost">
+                <span>Custos projetados</span>
+                <strong id="admin-projected-costs">—</strong>
+                <small>Infraestrutura + IA + taxas cadastradas</small>
+              </article>
+
+              <article class="admin-finance-card balance">
+                <span>Saldo projetado</span>
+                <strong id="admin-projected-balance">—</strong>
+                <small id="admin-projected-margin">Receita menos custos</small>
+              </article>
+            </div>
+
+            <div id="admin-cost-breakdown" class="admin-cost-breakdown"></div>
+          </div>
+
+          <div class="admin-logistics-note">
+            <span>ℹ</span>
+            <p>
+              Base, Storage e cache vêm diretamente do PostgreSQL/Supabase.
+              O egress real e o cached egress são medidos pela plataforma Supabase
+              e não são expostos pelo banco; por isso aparecem como não mensurados
+              até conectarmos uma fonte de billing/usage.
+            </p>
+
+            <a
+              href="https://supabase.com/dashboard/org/pozqdgelrxrceapfexxt/usage"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Ver uso no Supabase ↗
+            </a>
+          </div>
+        </section>
+
         <section class="admin-section">
           <div class="admin-section-head admin-customer-head">
             <div>
@@ -133,6 +197,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
   <script src="app.js?v=12.7"></script>
-  <script src="admin.js?v=1.2"></script>
+  <script src="admin.js?v=1.3"></script>
 </body>
 </html>
