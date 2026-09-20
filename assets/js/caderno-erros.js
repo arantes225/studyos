@@ -395,8 +395,8 @@ async function loadErrorAreas() {
     + allErrorAreas
         .map(
           (area) => `
-            <option value="${escapeErrorHtml(area)}">
-              ${escapeErrorHtml(area)}
+            <option value="${errorLibraryEscape(area)}">
+              ${errorLibraryEscape(area)}
             </option>
           `
         )
@@ -3026,8 +3026,8 @@ function populateLibraryAreas() {
     + areas
         .map(
           (area) => `
-            <option value="${escapeErrorHtml(area)}">
-              ${escapeErrorHtml(area)}
+            <option value="${errorLibraryEscape(area)}">
+              ${errorLibraryEscape(area)}
             </option>
           `
         )
