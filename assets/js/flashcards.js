@@ -4065,7 +4065,7 @@ async function flashPdfImageData(path) {
     bitmap.close?.();
 
     return {
-      dataUrl: canvas.toDataURL("image/jpeg", 0.78),
+      dataUrl: canvas.toDataURL("image/jpeg", 0.9),
       width: canvas.width,
       height: canvas.height
     };
@@ -4076,14 +4076,40 @@ async function flashPdfImageData(path) {
 }
 
 
+function flashPdfNewPage(
+  doc,
+  state
+) {
+  doc.addPage();
+
+  window.LuriaPdfBranding
+    ?.decoratePage(
+      doc,
+      state.assets,
+      {
+        title:
+          "Flashcards",
+        subtitle:
+          state.headerSubtitle
+          || ""
+      }
+    );
+
+  state.y =
+    29;
+
+  return state;
+}
+
+
 function flashPdfAddImage(doc, imageData, state) {
   if (!imageData) return state;
 
-  const margin = 14;
+  const margin = 16;
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const maxWidth = Math.min(95, pageWidth - margin * 2);
-  const maxHeight = 70;
+  const maxWidth = Math.min(105, pageWidth - margin * 2);
+  const maxHeight = 76;
 
   const ratio = imageData.width / Math.max(1, imageData.height);
   let width = maxWidth;
@@ -4094,14 +4120,61 @@ function flashPdfAddImage(doc, imageData, state) {
     width = height * ratio;
   }
 
-  if (state.y + height + 8 > pageHeight - 14) {
-    doc.addPage();
-    state.y = 16;
+  if (state.y + height + 10 > pageHeight - 16) {
+    state =
+      flashPdfNewPage(
+        doc,
+        state
+      );
   }
 
-  const x = margin + Math.max(0, (pageWidth - margin * 2 - width) / 2);
-  doc.addImage(imageData.dataUrl, "JPEG", x, state.y, width, height, undefined, "FAST");
-  state.y += height + 6;
+  const x =
+    margin
+    + Math.max(
+        0,
+        (
+          pageWidth
+          - margin * 2
+          - width
+        ) / 2
+      );
+
+  doc.setDrawColor(
+    218,
+    230,
+    244
+  );
+
+  doc.setFillColor(
+    248,
+    250,
+    252
+  );
+
+  doc.roundedRect(
+    x - 2,
+    state.y - 2,
+    width + 4,
+    height + 4,
+    2.4,
+    2.4,
+    "FD"
+  );
+
+  doc.addImage(
+    imageData.dataUrl,
+    "JPEG",
+    x,
+    state.y,
+    width,
+    height,
+    undefined,
+    "MEDIUM"
+  );
+
+  state.y +=
+    height + 8;
+
   return state;
 }
 
@@ -4109,27 +4182,68 @@ function flashPdfAddImage(doc, imageData, state) {
 function flashPdfAddBlock(doc, label, value, state) {
   if (!value) return state;
 
-  const margin = 14;
+  const margin = 16;
   const pageHeight = doc.internal.pageSize.getHeight();
   const maxWidth = doc.internal.pageSize.getWidth() - margin * 2;
-  const labelLines = doc.splitTextToSize(`${label}:`, maxWidth);
-  const valueLines = doc.splitTextToSize(String(value), maxWidth);
-  const needed = (labelLines.length + valueLines.length + 1) * 5;
+  const valueLines = doc.splitTextToSize(String(value), maxWidth - 4);
+  const needed = 5.5 + valueLines.length * 4.8 + 4.5;
 
-  if (state.y + needed > pageHeight - 14) {
-    doc.addPage();
-    state.y = 16;
+  if (state.y + needed > pageHeight - 16) {
+    state =
+      flashPdfNewPage(
+        doc,
+        state
+      );
   }
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  doc.text(labelLines, margin, state.y);
-  state.y += labelLines.length * 4.5;
+  doc.setTextColor(
+    24,
+    72,
+    136
+  );
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.text(valueLines, margin, state.y);
-  state.y += valueLines.length * 4.5 + 4;
+  doc.setFont(
+    "helvetica",
+    "bold"
+  );
+
+  doc.setFontSize(
+    8.2
+  );
+
+  doc.text(
+    String(label).toUpperCase(),
+    margin,
+    state.y
+  );
+
+  state.y +=
+    4.7;
+
+  doc.setTextColor(
+    30,
+    41,
+    59
+  );
+
+  doc.setFont(
+    "helvetica",
+    "normal"
+  );
+
+  doc.setFontSize(
+    9.7
+  );
+
+  doc.text(
+    valueLines,
+    margin,
+    state.y
+  );
+
+  state.y +=
+    valueLines.length * 4.8
+    + 5;
 
   return state;
 }
@@ -4153,60 +4267,185 @@ async function exportSelectedFlashcardsPdf() {
 
   try {
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit: "mm", format: "a4" });
-    const margin = 14;
+    const doc = new jsPDF({
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait",
+      compress: true
+    });
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text("LURIA — Flashcards", margin, 16);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.text(
-      `${cards.length} flashcard${cards.length === 1 ? "" : "s"} selecionado${cards.length === 1 ? "" : "s"}`,
-      margin,
-      23
-    );
+    const assets =
+      await window.LuriaPdfBranding
+        ?.getAssets?.();
 
-    let state = { y: 32 };
+    const headerSubtitle =
+      `${cards.length} flashcard${cards.length === 1 ? "" : "s"} selecionado${cards.length === 1 ? "" : "s"}`;
+
+    window.LuriaPdfBranding
+      ?.decoratePage(
+        doc,
+        assets,
+        {
+          title:
+            "Flashcards",
+          subtitle:
+            headerSubtitle
+        }
+      );
+
+    const margin = 16;
+
+    let state = {
+      y: 29,
+      assets,
+      headerSubtitle
+    };
 
     for (let index = 0; index < cards.length; index += 1) {
       const card = cards[index];
 
-      if (state.y > 250) {
-        doc.addPage();
-        state.y = 16;
+      if (state.y > 252) {
+        state =
+          flashPdfNewPage(
+            doc,
+            state
+          );
       }
 
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text(
-        `${index + 1}. ${card.area || "Sem área"}${card.materia ? ` · ${card.materia}` : ""}`,
-        margin,
-        state.y
+      doc.setFillColor(
+        238,
+        244,
+        251
       );
-      state.y += 7;
 
-      state = flashPdfAddBlock(doc, "Tema", card.theme, state);
-      state = flashPdfAddBlock(doc, "Frente", card.front_text, state);
+      doc.setDrawColor(
+        218,
+        230,
+        244
+      );
+
+      doc.roundedRect(
+        margin,
+        state.y - 4.2,
+        doc.internal.pageSize.getWidth() - margin * 2,
+        11,
+        2.4,
+        2.4,
+        "FD"
+      );
+
+      doc.setTextColor(
+        18,
+        48,
+        85
+      );
+
+      doc.setFont(
+        "helvetica",
+        "bold"
+      );
+
+      doc.setFontSize(
+        11.2
+      );
+
+      const heading =
+        `${index + 1}. ${card.area || "Sem área"}${card.materia ? ` · ${card.materia}` : ""}`;
+
+      doc.text(
+        doc.splitTextToSize(
+          heading,
+          doc.internal.pageSize.getWidth() - margin * 2 - 8
+        )[0],
+        margin + 4,
+        state.y + 2.3
+      );
+
+      state.y +=
+        12;
+
+      state =
+        flashPdfAddBlock(
+          doc,
+          "Tema",
+          card.theme,
+          state
+        );
+
+      state =
+        flashPdfAddBlock(
+          doc,
+          "Frente",
+          card.front_text,
+          state
+        );
 
       if (card.front_image_path) {
         setLibraryStatus(`Preparando mídia ${index + 1} de ${cards.length}...`);
-        const frontImage = await flashPdfImageData(card.front_image_path);
-        state = flashPdfAddImage(doc, frontImage, state);
+
+        const frontImage =
+          await flashPdfImageData(
+            card.front_image_path
+          );
+
+        state =
+          flashPdfAddImage(
+            doc,
+            frontImage,
+            state
+          );
       }
 
-      state = flashPdfAddBlock(doc, "Verso", card.back_text, state);
+      state =
+        flashPdfAddBlock(
+          doc,
+          "Verso",
+          card.back_text,
+          state
+        );
 
       if (card.back_image_path) {
-        const backImage = await flashPdfImageData(card.back_image_path);
-        state = flashPdfAddImage(doc, backImage, state);
+        const backImage =
+          await flashPdfImageData(
+            card.back_image_path
+          );
+
+        state =
+          flashPdfAddImage(
+            doc,
+            backImage,
+            state
+          );
       }
 
-      state.y += 4;
-      doc.setDrawColor(220);
-      doc.line(margin, state.y, doc.internal.pageSize.getWidth() - margin, state.y);
-      state.y += 8;
+      state.y +=
+        1.5;
+
+      doc.setDrawColor(
+        218,
+        230,
+        244
+      );
+
+      doc.setLineWidth(
+        0.25
+      );
+
+      doc.line(
+        margin,
+        state.y,
+        doc.internal.pageSize.getWidth() - margin,
+        state.y
+      );
+
+      state.y +=
+        7;
     }
+
+    window.LuriaPdfBranding
+      ?.finalize(
+        doc
+      );
 
     doc.save(`luria-flashcards-${todayISO()}.pdf`);
     setLibraryStatus("PDF exportado.", "success");
@@ -4217,6 +4456,7 @@ async function exportSelectedFlashcardsPdf() {
     if (button) button.disabled = false;
   }
 }
+
 
 async function deleteSelectedFlashcards() {
   const cards =
