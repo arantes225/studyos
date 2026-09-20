@@ -609,3 +609,168 @@
     flex-direction: column;
   }
 }
+
+
+/* =========================================================
+   ADMIN PIN GATE
+   ========================================================= */
+
+.admin-pin-gate {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 28px 18px;
+  background:
+    radial-gradient(
+      circle at top,
+      color-mix(in srgb, var(--accent) 7%, transparent),
+      transparent 42%
+    ),
+    var(--bg);
+}
+
+.admin-pin-gate[hidden] {
+  display: none !important;
+}
+
+.admin-pin-card {
+  width: min(100%, 410px);
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.admin-pin-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-pin-mark {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.admin-pin-brand strong,
+.admin-pin-brand small {
+  display: block;
+}
+
+.admin-pin-brand strong {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.admin-pin-brand small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.admin-pin-copy h1 {
+  margin: 7px 0 0;
+  font-size: 24px;
+  line-height: 1.12;
+}
+
+.admin-pin-copy p {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.admin-pin-fields {
+  display: grid;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.admin-pin-field {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-pin-field > span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: .045em;
+}
+
+.admin-pin-field input {
+  width: 100%;
+  height: 52px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  outline: none;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 23px;
+  font-weight: 900;
+  letter-spacing: .28em;
+  text-align: center;
+}
+
+.admin-pin-field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.admin-pin-message {
+  min-height: 18px;
+  margin-top: 13px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.admin-pin-message.error {
+  color: var(--danger);
+}
+
+.admin-pin-message.success {
+  color: var(--success);
+}
+
+.admin-pin-submit {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 5px;
+}
+
+.admin-pin-back {
+  display: block;
+  margin-top: 15px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 750;
+  text-align: center;
+}
+
+.admin-pin-back:hover {
+  color: var(--text);
+}
+
+@media (max-width: 520px) {
+  .admin-pin-card {
+    padding: 22px;
+    border-radius: 16px;
+  }
+}
