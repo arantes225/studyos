@@ -12381,322 +12381,416 @@ function updateLibraryActions() {
    PDF
    ========================================================= */
 
-function htmlToPdfBlocks(
-  html
-) {
-
-  const container =
+function createNotebookPdfPage(entry) {
+  const host =
     document.createElement(
       "div"
     );
 
+  host.className =
+    "notebook-pdf-export-host";
 
-  container.innerHTML =
+  const paper =
+    document.createElement(
+      "article"
+    );
+
+  paper.className =
+    "notebook-paper notebook-pdf-paper";
+
+  const head =
+    document.createElement(
+      "header"
+    );
+
+  head.className =
+    "notebook-document-head";
+
+  const headMain =
+    document.createElement(
+      "div"
+    );
+
+  headMain.className =
+    "notebook-document-head-main";
+
+  const area =
+    document.createElement(
+      "div"
+    );
+
+  area.className =
+    "notebook-document-area";
+
+  area.textContent =
+    entry.area
+    || "";
+
+  const title =
+    document.createElement(
+      "h1"
+    );
+
+  title.textContent =
+    entry.title
+    || "Caderno";
+
+  const date =
+    document.createElement(
+      "div"
+    );
+
+  date.className =
+    "notebook-document-date";
+
+  date.textContent =
+    formatDate(
+      entry.date
+    );
+
+  const editor =
+    document.createElement(
+      "div"
+    );
+
+  editor.className =
+    "notebook-editor";
+
+  editor.innerHTML =
     sanitizeHtml(
-      html
+      entry.note
+        ?.content_html
+      || ""
     );
 
+  headMain.append(
+    area,
+    title,
+    date
+  );
 
-  const blocks =
-    [];
+  head.appendChild(
+    headMain
+  );
 
+  paper.append(
+    head,
+    editor
+  );
 
-  function add(
-    text,
-    type = "text"
-  ) {
+  host.appendChild(
+    paper
+  );
 
-    const clean =
-      String(
-        text ||
-        ""
-      )
-        .trim();
-
-
-    if (
-      clean
-    ) {
-
-      blocks.push({
-        type,
-        text:
-          clean
-      });
-
-    }
-
-  }
-
-
-  for (
-    const child
-    of
-    Array.from(
-      container.children
-    )
-  ) {
-
-    if (
-      child.tagName ===
-      "HR"
-    ) {
-
-      blocks.push({
-        type:
-          "divider",
-
-        text:
-          ""
-      });
-
-
-      continue;
-
-    }
-
-
-    if (
-      /^H[1-3]$/.test(
-        child.tagName
-      )
-    ) {
-
-      add(
-        child.innerText,
-        "heading"
-      );
-
-
-      continue;
-
-    }
-
-
-    if (
-      child.tagName ===
-      "UL"
-      ||
-      child.tagName ===
-      "OL"
-    ) {
-
-      Array.from(
-        child.children
-      )
-        .forEach(
-          (
-            item,
-            index
-          ) => {
-
-            const prefix =
-              child.tagName ===
-              "OL"
-                ? `${index + 1}. `
-                : "• ";
-
-
-            add(
-              `${prefix}${item.innerText}`
-            );
-
-          }
-        );
-
-
-      continue;
-
-    }
-
-
-    add(
-      child.innerText
-    );
-
-  }
-
-
-  return blocks;
-
+  return {
+    host,
+    paper
+  };
 }
 
 
-function writePdfBlock(
-  doc,
-  block,
-  layout
+async function waitForPdfImages(root) {
+  const images =
+    Array.from(
+      root.querySelectorAll(
+        "img"
+      )
+    );
+
+  await Promise.all(
+    images.map(
+      async (image) => {
+        if (
+          image.complete
+          &&
+          image.naturalWidth
+        ) {
+          return;
+        }
+
+        await new Promise(
+          (resolve) => {
+            const done =
+              () => {
+                image.removeEventListener(
+                  "load",
+                  done
+                );
+
+                image.removeEventListener(
+                  "error",
+                  done
+                );
+
+                resolve();
+              };
+
+            image.addEventListener(
+              "load",
+              done,
+              {
+                once: true
+              }
+            );
+
+            image.addEventListener(
+              "error",
+              done,
+              {
+                once: true
+              }
+            );
+
+            setTimeout(
+              done,
+              5000
+            );
+          }
+        );
+      }
+    )
+  );
+}
+
+
+async function renderNotebookPdfCanvas(
+  entry
 ) {
+  if (
+    !window.html2canvas
+  ) {
+    throw new Error(
+      "O renderizador visual do PDF não foi carregado."
+    );
+  }
+
+  const {
+    host,
+    paper
+  } =
+    createNotebookPdfPage(
+      entry
+    );
+
+  document.body.appendChild(
+    host
+  );
+
+  try {
+    await document.fonts
+      ?.ready;
+
+    await waitForPdfImages(
+      paper
+    );
+
+    return await window.html2canvas(
+      paper,
+      {
+        scale:
+          2,
+
+        useCORS:
+          true,
+
+        allowTaint:
+          false,
+
+        logging:
+          false,
+
+        backgroundColor:
+          getComputedStyle(
+            paper
+          ).backgroundColor,
+
+        windowWidth:
+          940,
+
+        scrollX:
+          0,
+
+        scrollY:
+          0
+      }
+    );
+  }
+
+  finally {
+    host.remove();
+  }
+}
+
+
+function addNotebookCanvasToPdf(
+  doc,
+  canvas,
+  firstPage = false
+) {
+  const pageWidth =
+    210;
+
+  const pageHeight =
+    297;
 
   const margin =
-    layout.margin;
+    8;
 
-
-  const maxWidth =
-    layout.width
+  const drawWidth =
+    pageWidth
     -
     (
       margin * 2
     );
 
+  const drawHeight =
+    pageHeight
+    -
+    (
+      margin * 2
+    );
 
-  if (
-    block.type ===
-    "divider"
+  const sourcePageHeight =
+    Math.floor(
+      canvas.width
+      *
+      (
+        drawHeight
+        /
+        drawWidth
+      )
+    );
+
+  let sourceY =
+    0;
+
+  let sliceIndex =
+    0;
+
+  while (
+    sourceY
+    <
+    canvas.height
   ) {
-
     if (
-      layout.y >
-      layout.height
-      -
-      margin
-      -
-      8
+      !firstPage
+      ||
+      sliceIndex
+      >
+      0
     ) {
-
       doc.addPage();
-
-
-      layout.y =
-        margin;
-
     }
 
+    const sliceHeight =
+      Math.min(
+        sourcePageHeight,
+        canvas.height
+        -
+        sourceY
+      );
 
-    doc.setDrawColor(
-      190
+    const pageCanvas =
+      document.createElement(
+        "canvas"
+      );
+
+    pageCanvas.width =
+      canvas.width;
+
+    pageCanvas.height =
+      sliceHeight;
+
+    const context =
+      pageCanvas.getContext(
+        "2d"
+      );
+
+    context.drawImage(
+      canvas,
+      0,
+      sourceY,
+      canvas.width,
+      sliceHeight,
+      0,
+      0,
+      canvas.width,
+      sliceHeight
     );
 
+    const renderedHeight =
+      drawWidth
+      *
+      (
+        sliceHeight
+        /
+        canvas.width
+      );
 
-    doc.line(
+    doc.addImage(
+      pageCanvas.toDataURL(
+        "image/png"
+      ),
+      "PNG",
       margin,
-      layout.y,
-      layout.width - margin,
-      layout.y
-    );
-
-
-    layout.y +=
-      8;
-
-
-    return;
-
-  }
-
-
-  const heading =
-    block.type ===
-    "heading";
-
-
-  const fontSize =
-    heading
-      ? 13
-      : 10;
-
-
-  const lineHeight =
-    heading
-      ? 6.5
-      : 5.2;
-
-
-  doc.setFont(
-    "helvetica",
-    heading
-      ? "bold"
-      : "normal"
-  );
-
-
-  doc.setFontSize(
-    fontSize
-  );
-
-
-  const lines =
-    doc.splitTextToSize(
-      block.text,
-      maxWidth
-    );
-
-
-  for (
-    const line
-    of
-    lines
-  ) {
-
-    if (
-      layout.y >
-      layout.height
-      -
-      margin
-    ) {
-
-      doc.addPage();
-
-
-      layout.y =
-        margin;
-
-    }
-
-
-    doc.text(
-      line,
       margin,
-      layout.y
+      drawWidth,
+      renderedHeight,
+      undefined,
+      "FAST"
     );
 
+    sourceY +=
+      sliceHeight;
 
-    layout.y +=
-      lineHeight;
-
+    sliceIndex +=
+      1;
   }
-
-
-  layout.y +=
-    heading
-      ? 2.5
-      : 3;
-
 }
 
 
 async function exportSelectedPdf() {
-
   const entries =
     selectedEntries();
-
 
   if (
     !entries.length
   ) {
-
     return;
-
   }
-
 
   const jsPDF =
     window.jspdf?.jsPDF;
 
-
   if (
     !jsPDF
   ) {
-
     alert(
       "Não foi possível carregar o exportador de PDF."
     );
 
-
     return;
-
   }
 
+  const exportButton =
+    document.getElementById(
+      "notebook-library-export"
+    );
+
+  const originalLabel =
+    exportButton
+      ?.textContent
+    || "";
+
+  if (
+    exportButton
+  ) {
+    exportButton.disabled =
+      true;
+
+    exportButton.textContent =
+      "Gerando PDF...";
+  }
 
   const doc =
     new jsPDF({
@@ -12704,133 +12798,60 @@ async function exportSelectedPdf() {
         "mm",
 
       format:
-        "a4"
+        "a4",
+
+      orientation:
+        "portrait",
+
+      compress:
+        true
     });
 
-
-  const layout = {
-    margin:
-      18,
-
-    width:
-      210,
-
-    height:
-      297,
-
-    y:
-      18
-  };
-
-
-  entries.forEach(
-    (
-      entry,
-      index
-    ) => {
-
-      if (
-        index >
-        0
-      ) {
-
-        doc.addPage();
-
-
-        layout.y =
-          layout.margin;
-
-      }
-
-
-      doc.setFont(
-        "helvetica",
-        "bold"
-      );
-
-
-      doc.setFontSize(
-        17
-      );
-
-
-      const titleLines =
-        doc.splitTextToSize(
-          entry.title,
-          layout.width
-          -
-          (
-            layout.margin * 2
-          )
+  try {
+    for (
+      let index = 0;
+      index < entries.length;
+      index += 1
+    ) {
+      const canvas =
+        await renderNotebookPdfCanvas(
+          entries[index]
         );
 
-
-      doc.text(
-        titleLines,
-        layout.margin,
-        layout.y
+      addNotebookCanvasToPdf(
+        doc,
+        canvas,
+        index === 0
       );
-
-
-      layout.y +=
-        (
-          titleLines.length
-          * 7
-        )
-        +
-        2;
-
-
-      doc.setFont(
-        "helvetica",
-        "normal"
-      );
-
-
-      doc.setFontSize(
-        9
-      );
-
-
-      doc.text(
-        `${entry.area} · ${formatDate(
-          entry.date
-        )}`,
-        layout.margin,
-        layout.y
-      );
-
-
-      layout.y +=
-        10;
-
-
-      htmlToPdfBlocks(
-        entry.note.content_html ||
-        ""
-      )
-        .forEach(
-          (block) => {
-
-            writePdfBlock(
-              doc,
-              block,
-              layout
-            );
-
-          }
-        );
-
     }
-  );
 
+    doc.save(
+      "luria-cadernos.pdf"
+    );
+  }
 
-  doc.save(
-    "luria-cadernos.pdf"
-  );
+  catch (error) {
+    console.error(
+      error
+    );
 
+    alert(
+      "Não foi possível gerar o PDF mantendo o layout do caderno."
+    );
+  }
+
+  finally {
+    if (
+      exportButton
+    ) {
+      exportButton.disabled =
+        false;
+
+      exportButton.textContent =
+        originalLabel;
+    }
+  }
 }
-
 
 
 /* =========================================================
