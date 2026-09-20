@@ -1635,3 +1635,69 @@ optgroup {
 :root[data-theme="light"] h3 {
   color: var(--brand-light-blue) !important;
 }
+
+
+/* =========================================================
+   LURIA — HIERARQUIA DE BOTÕES NO TEMA CLARO
+   ========================================================= */
+:root,
+:root[data-theme="light"] {
+  --brand-light-blue: #184888;
+  --button-primary: #2563EB;
+  --button-primary-hover: #1D4ED8;
+  --button-secondary-bg: #FFFFFF;
+  --button-secondary-border: #184888;
+  --button-secondary-text: #184888;
+  --button-success: #16815C;
+  --button-warning: #D89B24;
+  --button-danger: #C83E4D;
+  --button-neutral-bg: #EEF3F8;
+  --button-neutral-text: #425466;
+}
+
+:root[data-theme="light"] .button.primary,
+:root[data-theme="light"] .primary-action {
+  background: var(--button-primary) !important;
+  border-color: var(--button-primary) !important;
+  color: #fff !important;
+}
+
+:root[data-theme="light"] .button.primary:hover,
+:root[data-theme="light"] .primary-action:hover {
+  background: var(--button-primary-hover) !important;
+  border-color: var(--button-primary-hover) !important;
+}
+
+:root[data-theme="light"] .button.secondary {
+  background: var(--button-secondary-bg) !important;
+  border-color: var(--button-secondary-border) !important;
+  color: var(--button-secondary-text) !important;
+}
+
+:root[data-theme="light"] .button.success,
+:root[data-theme="light"] .success-action {
+  background: var(--button-success) !important;
+  border-color: var(--button-success) !important;
+  color: #fff !important;
+}
+
+:root[data-theme="light"] .button.warning,
+:root[data-theme="light"] .warning-action {
+  background: var(--button-warning) !important;
+  border-color: var(--button-warning) !important;
+  color: #fff !important;
+}
+
+:root[data-theme="light"] .button.danger,
+:root[data-theme="light"] .danger-action,
+:root[data-theme="light"] button.danger {
+  background: var(--button-danger) !important;
+  border-color: var(--button-danger) !important;
+  color: #fff !important;
+}
+
+:root[data-theme="light"] .button.neutral {
+  background: var(--button-neutral-bg) !important;
+  border-color: var(--border) !important;
+  color: var(--button-neutral-text) !important;
+}
