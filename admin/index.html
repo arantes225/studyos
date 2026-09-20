@@ -1,16 +1,355 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <base href="/">
-  <meta charset="utf-8">
-  <meta name="robots" content="noindex">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin · LURIA</title>
+  <link rel="manifest" href="manifest.webmanifest?v=3">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/img/pwa-icon-180.png?v=3">
+  <meta name="theme-color" content="#0A2342">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="LURIA">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria2">
+  <link rel="stylesheet" href="assets/css/style.css?v=luria-palette-11">
+  <link rel="stylesheet" href="assets/css/admin.css?v=1.9">
+  <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=2">
   <link rel="canonical" href="/admin/">
-  <title>Redirecionando…</title>
-  <script>
-    window.location.replace("/admin/" + window.location.search + window.location.hash);
-  </script>
 </head>
-<body>
-  <p>Redirecionando para <a href="/admin/">/admin/</a>…</p>
+
+<body data-page="admin" class="admin-pin-locked">
+  <section id="admin-pin-gate" class="admin-pin-gate" aria-labelledby="admin-pin-title">
+    <form id="admin-pin-form" class="admin-pin-card" autocomplete="off">
+      <div class="admin-pin-brand">
+        <strong>LURIA Admin</strong>
+        <img
+          class="admin-pin-logo"
+          src="assets/img/logo-principal.png?v=luria-admin-1"
+          alt="LURIA"
+        >
+        <small>Acesso protegido</small>
+      </div>
+
+      <div class="admin-pin-copy">
+        <span class="eyebrow">Segurança</span>
+        <h1 id="admin-pin-title">Verificando acesso...</h1>
+        <p id="admin-pin-description">Confirme seu acesso administrativo para continuar.</p>
+      </div>
+
+      <div id="admin-pin-fields" class="admin-pin-fields" hidden>
+        <label class="admin-pin-field">
+          <span id="admin-pin-label">PIN de 6 dígitos</span>
+          <input
+            id="admin-pin"
+            type="password"
+            inputmode="numeric"
+            pattern="[0-9]{6}"
+            maxlength="6"
+            minlength="6"
+            autocomplete="off"
+            aria-describedby="admin-pin-message"
+          >
+        </label>
+
+        <label id="admin-pin-confirm-wrap" class="admin-pin-field" hidden>
+          <span>Confirmar PIN</span>
+          <input
+            id="admin-pin-confirm"
+            type="password"
+            inputmode="numeric"
+            pattern="[0-9]{6}"
+            maxlength="6"
+            minlength="6"
+            autocomplete="off"
+          >
+        </label>
+      </div>
+
+      <div id="admin-pin-message" class="admin-pin-message" aria-live="polite">
+        Verificando...
+      </div>
+
+      <button id="admin-pin-submit" class="button primary admin-pin-submit" type="submit" disabled>
+        Continuar
+      </button>
+
+      <a class="admin-pin-back" href="dashboard.html">Voltar ao Dashboard</a>
+    </form>
+  </section>
+
+  <div id="admin-app" class="app-shell" hidden>
+    <aside id="sidebar" class="sidebar"></aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <main class="main">
+      <div class="page admin-page">
+        <header class="topbar admin-topbar">
+          <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
+
+          <div class="page-heading">
+            <span class="eyebrow" data-page-eyebrow></span>
+            <h1 data-page-title></h1>
+          </div>
+
+          <div class="admin-range">
+            <label for="admin-range">Período</label>
+            <select id="admin-range">
+              <option value="7">7 dias</option>
+              <option value="30" selected>30 dias</option>
+              <option value="90">90 dias</option>
+            </select>
+          </div>
+        </header>
+
+        <div id="admin-status" class="admin-status">Carregando painel administrativo...</div>
+
+        <section class="admin-plan-grid" aria-label="Clientes e planos">
+          <article class="admin-plan-card">
+            <span>Clientes total</span>
+            <strong id="admin-total-clients">—</strong>
+            <small>Contas cadastradas</small>
+          </article>
+
+          <article class="admin-plan-card">
+            <span>Plano Essencial</span>
+            <strong id="admin-plan-essential">—</strong>
+            <small>Assinaturas ativas</small>
+          </article>
+
+          <article class="admin-plan-card">
+            <span>Plano Plus</span>
+            <strong id="admin-plan-plus">—</strong>
+            <small>Assinaturas ativas</small>
+          </article>
+
+          <article class="admin-plan-card">
+            <span>Plano Pro</span>
+            <strong id="admin-plan-pro">—</strong>
+            <small>Assinaturas ativas</small>
+          </article>
+        </section>
+
+        <section class="admin-section">
+          <div class="admin-section-head">
+            <div>
+              <span class="eyebrow">Produto e negócio</span>
+              <h2>Funil, retenção e receita</h2>
+            </div>
+            <small id="admin-generated-at"></small>
+          </div>
+
+          <div id="admin-metrics-grid" class="admin-metrics-grid"></div>
+        </section>
+
+        <section class="admin-section">
+          <div class="admin-section-head">
+            <div>
+              <span class="eyebrow">Uso por recurso</span>
+              <h2>Usuários ativos por funcionalidade</h2>
+            </div>
+          </div>
+
+          <div id="admin-feature-grid" class="admin-feature-grid"></div>
+        </section>
+
+        <section class="admin-section admin-logistics-section">
+          <div class="admin-section-head">
+            <div>
+              <span class="eyebrow">Logística & financeiro</span>
+              <h2>Infraestrutura, tráfego e projeção mensal</h2>
+            </div>
+
+            <div class="admin-logistics-head-meta">
+              <span id="admin-logistics-plan" class="admin-infra-plan">Supabase —</span>
+              <small id="admin-logistics-updated"></small>
+            </div>
+          </div>
+
+          <div id="admin-infra-grid" class="admin-infra-grid">
+            <article class="admin-infra-card">
+              <span>Base de dados</span>
+              <strong>—</strong>
+              <small>Carregando...</small>
+            </article>
+          </div>
+
+          <div class="admin-finance-wrap">
+            <div class="admin-finance-grid">
+              <article class="admin-finance-card income">
+                <span>Entradas projetadas</span>
+                <strong id="admin-projected-revenue">—</strong>
+                <small>MRR estimado para o mês</small>
+              </article>
+
+              <article class="admin-finance-card cost">
+                <span>Custos projetados</span>
+                <strong id="admin-projected-costs">—</strong>
+                <small>Infraestrutura + IA + taxas cadastradas</small>
+              </article>
+
+              <article class="admin-finance-card balance">
+                <span>Saldo projetado</span>
+                <strong id="admin-projected-balance">—</strong>
+                <small id="admin-projected-margin">Receita menos custos</small>
+              </article>
+            </div>
+
+            <div class="admin-cost-breakdown-head">
+              <div>
+                <strong>Composição dos custos mensais</strong>
+                <small>Valores usados na projeção financeira</small>
+              </div>
+              <button id="admin-edit-costs" class="button secondary admin-edit-costs" type="button">
+                Editar custos
+              </button>
+            </div>
+
+            <div id="admin-cost-breakdown" class="admin-cost-breakdown"></div>
+          </div>
+
+          <div class="admin-logistics-note">
+            <span>ℹ</span>
+            <p>
+              Base, Storage e cache vêm diretamente do PostgreSQL/Supabase.
+              O egress real e o cached egress são medidos pela plataforma Supabase
+              e não são expostos pelo banco; por isso aparecem como não mensurados
+              até conectarmos uma fonte de billing/usage.
+            </p>
+
+            <a
+              href="https://supabase.com/dashboard/org/pozqdgelrxrceapfexxt/usage"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Ver uso no Supabase ↗
+            </a>
+          </div>
+        </section>
+
+        <section class="admin-section">
+          <div class="admin-section-head admin-customer-head">
+            <div>
+              <span class="eyebrow">Clientes</span>
+              <h2>Métricas individuais</h2>
+            </div>
+
+            <div class="admin-customer-tools">
+              <input
+                id="admin-customer-search"
+                type="search"
+                placeholder="Buscar cliente, e-mail ou plano"
+                autocomplete="off"
+              >
+
+              <div class="admin-filter-wrap">
+                <button
+                  id="admin-customer-filter-toggle"
+                  class="admin-filter-button"
+                  type="button"
+                  aria-label="Filtrar clientes"
+                  aria-expanded="false"
+                  aria-controls="admin-customer-filter-panel"
+                  title="Filtrar clientes"
+                >
+                  <span aria-hidden="true">⌯</span>
+                </button>
+
+                <div id="admin-customer-filter-panel" class="admin-filter-panel" hidden>
+                  <label>
+                    <span>Plano</span>
+                    <select id="admin-customer-plan-filter">
+                      <option value="">Todos</option>
+                      <option value="free">Grátis</option>
+                      <option value="essential">Essencial</option>
+                      <option value="plus">Plus</option>
+                      <option value="pro">Pro</option>
+                    </select>
+                  </label>
+
+                  <label>
+                    <span>Status</span>
+                    <select id="admin-customer-status-filter">
+                      <option value="">Todos</option>
+                      <option value="active">Ativo</option>
+                      <option value="trial">Teste</option>
+                      <option value="past_due">Pendente</option>
+                      <option value="canceled">Cancelado</option>
+                      <option value="expired">Expirado</option>
+                    </select>
+                  </label>
+
+                  <button id="admin-customer-filter-clear" class="admin-filter-clear" type="button">
+                    Limpar filtros
+                  </button>
+                </div>
+              </div>
+
+              <span id="admin-customer-count">0 clientes</span>
+            </div>
+          </div>
+
+          <div class="admin-table-wrap">
+            <table class="admin-customer-table">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Plano</th>
+                  <th>Tempo de assinatura</th>
+                  <th>Estudo no mês</th>
+                  <th>Novos flashcards</th>
+                  <th>Novos CCQs</th>
+                  <th>Aulas atrasadas</th>
+                  <th>Retenção de estudos</th>
+                  <th>Último acesso</th>
+                </tr>
+              </thead>
+              <tbody id="admin-customer-body">
+                <tr>
+                  <td colspan="9" class="admin-table-empty">Carregando clientes...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="admin-cost-editor" class="admin-cost-dialog">
+    <form id="admin-cost-form" method="dialog">
+      <div class="admin-cost-dialog-head">
+        <div>
+          <span class="eyebrow">Financeiro</span>
+          <h2>Editar custos</h2>
+          <p>Custos anuais são divididos por 12. Custos por pessoa são multiplicados pelo total de clientes cadastrados.</p>
+        </div>
+        <button id="admin-cost-close" class="dialog-close" type="button" aria-label="Fechar">×</button>
+      </div>
+
+      <div class="admin-cost-editor-grid-head" aria-hidden="true">
+        <span>Custo</span>
+        <span>Valor</span>
+        <span>Período</span>
+        <span>Aplicação</span>
+      </div>
+
+      <div id="admin-cost-editor-list" class="admin-cost-editor-list"></div>
+
+      <div id="admin-cost-editor-message" class="admin-cost-editor-message" aria-live="polite"></div>
+
+      <div class="admin-cost-editor-actions">
+        <button id="admin-cost-cancel" class="button secondary" type="button">Cancelar</button>
+        <button id="admin-cost-save" class="button primary" type="submit">Salvar custos</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/supabase.js"></script>
+  <script src="assets/js/app.js?v=13.1"></script>
+  <script src="assets/js/admin.js?v=1.8"></script>
+  <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
