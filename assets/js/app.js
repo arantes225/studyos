@@ -1,3 +1,196 @@
+
+// Sidebar mobile/PWA unificado: uma única dimensão em todas as páginas.
+(function ensureUnifiedMobileSidebar() {
+  if (document.getElementById("luria-unified-mobile-sidebar")) return;
+
+  const style = document.createElement("style");
+  style.id = "luria-unified-mobile-sidebar";
+  style.textContent = `
+    @media (max-width: 980px) {
+      body .sidebar {
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: min(86vw, 290px) !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        padding:
+          max(18px, env(safe-area-inset-top))
+          18px
+          calc(18px + env(safe-area-inset-bottom))
+          18px !important;
+        background: var(--sidebar) !important;
+        border-right: 1px solid var(--border) !important;
+        box-shadow: var(--shadow) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        transform: translateX(-105%) !important;
+        transition: transform 180ms ease !important;
+        z-index: 30 !important;
+      }
+
+      body.sidebar-open .sidebar {
+        transform: translateX(0) !important;
+      }
+
+      body .sidebar-top {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 10px !important;
+        min-height: 0 !important;
+        margin-bottom: 24px !important;
+      }
+
+      body .brand {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        min-width: 0 !important;
+        overflow: visible !important;
+      }
+
+      body .brand-logo-single,
+      body .luria-theme-logo,
+      body .brand-logo-stack {
+        width: 54px !important;
+        height: 54px !important;
+        flex: 0 0 54px !important;
+      }
+
+      body .brand-copy {
+        display: grid !important;
+        min-width: 0 !important;
+      }
+
+      body .brand-copy strong {
+        font-size: 17px !important;
+        line-height: normal !important;
+      }
+
+      body .brand-copy small {
+        display: block !important;
+        margin-top: 0 !important;
+        font-size: 11px !important;
+        line-height: normal !important;
+      }
+
+      body .sidebar-close {
+        display: inline-grid !important;
+        place-items: center !important;
+        width: auto !important;
+        height: auto !important;
+        padding: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        color: var(--text) !important;
+        font-size: 28px !important;
+        line-height: 1 !important;
+      }
+
+      body .nav {
+        display: grid !important;
+        gap: 6px !important;
+      }
+
+      body .nav-link,
+      body .nav-group-label {
+        min-height: 44px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        padding: 0 12px !important;
+        border-radius: 11px !important;
+        font-size: 14px !important;
+        font-weight: 650 !important;
+      }
+
+      body .nav-icon {
+        width: 20px !important;
+        font-size: 17px !important;
+      }
+
+      body .nav-group {
+        margin: 2px 0 !important;
+      }
+
+      body .nav-group-chevron {
+        font-size: 14px !important;
+      }
+
+      body .nav-submenu {
+        display: grid !important;
+        gap: 3px !important;
+        margin: 2px 0 7px 42px !important;
+        padding: 0 !important;
+      }
+
+      body .nav-sublink {
+        min-height: 36px !important;
+        display: flex !important;
+        align-items: center !important;
+        padding: 0 10px !important;
+        border-radius: 9px !important;
+        font-size: 13px !important;
+      }
+
+      body .sidebar-footer {
+        display: grid !important;
+        gap: 12px !important;
+        margin-top: auto !important;
+        padding-top: 20px !important;
+      }
+
+      body .streak-mini {
+        display: flex !important;
+      }
+
+      body .user-mini {
+        display: flex !important;
+        align-items: center !important;
+        gap: 11px !important;
+        min-height: 0 !important;
+        padding: 11px !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 12px !important;
+        background: var(--surface) !important;
+      }
+
+      body .user-avatar {
+        width: 34px !important;
+        height: 34px !important;
+        flex: 0 0 34px !important;
+      }
+
+      body .user-copy strong {
+        font-size: 13px !important;
+      }
+
+      body .user-copy small {
+        display: block !important;
+        margin-top: 2px !important;
+        font-size: 11px !important;
+        line-height: normal !important;
+      }
+
+      body .logout-button {
+        min-height: 40px !important;
+        border-radius: 10px !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
+      }
+
+      body .sidebar-backdrop {
+        background: rgba(0, 0, 0, .36) !important;
+        backdrop-filter: none !important;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+})();
+
 const sb = window.supabaseClient;
 
 const PAGE_INFO = {
