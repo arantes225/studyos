@@ -8,6 +8,7 @@
     days: 30,
     snapshot: null,
     logistics: null,
+    costItems: [],
     customers: [],
     pinConfigured: false,
     pinUnlocked: false,
@@ -332,6 +333,39 @@
         .join("");
   }
 
+  function monthlyEquivalentCents(item, peopleCount) {
+    const amount = Math.max(0, Number(item?.amount_cents || 0));
+    const monthly = item?.cadence === "annual" ? amount / 12 : amount;
+    return item?.scope === "per_person"
+      ? monthly * Math.max(0, Number(peopleCount || 0))
+      : monthly;
+  }
+
+  function renderCostEditor() {
+    const list = $("admin-cost-editor-list");
+    if (!list) return;
+    list.innerHTML = state.costItems.map(item => `
+      <div class="admin-cost-editor-row" data-cost-key="${esc(item.key)}">
+        <strong>${esc(item.label)}</strong>
+        <label class="admin-money-input">
+          <span>R$</span>
+          <input type="number" min="0" step="0.01" inputmode="decimal"
+            data-cost-field="amount"
+            value="${(Number(item.amount_cents || 0) / 100).toFixed(2)}"
+            aria-label="Valor de ${esc(item.label)}">
+        </label>
+        <select data-cost-field="cadence" aria-label="Período de ${esc(item.label)}">
+          <option value="monthly" ${item.cadence === "monthly" ? "selected" : ""}>Mensal</option>
+          <option value="annual" ${item.cadence === "annual" ? "selected" : ""}>Anual</option>
+        </select>
+        <select data-cost-field="scope" aria-label="Aplicação de ${esc(item.label)}">
+          <option value="general" ${item.scope === "general" ? "selected" : ""}>Geral</option>
+          <option value="per_person" ${item.scope === "per_person" ? "selected" : ""}>Por pessoa</option>
+        </select>
+      </div>
+    `).join("");
+  }
+
   function renderLogistics(logistics, metrics) {
     state.logistics =
       logistics || {};
@@ -482,12 +516,23 @@
         || 0
       );
 
-    const costs =
+    const peopleCount =
       Number(
-        logistics?.costs
-          ?.total_cents
+        state.snapshot?.summary?.total_clients
         || 0
       );
+
+    const costs =
+      state.costItems.length
+        ? state.costItems.reduce(
+            (sum, item) => sum + monthlyEquivalentCents(item, peopleCount),
+            0
+          )
+        : Number(
+            logistics?.costs
+              ?.total_cents
+            || 0
+          );
 
     const balance =
       revenue - costs;
@@ -524,33 +569,35 @@
         balance < 0
       );
 
-    const breakdown = [
-      ["Supabase", logistics?.costs?.supabase_cents],
-      ["Hospedagem", logistics?.costs?.hosting_cents],
-      ["IA / APIs", logistics?.costs?.ai_cents],
-      ["Taxas de pagamento", logistics?.costs?.payment_fees_cents],
-      ["Outros", logistics?.costs?.other_cents]
-    ];
+    const breakdown = state.costItems.length
+      ? state.costItems
+      : [
+          { label: "Supabase", amount_cents: logistics?.costs?.supabase_cents, cadence: "monthly", scope: "general" },
+          { label: "Hospedagem", amount_cents: logistics?.costs?.hosting_cents, cadence: "monthly", scope: "general" },
+          { label: "IA / APIs", amount_cents: logistics?.costs?.ai_cents, cadence: "monthly", scope: "general" },
+          { label: "Taxas de pagamento", amount_cents: logistics?.costs?.payment_fees_cents, cadence: "monthly", scope: "general" },
+          { label: "Outros", amount_cents: logistics?.costs?.other_cents, cadence: "monthly", scope: "general" }
+        ];
 
-    $("admin-cost-breakdown").innerHTML =
-      `
-        <div class="admin-cost-title">
-          <strong>Composição dos custos mensais</strong>
-          <small>Valores atualmente cadastrados para projeção</small>
-        </div>
-        <div class="admin-cost-items">
-          ${breakdown
-            .map(([label, value]) => `
-              <span>
-                <small>${esc(label)}</small>
-                <strong>${esc(formatMoney(value))}</strong>
-              </span>
-            `)
-            .join("")}
-        </div>
-      `;
+    $("admin-cost-breakdown").innerHTML = `
+      <div class="admin-cost-items">
+        ${breakdown.map(item => {
+          const monthly = monthlyEquivalentCents(item, peopleCount);
+          const cadence = item.cadence === "annual" ? "anual" : "mensal";
+          const scope = item.scope === "per_person" ? "por pessoa" : "geral";
+          return `
+            <span>
+              <small>${esc(item.label)}</small>
+              <strong>${esc(formatMoney(monthly))}</strong>
+              <em>${esc(cadence)} · ${esc(scope)}</em>
+            </span>
+          `;
+        }).join("")}
+      </div>
+    `;
+
+    renderCostEditor();
   }
-
 
   function filteredCustomers() {
     const query =
@@ -722,7 +769,8 @@
 
     const [
       dashboardResponse,
-      logisticsResponse
+      logisticsResponse,
+      costItemsResponse
     ] =
       await Promise.all([
         sb.rpc(
@@ -734,6 +782,9 @@
         ),
         sb.rpc(
           "admin_logistics_snapshot"
+        ),
+        sb.rpc(
+          "admin_cost_items_snapshot"
         )
       ]);
 
@@ -792,6 +843,15 @@
       state.logistics =
         logisticsResponse.data
         || {};
+    }
+
+    if (costItemsResponse?.error) {
+      console.warn("Não foi possível carregar os custos editáveis:", costItemsResponse.error);
+      state.costItems = [];
+    } else {
+      state.costItems = Array.isArray(costItemsResponse?.data)
+        ? costItemsResponse.data
+        : [];
     }
 
     render(
