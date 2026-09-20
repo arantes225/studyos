@@ -4055,13 +4055,13 @@ async function extractQuestionsFromPdf(
     ).length
   ) {
     setImportStatus(
-      `MedCof reconhecido: ${questions.length} questões, ${Object.keys(answerKey).length} respostas no gabarito e ${questionImages.length} questão(ões) com figura detectada(s). Salvando...`
+      `MedCof reconhecido: ${questions.length} questões, ${Object.keys(answerKey).length} respostas no gabarito e ${questionImages.length} recorte(s) de imagem preservado(s). Salvando...`
     );
   } else if (
     questionImages.length
   ) {
     setImportStatus(
-      `${questions.length} questões e ${questionImages.length} figura(s) detectadas. Salvando simulado...`
+      `${questions.length} questões e ${questionImages.length} recorte(s) de imagem preservado(s). Salvando simulado...`
     );
   }
 
@@ -5305,7 +5305,7 @@ async function importPdf() {
 
 
     setImportStatus(
-      `${questions.length} questões extraídas com sucesso. ${questionImages.length} questão(ões) com figura(s) recortada(s). O PDF original não foi armazenado.`,
+      `${questions.length} questões extraídas com sucesso. ${questionImages.length} recorte(s) de imagem preservado(s). O PDF original não foi armazenado.`,
       "success"
     );
 
@@ -8362,6 +8362,25 @@ async function openSet(setId) {
     await attachQuestionImageUrls(
       itemsResult.data || []
     );
+
+  if (
+    galleryResult?.error
+  ) {
+    console.warn(
+      "Não foi possível carregar a galeria de imagens:",
+      galleryResult.error
+    );
+
+    qsState.imageGallery =
+      [];
+
+  } else {
+    qsState.imageGallery =
+      await attachGalleryImageUrls(
+        galleryResult?.data
+        || []
+      );
+  }
 
   const itemIds = new Set(
     items.map((item) => item.id)
