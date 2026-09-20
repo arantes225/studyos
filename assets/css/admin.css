@@ -704,6 +704,11 @@
   gap: 6px;
 }
 
+.admin-pin-field[hidden] {
+  display: none !important;
+}
+
+
 .admin-pin-field > span {
   color: var(--muted);
   font-size: 9px;
