@@ -949,25 +949,35 @@ function prepararSidebarDesktop(
       "sidebar-desktop-toggle"
     );
 
+
   if (!button) {
     button =
       document.createElement(
         "button"
       );
 
+
     button.id =
       "sidebar-desktop-toggle";
+
 
     button.className =
       "sidebar-desktop-toggle";
 
+
     button.type =
       "button";
+
+
+    button.innerHTML =
+      "<span aria-hidden=\"true\">☰</span>";
+
 
     document.body.appendChild(
       button
     );
   }
+
 
   const apply =
     (hidden) => {
@@ -978,22 +988,28 @@ function prepararSidebarDesktop(
           hidden
         );
 
-      button.textContent =
-        hidden
-          ? "›"
-          : "‹";
 
       button.setAttribute(
         "aria-label",
         hidden
-          ? "Abrir barra lateral"
-          : "Fechar barra lateral"
+          ? "Abrir menu lateral"
+          : "Recolher menu lateral"
       );
+
+
+      button.setAttribute(
+        "aria-pressed",
+        hidden
+          ? "true"
+          : "false"
+      );
+
 
       button.title =
         hidden
-          ? "Abrir barra lateral"
-          : "Fechar barra lateral";
+          ? "Abrir menu lateral"
+          : "Recolher menu lateral";
+
 
       try {
         localStorage.setItem(
@@ -1007,8 +1023,10 @@ function prepararSidebarDesktop(
       } catch {}
     };
 
+
   let initial =
     false;
+
 
   try {
     initial =
@@ -1019,9 +1037,11 @@ function prepararSidebarDesktop(
       ) === "1";
   } catch {}
 
+
   apply(
     initial
   );
+
 
   button.addEventListener(
     "click",
@@ -1033,6 +1053,7 @@ function prepararSidebarDesktop(
       ) {
         return;
       }
+
 
       apply(
         !document.body
