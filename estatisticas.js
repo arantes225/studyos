@@ -571,35 +571,42 @@
     const grouped = new Map();
 
     for (const row of attempts || []) {
+      if (row.result !== "wrong") continue;
+
       const label = area(row);
       const d = new Date(row.answered_at);
       if (Number.isNaN(d.getTime())) continue;
 
       const weekday = (d.getDay() + 6) % 7;
+
       if (!grouped.has(label)) {
-        grouped.set(label, Array.from({length:7}, () => ({ total:0, correct:0 })));
+        grouped.set(
+          label,
+          Array.from({ length: 7 }, () => 0)
+        );
       }
 
-      const cell = grouped.get(label)[weekday];
-      cell.total += 1;
-      if (row.result === "correct") cell.correct += 1;
+      grouped.get(label)[weekday] += 1;
     }
 
     const rows = Array.from(grouped.entries())
-      .map(([label,cells]) => ({
+      .map(([label, cells]) => ({
         label,
         cells,
-        total: cells.reduce((sum,cell)=>sum+cell.total,0)
+        total: cells.reduce((sum, value) => sum + value, 0)
       }))
-      .sort((a,b)=>b.total-a.total)
-      .slice(0,10);
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 10);
 
     if (!rows.length) {
-      el.innerHTML = '<div class="stats-empty">Ainda não há questões suficientes para montar o mapa de calor.</div>';
+      el.innerHTML = '<div class="stats-empty">Ainda não há erros com área registrada para montar o mapa.</div>';
       return;
     }
 
-    const max = Math.max(1, ...rows.flatMap(row => row.cells.map(cell => cell.total)));
+    const max = Math.max(
+      1,
+      ...rows.flatMap(row => row.cells)
+    );
 
     el.innerHTML = `
       <div class="heatmap-grid area-week">
@@ -608,18 +615,15 @@
 
         ${rows.map(row => `
           <div class="heatmap-row-label">${esc(row.label)}</div>
-          ${row.cells.map(cell => {
-            const accuracy = pct(cell.correct, cell.total);
-            return `
-              <div class="heatmap-cell" style="--heat:${heatIntensity(cell.total,max)}">
-                <strong>${cell.total ? percent(accuracy,0) : "—"}</strong>
-                <small>${cell.total ? `${cell.total} q.` : "0 q."}</small>
-              </div>
-            `;
-          }).join("")}
+          ${row.cells.map(value => `
+            <div class="heatmap-cell" style="--heat:${heatIntensity(value,max)}">
+              <strong>${value || "—"}</strong>
+              <small>${value === 1 ? "1 erro" : `${value} erros`}</small>
+            </div>
+          `).join("")}
         `).join("")}
       </div>
-      <div class="heatmap-legend"><span>menos</span><span class="heatmap-legend-swatch"></span><span>mais questões</span></div>
+      <div class="heatmap-legend"><span>menos</span><span class="heatmap-legend-swatch"></span><span>mais erros</span></div>
     `;
   }
 
@@ -1353,13 +1357,24 @@
       .map(x=>Number(x.accuracy_percent))
       .filter(Number.isFinite);
 
-    const areasPreview = Array.from(group(attempts,area).entries()).map(([label,rows])=>{
-      const c=rows.filter(x=>x.result==="correct").length;
-      return {label,total:rows.length,accuracy:pct(c,rows.length)};
-    }).filter(x=>x.total>=1);
+    const wrongByArea =
+      Array.from(
+        group(
+          attempts.filter(x => x.result === "wrong"),
+          area
+        ).entries()
+      )
+        .map(([label, rows]) => ({
+          label,
+          errors: rows.length,
+          sent: rows.filter(x => x.sent_to_error === true).length
+        }))
+        .sort((a, b) => b.errors - a.errors);
 
-    const strongest = areasPreview.filter(x=>x.total>=5).slice().sort((a,b)=>b.accuracy-a.accuracy)[0];
-    const weakest = areasPreview.filter(x=>x.total>=5).slice().sort((a,b)=>a.accuracy-b.accuracy)[0];
+    const mostErrorsArea =
+      wrongByArea[0]
+      || null;
+
     const bestSet = sets
       .filter(x=>Number.isFinite(Number(x.accuracy_percent)))
       .slice()
@@ -1373,8 +1388,18 @@
       {label:"Erros",value:num(wrong),helper:`${percent(pct(wrong,attempts.length),1)} das respostas`,progress:pct(wrong,attempts.length)},
       {label:"Erros enviados ao Caderno",value:num(sent),helper:`${percent(conversion,1)} dos erros`,progress:conversion},
       {label:"Conversão para o Caderno",value:percent(conversion,1),helper:`${sent}/${wrong} erros`,progress:conversion},
-      {label:"Melhor área",value:strongest?.label||"—",helper:strongest?`${percent(strongest.accuracy,1)} · ${strongest.total} questões`:"mínimo 5 questões",progress:strongest?.accuracy||0},
-      {label:"Área mais frágil",value:weakest?.label||"—",helper:weakest?`${percent(weakest.accuracy,1)} · ${weakest.total} questões`:"mínimo 5 questões",progress:weakest?.accuracy||0}
+      {
+        label:"Melhor simulado",
+        value:bestSet?.title||"—",
+        helper:bestSet?`${percent(Number(bestSet.accuracy_percent),1)} · ${num(bestSet.answered_count)} respondidas`:"sem simulado concluído",
+        progress:Number(bestSet?.accuracy_percent)||0
+      },
+      {
+        label:"Área com mais erros",
+        value:mostErrorsArea?.label||"—",
+        helper:mostErrorsArea?`${mostErrorsArea.errors} erro${mostErrorsArea.errors===1?"":"s"} · ${mostErrorsArea.sent} ao Caderno`:"sem erros com área registrada",
+        progress:wrong?Math.min(100,pct(mostErrorsArea?.errors||0,wrong)):0
+      }
     ]);
 
     renderMetricStrip("question-performance-metrics",[]);
@@ -1390,21 +1415,33 @@
       {type:"line",label:"Acerto %",data:series.map(x=>accMap.get(x.date)??null)}
     ]);
 
-    const areas = Array.from(group(attempts,area).entries()).map(([label,rows])=>{
-      const c=rows.filter(x=>x.result==="correct").length;
-      const w=rows.length-c;
-      const s=rows.filter(x=>x.sent_to_error).length;
-      return {label,total:rows.length,correct:c,wrong:w,sent:s,accuracy:pct(c,rows.length)};
-    }).sort((a,b)=>b.total-a.total);
+    const areas = wrongByArea;
 
-    chart("chart-question-area","bar",areas.slice(0,10).map(x=>x.label),[
-      {label:"Acerto %",data:areas.slice(0,10).map(x=>Number(x.accuracy.toFixed(1)))}
-    ],{max:100});
+    chart(
+      "chart-question-area",
+      "bar",
+      areas.slice(0,10).map(x=>x.label),
+      [
+        {
+          label:"Erros",
+          data:areas.slice(0,10).map(x=>x.errors)
+        }
+      ]
+    );
 
-    table("question-area-table",
-      [{label:"Área"},{label:"Questões",num:true},{label:"Acertos",num:true},{label:"Erros",num:true},{label:"Aproveitamento",num:true},{label:"Enviados ao Caderno",num:true}],
+    table(
+      "question-area-table",
+      [
+        {label:"Área"},
+        {label:"Erros",num:true},
+        {label:"Enviados ao Caderno",num:true},
+        {label:"Conversão",num:true}
+      ],
       areas.map(x=>[
-        `<strong>${esc(x.label)}</strong>`,num(x.total),num(x.correct),num(x.wrong),percent(x.accuracy,1),num(x.sent)
+        `<strong>${esc(x.label)}</strong>`,
+        num(x.errors),
+        num(x.sent),
+        percent(pct(x.sent,x.errors),1)
       ])
     );
 
@@ -1418,8 +1455,18 @@
     );
 
     const out=[];
-    if(weakest) out.push({title:"Área com menor aproveitamento",text:`${weakest.label}: ${percent(weakest.accuracy,1)} em ${weakest.total} questões.`});
-    if(strongest) out.push({title:"Área com maior aproveitamento",text:`${strongest.label}: ${percent(strongest.accuracy,1)} em ${strongest.total} questões.`});
+    if(mostErrorsArea) {
+      out.push({
+        title:"Maior concentração de erros",
+        text:`${mostErrorsArea.label} concentra ${mostErrorsArea.errors} erro${mostErrorsArea.errors===1?"":"s"} com área registrada.`
+      });
+    }
+    if(bestSet) {
+      out.push({
+        title:"Melhor simulado",
+        text:`${bestSet.title||"Simulado"} teve ${percent(Number(bestSet.accuracy_percent),1)} de aproveitamento.`
+      });
+    }
     if(wrong) out.push({title:"Conversão para o Caderno",text:`${sent} de ${wrong} erros foram transformados em revisão (${percent(conversion,1)}).`});
     if(state.range!=="all"&&prevAttempts.length) out.push({title:"Tendência",text:`O aproveitamento ${accuracy>=prevAccuracy?"subiu":"caiu"} ${num(Math.abs(accuracy-prevAccuracy),1)} p.p. em relação ao período anterior.`});
     insights("question-insights",out);
