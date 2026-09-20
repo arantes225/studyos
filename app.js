@@ -10,7 +10,8 @@ const PAGE_INFO = {
   questoes: { title: "Questões e Simulados", eyebrow: "Estudar" },
   estatisticas: { title: "Estatísticas", eyebrow: "Desempenho" },
   editais: { title: "Editais / Provas", eyebrow: "Planejamento" },
-  configuracoes: { title: "Configurações", eyebrow: "Conta e preferências" }
+  configuracoes: { title: "Configurações", eyebrow: "Conta e preferências" },
+  admin: { title: "Admin", eyebrow: "Métricas do produto" }
 };
 
 const page = document.body.dataset.page || "dashboard";
@@ -155,6 +156,15 @@ function sidebarMarkup(user, profile = null) {
 
       <a class="nav-link ${page === "configuracoes" ? "active" : ""}" href="configuracoes.html">
         <span class="nav-icon">⚙</span><span>Configurações</span>
+      </a>
+
+      <a
+        id="admin-nav-link"
+        class="nav-link ${page === "admin" ? "active" : ""}"
+        href="admin.html"
+        hidden
+      >
+        <span class="nav-icon">◆</span><span>Admin</span>
       </a>
     </nav>
 
@@ -1183,6 +1193,56 @@ function prepararMobileMenu() {
   backdrop?.addEventListener("click", fechar);
 }
 
+async function prepararAdminNavigation() {
+  const link =
+    document.getElementById(
+      "admin-nav-link"
+    );
+
+  if (!link) {
+    return false;
+  }
+
+  try {
+    const {
+      data,
+      error
+    } =
+      await sb.rpc(
+        "is_admin"
+      );
+
+    if (
+      error
+      || data !== true
+    ) {
+      link.hidden =
+        true;
+
+      return false;
+    }
+
+    link.hidden =
+      false;
+
+    return true;
+
+  } catch (
+    error
+  ) {
+    console.warn(
+      "Não foi possível verificar acesso administrativo:",
+      error
+    );
+
+    link.hidden =
+      true;
+
+    return false;
+  }
+}
+
+
 async function iniciarApp() {
   const { data, error } = await sb.auth.getSession();
 
@@ -1236,6 +1296,7 @@ async function iniciarApp() {
   prepararMobileMenu();
   prepararSidebarDesktop(user.id);
   prepararStudyMenu(user.id);
+  await prepararAdminNavigation();
   await registrarAcessoDiario();
   prepararConfiguracoes();
 
