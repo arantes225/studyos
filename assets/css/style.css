@@ -1602,3 +1602,33 @@ body.sidebar-hidden
   font-weight: 400 !important;
   letter-spacing: .01em !important;
 }
+
+
+/* LURIA — ajuste de escala do wordmark */
+.brand-copy strong {
+  font-size: 54px !important;
+  line-height: .95 !important;
+}
+
+.brand-copy small {
+  margin-top: 12px !important;
+}
+
+.auth-brand h1 {
+  font-size: 84px !important;
+  line-height: .92 !important;
+}
+
+.auth-brand p {
+  margin-top: 18px !important;
+}
+
+@media (max-width: 700px) {
+  .brand-copy strong {
+    font-size: 44px !important;
+  }
+
+  .auth-brand h1 {
+    font-size: 66px !important;
+  }
+}
