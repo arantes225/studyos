@@ -2982,6 +2982,230 @@ async function compressResibulandoImageBlob(
 }
 
 
+async function compressQuestionFigureBlob(
+  sourceBlob
+) {
+  if (
+    !sourceBlob
+    ||
+    !sourceBlob.type
+      ?.startsWith(
+        "image/"
+      )
+  ) {
+    return sourceBlob;
+  }
+
+
+  /*
+    Figuras de prova têm texto pequeno, setas, gráficos e
+    radiografias. Até ~650 KB preferimos manter o PNG original
+    para não destruir detalhes finos.
+  */
+  if (
+    sourceBlob.size
+    <= 650 * 1024
+  ) {
+    return sourceBlob;
+  }
+
+
+  try {
+    const bitmap =
+      await createImageBitmap(
+        sourceBlob
+      );
+
+
+    const originalWidth =
+      bitmap.width;
+
+    const originalHeight =
+      bitmap.height;
+
+
+    const dimensionSteps = [
+      2200,
+      2000,
+      1800,
+      1600
+    ];
+
+
+    const qualitySteps = [
+      0.94,
+      0.91,
+      0.88,
+      0.84
+    ];
+
+
+    let best =
+      null;
+
+
+    for (
+      const maxDimension
+      of dimensionSteps
+    ) {
+      const scale =
+        Math.min(
+          1,
+          maxDimension
+          /
+          Math.max(
+            originalWidth,
+            originalHeight
+          )
+        );
+
+
+      const width =
+        Math.max(
+          1,
+          Math.round(
+            originalWidth
+            * scale
+          )
+        );
+
+
+      const height =
+        Math.max(
+          1,
+          Math.round(
+            originalHeight
+            * scale
+          )
+        );
+
+
+      const canvas =
+        document.createElement(
+          "canvas"
+        );
+
+
+      canvas.width =
+        width;
+
+      canvas.height =
+        height;
+
+
+      const context =
+        canvas.getContext(
+          "2d",
+          {
+            alpha:
+              false
+          }
+        );
+
+
+      context.fillStyle =
+        "#ffffff";
+
+      context.fillRect(
+        0,
+        0,
+        width,
+        height
+      );
+
+
+      context.imageSmoothingEnabled =
+        true;
+
+      context.imageSmoothingQuality =
+        "high";
+
+
+      context.drawImage(
+        bitmap,
+        0,
+        0,
+        width,
+        height
+      );
+
+
+      for (
+        const quality
+        of qualitySteps
+      ) {
+        const candidate =
+          await new Promise(
+            resolve => {
+              canvas.toBlob(
+                resolve,
+                "image/webp",
+                quality
+              );
+            }
+          );
+
+
+        if (
+          !candidate
+        ) {
+          continue;
+        }
+
+
+        if (
+          !best
+          ||
+          (
+            candidate.size
+            < best.size
+            &&
+            quality >= 0.88
+          )
+        ) {
+          best =
+            candidate;
+        }
+
+
+        /*
+          Até 700 KB é aceitável para manter diagramas legíveis.
+        */
+        if (
+          candidate.size
+          <= 700 * 1024
+          &&
+          quality >= 0.88
+        ) {
+          bitmap.close?.();
+
+          return candidate;
+        }
+      }
+    }
+
+
+    bitmap.close?.();
+
+
+    return best
+      || sourceBlob;
+
+
+  } catch (
+    error
+  ) {
+    console.warn(
+      "Não foi possível otimizar a figura da questão:",
+      error
+    );
+
+
+    return sourceBlob;
+  }
+}
+
+
 async function uploadExtractedQuestionImages(
   setId,
   questionImages
@@ -3010,7 +3234,7 @@ async function uploadExtractedQuestionImages(
 
 
     const optimizedBlob =
-      await compressResibulandoImageBlob(
+      await compressQuestionFigureBlob(
         image.blob
       );
 
@@ -10693,7 +10917,7 @@ async function saveAnswerKey() {
 async function compressNotebookGalleryBlob(
   blob
 ) {
-  return compressResibulandoImageBlob(
+  return compressQuestionFigureBlob(
     blob
   );
 }
@@ -10732,8 +10956,18 @@ async function copyGalleryImageToNotebook(
       imageBlob
     );
 
+  const extension =
+    compressedBlob.type
+      === "image/png"
+        ? "png"
+        : compressedBlob.type
+          === "image/jpeg"
+            ? "jpg"
+            : "webp";
+
+
   const destinationPath =
-    `${qsState.user.id}/error_notebook/${errorEntryId}/question.webp`;
+    `${qsState.user.id}/error_notebook/${errorEntryId}/question.${extension}`;
 
   const {
     error: uploadError
