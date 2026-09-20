@@ -403,3 +403,55 @@
   border-color: var(--border);
   background: transparent;
 }
+
+
+/* =========================================================
+   V16.2 — NOTA E CORTE EDITÁVEIS DIRETAMENTE NO CARD
+   ========================================================= */
+
+.exam-inline-score {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.exam-inline-score input {
+  width: min(100%, 94px);
+  min-height: 34px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  outline: none;
+}
+
+.exam-inline-score input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.exam-inline-score input.invalid {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 13%, transparent);
+}
+
+.exam-inline-score > span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.exam-score-quick-dialog {
+  display: none !important;
+}
+
+.exam-card.exam-score-state-red .exam-inline-score input,
+.exam-card.exam-score-state-yellow .exam-inline-score input,
+.exam-card.exam-score-state-green .exam-inline-score input {
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+}
