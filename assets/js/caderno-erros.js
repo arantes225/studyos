@@ -1753,6 +1753,205 @@ function clearNewErrorForm() {
 }
 
 
+async function createErrorEntryFallback({
+  area,
+  materia,
+  theme,
+  ccq,
+  question,
+  answer,
+  thought,
+  imagePath
+}) {
+  const {
+    data:
+      settings,
+    error:
+      settingsError
+  } =
+    await errorSb
+      .from(
+        "user_settings"
+      )
+      .select(
+        "error_review_interval_days,error_weekdays"
+      )
+      .eq(
+        "user_id",
+        errorUser.id
+      )
+      .maybeSingle();
+
+  if (
+    settingsError
+  ) {
+    console.warn(
+      "Não foi possível carregar a configuração de revisão do Caderno de Erros:",
+      settingsError.message
+    );
+  }
+
+  const interval =
+    Math.max(
+      1,
+      Number(
+        settings
+          ?.error_review_interval_days
+        || 21
+      )
+    );
+
+  const weekdays =
+    Array.isArray(
+      settings?.error_weekdays
+    )
+      ? settings.error_weekdays
+          .map(Number)
+          .filter(
+            value =>
+              value >= 1
+              && value <= 7
+          )
+      : [
+          1,2,3,4,5,6,7
+        ];
+
+  const start =
+    new Date();
+
+  start.setHours(
+    12,0,0,0
+  );
+
+  start.setDate(
+    start.getDate()
+    + interval
+  );
+
+  let due =
+    new Date(
+      start
+    );
+
+  for (
+    let i = 0;
+    i < 14;
+    i += 1
+  ) {
+    const jsDay =
+      due.getDay();
+
+    const isoDay =
+      jsDay === 0
+        ? 7
+        : jsDay;
+
+    if (
+      !weekdays.length
+      || weekdays.includes(
+        isoDay
+      )
+    ) {
+      break;
+    }
+
+    due.setDate(
+      due.getDate()
+      + 1
+    );
+  }
+
+  const dueDate =
+    [
+      due.getFullYear(),
+      String(
+        due.getMonth() + 1
+      ).padStart(
+        2,
+        "0"
+      ),
+      String(
+        due.getDate()
+      ).padStart(
+        2,
+        "0"
+      )
+    ].join("-");
+
+  const actualInterval =
+    Math.max(
+      1,
+      Math.round(
+        (
+          due
+          - new Date(
+              new Date()
+                .setHours(
+                  12,0,0,0
+                )
+            )
+        )
+        / 86400000
+      )
+    );
+
+  const {
+    data,
+    error
+  } =
+    await errorSb
+      .from(
+        "error_notebook"
+      )
+      .insert({
+        user_id:
+          errorUser.id,
+        area:
+          area
+          || null,
+        materia:
+          materia
+          || null,
+        theme:
+          theme
+          || null,
+        ccq,
+        question_text:
+          question
+          || null,
+        question_image_path:
+          imagePath
+          || null,
+        correct_answer:
+          answer
+          || null,
+        what_i_thought:
+          thought
+          || null,
+        due_date:
+          dueDate,
+        current_interval_days:
+          actualInterval,
+        stability_days:
+          actualInterval,
+        active:
+          true
+      })
+      .select(
+        "id"
+      )
+      .single();
+
+  if (
+    error
+  ) {
+    throw error;
+  }
+
+  return data;
+}
+
+
 async function saveNewError() {
   const button =
     document.getElementById(
@@ -1878,9 +2077,7 @@ async function saveNewError() {
       );
 
 
-    const {
-      error
-    } =
+    const rpcResult =
       await errorSb.rpc(
         "create_error_entry",
         {
@@ -1917,8 +2114,24 @@ async function saveNewError() {
       );
 
 
-    if (error) {
-      throw error;
+    if (
+      rpcResult.error
+    ) {
+      console.warn(
+        "RPC create_error_entry falhou; usando gravação direta segura:",
+        rpcResult.error.message
+      );
+
+      await createErrorEntryFallback({
+        area,
+        materia,
+        theme,
+        ccq,
+        question,
+        answer,
+        thought,
+        imagePath
+      });
     }
 
 
