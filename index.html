@@ -1,61 +1,499 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <title>Resibulando · Seu mapa até a residência</title>
   <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
+    name="description"
+    content="Organize cronograma, revisões, caderno, flashcards, questões e desempenho em um único sistema de estudos para residência médica."
   >
+  <meta name="theme-color" content="#f7f9fc">
 
-  <title>Resibulando</title>
-
-  <link
-    rel="icon"
-    type="image/png"
-    href="favicon.png?v=resibulando2"
-  >
-
-  <link
-    rel="stylesheet"
-    href="style.css?v=12.5"
-  >
-  <link rel="stylesheet" href="resibulando-brand-v5.css?v=5">
-  <script defer src="resibulando-brand-v5.js?v=5"></script>
+  <link rel="icon" type="image/png" href="favicon.png?v=resibulando2">
+  <link rel="stylesheet" href="landing.css?v=1.0">
 </head>
 
-<body class="loading-page">
+<body>
+  <header class="landing-header" id="top">
+    <div class="landing-container header-inner">
+      <a class="landing-brand" href="#top" aria-label="Resibulando - início">
+        <img src="logo-principal.png?v=resibulando2" alt="" aria-hidden="true">
+        <div>
+          <strong>Resibulando</strong>
+          <small>Seu mapa até a residência</small>
+        </div>
+      </a>
 
-  <div class="loading-card">
+      <nav class="landing-nav" id="landing-nav" aria-label="Navegação principal">
+        <a href="#recursos">Recursos</a>
+        <a href="#como-funciona">Como funciona</a>
+        <a href="#planos">Planos</a>
+      </nav>
 
-    <img
-      class="loading-logo"
-      src="logo-principal.png?v=resibulando2"
-      alt="Logo Resibulando"
-    >
+      <div class="header-actions">
+        <a class="text-link" id="login-link" href="login.html">Entrar</a>
+        <a class="landing-button small primary" id="header-cta" href="login.html">
+          Criar conta
+        </a>
 
-    <strong>Resibulando</strong>
+        <button
+          class="mobile-nav-toggle"
+          id="mobile-nav-toggle"
+          type="button"
+          aria-label="Abrir menu"
+          aria-expanded="false"
+          aria-controls="mobile-nav"
+        >
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
 
-    <span>Carregando...</span>
+    <div class="mobile-nav" id="mobile-nav" hidden>
+      <a href="#recursos">Recursos</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#planos">Planos</a>
+      <a href="login.html">Entrar</a>
+    </div>
+  </header>
 
-  </div>
+  <main>
+    <section class="hero-section">
+      <div class="landing-container hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow-pill">
+            <span></span>
+            Feito para transformar conteúdo em revisão
+          </div>
+
+          <h1>
+            Seu estudo para residência,
+            <em>organizado em um só lugar.</em>
+          </h1>
+
+          <p class="hero-description">
+            Planeje o que estudar, registre o que importa, revise no momento certo
+            e acompanhe seu desempenho sem depender de várias ferramentas diferentes.
+          </p>
+
+          <div class="hero-actions">
+            <a class="landing-button primary" id="hero-cta" href="login.html">
+              Começar agora
+              <span aria-hidden="true">→</span>
+            </a>
+            <a class="landing-button ghost" href="#como-funciona">
+              Ver como funciona
+            </a>
+          </div>
+
+          <div class="hero-proof">
+            <div>
+              <strong>1 sistema</strong>
+              <span>para organizar sua rotina</span>
+            </div>
+            <div>
+              <strong>Revisões</strong>
+              <span>conectadas ao estudo</span>
+            </div>
+            <div>
+              <strong>Progresso</strong>
+              <span>visível de verdade</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="product-preview" aria-label="Prévia do Resibulando">
+          <div class="preview-window">
+            <div class="preview-topbar">
+              <div class="preview-dots"><span></span><span></span><span></span></div>
+              <div class="preview-address">resibulando.online</div>
+              <div class="preview-user">LF</div>
+            </div>
+
+            <div class="preview-app">
+              <aside class="preview-sidebar">
+                <div class="preview-brand-row">
+                  <img src="logo-icone-original.png?v=resibulando2" alt="">
+                  <strong>Resibulando</strong>
+                </div>
+                <span class="preview-nav active">◫ Dashboard</span>
+                <span class="preview-nav">▦ Cronograma</span>
+                <span class="preview-nav">◉ Estudar</span>
+                <span class="preview-nav sub">Caderno</span>
+                <span class="preview-nav sub">Flashcards</span>
+                <span class="preview-nav sub">Questões</span>
+                <span class="preview-nav">▥ Estatísticas</span>
+              </aside>
+
+              <div class="preview-content">
+                <div class="preview-heading">
+                  <div>
+                    <small>VISÃO GERAL</small>
+                    <strong>Bom estudo, Luiz.</strong>
+                  </div>
+                  <span class="preview-streak">🔥 12 dias</span>
+                </div>
+
+                <div class="preview-metrics">
+                  <article>
+                    <small>Hoje</small>
+                    <strong>3</strong>
+                    <span>atividades</span>
+                  </article>
+                  <article>
+                    <small>Revisões</small>
+                    <strong>18</strong>
+                    <span>pendentes</span>
+                  </article>
+                  <article>
+                    <small>Questões</small>
+                    <strong>78%</strong>
+                    <span>acerto</span>
+                  </article>
+                </div>
+
+                <div class="preview-panels">
+                  <article class="preview-panel schedule">
+                    <div class="panel-mini-head">
+                      <strong>Próximos estudos</strong>
+                      <span>Hoje</span>
+                    </div>
+                    <div class="study-row">
+                      <span class="study-time">08:00</span>
+                      <div><strong>Pediatria</strong><small>Crescimento e desenvolvimento</small></div>
+                    </div>
+                    <div class="study-row">
+                      <span class="study-time">14:00</span>
+                      <div><strong>Caderno de erros</strong><small>12 CCQs para revisar</small></div>
+                    </div>
+                    <div class="study-row">
+                      <span class="study-time">19:00</span>
+                      <div><strong>Flashcards</strong><small>Clínica médica</small></div>
+                    </div>
+                  </article>
+
+                  <article class="preview-panel chart-card">
+                    <div class="panel-mini-head">
+                      <strong>Consistência</strong>
+                      <span>7 dias</span>
+                    </div>
+                    <div class="mini-chart" aria-hidden="true">
+                      <i style="height:42%"></i>
+                      <i style="height:66%"></i>
+                      <i style="height:52%"></i>
+                      <i style="height:84%"></i>
+                      <i style="height:72%"></i>
+                      <i style="height:92%"></i>
+                      <i style="height:78%"></i>
+                    </div>
+                    <small class="chart-caption">Rotina de estudo mais visível, decisão mais simples.</small>
+                  </article>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="floating-card floating-review">
+            <span>✓</span>
+            <div>
+              <strong>Revisão concluída</strong>
+              <small>Próxima em 21 dias</small>
+            </div>
+          </div>
+
+          <div class="floating-card floating-ccq">
+            <span>CCQ</span>
+            <div>
+              <strong>Aprenda com os erros</strong>
+              <small>Transforme questão em revisão</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="problem-section">
+      <div class="landing-container problem-grid">
+        <div>
+          <span class="section-kicker">Menos fragmentação</span>
+          <h2>Estudar já é difícil. Organizar o estudo não deveria ser.</h2>
+        </div>
+        <p>
+          Cronograma em um lugar, anotações em outro, flashcards em outro e desempenho
+          perdido em planilhas. O Resibulando conecta essas partes para que cada estudo
+          gere o próximo passo.
+        </p>
+      </div>
+    </section>
+
+    <section class="features-section" id="recursos">
+      <div class="landing-container">
+        <div class="section-heading centered">
+          <span class="section-kicker">Tudo conectado</span>
+          <h2>Da aula à revisão, sem perder o fio.</h2>
+          <p>
+            Cada ferramenta foi pensada para fazer parte do mesmo fluxo de estudo.
+          </p>
+        </div>
+
+        <div class="feature-bento">
+          <article class="landing-feature feature-wide">
+            <div class="feature-icon">▦</div>
+            <div>
+              <span class="feature-label">Planejamento</span>
+              <h3>Cronograma que vira rotina</h3>
+              <p>
+                Organize temas, datas e revisões em um calendário que acompanha o que
+                você realmente precisa estudar.
+              </p>
+            </div>
+            <div class="calendar-visual" aria-hidden="true">
+              <span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span>
+              <i></i><i class="filled"></i><i></i><i class="filled strong"></i><i></i>
+              <i class="filled"></i><i></i><i class="filled"></i><i></i><i class="filled strong"></i>
+            </div>
+          </article>
+
+          <article class="landing-feature">
+            <div class="feature-icon">✎</div>
+            <span class="feature-label">Caderno</span>
+            <h3>Registre o que importa</h3>
+            <p>
+              Um caderno estruturado para manter seus temas clínicos organizados e fáceis de revisar.
+            </p>
+          </article>
+
+          <article class="landing-feature">
+            <div class="feature-icon">◎</div>
+            <span class="feature-label">Caderno de erros</span>
+            <h3>Errou? Isso vira revisão.</h3>
+            <p>
+              Transforme erros em CCQs e mantenha o conteúdo difícil voltando no momento certo.
+            </p>
+          </article>
+
+          <article class="landing-feature">
+            <div class="feature-icon">◇</div>
+            <span class="feature-label">Flashcards</span>
+            <h3>Memória ativa integrada</h3>
+            <p>
+              Crie e revise flashcards sem tirar o estudo do contexto do seu cronograma.
+            </p>
+          </article>
+
+          <article class="landing-feature">
+            <div class="feature-icon">✓</div>
+            <span class="feature-label">Questões</span>
+            <h3>Questões que alimentam seu sistema</h3>
+            <p>
+              Registre desempenho e leve os erros importantes direto para o caderno de erros.
+            </p>
+          </article>
+
+          <article class="landing-feature feature-wide analytics-feature">
+            <div>
+              <div class="feature-icon">▥</div>
+              <span class="feature-label">Estatísticas</span>
+              <h3>Veja onde seu estudo está funcionando.</h3>
+              <p>
+                Acompanhe consistência, revisões e desempenho para decidir onde investir seu tempo.
+              </p>
+            </div>
+            <div class="analytics-visual" aria-hidden="true">
+              <div class="analytics-line">
+                <svg viewBox="0 0 320 120" preserveAspectRatio="none">
+                  <path d="M0,94 C35,88 45,62 78,70 C110,78 125,38 160,52 C196,66 205,26 242,38 C270,46 286,19 320,22"></path>
+                </svg>
+              </div>
+              <div class="analytics-tags">
+                <span>Clínica <strong>82%</strong></span>
+                <span>Cirurgia <strong>76%</strong></span>
+                <span>Pediatria <strong>88%</strong></span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="workflow-section" id="como-funciona">
+      <div class="landing-container">
+        <div class="section-heading">
+          <span class="section-kicker">Como funciona</span>
+          <h2>Um ciclo simples para estudar melhor.</h2>
+        </div>
+
+        <div class="workflow-grid">
+          <article>
+            <span class="workflow-number">01</span>
+            <div class="workflow-icon">▦</div>
+            <h3>Planeje</h3>
+            <p>Defina o que estudar e distribua os temas ao longo da sua rotina.</p>
+          </article>
+          <article>
+            <span class="workflow-number">02</span>
+            <div class="workflow-icon">◉</div>
+            <h3>Estude</h3>
+            <p>Use caderno, flashcards, questões e ambientação sem sair do mesmo sistema.</p>
+          </article>
+          <article>
+            <span class="workflow-number">03</span>
+            <div class="workflow-icon">↻</div>
+            <h3>Revise</h3>
+            <p>O que precisa voltar reaparece na agenda para consolidar o aprendizado.</p>
+          </article>
+          <article>
+            <span class="workflow-number">04</span>
+            <div class="workflow-icon">▥</div>
+            <h3>Ajuste</h3>
+            <p>Use suas estatísticas para entender dificuldades e adaptar o próximo ciclo.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="plans-section" id="planos">
+      <div class="landing-container">
+        <div class="section-heading centered">
+          <span class="section-kicker">Planos</span>
+          <h2>Comece com o que você precisa agora.</h2>
+          <p>A estrutura de planos já está sendo preparada para o lançamento.</p>
+        </div>
+
+        <div class="plans-grid">
+          <article class="plan-card">
+            <div class="plan-head">
+              <span>Essencial</span>
+              <h3>O sistema de estudo.</h3>
+              <p>Para quem quer organizar rotina, conteúdo e revisões.</p>
+            </div>
+            <ul>
+              <li>Dashboard e agenda</li>
+              <li>Cronograma</li>
+              <li>Ambientação de estudo</li>
+              <li>Caderno</li>
+              <li>Caderno de erros e CCQs</li>
+            </ul>
+            <a class="landing-button plan-button ghost" href="login.html">Começar</a>
+          </article>
+
+          <article class="plan-card featured">
+            <div class="popular-badge">Mais completo</div>
+            <div class="plan-head">
+              <span>Plus</span>
+              <h3>Automação e escala.</h3>
+              <p>Para quem quer estudar mais conteúdo com menos trabalho operacional.</p>
+            </div>
+            <ul>
+              <li>Tudo do Essencial</li>
+              <li>Flashcards</li>
+              <li>Questões e simulados</li>
+              <li>Importações automatizadas</li>
+              <li>Estatísticas completas</li>
+            </ul>
+            <a class="landing-button plan-button primary" href="login.html">Quero conhecer</a>
+          </article>
+
+          <article class="plan-card future">
+            <div class="plan-head">
+              <span>Pro</span>
+              <h3>Inteligência aplicada.</h3>
+              <p>Recursos de IA integrados ao seu próprio material de estudo.</p>
+            </div>
+            <ul>
+              <li>Tudo do Plus</li>
+              <li>Geração assistida de flashcards</li>
+              <li>CCQs com IA</li>
+              <li>Explicação de questões</li>
+              <li>Análise inteligente de desempenho</li>
+            </ul>
+            <div class="coming-soon">Em desenvolvimento</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="faq-section">
+      <div class="landing-container faq-grid">
+        <div class="section-heading">
+          <span class="section-kicker">Perguntas frequentes</span>
+          <h2>Antes de começar.</h2>
+        </div>
+
+        <div class="faq-list">
+          <details>
+            <summary>O Resibulando substitui meu cursinho?</summary>
+            <p>
+              Não. Ele é uma plataforma de organização e estudo. Você pode usar o conteúdo
+              do seu curso e centralizar no Resibulando sua rotina, revisões e desempenho.
+            </p>
+          </details>
+
+          <details>
+            <summary>Preciso abandonar meus materiais atuais?</summary>
+            <p>
+              Não. A proposta é organizar seu método e conectar as etapas do estudo,
+              não obrigar você a reconstruir tudo do zero.
+            </p>
+          </details>
+
+          <details>
+            <summary>Já existe integração com inteligência artificial?</summary>
+            <p>
+              Os recursos de IA estão em desenvolvimento e serão testados antes de fazer
+              parte de um plano comercial.
+            </p>
+          </details>
+
+          <details>
+            <summary>Os planos já estão disponíveis para pagamento?</summary>
+            <p>
+              A infraestrutura de planos e pagamentos está sendo preparada. Durante esta
+              fase, o acesso segue o modelo atual de testes da plataforma.
+            </p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="final-cta-section">
+      <div class="landing-container final-cta">
+        <div>
+          <span class="section-kicker light">Seu próximo estudo começa aqui</span>
+          <h2>Menos tempo organizando. Mais clareza para estudar.</h2>
+          <p>
+            Transforme cronograma, conteúdo, erros e revisões em um único fluxo.
+          </p>
+        </div>
+        <a class="landing-button light" id="bottom-cta" href="login.html">
+          Entrar no Resibulando
+          <span aria-hidden="true">→</span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="landing-footer">
+    <div class="landing-container footer-inner">
+      <a class="landing-brand footer-brand" href="#top">
+        <img src="logo-principal.png?v=resibulando2" alt="">
+        <div>
+          <strong>Resibulando</strong>
+          <small>Seu mapa até a residência</small>
+        </div>
+      </a>
+
+      <div class="footer-copy">
+        <span>© <span id="footer-year"></span> Resibulando.</span>
+        <span>Plataforma em desenvolvimento.</span>
+      </div>
+    </div>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
-
-  <script>
-    (async () => {
-      const { data } =
-        await window.supabaseClient.auth.getSession();
-
-      window.location.replace(
-        data.session
-          ? "dashboard.html"
-          : "login.html"
-      );
-    })();
-  </script>
-
+  <script src="landing.js?v=1.0"></script>
 </body>
 </html>
