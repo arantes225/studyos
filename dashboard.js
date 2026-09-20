@@ -1590,6 +1590,58 @@ function initDashboardStreakVisual() {
         label.textContent =
           info.label;
       }
+
+      const goal =
+        180;
+
+      const progressDays =
+        Math.min(
+          goal,
+          Math.max(
+            0,
+            days
+          )
+        );
+
+      const progress =
+        progressDays
+        / goal;
+
+      const circumference =
+        2
+        * Math.PI
+        * 52;
+
+      const ring =
+        document.getElementById(
+          "dashboard-streak-progress"
+        );
+
+      if (ring) {
+        ring.style.strokeDasharray =
+          String(
+            circumference
+          );
+
+        ring.style.strokeDashoffset =
+          String(
+            circumference
+            * (
+              1
+              - progress
+            )
+          );
+      }
+
+      const progressLabel =
+        document.getElementById(
+          "dashboard-streak-progress-label"
+        );
+
+      if (progressLabel) {
+        progressLabel.textContent =
+          `${progressDays}/${goal}`;
+      }
     };
 
 
