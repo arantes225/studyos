@@ -6,8 +6,8 @@
   <title>Caderno · Resibulando</title>
 
   <link rel="icon" type="image/png" href="favicon.png?v=resibulando2">
-  <link rel="stylesheet" href="style.css?v=12.1">
-  <link rel="stylesheet" href="caderno.css?v=29.0">
+  <link rel="stylesheet" href="style.css?v=12.2">
+  <link rel="stylesheet" href="caderno.css?v=30.0">
 </head>
 
 <body data-page="caderno">
@@ -66,17 +66,30 @@
             <aside class="notebook-topic-panel">
 
               <div class="notebook-topic-panel-head">
-                <div>
+                <div class="notebook-topic-panel-title">
                   <span class="badge accent">Aulas</span>
                   <h2>Temas</h2>
                 </div>
 
-                <span
-                  id="notebook-topic-count"
-                  class="notebook-topic-count"
-                >
-                  0
-                </span>
+                <div class="notebook-topic-panel-head-actions">
+                  <span
+                    id="notebook-topic-count"
+                    class="notebook-topic-count"
+                  >
+                    0
+                  </span>
+
+                  <button
+                    id="notebook-topic-panel-toggle"
+                    class="notebook-topic-panel-toggle"
+                    type="button"
+                    aria-label="Recolher lista de temas"
+                    aria-expanded="true"
+                    title="Recolher lista de temas"
+                  >
+                    ‹
+                  </button>
+                </div>
               </div>
 
               <div class="notebook-topic-controls">
@@ -883,7 +896,7 @@
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 
   <script src="supabase.js"></script>
-  <script src="app.js?v=12.1"></script>
-  <script src="caderno.js?v=29.0"></script>
+  <script src="app.js?v=12.2"></script>
+  <script src="caderno.js?v=30.0"></script>
 </body>
 </html>
