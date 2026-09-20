@@ -1,0 +1,305 @@
+/* LURIA PWA mobile refinements — loaded after page-specific CSS */
+@media (max-width: 760px) {
+  /* Global PWA density */
+  .pwa-standalone body[data-page="cronograma"] .main,
+  .pwa-standalone body[data-page="estatisticas"] .main,
+  .pwa-standalone body[data-page="admin"] .main {
+    padding: 12px 10px 28px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .topbar,
+  .pwa-standalone body[data-page="estatisticas"] .topbar,
+  .pwa-standalone body[data-page="admin"] .topbar {
+    min-height: 48px !important;
+    margin-bottom: 10px !important;
+    gap: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .page-heading h1,
+  .pwa-standalone body[data-page="estatisticas"] .page-heading h1,
+  .pwa-standalone body[data-page="admin"] .page-heading h1 {
+    font-size: 20px !important;
+    line-height: 1.08 !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .page-heading .eyebrow,
+  .pwa-standalone body[data-page="estatisticas"] .page-heading .eyebrow,
+  .pwa-standalone body[data-page="admin"] .page-heading .eyebrow {
+    font-size: 7px !important;
+  }
+
+  /* Cronograma: text inside buttons */
+  .pwa-standalone body[data-page="cronograma"] .schedule-add-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    gap: 3px !important;
+    padding: 3px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .schedule-add-tab {
+    min-width: 0 !important;
+    min-height: 32px !important;
+    padding: 4px 6px !important;
+    font-size: 8px !important;
+    line-height: 1.15 !important;
+    white-space: normal !important;
+    text-align: center !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .button,
+  .pwa-standalone body[data-page="cronograma"] button,
+  .pwa-standalone body[data-page="cronograma"] .topic-action,
+  .pwa-standalone body[data-page="cronograma"] .theme-library-action {
+    font-size: 9px !important;
+    line-height: 1.15 !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .drop-file .button {
+    min-height: 32px !important;
+    padding: 0 11px !important;
+    font-size: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .schedule-add-hub,
+  .pwa-standalone body[data-page="cronograma"] .import-box,
+  .pwa-standalone body[data-page="cronograma"] .manual-panel,
+  .pwa-standalone body[data-page="cronograma"] .base-schedule-panel,
+  .pwa-standalone body[data-page="cronograma"] .planner-panel,
+  .pwa-standalone body[data-page="cronograma"] .overdue-organizer,
+  .pwa-standalone body[data-page="cronograma"] .deck-panel,
+  .pwa-standalone body[data-page="cronograma"] .theme-library-panel {
+    padding: 12px !important;
+    border-radius: 13px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .schedule-add-hub h2,
+  .pwa-standalone body[data-page="cronograma"] .import-box h2,
+  .pwa-standalone body[data-page="cronograma"] .planner-panel h2,
+  .pwa-standalone body[data-page="cronograma"] .theme-library-panel h2 {
+    font-size: 16px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .schedule-add-hub p,
+  .pwa-standalone body[data-page="cronograma"] .import-box p,
+  .pwa-standalone body[data-page="cronograma"] .import-box small,
+  .pwa-standalone body[data-page="cronograma"] .mode-option small {
+    font-size: 9px !important;
+    line-height: 1.35 !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .mode-option span {
+    padding: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .mode-option strong {
+    font-size: 11px !important;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .planner-panel {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pwa-standalone body[data-page="cronograma"] .planner-header,
+  .pwa-standalone body[data-page="cronograma"] .week-planner {
+    min-width: 720px !important;
+  }
+
+  /* Estatísticas: stop the huge single-column cards */
+  .pwa-standalone body[data-page="estatisticas"] .stats-page {
+    gap: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-hero,
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-box,
+  .pwa-standalone body[data-page="estatisticas"] .stats-block {
+    padding: 10px !important;
+    border-radius: 12px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-hero {
+    gap: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-hero h2 {
+    font-size: 17px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-hero p {
+    font-size: 8.5px !important;
+    line-height: 1.35 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-range {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 2px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-range button {
+    min-height: 30px !important;
+    padding: 0 3px !important;
+    font-size: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tabs-shell {
+    overflow-x: auto !important;
+    padding: 3px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tabs {
+    min-width: 510px !important;
+    grid-template-columns: repeat(5, minmax(98px, 1fr)) !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tab {
+    min-height: 32px !important;
+    font-size: 7.5px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card {
+    min-height: 80px !important;
+    padding: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card span,
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card small,
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini span,
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini small {
+    font-size: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card strong {
+    font-size: 17px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-block-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-strip {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini {
+    padding: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini strong {
+    font-size: 14px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .chart-box {
+    min-height: 180px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .chart-box.compact {
+    min-height: 155px !important;
+  }
+
+  /* Admin: compact dashboard instead of long desktop cards */
+  .pwa-standalone body[data-page="admin"] .admin-topbar {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+    align-items: center !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-range label {
+    display: none !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-range select {
+    min-height: 32px !important;
+    font-size: 8px !important;
+    padding: 0 6px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-grid,
+  .pwa-standalone body[data-page="admin"] .admin-metrics-grid,
+  .pwa-standalone body[data-page="admin"] .admin-feature-grid,
+  .pwa-standalone body[data-page="admin"] .admin-infra-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-card,
+  .pwa-standalone body[data-page="admin"] .admin-metric-card,
+  .pwa-standalone body[data-page="admin"] .admin-feature-card,
+  .pwa-standalone body[data-page="admin"] .admin-infra-card {
+    min-height: 76px !important;
+    padding: 9px !important;
+    border-radius: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-card span,
+  .pwa-standalone body[data-page="admin"] .admin-metric-card span,
+  .pwa-standalone body[data-page="admin"] .admin-feature-card span,
+  .pwa-standalone body[data-page="admin"] .admin-infra-card span {
+    font-size: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-card strong,
+  .pwa-standalone body[data-page="admin"] .admin-metric-card strong,
+  .pwa-standalone body[data-page="admin"] .admin-feature-card strong,
+  .pwa-standalone body[data-page="admin"] .admin-infra-card strong {
+    font-size: 17px !important;
+    margin-top: 4px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-card small,
+  .pwa-standalone body[data-page="admin"] .admin-metric-card small,
+  .pwa-standalone body[data-page="admin"] .admin-feature-card small,
+  .pwa-standalone body[data-page="admin"] .admin-infra-card small {
+    font-size: 7px !important;
+    line-height: 1.25 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-section {
+    padding: 10px !important;
+    border-radius: 12px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-section-head h2 {
+    font-size: 13px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-finance-grid {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-finance-card {
+    min-height: 70px !important;
+    padding: 9px 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-cost-items {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-customer-table {
+    min-width: 760px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-customer-table th,
+  .pwa-standalone body[data-page="admin"] .admin-customer-table td {
+    padding: 6px 7px !important;
+    font-size: 7.5px !important;
+  }
+}
