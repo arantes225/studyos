@@ -2343,3 +2343,118 @@ optgroup {
     justify-self: center !important;
   }
 }
+
+
+/* =========================================================
+   LURIA — FILE INPUT PREMIUM
+   Melhora visual global para "Escolher arquivo"
+   ========================================================= */
+input[type="file"] {
+  max-width: 100%;
+  color: var(--muted);
+  font: inherit;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+input[type="file"]::file-selector-button {
+  min-height: 36px;
+  margin-right: 10px;
+  padding: 0 13px;
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border));
+  border-radius: 10px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 94%, var(--accent-soft)),
+      color-mix(in srgb, var(--surface-2) 88%, var(--accent-soft))
+    );
+  color: var(--accent);
+  font: inherit;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .01em;
+  cursor: pointer;
+  transition:
+    background .16s ease,
+    border-color .16s ease,
+    color .16s ease,
+    transform .16s ease,
+    box-shadow .16s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  box-shadow:
+    0 4px 12px
+    color-mix(in srgb, var(--accent) 12%, transparent);
+  transform: translateY(-1px);
+}
+
+input[type="file"]::file-selector-button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+input[type="file"]:focus-visible {
+  outline: none;
+}
+
+input[type="file"]:focus-visible::file-selector-button {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 3px
+    color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+@supports selector(::-webkit-file-upload-button) {
+  input[type="file"]::-webkit-file-upload-button {
+    min-height: 36px;
+    margin-right: 10px;
+    padding: 0 13px;
+    border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border));
+    border-radius: 10px;
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--surface) 94%, var(--accent-soft)),
+        color-mix(in srgb, var(--surface-2) 88%, var(--accent-soft))
+      );
+    color: var(--accent);
+    font: inherit;
+    font-size: 9px;
+    font-weight: 850;
+    cursor: pointer;
+  }
+}
+
+.file-picker-shell,
+.upload-file-shell {
+  border-radius: 12px;
+}
+
+@media (max-width: 760px) {
+  input[type="file"] {
+    font-size: 9px;
+  }
+
+  input[type="file"]::file-selector-button {
+    min-height: 34px;
+    margin-right: 8px;
+    padding: 0 11px;
+    border-radius: 9px;
+    font-size: 8.5px;
+  }
+
+  @supports selector(::-webkit-file-upload-button) {
+    input[type="file"]::-webkit-file-upload-button {
+      min-height: 34px;
+      margin-right: 8px;
+      padding: 0 11px;
+      border-radius: 9px;
+      font-size: 8.5px;
+    }
+  }
+}
