@@ -707,10 +707,7 @@ async function signedFlashImage(path) {
   const {
     data,
     error
-  } = await flashSb
-    .storage
-    .from("docmap")
-    .createSignedUrl(
+  } = await window.LuriaStorage.createSignedUrl("flashcard_images",
       path,
       60 * 60
     );
@@ -1256,12 +1253,7 @@ async function uploadFlashImage(
   const path =
     `${flashUser.id}/flashcards/${crypto.randomUUID()}-${side}-${safeName}`;
 
-  const {
-    error
-  } = await flashSb
-    .storage
-    .from("docmap")
-    .upload(
+  const { error, reference } = await window.LuriaStorage.upload("flashcard_images",
       path,
       file,
       {
@@ -1277,8 +1269,7 @@ async function uploadFlashImage(
     throw error;
   }
 
-  return path;
-}
+  return reference || path;\n}
 
 function clearCreateForm() {
   [
@@ -1465,10 +1456,7 @@ function wireCreate() {
           console.error(error);
 
           if (uploadedPaths.length) {
-            await flashSb
-              .storage
-              .from("docmap")
-              .remove(
+            await window.LuriaStorage.remove("flashcard_images",
                 uploadedPaths
               );
           }
@@ -3932,12 +3920,7 @@ async function deleteFlashcardFromLibrary(
       error:
         storageError
     } =
-      await flashSb
-        .storage
-        .from(
-          "docmap"
-        )
-        .remove(
+      await window.LuriaStorage.remove("flashcard_images",
           storagePaths
         );
 
@@ -4066,10 +4049,7 @@ async function flashPdfImageData(path) {
   if (!path) return null;
 
   try {
-    const { data: blob, error } = await flashSb
-      .storage
-      .from("docmap")
-      .download(path);
+    const { data: blob, error } = await window.LuriaStorage.download("flashcard_images",path);
 
     if (error) throw error;
 
@@ -4592,12 +4572,7 @@ async function deleteSelectedFlashcards() {
         error:
           storageError
       } =
-        await flashSb
-          .storage
-          .from(
-            "docmap"
-          )
-          .remove(
+        await window.LuriaStorage.remove("flashcard_images",
             paths
           );
 
