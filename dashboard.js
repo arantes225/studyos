@@ -1088,6 +1088,38 @@ async function loadLessonMetrics() {
     `${completed.length}/${total}`
   );
 
+  const progressRing =
+    document.getElementById(
+      "dashboard-progress-ring-value"
+    );
+
+  if (progressRing) {
+    const circumference =
+      2
+      * Math.PI
+      * 52;
+
+    const ratio =
+      total > 0
+        ? Math.min(
+            1,
+            completed.length / total
+          )
+        : 0;
+
+    progressRing.style.strokeDasharray =
+      String(circumference);
+
+    progressRing.style.strokeDashoffset =
+      String(
+        circumference
+        * (
+          1
+          - ratio
+        )
+      );
+  }
+
   setDashboardText(
     "metric-lessons-progress",
     `${progress.toFixed(0)}%`
@@ -1591,57 +1623,6 @@ function initDashboardStreakVisual() {
           info.label;
       }
 
-      const goal =
-        180;
-
-      const progressDays =
-        Math.min(
-          goal,
-          Math.max(
-            0,
-            days
-          )
-        );
-
-      const progress =
-        progressDays
-        / goal;
-
-      const circumference =
-        2
-        * Math.PI
-        * 52;
-
-      const ring =
-        document.getElementById(
-          "dashboard-streak-progress"
-        );
-
-      if (ring) {
-        ring.style.strokeDasharray =
-          String(
-            circumference
-          );
-
-        ring.style.strokeDashoffset =
-          String(
-            circumference
-            * (
-              1
-              - progress
-            )
-          );
-      }
-
-      const progressLabel =
-        document.getElementById(
-          "dashboard-streak-progress-label"
-        );
-
-      if (progressLabel) {
-        progressLabel.textContent =
-          `${progressDays}/${goal}`;
-      }
     };
 
 
