@@ -2458,3 +2458,14 @@ input[type="file"]:focus-visible::file-selector-button {
     }
   }
 }
+
+/* LOGIN — força logo transparente */
+.auth-page .auth-brand-logo {
+  background: transparent !important;
+  background-color: transparent !important;
+  mix-blend-mode: normal !important;
+  filter: none !important;
+  opacity: 1 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
