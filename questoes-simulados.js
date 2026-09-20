@@ -30,6 +30,13 @@ const qsState = {
     new Map(),
 
   /*
+    Questões erradas que o usuário decidiu NÃO enviar
+    ao Caderno de Erros. Fica persistido localmente por simulado.
+  */
+  errorNotebookSkips:
+    new Set(),
+
+  /*
     Prints do gabarito/respostas são mantidos
     SOMENTE na memória do navegador.
     Nunca são enviados ao Supabase.
@@ -6454,6 +6461,8 @@ async function openSet(setId) {
     ])
   );
 
+  loadErrorNotebookSkips();
+
   document.getElementById("qs-current-title").textContent =
     set.title;
 
@@ -10731,9 +10740,15 @@ function renderQuestions() {
       const sent =
         attempt?.sent_to_error === true;
 
+      const skipErrorNotebook =
+        !sent
+        && isErrorNotebookSkipped(
+          item.id
+        );
+
       return `
         <article
-          class="qs-question ${wrong ? "wrong" : ""} ${annulled ? "annulled" : ""} ${sent ? "sent" : ""}"
+          class="qs-question ${wrong ? "wrong" : ""} ${annulled ? "annulled" : ""} ${sent ? "sent" : ""} ${skipErrorNotebook ? "skip-error-notebook" : ""}"
           data-question-id="${qsEscape(item.id)}"
         >
           <div class="qs-question-main">
@@ -10761,6 +10776,21 @@ function renderQuestions() {
           </details>
 
           <div class="qs-error-fields">
+            <label class="qs-error-skip full">
+              <input
+                type="checkbox"
+                data-skip-error-notebook="${qsEscape(item.id)}"
+                ${skipErrorNotebook ? "checked" : ""}
+                ${sent ? "disabled" : ""}
+              >
+              <span>
+                <strong>Não enviar para o Caderno de Erros</strong>
+                <small>
+                  Esta questão continua contabilizada como erro, mas você não precisa preencher os campos abaixo.
+                </small>
+              </span>
+            </label>
+
             <label class="qs-field">
               <span>Área *</span>
               <select data-error-area="${qsEscape(item.id)}">
@@ -10825,9 +10855,80 @@ function renderQuestions() {
           checkbox.checked
         );
 
+        if (
+          !checkbox.checked
+        ) {
+          const itemId =
+            checkbox.dataset
+              .wrongToggle;
+
+          setErrorNotebookSkipped(
+            itemId,
+            false
+          );
+
+          card.classList.remove(
+            "skip-error-notebook"
+          );
+
+          const skipInput =
+            card.querySelector(
+              "[data-skip-error-notebook]"
+            );
+
+          if (
+            skipInput
+          ) {
+            skipInput.checked =
+              false;
+          }
+        }
+
         updateLiveSummary();
       });
     });
+
+  container
+    .querySelectorAll(
+      "[data-skip-error-notebook]"
+    )
+    .forEach(
+      checkbox => {
+        checkbox.addEventListener(
+          "change",
+          () => {
+            const itemId =
+              checkbox.dataset
+                .skipErrorNotebook;
+
+            setErrorNotebookSkipped(
+              itemId,
+              checkbox.checked
+            );
+
+            const card =
+              checkbox.closest(
+                ".qs-question"
+              );
+
+            card
+              ?.classList
+              .toggle(
+                "skip-error-notebook",
+                checkbox.checked
+              );
+
+            if (
+              checkbox.checked
+            ) {
+              refreshErrorImagePicker(
+                itemId
+              );
+            }
+          }
+        );
+      }
+    );
 
   bindErrorImagePickerEvents(
     container
@@ -10921,6 +11022,143 @@ function updateLiveSummary() {
 }
 
 
+function errorNotebookSkipStorageKey(
+  setId =
+    qsState.currentSet?.id
+) {
+  if (
+    !qsState.user?.id
+    || !setId
+  ) {
+    return null;
+  }
+
+  return `resibulando:error-notebook-skips:${qsState.user.id}:${setId}`;
+}
+
+
+function loadErrorNotebookSkips() {
+  qsState
+    .errorNotebookSkips
+    .clear();
+
+  const key =
+    errorNotebookSkipStorageKey();
+
+  if (!key) {
+    return;
+  }
+
+  try {
+    const stored =
+      JSON.parse(
+        localStorage.getItem(
+          key
+        )
+        || "[]"
+      );
+
+    const validIds =
+      new Set(
+        qsState.items.map(
+          item =>
+            item.id
+        )
+      );
+
+    (
+      Array.isArray(
+        stored
+      )
+        ? stored
+        : []
+    )
+      .filter(
+        id =>
+          validIds.has(
+            id
+          )
+      )
+      .forEach(
+        id =>
+          qsState
+            .errorNotebookSkips
+            .add(
+              id
+            )
+      );
+
+  } catch {
+    qsState
+      .errorNotebookSkips
+      .clear();
+  }
+}
+
+
+function persistErrorNotebookSkips() {
+  const key =
+    errorNotebookSkipStorageKey();
+
+  if (!key) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(
+      key,
+      JSON.stringify(
+        Array.from(
+          qsState.errorNotebookSkips
+        )
+      )
+    );
+  } catch {}
+}
+
+
+function isErrorNotebookSkipped(
+  itemId
+) {
+  return qsState
+    .errorNotebookSkips
+    .has(
+      itemId
+    );
+}
+
+
+function setErrorNotebookSkipped(
+  itemId,
+  skipped
+) {
+  if (
+    skipped
+  ) {
+    qsState
+      .errorNotebookSkips
+      .add(
+        itemId
+      );
+
+    qsState
+      .imageSelections
+      .delete(
+        itemId
+      );
+
+  } else {
+    qsState
+      .errorNotebookSkips
+      .delete(
+        itemId
+      );
+  }
+
+  persistErrorNotebookSkips();
+}
+
+
 function readWrongMetadata(itemId) {
   const area =
     document.querySelector(
@@ -10955,13 +11193,22 @@ function readWrongMetadata(itemId) {
       )
     || null;
 
+  const skipErrorNotebook =
+    document.querySelector(
+      `[data-skip-error-notebook="${CSS.escape(itemId)}"]`
+    )?.checked
+    ?? isErrorNotebookSkipped(
+      itemId
+    );
+
   return {
     area,
     materia,
     correctOption,
     ccq,
     thought,
-    imagePath
+    imagePath,
+    skipErrorNotebook
   };
 }
 
@@ -11005,7 +11252,14 @@ async function saveAnswerKey() {
       const metadata =
         readWrongMetadata(item.id);
 
-      if (!metadata.area || !metadata.correctOption) {
+      if (
+        !metadata.skipErrorNotebook
+        &&
+        (
+          !metadata.area
+          || !metadata.correctOption
+        )
+      ) {
         missing.push(
           item.question_number
         );
@@ -11328,21 +11582,130 @@ async function clearCurrentSimulationImageGallery() {
 }
 
 
+async function clearCurrentSimulationSourcePdf() {
+  const set =
+    qsState.currentSet;
+
+  const sourcePath =
+    set?.source_file_path
+    || null;
+
+  if (
+    !set?.id
+    || !sourcePath
+  ) {
+    return {
+      removed:
+        false,
+      storageWarning:
+        false,
+      databaseWarning:
+        false
+    };
+  }
+
+  const {
+    error:
+      storageError
+  } =
+    await qsSb
+      .storage
+      .from(
+        "docmap"
+      )
+      .remove([
+        sourcePath
+      ]);
+
+  if (
+    storageError
+  ) {
+    console.warn(
+      "Não foi possível remover o PDF original:",
+      storageError
+    );
+
+    return {
+      removed:
+        false,
+      storageWarning:
+        true,
+      databaseWarning:
+        false
+    };
+  }
+
+  const {
+    error:
+      databaseError
+  } =
+    await qsSb
+      .from(
+        "question_sets"
+      )
+      .update({
+        source_file_path:
+          null
+      })
+      .eq(
+        "id",
+        set.id
+      );
+
+  if (
+    databaseError
+  ) {
+    console.warn(
+      "PDF removido do Storage, mas não foi possível limpar source_file_path:",
+      databaseError
+    );
+  } else {
+    set.source_file_path =
+      null;
+
+    const listedSet =
+      qsState.sets.find(
+        item =>
+          item.id ===
+          set.id
+      );
+
+    if (
+      listedSet
+    ) {
+      listedSet.source_file_path =
+        null;
+    }
+  }
+
+  return {
+    removed:
+      true,
+    storageWarning:
+      false,
+    databaseWarning:
+      Boolean(
+        databaseError
+      )
+  };
+}
+
+
 async function sendErrorsToNotebook() {
   if (!qsState.currentSet) return;
 
 
-  const wrongAttempts =
+  const allWrongAttempts =
     Array.from(
       qsState.attempts.values()
     ).filter(
-      (attempt) =>
+      attempt =>
         attempt.result === "wrong"
         && !attempt.sent_to_error
     );
 
 
-  if (!wrongAttempts.length) {
+  if (!allWrongAttempts.length) {
     setAnswerStatus(
       "Não há erros novos para enviar. Salve o gabarito primeiro.",
       "error"
@@ -11350,6 +11713,20 @@ async function sendErrorsToNotebook() {
 
     return;
   }
+
+
+  const wrongAttempts =
+    allWrongAttempts.filter(
+      attempt =>
+        !isErrorNotebookSkipped(
+          attempt.question_item_id
+        )
+    );
+
+
+  const skippedCount =
+    allWrongAttempts.length
+    - wrongAttempts.length;
 
 
   const missingCcq = [];
@@ -11616,6 +11993,35 @@ async function sendErrorsToNotebook() {
 
 
     setAnswerStatus(
+      "Apagando PDF original do Storage..."
+    );
+
+
+    let pdfCleanup = {
+      removed:
+        false,
+      storageWarning:
+        false,
+      databaseWarning:
+        false
+    };
+
+
+    try {
+      pdfCleanup =
+        await clearCurrentSimulationSourcePdf();
+    } catch (pdfError) {
+      console.warn(
+        "Não foi possível apagar o PDF original:",
+        pdfError
+      );
+
+      pdfCleanup.storageWarning =
+        true;
+    }
+
+
+    setAnswerStatus(
       `${sent} ${
         sent === 1
           ? "erro enviado"
@@ -11625,8 +12031,24 @@ async function sendErrorsToNotebook() {
           ? ` Galeria temporária limpa (${galleryCleanup.removed} imagem${galleryCleanup.removed === 1 ? "" : "s"}).`
           : ""
       }${
+        skippedCount
+          ? ` ${skippedCount} questão${skippedCount === 1 ? "" : "ões"} marcada${skippedCount === 1 ? "" : "s"} para não enviar.`
+          : ""
+      }${
         galleryCleanup.storageWarning
           ? " Algumas imagens antigas podem permanecer no Storage, mas não ficam mais visíveis na galeria."
+          : ""
+      }${
+        pdfCleanup.removed
+          ? " PDF original apagado."
+          : ""
+      }${
+        pdfCleanup.storageWarning
+          ? " Não foi possível apagar o PDF original do Storage."
+          : ""
+      }${
+        pdfCleanup.databaseWarning
+          ? " O arquivo foi apagado, mas o registro do caminho não pôde ser limpo."
           : ""
       }`,
       "success"
@@ -11771,6 +12193,7 @@ function closeCurrentSet() {
   qsState.currentSet = null;
   qsState.items = [];
   qsState.attempts = new Map();
+  qsState.errorNotebookSkips.clear();
 
   document.getElementById("qs-answer-panel").hidden =
     true;
