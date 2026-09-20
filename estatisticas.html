@@ -258,7 +258,7 @@
           <div data-stats-panel="questoes" hidden>
             <section class="stats-summary-box">
               <div class="stats-section-head">
-                <div><span class="stats-kicker">Resumo</span><h3>Questões / Simulados</h3><p>Nove indicadores centrais; os detalhes permanecem nos gráficos e tabelas abaixo.</p></div>
+                <div><span class="stats-kicker">Resumo</span><h3>Questões / Simulados</h3><p>Seis indicadores centrais, sem repetir informações dos gráficos abaixo.</p></div>
                 <a class="stats-link" href="questoes-simulados.html">Abrir página de questões</a>
               </div>
               <div id="question-summary" class="stats-summary-grid"></div>
@@ -277,17 +277,13 @@
               </article>
 
               <article class="stats-block wide">
-                <div class="stats-section-head"><div><h3>Detalhamento dos erros por área</h3><p>Quantidade de erros e quantos foram enviados ao Caderno de Erros.</p></div></div>
-                <div id="question-area-table" class="stats-table-wrap"></div>
-              </article>
-
-              <article class="stats-block wide">
-                <div class="stats-section-head"><div><h3>Simulados</h3><p>Histórico com resultado individual de cada simulado.</p></div></div>
+                <div class="stats-section-head"><div><h3>Simulados</h3><p>Evolução do aproveitamento e histórico das provas realizadas.</p></div></div>
+                <div class="chart-box"><canvas id="chart-question-sets"></canvas></div>
                 <div id="question-set-table" class="stats-table-wrap"></div>
               </article>
 
               <article class="stats-block wide">
-                <div class="stats-section-head"><div><h3>Insights de questões</h3><p>Concentração de erros, simulados e mudanças no desempenho.</p></div></div>
+                <div class="stats-section-head"><div><h3>Insights de questões</h3><p>Tendências e relações que não aparecem diretamente nos gráficos.</p></div></div>
                 <div id="question-insights"></div>
               </article>
             </div>
@@ -301,6 +297,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=12.7"></script>
-  <script src="assets/js/estatisticas.js?v=19.1"></script>
+  <script src="assets/js/estatisticas.js?v=19.2"></script>
 </body>
 </html>
