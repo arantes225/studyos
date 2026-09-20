@@ -12,7 +12,10 @@
     customers: [],
     pinConfigured: false,
     pinUnlocked: false,
-    wired: false
+    wired: false,
+    storageGuide: "",
+    storageGuidePath: "",
+    storageGuideError: ""
   };
 
   const METRICS = [
@@ -366,6 +369,167 @@
     `).join("");
   }
 
+  function renderStorageExpansionAlert() {
+    const alert =
+      $("admin-storage-expansion-alert");
+
+    if (!alert) {
+      return;
+    }
+
+    const storage =
+      state.logistics?.storage
+      || {};
+
+    const percent =
+      usagePercent(
+        storage.used_bytes,
+        storage.quota_bytes
+      );
+
+    const visible =
+      percent !== null
+      && percent >= 80;
+
+    alert.hidden =
+      !visible;
+
+    if (!visible) {
+      return;
+    }
+
+    const percentElement =
+      $("admin-storage-expansion-percent");
+
+    const summary =
+      $("admin-storage-expansion-summary");
+
+    const button =
+      $("admin-storage-expansion-open");
+
+    const content =
+      $("admin-storage-expansion-content");
+
+    const source =
+      $("admin-storage-expansion-source");
+
+    if (percentElement) {
+      percentElement.textContent =
+        formatPercent(
+          percent
+        );
+    }
+
+    if (summary) {
+      summary.textContent =
+        `${formatBytes(storage.used_bytes)} usados de ${formatBytes(storage.quota_bytes)}. O plano de expansão do Storage já está disponível.`;
+    }
+
+    if (source) {
+      source.textContent =
+        state.storageGuidePath
+          ? `Guia privado: docmap/${state.storageGuidePath}`
+          : state.storageGuideError
+            ? "O guia não pôde ser carregado do Storage."
+            : "Preparando guia privado no Storage...";
+    }
+
+    if (button) {
+      button.disabled =
+        !state.storageGuide;
+
+      if (!state.storageGuide) {
+        button.textContent =
+          state.storageGuideError
+            ? "Indisponível"
+            : "Preparando...";
+      } else if (
+        content
+        && !content.hidden
+      ) {
+        button.textContent =
+          "Fechar";
+      } else {
+        button.textContent =
+          "Abrir";
+      }
+    }
+
+    if (
+      content
+      && state.storageGuide
+      && !content.dataset.ready
+    ) {
+      content.textContent =
+        state.storageGuide;
+
+      content.dataset.ready =
+        "true";
+    }
+  }
+
+
+  async function loadStorageExpansionGuide() {
+    try {
+      state.storageGuideError =
+        "";
+
+      const {
+        data,
+        error
+      } =
+        await sb.functions.invoke(
+          "admin-storage-guide",
+          {
+            body: {
+              action:
+                "ensure"
+            }
+          }
+        );
+
+      if (error) {
+        throw error;
+      }
+
+      if (
+        !data?.content
+      ) {
+        throw new Error(
+          "O guia administrativo voltou sem conteúdo."
+        );
+      }
+
+      state.storageGuide =
+        String(
+          data.content
+        );
+
+      state.storageGuidePath =
+        String(
+          data.path
+          || "_admin/storage-expansion-guide.md"
+        );
+
+    } catch (error) {
+      console.warn(
+        "Não foi possível preparar o guia de expansão do Storage:",
+        error
+      );
+
+      state.storageGuide =
+        "";
+
+      state.storageGuideError =
+        error?.message
+        || "Falha ao carregar o guia.";
+
+    } finally {
+      renderStorageExpansionAlert();
+    }
+  }
+
+
   function renderLogistics(logistics, metrics) {
     state.logistics =
       logistics || {};
@@ -483,6 +647,8 @@
           `;
         })
         .join("");
+
+    renderStorageExpansionAlert();
 
     const plan =
       String(
@@ -1064,7 +1230,10 @@
         true;
     }
 
-    await load();
+    await Promise.all([
+      load(),
+      loadStorageExpansionGuide()
+    ]);
   }
 
   async function submitAdminPin(event) {
@@ -1298,6 +1467,52 @@
   }
 
   function wire() {
+    $("admin-storage-expansion-open")
+      ?.addEventListener(
+        "click",
+        () => {
+          const button =
+            $("admin-storage-expansion-open");
+
+          const content =
+            $("admin-storage-expansion-content");
+
+          if (
+            !button
+            || !content
+            || !state.storageGuide
+          ) {
+            return;
+          }
+
+          const opening =
+            content.hidden;
+
+          content.hidden =
+            !opening;
+
+          button.setAttribute(
+            "aria-expanded",
+            String(
+              opening
+            )
+          );
+
+          button.textContent =
+            opening
+              ? "Fechar"
+              : "Abrir";
+
+          if (opening) {
+            content.textContent =
+              state.storageGuide;
+
+            content.dataset.ready =
+              "true";
+          }
+        }
+      );
+
     $("admin-range")
       ?.addEventListener(
         "change",
