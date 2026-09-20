@@ -812,3 +812,130 @@ body.admin-unlocked #admin-app {
   visibility: visible;
   pointer-events: auto;
 }
+
+
+/* =========================================================
+   ADMIN CUSTOMER FILTER
+   ========================================================= */
+.admin-filter-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.admin-filter-button {
+  width: 38px;
+  height: 38px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.admin-filter-button:hover,
+.admin-filter-button[aria-expanded="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.admin-filter-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 80;
+  width: min(280px, calc(100vw - 32px));
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.admin-filter-panel[hidden] {
+  display: none !important;
+}
+
+.admin-filter-panel label {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-filter-panel label + label {
+  margin-top: 10px;
+}
+
+.admin-filter-panel label > span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.admin-filter-panel select {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 11px;
+  outline: none;
+}
+
+.admin-filter-panel select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.admin-filter-clear {
+  width: 100%;
+  min-height: 34px;
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.admin-filter-clear:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+@media (max-width: 720px) {
+  .admin-customer-tools {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+  }
+
+  .admin-customer-tools input {
+    grid-column: 1 / 2;
+  }
+
+  .admin-filter-wrap {
+    grid-column: 2;
+  }
+
+  .admin-customer-tools > #admin-customer-count {
+    grid-column: 1 / -1;
+  }
+
+  .admin-filter-panel {
+    right: 0;
+  }
+}
