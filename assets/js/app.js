@@ -126,7 +126,7 @@ function sidebarMarkup(user, profile = null) {
         <img
           id="luria-brand-logo"
           class="brand-logo-single"
-          src="assets/img/logo-icone-original.png?v=luria2"
+          src="assets/img/logo-icone-original.png?v=luria6"
           alt="Logo LURIA"
         >
 
@@ -257,7 +257,7 @@ function updateLuriaLogo(theme) {
   }
 
   let source =
-    "assets/img/logo-icone-original.png?v=luria2";
+    "assets/img/logo-icone-original.png?v=luria6";
 
   if (theme === "dark") {
     source =
