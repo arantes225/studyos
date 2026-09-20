@@ -189,30 +189,22 @@ function sidebarMarkup(user, profile = null) {
 
     <div class="sidebar-footer">
       <div class="streak-mini" data-sidebar-streak-card>
-        <div class="streak-mini-head">
-          <span class="streak-mini-title">Ofensiva</span>
-          <span class="streak-mini-status" data-sidebar-streak-status>Comece hoje</span>
+        <div class="streak-mini-flame" aria-hidden="true">
+          <svg viewBox="0 0 64 80" role="presentation">
+            <path
+              fill="currentColor"
+              d="M34 3C35 15 26 19 26 29C26 35 30 38 33 40C27 40 22 35 21 29C13 37 8 46 8 56C8 69 18 77 32 77C46 77 56 68 56 54C56 41 48 30 40 22C39 30 36 34 32 36C35 27 43 18 34 3Z"
+            ></path>
+            <path
+              class="streak-mini-core"
+              d="M33 40C27 47 23 52 23 59C23 67 27 71 33 71C40 71 44 66 44 59C44 52 39 47 35 43C35 48 33 51 30 53C31 48 34 45 33 40Z"
+            ></path>
+          </svg>
         </div>
 
-        <div class="streak-mini-body">
-          <div class="streak-mini-flame" aria-hidden="true">
-            <span class="streak-mini-aura"></span>
-            <svg viewBox="0 0 64 80" role="presentation">
-              <path
-                fill="currentColor"
-                d="M34 3C35 15 26 19 26 29C26 35 30 38 33 40C27 40 22 35 21 29C13 37 8 46 8 56C8 69 18 77 32 77C46 77 56 68 56 54C56 41 48 30 40 22C39 30 36 34 32 36C35 27 43 18 34 3Z"
-              ></path>
-              <path
-                class="streak-mini-core"
-                d="M33 40C27 47 23 52 23 59C23 67 27 71 33 71C40 71 44 66 44 59C44 52 39 47 35 43C35 48 33 51 30 53C31 48 34 45 33 40Z"
-              ></path>
-            </svg>
-          </div>
-
-          <div class="streak-mini-copy">
-            <strong><span data-streak-value>—</span> dias</strong>
-            <small>sequência atual</small>
-          </div>
+        <div class="streak-mini-copy">
+          <strong><span data-streak-value>—</span> dias de ofensiva</strong>
+          <small data-sidebar-streak-status>Comece hoje</small>
         </div>
       </div>
 
