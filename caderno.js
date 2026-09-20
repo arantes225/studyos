@@ -5240,6 +5240,12 @@ function notebookRowBoundaries(
   y1
 ) {
   if (
+    !canvas
+    ||
+    !Array.isArray(
+      globalVertical
+    )
+    ||
     globalVertical.length < 2
   ) {
     return [];
@@ -5261,11 +5267,16 @@ function notebookRowBoundaries(
       y1 - y0
     );
 
+
   const margin =
     Math.min(
-      rowHeight * 0.16,
-      8
+      Math.max(
+        2,
+        rowHeight * 0.12
+      ),
+      10
     );
+
 
   const scanTop =
     y0 + margin;
@@ -5287,6 +5298,7 @@ function notebookRowBoundaries(
     const x =
       globalVertical[index];
 
+
     const support =
       notebookVerticalEdgeSupport(
         canvas,
@@ -5295,13 +5307,14 @@ function notebookRowBoundaries(
         scanBottom
       );
 
+
     /*
-      Só considera a divisória se ela realmente existir
-      NESTA LINHA. Assim, um cabeçalho mesclado não herda
-      as colunas das linhas inferiores.
+      A divisória precisa existir nesta linha.
+      Não propagamos uma divisão das linhas inferiores
+      para um cabeçalho que é uma célula única.
     */
     if (
-      support >= 0.34
+      support >= 0.28
     ) {
       boundaries.push(
         x
@@ -5319,25 +5332,38 @@ function notebookRowBoundaries(
 }
 
 
-function notebookCellTextFromWords(
+function groupNotebookWordsIntoVisualLines(
   words
 ) {
+  const usable =
+    notebookTableWordData(
+      words
+    );
+
+
   if (
-    !words.length
+    !usable.length
   ) {
-    return "";
+    return [];
   }
 
 
-  const lineTolerance =
+  const typicalHeight =
     Math.max(
       6,
       medianNotebookNumber(
-        words.map(
+        usable.map(
           word =>
             word.height
         )
-      ) * 0.65
+      )
+    );
+
+
+  const tolerance =
+    Math.max(
+      5,
+      typicalHeight * 0.62
     );
 
 
@@ -5347,7 +5373,7 @@ function notebookCellTextFromWords(
 
   for (
     const word
-    of words
+    of usable
       .slice()
       .sort(
         (
@@ -5356,7 +5382,7 @@ function notebookCellTextFromWords(
         ) =>
           a.y - b.y
           ||
-          a.x - b.x
+          a.x0 - b.x0
       )
   ) {
     let line =
@@ -5366,7 +5392,7 @@ function notebookCellTextFromWords(
             candidate.y
             - word.y
           )
-          <= lineTolerance
+          <= tolerance
       );
 
 
@@ -5376,9 +5402,17 @@ function notebookCellTextFromWords(
       line = {
         y:
           word.y,
+
+        top:
+          word.y0,
+
+        bottom:
+          word.y1,
+
         words:
           []
       };
+
 
       lines.push(
         line
@@ -5389,27 +5423,319 @@ function notebookCellTextFromWords(
     line.words.push(
       word
     );
+
+
+    line.y =
+      line.words.reduce(
+        (
+          sum,
+          item
+        ) =>
+          sum + item.y,
+        0
+      )
+      / line.words.length;
+
+
+    line.top =
+      Math.min(
+        line.top,
+        word.y0
+      );
+
+
+    line.bottom =
+      Math.max(
+        line.bottom,
+        word.y1
+      );
   }
 
 
-  return lines
-    .sort(
-      (
-        a,
-        b
-      ) =>
-        a.y - b.y
+  lines.forEach(
+    line =>
+      line.words.sort(
+        (
+          a,
+          b
+        ) =>
+          a.x0 - b.x0
+      )
+  );
+
+
+  return lines.sort(
+    (
+      a,
+      b
+    ) =>
+      a.y - b.y
+  );
+}
+
+
+function notebookPhraseSegments(
+  words
+) {
+  const usable =
+    notebookTableWordData(
+      words
     )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a.x0 - b.x0
+      );
+
+
+  if (
+    !usable.length
+  ) {
+    return [];
+  }
+
+
+  const typicalHeight =
+    Math.max(
+      6,
+      medianNotebookNumber(
+        usable.map(
+          word =>
+            word.height
+        )
+      )
+    );
+
+
+  const gaps =
+    [];
+
+
+  for (
+    let index = 1;
+    index < usable.length;
+    index += 1
+  ) {
+    const gap =
+      usable[index].x0
+      - usable[
+          index - 1
+        ].x1;
+
+
+    if (
+      gap > 0
+    ) {
+      gaps.push(
+        gap
+      );
+    }
+  }
+
+
+  const ordinaryGap =
+    medianNotebookNumber(
+      gaps.filter(
+        gap =>
+          gap
+          <= typicalHeight * 1.8
+      )
+    )
+    ||
+    typicalHeight * 0.45;
+
+
+  const splitGap =
+    Math.max(
+      12,
+      typicalHeight * 1.45,
+      ordinaryGap * 2.7
+    );
+
+
+  const isIsolatedNumber =
+    value =>
+      /^[-+]?\d+(?:[.,]\d+)?%?$/
+        .test(
+          String(
+            value
+            || ""
+          )
+            .trim()
+        );
+
+
+  const groups =
+    [];
+
+  let current =
+    [];
+
+
+  usable.forEach(
+    (
+      word,
+      index
+    ) => {
+      if (
+        index > 0
+      ) {
+        const previous =
+          usable[
+            index - 1
+          ];
+
+
+        const gap =
+          word.x0
+          - previous.x1;
+
+
+        const separatedNumbers =
+          isIsolatedNumber(
+            previous.text
+          )
+          &&
+          isIsolatedNumber(
+            word.text
+          )
+          &&
+          gap >=
+            Math.max(
+              6,
+              typicalHeight * 0.48
+            );
+
+
+        const shortTokensFarApart =
+          String(
+            previous.text
+            || ""
+          ).length <= 4
+          &&
+          String(
+            word.text
+            || ""
+          ).length <= 4
+          &&
+          gap >=
+            Math.max(
+              9,
+              typicalHeight * 0.9
+            );
+
+
+        if (
+          (
+            gap >= splitGap
+            ||
+            separatedNumbers
+            ||
+            shortTokensFarApart
+          )
+          &&
+          current.length
+        ) {
+          groups.push(
+            current
+          );
+
+          current =
+            [];
+        }
+      }
+
+
+      current.push(
+        word
+      );
+    }
+  );
+
+
+  if (
+    current.length
+  ) {
+    groups.push(
+      current
+    );
+  }
+
+
+  return groups.map(
+    group => {
+      const x0 =
+        Math.min(
+          ...group.map(
+            word =>
+              word.x0
+          )
+        );
+
+
+      const x1 =
+        Math.max(
+          ...group.map(
+            word =>
+              word.x1
+          )
+        );
+
+
+      return {
+        x0,
+        x1,
+
+        x:
+          (
+            x0 + x1
+          ) / 2,
+
+        text:
+          group
+            .map(
+              word =>
+                word.text
+            )
+            .join(
+              " "
+            )
+            .replace(
+              /\s+/g,
+              " "
+            )
+            .trim(),
+
+        words:
+          group
+      };
+    }
+  );
+}
+
+
+function notebookCellTextFromWords(
+  words
+) {
+  if (
+    !words.length
+  ) {
+    return "";
+  }
+
+
+  const lines =
+    groupNotebookWordsIntoVisualLines(
+      words
+    );
+
+
+  return lines
     .map(
       line =>
         line.words
-          .sort(
-            (
-              a,
-              b
-            ) =>
-              a.x - b.x
-          )
           .map(
             word =>
               word.text
@@ -5429,256 +5755,23 @@ function notebookCellTextFromWords(
 }
 
 
-function rowsFromNotebookGrid(
+function buildNotebookRowBands(
   words,
   grid,
   canvas
-) {
-  if (
-    !grid
-    ||
-    !canvas
-    ||
-    grid.vertical.length < 2
-    ||
-    grid.horizontal.length < 2
-  ) {
-    return null;
-  }
-
-
-  const vertical =
-    grid.vertical
-      .slice()
-      .sort(
-        (
-          a,
-          b
-        ) =>
-          a - b
-      );
-
-
-  const horizontal =
-    grid.horizontal
-      .slice()
-      .sort(
-        (
-          a,
-          b
-        ) =>
-          a - b
-      );
-
-
-  const baseColumns =
-    vertical.length - 1;
-
-
-  if (
-    baseColumns < 1
-    ||
-    baseColumns > 15
-    ||
-    horizontal.length - 1 > 50
-  ) {
-    return null;
-  }
-
-
-  const normalizedWords =
-    notebookTableWordData(
-      words
-    );
-
-
-  const structuredRows =
-    [];
-
-
-  for (
-    let rowIndex = 0;
-    rowIndex < horizontal.length - 1;
-    rowIndex += 1
-  ) {
-    const y0 =
-      horizontal[rowIndex];
-
-    const y1 =
-      horizontal[
-        rowIndex + 1
-      ];
-
-
-    const rowWords =
-      normalizedWords.filter(
-        word =>
-          word.y > y0
-          &&
-          word.y < y1
-      );
-
-
-    const rowBoundaries =
-      notebookRowBoundaries(
-        canvas,
-        vertical,
-        y0,
-        y1
-      );
-
-
-    if (
-      rowBoundaries.length < 2
-    ) {
-      continue;
-    }
-
-
-    const cells =
-      [];
-
-
-    for (
-      let cellIndex = 0;
-      cellIndex < rowBoundaries.length - 1;
-      cellIndex += 1
-    ) {
-      const left =
-        rowBoundaries[
-          cellIndex
-        ];
-
-      const right =
-        rowBoundaries[
-          cellIndex + 1
-        ];
-
-
-      const cellWords =
-        rowWords.filter(
-          word =>
-            word.x > left
-            &&
-            word.x < right
-        );
-
-
-      /*
-        Calcula quantas colunas lógicas esta célula ocupa.
-        Ex.: primeira linha sem divisórias em uma tabela de
-        3 colunas => colspan 3.
-      */
-      let startLogical =
-        0;
-
-      let endLogical =
-        baseColumns;
-
-
-      for (
-        let index = 0;
-        index < vertical.length;
-        index += 1
-      ) {
-        if (
-          Math.abs(
-            vertical[index]
-            - left
-          )
-          <= 8
-        ) {
-          startLogical =
-            index;
-
-          break;
-        }
-      }
-
-
-      for (
-        let index = 0;
-        index < vertical.length;
-        index += 1
-      ) {
-        if (
-          Math.abs(
-            vertical[index]
-            - right
-          )
-          <= 8
-        ) {
-          endLogical =
-            index;
-
-          break;
-        }
-      }
-
-
-      cells.push({
-        text:
-          notebookCellTextFromWords(
-            cellWords
-          ),
-
-        colspan:
-          Math.max(
-            1,
-            endLogical
-            - startLogical
-          ),
-
-        header:
-          rowIndex === 0
-      });
-    }
-
-
-    if (
-      cells.some(
-        cell =>
-          String(
-            cell.text
-            || ""
-          ).trim()
-      )
-    ) {
-      structuredRows.push({
-        cells
-      });
-    }
-  }
-
-
-  if (
-    !structuredRows.length
-  ) {
-    return null;
-  }
-
-
-  return {
-    baseColumns,
-    rows:
-      structuredRows
-  };
-}
-
-
-function tableRowsFromOcrWords(
-  words
 ) {
   const usable =
     notebookTableWordData(
       words
     );
 
+
   if (
     !usable.length
   ) {
     return [];
   }
+
 
   const typicalHeight =
     Math.max(
@@ -5691,263 +5784,227 @@ function tableRowsFromOcrWords(
       )
     );
 
-  const rowTolerance =
+
+  const minWordTop =
+    Math.min(
+      ...usable.map(
+        word =>
+          word.y0
+      )
+    );
+
+
+  const maxWordBottom =
     Math.max(
-      7,
-      typicalHeight * 0.72
-    );
-
-  const visualRows =
-    [];
-
-  for (
-    const word
-    of usable
-      .slice()
-      .sort(
-        (a, b) =>
-          a.y - b.y
-          ||
-          a.x0 - b.x0
+      ...usable.map(
+        word =>
+          word.y1
       )
-  ) {
-    let row =
-      visualRows.find(
-        candidate =>
-          Math.abs(
-            candidate.y
-            - word.y
-          )
-          <= rowTolerance
-      );
-
-    if (
-      !row
-    ) {
-      row = {
-        y:
-          word.y,
-        words: []
-      };
-
-      visualRows.push(
-        row
-      );
-    }
-
-    row.words.push(
-      word
     );
 
-    row.y =
-      row.words.reduce(
-        (
-          sum,
-          item
-        ) =>
-          sum + item.y,
-        0
-      )
-      / row.words.length;
-  }
-
-  visualRows.forEach(
-    row =>
-      row.words.sort(
-        (a, b) =>
-          a.x0 - b.x0
-      )
-  );
-
-  /*
-    Primeiro separamos células de cada linha pelos grandes
-    espaços horizontais. Isso é mais confiável que usar cada
-    palavra como uma coluna.
-  */
-  const allPositiveGaps =
-    [];
-
-  visualRows.forEach(
-    row => {
-      for (
-        let index = 1;
-        index < row.words.length;
-        index += 1
-      ) {
-        const gap =
-          row.words[index].x0
-          - row.words[
-              index - 1
-            ].x1;
-
-        if (
-          gap > 1
-        ) {
-          allPositiveGaps.push(
-            gap
-          );
-        }
-      }
-    }
-  );
-
-  const normalWordGap =
-    medianNotebookNumber(
-      allPositiveGaps
-        .filter(
-          gap =>
-            gap
-            <= typicalHeight * 3
-        )
-    )
-    ||
-    typicalHeight * 0.6;
-
-  const cellGap =
-    Math.max(
-      typicalHeight * 2.2,
-      normalWordGap * 2.8,
-      22
-    );
-
-  const segmentedRows =
-    visualRows.map(
-      row => {
-        const segments =
-          [];
-
-        let current =
-          [];
-
-        row.words.forEach(
-          (
-            word,
-            index
-          ) => {
-            if (
-              index > 0
-            ) {
-              const previous =
-                row.words[
-                  index - 1
-                ];
-
-              const gap =
-                word.x0
-                - previous.x1;
-
-              if (
-                gap >= cellGap
-                &&
-                current.length
-              ) {
-                segments.push(
-                  current
-                );
-
-                current =
-                  [];
-              }
-            }
-
-            current.push(
-              word
-            );
-          }
-        );
-
-        if (
-          current.length
-        ) {
-          segments.push(
-            current
-          );
-        }
-
-        return segments.map(
-          segment => ({
-            x0:
-              Math.min(
-                ...segment.map(
-                  word =>
-                    word.x0
-                )
-              ),
-
-            x1:
-              Math.max(
-                ...segment.map(
-                  word =>
-                    word.x1
-                )
-              ),
-
-            x:
-              (
-                Math.min(
-                  ...segment.map(
-                    word =>
-                      word.x0
-                  )
-                )
-                +
-                Math.max(
-                  ...segment.map(
-                    word =>
-                      word.x1
-                  )
-                )
-              ) / 2,
-
-            text:
-              segment
-                .map(
-                  word =>
-                    word.text
-                )
-                .join(
-                  " "
-                )
-                .replace(
-                  /\s+/g,
-                  " "
-                )
-                .trim()
-          })
-        );
-      }
-    )
-    .filter(
-      segments =>
-        segments.length
-    );
 
   if (
-    !segmentedRows.length
+    grid?.horizontal
+      ?.length
   ) {
-    return [];
+    const separators =
+      grid.horizontal
+        .slice()
+        .sort(
+          (
+            a,
+            b
+          ) =>
+            a - b
+        );
+
+
+    const boundaries =
+      separators.slice();
+
+
+    /*
+      Se houver texto acima da primeira linha horizontal,
+      cria um limite sintético para NÃO perder o cabeçalho.
+      Esse era o principal motivo da primeira linha sumir.
+    */
+    if (
+      minWordTop
+      <
+      separators[0]
+      - typicalHeight * 0.25
+    ) {
+      boundaries.unshift(
+        Math.max(
+          0,
+          minWordTop
+          - typicalHeight * 0.8
+        )
+      );
+    }
+
+
+    if (
+      maxWordBottom
+      >
+      separators[
+        separators.length - 1
+      ]
+      + typicalHeight * 0.25
+    ) {
+      boundaries.push(
+        Math.min(
+          canvas?.height
+          || maxWordBottom
+            + typicalHeight,
+          maxWordBottom
+          + typicalHeight * 0.8
+        )
+      );
+    }
+
+
+    const bands =
+      [];
+
+
+    for (
+      let index = 0;
+      index < boundaries.length - 1;
+      index += 1
+    ) {
+      const top =
+        boundaries[index];
+
+      const bottom =
+        boundaries[
+          index + 1
+        ];
+
+
+      const rowWords =
+        usable.filter(
+          word =>
+            word.y > top
+            &&
+            word.y < bottom
+        );
+
+
+      if (
+        !rowWords.length
+      ) {
+        continue;
+      }
+
+
+      bands.push({
+        top,
+        bottom,
+        words:
+          rowWords
+      });
+    }
+
+
+    if (
+      bands.length
+    ) {
+      return bands;
+    }
   }
 
+
   /*
-    A estrutura não é definida pela primeira linha.
-    Procuramos a linha MAIS subdividida como referência.
-    Isso preserva cabeçalhos com uma única célula.
+    Sem linhas horizontais confiáveis:
+    cada faixa de texto vira uma linha candidata.
+    Frases e números isolados na MESMA altura continuam
+    juntos para ajudar a descobrir as colunas.
   */
-  const baseColumns =
-    Math.max(
-      1,
-      ...segmentedRows.map(
-        segments =>
-          Math.min(
-            10,
-            segments.length
-          )
-      )
+  const visualLines =
+    groupNotebookWordsIntoVisualLines(
+      usable
     );
 
 
-  const reference =
-    segmentedRows
+  return visualLines.map(
+    (
+      line,
+      index
+    ) => {
+      const previous =
+        visualLines[
+          index - 1
+        ];
+
+
+      const next =
+        visualLines[
+          index + 1
+        ];
+
+
+      const top =
+        previous
+          ? (
+              previous.bottom
+              + line.top
+            ) / 2
+          : Math.max(
+              0,
+              line.top
+              - typicalHeight * 0.8
+            );
+
+
+      const bottom =
+        next
+          ? (
+              line.bottom
+              + next.top
+            ) / 2
+          : line.bottom
+            + typicalHeight * 0.8;
+
+
+      return {
+        top,
+        bottom,
+        words:
+          line.words
+      };
+    }
+  );
+}
+
+
+function analyzeNotebookRow(
+  band,
+  grid,
+  canvas
+) {
+  const rowWords =
+    band.words
+    || [];
+
+
+  const visualLines =
+    groupNotebookWordsIntoVisualLines(
+      rowWords
+    );
+
+
+  const lineSegments =
+    visualLines.map(
+      line =>
+        notebookPhraseSegments(
+          line.words
+        )
+    );
+
+
+  const bestPhraseLine =
+    lineSegments
       .slice()
       .sort(
         (
@@ -5956,18 +6013,348 @@ function tableRowsFromOcrWords(
         ) =>
           b.length
           - a.length
-      )[0];
+      )[0]
+    || [];
+
+
+  const vertical =
+    grid?.vertical
+      ?.slice()
+      ?.sort(
+        (
+          a,
+          b
+        ) =>
+          a - b
+      )
+    || [];
+
+
+  const boundaries =
+    notebookRowBoundaries(
+      canvas,
+      vertical,
+      band.top,
+      band.bottom
+    );
+
+
+  const dividerCells =
+    boundaries.length >= 2
+      ? boundaries.length - 1
+      : 0;
+
+
+  /*
+    A estrutura de uma linha usa DUAS fontes:
+    - divisórias visuais;
+    - frases/números separados horizontalmente.
+
+    Se o OCR encontra "10     20     30", isso é evidência
+    de 3 células mesmo que a linha vertical esteja fraca.
+  */
+  const phraseCells =
+    bestPhraseLine.length;
+
+
+  const inferredCount =
+    Math.max(
+      1,
+      dividerCells,
+      phraseCells
+    );
+
+
+  return {
+    ...band,
+    visualLines,
+    lineSegments,
+    phraseReference:
+      bestPhraseLine,
+    boundaries,
+    dividerCells,
+    phraseCells,
+    inferredCount
+  };
+}
+
+
+function notebookRowCellsFromPhrases(
+  descriptor
+) {
+  const reference =
+    descriptor
+      .phraseReference
+    || [];
+
+
+  if (
+    !reference.length
+  ) {
+    return [];
+  }
+
+
+  if (
+    reference.length === 1
+  ) {
+    return [
+      {
+        x:
+          reference[0].x,
+
+        text:
+          notebookCellTextFromWords(
+            descriptor.words
+          )
+      }
+    ];
+  }
 
 
   const anchors =
-    reference
-      .slice(
-        0,
-        baseColumns
-      )
+    reference.map(
+      segment =>
+        segment.x
+    );
+
+
+  const buckets =
+    anchors.map(
+      () =>
+        []
+    );
+
+
+  descriptor
+    .lineSegments
+    .forEach(
+      segments => {
+        segments.forEach(
+          segment => {
+            let bestIndex =
+              0;
+
+            let bestDistance =
+              Number.POSITIVE_INFINITY;
+
+
+            anchors.forEach(
+              (
+                anchor,
+                index
+              ) => {
+                const distance =
+                  Math.abs(
+                    anchor
+                    - segment.x
+                  );
+
+
+                if (
+                  distance < bestDistance
+                ) {
+                  bestDistance =
+                    distance;
+
+                  bestIndex =
+                    index;
+                }
+              }
+            );
+
+
+            buckets[
+              bestIndex
+            ].push(
+              segment
+            );
+          }
+        );
+      }
+    );
+
+
+  return buckets.map(
+    (
+      segments,
+      index
+    ) => ({
+      x:
+        anchors[index],
+
+      text:
+        segments
+          .sort(
+            (
+              a,
+              b
+            ) =>
+              a.words?.[0]?.y
+              - b.words?.[0]?.y
+              ||
+              a.x0 - b.x0
+          )
+          .map(
+            segment =>
+              segment.text
+          )
+          .join(
+            " "
+          )
+          .replace(
+            /\s+/g,
+            " "
+          )
+          .trim()
+    })
+  );
+}
+
+
+function notebookRowCellsFromDividers(
+  descriptor
+) {
+  const boundaries =
+    descriptor.boundaries
+    || [];
+
+
+  if (
+    boundaries.length < 2
+  ) {
+    return [];
+  }
+
+
+  const cells =
+    [];
+
+
+  for (
+    let index = 0;
+    index < boundaries.length - 1;
+    index += 1
+  ) {
+    const left =
+      boundaries[
+        index
+      ];
+
+    const right =
+      boundaries[
+        index + 1
+      ];
+
+
+    const words =
+      descriptor.words.filter(
+        word =>
+          word.x > left
+          &&
+          word.x < right
+      );
+
+
+    cells.push({
+      x:
+        (
+          left + right
+        ) / 2,
+
+      text:
+        notebookCellTextFromWords(
+          words
+        )
+    });
+  }
+
+
+  return cells;
+}
+
+
+function notebookReferenceAnchors(
+  descriptors,
+  baseColumns
+) {
+  const candidates =
+    descriptors
       .map(
-        segment =>
-          segment.x
+        descriptor => {
+          const divider =
+            notebookRowCellsFromDividers(
+              descriptor
+            );
+
+
+          const phrases =
+            notebookRowCellsFromPhrases(
+              descriptor
+            );
+
+
+          const cells =
+            divider.length
+            >= phrases.length
+              ? divider
+              : phrases;
+
+
+          return cells;
+        }
+      )
+      .filter(
+        cells =>
+          cells.length
+          === baseColumns
+      );
+
+
+  if (
+    candidates.length
+  ) {
+    const best =
+      candidates
+        .slice()
+        .sort(
+          (
+            a,
+            b
+          ) =>
+            (
+              b[
+                b.length - 1
+              ].x
+              - b[0].x
+            )
+            -
+            (
+              a[
+                a.length - 1
+              ].x
+              - a[0].x
+            )
+        )[0];
+
+
+    return best.map(
+      cell =>
+        cell.x
+    );
+  }
+
+
+  const allCenters =
+    descriptors
+      .flatMap(
+        descriptor =>
+          descriptor
+            .phraseReference
+            .map(
+              segment =>
+                segment.x
+            )
       )
       .sort(
         (
@@ -5979,176 +6366,574 @@ function tableRowsFromOcrWords(
 
 
   if (
-    !anchors.length
+    !allCenters.length
+  ) {
+    return Array.from(
+      {
+        length:
+          baseColumns
+      },
+      (
+        _,
+        index
+      ) =>
+        index
+    );
+  }
+
+
+  const min =
+    allCenters[0];
+
+  const max =
+    allCenters[
+      allCenters.length - 1
+    ];
+
+
+  if (
+    baseColumns === 1
+  ) {
+    return [
+      (
+        min + max
+      ) / 2
+    ];
+  }
+
+
+  return Array.from(
+    {
+      length:
+        baseColumns
+    },
+    (
+      _,
+      index
+    ) =>
+      min
+      + (
+          max - min
+        )
+        * index
+        / (
+            baseColumns - 1
+          )
+  );
+}
+
+
+function mapNotebookCellsToLogicalColumns(
+  cells,
+  anchors,
+  baseColumns
+) {
+  if (
+    !cells.length
+  ) {
+    return [];
+  }
+
+
+  if (
+    cells.length === 1
+  ) {
+    return [
+      {
+        text:
+          cells[0].text,
+
+        colspan:
+          baseColumns
+      }
+    ];
+  }
+
+
+  const mappedIndexes =
+    cells.map(
+      cell => {
+        let bestIndex =
+          0;
+
+        let bestDistance =
+          Number.POSITIVE_INFINITY;
+
+
+        anchors.forEach(
+          (
+            anchor,
+            index
+          ) => {
+            const distance =
+              Math.abs(
+                anchor
+                - cell.x
+              );
+
+
+            if (
+              distance
+              < bestDistance
+            ) {
+              bestDistance =
+                distance;
+
+              bestIndex =
+                index;
+            }
+          }
+        );
+
+
+        return bestIndex;
+      }
+    );
+
+
+  /*
+    Garante ordem crescente e evita duas células caírem
+    na mesma coluna lógica.
+  */
+  for (
+    let index = 1;
+    index < mappedIndexes.length;
+    index += 1
+  ) {
+    mappedIndexes[index] =
+      Math.max(
+        mappedIndexes[index],
+        mappedIndexes[
+          index - 1
+        ] + 1
+      );
+  }
+
+
+  for (
+    let index = mappedIndexes.length - 1;
+    index >= 0;
+    index -= 1
+  ) {
+    const maxAllowed =
+      baseColumns
+      - (
+          mappedIndexes.length
+          - index
+        );
+
+
+    mappedIndexes[index] =
+      Math.min(
+        mappedIndexes[index],
+        maxAllowed
+      );
+  }
+
+
+  return cells.map(
+    (
+      cell,
+      index
+    ) => {
+      const start =
+        Math.max(
+          0,
+          mappedIndexes[index]
+        );
+
+
+      const next =
+        index
+        < cells.length - 1
+          ? Math.max(
+              start + 1,
+              mappedIndexes[
+                index + 1
+              ]
+            )
+          : baseColumns;
+
+
+      return {
+        text:
+          cell.text,
+
+        colspan:
+          Math.max(
+            1,
+            next - start
+          )
+      };
+    }
+  );
+}
+
+
+function buildNotebookTableStructureLineByLine(
+  words,
+  grid,
+  canvas
+) {
+  const bands =
+    buildNotebookRowBands(
+      words,
+      grid,
+      canvas
+    );
+
+
+  if (
+    !bands.length
   ) {
     return null;
   }
 
 
-  const structuredRows =
-    segmentedRows.map(
-      (
-        segments,
-        rowIndex
-      ) => {
-        /*
-          Uma linha com um único bloco de texto em uma tabela
-          de 2+ colunas é tratada como linha mesclada/título.
-        */
-        if (
-          segments.length === 1
-          &&
-          baseColumns > 1
-        ) {
-          return {
-            cells: [
-              {
-                text:
-                  segments[0]
-                    .text,
-
-                colspan:
-                  baseColumns,
-
-                header:
-                  rowIndex === 0
-              }
-            ]
-          };
-        }
+  const descriptors =
+    bands.map(
+      band =>
+        analyzeNotebookRow(
+          band,
+          grid,
+          canvas
+        )
+    );
 
 
-        const cells =
-          [];
+  /*
+    O número de colunas vem da linha mais informativa,
+    nunca da primeira linha.
+  */
+  const baseColumns =
+    Math.max(
+      1,
+      ...descriptors.map(
+        descriptor =>
+          descriptor.inferredCount
+      )
+    );
 
 
-        for (
-          let index = 0;
-          index < segments.length;
-          index += 1
-        ) {
-          const segment =
-            segments[index];
+  const anchors =
+    notebookReferenceAnchors(
+      descriptors,
+      baseColumns
+    );
 
 
-          let nearest =
-            0;
-
-          let nearestDistance =
-            Number.POSITIVE_INFINITY;
-
-
-          anchors.forEach(
-            (
-              anchor,
-              anchorIndex
-            ) => {
-              const distance =
-                Math.abs(
-                  anchor
-                  - segment.x
-                );
-
-              if (
-                distance
-                < nearestDistance
-              ) {
-                nearestDistance =
-                  distance;
-
-                nearest =
-                  anchorIndex;
-              }
-            }
-          );
+  const rows =
+    descriptors
+      .map(
+        (
+          descriptor,
+          rowIndex
+        ) => {
+          const dividerCells =
+            notebookRowCellsFromDividers(
+              descriptor
+            );
 
 
-          let nextNearest =
-            baseColumns;
+          const phraseCells =
+            notebookRowCellsFromPhrases(
+              descriptor
+            );
+
+
+          /*
+            Se divisórias e texto discordarem, escolhe a fonte
+            que encontrou mais células úteis naquela linha.
+          */
+          let cells =
+            dividerCells.length
+            >= phraseCells.length
+              ? dividerCells
+              : phraseCells;
+
+
+          cells =
+            cells.filter(
+              cell =>
+                String(
+                  cell.text
+                  || ""
+                ).trim()
+            );
 
 
           if (
-            index
-            < segments.length - 1
+            !cells.length
           ) {
-            const next =
-              segments[
-                index + 1
-              ];
-
-
-            nextNearest =
-              anchors.reduce(
-                (
-                  best,
-                  anchor,
-                  anchorIndex
-                ) => {
-                  const currentDistance =
-                    Math.abs(
-                      anchor
-                      - next.x
-                    );
-
-                  const bestDistance =
-                    Math.abs(
-                      anchors[best]
-                      - next.x
-                    );
-
-                  return currentDistance
-                    < bestDistance
-                      ? anchorIndex
-                      : best;
-                },
-                Math.min(
-                  baseColumns - 1,
-                  nearest + 1
-                )
-              );
+            return null;
           }
 
 
-          const span =
-            index
-              === segments.length - 1
-              ? Math.max(
-                  1,
-                  baseColumns
-                  - nearest
-                )
-              : Math.max(
-                  1,
-                  nextNearest
-                  - nearest
-                );
+          const logical =
+            mapNotebookCellsToLogicalColumns(
+              cells,
+              anchors,
+              baseColumns
+            );
 
 
-          cells.push({
-            text:
-              segment.text,
+          return {
+            cells:
+              logical.map(
+                cell => ({
+                  text:
+                    cell.text,
 
-            colspan:
-              span,
+                  colspan:
+                    cell.colspan,
 
-            header:
-              rowIndex === 0
-          });
+                  header:
+                    rowIndex === 0
+                })
+              )
+          };
         }
+      )
+      .filter(
+        Boolean
+      );
 
 
-        return {
-          cells
-        };
-      }
-    );
+  if (
+    !rows.length
+  ) {
+    return null;
+  }
 
 
   return {
     baseColumns,
-    rows:
-      structuredRows
+    rows
   };
+}
+
+
+function rowsFromNotebookGrid(
+  words,
+  grid,
+  canvas
+) {
+  return buildNotebookTableStructureLineByLine(
+    words,
+    grid,
+    canvas
+  );
+}
+
+
+function tableRowsFromOcrWords(
+  words,
+  canvas = null
+) {
+  return buildNotebookTableStructureLineByLine(
+    words,
+    null,
+    canvas
+  );
+}
+
+
+function mergeNotebookOcrWords(
+  firstWords,
+  secondWords
+) {
+  const merged =
+    [];
+
+
+  const add =
+    word => {
+      if (
+        !word?.bbox
+        ||
+        !String(
+          word.text
+          || ""
+        ).trim()
+      ) {
+        return;
+      }
+
+
+      const x0 =
+        Number(
+          word.bbox.x0
+        );
+
+      const y0 =
+        Number(
+          word.bbox.y0
+        );
+
+      const x1 =
+        Number(
+          word.bbox.x1
+        );
+
+      const y1 =
+        Number(
+          word.bbox.y1
+        );
+
+
+      const centerX =
+        (
+          x0 + x1
+        ) / 2;
+
+      const centerY =
+        (
+          y0 + y1
+        ) / 2;
+
+
+      const width =
+        Math.max(
+          1,
+          x1 - x0
+        );
+
+      const height =
+        Math.max(
+          1,
+          y1 - y0
+        );
+
+
+      const duplicateIndex =
+        merged.findIndex(
+          current => {
+            const bbox =
+              current.bbox;
+
+
+            const currentCenterX =
+              (
+                Number(
+                  bbox.x0
+                )
+                + Number(
+                    bbox.x1
+                  )
+              ) / 2;
+
+
+            const currentCenterY =
+              (
+                Number(
+                  bbox.y0
+                )
+                + Number(
+                    bbox.y1
+                  )
+              ) / 2;
+
+
+            const currentWidth =
+              Math.max(
+                1,
+                Number(
+                  bbox.x1
+                )
+                - Number(
+                    bbox.x0
+                  )
+              );
+
+
+            const currentHeight =
+              Math.max(
+                1,
+                Number(
+                  bbox.y1
+                )
+                - Number(
+                    bbox.y0
+                  )
+              );
+
+
+            return (
+              Math.abs(
+                currentCenterX
+                - centerX
+              )
+              <=
+              Math.max(
+                width,
+                currentWidth
+              ) * 0.45
+              &&
+              Math.abs(
+                currentCenterY
+                - centerY
+              )
+              <=
+              Math.max(
+                height,
+                currentHeight
+              ) * 0.55
+            );
+          }
+        );
+
+
+      if (
+        duplicateIndex < 0
+      ) {
+        merged.push(
+          word
+        );
+
+        return;
+      }
+
+
+      if (
+        Number(
+          word.confidence
+          || 0
+        )
+        >
+        Number(
+          merged[
+            duplicateIndex
+          ].confidence
+          || 0
+        )
+      ) {
+        merged[
+          duplicateIndex
+        ] =
+          word;
+      }
+    };
+
+
+  (
+    firstWords
+    || []
+  )
+    .forEach(
+      add
+    );
+
+
+  (
+    secondWords
+    || []
+  )
+    .forEach(
+      add
+    );
+
+
+  return merged;
 }
 
 
@@ -6238,7 +7023,7 @@ async function readNotebookTableImage() {
 
   try {
     setNotebookTableStatus(
-      "Analisando a estrutura de cada linha da tabela..."
+      "Lendo cada linha separadamente..."
     );
 
 
@@ -6261,13 +7046,13 @@ async function readNotebookTableImage() {
       );
 
 
-    setNotebookTableStatus(
-      grid
-        ? "Grade encontrada. Verificando separadamente quantas colunas existem em cada linha..."
-        : "Grade parcial. Reconstruindo a estrutura linha por linha..."
-    );
+    /*
+      Duas leituras SEMPRE:
+      - contraste: melhora números e texto pequeno;
+      - original: preserva cabeçalhos coloridos e primeira linha.
 
-
+      Depois mesclamos as palavras por posição.
+    */
     const enhancedResult =
       await window.Tesseract
         .recognize(
@@ -6276,91 +7061,84 @@ async function readNotebookTableImage() {
         );
 
 
-    let bestResult =
-      enhancedResult;
+    setNotebookTableStatus(
+      "Confirmando cabeçalhos, frases e números da imagem original..."
+    );
 
 
-    const enhancedScore =
-      notebookOcrScore(
-        enhancedResult
-      );
-
-
-    if (
-      enhancedScore < 115
-    ) {
-      setNotebookTableStatus(
-        "Refinando o texto sem perder a estrutura da tabela..."
-      );
-
-
-      const originalResult =
-        await window.Tesseract
-          .recognize(
-            sourceCanvas,
-            "por"
-          );
-
-
-      if (
-        notebookOcrScore(
-          originalResult
-        )
-        > enhancedScore
-      ) {
-        bestResult =
-          originalResult;
-      }
-    }
+    const originalResult =
+      await window.Tesseract
+        .recognize(
+          sourceCanvas,
+          "por"
+        );
 
 
     const words =
-      bestResult
-        ?.data
-        ?.words
-      || [];
+      mergeNotebookOcrWords(
+        enhancedResult
+          ?.data
+          ?.words
+        || [],
+        originalResult
+          ?.data
+          ?.words
+        || []
+      );
+
+
+    setNotebookTableStatus(
+      "Construindo a tabela linha por linha e usando frases/números para localizar divisões..."
+    );
 
 
     let structure =
-      grid
-        ? rowsFromNotebookGrid(
-            words,
-            grid,
-            sourceCanvas
-          )
-        : null;
+      buildNotebookTableStructureLineByLine(
+        words,
+        grid,
+        sourceCanvas
+      );
 
 
     let method =
-      structure
-        ? "grade por linha"
-        : "alinhamento por linha";
+      grid
+        ? "linhas + divisórias + texto"
+        : "linhas + frases/números";
 
 
+    /*
+      Fallback textual final. Ainda preserva linha única
+      como célula mesclada quando outras linhas têm colunas.
+    */
     if (
       !structure
       ||
       !structure.rows
         ?.length
     ) {
-      structure =
-        tableRowsFromOcrWords(
-          words
-        );
-    }
-
-
-    if (
-      !structure
-      ||
-      !structure.rows
-        ?.length
-    ) {
-      const rawRows =
-        String(
-          bestResult
+      const rawText =
+        [
+          originalResult
             ?.data
             ?.text
+          || "",
+          enhancedResult
+            ?.data
+            ?.text
+          || ""
+        ]
+          .sort(
+            (
+              a,
+              b
+            ) =>
+              b.length - a.length
+          )[0];
+
+
+      const rawRows =
+        String(
+          rawText
           || ""
         )
           .split(
@@ -6448,7 +7226,7 @@ async function readNotebookTableImage() {
 
 
         method =
-          "texto por linha";
+          "texto bruto por linha";
       }
     }
 
@@ -6460,7 +7238,7 @@ async function readNotebookTableImage() {
         ?.length
     ) {
       throw new Error(
-        "Nenhuma célula foi reconhecida."
+        "Nenhuma linha da tabela foi reconhecida."
       );
     }
 
@@ -6484,7 +7262,7 @@ async function readNotebookTableImage() {
 
 
     setNotebookTableStatus(
-      `Tabela reconhecida por ${method}: ${structure.rows.length} linha(s), estrutura ${rowPattern} célula(s) por linha. Revise antes de inserir.`,
+      `Tabela reconhecida por ${method}: estrutura ${rowPattern} célula(s) por linha. A primeira linha também foi analisada individualmente.`,
       "success"
     );
 
