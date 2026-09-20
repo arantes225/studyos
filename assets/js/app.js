@@ -1263,6 +1263,7 @@ function prepararStudyMenu(
         );
       }
     );
+}
 
 
 function prepararMobileMenu() {
