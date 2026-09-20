@@ -1,4 +1,4 @@
-const CACHE_VERSION = "luria-pwa-v1";
+const CACHE_VERSION = "luria-pwa-v2";
 const STATIC_CACHE = CACHE_VERSION + "-static";
 const RUNTIME_CACHE = CACHE_VERSION + "-runtime";
 
@@ -14,7 +14,9 @@ const APP_SHELL = [
   "/assets/js/pwa.js",
   "/assets/img/favicon.png",
   "/assets/img/logo-icone-original.png",
-  "/assets/img/logo-principal.png"
+  "/assets/img/logo-principal.png",
+  "/assets/img/pwa-icon-192.png",
+  "/assets/img/pwa-icon-512.png"
 ];
 
 self.addEventListener("install", (event) => {
