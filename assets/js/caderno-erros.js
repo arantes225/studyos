@@ -376,7 +376,7 @@ async function loadErrorAreas() {
 
   allErrorAreas =
     window.LuriaStudyMode
-      ?.areasFor(
+      ?.generalAreasFor(
         mode
       )
     || [];
@@ -2802,7 +2802,7 @@ function populateLibraryAreas() {
 
   const areas =
     window.LuriaStudyMode
-      ?.areasFor(
+      ?.generalAreasFor(
         mode
       )
     || [];
