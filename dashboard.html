@@ -1274,6 +1274,31 @@
   }
 }
 
+
+/* DASHBOARD V27 — grade única 3x3 */
+.dashboard-summary-grid-hidden {
+  display: none !important;
+}
+
+.dashboard-detail-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dashboard-detail-ccq .dashboard-ccq-head {
+  justify-content: center;
+}
+
+.dashboard-detail-ccq .dashboard-ccq-auto {
+  position: absolute;
+  right: 0;
+}
+
+.dashboard-detail-ccq .dashboard-passive-ccq-stage,
+.dashboard-detail-ccq .dashboard-passive-ccq-text,
+.dashboard-detail-ccq .dashboard-passive-ccq-meta {
+  text-align: center;
+}
+
 </style>
   <link rel="stylesheet" href="resibulando-brand-v5.css?v=5">
   <script defer src="resibulando-brand-v5.js?v=5"></script>
@@ -1294,7 +1319,7 @@
           </div>
         </header>
 
-        <section class="dashboard-summary-grid" aria-label="Resumo do Dashboard">
+        <section class="dashboard-summary-grid dashboard-summary-grid-hidden" aria-label="Resumo do Dashboard" aria-hidden="true">
           <article class="dashboard-summary-card">
             <span>Aulas atrasadas</span>
             <strong id="summary-overdue-lessons">—</strong>
@@ -1343,33 +1368,11 @@
           </article>
         </section>
 
-        <section class="dashboard-detail-grid" aria-label="Indicadores detalhados">
-          <article class="dashboard-detail-card">
-            <span class="dashboard-detail-label">Horas de estudo</span>
-            <strong id="metric-hours" class="dashboard-detail-value">—</strong>
-            <small id="metric-hours-helper" class="dashboard-detail-helper">Nesta semana</small>
-          </article>
-
+        <section class="dashboard-detail-grid" aria-label="Indicadores do Dashboard">
           <article class="dashboard-detail-card">
             <span class="dashboard-detail-label">Aulas atrasadas</span>
             <strong id="metric-overdue-lessons" class="dashboard-detail-value">—</strong>
             <small id="metric-overdue-lessons-helper" class="dashboard-detail-helper">Carregando cronograma...</small>
-          </article>
-
-          <article class="dashboard-detail-card">
-            <span class="dashboard-detail-label">Progresso</span>
-            <strong id="metric-lessons-progress-copy" class="dashboard-detail-value">—</strong>
-            <small class="dashboard-detail-helper">
-              <span id="metric-lessons-progress">—</span>
-              <span aria-hidden="true"> · </span>
-              <span id="metric-lessons-progress-helper">Carregando...</span>
-            </small>
-          </article>
-
-          <article class="dashboard-detail-card">
-            <span class="dashboard-detail-label">Retenção</span>
-            <strong id="metric-retention" class="dashboard-detail-value">—</strong>
-            <small id="metric-retention-helper" class="dashboard-detail-helper">Sem revisões suficientes</small>
           </article>
 
           <article class="dashboard-detail-card">
@@ -1379,9 +1382,58 @@
           </article>
 
           <article class="dashboard-detail-card">
-            <span class="dashboard-detail-label">Caderno de erros</span>
+            <span class="dashboard-detail-label">Caderno de Erros</span>
             <strong id="metric-errors" class="dashboard-detail-value">—</strong>
             <small id="metric-errors-helper" class="dashboard-detail-helper">Carregando...</small>
+          </article>
+
+          <article class="dashboard-detail-card">
+            <span class="dashboard-detail-label">Progresso</span>
+            <strong id="metric-lessons-progress-copy" class="dashboard-detail-value">—</strong>
+            <small id="metric-lessons-progress" class="dashboard-detail-helper">—</small>
+            <span id="metric-lessons-progress-helper" hidden></span>
+          </article>
+
+          <article class="dashboard-detail-card">
+            <span class="dashboard-detail-label">Horas de Estudos</span>
+            <strong id="metric-hours" class="dashboard-detail-value">—</strong>
+            <small id="metric-hours-helper" class="dashboard-detail-helper">Nesta semana</small>
+          </article>
+
+          <article
+            id="dashboard-streak-card"
+            class="dashboard-detail-card streak-card-v22"
+            data-streak-tier="0"
+          >
+            <span class="dashboard-detail-label metric-label">Ofensiva</span>
+
+            <strong class="dashboard-detail-value metric-value">
+              <span data-streak-value>—</span> dias
+            </strong>
+
+            <small class="dashboard-detail-helper metric-helper">
+              Recorde: <span data-longest-streak>—</span> dias
+            </small>
+
+            <div class="streak-flame-wrap" aria-hidden="true">
+              <span class="streak-flame-aura"></span>
+
+              <svg class="streak-flame-svg" viewBox="0 0 64 80">
+                <path
+                  fill="currentColor"
+                  d="M34 3C35 15 26 19 26 29C26 35 30 38 33 40C27 40 22 35 21 29C13 37 8 46 8 56C8 69 18 77 32 77C46 77 56 68 56 54C56 41 48 30 40 22C39 30 36 34 32 36C35 27 43 18 34 3Z"
+                ></path>
+
+                <path
+                  class="streak-flame-core"
+                  d="M33 40C27 47 23 52 23 59C23 67 27 71 33 71C40 71 44 66 44 59C44 52 39 47 35 43C35 48 33 51 30 53C31 48 34 45 33 40Z"
+                ></path>
+              </svg>
+            </div>
+
+            <div id="dashboard-streak-stage" class="streak-stage-label">
+              Comece hoje
+            </div>
           </article>
 
           <article class="dashboard-detail-card">
@@ -1394,7 +1446,7 @@
           <article class="dashboard-detail-card dashboard-detail-ccq">
             <div class="dashboard-ccq-head">
               <span class="dashboard-detail-label">CCQ do dia</span>
-              <span class="dashboard-ccq-auto">30s</span>
+              <span class="dashboard-ccq-auto">15s</span>
             </div>
 
             <div
@@ -1418,49 +1470,10 @@
             </div>
           </article>
 
-          <article
-            id="dashboard-streak-card"
-            class="dashboard-detail-card streak-card-v22"
-            data-streak-tier="0"
-          >
-            <span class="dashboard-detail-label metric-label">Ofensiva</span>
-
-            <strong class="dashboard-detail-value metric-value">
-              🔥 <span data-streak-value>—</span> dias
-            </strong>
-
-            <small class="dashboard-detail-helper metric-helper">
-              Recorde: <span data-longest-streak>—</span> dias
-            </small>
-
-            <div
-              class="streak-flame-wrap"
-              aria-hidden="true"
-            >
-              <span class="streak-flame-aura"></span>
-
-              <svg
-                class="streak-flame-svg"
-                viewBox="0 0 64 80"
-              >
-                <path
-                  fill="currentColor"
-                  d="M34 3C35 15 26 19 26 29C26 35 30 38 33 40C27 40 22 35 21 29C13 37 8 46 8 56C8 69 18 77 32 77C46 77 56 68 56 54C56 41 48 30 40 22C39 30 36 34 32 36C35 27 43 18 34 3Z"
-                ></path>
-
-                <path
-                  class="streak-flame-core"
-                  d="M33 40C27 47 23 52 23 59C23 67 27 71 33 71C40 71 44 66 44 59C44 52 39 47 35 43C35 48 33 51 30 53C31 48 34 45 33 40Z"
-                ></path>
-              </svg>
-            </div>
-
-            <div
-              id="dashboard-streak-stage"
-              class="streak-stage-label"
-            >
-              Comece hoje
-            </div>
+          <article class="dashboard-detail-card">
+            <span class="dashboard-detail-label">Retenção de conteúdo</span>
+            <strong id="metric-retention" class="dashboard-detail-value">—</strong>
+            <small id="metric-retention-helper" class="dashboard-detail-helper">Sem revisões suficientes</small>
           </article>
         </section>
 
@@ -1523,6 +1536,6 @@
   <script src="supabase.js"></script>
   <script src="app.js?v=12.3"></script>
   <script src="study-mode.js?v=12.1"></script>
-  <script src="dashboard.js?v=26.1"></script>
+  <script src="dashboard.js?v=27.0"></script>
 </body>
 </html>
