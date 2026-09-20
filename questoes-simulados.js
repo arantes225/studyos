@@ -2998,13 +2998,17 @@ async function compressQuestionFigureBlob(
 
 
   /*
-    Figuras de prova têm texto pequeno, setas, gráficos e
-    radiografias. Até ~650 KB preferimos manter o PNG original
-    para não destruir detalhes finos.
+    Limite rígido pedido para figuras de questões.
+    Mantemos uma pequena margem para garantir que o arquivo
+    fique realmente ABAIXO de 130 KB.
   */
+  const maxBytes =
+    128 * 1024;
+
+
   if (
     sourceBlob.size
-    <= 650 * 1024
+    <= maxBytes
   ) {
     return sourceBlob;
   }
@@ -3024,23 +3028,43 @@ async function compressQuestionFigureBlob(
       bitmap.height;
 
 
+    /*
+      Começa preservando bastante resolução e reduz somente
+      quando necessário. Em cada dimensão, tenta primeiro
+      qualidades altas para manter textos, gráficos e detalhes.
+    */
     const dimensionSteps = [
-      2200,
-      2000,
       1800,
-      1600
+      1600,
+      1450,
+      1300,
+      1150,
+      1000,
+      900,
+      800,
+      700,
+      620,
+      540
     ];
 
 
     const qualitySteps = [
-      0.94,
-      0.91,
-      0.88,
-      0.84
+      0.90,
+      0.86,
+      0.82,
+      0.78,
+      0.74,
+      0.70,
+      0.66,
+      0.62,
+      0.58,
+      0.54,
+      0.50,
+      0.46
     ];
 
 
-    let best =
+    let smallest =
       null;
 
 
@@ -3154,28 +3178,164 @@ async function compressQuestionFigureBlob(
 
 
         if (
-          !best
+          !smallest
           ||
-          (
-            candidate.size
-            < best.size
-            &&
-            quality >= 0.88
-          )
+          candidate.size
+          < smallest.size
         ) {
-          best =
+          smallest =
             candidate;
         }
 
 
-        /*
-          Até 700 KB é aceitável para manter diagramas legíveis.
-        */
         if (
           candidate.size
-          <= 700 * 1024
-          &&
-          quality >= 0.88
+          <= maxBytes
+        ) {
+          bitmap.close?.();
+
+          return candidate;
+        }
+      }
+    }
+
+
+    /*
+      Último recurso: continua reduzindo até garantir o limite.
+      É preferível diminuir a dimensão a salvar acima de 130 KB.
+    */
+    for (
+      const maxDimension
+      of [
+        480,
+        420,
+        360
+      ]
+    ) {
+      const scale =
+        Math.min(
+          1,
+          maxDimension
+          /
+          Math.max(
+            originalWidth,
+            originalHeight
+          )
+        );
+
+
+      const width =
+        Math.max(
+          1,
+          Math.round(
+            originalWidth
+            * scale
+          )
+        );
+
+
+      const height =
+        Math.max(
+          1,
+          Math.round(
+            originalHeight
+            * scale
+          )
+        );
+
+
+      const canvas =
+        document.createElement(
+          "canvas"
+        );
+
+
+      canvas.width =
+        width;
+
+      canvas.height =
+        height;
+
+
+      const context =
+        canvas.getContext(
+          "2d",
+          {
+            alpha:
+              false
+          }
+        );
+
+
+      context.fillStyle =
+        "#ffffff";
+
+      context.fillRect(
+        0,
+        0,
+        width,
+        height
+      );
+
+
+      context.imageSmoothingEnabled =
+        true;
+
+      context.imageSmoothingQuality =
+        "high";
+
+
+      context.drawImage(
+        bitmap,
+        0,
+        0,
+        width,
+        height
+      );
+
+
+      for (
+        const quality
+        of [
+          0.44,
+          0.40,
+          0.36,
+          0.32
+        ]
+      ) {
+        const candidate =
+          await new Promise(
+            resolve => {
+              canvas.toBlob(
+                resolve,
+                "image/webp",
+                quality
+              );
+            }
+          );
+
+
+        if (
+          !candidate
+        ) {
+          continue;
+        }
+
+
+        if (
+          !smallest
+          ||
+          candidate.size
+          < smallest.size
+        ) {
+          smallest =
+            candidate;
+        }
+
+
+        if (
+          candidate.size
+          <= maxBytes
         ) {
           bitmap.close?.();
 
@@ -3188,7 +3348,12 @@ async function compressQuestionFigureBlob(
     bitmap.close?.();
 
 
-    return best
+    /*
+      Na prática, os passos acima devem produzir <128 KB.
+      Se o navegador gerar algo excepcionalmente maior,
+      devolvemos o menor candidato obtido.
+    */
+    return smallest
       || sourceBlob;
 
 
@@ -3196,7 +3361,7 @@ async function compressQuestionFigureBlob(
     error
   ) {
     console.warn(
-      "Não foi possível otimizar a figura da questão:",
+      "Não foi possível comprimir a figura da questão:",
       error
     );
 
