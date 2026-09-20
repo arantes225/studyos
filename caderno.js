@@ -6575,7 +6575,7 @@ function buildNotebookTableStructureLineByLine(
   grid,
   canvas
 ) {
-  const bands =
+  const originalBands =
     buildNotebookRowBands(
       words,
       grid,
@@ -6584,10 +6584,28 @@ function buildNotebookTableStructureLineByLine(
 
 
   if (
-    !bands.length
+    !originalBands.length
   ) {
     return null;
   }
+
+
+  /*
+    Cada faixa visual é reavaliada linha a linha.
+    Se houver duas linhas com números/colunas independentes,
+    elas viram duas linhas da tabela.
+    Se a segunda linha for só continuação de uma frase longa,
+    continua pertencendo à mesma linha.
+  */
+  const bands =
+    originalBands.flatMap(
+      band =>
+        splitNotebookBandIntoLogicalRows(
+          band,
+          grid,
+          canvas
+        )
+    );
 
 
   const descriptors =
@@ -6601,10 +6619,6 @@ function buildNotebookTableStructureLineByLine(
     );
 
 
-  /*
-    O número de colunas vem da linha mais informativa,
-    nunca da primeira linha.
-  */
   const baseColumns =
     Math.max(
       1,
@@ -6641,10 +6655,6 @@ function buildNotebookTableStructureLineByLine(
             );
 
 
-          /*
-            Se divisórias e texto discordarem, escolhe a fonte
-            que encontrou mais células úteis naquela linha.
-          */
           let cells =
             dividerCells.length
             >= phraseCells.length
@@ -6937,6 +6947,1017 @@ function mergeNotebookOcrWords(
 }
 
 
+
+function notebookDominantRowColor(
+  source,
+  left,
+  top,
+  width,
+  height
+) {
+  const context =
+    source.getContext(
+      "2d",
+      {
+        willReadFrequently:
+          true
+      }
+    );
+
+
+  const image =
+    context.getImageData(
+      left,
+      top,
+      width,
+      height
+    );
+
+
+  const counts =
+    new Map();
+
+
+  const step =
+    Math.max(
+      1,
+      Math.floor(
+        Math.min(
+          width,
+          height
+        ) / 40
+      )
+    );
+
+
+  for (
+    let y = 0;
+    y < height;
+    y += step
+  ) {
+    for (
+      let x = 0;
+      x < width;
+      x += step
+    ) {
+      const offset =
+        (
+          y * width
+          + x
+        ) * 4;
+
+
+      const r =
+        image.data[
+          offset
+        ];
+
+      const g =
+        image.data[
+          offset + 1
+        ];
+
+      const b =
+        image.data[
+          offset + 2
+        ];
+
+
+      const qr =
+        Math.floor(
+          r / 16
+        ) * 16;
+
+      const qg =
+        Math.floor(
+          g / 16
+        ) * 16;
+
+      const qb =
+        Math.floor(
+          b / 16
+        ) * 16;
+
+
+      const key =
+        `${qr},${qg},${qb}`;
+
+
+      counts.set(
+        key,
+        (
+          counts.get(
+            key
+          )
+          || 0
+        ) + 1
+      );
+    }
+  }
+
+
+  const best =
+    Array.from(
+      counts.entries()
+    )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          b[1] - a[1]
+      )[0]?.[0]
+    || "240,240,240";
+
+
+  const [
+    r,
+    g,
+    b
+  ] =
+    best
+      .split(",")
+      .map(Number);
+
+
+  return {
+    r:
+      Math.min(
+        255,
+        r + 8
+      ),
+
+    g:
+      Math.min(
+        255,
+        g + 8
+      ),
+
+    b:
+      Math.min(
+        255,
+        b + 8
+      )
+  };
+}
+
+
+function createNotebookRowOcrCanvas(
+  source,
+  rowTop,
+  rowBottom,
+  grid = null
+) {
+  const vertical =
+    grid?.vertical
+      ?.slice()
+      ?.sort(
+        (
+          a,
+          b
+        ) =>
+          a - b
+      )
+    || [];
+
+
+  const left =
+    vertical.length >= 2
+      ? Math.max(
+          0,
+          Math.floor(
+            vertical[0] + 2
+          )
+        )
+      : 0;
+
+
+  const right =
+    vertical.length >= 2
+      ? Math.min(
+          source.width,
+          Math.ceil(
+            vertical[
+              vertical.length - 1
+            ] - 2
+          )
+        )
+      : source.width;
+
+
+  const top =
+    Math.max(
+      0,
+      Math.floor(
+        rowTop + 2
+      )
+    );
+
+
+  const bottom =
+    Math.min(
+      source.height,
+      Math.ceil(
+        rowBottom - 2
+      )
+    );
+
+
+  const cropWidth =
+    Math.max(
+      1,
+      right - left
+    );
+
+
+  const cropHeight =
+    Math.max(
+      1,
+      bottom - top
+    );
+
+
+  const context =
+    source.getContext(
+      "2d",
+      {
+        willReadFrequently:
+          true
+      }
+    );
+
+
+  const image =
+    context.getImageData(
+      left,
+      top,
+      cropWidth,
+      cropHeight
+    );
+
+
+  const background =
+    notebookDominantRowColor(
+      source,
+      left,
+      top,
+      cropWidth,
+      cropHeight
+    );
+
+
+  const binary =
+    document.createElement(
+      "canvas"
+    );
+
+
+  binary.width =
+    cropWidth;
+
+  binary.height =
+    cropHeight;
+
+
+  const binaryContext =
+    binary.getContext(
+      "2d",
+      {
+        alpha:
+          false,
+        willReadFrequently:
+          true
+      }
+    );
+
+
+  const output =
+    binaryContext.createImageData(
+      cropWidth,
+      cropHeight
+    );
+
+
+  for (
+    let offset = 0;
+    offset < image.data.length;
+    offset += 4
+  ) {
+    const r =
+      image.data[
+        offset
+      ];
+
+    const g =
+      image.data[
+        offset + 1
+      ];
+
+    const b =
+      image.data[
+        offset + 2
+      ];
+
+
+    const distance =
+      Math.sqrt(
+        (
+          r - background.r
+        ) ** 2
+        +
+        (
+          g - background.g
+        ) ** 2
+        +
+        (
+          b - background.b
+        ) ** 2
+      );
+
+
+    /*
+      O fundo dominante vira branco.
+      Tudo que destoa do fundo vira tinta preta.
+      Isso funciona tanto para:
+      - texto preto em fundo branco/cinza;
+      - texto branco em cabeçalho azul.
+    */
+    const ink =
+      distance >= 28;
+
+
+    const value =
+      ink
+        ? 0
+        : 255;
+
+
+    output.data[
+      offset
+    ] =
+      value;
+
+    output.data[
+      offset + 1
+    ] =
+      value;
+
+    output.data[
+      offset + 2
+    ] =
+      value;
+
+    output.data[
+      offset + 3
+    ] =
+      255;
+  }
+
+
+  binaryContext.putImageData(
+    output,
+    0,
+    0
+  );
+
+
+  /*
+    Apaga linhas verticais conhecidas para o OCR não
+    transformá-las em I, l, | etc.
+  */
+  if (
+    vertical.length
+  ) {
+    binaryContext.fillStyle =
+      "#ffffff";
+
+
+    for (
+      const x
+      of vertical
+    ) {
+      const localX =
+        x - left;
+
+
+      if (
+        localX > 0
+        &&
+        localX < cropWidth
+      ) {
+        binaryContext.fillRect(
+          Math.max(
+            0,
+            localX - 3
+          ),
+          0,
+          7,
+          cropHeight
+        );
+      }
+    }
+  }
+
+
+  const targetHeight =
+    Math.max(
+      72,
+      Math.min(
+        120,
+        cropHeight * 2.2
+      )
+    );
+
+
+  const scale =
+    Math.max(
+      1,
+      targetHeight
+      / Math.max(
+          1,
+          cropHeight
+        )
+    );
+
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+
+  canvas.width =
+    Math.max(
+      1,
+      Math.round(
+        cropWidth * scale
+      )
+    );
+
+
+  canvas.height =
+    Math.max(
+      1,
+      Math.round(
+        cropHeight * scale
+      )
+    );
+
+
+  const canvasContext =
+    canvas.getContext(
+      "2d",
+      {
+        alpha:
+          false,
+        willReadFrequently:
+          true
+      }
+    );
+
+
+  canvasContext.fillStyle =
+    "#ffffff";
+
+
+  canvasContext.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  canvasContext.imageSmoothingEnabled =
+    false;
+
+
+  canvasContext.drawImage(
+    binary,
+    0,
+    0,
+    cropWidth,
+    cropHeight,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  return {
+    canvas,
+    left,
+    top,
+    scale
+  };
+}
+
+
+function notebookGridRowRanges(
+  grid,
+  canvas
+) {
+  const horizontal =
+    grid?.horizontal
+      ?.slice()
+      ?.sort(
+        (
+          a,
+          b
+        ) =>
+          a - b
+      )
+    || [];
+
+
+  if (
+    horizontal.length < 2
+  ) {
+    return [];
+  }
+
+
+  const ranges =
+    [];
+
+
+  for (
+    let index = 0;
+    index < horizontal.length - 1;
+    index += 1
+  ) {
+    const top =
+      horizontal[index];
+
+    const bottom =
+      horizontal[
+        index + 1
+      ];
+
+
+    if (
+      bottom - top >= 5
+    ) {
+      ranges.push({
+        top,
+        bottom
+      });
+    }
+  }
+
+
+  return ranges;
+}
+
+
+async function createNotebookTableWorker() {
+  if (
+    !window.Tesseract
+      ?.createWorker
+  ) {
+    return null;
+  }
+
+
+  try {
+    const worker =
+      await window.Tesseract
+        .createWorker(
+          "por"
+        );
+
+
+    try {
+      await worker
+        .setParameters({
+          tessedit_pageseg_mode:
+            "6",
+
+          preserve_interword_spaces:
+            "1"
+        });
+    } catch {}
+
+
+    return worker;
+
+  } catch (
+    error
+  ) {
+    console.warn(
+      "Worker OCR por linha indisponível:",
+      error
+    );
+
+
+    return null;
+  }
+}
+
+
+function notebookWordsBackToSource(
+  words,
+  mapping
+) {
+  return (
+    words
+    || []
+  )
+    .filter(
+      word =>
+        word?.bbox
+        &&
+        String(
+          word.text
+          || ""
+        ).trim()
+    )
+    .map(
+      word => {
+        const bbox =
+          word.bbox;
+
+
+        return {
+          ...word,
+
+          bbox: {
+            x0:
+              mapping.left
+              +
+              Number(
+                bbox.x0
+              )
+              / mapping.scale,
+
+            y0:
+              mapping.top
+              +
+              Number(
+                bbox.y0
+              )
+              / mapping.scale,
+
+            x1:
+              mapping.left
+              +
+              Number(
+                bbox.x1
+              )
+              / mapping.scale,
+
+            y1:
+              mapping.top
+              +
+              Number(
+                bbox.y1
+              )
+              / mapping.scale
+          }
+        };
+      }
+    );
+}
+
+
+async function recognizeNotebookRowsIndividually(
+  source,
+  grid
+) {
+  const ranges =
+    notebookGridRowRanges(
+      grid,
+      source
+    );
+
+
+  if (
+    !ranges.length
+  ) {
+    return [];
+  }
+
+
+  const worker =
+    await createNotebookTableWorker();
+
+
+  const allWords =
+    [];
+
+
+  try {
+    for (
+      let index = 0;
+      index < ranges.length;
+      index += 1
+    ) {
+      const range =
+        ranges[index];
+
+
+      setNotebookTableStatus(
+        `Lendo linha ${index + 1} de ${ranges.length}...`
+      );
+
+
+      const prepared =
+        createNotebookRowOcrCanvas(
+          source,
+          range.top,
+          range.bottom,
+          grid
+        );
+
+
+      let result;
+
+
+      if (
+        worker
+      ) {
+        result =
+          await worker
+            .recognize(
+              prepared.canvas
+            );
+
+      } else {
+        result =
+          await window.Tesseract
+            .recognize(
+              prepared.canvas,
+              "por"
+            );
+      }
+
+
+      const mapped =
+        notebookWordsBackToSource(
+          result
+            ?.data
+            ?.words
+          || [],
+          prepared
+        );
+
+
+      allWords.push(
+        ...mapped
+      );
+    }
+
+
+  } finally {
+    if (
+      worker
+    ) {
+      try {
+        await worker
+          .terminate();
+      } catch {}
+    }
+  }
+
+
+  return allWords;
+}
+
+
+function notebookLineHasIndependentColumnEvidence(
+  line,
+  grid,
+  canvas
+) {
+  const segments =
+    notebookPhraseSegments(
+      line.words
+    );
+
+
+  if (
+    segments.length >= 2
+  ) {
+    return true;
+  }
+
+
+  const vertical =
+    grid?.vertical
+      ?.slice()
+      ?.sort(
+        (
+          a,
+          b
+        ) =>
+          a - b
+      )
+    || [];
+
+
+  if (
+    vertical.length >= 3
+  ) {
+    const occupied =
+      new Set();
+
+
+    line.words
+      .forEach(
+        word => {
+          for (
+            let index = 0;
+            index < vertical.length - 1;
+            index += 1
+          ) {
+            if (
+              word.x
+              > vertical[index]
+              &&
+              word.x
+              < vertical[
+                  index + 1
+                ]
+            ) {
+              occupied.add(
+                index
+              );
+
+              break;
+            }
+          }
+        }
+      );
+
+
+    if (
+      occupied.size >= 2
+    ) {
+      return true;
+    }
+  }
+
+
+  const isolatedNumbers =
+    line.words.filter(
+      word =>
+        /^[-+]?\d+(?:[.,]\d+)?%?$/
+          .test(
+            String(
+              word.text
+              || ""
+            )
+              .trim()
+          )
+    );
+
+
+  return isolatedNumbers.length >= 2;
+}
+
+
+function splitNotebookBandIntoLogicalRows(
+  band,
+  grid,
+  canvas
+) {
+  const lines =
+    groupNotebookWordsIntoVisualLines(
+      band.words
+    );
+
+
+  if (
+    lines.length <= 1
+  ) {
+    return [
+      band
+    ];
+  }
+
+
+  const groups =
+    [];
+
+
+  let current =
+    [];
+
+
+  let currentHasAnchor =
+    false;
+
+
+  for (
+    const line
+    of lines
+  ) {
+    const independent =
+      notebookLineHasIndependentColumnEvidence(
+        line,
+        grid,
+        canvas
+      );
+
+
+    if (
+      independent
+      &&
+      current.length
+      &&
+      currentHasAnchor
+    ) {
+      groups.push(
+        current
+      );
+
+
+      current =
+        [];
+      currentHasAnchor =
+        false;
+    }
+
+
+    current.push(
+      line
+    );
+
+
+    if (
+      independent
+    ) {
+      currentHasAnchor =
+        true;
+    }
+  }
+
+
+  if (
+    current.length
+  ) {
+    groups.push(
+      current
+    );
+  }
+
+
+  /*
+    Se nenhum grupo ganhou evidência de colunas independentes,
+    trata a faixa inteira como uma única linha com texto quebrado.
+  */
+  const evidenceCount =
+    groups.filter(
+      group =>
+        group.some(
+          line =>
+            notebookLineHasIndependentColumnEvidence(
+              line,
+              grid,
+              canvas
+            )
+        )
+    ).length;
+
+
+  if (
+    evidenceCount <= 1
+  ) {
+    return [
+      band
+    ];
+  }
+
+
+  return groups.map(
+    group => ({
+      top:
+        Math.min(
+          ...group.map(
+            line =>
+              line.top
+          )
+        ),
+
+      bottom:
+        Math.max(
+          ...group.map(
+            line =>
+              line.bottom
+          )
+        ),
+
+      words:
+        group.flatMap(
+          line =>
+            line.words
+        )
+    })
+  );
+}
+
+
 function notebookOcrScore(
   result
 ) {
@@ -6979,6 +8000,7 @@ async function readNotebookTableImage() {
     document.getElementById(
       "notebook-table-image"
     );
+
 
   const file =
     input?.files?.[0]
@@ -7023,7 +8045,7 @@ async function readNotebookTableImage() {
 
   try {
     setNotebookTableStatus(
-      "Lendo cada linha separadamente..."
+      "Detectando as linhas reais da tabela..."
     );
 
 
@@ -7039,56 +8061,95 @@ async function readNotebookTableImage() {
       );
 
 
-    const ocrCanvas =
-      createNotebookTableOcrCanvas(
-        sourceCanvas,
-        grid
-      );
+    let words =
+      [];
+
+
+    let method =
+      "";
 
 
     /*
-      Duas leituras SEMPRE:
-      - contraste: melhora números e texto pequeno;
-      - original: preserva cabeçalhos coloridos e primeira linha.
-
-      Depois mesclamos as palavras por posição.
+      CAMINHO PRINCIPAL:
+      se há linhas horizontais, cada linha da imagem passa
+      por OCR separadamente. O fundo dominante é removido,
+      inclusive em cabeçalhos azuis com texto branco.
     */
-    const enhancedResult =
-      await window.Tesseract
-        .recognize(
-          ocrCanvas,
-          "por"
-        );
-
-
-    setNotebookTableStatus(
-      "Confirmando cabeçalhos, frases e números da imagem original..."
-    );
-
-
-    const originalResult =
-      await window.Tesseract
-        .recognize(
+    if (
+      grid?.horizontal
+        ?.length >= 2
+    ) {
+      words =
+        await recognizeNotebookRowsIndividually(
           sourceCanvas,
-          "por"
+          grid
         );
 
 
-    const words =
-      mergeNotebookOcrWords(
-        enhancedResult
-          ?.data
-          ?.words
-        || [],
-        originalResult
-          ?.data
-          ?.words
-        || []
+      method =
+        "OCR individual por linha";
+    }
+
+
+    /*
+      Fallback para tabela sem grade horizontal confiável.
+      Mantém a leitura global antiga, mas a construção ainda
+      usa frases e números soltos como evidência de divisão.
+    */
+    if (
+      !words.length
+    ) {
+      setNotebookTableStatus(
+        "Sem grade horizontal confiável. Lendo texto e posições..."
       );
 
 
+      const ocrCanvas =
+        createNotebookTableOcrCanvas(
+          sourceCanvas,
+          grid
+        );
+
+
+      const [
+        enhancedResult,
+        originalResult
+      ] =
+        await Promise.all([
+          window.Tesseract
+            .recognize(
+              ocrCanvas,
+              "por"
+            ),
+
+          window.Tesseract
+            .recognize(
+              sourceCanvas,
+              "por"
+            )
+        ]);
+
+
+      words =
+        mergeNotebookOcrWords(
+          enhancedResult
+            ?.data
+            ?.words
+          || [],
+          originalResult
+            ?.data
+            ?.words
+          || []
+        );
+
+
+      method =
+        "OCR global + posições";
+    }
+
+
     setNotebookTableStatus(
-      "Construindo a tabela linha por linha e usando frases/números para localizar divisões..."
+      "Reconstruindo cada linha com divisórias, frases e números isolados..."
     );
 
 
@@ -7100,137 +8161,6 @@ async function readNotebookTableImage() {
       );
 
 
-    let method =
-      grid
-        ? "linhas + divisórias + texto"
-        : "linhas + frases/números";
-
-
-    /*
-      Fallback textual final. Ainda preserva linha única
-      como célula mesclada quando outras linhas têm colunas.
-    */
-    if (
-      !structure
-      ||
-      !structure.rows
-        ?.length
-    ) {
-      const rawText =
-        [
-          originalResult
-            ?.data
-            ?.text
-          || "",
-          enhancedResult
-            ?.data
-            ?.text
-          || ""
-        ]
-          .sort(
-            (
-              a,
-              b
-            ) =>
-              b.length - a.length
-          )[0];
-
-
-      const rawRows =
-        String(
-          rawText
-          || ""
-        )
-          .split(
-            /\n+/
-          )
-          .map(
-            line =>
-              line.trim()
-          )
-          .filter(
-            Boolean
-          )
-          .map(
-            line =>
-              line
-                .split(
-                  /\t+|\s{3,}/
-                )
-                .map(
-                  cell =>
-                    cell.trim()
-                )
-                .filter(
-                  Boolean
-                )
-          )
-          .filter(
-            row =>
-              row.length
-          );
-
-
-      if (
-        rawRows.length
-      ) {
-        const baseColumns =
-          Math.max(
-            1,
-            ...rawRows.map(
-              row =>
-                row.length
-            )
-          );
-
-
-        structure = {
-          baseColumns,
-
-          rows:
-            rawRows.map(
-              (
-                row,
-                rowIndex
-              ) => ({
-                cells:
-                  row.length === 1
-                  && baseColumns > 1
-                    ? [
-                        {
-                          text:
-                            row[0],
-
-                          colspan:
-                            baseColumns,
-
-                          header:
-                            rowIndex === 0
-                        }
-                      ]
-                    : row.map(
-                        cell => ({
-                          text:
-                            cell,
-
-                          colspan:
-                            1,
-
-                          header:
-                            rowIndex === 0
-                        })
-                      )
-              })
-            )
-        };
-
-
-        method =
-          "texto bruto por linha";
-      }
-    }
-
-
     if (
       !structure
       ||
@@ -7238,7 +8168,7 @@ async function readNotebookTableImage() {
         ?.length
     ) {
       throw new Error(
-        "Nenhuma linha da tabela foi reconhecida."
+        "Não consegui reconstruir a estrutura da tabela."
       );
     }
 
@@ -7262,7 +8192,7 @@ async function readNotebookTableImage() {
 
 
     setNotebookTableStatus(
-      `Tabela reconhecida por ${method}: estrutura ${rowPattern} célula(s) por linha. A primeira linha também foi analisada individualmente.`,
+      `Tabela reconhecida por ${method}: ${rowPattern} célula(s) por linha. Frases e números isolados foram usados para confirmar as divisões.`,
       "success"
     );
 
