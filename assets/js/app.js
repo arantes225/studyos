@@ -7,7 +7,7 @@
   style.id = "luria-unified-mobile-sidebar";
   style.textContent = `
     @media (max-width: 980px) {
-      body .sidebar {
+      html.pwa-standalone body #sidebar.sidebar {
         position: fixed !important;
         left: 0 !important;
         top: 0 !important;
@@ -29,11 +29,11 @@
         z-index: 30 !important;
       }
 
-      body.sidebar-open .sidebar {
+      html.pwa-standalone body.sidebar-open #sidebar.sidebar {
         transform: translateX(0) !important;
       }
 
-      body .sidebar-top {
+      html.pwa-standalone body #sidebar.sidebar .sidebar-top {
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
@@ -42,7 +42,7 @@
         margin-bottom: 24px !important;
       }
 
-      body .brand {
+      html.pwa-standalone body #sidebar.sidebar .brand {
         display: flex !important;
         align-items: center !important;
         gap: 12px !important;
@@ -50,32 +50,32 @@
         overflow: visible !important;
       }
 
-      body .brand-logo-single,
-      body .luria-theme-logo,
-      body .brand-logo-stack {
+      html.pwa-standalone body #sidebar.sidebar .brand-logo-single,
+      html.pwa-standalone body #sidebar.sidebar .luria-theme-logo,
+      html.pwa-standalone body #sidebar.sidebar .brand-logo-stack {
         width: 54px !important;
         height: 54px !important;
         flex: 0 0 54px !important;
       }
 
-      body .brand-copy {
+      html.pwa-standalone body #sidebar.sidebar .brand-copy {
         display: grid !important;
         min-width: 0 !important;
       }
 
-      body .brand-copy strong {
+      html.pwa-standalone body #sidebar.sidebar .brand-copy strong {
         font-size: 17px !important;
         line-height: normal !important;
       }
 
-      body .brand-copy small {
+      html.pwa-standalone body #sidebar.sidebar .brand-copy small {
         display: block !important;
         margin-top: 0 !important;
         font-size: 11px !important;
         line-height: normal !important;
       }
 
-      body .sidebar-close {
+      html.pwa-standalone body #sidebar.sidebar .sidebar-close {
         display: inline-grid !important;
         place-items: center !important;
         width: auto !important;
@@ -89,13 +89,13 @@
         line-height: 1 !important;
       }
 
-      body .nav {
+      html.pwa-standalone body #sidebar.sidebar .nav {
         display: grid !important;
         gap: 6px !important;
       }
 
-      body .nav-link,
-      body .nav-group-label {
+      html.pwa-standalone body #sidebar.sidebar .nav-link,
+      html.pwa-standalone body #sidebar.sidebar .nav-group-label {
         min-height: 44px !important;
         display: flex !important;
         align-items: center !important;
@@ -106,27 +106,27 @@
         font-weight: 650 !important;
       }
 
-      body .nav-icon {
+      html.pwa-standalone body #sidebar.sidebar .nav-icon {
         width: 20px !important;
         font-size: 17px !important;
       }
 
-      body .nav-group {
+      html.pwa-standalone body #sidebar.sidebar .nav-group {
         margin: 2px 0 !important;
       }
 
-      body .nav-group-chevron {
+      html.pwa-standalone body #sidebar.sidebar .nav-group-chevron {
         font-size: 14px !important;
       }
 
-      body .nav-submenu {
+      html.pwa-standalone body #sidebar.sidebar .nav-submenu {
         display: grid !important;
         gap: 3px !important;
         margin: 2px 0 7px 42px !important;
         padding: 0 !important;
       }
 
-      body .nav-sublink {
+      html.pwa-standalone body #sidebar.sidebar .nav-sublink {
         min-height: 36px !important;
         display: flex !important;
         align-items: center !important;
@@ -135,18 +135,18 @@
         font-size: 13px !important;
       }
 
-      body .sidebar-footer {
+      html.pwa-standalone body #sidebar.sidebar .sidebar-footer {
         display: grid !important;
         gap: 12px !important;
         margin-top: auto !important;
         padding-top: 20px !important;
       }
 
-      body .streak-mini {
+      html.pwa-standalone body #sidebar.sidebar .streak-mini {
         display: flex !important;
       }
 
-      body .user-mini {
+      html.pwa-standalone body #sidebar.sidebar .user-mini {
         display: flex !important;
         align-items: center !important;
         gap: 11px !important;
@@ -157,31 +157,31 @@
         background: var(--surface) !important;
       }
 
-      body .user-avatar {
+      html.pwa-standalone body #sidebar.sidebar .user-avatar {
         width: 34px !important;
         height: 34px !important;
         flex: 0 0 34px !important;
       }
 
-      body .user-copy strong {
+      html.pwa-standalone body #sidebar.sidebar .user-copy strong {
         font-size: 13px !important;
       }
 
-      body .user-copy small {
+      html.pwa-standalone body #sidebar.sidebar .user-copy small {
         display: block !important;
         margin-top: 2px !important;
         font-size: 11px !important;
         line-height: normal !important;
       }
 
-      body .logout-button {
+      html.pwa-standalone body #sidebar.sidebar .logout-button {
         min-height: 40px !important;
         border-radius: 10px !important;
         font-size: 13px !important;
         font-weight: 700 !important;
       }
 
-      body .sidebar-backdrop {
+      html.pwa-standalone body .sidebar-backdrop {
         background: rgba(0, 0, 0, .36) !important;
         backdrop-filter: none !important;
       }
