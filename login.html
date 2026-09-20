@@ -1,13 +1,111 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-  <meta charset="utf-8">
-  <meta name="robots" content="noindex">
-  <meta http-equiv="refresh" content="0;url=/login/">
-  <title>Redirecionando...</title>
-  <script>
-    location.replace("/login/" + location.search + location.hash);
-  </script>
+  <base href="/">
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Entrar · LURIA</title>
+
+  <link
+    rel="icon"
+    type="image/png"
+    href="assets/img/favicon.png?v=luria2"
+  >
+
+  <link
+    rel="stylesheet"
+    href="assets/css/style.css?v=luria-palette-11"
+  >
+  <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
+  <script defer src="assets/js/luria-brand-v5.js?v=8"></script>
+  <link rel="canonical" href="/login/">
+  <script>(function(){try{if(location.pathname.endsWith("/login.html"))history.replaceState(null,"","/login/"+location.search+location.hash);}catch(e){}})();</script>
 </head>
-<body></body>
+
+<body class="auth-page">
+
+  <main class="auth-card">
+
+    <div class="auth-brand">
+
+      <img
+        class="auth-brand-logo"
+        src="assets/img/logo-principal.png?v=luria2"
+        alt="Logo LURIA"
+      >
+
+      <div class="auth-brand-copy">
+        <h1>LURIA</h1>
+        <p>Aprenda. Conecte. Consolide.</p>
+      </div>
+
+    </div>
+
+    <form
+      id="login-form"
+      class="auth-form"
+    >
+
+      <label>
+        E-mail
+
+        <input
+          id="email"
+          type="email"
+          autocomplete="email"
+          placeholder="voce@email.com"
+          required
+        >
+      </label>
+
+      <label>
+        Senha
+
+        <input
+          id="senha"
+          type="password"
+          autocomplete="current-password"
+          placeholder="Sua senha"
+          required
+        >
+      </label>
+
+      <button
+        id="entrar"
+        class="button primary"
+        type="submit"
+      >
+        Entrar
+      </button>
+
+      <button
+        id="criar-conta"
+        class="button secondary"
+        type="button"
+      >
+        Criar conta
+      </button>
+
+      <p
+        id="mensagem"
+        class="auth-message"
+        aria-live="polite"
+      ></p>
+
+    </form>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/supabase.js"></script>
+  <script src="assets/js/auth.js"></script>
+
+  <script defer src="assets/js/pwa.js?v=3"></script>
+</body>
 </html>
