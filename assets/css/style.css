@@ -2469,3 +2469,70 @@ input[type="file"]:focus-visible::file-selector-button {
   border: 0 !important;
   box-shadow: none !important;
 }
+
+
+/* =========================================================
+   LURIA — PATTERN DE FUNDO EXPERIMENTAL
+   Login + Ambientação
+   ========================================================= */
+
+.auth-page,
+body[data-page="ambientacao"] {
+  position: relative;
+  isolation: isolate;
+}
+
+.auth-page::before,
+body[data-page="ambientacao"]::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("../img/logo-icone-original.png?v=pattern1");
+  background-repeat: repeat;
+  background-position: 22px 18px;
+  opacity: .028;
+}
+
+.auth-page::before {
+  background-size: 132px 132px;
+  transform: rotate(-8deg) scale(1.08);
+  transform-origin: center;
+  opacity: .035;
+}
+
+body[data-page="ambientacao"]::before {
+  background-size: 168px 168px;
+  background-position: 34px 30px;
+  opacity: .022;
+}
+
+.auth-page .auth-card,
+body[data-page="ambientacao"] .app-shell {
+  position: relative;
+  z-index: 1;
+}
+
+/* No escuro e no tema rosa, o pattern acompanha a identidade. */
+:root[data-theme="dark"] body[data-page="ambientacao"]::before {
+  background-image: url("../img/logo-icone-azul-claro.png?v=pattern1");
+  opacity: .032;
+}
+
+:root[data-theme="leila-mood"] body[data-page="ambientacao"]::before {
+  background-image: url("../img/logo-icone-rosa-escuro.png?v=pattern1");
+  opacity: .026;
+}
+
+@media (max-width: 760px) {
+  .auth-page::before {
+    background-size: 108px 108px;
+    opacity: .03;
+  }
+
+  body[data-page="ambientacao"]::before {
+    background-size: 138px 138px;
+    opacity: .018;
+  }
+}
