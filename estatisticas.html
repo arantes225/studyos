@@ -272,12 +272,12 @@
               </article>
 
               <article class="stats-block">
-                <div class="stats-section-head"><div><h3>Aproveitamento por área</h3><p>Taxa de acerto nas áreas com questões respondidas.</p></div></div>
+                <div class="stats-section-head"><div><h3>Erros por área</h3><p>Distribuição dos erros pelas áreas registradas.</p></div></div>
                 <div class="chart-box compact"><canvas id="chart-question-area"></canvas></div>
               </article>
 
               <article class="stats-block wide">
-                <div class="stats-section-head"><div><h3>Mapa de calor por área</h3><p>Aproveitamento por área e dia da semana; a intensidade indica volume de questões.</p></div></div>
+                <div class="stats-section-head"><div><h3>Mapa de erros por área</h3><p>Erros por área e dia da semana; a intensidade indica onde eles mais se concentram.</p></div></div>
                 <div id="question-area-week-heatmap" class="stats-heatmap"></div>
               </article>
 
@@ -287,7 +287,7 @@
               </article>
 
               <article class="stats-block wide">
-                <div class="stats-section-head"><div><h3>Desempenho por área</h3><p>Volume, acertos, erros e aproveitamento.</p></div></div>
+                <div class="stats-section-head"><div><h3>Detalhamento dos erros por área</h3><p>Quantidade de erros e quantos foram enviados ao Caderno de Erros.</p></div></div>
                 <div id="question-area-table" class="stats-table-wrap"></div>
               </article>
 
@@ -297,7 +297,7 @@
               </article>
 
               <article class="stats-block wide">
-                <div class="stats-section-head"><div><h3>Insights de questões</h3><p>Pontos fortes, áreas frágeis e mudanças no desempenho.</p></div></div>
+                <div class="stats-section-head"><div><h3>Insights de questões</h3><p>Concentração de erros, simulados e mudanças no desempenho.</p></div></div>
                 <div id="question-insights"></div>
               </article>
             </div>
@@ -311,6 +311,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <script src="supabase.js"></script>
   <script src="app.js?v=12.7"></script>
-  <script src="estatisticas.js?v=19.0"></script>
+  <script src="estatisticas.js?v=19.1"></script>
 </body>
 </html>
