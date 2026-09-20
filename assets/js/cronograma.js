@@ -3864,12 +3864,12 @@ async function loadSchedulePreferences() {
     : [];
 
   scheduleState.theoryStudyWeekdays = (configuredDays.length ? configuredDays : [1,3,5]).slice(0,3);
-  window.ResibulandoStudyMode?.apply(scheduleState.studyMode);
+  window.LuriaStudyMode?.apply(scheduleState.studyMode);
   renderBaseSchedulePreview();
 }
 
 function currentBaseScheduleRows() {
-  const data = window.RESIBULANDO_BASE_SCHEDULES || {};
+  const data = window.LURIA_BASE_SCHEDULES || {};
   return data[scheduleState.studyMode] || data.medicine || [];
 }
 
@@ -4344,8 +4344,8 @@ async function applyBaseSchedule() {
 }
 
 
-window.applyResibulandoGenericSchedule =
-  async function applyResibulandoGenericScheduleSafe() {
+window.applyLuriaGenericSchedule =
+  async function applyLuriaGenericScheduleSafe() {
     try {
       await applyBaseSchedule();
     } catch (error) {
@@ -4385,7 +4385,7 @@ function wireBaseSchedule() {
 
 
   window.addEventListener(
-    "resibulando:study-mode",
+    "luria:study-mode",
     (event) => {
       scheduleState.studyMode =
         event.detail?.mode
@@ -6647,7 +6647,7 @@ async function reorganizeAdvancedLessons() {
 
   const confirmed =
     window.confirm(
-      "Adiantar o cronograma agora? O Resibulando compactará as aulas futuras para frente, usando no máximo 3 dias de aula por semana e respeitando o máximo diário configurado."
+      "Adiantar o cronograma agora? O Luria compactará as aulas futuras para frente, usando no máximo 3 dias de aula por semana e respeitando o máximo diário configurado."
     );
 
   if (!confirmed) {
