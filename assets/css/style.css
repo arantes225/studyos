@@ -904,7 +904,7 @@ body.app-ready .app-shell .main { opacity: 1; }
 
 
 /* =========================================================
-   RESIBULANDO — BRANDING FINAL
+   LURIA — BRANDING FINAL
    ========================================================= */
 
 /* ---------------------------------------------------------
@@ -1105,7 +1105,7 @@ body.app-ready .app-shell .main { opacity: 1; }
 
 
 /* =========================================================
-   RESIBULANDO — HOTFIX DE LOGO
+   LURIA — HOTFIX DE LOGO
    ========================================================= */
 
 .brand-logo-single {
@@ -1191,7 +1191,7 @@ body.sidebar-collapsed .nav-group-label .nav-group-chevron,
 body.sidebar-collapsed .nav-submenu,
 body.sidebar-collapsed .sidebar-footer { display:none !important; }
 body.sidebar-collapsed .brand-logo-single,
-body.sidebar-collapsed .resibulando-theme-logo { width:52px !important; height:52px !important; flex-basis:52px !important; }
+body.sidebar-collapsed .luria-theme-logo { width:52px !important; height:52px !important; flex-basis:52px !important; }
 body.sidebar-collapsed .nav-link,
 body.sidebar-collapsed .nav-group-label { justify-content:center; padding-inline:0; }
 body.sidebar-collapsed .nav-icon { font-size:18px; }
