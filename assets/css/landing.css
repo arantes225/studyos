@@ -1,14 +1,14 @@
 :root {
-  --landing-bg: #F8FAFC;
+  --landing-bg: #F7F9FC;
   --landing-surface: #FFFFFF;
-  --landing-surface-2: #EEF4FB;
-  --landing-text: #123055;
-  --landing-muted: #64748B;
-  --landing-border: #DAE6F4;
-  --landing-accent: #2563EB;
-  --landing-accent-strong: #1749B3;
-  --landing-accent-soft: #EAF2FF;
-  --landing-dark: #0B1F3B;
+  --landing-surface-2: #F1F5F9;
+  --landing-text: #10243E;
+  --landing-muted: #5F6F82;
+  --landing-border: #D9E2EC;
+  --landing-accent: #184888;
+  --landing-accent-strong: #123A70;
+  --landing-accent-soft: #E7EEF7;
+  --landing-dark: #0B2445;
   --landing-gold: #D4AF37;
   --landing-gold-soft: #FFF7D6;
   --landing-success: #16815C;
@@ -28,7 +28,7 @@ body {
   min-width: 320px;
   color: var(--landing-text);
   background:
-    radial-gradient(circle at 70% 4%, rgba(37, 99, 235, .08), transparent 28rem),
+    radial-gradient(circle at 70% 4%, rgba(24, 72, 136, .08), transparent 28rem),
     var(--landing-bg);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -1492,8 +1492,8 @@ optgroup {
 
 /* LURIA — HIERARQUIA DE BOTÕES DA LANDING */
 :root {
-  --landing-button-primary: #2563EB;
-  --landing-button-primary-hover: #1D4ED8;
+  --landing-button-primary: #184888;
+  --landing-button-primary-hover: #123A70;
   --landing-button-secondary-bg: #FFFFFF;
   --landing-button-secondary-border: #184888;
   --landing-button-secondary-text: #184888;
@@ -1515,4 +1515,35 @@ optgroup {
   background: var(--landing-button-secondary-bg) !important;
   border-color: var(--landing-button-secondary-border) !important;
   color: var(--landing-button-secondary-text) !important;
+}
+
+
+/* LURIA — landing alinhada ao tema escuro global */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --landing-bg: #07111F;
+    --landing-surface: #0D1B30;
+    --landing-surface-2: #13233A;
+    --landing-text: #F4F8FF;
+    --landing-muted: #A8B8CD;
+    --landing-border: #20344F;
+    --landing-accent: #4F7FB8;
+    --landing-accent-strong: #7FA6D1;
+    --landing-accent-soft: #142A44;
+    --landing-dark: #081426;
+    --landing-gold-soft: #3A321A;
+    --landing-success: #76D9B0;
+    --landing-shadow: 0 24px 70px rgba(0, 0, 0, .28);
+  }
+
+  body {
+    background:
+      radial-gradient(circle at 70% 4%, rgba(79, 127, 184, .12), transparent 28rem),
+      var(--landing-bg);
+  }
+
+  .landing-header {
+    border-bottom-color: rgba(32, 52, 79, .82);
+    background: rgba(7, 17, 31, .88);
+  }
 }
