@@ -900,3 +900,337 @@
     max-height: 220px !important;
   }
 }
+
+
+/* =========================================================
+   PWA MOBILE v4 — Estatísticas no padrão visual do Dashboard
+   Mesma hierarquia: topo simples, painéis cheios, cards centrais.
+   ========================================================= */
+@media (max-width: 760px) {
+  .pwa-standalone body[data-page="estatisticas"] .main {
+    padding:
+      max(14px, env(safe-area-inset-top))
+      16px
+      calc(36px + env(safe-area-inset-bottom))
+      16px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .topbar {
+    min-height: 48px !important;
+    margin-bottom: 18px !important;
+    gap: 12px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .menu-open {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 11px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .page-heading h1 {
+    font-size: 24px !important;
+    line-height: 1.15 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .page-heading .eyebrow {
+    font-size: 10px !important;
+    margin-bottom: 3px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-page {
+    display: grid !important;
+    gap: 16px !important;
+    padding-bottom: 0 !important;
+  }
+
+  /* O título já existe no topbar; no mobile o primeiro bloco vira apenas controles. */
+  .pwa-standalone body[data-page="estatisticas"] .stats-hero {
+    display: block !important;
+    padding: 14px !important;
+    border-radius: 16px !important;
+    background: var(--surface) !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-hero > div:first-child {
+    display: none !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-range {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-range button {
+    min-height: 44px !important;
+    padding: 0 10px !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 11px !important;
+    background: var(--surface-2) !important;
+    color: var(--muted) !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    box-shadow: none !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-range button.active {
+    background: var(--surface) !important;
+    color: var(--text) !important;
+    border-color: color-mix(in srgb, var(--accent) 38%, var(--border)) !important;
+    box-shadow: inset 3px 0 0 var(--accent), 0 1px 2px rgba(15, 23, 42, .025) !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tabs-shell {
+    padding: 14px !important;
+    overflow: visible !important;
+    border-radius: 16px !important;
+    background: var(--surface) !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tabs {
+    min-width: 0 !important;
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tab,
+  .pwa-standalone body[data-page="estatisticas"] .stats-tab:last-child {
+    grid-column: auto !important;
+    width: 100% !important;
+    min-height: 42px !important;
+    padding: 0 12px !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 11px !important;
+    background: var(--surface-2) !important;
+    color: var(--muted) !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    text-align: left !important;
+    white-space: normal !important;
+    box-shadow: none !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tab.active {
+    background: var(--surface) !important;
+    color: var(--text) !important;
+    border-color: color-mix(in srgb, var(--accent) 38%, var(--border)) !important;
+    box-shadow: inset 3px 0 0 var(--accent), 0 1px 2px rgba(15, 23, 42, .025) !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-status {
+    min-height: 0 !important;
+    padding: 0 2px !important;
+    font-size: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-box,
+  .pwa-standalone body[data-page="estatisticas"] .stats-block {
+    padding: 16px !important;
+    border-radius: 16px !important;
+    background: var(--surface) !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-box {
+    gap: 14px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-section-head {
+    display: block !important;
+    margin-bottom: 0 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-section-head h3 {
+    margin: 0 !important;
+    font-size: 17px !important;
+    line-height: 1.2 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-section-head p {
+    margin: 6px 0 0 !important;
+    font-size: 10px !important;
+    line-height: 1.5 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-kicker {
+    margin-bottom: 5px !important;
+    font-size: 9px !important;
+  }
+
+  /* Igual ao Dashboard mobile: um callout por linha, centralizado. */
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card {
+    min-height: 125px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px !important;
+    border-radius: 15px !important;
+    background: var(--surface) !important;
+    text-align: center !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .025) !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card span,
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card strong,
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card small {
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card span {
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card strong {
+    margin-top: 9px !important;
+    font-size: 31px !important;
+    line-height: 1.03 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card small {
+    margin-top: 8px !important;
+    min-height: 0 !important;
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-viz {
+    width: 100% !important;
+    margin-top: 12px !important;
+    padding-top: 0 !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-mini-track {
+    height: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-block-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-block.wide {
+    grid-column: auto !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-strip {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-top: 14px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini {
+    min-height: 105px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 16px !important;
+    border-radius: 13px !important;
+    background: var(--surface-2) !important;
+    text-align: center !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini span,
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini strong,
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini small {
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini span {
+    font-size: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini strong {
+    margin-top: 7px !important;
+    font-size: 24px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini small {
+    margin-top: 6px !important;
+    font-size: 10px !important;
+  }
+
+  /* Gráficos viram painéis de dashboard, sem grandes vazios. */
+  .pwa-standalone body[data-page="estatisticas"] .chart-box,
+  .pwa-standalone body[data-page="estatisticas"] .chart-box.compact {
+    width: 100% !important;
+    height: 210px !important;
+    min-height: 210px !important;
+    max-height: 210px !important;
+    margin-top: 14px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .chart-box canvas,
+  .pwa-standalone body[data-page="estatisticas"] .chart-box.compact canvas {
+    width: 100% !important;
+    height: 210px !important;
+    max-height: 210px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .progress-list {
+    gap: 10px !important;
+    margin-top: 14px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .progress-row {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+    padding: 10px !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 11px !important;
+    background: var(--surface-2) !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .progress-value {
+    text-align: left !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-link {
+    width: 100% !important;
+    min-height: 42px !important;
+    margin-top: 10px !important;
+    font-size: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .insights {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .insight {
+    padding: 14px !important;
+    border-radius: 12px !important;
+    font-size: 10.5px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-table-wrap,
+  .pwa-standalone body[data-page="estatisticas"] .stats-heatmap {
+    margin-top: 14px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-table {
+    min-width: 680px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .heatmap-grid {
+    min-width: 590px !important;
+  }
+}
