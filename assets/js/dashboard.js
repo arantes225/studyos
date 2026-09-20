@@ -1399,6 +1399,7 @@ function showDashboardCcq() {
 
   const item = dashboardCcqState.items[index];
   const text = document.getElementById("dashboard-passive-ccq-text");
+  const meta = document.getElementById("dashboard-passive-ccq-meta");
 
   if (text) {
     text.textContent = item.ccq || "";
@@ -1415,6 +1416,12 @@ function showDashboardCcq() {
     summaryText.textContent =
       item.ccq
       || "—";
+  }
+
+  if (meta) {
+    meta.textContent =
+      item.area
+      || "";
   }
 
   resetCcqProgress();
