@@ -1282,6 +1282,10 @@ function sanitizeHtml(
         }
 
         const allowedFontFamilies = [
+          "system-ui",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
           "Arial",
           "Helvetica",
           "Times New Roman",
@@ -2339,6 +2343,27 @@ function setEditorEnabled(
             !enabled;
         }
 
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      ".notebook-tool-menu"
+    )
+    .forEach(
+      menu => {
+        menu.addEventListener(
+          "click",
+          event =>
+            event.stopPropagation()
+        );
+
+        menu.addEventListener(
+          "pointerdown",
+          event =>
+            event.stopPropagation()
+        );
       }
     );
 
@@ -3639,8 +3664,8 @@ function applyNotebookFont(
   const allowedFonts =
     new Map([
       [
-        "Arial",
-        "Arial, Helvetica, sans-serif"
+        "default",
+        "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
       ],
       [
         "Times New Roman",
@@ -15873,8 +15898,12 @@ function wireEvents() {
         }
 
 
-        event.target.value =
-          "";
+        event.target.title =
+          event.target
+            .selectedOptions?.[0]
+            ?.textContent
+            ?.trim()
+          || "Fonte";
       }
     );
 
