@@ -1418,6 +1418,7 @@ body.sidebar-hidden
 .streak-mini {
   --sidebar-streak-main: #f59e0b;
   --sidebar-streak-core: #fde68a;
+  --sidebar-flame-size: 43px;
 
   display: flex;
   align-items: center;
@@ -1430,9 +1431,9 @@ body.sidebar-hidden
 }
 
 .streak-mini-icon {
-  width: 57px;
-  height: 61px;
-  flex: 0 0 57px;
+  width: 79px;
+  height: 82px;
+  flex: 0 0 79px;
   display: grid;
   place-items: center;
 }
@@ -1443,8 +1444,8 @@ body.sidebar-hidden
 }
 
 .streak-mini-flame {
-  width: 43px;
-  height: 53px;
+  width: var(--sidebar-flame-size, 43px);
+  height: calc(var(--sidebar-flame-size, 43px) * 1.23);
   overflow: visible;
   color: var(--sidebar-streak-main);
   transform-origin: 50% 85%;
@@ -1515,7 +1516,7 @@ body.sidebar-hidden
 }
 
 .streak-mini-copy small {
-  color: #f59e0b;
+  color: var(--sidebar-streak-main);
   font-size: 9.2px;
   font-weight: 850;
   line-height: 1.1;
@@ -1524,6 +1525,7 @@ body.sidebar-hidden
 .streak-mini[data-streak-tier="snow"] {
   --sidebar-streak-main: #60a5fa;
   --sidebar-streak-core: #bfdbfe;
+  --sidebar-flame-size: 43px;
 }
 
 .streak-mini[data-streak-tier="snow"] .streak-mini-flame {
@@ -1537,31 +1539,37 @@ body.sidebar-hidden
 .streak-mini[data-streak-tier="1"] {
   --sidebar-streak-main: #f5a524;
   --sidebar-streak-core: #fde68a;
+  --sidebar-flame-size: 43px;
 }
 
 .streak-mini[data-streak-tier="2"] {
   --sidebar-streak-main: #ff7a1a;
   --sidebar-streak-core: #ffd166;
+  --sidebar-flame-size: 51px;
 }
 
 .streak-mini[data-streak-tier="3"] {
   --sidebar-streak-main: #ff4d2e;
   --sidebar-streak-core: #ffb347;
+  --sidebar-flame-size: 59px;
 }
 
 .streak-mini[data-streak-tier="4"] {
   --sidebar-streak-main: #e43dff;
   --sidebar-streak-core: #ff9bf0;
+  --sidebar-flame-size: 66px;
 }
 
 .streak-mini[data-streak-tier="5"] {
   --sidebar-streak-main: #7c4dff;
   --sidebar-streak-core: #c7b8ff;
+  --sidebar-flame-size: 72px;
 }
 
 .streak-mini[data-streak-tier="6"] {
   --sidebar-streak-main: #169bff;
   --sidebar-streak-core: #8fddff;
+  --sidebar-flame-size: 79px;
 }
 
 .badge.premium,
