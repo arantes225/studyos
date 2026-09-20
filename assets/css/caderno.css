@@ -2052,3 +2052,123 @@
 .notebook-shared-note {
   border-color:color-mix(in srgb,var(--accent) 28%,var(--border));
 }
+
+
+/* =========================================================
+   EXPORTAÇÃO PDF — TEMA CLARO ISOLADO
+   Mantém callouts, tabelas, cores e estilos legíveis.
+   ========================================================= */
+
+.notebook-pdf-export-host {
+  position: fixed;
+  left: -100000px;
+  top: 0;
+  width: 940px;
+  z-index: -1;
+  pointer-events: none;
+  overflow: visible;
+
+  background: #ffffff;
+  color: #10243e;
+
+  --surface: #ffffff;
+  --surface-2: #f5f7fa;
+  --text: #10243e;
+  --muted: #64748b;
+  --border: #d8e1eb;
+  --accent: #184888;
+  --accent-soft: #eaf0f8;
+  --success: #18864b;
+  --danger: #c33a3a;
+
+  color-scheme: light;
+}
+
+.notebook-pdf-export-host .notebook-pdf-paper {
+  width: 940px;
+  min-height: 1120px;
+  margin: 0;
+  padding: 68px 72px 88px;
+  border: 0;
+  border-radius: 0;
+  background: #ffffff;
+  color: #10243e;
+  box-shadow: none;
+}
+
+.notebook-pdf-export-host .notebook-editor {
+  min-height: 0;
+  overflow: visible;
+  color: #10243e;
+}
+
+.notebook-pdf-export-host .notebook-editor table {
+  width: 100%;
+  min-width: 0;
+  margin: 22px 0;
+  border-collapse: collapse;
+  table-layout: auto;
+  background: #ffffff;
+}
+
+.notebook-pdf-export-host .notebook-editor th,
+.notebook-pdf-export-host .notebook-editor td {
+  padding: 10px 11px;
+  border: 1px solid #cfd9e4;
+  background: #ffffff;
+  color: #10243e;
+  vertical-align: top;
+}
+
+.notebook-pdf-export-host .notebook-editor th {
+  background: #eef2f6;
+  font-weight: 850;
+}
+
+.notebook-pdf-export-host .notebook-study-block {
+  border: 1px solid #d8e1eb;
+  border-left-width: 5px;
+  background: #f7f9fb;
+  color: #10243e;
+  box-shadow: none;
+}
+
+.notebook-pdf-export-host .notebook-study-block.important {
+  border-color: #cfe0f6;
+  border-left-color: #60a5fa;
+  background: #edf5ff;
+}
+
+.notebook-pdf-export-host .notebook-study-block.warning {
+  border-color: #eed9a9;
+  border-left-color: #e7a126;
+  background: #fff7e7;
+}
+
+.notebook-pdf-export-host .notebook-study-block.memory {
+  border-color: #efcaca;
+  border-left-color: #dc2626;
+  background: #fff0f0;
+}
+
+.notebook-pdf-export-host .notebook-editor hr {
+  border-top-color: #d8e1eb;
+}
+
+.notebook-pdf-export-host .notebook-document-area {
+  color: #184888;
+}
+
+.notebook-pdf-export-host .notebook-document-head h1,
+.notebook-pdf-export-host .notebook-editor h1,
+.notebook-pdf-export-host .notebook-editor h2,
+.notebook-pdf-export-host .notebook-editor h3,
+.notebook-pdf-export-host .notebook-editor strong,
+.notebook-pdf-export-host .notebook-editor b {
+  color: inherit;
+}
+
+.notebook-pdf-export-host .notebook-editor img {
+  max-width: 100%;
+  height: auto;
+}
