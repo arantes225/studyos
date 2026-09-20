@@ -1899,3 +1899,119 @@
     margin: 14px auto;
   }
 }
+
+
+/* =========================================================
+   CADERNO V30 — LISTA DE TEMAS REBATÍVEL
+   ========================================================= */
+
+.notebook-workspace,
+.notebook-topic-panel {
+  transition:
+    grid-template-columns .18s ease,
+    width .18s ease,
+    padding .18s ease,
+    gap .18s ease;
+}
+
+.notebook-topic-panel-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+}
+
+.notebook-topic-panel-toggle {
+  width: 32px;
+  height: 32px;
+
+  display: grid;
+  place-items: center;
+
+  flex: 0 0 auto;
+
+  padding: 0;
+
+  border: 1px solid var(--border);
+  border-radius: 9px;
+
+  background: var(--surface);
+  color: var(--muted);
+
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.notebook-topic-panel-toggle:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.notebook-workspace.topic-panel-collapsed {
+  grid-template-columns: 50px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.notebook-topic-panel.is-collapsed {
+  width: 50px;
+  min-width: 50px;
+  max-height: 54px;
+
+  padding: 8px;
+
+  grid-template-rows: auto;
+  gap: 0;
+
+  overflow: hidden;
+}
+
+.notebook-topic-panel.is-collapsed
+.notebook-topic-panel-head {
+  justify-content: center;
+}
+
+.notebook-topic-panel.is-collapsed
+.notebook-topic-panel-title,
+.notebook-topic-panel.is-collapsed
+.notebook-topic-count,
+.notebook-topic-panel.is-collapsed
+.notebook-topic-controls,
+.notebook-topic-panel.is-collapsed
+.notebook-new-free-page,
+.notebook-topic-panel.is-collapsed
+.notebook-topic-list {
+  display: none !important;
+}
+
+.notebook-topic-panel.is-collapsed
+.notebook-topic-panel-head-actions {
+  width: 100%;
+  justify-content: center;
+}
+
+.notebook-topic-panel.is-collapsed
+.notebook-topic-panel-toggle {
+  width: 34px;
+  height: 34px;
+}
+
+@media (max-width: 760px) {
+  .notebook-workspace.topic-panel-collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .notebook-topic-panel.is-collapsed {
+    width: 100%;
+    min-width: 0;
+    max-height: 50px;
+  }
+
+  .notebook-topic-panel.is-collapsed
+  .notebook-topic-panel-head-actions {
+    justify-content: flex-end;
+  }
+}
