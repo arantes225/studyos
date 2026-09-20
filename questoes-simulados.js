@@ -1342,17 +1342,489 @@ function canvasToPngBlob(
 }
 
 
-async function cropRenderedPage(
+async function questionImageRectUnion(
+  first,
+  second
+) {
+  const left =
+    Math.min(
+      first.left,
+      second.left
+    );
+
+  const top =
+    Math.min(
+      first.top,
+      second.top
+    );
+
+  const right =
+    Math.max(
+      first.right,
+      second.right
+    );
+
+  const bottom =
+    Math.max(
+      first.bottom,
+      second.bottom
+    );
+
+  return {
+    left,
+    top,
+    right,
+    bottom,
+    width:
+      Math.max(
+        1,
+        right - left
+      ),
+    height:
+      Math.max(
+        1,
+        bottom - top
+      )
+  };
+}
+
+
+function questionImageRectOverlap(
+  first,
+  second
+) {
+  const left =
+    Math.max(
+      first.left,
+      second.left
+    );
+
+  const top =
+    Math.max(
+      first.top,
+      second.top
+    );
+
+  const right =
+    Math.min(
+      first.right,
+      second.right
+    );
+
+  const bottom =
+    Math.min(
+      first.bottom,
+      second.bottom
+    );
+
+  const width =
+    Math.max(
+      0,
+      right - left
+    );
+
+  const height =
+    Math.max(
+      0,
+      bottom - top
+    );
+
+  return {
+    width,
+    height,
+    area:
+      width * height
+  };
+}
+
+
+function shouldMergeQuestionImageRects(
+  first,
+  second,
+  viewport
+) {
+  const overlap =
+    questionImageRectOverlap(
+      first,
+      second
+    );
+
+  if (
+    overlap.area > 0
+  ) {
+    return true;
+  }
+
+
+  const horizontalOverlap =
+    Math.max(
+      0,
+      Math.min(
+        first.right,
+        second.right
+      )
+      -
+      Math.max(
+        first.left,
+        second.left
+      )
+    );
+
+
+  const verticalOverlap =
+    Math.max(
+      0,
+      Math.min(
+        first.bottom,
+        second.bottom
+      )
+      -
+      Math.max(
+        first.top,
+        second.top
+      )
+    );
+
+
+  const horizontalOverlapRatio =
+    horizontalOverlap
+    /
+    Math.max(
+      1,
+      Math.min(
+        first.width,
+        second.width
+      )
+    );
+
+
+  const verticalOverlapRatio =
+    verticalOverlap
+    /
+    Math.max(
+      1,
+      Math.min(
+        first.height,
+        second.height
+      )
+    );
+
+
+  const verticalGap =
+    Math.max(
+      0,
+      Math.max(
+        first.top,
+        second.top
+      )
+      -
+      Math.min(
+        first.bottom,
+        second.bottom
+      )
+    );
+
+
+  const horizontalGap =
+    Math.max(
+      0,
+      Math.max(
+        first.left,
+        second.left
+      )
+      -
+      Math.min(
+        first.right,
+        second.right
+      )
+    );
+
+
+  const nearGap =
+    Math.max(
+      12,
+      viewport.width * 0.012
+    );
+
+
+  if (
+    verticalGap <= nearGap
+    &&
+    horizontalOverlapRatio >= 0.38
+  ) {
+    return true;
+  }
+
+
+  if (
+    horizontalGap <= nearGap
+    &&
+    verticalOverlapRatio >= 0.55
+  ) {
+    return true;
+  }
+
+
+  return false;
+}
+
+
+function groupQuestionImageRects(
+  entries,
+  viewport
+) {
+  const groups =
+    [];
+
+
+  for (
+    const entry
+    of entries
+  ) {
+    let target =
+      groups.find(
+        group =>
+          group.question_number
+            === entry.question_number
+          &&
+          shouldMergeQuestionImageRects(
+            group.rect,
+            entry.rect,
+            viewport
+          )
+      );
+
+
+    if (
+      !target
+    ) {
+      target = {
+        question_number:
+          entry.question_number,
+
+        rect:
+          {
+            ...entry.rect
+          }
+      };
+
+
+      groups.push(
+        target
+      );
+
+
+    } else {
+      target.rect =
+        questionImageRectUnion(
+          target.rect,
+          entry.rect
+        );
+    }
+
+
+    let merged =
+      true;
+
+
+    while (
+      merged
+    ) {
+      merged =
+        false;
+
+
+      for (
+        let index = groups.length - 1;
+        index >= 0;
+        index -= 1
+      ) {
+        const other =
+          groups[index];
+
+
+        if (
+          other === target
+          ||
+          other.question_number
+            !== target.question_number
+        ) {
+          continue;
+        }
+
+
+        if (
+          shouldMergeQuestionImageRects(
+            target.rect,
+            other.rect,
+            viewport
+          )
+        ) {
+          target.rect =
+            questionImageRectUnion(
+              target.rect,
+              other.rect
+            );
+
+
+          groups.splice(
+            index,
+            1
+          );
+
+
+          merged =
+            true;
+        }
+      }
+    }
+  }
+
+
+  return groups.sort(
+    (
+      a,
+      b
+    ) =>
+      a.question_number
+      - b.question_number
+      ||
+      a.rect.top
+      - b.rect.top
+      ||
+      a.rect.left
+      - b.rect.left
+  );
+}
+
+
+function safeQuestionImageCropRect(
+  rect,
+  lineRecords,
+  viewport
+) {
+  const padding =
+    Math.max(
+      3,
+      Math.round(
+        viewport.scale * 1.5
+      )
+    );
+
+
+  let left =
+    Math.max(
+      0,
+      rect.left - padding
+    );
+
+  let top =
+    Math.max(
+      0,
+      rect.top - padding
+    );
+
+  let right =
+    Math.min(
+      viewport.width,
+      rect.right + padding
+    );
+
+  let bottom =
+    Math.min(
+      viewport.height,
+      rect.bottom + padding
+    );
+
+
+  for (
+    const line
+    of lineRecords
+  ) {
+    const horizontalOverlap =
+      Math.max(
+        0,
+        Math.min(
+          right,
+          line.right
+        )
+        -
+        Math.max(
+          left,
+          line.left
+        )
+      );
+
+
+    if (
+      horizontalOverlap
+      <
+      Math.min(
+        right - left,
+        line.right - line.left
+      ) * 0.18
+    ) {
+      continue;
+    }
+
+
+    if (
+      line.bottom <= rect.top
+      &&
+      rect.top - line.bottom
+        <= padding * 2.5
+    ) {
+      top =
+        Math.max(
+          top,
+          line.bottom + 1
+        );
+    }
+
+
+    if (
+      line.top >= rect.bottom
+      &&
+      line.top - rect.bottom
+        <= padding * 2.5
+    ) {
+      bottom =
+        Math.min(
+          bottom,
+          line.top - 1
+        );
+    }
+  }
+
+
+  return {
+    left,
+    top,
+    right,
+    bottom,
+    width:
+      Math.max(
+        1,
+        right - left
+      ),
+    height:
+      Math.max(
+        1,
+        bottom - top
+      )
+  };
+}
+
+
+function cropRenderedPage(
   pageCanvas,
   rect
 ) {
-  const padding = 12;
-
   const left =
     Math.max(
       0,
       Math.floor(
-        rect.left - padding
+        rect.left
       )
     );
 
@@ -1360,7 +1832,7 @@ async function cropRenderedPage(
     Math.max(
       0,
       Math.floor(
-        rect.top - padding
+        rect.top
       )
     );
 
@@ -1368,7 +1840,7 @@ async function cropRenderedPage(
     Math.min(
       pageCanvas.width,
       Math.ceil(
-        rect.right + padding
+        rect.right
       )
     );
 
@@ -1376,7 +1848,7 @@ async function cropRenderedPage(
     Math.min(
       pageCanvas.height,
       Math.ceil(
-        rect.bottom + padding
+        rect.bottom
       )
     );
 
@@ -1407,7 +1879,8 @@ async function cropRenderedPage(
     crop.getContext(
       "2d",
       {
-        alpha: false
+        alpha:
+          false
       }
     );
 
@@ -1420,6 +1893,12 @@ async function cropRenderedPage(
     width,
     height
   );
+
+  context.imageSmoothingEnabled =
+    true;
+
+  context.imageSmoothingQuality =
+    "high";
 
   context.drawImage(
     pageCanvas,
@@ -1551,7 +2030,7 @@ async function extractQuestionImagesFromPage(
   pageNumber
 ) {
   const scale =
-    2;
+    3;
 
   const viewport =
     page.getViewport({
@@ -1590,8 +2069,9 @@ async function extractQuestionImagesFromPage(
   const matchedRects =
     imageRects
       .map(
-        (rect) => ({
+        rect => ({
           rect,
+
           question_number:
             matchImageRectToQuestion(
               rect,
@@ -1600,7 +2080,7 @@ async function extractQuestionImagesFromPage(
         })
       )
       .filter(
-        (item) =>
+        item =>
           Number.isInteger(
             item.question_number
           )
@@ -1611,6 +2091,19 @@ async function extractQuestionImagesFromPage(
   ) {
     return [];
   }
+
+
+  /*
+    PDFs podem armazenar uma única figura em vários blocos.
+    Reagrupamos os blocos ANTES de recortar para não cortar
+    a figura no meio nem empilhar metades depois.
+  */
+  const groupedRects =
+    groupQuestionImageRects(
+      matchedRects,
+      viewport
+    );
+
 
   const canvas =
     document.createElement(
@@ -1631,9 +2124,27 @@ async function extractQuestionImagesFromPage(
     canvas.getContext(
       "2d",
       {
-        alpha: false
+        alpha:
+          false
       }
     );
+
+  context.fillStyle =
+    "#ffffff";
+
+  context.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  context.imageSmoothingEnabled =
+    true;
+
+  context.imageSmoothingQuality =
+    "high";
+
 
   await page
     .render({
@@ -1643,32 +2154,51 @@ async function extractQuestionImagesFromPage(
     })
     .promise;
 
-  const results = [];
+
+  const results =
+    [];
+
 
   for (
     let index = 0;
-    index < matchedRects.length;
+    index < groupedRects.length;
     index += 1
   ) {
     const item =
-      matchedRects[index];
+      groupedRects[index];
+
 
     setImportStatus(
-      `Recortando figura da questão ${item.question_number} — página ${pageNumber}...`
+      `Recortando figura completa da questão ${item.question_number} — página ${pageNumber}...`
     );
+
+
+    const safeRect =
+      safeQuestionImageCropRect(
+        item.rect,
+        lineRecords,
+        viewport
+      );
+
 
     const blob =
       await cropRenderedPage(
         canvas,
-        item.rect
+        safeRect
       );
+
 
     results.push({
       question_number:
         item.question_number,
-      blob
+
+      blob,
+
+      source_rect:
+        safeRect
     });
   }
+
 
   return results;
 }
