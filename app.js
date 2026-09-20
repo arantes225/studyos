@@ -1193,16 +1193,7 @@ function prepararMobileMenu() {
   backdrop?.addEventListener("click", fechar);
 }
 
-async function prepararAdminNavigation() {
-  const link =
-    document.getElementById(
-      "admin-nav-link"
-    );
-
-  if (!link) {
-    return false;
-  }
-
+async function verificarAcessoAdmin() {
   try {
     const {
       data,
@@ -1212,20 +1203,16 @@ async function prepararAdminNavigation() {
         "is_admin"
       );
 
-    if (
-      error
-      || data !== true
-    ) {
-      link.hidden =
-        true;
+    if (error) {
+      console.warn(
+        "Não foi possível verificar acesso administrativo:",
+        error.message
+      );
 
       return false;
     }
 
-    link.hidden =
-      false;
-
-    return true;
+    return data === true;
 
   } catch (
     error
@@ -1235,11 +1222,32 @@ async function prepararAdminNavigation() {
       error
     );
 
-    link.hidden =
-      true;
-
     return false;
   }
+}
+
+
+async function prepararAdminNavigation(
+  acessoAdmin = null
+) {
+  const link =
+    document.getElementById(
+      "admin-nav-link"
+    );
+
+  if (!link) {
+    return false;
+  }
+
+  const isAdmin =
+    typeof acessoAdmin === "boolean"
+      ? acessoAdmin
+      : await verificarAcessoAdmin();
+
+  link.hidden =
+    !isAdmin;
+
+  return isAdmin;
 }
 
 
@@ -1252,6 +1260,26 @@ async function iniciarApp() {
   }
 
   const user = data.session.user;
+
+  let acessoAdmin =
+    null;
+
+  if (
+    page === "admin"
+  ) {
+    acessoAdmin =
+      await verificarAcessoAdmin();
+
+    if (
+      !acessoAdmin
+    ) {
+      window.location.replace(
+        "dashboard.html"
+      );
+
+      return;
+    }
+  }
 
   const cachedTheme = readCachedTheme(user.id);
   if (cachedTheme) {
@@ -1296,7 +1324,12 @@ async function iniciarApp() {
   prepararMobileMenu();
   prepararSidebarDesktop(user.id);
   prepararStudyMenu(user.id);
-  await prepararAdminNavigation();
+
+  acessoAdmin =
+    await prepararAdminNavigation(
+      acessoAdmin
+    );
+
   await registrarAcessoDiario();
   prepararConfiguracoes();
 
@@ -1305,10 +1338,17 @@ async function iniciarApp() {
   window.docmapUser = user;
   window.docmapSession = data.session;
   window.docmapProfile = profile;
+  window.docmapIsAdmin =
+    acessoAdmin === true;
 
   window.dispatchEvent(
     new CustomEvent("docmap:ready", {
-      detail: { user, session: data.session }
+      detail: {
+        user,
+        session: data.session,
+        isAdmin:
+          window.docmapIsAdmin
+      }
     })
   );
 }
