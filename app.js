@@ -14,6 +14,25 @@ const PAGE_INFO = {
   admin: { title: "Admin", eyebrow: "Métricas do produto" }
 };
 
+
+const PAGE_FEATURES = {
+  dashboard: "dashboard",
+  cronograma: "cronograma",
+  ambientacao: "ambientacao",
+  caderno: "caderno",
+  flashcards: "flashcards",
+  erros: "error_notebook",
+  questoes: "questions",
+  estatisticas: "advanced_statistics"
+};
+
+const PLUS_NAV_FEATURES = {
+  "flashcards.html": "flashcards",
+  "questoes-simulados.html": "questions",
+  "registrar-questoes.html": "questions",
+  "estatisticas.html": "advanced_statistics"
+};
+
 const page = document.body.dataset.page || "dashboard";
 let currentThemeSetting = "system";
 let systemThemeListener = null;
@@ -1193,6 +1212,162 @@ function prepararMobileMenu() {
   backdrop?.addEventListener("click", fechar);
 }
 
+
+function essentialEntitlementsFallback() {
+  return {
+    plan: "essential",
+    source: "fallback",
+    is_admin: false,
+    complimentary: false,
+    counts_as_paid: false,
+    expires_at: null,
+    features: {
+      dashboard: { enabled: true, limit: null },
+      agenda: { enabled: true, limit: null },
+      cronograma: { enabled: true, limit: null },
+      ambientacao: { enabled: true, limit: null },
+      caderno: { enabled: true, limit: null },
+      error_notebook: { enabled: true, limit: null },
+      flashcards: { enabled: false, limit: 0 },
+      flashcard_import: { enabled: false, limit: 0 },
+      questions: { enabled: false, limit: 0 },
+      question_import: { enabled: false, limit: 0 },
+      simulations: { enabled: false, limit: 0 },
+      advanced_statistics: { enabled: false, limit: 0 },
+      ai: { enabled: false, limit: 0 }
+    }
+  };
+}
+
+
+async function carregarEntitlements() {
+  try {
+    const {
+      data,
+      error
+    } =
+      await sb.rpc(
+        "get_my_entitlements"
+      );
+
+    if (
+      error
+      || !data
+    ) {
+      console.warn(
+        "Não foi possível carregar o plano do usuário:",
+        error?.message || "resposta vazia"
+      );
+
+      return essentialEntitlementsFallback();
+    }
+
+    return data;
+
+  } catch (
+    error
+  ) {
+    console.warn(
+      "Não foi possível carregar o plano do usuário:",
+      error
+    );
+
+    return essentialEntitlementsFallback();
+  }
+}
+
+
+function temFeature(
+  entitlements,
+  featureKey
+) {
+  if (
+    entitlements?.is_admin === true
+  ) {
+    return true;
+  }
+
+  return (
+    entitlements
+      ?.features
+      ?.[featureKey]
+      ?.enabled === true
+  );
+}
+
+
+function aplicarEntitlementsNaNavegacao(
+  entitlements
+) {
+  Object.entries(
+    PLUS_NAV_FEATURES
+  ).forEach(
+    ([href, featureKey]) => {
+      document
+        .querySelectorAll(
+          `a[href="${href}"]`
+        )
+        .forEach(
+          (link) => {
+            if (
+              temFeature(
+                entitlements,
+                featureKey
+              )
+            ) {
+              return;
+            }
+
+            link.classList.add(
+              "nav-feature-locked"
+            );
+
+            link.setAttribute(
+              "aria-disabled",
+              "true"
+            );
+
+            link.title =
+              "Disponível no plano Plus";
+
+            if (
+              !link.querySelector(
+                ".nav-plan-badge"
+              )
+            ) {
+              const badge =
+                document.createElement(
+                  "span"
+                );
+
+              badge.className =
+                "nav-plan-badge";
+
+              badge.textContent =
+                "PLUS";
+
+              link.appendChild(
+                badge
+              );
+            }
+
+            link.addEventListener(
+              "click",
+              (event) => {
+                event.preventDefault();
+
+                window.alert(
+                  "Este recurso está disponível no plano Plus."
+                );
+              }
+            );
+          }
+        );
+    }
+  );
+}
+
+
 async function verificarAcessoAdmin() {
   try {
     const {
@@ -1281,6 +1456,27 @@ async function iniciarApp() {
     }
   }
 
+  const entitlements =
+    await carregarEntitlements();
+
+  const requiredFeature =
+    PAGE_FEATURES[page]
+    || null;
+
+  if (
+    requiredFeature
+    && !temFeature(
+      entitlements,
+      requiredFeature
+    )
+  ) {
+    window.location.replace(
+      "dashboard.html"
+    );
+
+    return;
+  }
+
   const cachedTheme = readCachedTheme(user.id);
   if (cachedTheme) {
     applyThemeSetting(cachedTheme);
@@ -1324,6 +1520,9 @@ async function iniciarApp() {
   prepararMobileMenu();
   prepararSidebarDesktop(user.id);
   prepararStudyMenu(user.id);
+  aplicarEntitlementsNaNavegacao(
+    entitlements
+  );
 
   acessoAdmin =
     await prepararAdminNavigation(
@@ -1338,6 +1537,11 @@ async function iniciarApp() {
   window.docmapUser = user;
   window.docmapSession = data.session;
   window.docmapProfile = profile;
+  window.docmapEntitlements =
+    entitlements;
+  window.docmapPlan =
+    entitlements?.plan
+    || "essential";
   window.docmapIsAdmin =
     acessoAdmin === true;
 
@@ -1347,7 +1551,11 @@ async function iniciarApp() {
         user,
         session: data.session,
         isAdmin:
-          window.docmapIsAdmin
+          window.docmapIsAdmin,
+        plan:
+          window.docmapPlan,
+        entitlements:
+          window.docmapEntitlements
       }
     })
   );
