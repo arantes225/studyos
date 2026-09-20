@@ -651,16 +651,14 @@
   border-bottom: 1px solid var(--border);
 }
 
-.admin-pin-mark {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 18px;
-  font-weight: 900;
+.admin-pin-logo {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 54px;
+  display: block;
+  object-fit: contain;
+  background: transparent;
+  border: 0;
 }
 
 .admin-pin-brand strong,
