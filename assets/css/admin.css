@@ -939,3 +939,240 @@ body.admin-unlocked #admin-app {
     right: 0;
   }
 }
+
+
+/* =========================================================
+   ADMIN COST EDITOR
+   ========================================================= */
+.admin-cost-breakdown-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 15px 0;
+}
+
+.admin-cost-breakdown-head > div {
+  min-width: 0;
+}
+
+.admin-cost-breakdown-head strong,
+.admin-cost-breakdown-head small {
+  display: block;
+}
+
+.admin-cost-breakdown-head strong {
+  font-size: 11px;
+}
+
+.admin-cost-breakdown-head small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.admin-edit-costs {
+  min-height: 34px;
+  padding: 0 11px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.admin-cost-breakdown {
+  grid-template-columns: 1fr;
+  padding-top: 10px;
+}
+
+.admin-cost-items > span em {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 8px;
+  font-style: normal;
+  line-height: 1.25;
+}
+
+.admin-cost-dialog {
+  width: min(900px, calc(100vw - 28px));
+  max-height: min(82vh, 760px);
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 22px 70px rgba(15, 23, 42, .24);
+}
+
+.admin-cost-dialog::backdrop {
+  background: rgba(15, 23, 42, .48);
+  backdrop-filter: blur(3px);
+}
+
+.admin-cost-dialog form {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  max-height: min(82vh, 760px);
+  overflow-y: auto;
+}
+
+.admin-cost-dialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.admin-cost-dialog-head h2 {
+  margin: 4px 0 0;
+  font-size: 20px;
+}
+
+.admin-cost-dialog-head p {
+  max-width: 660px;
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.admin-cost-editor-grid-head,
+.admin-cost-editor-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.25fr) minmax(130px, .8fr) minmax(120px, .65fr) minmax(130px, .75fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.admin-cost-editor-grid-head {
+  padding: 0 11px;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.admin-cost-editor-list {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-cost-editor-row {
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.admin-cost-editor-row > strong {
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.admin-cost-editor-row select,
+.admin-money-input {
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.admin-cost-editor-row select {
+  width: 100%;
+  padding: 0 10px;
+  outline: none;
+  font: inherit;
+  font-size: 10px;
+}
+
+.admin-money-input {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  padding-left: 10px;
+}
+
+.admin-money-input > span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.admin-money-input input {
+  width: 100%;
+  height: 36px;
+  border: 0;
+  outline: 0;
+  padding: 0 9px 0 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.admin-cost-editor-row select:focus,
+.admin-money-input:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.admin-cost-editor-message {
+  min-height: 18px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.admin-cost-editor-message.success {
+  color: var(--success);
+}
+
+.admin-cost-editor-message.error {
+  color: var(--danger);
+}
+
+.admin-cost-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.admin-cost-editor-actions .button {
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 10px;
+}
+
+@media (max-width: 720px) {
+  .admin-cost-breakdown-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-edit-costs {
+    width: 100%;
+  }
+
+  .admin-cost-editor-grid-head {
+    display: none;
+  }
+
+  .admin-cost-editor-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .admin-cost-editor-row > strong {
+    font-size: 12px;
+    margin-bottom: 2px;
+  }
+
+  .admin-cost-editor-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
