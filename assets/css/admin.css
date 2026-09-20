@@ -1440,3 +1440,127 @@ body.admin-unlocked #admin-app {
   font-weight: 800;
   white-space: nowrap;
 }
+
+
+/* =========================================================
+   STORAGE 80% — PLANO DE EXPANSÃO
+   ========================================================= */
+
+.admin-storage-expansion-alert {
+  display: grid;
+  gap: 10px;
+  padding: 12px 13px;
+  border: 1px solid color-mix(in srgb, #e7a126 55%, var(--border));
+  border-radius: 12px;
+  background:
+    color-mix(
+      in srgb,
+      #f2b647 8%,
+      var(--surface)
+    );
+}
+
+.admin-storage-expansion-alert[hidden] {
+  display: none !important;
+}
+
+.admin-storage-expansion-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-storage-expansion-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 58px;
+  min-height: 28px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background:
+    color-mix(
+      in srgb,
+      #e7a126 18%,
+      var(--surface)
+    );
+  color: #a56d09;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.admin-storage-expansion-copy strong,
+.admin-storage-expansion-copy small {
+  display: block;
+}
+
+.admin-storage-expansion-copy strong {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.admin-storage-expansion-copy small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 8.5px;
+  line-height: 1.45;
+}
+
+.admin-storage-expansion-open {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.admin-storage-expansion-source {
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.admin-storage-expansion-content {
+  max-height: 620px;
+  margin: 0;
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    "Liberation Mono",
+    monospace;
+  font-size: 10px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.admin-storage-expansion-content[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 720px) {
+  .admin-storage-expansion-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .admin-storage-expansion-open {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .admin-storage-expansion-content {
+    max-height: 70vh;
+    padding: 12px;
+    font-size: 8.5px;
+  }
+}
