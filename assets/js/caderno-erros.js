@@ -2044,6 +2044,22 @@ async function saveNewError() {
       : null;
 
 
+  if (!area) {
+    setNewErrorStatus(
+      "Selecione uma área.",
+      "error"
+    );
+
+    document
+      .getElementById(
+        "new-error-area"
+      )
+      ?.focus();
+
+    return;
+  }
+
+
   if (!ccq) {
     setNewErrorStatus(
       "Preencha o CCQ.",
