@@ -30,6 +30,14 @@ const qsState = {
     new Map(),
 
   /*
+    Galeria temporária com TODOS os recortes detectados.
+    Pode haver mais de uma imagem por questão e não fazemos
+    deduplicação automática de candidatos sobrepostos/ruins.
+  */
+  imageGallery:
+    [],
+
+  /*
     Questões erradas que o usuário decidiu NÃO enviar
     ao Caderno de Erros. Fica persistido localmente por simulado.
   */
@@ -3610,19 +3618,23 @@ async function extractQuestionImagesFromPage(
   pageNumber
 ) {
   /*
-    Estratégia simples e determinística:
+    Duas passagens independentes:
 
-    - reconhece onde cada questão começa;
-    - reconhece onde começam as alternativas;
-    - procura a MAIOR faixa vertical vazia/visual entre
-      o enunciado e a alternativa A;
-    - tira uma "foto" dessa faixa, tenha figura ou não.
+    1) TEXTO / OCR estrutural:
+       usa a camada de texto do PDF para localizar o fim do
+       enunciado e o início das alternativas. Captura a faixa
+       intermediária inteira.
 
-    Não depende de XObject nem de reconhecer "imagem".
+    2) IMAGEM / XOBJECT:
+       procura objetos de imagem incorporados no PDF e os associa
+       à questão pela posição vertical.
+
+    IMPORTANTE:
+    não removemos candidatos ruins, repetidos ou sobrepostos.
+    A decisão final fica com o usuário na galeria.
   */
   const renderScale =
     3;
-
 
   const viewport =
     page.getViewport({
@@ -3630,13 +3642,16 @@ async function extractQuestionImagesFromPage(
         renderScale
     });
 
-
   const lineRecords =
     groupTextItemsIntoLineRecords(
       content.items,
       viewport
     );
 
+  const questionStarts =
+    questionStartsForPage(
+      lineRecords
+    );
 
   const regions =
     questionRegionsFromTextLayout(
@@ -3644,35 +3659,20 @@ async function extractQuestionImagesFromPage(
       viewport
     );
 
-
-  if (
-    !regions.length
-  ) {
-    console.debug(
-      `[Questões] Página ${pageNumber}: nenhuma região entre enunciado e alternativas foi delimitada.`
-    );
-
-    return [];
-  }
-
-
   const canvas =
     document.createElement(
       "canvas"
     );
-
 
   canvas.width =
     Math.ceil(
       viewport.width
     );
 
-
   canvas.height =
     Math.ceil(
       viewport.height
     );
-
 
   const context =
     canvas.getContext(
@@ -3683,10 +3683,8 @@ async function extractQuestionImagesFromPage(
       }
     );
 
-
   context.fillStyle =
     "#ffffff";
-
 
   context.fillRect(
     0,
@@ -3695,37 +3693,34 @@ async function extractQuestionImagesFromPage(
     canvas.height
   );
 
-
   context.imageSmoothingEnabled =
     true;
 
-
   context.imageSmoothingQuality =
     "high";
-
 
   await page
     .render({
       canvasContext:
         context,
-
       viewport
     })
     .promise;
 
-
   const results =
     [];
 
-
+  /*
+    PASSAGEM 1 — faixa entre enunciado e alternativas.
+    Mesmo se o recorte não parecer perfeito, preservamos.
+  */
   for (
     const region
     of regions
   ) {
     setImportStatus(
-      `Capturando faixa da questão ${region.question_number} — página ${pageNumber}...`
+      `Passagem 1/2: recortando questão ${region.question_number} — página ${pageNumber}...`
     );
-
 
     const blob =
       await cropRenderedPage(
@@ -3733,26 +3728,88 @@ async function extractQuestionImagesFromPage(
         region
       );
 
-
     results.push({
       question_number:
         region.question_number,
-
       blob,
-
       source_rect:
         region,
-
       source:
-        "question-gap-screenshot"
+        "text-gap",
+      page_number:
+        pageNumber
     });
   }
 
+  /*
+    PASSAGEM 2 — imagens incorporadas/objetos visuais do PDF.
+    Não fazemos merge nem eliminamos sobreposição.
+  */
+  try {
+    const embeddedRects =
+      await extractEmbeddedImageRects(
+        page,
+        viewport,
+        true
+      );
+
+    for (
+      const rect
+      of embeddedRects
+    ) {
+      const questionNumber =
+        matchImageRectToQuestion(
+          rect,
+          questionStarts
+        );
+
+      if (
+        !questionNumber
+      ) {
+        continue;
+      }
+
+      setImportStatus(
+        `Passagem 2/2: detectando imagens da questão ${questionNumber} — página ${pageNumber}...`
+      );
+
+      const safeRect =
+        safeQuestionImageCropRect(
+          rect,
+          lineRecords,
+          viewport
+        );
+
+      const blob =
+        await cropRenderedPage(
+          canvas,
+          safeRect
+        );
+
+      results.push({
+        question_number:
+          questionNumber,
+        blob,
+        source_rect:
+          safeRect,
+        source:
+          "embedded-image",
+        page_number:
+          pageNumber
+      });
+    }
+  } catch (
+    imageError
+  ) {
+    console.warn(
+      `Passagem visual falhou na página ${pageNumber}:`,
+      imageError
+    );
+  }
 
   console.debug(
-    `[Questões] Página ${pageNumber}: ${results.length} captura(s) criada(s) entre enunciado e alternativas.`
+    `[Questões] Página ${pageNumber}: ${results.length} candidato(s) de imagem preservado(s).`
   );
-
 
   return results;
 }
@@ -3980,9 +4037,16 @@ async function extractQuestionsFromPdf(
     );
 
   const questionImages =
-    await consolidateQuestionImages(
-      extractedImageEntries
-    );
+    extractedImageEntries
+      .slice()
+      .sort(
+        (a, b) =>
+          Number(a.question_number || 0)
+          - Number(b.question_number || 0)
+          ||
+          Number(a.page_number || 0)
+          - Number(b.page_number || 0)
+      );
 
   if (
     medCofDetected
@@ -4916,9 +4980,14 @@ async function uploadExtractedQuestionImages(
   setId,
   questionImages
 ) {
-  const paths =
+  const primaryPaths =
     {};
 
+  const candidateRows =
+    [];
+
+  const perQuestionCounter =
+    new Map();
 
   for (
     let index = 0;
@@ -4931,39 +5000,48 @@ async function uploadExtractedQuestionImages(
       ];
 
     const questionNumber =
-      image.question_number;
+      Number(
+        image.question_number
+      );
 
+    const candidateIndex =
+      (
+        perQuestionCounter.get(
+          questionNumber
+        )
+        || 0
+      )
+      + 1;
 
-    setImportStatus(
-      `Otimizando figura da questão ${questionNumber}...`
+    perQuestionCounter.set(
+      questionNumber,
+      candidateIndex
     );
 
+    setImportStatus(
+      `Otimizando imagem ${candidateIndex} da questão ${questionNumber}...`
+    );
 
     const optimizedBlob =
       await compressQuestionFigureBlob(
         image.blob
       );
 
-
     const isWebp =
       optimizedBlob.type
         === "image/webp";
-
 
     const extension =
       isWebp
         ? "webp"
         : "png";
 
-
     const path =
-      `${qsState.user.id}/question_sets/${setId}/images/question-${questionNumber}.${extension}`;
-
+      `${qsState.user.id}/question_sets/${setId}/images/question-${questionNumber}-candidate-${candidateIndex}.${extension}`;
 
     setImportStatus(
-      `Enviando figura da questão ${questionNumber}...`
+      `Enviando imagem ${candidateIndex} da questão ${questionNumber}...`
     );
-
 
     const {
       error
@@ -4980,27 +5058,68 @@ async function uploadExtractedQuestionImages(
             contentType:
               optimizedBlob.type
               || "image/webp",
-
             upsert:
               true
           }
         );
 
-
     if (error) {
       throw error;
     }
 
+    if (
+      !primaryPaths[
+        questionNumber
+      ]
+    ) {
+      primaryPaths[
+        questionNumber
+      ] =
+        path;
+    }
 
-    paths[
-      questionNumber
-    ] =
-      path;
+    candidateRows.push({
+      user_id:
+        qsState.user.id,
+      set_id:
+        setId,
+      question_number:
+        questionNumber,
+      image_path:
+        path,
+      source:
+        image.source
+        || "unknown",
+      candidate_index:
+        candidateIndex
+    });
   }
 
+  if (
+    candidateRows.length
+  ) {
+    const {
+      error:
+        galleryError
+    } =
+      await qsSb
+        .from(
+          "question_image_candidates"
+        )
+        .insert(
+          candidateRows
+        );
 
-  return paths;
+    if (
+      galleryError
+    ) {
+      throw galleryError;
+    }
+  }
+
+  return primaryPaths;
 }
+
 
 function chunkArray(array, size) {
   const chunks = [];
@@ -6938,6 +7057,14 @@ async function loadSets() {
     await attachQuestionImageUrls(
       itemsResult.data || []
     );
+
+  qsState.imageGallery =
+    galleryResult?.error
+      ? []
+      : await attachGalleryImageUrls(
+          galleryResult?.data
+          || []
+        );
   const attempts = attemptsResult.data || [];
 
   const itemToSet = new Map(
@@ -7601,7 +7728,12 @@ async function deleteSelectedSets() {
 
     ...(imageRows || [])
       .map(
-        (item) =>
+        item =>
+          item.image_path
+      ),
+    ...(candidateRows || [])
+      .map(
+        item =>
           item.image_path
       )
       .filter(
@@ -7891,6 +8023,72 @@ async function attachQuestionImageUrls(
 }
 
 
+async function attachGalleryImageUrls(
+  rows
+) {
+  const ownPrefix =
+    `${qsState.user.id}/`;
+
+  return Promise.all(
+    (rows || []).map(
+      async row => {
+        if (
+          !row.image_path
+          ||
+          !String(
+            row.image_path
+          ).startsWith(
+            ownPrefix
+          )
+        ) {
+          return {
+            ...row,
+            image_url:
+              null
+          };
+        }
+
+        const {
+          data,
+          error
+        } =
+          await qsSb
+            .storage
+            .from(
+              "docmap"
+            )
+            .createSignedUrl(
+              row.image_path,
+              300
+            );
+
+        if (
+          error
+        ) {
+          console.warn(
+            "Não foi possível abrir uma imagem da galeria:",
+            error
+          );
+
+          return {
+            ...row,
+            image_url:
+              null
+          };
+        }
+
+        return {
+          ...row,
+          image_url:
+            data?.signedUrl
+            || null
+        };
+      }
+    )
+  );
+}
+
+
 async function extractOfficialAnswerKeyFromPdfBlob(
   blob
 ) {
@@ -8116,7 +8314,8 @@ async function openSet(setId) {
 
   const [
     itemsResult,
-    attemptsResult
+    attemptsResult,
+    galleryResult
   ] = await Promise.all([
     qsSb
       .from("question_items")
@@ -8126,7 +8325,14 @@ async function openSet(setId) {
 
     qsSb
       .from("question_attempts")
+      .select("*"),
+
+    qsSb
+      .from("question_image_candidates")
       .select("*")
+      .eq("set_id", setId)
+      .order("question_number", { ascending: true })
+      .order("candidate_index", { ascending: true })
   ]);
 
   if (itemsResult.error) {
@@ -8208,12 +8414,65 @@ function questionExcerpt(item) {
 }
 
 function availableSimulationImages() {
+  const gallery =
+    (qsState.imageGallery || [])
+      .filter(
+        item =>
+          item.image_path
+          && item.image_url
+      );
+
+  if (
+    gallery.length
+  ) {
+    return gallery;
+  }
+
+  /*
+    Compatibilidade com simulados antigos que tinham
+    apenas uma imagem em question_items.image_path.
+  */
   return qsState.items
     .filter(
-      (item) =>
+      item =>
         item.image_path
         && item.image_url
+    )
+    .map(
+      (item) => ({
+        id:
+          `legacy-${item.id}`,
+        question_number:
+          item.question_number,
+        image_path:
+          item.image_path,
+        image_url:
+          item.image_url,
+        source:
+          "legacy",
+        candidate_index:
+          1
+      })
     );
+}
+
+
+function imageSourceLabel(
+  source
+) {
+  if (
+    source === "text-gap"
+  ) {
+    return "Recorte por texto";
+  }
+
+  if (
+    source === "embedded-image"
+  ) {
+    return "Imagem detectada";
+  }
+
+  return "Imagem";
 }
 
 
@@ -8242,13 +8501,116 @@ function renderErrorImagePicker(
     )
     || "";
 
+  const groups =
+    new Map();
+
+  for (
+    const galleryItem
+    of images
+  ) {
+    const number =
+      Number(
+        galleryItem.question_number
+      );
+
+    if (
+      !groups.has(
+        number
+      )
+    ) {
+      groups.set(
+        number,
+        []
+      );
+    }
+
+    groups
+      .get(
+        number
+      )
+      .push(
+        galleryItem
+      );
+  }
+
+  const groupedHtml =
+    Array.from(
+      groups.entries()
+    )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a[0] - b[0]
+      )
+      .map(
+        (
+          [
+            questionNumber,
+            questionImages
+          ]
+        ) => `
+          <section class="qs-error-image-group">
+            <div class="qs-error-image-group-title">
+              <strong>Imagens questão ${questionNumber}</strong>
+              <small>${questionImages.length} candidato${questionImages.length === 1 ? "" : "s"}</small>
+            </div>
+
+            <div class="qs-error-image-gallery">
+              ${
+                questionImages
+                  .map(
+                    (
+                      galleryItem,
+                      galleryIndex
+                    ) => {
+                      const selected =
+                        selectedPath
+                          === galleryItem.image_path;
+
+                      return `
+                        <button
+                          class="qs-error-image-option ${selected ? "selected" : ""}"
+                          type="button"
+                          data-error-image-select="${qsEscape(item.id)}"
+                          data-image-path="${qsEscape(galleryItem.image_path)}"
+                          aria-pressed="${selected ? "true" : "false"}"
+                          title="Selecionar imagem ${galleryIndex + 1} da questão ${questionNumber}"
+                        >
+                          <img
+                            src="${qsEscape(galleryItem.image_url)}"
+                            alt="Imagem ${galleryIndex + 1} da questão ${questionNumber}"
+                            loading="lazy"
+                          >
+
+                          <span>
+                            Imagem ${galleryIndex + 1}
+                          </span>
+
+                          <small>
+                            ${qsEscape(imageSourceLabel(galleryItem.source))}
+                            · ${selected ? "Selecionada" : "Selecionar"}
+                          </small>
+                        </button>
+                      `;
+                    }
+                  )
+                  .join("")
+              }
+            </div>
+          </section>
+        `
+      )
+      .join("");
+
   return `
     <div class="qs-error-image-picker full">
       <div class="qs-error-image-picker-head">
         <div>
           <strong>Imagem para o Caderno de Erros</strong>
           <small>
-            Opcional. Escolha uma imagem da galeria somente se ela ajudar a revisar este erro.
+            Escolha livremente entre todos os recortes detectados. O LURIA mantém inclusive imagens repetidas, ruins ou sobrepostas para você decidir.
           </small>
         </div>
 
@@ -8268,47 +8630,14 @@ function renderErrorImagePicker(
       </div>
 
       <div
-        class="qs-error-image-gallery"
+        class="qs-error-image-groups"
         data-error-image-gallery="${qsEscape(item.id)}"
       >
-        ${
-          images.map(
-            (galleryItem) => {
-              const selected =
-                selectedPath
-                  === galleryItem.image_path;
-
-              return `
-                <button
-                  class="qs-error-image-option ${selected ? "selected" : ""}"
-                  type="button"
-                  data-error-image-select="${qsEscape(item.id)}"
-                  data-image-path="${qsEscape(galleryItem.image_path)}"
-                  aria-pressed="${selected ? "true" : "false"}"
-                  title="Usar imagem detectada na questão ${galleryItem.question_number}"
-                >
-                  <img
-                    src="${qsEscape(galleryItem.image_url)}"
-                    alt="Imagem detectada na questão ${galleryItem.question_number}"
-                    loading="lazy"
-                  >
-
-                  <span>
-                    Questão ${galleryItem.question_number}
-                  </span>
-
-                  <small>
-                    ${selected ? "Selecionada" : "Selecionar"}
-                  </small>
-                </button>
-              `;
-            }
-          ).join("")
-        }
+        ${groupedHtml}
       </div>
 
       <p class="qs-error-image-note">
-        Depois que os erros forem enviados ao Caderno, esta galeria do simulado será apagada. Imagens selecionadas serão copiadas para o Caderno antes da limpeza.
+        A galeria fica disponível até o envio dos erros ao Caderno. A imagem selecionada é copiada antes da limpeza.
       </p>
     </div>
   `;
@@ -13257,96 +13586,158 @@ async function clearCurrentSimulationImageGallery() {
     };
   }
 
-  const {
-    data: rows,
-    error: fetchError
-  } =
-    await qsSb
-      .from(
-        "question_items"
-      )
-      .select(
-        "id,image_path"
-      )
-      .eq(
-        "set_id",
-        qsState.currentSet.id
-      );
+  const [
+    legacyResult,
+    galleryResult
+  ] =
+    await Promise.all([
+      qsSb
+        .from(
+          "question_items"
+        )
+        .select(
+          "id,image_path"
+        )
+        .eq(
+          "set_id",
+          qsState.currentSet.id
+        ),
 
-  if (fetchError) {
-    throw fetchError;
+      qsSb
+        .from(
+          "question_image_candidates"
+        )
+        .select(
+          "id,image_path"
+        )
+        .eq(
+          "set_id",
+          qsState.currentSet.id
+        )
+    ]);
+
+  if (
+    legacyResult.error
+  ) {
+    throw legacyResult.error;
   }
 
-  const imageRows =
-    (rows || [])
+  if (
+    galleryResult.error
+  ) {
+    throw galleryResult.error;
+  }
+
+  const legacyRows =
+    (legacyResult.data || [])
       .filter(
-        (row) =>
+        row =>
           Boolean(
             row.image_path
           )
       );
 
-  if (
-    !imageRows.length
-  ) {
-    qsState.imageSelections.clear();
-
-    return {
-      removed: 0,
-      storageWarning: false
-    };
-  }
-
-  /*
-    Primeiro tira as imagens da galeria no banco.
-    Assim elas somem da interface mesmo se o Storage
-    demorar ou falhar ao apagar um arquivo órfão.
-  */
-  const {
-    error: updateError
-  } =
-    await qsSb
-      .from(
-        "question_items"
-      )
-      .update({
-        image_path: null
-      })
-      .in(
-        "id",
-        imageRows.map(
-          (row) =>
-            row.id
-        )
+  const galleryRows =
+    (galleryResult.data || [])
+      .filter(
+        row =>
+          Boolean(
+            row.image_path
+          )
       );
-
-  if (updateError) {
-    throw updateError;
-  }
 
   const paths =
     Array.from(
       new Set(
-        imageRows.map(
-          (row) =>
-            row.image_path
-        )
+        [
+          ...legacyRows.map(
+            row =>
+              row.image_path
+          ),
+          ...galleryRows.map(
+            row =>
+              row.image_path
+          )
+        ]
       )
     );
 
-  const {
-    error: storageError
-  } =
-    await qsSb
-      .storage
-      .from(
-        "docmap"
-      )
-      .remove(
-        paths
-      );
+  if (
+    legacyRows.length
+  ) {
+    const {
+      error:
+        updateError
+    } =
+      await qsSb
+        .from(
+          "question_items"
+        )
+        .update({
+          image_path:
+            null
+        })
+        .in(
+          "id",
+          legacyRows.map(
+            row =>
+              row.id
+          )
+        );
+
+    if (
+      updateError
+    ) {
+      throw updateError;
+    }
+  }
+
+  if (
+    galleryRows.length
+  ) {
+    const {
+      error:
+        deleteError
+    } =
+      await qsSb
+        .from(
+          "question_image_candidates"
+        )
+        .delete()
+        .eq(
+          "set_id",
+          qsState.currentSet.id
+        );
+
+    if (
+      deleteError
+    ) {
+      throw deleteError;
+    }
+  }
+
+  let storageError =
+    null;
+
+  if (
+    paths.length
+  ) {
+    const result =
+      await qsSb
+        .storage
+        .from(
+          "docmap"
+        )
+        .remove(
+          paths
+        );
+
+    storageError =
+      result.error;
+  }
 
   qsState.imageSelections.clear();
+  qsState.imageGallery = [];
 
   return {
     removed:
@@ -13878,21 +14269,41 @@ async function deleteSet(setId) {
 
   if (!confirmed) return;
 
-  const {
-    data:
-      imageRows
-  } =
-    await qsSb
-      .from(
-        "question_items"
-      )
-      .select(
-        "image_path"
-      )
-      .eq(
-        "set_id",
-        setId
-      );
+  const [
+    {
+      data:
+        imageRows
+    },
+    {
+      data:
+        candidateRows
+    }
+  ] =
+    await Promise.all([
+      qsSb
+        .from(
+          "question_items"
+        )
+        .select(
+          "image_path"
+        )
+        .eq(
+          "set_id",
+          setId
+        ),
+
+      qsSb
+        .from(
+          "question_image_candidates"
+        )
+        .select(
+          "image_path"
+        )
+        .eq(
+          "set_id",
+          setId
+        )
+    ]);
 
 
   const storagePaths = [
@@ -13969,6 +14380,7 @@ function closeCurrentSet() {
 
   qsState.currentSet = null;
   qsState.items = [];
+  qsState.imageGallery = [];
   qsState.attempts = new Map();
   qsState.errorNotebookSkips.clear();
 
