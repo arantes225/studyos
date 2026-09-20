@@ -166,6 +166,51 @@ function setNewErrorStatus(
 }
 
 
+function normalizeErrorAgendaArea(
+  value
+) {
+  const normalized =
+    String(
+      value
+      ?? ""
+    )
+      .trim()
+      .toLowerCase()
+      .normalize(
+        "NFD"
+      )
+      .replace(
+        /[\u0300-\u036f]/g,
+        ""
+      );
+
+  if (
+    !normalized
+    || normalized === "sem area"
+  ) {
+    return "";
+  }
+
+  return normalized;
+}
+
+
+function sameErrorAgendaArea(
+  first,
+  second
+) {
+  return (
+    normalizeErrorAgendaArea(
+      first
+    )
+    ===
+    normalizeErrorAgendaArea(
+      second
+    )
+  );
+}
+
+
 function currentAreaFilter() {
   if (
     errorAgendaDate
@@ -2219,106 +2264,225 @@ async function renderCurrentError() {
 
 
 async function loadErrorQueue() {
-  let query =
-    errorSb
-      .from(
-        "error_notebook"
-      )
-      .select(
-        "id,area,materia,theme,ccq,question_text,question_image_path,correct_answer,what_i_thought,due_date,current_interval_days,stability_days,review_count,last_reviewed_at,created_at"
-      )
-      .eq(
-        "active",
-        true
-      );
+  const selectColumns =
+    "id,area,materia,theme,ccq,question_text,question_image_path,correct_answer,what_i_thought,due_date,current_interval_days,stability_days,review_count,last_reviewed_at,created_at";
+
+
+  let data =
+    [];
+
+  let error =
+    null;
 
 
   /*
     Pela Agenda:
-    exatamente data + área.
-
-    Página normal:
-    itens vencidos até hoje,
-    opcionalmente filtrados
-    por área.
+    1. busca todos os CCQs da data;
+    2. filtra a área no JavaScript de forma normalizada.
+       Isso evita o caso "Sem área" / null / espaços / acentos
+       fazer a fila ficar vazia mesmo com CCQs na data.
   */
-
   if (
     errorAgendaDate
   ) {
-    query =
-      query.eq(
-        "due_date",
-        errorAgendaDate
-      );
+    const exactResult =
+      await errorSb
+        .from(
+          "error_notebook"
+        )
+        .select(
+          selectColumns
+        )
+        .eq(
+          "active",
+          true
+        )
+        .eq(
+          "due_date",
+          errorAgendaDate
+        )
+        .order(
+          "due_date",
+          {
+            ascending:
+              true
+          }
+        )
+        .order(
+          "created_at",
+          {
+            ascending:
+              true
+          }
+        )
+        .limit(
+          250
+        );
+
+
+    error =
+      exactResult.error;
 
 
     if (
-      errorAgendaArea
+      !error
     ) {
-      query =
-        query.eq(
-          "area",
-          errorAgendaArea
-        );
+      data =
+        (
+          exactResult.data
+          || []
+        )
+          .filter(
+            item =>
+              sameErrorAgendaArea(
+                item.area,
+                errorAgendaArea
+              )
+          );
+    }
 
 
-    } else {
-      query =
-        query.is(
-          "area",
-          null
-        );
+    /*
+      Recuperação para atividades movidas para HOJE em versões
+      anteriores, quando a agenda podia mudar visualmente sem
+      atualizar corretamente due_date.
+
+      Se a fila exata estiver vazia, mostramos os CCQs vencidos
+      da mesma área. Isso evita abrir a Ambientação em branco.
+    */
+    if (
+      !error
+      &&
+      !data.length
+      &&
+      errorAgendaDate
+      === errorTodayISO()
+    ) {
+      const fallbackResult =
+        await errorSb
+          .from(
+            "error_notebook"
+          )
+          .select(
+            selectColumns
+          )
+          .eq(
+            "active",
+            true
+          )
+          .lte(
+            "due_date",
+            errorAgendaDate
+          )
+          .order(
+            "due_date",
+            {
+              ascending:
+                true
+            }
+          )
+          .order(
+            "created_at",
+            {
+              ascending:
+                true
+            }
+          )
+          .limit(
+            250
+          );
+
+
+      if (
+        fallbackResult.error
+      ) {
+        error =
+          fallbackResult.error;
+
+      } else {
+        data =
+          (
+            fallbackResult.data
+            || []
+          )
+            .filter(
+              item =>
+                sameErrorAgendaArea(
+                  item.area,
+                  errorAgendaArea
+                )
+            );
+      }
     }
 
 
   } else {
-    query =
-      query.lte(
-        "due_date",
-        errorTodayISO()
-      );
+    let query =
+      errorSb
+        .from(
+          "error_notebook"
+        )
+        .select(
+          selectColumns
+        )
+        .eq(
+          "active",
+          true
+        )
+        .lte(
+          "due_date",
+          errorTodayISO()
+        );
 
 
     const area =
       currentAreaFilter();
 
 
-    if (area) {
+    if (
+      area
+    ) {
       query =
         query.eq(
           "area",
           area
         );
     }
+
+
+    const result =
+      await query
+        .order(
+          "due_date",
+          {
+            ascending:
+              true
+          }
+        )
+        .order(
+          "created_at",
+          {
+            ascending:
+              true
+          }
+        )
+        .limit(
+          250
+        );
+
+
+    data =
+      result.data
+      || [];
+
+    error =
+      result.error;
   }
 
 
-  const {
-    data,
+  if (
     error
-  } =
-    await query
-      .order(
-        "due_date",
-        {
-          ascending:
-            true
-        }
-      )
-      .order(
-        "created_at",
-        {
-          ascending:
-            true
-        }
-      )
-      .limit(
-        250
-      );
-
-
-  if (error) {
+  ) {
     console.error(
       error
     );
@@ -2335,7 +2499,8 @@ async function loadErrorQueue() {
 
 
   errorQueue =
-    data || [];
+    data
+    || [];
 
 
   errorIndex =
@@ -2352,7 +2517,9 @@ async function loadErrorQueue() {
     );
 
 
-  if (emptyCopy) {
+  if (
+    emptyCopy
+  ) {
     emptyCopy.textContent =
       selectedArea
         ? `Não há revisões pendentes em ${selectedArea}.`
@@ -2375,18 +2542,26 @@ async function loadErrorQueue() {
       );
 
 
-    title.textContent =
-      "Erros agendados";
+    if (
+      title
+    ) {
+      title.textContent =
+        "Erros agendados";
+    }
 
 
-    copy.textContent =
-      `Revisão de ${formatErrorDate(
-        errorAgendaDate
-      )}${
-        errorAgendaArea
-          ? ` · ${errorAgendaArea}`
-          : ""
-      }.`;
+    if (
+      copy
+    ) {
+      copy.textContent =
+        `Revisão de ${formatErrorDate(
+          errorAgendaDate
+        )}${
+          errorAgendaArea
+            ? ` · ${errorAgendaArea}`
+            : ""
+        }.`;
+    }
   }
 
 
