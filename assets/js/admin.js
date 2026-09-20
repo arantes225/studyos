@@ -555,15 +555,52 @@
   function filteredCustomers() {
     const query =
       $("admin-customer-search")
-        .value
+        ?.value
         .trim()
-        .toLowerCase();
+        .toLowerCase()
+      || "";
 
-    if (!query) {
-      return state.customers;
-    }
+    const plan =
+      $("admin-customer-plan-filter")
+        ?.value
+        .trim()
+        .toLowerCase()
+      || "";
+
+    const status =
+      $("admin-customer-status-filter")
+        ?.value
+        .trim()
+        .toLowerCase()
+      || "";
 
     return state.customers.filter(customer => {
+      const customerPlan =
+        String(customer.plan || "free")
+          .toLowerCase();
+
+      const customerStatus =
+        String(customer.status || "")
+          .toLowerCase();
+
+      if (
+        plan
+        && customerPlan !== plan
+      ) {
+        return false;
+      }
+
+      if (
+        status
+        && customerStatus !== status
+      ) {
+        return false;
+      }
+
+      if (!query) {
+        return true;
+      }
+
       const haystack =
         [
           customer.display_name,
@@ -1167,6 +1204,95 @@
         "input",
         renderCustomers
       );
+
+    [
+      "admin-customer-plan-filter",
+      "admin-customer-status-filter"
+    ].forEach(id => {
+      $(id)?.addEventListener(
+        "change",
+        renderCustomers
+      );
+    });
+
+    $("admin-customer-filter-toggle")
+      ?.addEventListener(
+        "click",
+        () => {
+          const panel =
+            $("admin-customer-filter-panel");
+
+          const button =
+            $("admin-customer-filter-toggle");
+
+          if (!panel || !button) {
+            return;
+          }
+
+          panel.hidden =
+            !panel.hidden;
+
+          button.setAttribute(
+            "aria-expanded",
+            String(!panel.hidden)
+          );
+        }
+      );
+
+    $("admin-customer-filter-clear")
+      ?.addEventListener(
+        "click",
+        () => {
+          const plan =
+            $("admin-customer-plan-filter");
+
+          const status =
+            $("admin-customer-status-filter");
+
+          if (plan) {
+            plan.value = "";
+          }
+
+          if (status) {
+            status.value = "";
+          }
+
+          renderCustomers();
+        }
+      );
+
+    document.addEventListener(
+      "click",
+      event => {
+        const wrap =
+          document.querySelector(
+            ".admin-filter-wrap"
+          );
+
+        const panel =
+          $("admin-customer-filter-panel");
+
+        const button =
+          $("admin-customer-filter-toggle");
+
+        if (
+          !wrap
+          || !panel
+          || panel.hidden
+          || wrap.contains(event.target)
+        ) {
+          return;
+        }
+
+        panel.hidden =
+          true;
+
+        button?.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+      }
+    );
   }
 
   async function ensureAdminAccess() {
