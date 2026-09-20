@@ -718,6 +718,14 @@
                 </option>
               </select>
 
+              <select id="library-materia">
+                <option value="">Todas as matérias</option>
+              </select>
+
+              <select id="library-theme">
+                <option value="">Todos os temas</option>
+              </select>
+
               <select id="library-active">
                 <option value="active">
                   Ativos
@@ -731,6 +739,18 @@
               </select>
 
             </div>
+
+            <div class="flash-deck-actions">
+              <button id="flash-review-filtered" class="button primary" type="button">
+                Revisar agora
+              </button>
+              <button id="flash-share-filtered" class="button secondary" type="button">
+                Compartilhar deck
+              </button>
+              <small>Revisar agora não altera sua agenda de repetição espaçada.</small>
+            </div>
+
+            <div id="library-decks" class="flash-deck-grid"></div>
 
             <div
               id="flash-library-bulk"
@@ -924,7 +944,7 @@
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=14.0"></script>
   <script src="assets/js/study-mode.js?v=13.0"></script>
-  <script src="assets/js/flashcards.js?v=13.1"></script>
+  <script src="assets/js/flashcards.js?v=14.0"></script>
 
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
