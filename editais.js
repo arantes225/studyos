@@ -1228,7 +1228,7 @@ async function loadExams() {
         "exams"
       )
       .select(
-        "id,institution,board,exam_date,registration_deadline,fee,notes,status,edital_url,registration_url,score_percent,result_notes,created_at,updated_at"
+        "id,institution,board,exam_date,registration_deadline,fee,notes,status,edital_url,registration_url,score_percent,result_notes,cutoff_history,created_at,updated_at"
       )
       .order(
         "exam_date",
@@ -1256,6 +1256,32 @@ async function loadExams() {
 
 
   renderExams();
+}
+
+
+function examLatestCutoffValue(
+  history
+) {
+  if (
+    !Array.isArray(history)
+    || !history.length
+  ) {
+    return "";
+  }
+
+  const first =
+    history[0];
+
+  const value =
+    Number(
+      first?.score
+    );
+
+  return Number.isFinite(
+    value
+  )
+    ? value
+    : "";
 }
 
 
@@ -1297,6 +1323,7 @@ function clearExamForm() {
     "exam-date",
     "exam-fee",
     "exam-score",
+    "exam-cutoff",
     "exam-edital-url",
     "exam-registration-url",
     "exam-notes",
@@ -1428,6 +1455,16 @@ function openExamDialog(
 
     document
       .getElementById(
+        "exam-cutoff"
+      )
+      .value =
+        examLatestCutoffValue(
+          exam.cutoff_history
+        );
+
+
+    document
+      .getElementById(
         "exam-edital-url"
       )
       .value =
@@ -1536,6 +1573,14 @@ async function saveExam() {
       .value;
 
 
+  const cutoffRaw =
+    document
+      .getElementById(
+        "exam-cutoff"
+      )
+      .value;
+
+
   const payload = {
     user_id:
       examUser.id,
@@ -1587,6 +1632,20 @@ async function saveExam() {
         : Number(
             scoreRaw
           ),
+
+
+    cutoff_history:
+      cutoffRaw === ""
+        ? []
+        : [
+            {
+              year: "",
+              score:
+                Number(
+                  cutoffRaw
+                )
+            }
+          ],
 
     edital_url:
       document
