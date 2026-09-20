@@ -1390,3 +1390,45 @@ img { max-width: 100%; }
     animation-iteration-count: 1 !important;
   }
 }
+
+
+/* =========================================================
+   LURIA VISIBLE GOLD DETAILS
+   ========================================================= */
+.preview-streak {
+  border-color: rgba(212, 175, 55, .52);
+  background: var(--landing-gold-soft);
+  color: #80620A;
+  box-shadow: 0 5px 16px rgba(212, 175, 55, .12);
+}
+
+.plan-card.featured .plan-head > span {
+  color: #9A760B;
+}
+
+.plan-card.featured .plan-button.primary {
+  border-color: var(--landing-gold);
+  background: var(--landing-gold);
+  color: #14213A;
+  box-shadow: 0 10px 24px rgba(212, 175, 55, .20);
+}
+
+.plan-card.featured .plan-button.primary:hover {
+  background: #C7A22C;
+  border-color: #C7A22C;
+}
+
+.plan-card.featured {
+  position: relative;
+}
+
+.plan-card.featured::before {
+  content: "";
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  top: 0;
+  height: 3px;
+  border-radius: 0 0 999px 999px;
+  background: linear-gradient(90deg, transparent, var(--landing-gold), transparent);
+}
