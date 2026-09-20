@@ -188,45 +188,6 @@ function sidebarMarkup(user, profile = null) {
     </nav>
 
     <div class="sidebar-footer">
-      <div class="sidebar-lofi" data-lofi-shell>
-        <div class="sidebar-lofi-head">
-          <button
-            class="sidebar-lofi-toggle"
-            type="button"
-            data-lofi-toggle
-            aria-label="Tocar lo-fi"
-          >
-            ▶
-          </button>
-
-          <div class="sidebar-lofi-copy">
-            <strong data-lofi-title>Lofi 1</strong>
-            <small data-lofi-status>carregando...</small>
-          </div>
-        </div>
-
-        <select
-          class="sidebar-lofi-select"
-          data-lofi-select
-          aria-label="Escolher som ambiente"
-        >
-          <option value="">Carregando sons...</option>
-        </select>
-
-        <div class="sidebar-lofi-volume">
-          <span>♫</span>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value="0.45"
-            data-lofi-volume
-            aria-label="Volume do som ambiente"
-          >
-        </div>
-      </div>
-
       <div class="streak-mini">
         <span>🔥</span>
         <div>
