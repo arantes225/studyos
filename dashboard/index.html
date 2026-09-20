@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard · LURIA</title>
+  <link rel="manifest" href="manifest.webmanifest?v=3">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/img/pwa-icon-180.png?v=3">
+  <meta name="theme-color" content="#0A2342">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="LURIA">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria2">
+  <link rel="stylesheet" href="assets/css/style.css?v=luria-palette-13">
+  <style id="fase3-inline">
+/* =========================================================
+   FASE 3 — DASHBOARD + AGENDA
+   ========================================================= */
+
+.calendar-panel {
+  overflow: hidden;
+}
+
+.calendar-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+.calendar-toolbar h2 {
+  margin: 0;
+}
+
+.calendar-toolbar p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.calendar-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.segmented-control,
+.calendar-nav {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-2);
+}
+
+.segmented-control button,
+.calendar-nav button {
+  min-height: 36px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 750;
+}
+
+.segmented-control button.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 4px rgba(20, 25, 35, 0.08);
+}
+
+.calendar-nav button:hover,
+.segmented-control button:hover {
+  color: var(--text);
+}
+
+.calendar-status {
+  min-height: 20px;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.calendar-status.error {
+  color: var(--danger);
+}
+
+.calendar-status.success {
+  color: var(--success);
+}
+
+.calendar {
+  min-width: 0;
+}
+
+.week-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.calendar-day {
+  min-width: 0;
+  min-height: 430px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+
+.calendar-day:last-child {
+  border-right: 0;
+}
+
+.calendar-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 50px;
+  padding: 0 11px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.calendar-day-header span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.calendar-day-header strong {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border-radius: 50%;
+  font-size: 13px;
+}
+
+.calendar-day.today .calendar-day-header strong,
+.month-day.today > header span {
+  background: var(--accent);
+  color: #fff;
+}
+
+.calendar-day-body {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  min-height: 379px;
+  padding: 9px;
+}
+
+.empty-day {
+  padding: 16px 4px;
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+.agenda-card {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 11px;
+  background: var(--surface);
+  transition: opacity 120ms ease, transform 120ms ease, border-color 120ms ease;
+}
+
+.agenda-card[draggable="true"] {
+  cursor: grab;
+}
+
+.agenda-card.dragging {
+  opacity: .45;
+}
+
+.agenda-card.lesson {
+  border-left-color: #4f7bd9;
+}
+
+.agenda-card.subject-review {
+  border-left-color: #8b6fc7;
+}
+
+.agenda-card.flashcards {
+  border-left-color: #2f9b72;
+}
+
+.agenda-card.errors {
+  border-left-color: #d48b36;
+}
+
+.agenda-card.exam {
+  border-left-color: #d34f4f;
+}
+
+.agenda-card.registration {
+  border-left-color: #bb5b9a;
+}
+
+.agenda-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.agenda-kind {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.agenda-count {
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  min-height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.agenda-title {
+  display: block;
+  margin-top: 7px;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.agenda-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 7px;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.agenda-subtitle {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.agenda-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 9px;
+}
+
+.agenda-card-action {
+  min-height: 29px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.agenda-card-action.primary-action {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.agenda-card-action:hover {
+  border-color: var(--accent);
+}
+
+.drop-target {
+  outline: 2px dashed var(--accent);
+  outline-offset: -3px;
+  background: var(--accent-soft);
+}
+
+.month-calendar {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.month-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.month-weekdays span {
+  padding: 10px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.month-day {
+  min-width: 0;
+  min-height: 145px;
+  padding: 7px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.month-day:nth-child(7n) {
+  border-right: 0;
+}
+
+.month-day.outside {
+  opacity: .48;
+  background: var(--surface-2);
+}
+
+.month-day > header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 6px;
+}
+
+.month-day > header span {
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.month-day-items {
+  display: grid;
+  gap: 6px;
+}
+
+.month-day .agenda-card {
+  padding: 7px;
+}
+
+.month-day .agenda-card .agenda-meta,
+.month-day .agenda-card .agenda-subtitle,
+.month-day .agenda-card .agenda-card-actions {
+  display: none;
+}
+
+.month-day .agenda-title {
+  margin-top: 4px;
+  font-size: 10px;
+}
+
+.month-day .agenda-kind {
+  font-size: 9px;
+}
+
+.month-day .agenda-count {
+  min-width: 18px;
+  min-height: 18px;
+  font-size: 9px;
+}
+
+.move-dialog {
+  width: min(calc(100% - 32px), 470px);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.move-dialog::backdrop {
+  background: rgba(0, 0, 0, .45);
+}
+
+.move-dialog form {
+  padding: 22px;
+}
+
+.dialog-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.dialog-heading h2 {
+  margin: 5px 0 0;
+  font-size: 19px;
+}
+
+.dialog-close {
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 22px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  margin-top: 20px;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.field input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.dialog-note {
+  margin: 13px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 20px;
+}
+
+.dialog-actions .button {
+  min-height: 41px;
+  padding: 0 15px;
+}
+
+.selected-activity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 16px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.selected-activity[hidden] {
+  display: none;
+}
+
+.selected-activity h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.selected-activity p {
+  margin: 7px 0 0;
+  color: var(--muted);
+}
+
+.compact-button {
+  min-height: 40px;
+  padding: 0 14px;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 1180px) {
+  .week-calendar {
+    overflow-x: auto;
+    grid-template-columns: repeat(7, minmax(175px, 1fr));
+  }
+
+  .month-calendar {
+    overflow-x: auto;
+  }
+
+  .month-weekdays,
+  .month-grid {
+    min-width: 850px;
+  }
+}
+
+@media (max-width: 760px) {
+  .calendar-toolbar {
+    flex-direction: column;
+  }
+
+  .calendar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .selected-activity {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.simulations-panel {
+  margin-top: 16px;
+}
+
+.simulations-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+}
+
+.simulations-overview-copy h2 {
+  margin: 0;
+}
+
+.simulations-overview-copy p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.simulations-link {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.simulations-recent {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 15px;
+}
+
+.simulation-mini-card {
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.simulation-mini-card strong,
+.simulation-mini-card span,
+.simulation-mini-card small {
+  display: block;
+}
+
+.simulation-mini-card strong {
+  min-height: 34px;
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.simulation-mini-score {
+  margin-top: 10px;
+  font-size: 20px;
+  font-weight: 850;
+}
+
+.simulation-mini-card small {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.simulations-empty {
+  grid-column: 1 / -1;
+  padding: 18px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+@media (max-width: 1000px) {
+  .simulations-recent {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .simulations-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .simulations-recent {
+    grid-template-columns: 1fr;
+  }
+}
+
+.metric-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+#metric-difficulty {
+  font-size: 21px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1180px) {
+  .metric-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   FASE 11.2 — DASHBOARD EXPANDIDO
+   ========================================================= */
+
+.dashboard-metrics-expanded {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dashboard-metrics-expanded .metric-card {
+  min-height: 128px;
+}
+
+.visual-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+}
+
+.metric-visual-copy {
+  min-width: 0;
+}
+
+.metric-value.compact-value {
+  font-size: 24px;
+  line-height: 1.05;
+}
+
+.metric-ring {
+  --metric-ring-value: 0;
+  --metric-ring-size: 78px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--metric-ring-size);
+  height: var(--metric-ring-size);
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      var(--accent) calc(var(--metric-ring-value) * 1%),
+      var(--surface-2) 0
+    );
+}
+
+.metric-ring::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.metric-ring-center {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.metric-ring-center strong {
+  font-size: 17px;
+  line-height: 1;
+}
+
+.metric-ring-center span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.secondary-ring {
+  background:
+    conic-gradient(
+      #d48b36 calc(var(--metric-ring-value) * 1%),
+      var(--surface-2) 0
+    );
+}
+
+.simulation-ring {
+  background:
+    conic-gradient(
+      #4f7bd9 calc(var(--metric-ring-value) * 1%),
+      var(--surface-2) 0
+    );
+}
+
+.overdue-card .metric-value {
+  color: var(--danger);
+}
+
+@media (max-width: 1180px) {
+  .dashboard-metrics-expanded {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-metrics-expanded {
+    grid-template-columns: 1fr;
+  }
+
+  .visual-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+/* CCQ fixo no Dashboard */
+.dashboard-passive-ccq-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-items: stretch;
+  gap: 10px;
+  min-height: 150px;
+}
+
+.dashboard-ccq-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dashboard-ccq-auto {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.dashboard-passive-ccq-stage {
+  position: absolute;
+
+  top: 34px;
+  right: 10px;
+  bottom: 4px;
+  left: 10px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  text-align: center;
+
+  transition:
+    transform 300ms ease,
+    opacity 300ms ease;
+}
+
+.dashboard-passive-ccq-stage.is-leaving {
+  transform: translateX(-24px);
+  opacity: 0;
+}
+
+.dashboard-passive-ccq-stage.is-entering {
+  transform: translateX(24px);
+  opacity: 0;
+}
+
+.dashboard-passive-ccq-text {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+
+  display: -webkit-box;
+  overflow: hidden;
+
+  color: var(--text);
+
+  font-size: 29px;
+  font-weight: 820;
+  line-height: 1.25;
+
+  text-align: center;
+
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
+.dashboard-passive-ccq-meta {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+
+  overflow: hidden;
+
+  color: var(--muted);
+
+  font-size: 8.5px;
+  font-weight: 700;
+
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-passive-ccq-empty {
+  min-height: 80px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 10px;
+  text-align: center;
+}
+
+.dashboard-passive-ccq-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  overflow: hidden;
+  background: var(--border);
+}
+
+.dashboard-passive-ccq-progress > span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--accent);
+}
+
+
+/* =========================================================
+   OFENSIVA — CHAMA PROGRESSIVA
+   ========================================================= */
+
+.streak-card-v22 {
+  --flame-size: 32px;
+  --flame-main: #94a3b8;
+  --flame-core: #cbd5e1;
+  --flame-glow: rgba(148, 163, 184, .15);
+
+  position: relative;
+  overflow: hidden;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label flame"
+    "value flame"
+    "helper flame"
+    "stage stage";
+
+  align-items: center;
+  column-gap: 12px;
+}
+
+.streak-card-v22 > .metric-label {
+  grid-area: label;
+}
+
+.streak-card-v22 > .metric-value {
+  grid-area: value;
+}
+
+.streak-card-v22 > .metric-helper {
+  grid-area: helper;
+}
+
+.streak-flame-wrap {
+  grid-area: flame;
+
+  position: relative;
+
+  width: 78px;
+  height: 90px;
+
+  display: grid;
+  place-items: center;
+
+  justify-self: end;
+}
+
+.streak-flame-aura {
+  position: absolute;
+
+  width: calc(var(--flame-size) * 1.3);
+  height: calc(var(--flame-size) * 1.3);
+
+  border-radius: 50%;
+  background: var(--flame-main);
+
+  opacity: .10;
+  filter: blur(13px);
+
+  transition:
+    width .35s ease,
+    height .35s ease,
+    background .35s ease;
+}
+
+.streak-flame-svg {
+  position: relative;
+  z-index: 1;
+
+  width: var(--flame-size);
+  height: var(--flame-size);
+
+  overflow: visible;
+
+  color: var(--flame-main);
+
+  filter: drop-shadow(
+    0
+    6px
+    var(--flame-glow)
+  );
+
+  transform-origin: 50% 85%;
+
+  transition:
+    width .35s ease,
+    height .35s ease,
+    color .35s ease,
+    filter .35s ease;
+
+  animation:
+    streakFlamePulse
+    2.5s
+    ease-in-out
+    infinite;
+}
+
+.streak-flame-core {
+  fill: var(--flame-core);
+
+  transition:
+    fill .35s ease;
+}
+
+.streak-snowflake {
+  display: none;
+  position: relative;
+  z-index: 2;
+  color: #60a5fa;
+  font-size: 44px;
+  line-height: 1;
+  filter: drop-shadow(0 5px 10px rgba(96,165,250,.22));
+  animation: streakSnowPulse 2.8s ease-in-out infinite;
+}
+
+.streak-card-v22[data-streak-tier="snow"] {
+  --flame-main: #60a5fa;
+  --flame-core: #bfdbfe;
+  --flame-glow: rgba(96,165,250,.22);
+}
+
+.streak-card-v22[data-streak-tier="snow"] .streak-flame-svg {
+  display: none;
+}
+
+.streak-card-v22[data-streak-tier="snow"] .streak-snowflake {
+  display: block;
+}
+
+.streak-card-v22[data-streak-tier="snow"] .streak-flame-aura {
+  background: #60a5fa;
+}
+
+@keyframes streakSnowPulse {
+  0%,
+  100% {
+    transform: translateY(1px) scale(.97) rotate(-3deg);
+  }
+
+  50% {
+    transform: translateY(-2px) scale(1.04) rotate(3deg);
+  }
+}
+
+.streak-stage-label {
+  grid-area: stage;
+
+  margin-top: 7px;
+
+  color: var(--flame-main);
+
+  font-size: 8px;
+  font-weight: 850;
+
+  text-transform: uppercase;
+  letter-spacing: .055em;
+}
+
+.streak-card-v22[data-streak-tier="1"] {
+  --flame-size: 38px;
+  --flame-main: #f5a524;
+  --flame-core: #fde68a;
+  --flame-glow: rgba(245, 165, 36, .24);
+}
+
+.streak-card-v22[data-streak-tier="2"] {
+  --flame-size: 45px;
+  --flame-main: #ff7a1a;
+  --flame-core: #ffd166;
+  --flame-glow: rgba(255, 122, 26, .30);
+}
+
+.streak-card-v22[data-streak-tier="3"] {
+  --flame-size: 52px;
+  --flame-main: #ff4d2e;
+  --flame-core: #ffb347;
+  --flame-glow: rgba(255, 77, 46, .34);
+}
+
+.streak-card-v22[data-streak-tier="4"] {
+  --flame-size: 58px;
+  --flame-main: #e43dff;
+  --flame-core: #ff9bf0;
+  --flame-glow: rgba(228, 61, 255, .32);
+}
+
+.streak-card-v22[data-streak-tier="5"] {
+  --flame-size: 64px;
+  --flame-main: #7c4dff;
+  --flame-core: #c7b8ff;
+  --flame-glow: rgba(124, 77, 255, .34);
+}
+
+.streak-card-v22[data-streak-tier="6"] {
+  --flame-size: 70px;
+  --flame-main: #169bff;
+  --flame-core: #8fddff;
+  --flame-glow: rgba(22, 155, 255, .38);
+}
+
+@keyframes streakFlamePulse {
+  0%,
+  100% {
+    transform:
+      translateY(1px)
+      scale(.97)
+      rotate(-1deg);
+  }
+
+  50% {
+    transform:
+      translateY(-2px)
+      scale(1.035)
+      rotate(1deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streak-flame-svg,
+  .streak-snowflake {
+    animation: none;
+  }
+}
+
+
+/* LURIA — detalhe dourado da ofensiva */
+.streak-card-v22 {
+  border-color: color-mix(in srgb, var(--gold) 36%, var(--border));
+  box-shadow:
+    inset 3px 0 0 var(--gold),
+    0 1px 2px rgba(11, 31, 59, .03);
+}
+
+/* Agenda — Flashcards e Caderno de erros resumidos */
+.compact-study-batch .compact-batch-quantity {
+  margin-top: 8px;
+  font-size: 15px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.compact-study-batch .compact-batch-area {
+  margin-top: 5px;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.month-day .compact-study-batch .compact-batch-area {
+  display: flex;
+}
+
+
+/* =========================================================
+   DASHBOARD V26 — RESUMO 3x3 + DETALHES 3x3
+   ========================================================= */
+
+.dashboard-summary-grid,
+.dashboard-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dashboard-summary-grid {
+  margin-bottom: 18px;
+}
+
+.dashboard-detail-grid {
+  margin-bottom: 18px;
+}
+
+.dashboard-summary-card,
+.dashboard-detail-card {
+  min-width: 0;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .025);
+}
+
+.dashboard-summary-card {
+  min-height: 96px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 16px 18px;
+  border-radius: 13px;
+}
+
+.dashboard-summary-card > span:first-child,
+.dashboard-detail-label {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.dashboard-summary-card > strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--text);
+  font-size: 25px;
+  font-weight: 880;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-summary-card > small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.dashboard-summary-ccq > strong {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.dashboard-detail-card {
+  position: relative;
+  min-height: 142px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 22px;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.dashboard-detail-value {
+  display: block;
+  margin-top: 9px;
+  color: var(--text);
+  font-size: 31px;
+  font-weight: 880;
+  line-height: 1.03;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-detail-helper {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.dashboard-detail-ccq {
+  min-height: 142px;
+  justify-content: flex-start;
+}
+
+.dashboard-detail-ccq .dashboard-ccq-head {
+  position: relative;
+  z-index: 2;
+}
+
+.dashboard-detail-ccq .dashboard-passive-ccq-stage {
+  top: 42px;
+  right: 16px;
+  bottom: 10px;
+  left: 16px;
+}
+
+.dashboard-detail-ccq .dashboard-passive-ccq-text {
+  font-size: 24px;
+  line-height: 1.28;
+  -webkit-line-clamp: 3;
+}
+
+.dashboard-detail-ccq .dashboard-passive-ccq-meta {
+  font-size: 8px;
+}
+
+.dashboard-detail-ccq .dashboard-passive-ccq-empty {
+  min-height: 92px;
+}
+
+.dashboard-detail-grid .streak-card-v22 {
+  min-height: 142px;
+  padding: 22px;
+  grid-template-areas:
+    "label flame"
+    "value flame"
+    "helper flame"
+    "stage stage";
+}
+
+.dashboard-detail-grid .streak-card-v22 > .dashboard-detail-label {
+  grid-area: label;
+}
+
+.dashboard-detail-grid .streak-card-v22 > .dashboard-detail-value {
+  grid-area: value;
+}
+
+.dashboard-detail-grid .streak-card-v22 > .dashboard-detail-helper {
+  grid-area: helper;
+}
+
+.dashboard-detail-grid .streak-card-v22 .streak-flame-wrap {
+  width: 66px;
+  height: 74px;
+}
+
+@media (max-width: 980px) {
+  .dashboard-summary-grid,
+  .dashboard-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .dashboard-summary-grid,
+  .dashboard-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-summary-card {
+    min-height: 82px;
+  }
+
+  .dashboard-detail-card {
+    min-height: 125px;
+  }
+}
+
+
+/* DASHBOARD V27.1 — CONTEÚDO CENTRALIZADO NOS CALLOUTS */
+.dashboard-summary-card,
+.dashboard-detail-card {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.dashboard-summary-card > *,
+.dashboard-detail-card > * {
+  text-align: center;
+}
+
+.dashboard-detail-label,
+.dashboard-detail-value,
+.dashboard-detail-helper,
+.dashboard-summary-card > span,
+.dashboard-summary-card > strong,
+.dashboard-summary-card > small {
+  width: 100%;
+  text-align: center;
+}
+
+.dashboard-detail-ccq {
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-detail-ccq .dashboard-ccq-head {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+.dashboard-detail-ccq .dashboard-ccq-auto {
+  right: 0;
+}
+
+.dashboard-detail-grid .streak-card-v22 {
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "label"
+    "flame"
+    "value"
+    "helper"
+    "stage";
+  justify-items: center;
+  align-content: center;
+  row-gap: 4px;
+  column-gap: 0;
+  text-align: center;
+}
+
+.dashboard-detail-grid .streak-card-v22 > .dashboard-detail-label,
+.dashboard-detail-grid .streak-card-v22 > .dashboard-detail-value,
+.dashboard-detail-grid .streak-card-v22 > .dashboard-detail-helper,
+.dashboard-detail-grid .streak-card-v22 .streak-stage-label {
+  width: 100%;
+  text-align: center;
+}
+
+.dashboard-detail-grid .streak-card-v22 .streak-flame-wrap {
+  justify-self: center;
+  width: 66px;
+  height: 66px;
+}
+
+/* DASHBOARD V27.2 — OFENSIVA EM COLUNA */
+.dashboard-detail-grid .streak-card-v22.streak-card-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  text-align: center;
+}
+
+.dashboard-detail-grid .streak-card-v22.streak-card-vertical .metric-label,
+.dashboard-detail-grid .streak-card-v22.streak-card-vertical .metric-value,
+.dashboard-detail-grid .streak-card-v22.streak-card-vertical .metric-helper {
+  width: 100%;
+  margin: 0;
+  text-align: center;
+}
+
+.dashboard-detail-grid .streak-card-v22.streak-card-vertical .streak-flame-wrap {
+  width: 66px;
+  height: 66px;
+  margin: 2px 0 1px;
+  justify-self: center;
+}
+
+/* DASHBOARD V27.3 — DISCO DE PROGRESSO */
+.dashboard-progress-card {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.dashboard-progress-ring {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  display: grid;
+  place-items: center;
+  margin: 7px 0 5px;
+}
+
+.dashboard-progress-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+
+.dashboard-progress-track,
+.dashboard-progress-value-ring {
+  fill: none;
+  stroke-width: 7;
+}
+
+.dashboard-progress-track {
+  stroke: color-mix(in srgb, var(--border) 88%, transparent);
+}
+
+.dashboard-progress-value-ring {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  stroke-dasharray: 326.73;
+  stroke-dashoffset: 326.73;
+  transition: stroke-dashoffset .45s ease;
+}
+
+.dashboard-progress-ring-label {
+  position: relative;
+  z-index: 2;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* DASHBOARD V27 — grade única 3x3 */
+.dashboard-summary-grid-hidden {
+  display: none !important;
+}
+
+.dashboard-detail-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dashboard-detail-ccq .dashboard-ccq-head {
+  justify-content: center;
+}
+
+.dashboard-detail-ccq .dashboard-ccq-auto {
+  position: absolute;
+  right: 0;
+}
+
+.dashboard-detail-ccq .dashboard-passive-ccq-stage,
+.dashboard-detail-ccq .dashboard-passive-ccq-text,
+.dashboard-detail-ccq .dashboard-passive-ccq-meta {
+  text-align: center;
+}
+
+
+/* DASHBOARD V27.4 — TEXTOS AUXILIARES +15% */
+.dashboard-summary-card > span:first-child,
+.dashboard-detail-label {
+  font-size: 10.35px;
+}
+
+.dashboard-summary-card > small {
+  font-size: 10.35px;
+}
+
+.dashboard-detail-helper {
+  font-size: 11.5px;
+}
+
+.dashboard-ccq-auto {
+  font-size: 9.2px;
+}
+
+.dashboard-passive-ccq-empty {
+  font-size: 11.5px;
+}
+
+</style>
+  <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
+  <script defer src="assets/js/luria-brand-v5.js?v=8"></script>
+</head>
+<body data-page="dashboard">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar"></aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <main class="main">
+      <div class="page">
+        <header class="topbar">
+          <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
+
+          <div class="page-heading">
+            <span class="eyebrow" data-page-eyebrow></span>
+            <h1 data-page-title></h1>
+          </div>
+        </header>
+
+        <section class="dashboard-summary-grid dashboard-summary-grid-hidden" aria-label="Resumo do Dashboard" aria-hidden="true">
+          <article class="dashboard-summary-card">
+            <span>Aulas atrasadas</span>
+            <strong id="summary-overdue-lessons">—</strong>
+          </article>
+
+          <article class="dashboard-summary-card">
+            <span>Flashcards</span>
+            <strong id="summary-flashcards">—</strong>
+          </article>
+
+          <article class="dashboard-summary-card">
+            <span>Caderno de erros</span>
+            <strong id="summary-errors">—</strong>
+          </article>
+
+          <article class="dashboard-summary-card">
+            <span>Progresso</span>
+            <strong id="summary-progress">—</strong>
+          </article>
+
+          <article class="dashboard-summary-card">
+            <span>Horas de estudo</span>
+            <strong id="summary-hours">—</strong>
+          </article>
+
+          <article class="dashboard-summary-card dashboard-summary-streak">
+            <span>Ofensiva</span>
+            <strong>🔥 <span data-streak-value>—</span> dias</strong>
+          </article>
+
+          <article class="dashboard-summary-card">
+            <span>Simulados</span>
+            <strong id="summary-simulations">—</strong>
+            <small id="summary-simulations-helper">Carregando...</small>
+          </article>
+
+          <article class="dashboard-summary-card">
+            <span>Hoje</span>
+            <strong id="summary-today">—</strong>
+            <small id="summary-today-helper">Carregando...</small>
+          </article>
+
+          <article class="dashboard-summary-card dashboard-summary-ccq">
+            <span>CCQ</span>
+            <strong id="summary-ccq-text">Carregando...</strong>
+          </article>
+        </section>
+
+        <section class="dashboard-detail-grid" aria-label="Indicadores do Dashboard">
+          <article class="dashboard-detail-card">
+            <span class="dashboard-detail-label">Aulas atrasadas</span>
+            <strong id="metric-overdue-lessons" class="dashboard-detail-value">—</strong>
+            <small id="metric-overdue-lessons-helper" class="dashboard-detail-helper">Carregando cronograma...</small>
+          </article>
+
+          <article class="dashboard-detail-card">
+            <span class="dashboard-detail-label">Flashcards</span>
+            <strong id="metric-flashcards" class="dashboard-detail-value">—</strong>
+            <small id="metric-flashcards-helper" class="dashboard-detail-helper">Carregando...</small>
+          </article>
+
+          <article class="dashboard-detail-card">
+            <span class="dashboard-detail-label">Caderno de Erros</span>
+            <strong id="metric-errors" class="dashboard-detail-value">—</strong>
+            <small id="metric-errors-helper" class="dashboard-detail-helper">Carregando...</small>
+          </article>
+
+          <article class="dashboard-detail-card dashboard-progress-card">
+            <span class="dashboard-detail-label">Progresso</span>
+
+            <div class="dashboard-progress-ring">
+              <svg class="dashboard-progress-svg" viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="dashboard-progress-track" cx="60" cy="60" r="52"></circle>
+                <circle id="dashboard-progress-ring-value" class="dashboard-progress-value-ring" cx="60" cy="60" r="52"></circle>
+              </svg>
+
+              <strong id="metric-lessons-progress-copy" class="dashboard-progress-ring-label">—</strong>
+            </div>
+
+            <small id="metric-lessons-progress" class="dashboard-detail-helper">—</small>
+            <span id="metric-lessons-progress-helper" hidden></span>
+          </article>
+
+          <article class="dashboard-detail-card">
+            <span class="dashboard-detail-label">Horas de Estudos</span>
+            <strong id="metric-hours" class="dashboard-detail-value">—</strong>
+            <small id="metric-hours-helper" class="dashboard-detail-helper">Nesta semana</small>
+          </article>
+
+          <article
+            id="dashboard-streak-card"
+            class="dashboard-detail-card streak-card-v22 streak-card-vertical"
+            data-streak-tier="0"
+          >
+            <span id="dashboard-streak-title" class="dashboard-detail-label metric-label">Sequência</span>
+
+            <div class="streak-flame-wrap" aria-hidden="true">
+              <span class="streak-flame-aura"></span>
+              <span class="streak-snowflake">❄</span>
+
+              <svg class="streak-flame-svg" viewBox="0 0 64 80">
+                <path
+                  fill="currentColor"
+                  d="M34 3C35 15 26 19 26 29C26 35 30 38 33 40C27 40 22 35 21 29C13 37 8 46 8 56C8 69 18 77 32 77C46 77 56 68 56 54C56 41 48 30 40 22C39 30 36 34 32 36C35 27 43 18 34 3Z"
+                ></path>
+
+                <path
+                  class="streak-flame-core"
+                  d="M33 40C27 47 23 52 23 59C23 67 27 71 33 71C40 71 44 66 44 59C44 52 39 47 35 43C35 48 33 51 30 53C31 48 34 45 33 40Z"
+                ></path>
+              </svg>
+            </div>
+
+            <strong class="dashboard-detail-value metric-value">
+              <span data-streak-value>—</span> dias
+            </strong>
+
+            <small id="dashboard-streak-stage" class="dashboard-detail-helper metric-helper streak-status-label">
+              Comece hoje
+            </small>
+          </article>
+
+          <article class="dashboard-detail-card">
+            <span class="dashboard-detail-label">Simulados</span>
+            <strong id="metric-simulations-accuracy" class="dashboard-detail-value">—</strong>
+            <small id="metric-simulations-helper" class="dashboard-detail-helper">Sem simulados no período</small>
+            <span id="metric-simulations" hidden>0</span>
+          </article>
+
+          <article class="dashboard-detail-card dashboard-detail-ccq">
+            <div class="dashboard-ccq-head">
+              <span class="dashboard-detail-label">CCQ do dia</span>
+              <span class="dashboard-ccq-auto">15s</span>
+            </div>
+
+            <div
+              id="dashboard-passive-ccq-empty"
+              class="dashboard-passive-ccq-empty"
+              hidden
+            ></div>
+
+            <div
+              id="dashboard-passive-ccq-stage"
+              class="dashboard-passive-ccq-stage"
+              hidden
+              aria-live="polite"
+            >
+              <div id="dashboard-passive-ccq-text" class="dashboard-passive-ccq-text"></div>
+              <div id="dashboard-passive-ccq-meta" class="dashboard-passive-ccq-meta"></div>
+            </div>
+
+            <div class="dashboard-passive-ccq-progress">
+              <span id="dashboard-passive-ccq-progress"></span>
+            </div>
+          </article>
+
+          <article class="dashboard-detail-card">
+            <span class="dashboard-detail-label">Retenção de conteúdo</span>
+            <strong id="metric-retention" class="dashboard-detail-value">—</strong>
+            <small id="metric-retention-helper" class="dashboard-detail-helper">Sem revisões suficientes</small>
+          </article>
+        </section>
+
+        <section class="panel calendar-panel">
+          <div class="calendar-toolbar">
+            <div>
+              <h2>Agenda</h2>
+              <p id="calendar-range-label">Carregando agenda...</p>
+            </div>
+
+            <div class="calendar-actions">
+              <div class="segmented-control" aria-label="Visualização da agenda">
+                <button id="view-week" class="active" type="button">Semana</button>
+                <button id="view-month" type="button">Mês</button>
+              </div>
+
+              <div class="calendar-nav">
+                <button id="calendar-prev" type="button" aria-label="Período anterior">‹</button>
+                <button id="calendar-today" type="button">Hoje</button>
+                <button id="calendar-next" type="button" aria-label="Próximo período">›</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="calendar-status" class="calendar-status" aria-live="polite"></div>
+          <div id="calendar" class="calendar" aria-live="polite"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="move-dialog" class="move-dialog">
+    <form id="move-form" method="dialog">
+      <div class="dialog-heading">
+        <div>
+          <span class="metric-label">Remarcar atividade</span>
+          <h2 id="move-title">Mover atividade</h2>
+        </div>
+
+        <button id="move-close" class="dialog-close" type="button" aria-label="Fechar">×</button>
+      </div>
+
+      <label class="field">
+        Nova data
+        <input id="move-date" type="date" required>
+      </label>
+
+      <p class="dialog-note">
+        Ao mover uma revisão, a data real da próxima revisão também será alterada.
+      </p>
+
+      <div class="dialog-actions">
+        <button id="move-cancel" class="button secondary" type="button">Cancelar</button>
+        <button class="button primary" type="submit">Salvar nova data</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/supabase.js"></script>
+  <script src="assets/js/app.js?v=13.1"></script>
+  <script src="assets/js/study-mode.js?v=12.1"></script>
+  <script src="assets/js/dashboard.js?v=27.6"></script>
+  <script defer src="assets/js/pwa.js?v=3"></script>
+</body>
+</html>
