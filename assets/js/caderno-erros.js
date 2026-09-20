@@ -371,11 +371,11 @@ async function loadErrorMetrics() {
 
 async function loadErrorAreas() {
   const mode =
-    window.resibulandoStudyMode
+    window.luriaStudyMode
     || "medicine";
 
   allErrorAreas =
-    window.ResibulandoStudyMode
+    window.LuriaStudyMode
       ?.areasFor(
         mode
       )
@@ -615,17 +615,17 @@ function loadImageElement(
 
 
 
-const RESIBULANDO_IMAGE_TARGET_BYTES =
+const LURIA_IMAGE_TARGET_BYTES =
   100 * 1024;
 
-const RESIBULANDO_IMAGE_SOFT_MAX_BYTES =
+const LURIA_IMAGE_SOFT_MAX_BYTES =
   150 * 1024;
 
-const RESIBULANDO_IMAGE_MAX_DIMENSION =
+const LURIA_IMAGE_MAX_DIMENSION =
   1100;
 
 
-async function compressResibulandoImageBlob(
+async function compressLuriaImageBlob(
   sourceBlob
 ) {
   if (
@@ -645,7 +645,7 @@ async function compressResibulandoImageBlob(
   */
   if (
     sourceBlob.size
-    <= RESIBULANDO_IMAGE_TARGET_BYTES
+    <= LURIA_IMAGE_TARGET_BYTES
   ) {
     return sourceBlob;
   }
@@ -813,7 +813,7 @@ async function compressResibulandoImageBlob(
         */
         if (
           candidate.size
-            <= RESIBULANDO_IMAGE_SOFT_MAX_BYTES
+            <= LURIA_IMAGE_SOFT_MAX_BYTES
           && quality >= 0.64
           && maxDimension >= 900
         ) {
@@ -830,7 +830,7 @@ async function compressResibulandoImageBlob(
 
         if (
           candidate.size
-          <= RESIBULANDO_IMAGE_TARGET_BYTES
+          <= LURIA_IMAGE_TARGET_BYTES
         ) {
           bitmap.close?.();
 
@@ -915,7 +915,7 @@ async function compressErrorImage(
 
 
   const blob =
-    await compressResibulandoImageBlob(
+    await compressLuriaImageBlob(
       file
     );
 
@@ -2797,11 +2797,11 @@ function populateLibraryAreas() {
     select.value;
 
   const mode =
-    window.resibulandoStudyMode
+    window.luriaStudyMode
     || "medicine";
 
   const areas =
-    window.ResibulandoStudyMode
+    window.LuriaStudyMode
       ?.areasFor(
         mode
       )
@@ -3719,7 +3719,7 @@ async function exportSelectedErrorsPdf() {
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text("Resibulando — Caderno de Erros", margin, 16);
+    doc.text("Luria — Caderno de Erros", margin, 16);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.text(
@@ -3766,7 +3766,7 @@ async function exportSelectedErrorsPdf() {
       state.y += 8;
     }
 
-    doc.save(`resibulando-caderno-erros-${errorTodayISO()}.pdf`);
+    doc.save(`luria-caderno-erros-${errorTodayISO()}.pdf`);
     setErrorLibraryStatus("PDF exportado.", "success");
   } catch (error) {
     console.error(error);
@@ -5276,7 +5276,7 @@ function wireErrorLibrary() {
    ========================================================= */
 
 window.addEventListener(
-  "resibulando:study-mode",
+  "luria:study-mode",
   () => {
     loadErrorAreas();
     populateLibraryAreas();
