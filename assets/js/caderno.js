@@ -1,14 +1,58 @@
 const notebookSb = window.supabaseClient;
 
-const NOTEBOOK_TEMPLATE = `
-  <h2>Doença</h2><p><br></p>
-  <h2>Epidemiologia</h2><p><br></p>
-  <h2>Quadro clínico</h2><p><br></p>
-  <h2>Diagnóstico</h2><p><br></p>
-  <h2>Tratamento</h2><p><br></p>
-  <h2>Profilaxia</h2><p><br></p>
-  <h2>Observações</h2><p><br></p>
-`;
+const NOTEBOOK_TEMPLATES = {
+  disease: `
+    <h2>Doença</h2><p><br></p>
+    <h2>Epidemiologia</h2><p><br></p>
+    <h2>Fatores de risco</h2><p><br></p>
+    <h2>Fisiopatologia</h2><p><br></p>
+    <h2>Quadro clínico</h2><p><br></p>
+    <h2>Diagnóstico</h2><p><br></p>
+    <h2>Tratamento</h2><p><br></p>
+    <h2>Profilaxia</h2><p><br></p>
+    <h2>Complicações</h2><p><br></p>
+    <h2>Observações</h2><p><br></p>
+  `,
+
+  "illness-script": `
+    <h2>Condições predisponentes</h2><p><br></p>
+    <h2>Mecanismo / fisiopatologia</h2><p><br></p>
+    <h2>Consequências clínicas</h2><p><br></p>
+    <h2>Pistas-chave</h2><p><br></p>
+    <h2>Achados que afastam</h2><p><br></p>
+    <h2>Diagnósticos diferenciais</h2><p><br></p>
+    <h2>Confirmação diagnóstica</h2><p><br></p>
+    <h2>Conduta inicial</h2><p><br></p>
+  `,
+
+  "clinical-reasoning": `
+    <h2>Representação do problema</h2><p><br></p>
+    <h2>Hipóteses diagnósticas</h2><p><br></p>
+    <h2>Achados a favor</h2><p><br></p>
+    <h2>Achados contra</h2><p><br></p>
+    <h2>Exames que mudam a conduta</h2><p><br></p>
+    <h2>Red flags</h2><p><br></p>
+    <h2>Conduta</h2><p><br></p>
+    <h2>Ponto de aprendizagem</h2><p><br></p>
+  `,
+
+  soap: `
+    <h2>Subjetivo</h2><p><br></p>
+    <h2>Objetivo</h2><p><br></p>
+    <h2>Avaliação</h2><p><br></p>
+    <h2>Plano</h2><p><br></p>
+  `,
+
+  "rapid-review": `
+    <h2>Definição em uma frase</h2><p><br></p>
+    <h2>Clássico de prova</h2><p><br></p>
+    <h2>Diagnóstico</h2><p><br></p>
+    <h2>Conduta</h2><p><br></p>
+    <h2>Pegadinhas</h2><p><br></p>
+    <h2>Red flags</h2><p><br></p>
+    <h2>Resumo final</h2><p><br></p>
+  `
+};
 
 const NOTEBOOK_EMOJIS = [
   "⚠️", "💡", "✅", "❌", "📌", "⭐",
@@ -1219,6 +1263,10 @@ function sanitizeHtml(
           child.style.backgroundColor
           || "";
 
+        const fontFamily =
+          child.style.fontFamily
+          || "";
+
         const safeStyle = [];
 
         if (color) {
@@ -1230,6 +1278,48 @@ function sanitizeHtml(
         if (backgroundColor) {
           safeStyle.push(
             `background-color: ${backgroundColor}`
+          );
+        }
+
+        const allowedFontFamilies = [
+          "Arial",
+          "Helvetica",
+          "Times New Roman",
+          "Times",
+          "Georgia",
+          "Verdana",
+          "Geneva",
+          "sans-serif",
+          "serif"
+        ];
+
+        const normalizedFontFamily =
+          fontFamily
+            .replaceAll(
+              '"',
+              ""
+            )
+            .split(
+              ","
+            )
+            .map(
+              part =>
+                part.trim()
+            )
+            .filter(
+              part =>
+                allowedFontFamilies
+                  .includes(
+                    part
+                  )
+            )
+            .join(
+              ", "
+            );
+
+        if (normalizedFontFamily) {
+          safeStyle.push(
+            `font-family: ${normalizedFontFamily}`
           );
         }
 
@@ -1282,6 +1372,40 @@ function sanitizeHtml(
 
         }
 
+      }
+
+
+      if (
+        child.tagName ===
+          "HR"
+        &&
+        child.classList.contains(
+          "notebook-divider"
+        )
+      ) {
+        keepClass =
+          child.classList.contains(
+            "dotted"
+          )
+            ? "notebook-divider dotted"
+            : "notebook-divider solid";
+      }
+
+
+      if (
+        child.tagName ===
+          "DIV"
+        &&
+        child.classList.contains(
+          "notebook-divider"
+        )
+        &&
+        child.classList.contains(
+          "arabesque"
+        )
+      ) {
+        keepClass =
+          "notebook-divider arabesque";
       }
 
 
@@ -2108,6 +2232,7 @@ function setEditorEnabled(
 
   [
     "notebook-block-style",
+    "notebook-font-family",
     "notebook-bold",
     "notebook-italic",
     "notebook-underline",
@@ -2115,7 +2240,6 @@ function setEditorEnabled(
     "notebook-highlight-color",
     "notebook-list-toggle",
     "notebook-template",
-    "notebook-break",
     "notebook-divider",
     "notebook-table-toggle",
     "notebook-image-add",
@@ -3358,7 +3482,16 @@ function execEditorCommand(
 }
 
 
-function insertTemplate() {
+function insertTemplate(
+  type = "disease"
+) {
+  const template =
+    NOTEBOOK_TEMPLATES[
+      type
+    ]
+    || NOTEBOOK_TEMPLATES
+      .disease;
+
 
   restoreSelection();
 
@@ -3366,7 +3499,7 @@ function insertTemplate() {
   document.execCommand(
     "insertHTML",
     false,
-    NOTEBOOK_TEMPLATE
+    template
   );
 
 
@@ -3374,19 +3507,45 @@ function insertTemplate() {
 
 
   scheduleSave();
-
 }
 
 
-function insertBreak() {
-
+function insertDivider(
+  style = "solid"
+) {
   restoreSelection();
+
+
+  const safeStyle =
+    [
+      "solid",
+      "dotted",
+      "arabesque"
+    ]
+      .includes(
+        style
+      )
+      ? style
+      : "solid";
+
+
+  const html =
+    safeStyle ===
+      "arabesque"
+      ? `
+          <div class="notebook-divider arabesque">❦</div>
+          <p><br></p>
+        `
+      : `
+          <hr class="notebook-divider ${safeStyle}">
+          <p><br></p>
+        `;
 
 
   document.execCommand(
     "insertHTML",
     false,
-    "<p><br></p><p><br></p>"
+    html
   );
 
 
@@ -3394,30 +3553,107 @@ function insertBreak() {
 
 
   scheduleSave();
-
 }
 
 
-function insertDivider() {
+function applyNotebookFont(
+  fontFamily
+) {
+  const allowedFonts =
+    new Map([
+      [
+        "Arial",
+        "Arial, Helvetica, sans-serif"
+      ],
+      [
+        "Times New Roman",
+        "\"Times New Roman\", Times, serif"
+      ],
+      [
+        "Georgia",
+        "Georgia, \"Times New Roman\", serif"
+      ],
+      [
+        "Verdana",
+        "Verdana, Geneva, sans-serif"
+      ]
+    ]);
+
+
+  if (
+    !allowedFonts.has(
+      fontFamily
+    )
+  ) {
+    return;
+  }
+
 
   restoreSelection();
 
 
   document.execCommand(
-    "insertHTML",
+    "fontName",
     false,
-    "<hr><p><br></p>"
+    fontFamily
   );
+
+
+  const editor =
+    document.getElementById(
+      "notebook-editor"
+    );
+
+
+  editor
+    ?.querySelectorAll(
+      "font[face]"
+    )
+    .forEach(
+      element => {
+        const face =
+          element.getAttribute(
+            "face"
+          )
+          || fontFamily;
+
+
+        const span =
+          document.createElement(
+            "span"
+          );
+
+
+        span.style.fontFamily =
+          allowedFonts.get(
+            face
+          )
+          || allowedFonts.get(
+            fontFamily
+          );
+
+
+        while (
+          element.firstChild
+        ) {
+          span.appendChild(
+            element.firstChild
+          );
+        }
+
+
+        element.replaceWith(
+          span
+        );
+      }
+    );
 
 
   saveSelection();
 
 
   scheduleSave();
-
 }
-
-
 
 
 function notebookEditorSelectionElement() {
@@ -12426,7 +12662,10 @@ function closeNotebookToolMenus(
 ) {
   [
     "list",
+    "template",
+    "divider",
     "table",
+    "image",
     "callout"
   ]
     .forEach(
@@ -15320,6 +15559,30 @@ function wireEvents() {
     );
 
 
+  document
+    .getElementById(
+      "notebook-font-family"
+    )
+    ?.addEventListener(
+      "change",
+      (event) => {
+        const font =
+          event.target.value;
+
+
+        if (font) {
+          applyNotebookFont(
+            font
+          );
+        }
+
+
+        event.target.value =
+          "";
+      }
+    );
+
+
   [
     [
       "notebook-bold",
@@ -15399,7 +15662,10 @@ function wireEvents() {
 
   [
     "list",
+    "template",
+    "divider",
     "table",
+    "image",
     "callout"
   ]
     .forEach(
@@ -15451,6 +15717,62 @@ function wireEvents() {
             execEditorCommand(
               button.dataset
                 .listCommand
+            );
+
+            closeNotebookToolMenus();
+          }
+        );
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-template-type]"
+    )
+    .forEach(
+      button => {
+        button.addEventListener(
+          "mousedown",
+          event =>
+            event.preventDefault()
+        );
+
+
+        button.addEventListener(
+          "click",
+          () => {
+            insertTemplate(
+              button.dataset
+                .templateType
+            );
+
+            closeNotebookToolMenus();
+          }
+        );
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-divider-style]"
+    )
+    .forEach(
+      button => {
+        button.addEventListener(
+          "mousedown",
+          event =>
+            event.preventDefault()
+        );
+
+
+        button.addEventListener(
+          "click",
+          () => {
+            insertDivider(
+              button.dataset
+                .dividerStyle
             );
 
             closeNotebookToolMenus();
@@ -15704,12 +16026,6 @@ function wireEvents() {
     );
 
 
-  const imageInput =
-    document.getElementById(
-      "notebook-image-input"
-    );
-
-
   imageButton
     ?.addEventListener(
       "mousedown",
@@ -15718,57 +16034,110 @@ function wireEvents() {
     );
 
 
-  imageButton
-    ?.addEventListener(
-      "click",
-      () => {
-        if (
-          notebookImageCount()
-          >= 2
-        ) {
-          alert(
-            "Este caderno já possui o máximo de 2 imagens."
-          );
+  const notebookImageInputs =
+    {
+      camera:
+        document.getElementById(
+          "notebook-image-camera-input"
+        ),
 
-          return;
-        }
+      gallery:
+        document.getElementById(
+          "notebook-image-gallery-input"
+        ),
+
+      file:
+        document.getElementById(
+          "notebook-image-file-input"
+        )
+    };
 
 
-        saveSelection();
+  document
+    .querySelectorAll(
+      "[data-image-source]"
+    )
+    .forEach(
+      button => {
+        button.addEventListener(
+          "mousedown",
+          event =>
+            event.preventDefault()
+        );
 
-        imageInput?.click();
+
+        button.addEventListener(
+          "click",
+          () => {
+            if (
+              notebookImageCount()
+              >= 2
+            ) {
+              alert(
+                "Este caderno já possui o máximo de 2 imagens."
+              );
+
+              closeNotebookToolMenus();
+
+              return;
+            }
+
+
+            saveSelection();
+
+
+            const input =
+              notebookImageInputs[
+                button.dataset
+                  .imageSource
+              ];
+
+
+            closeNotebookToolMenus();
+
+
+            input?.click();
+          }
+        );
       }
     );
 
 
-  imageInput
-    ?.addEventListener(
-      "change",
-      async () => {
-        try {
-          await addNotebookImages(
-            imageInput.files
-          );
+  Object
+    .values(
+      notebookImageInputs
+    )
+    .forEach(
+      input => {
+        input
+          ?.addEventListener(
+            "change",
+            async () => {
+              try {
+                await addNotebookImages(
+                  input.files
+                );
 
-        } catch (
-          error
-        ) {
-          console.error(
-            error
-          );
+              } catch (
+                error
+              ) {
+                console.error(
+                  error
+                );
 
-          setSaveStatus(
-            `Erro ao adicionar imagem: ${error.message}`,
-            "error"
-          );
+                setSaveStatus(
+                  `Erro ao adicionar imagem: ${error.message}`,
+                  "error"
+                );
 
-        } finally {
-          imageInput.value =
-            "";
-        }
+              } finally {
+                input.value =
+                  "";
+              }
+            }
+          );
       }
     );
-
 
   [
     "notebook-table-close",
@@ -15820,62 +16189,6 @@ function wireEvents() {
     );
 
 
-  const templateButton =
-    document.getElementById(
-      "notebook-template"
-    );
-
-
-  const breakButton =
-    document.getElementById(
-      "notebook-break"
-    );
-
-
-  const dividerButton =
-    document.getElementById(
-      "notebook-divider"
-    );
-
-
-  [
-    templateButton,
-    breakButton,
-    dividerButton
-  ]
-    .forEach(
-      (button) => {
-
-        button
-          ?.addEventListener(
-            "mousedown",
-            (event) =>
-              event.preventDefault()
-          );
-
-      }
-    );
-
-
-  templateButton
-    ?.addEventListener(
-      "click",
-      insertTemplate
-    );
-
-
-  breakButton
-    ?.addEventListener(
-      "click",
-      insertBreak
-    );
-
-
-  dividerButton
-    ?.addEventListener(
-      "click",
-      insertDivider
-    );
 
 
   const emojiToggle =
