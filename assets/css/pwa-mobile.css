@@ -1850,3 +1850,154 @@
     backdrop-filter: blur(1.5px) !important;
   }
 }
+
+
+/* =========================================================
+   PWA MOBILE v8 — Estatísticas estreitas, proporção de app
+   Regra final: limita a largura visual da página no celular
+   sem alterar o desktop ou outras áreas do PWA.
+   ========================================================= */
+@media (max-width: 760px) {
+  .pwa-standalone body[data-page="estatisticas"] .main {
+    width: 100% !important;
+    padding:
+      max(10px, env(safe-area-inset-top))
+      12px
+      calc(24px + env(safe-area-inset-bottom))
+      12px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .page {
+    width: min(100%, 360px) !important;
+    max-width: 360px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .topbar {
+    width: 100% !important;
+    min-width: 0 !important;
+    margin-bottom: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-page,
+  .pwa-standalone body[data-page="estatisticas"] [data-stats-panel],
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-box,
+  .pwa-standalone body[data-page="estatisticas"] .stats-block-grid,
+  .pwa-standalone body[data-page="estatisticas"] .stats-block {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-page {
+    gap: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-hero {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 4px !important;
+    border-radius: 11px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-range {
+    width: 100% !important;
+    min-width: 0 !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 2px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-range button {
+    min-width: 0 !important;
+    min-height: 32px !important;
+    padding: 0 2px !important;
+    font-size: 8.3px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tabs-shell {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 3px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tabs {
+    max-width: none !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-tab,
+  .pwa-standalone body[data-page="estatisticas"] .stats-tab:last-child {
+    min-height: 32px !important;
+    padding: 0 10px !important;
+    font-size: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-box,
+  .pwa-standalone body[data-page="estatisticas"] .stats-block {
+    padding: 9px !important;
+    border-radius: 12px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card {
+    min-width: 0 !important;
+    min-height: 76px !important;
+    padding: 7px 5px !important;
+    border-radius: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-card strong {
+    font-size: 17px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .metric-mini {
+    min-width: 0 !important;
+    min-height: 66px !important;
+    padding: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .chart-box,
+  .pwa-standalone body[data-page="estatisticas"] .chart-box.compact {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 165px !important;
+    min-height: 165px !important;
+    max-height: 165px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .chart-box canvas,
+  .pwa-standalone body[data-page="estatisticas"] .chart-box.compact canvas {
+    max-width: 100% !important;
+    height: 165px !important;
+    max-height: 165px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-table-wrap,
+  .pwa-standalone body[data-page="estatisticas"] .stats-heatmap {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain;
+  }
+}
+
+@media (max-width: 374px) {
+  .pwa-standalone body[data-page="estatisticas"] .page {
+    width: min(100%, 344px) !important;
+    max-width: 344px !important;
+  }
+
+  .pwa-standalone body[data-page="estatisticas"] .stats-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
