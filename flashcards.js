@@ -27,6 +27,25 @@ let editingFlashcardId =
 const selectedFlashcardIds =
   new Set();
 
+
+const flashParams =
+  new URLSearchParams(
+    window.location.search
+  );
+
+
+const flashAgendaDate =
+  flashParams.get(
+    "agenda_date"
+  );
+
+
+const flashAgendaArea =
+  flashParams.get(
+    "agenda_area"
+  );
+
+
 let flashSettings = {
   flashcard_intervals_hard: [1, 3, 7],
   flashcard_intervals_medium: [7, 21, 45],
@@ -848,44 +867,96 @@ async function renderCurrentReview() {
 }
 
 async function loadReviewQueue() {
+  let query =
+    flashSb
+      .from(
+        "flashcards"
+      )
+      .select(`
+        id,
+        area,
+        materia,
+        theme,
+        front_text,
+        back_text,
+        front_image_path,
+        back_image_path,
+        due_date,
+        review_count
+      `)
+      .eq(
+        "active",
+        true
+      );
+
+
+  /*
+    Pela Agenda:
+    carrega exatamente os cards remarcados para aquela
+    data e área. Assim uma revisão movida para amanhã
+    não depende de "due_date <= hoje".
+
+    Página normal:
+    continua mostrando todos os cards vencidos até hoje.
+  */
+  if (
+    flashAgendaDate
+  ) {
+    query =
+      query.eq(
+        "due_date",
+        flashAgendaDate
+      );
+
+
+    if (
+      flashAgendaArea
+    ) {
+      query =
+        query.eq(
+          "area",
+          flashAgendaArea
+        );
+    } else {
+      query =
+        query.is(
+          "area",
+          null
+        );
+    }
+
+  } else {
+    query =
+      query.lte(
+        "due_date",
+        todayISO()
+      );
+  }
+
+
   const {
     data,
     error
-  } = await flashSb
-    .from("flashcards")
-    .select(`
-      id,
-      area,
-      materia,
-      theme,
-      front_text,
-      back_text,
-      front_image_path,
-      back_image_path,
-      due_date,
-      review_count
-    `)
-    .eq(
-      "active",
-      true
-    )
-    .lte(
-      "due_date",
-      todayISO()
-    )
-    .order(
-      "due_date",
-      {
-        ascending: true
-      }
-    )
-    .order(
-      "created_at",
-      {
-        ascending: true
-      }
-    )
-    .limit(250);
+  } =
+    await query
+      .order(
+        "due_date",
+        {
+          ascending:
+            true
+        }
+      )
+      .order(
+        "created_at",
+        {
+          ascending:
+            true
+        }
+      )
+      .limit(
+        250
+      );
+
 
   if (error) {
     console.error(error);
@@ -899,13 +970,35 @@ async function loadReviewQueue() {
     return;
   }
 
+
   reviewQueue =
     data || [];
 
-  reviewIndex = 0;
+
+  reviewIndex =
+    0;
+
+
+  const sessionCopy =
+    document.getElementById(
+      "review-session-copy"
+    );
+
+
+  if (
+    flashAgendaDate
+    && sessionCopy
+  ) {
+    sessionCopy.textContent =
+      flashAgendaArea
+        ? `Agendados para ${flashAgendaDate} · ${flashAgendaArea}`
+        : `Agendados para ${flashAgendaDate}`;
+  }
+
 
   await renderCurrentReview();
 }
+
 
 function wireReview() {
   document
