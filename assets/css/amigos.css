@@ -290,3 +290,102 @@
   .studyrats-accessory-choice{flex-basis:66px;height:64px}
   .studyrats-accessory-choice-img{width:48px;height:39px}
 }
+
+
+/* Studyrats race scale-up v2 */
+.studyrats-race-scene{
+  overflow-x:auto;
+  overflow-y:hidden;
+  min-height:360px;
+  padding:0;
+}
+.studyrats-race-canvas{
+  position:relative;
+  width:166.667%;
+  min-width:980px;
+  min-height:360px;
+  padding:58px 64px 34px 18px;
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+}
+.studyrats-race-canvas>.studyrats-lanes{
+  width:100%;
+  align-content:center;
+}
+.studyrats-lane{
+  grid-template-columns:170px minmax(0,1fr);
+  min-height:70px;
+}
+.studyrats-road{
+  height:68px;
+  margin-right:8px;
+}
+.studyrats-progress-fill{
+  height:10px;
+}
+.studyrats-mouse{
+  width:108px;
+  height:74px;
+  transform:translate(-54px,-50%);
+}
+.studyrats-rat-composite{
+  width:108px;
+  height:74px;
+}
+.studyrats-rat-img{
+  width:108px;
+  height:74px;
+}
+.studyrats-track-score{
+  font-size:10px;
+}
+.studyrats-finish{
+  right:18px;
+  top:50%;
+  bottom:auto;
+  height:calc(100% - 120px);
+  width:34px;
+  transform:translateY(-50%);
+}
+.studyrats-finish i{
+  left:9px;
+  width:17px;
+  height:100%;
+}
+.studyrats-finish span{
+  font-size:8px;
+  padding:6px 10px;
+}
+.studyrats-lanes::before{
+  left:170px;
+}
+
+/* Scale accessories with the larger runners */
+.studyrats-rat-composite .studyrats-accessory-img{
+  transform-origin:center;
+}
+.studyrats-rat-composite .accessory-cap-colorful{width:65px;height:45px;left:51px;top:-13px;transform:rotate(4deg)}
+.studyrats-rat-composite .accessory-cowboy-hat{width:81px;height:51px;left:40px;top:-15px;transform:rotate(3deg)}
+.studyrats-rat-composite .accessory-santa-hat{width:69px;height:56px;left:51px;top:-21px;transform:rotate(7deg)}
+.studyrats-rat-composite .accessory-pink-hat{width:81px;height:50px;left:40px;top:-14px;transform:rotate(2deg)}
+.studyrats-rat-composite .accessory-pink-glasses{width:47px;height:30px;left:66px;top:19px;transform:rotate(2deg)}
+.studyrats-rat-composite .accessory-crown{width:47px;height:36px;left:60px;top:-12px;transform:rotate(2deg)}
+.studyrats-rat-composite .accessory-police-cap{width:59px;height:41px;left:57px;top:-12px;transform:rotate(2deg)}
+.studyrats-rat-composite .accessory-astronaut-helmet{width:72px;height:68px;left:50px;top:0}
+
+@media(max-width:760px){
+  .studyrats-race-scene{min-height:320px}
+  .studyrats-race-canvas{
+    width:166.667%;
+    min-width:860px;
+    min-height:320px;
+    padding:50px 52px 28px 10px;
+  }
+  .studyrats-lane{grid-template-columns:130px minmax(0,1fr);min-height:62px}
+  .studyrats-lanes::before{left:130px}
+  .studyrats-road{height:60px}
+  .studyrats-mouse{width:96px;height:66px;transform:translate(-48px,-50%)}
+  .studyrats-rat-composite{width:96px;height:66px}
+  .studyrats-rat-img{width:96px;height:66px}
+}
