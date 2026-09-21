@@ -375,8 +375,7 @@ async function deleteSelectedExams() {
   }
 
 
-  const confirmed =
-    window.confirm(
+  const confirmed = await window.LuriaDialog.confirm(
       `Excluir ${ids.length} prova${ids.length === 1 ? "" : "s"}? Os simulados vinculados não serão apagados.`
     );
 
@@ -401,7 +400,7 @@ async function deleteSelectedExams() {
 
 
   if (error) {
-    window.alert(
+    window.LuriaDialog.alert(
       `Não foi possível excluir: ${error.message}`
     );
 
@@ -600,7 +599,7 @@ async function updateExamStatusInline(
         previous;
     }
 
-    window.alert(
+    window.LuriaDialog.alert(
       `Não foi possível alterar o status: ${error.message}`
     );
 
@@ -1791,8 +1790,7 @@ async function deleteExam(
   }
 
 
-  const confirmed =
-    window.confirm(
+  const confirmed = await window.LuriaDialog.confirm(
       `Excluir "${exam.institution}"?\n\nOs simulados vinculados não serão apagados; apenas deixarão de ficar vinculados à prova.`
     );
 
@@ -1817,7 +1815,7 @@ async function deleteExam(
 
 
   if (error) {
-    window.alert(
+    window.LuriaDialog.alert(
       `Não foi possível excluir: ${error.message}`
     );
 
