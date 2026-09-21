@@ -795,7 +795,7 @@ async function createNotebookShareLink(
 
   if (error) {
     console.error(error);
-    alert(
+    window.LuriaDialog.alert(
       `Não foi possível compartilhar: ${error.message}`
     );
     return;
@@ -823,7 +823,7 @@ async function createNotebookShareLink(
       "saved"
     );
   } catch {
-    window.prompt(
+    await window.LuriaDialog.prompt(
       "Copie o link do material:",
       url.toString()
     );
@@ -1406,7 +1406,7 @@ async function openNotebookShareDialog(
           );
 
         } catch {
-          window.prompt(
+          await window.LuriaDialog.prompt(
             "Copie o link:",
             url.toString()
           );
@@ -1514,7 +1514,7 @@ async function redeemNotebookBundleFromUrl() {
   if (error) {
     console.error(error);
 
-    alert(
+    window.LuriaDialog.alert(
       `Não foi possível adicionar os cadernos: ${error.message}`
     );
 
@@ -1555,8 +1555,7 @@ async function redeemNotebookShareFromUrl() {
     return null;
   }
 
-  const personalize =
-    window.confirm(
+  const personalize = await window.LuriaDialog.confirm(
       "Deseja personalizar este material?\n\nOK = adicionar e editar em cima\nCancelar = adicionar somente para leitura"
     );
 
@@ -1579,7 +1578,7 @@ async function redeemNotebookShareFromUrl() {
 
   if (error) {
     console.error(error);
-    alert(
+    window.LuriaDialog.alert(
       `Não foi possível adicionar o material: ${error.message}`
     );
     return null;
@@ -3635,7 +3634,7 @@ async function createFreePage() {
     );
 
 
-    alert(
+    window.LuriaDialog.alert(
       `Não foi possível criar a página: ${error.message}`
     );
 
@@ -5551,7 +5550,7 @@ async function addNotebookImages(
   if (
     remaining <= 0
   ) {
-    alert(
+    window.LuriaDialog.alert(
       "Este caderno já possui o máximo de 2 imagens."
     );
 
@@ -5591,7 +5590,7 @@ async function addNotebookImages(
     ).length
     > remaining
   ) {
-    alert(
+    window.LuriaDialog.alert(
       `Você pode adicionar no máximo 2 imagens por caderno. Serão inseridas apenas ${remaining}.`
     );
   }
@@ -15824,7 +15823,7 @@ async function exportSelectedPdf() {
   if (
     !jsPDF
   ) {
-    alert(
+    window.LuriaDialog.alert(
       "Não foi possível carregar o exportador de PDF."
     );
 
@@ -15941,7 +15940,7 @@ async function exportSelectedPdf() {
       error
     );
 
-    alert(
+    window.LuriaDialog.alert(
       `Não foi possível gerar o PDF: ${error.message || "erro desconhecido"}`
     );
   }
@@ -16095,7 +16094,7 @@ async function deleteCurrentNotebook() {
   if (
     !current?.note?.id
   ) {
-    alert(
+    window.LuriaDialog.alert(
       "Este caderno ainda não possui conteúdo salvo para apagar."
     );
 
@@ -16104,8 +16103,7 @@ async function deleteCurrentNotebook() {
     return;
   }
 
-  const confirmed =
-    window.confirm(
+  const confirmed = await window.LuriaDialog.confirm(
       `Apagar "${current.title}"? Esta ação não pode ser desfeita.`
     );
 
@@ -16144,7 +16142,7 @@ async function deleteCurrentNotebook() {
       error
     );
 
-    alert(
+    window.LuriaDialog.alert(
       `Não foi possível apagar: ${error.message}`
     );
 
@@ -16333,8 +16331,7 @@ async function deleteSelectedNotes() {
   }
 
 
-  const confirmed =
-    window.confirm(
+  const confirmed = await window.LuriaDialog.confirm(
       `${parts.join(". ")}. Continuar?`
     );
 
@@ -16383,7 +16380,7 @@ async function deleteSelectedNotes() {
         deleteOwnedError
       );
 
-      alert(
+      window.LuriaDialog.alert(
         `Não foi possível apagar seus cadernos: ${deleteOwnedError.message}`
       );
 
@@ -16447,7 +16444,7 @@ async function deleteSelectedNotes() {
         error
       );
 
-      alert(
+      window.LuriaDialog.alert(
         `Não foi possível remover o material compartilhado: ${error.message}`
       );
 
@@ -17901,7 +17898,7 @@ function wireEvents() {
               notebookImageCount()
               >= 2
             ) {
-              alert(
+              window.LuriaDialog.alert(
                 "Este caderno já possui o máximo de 2 imagens."
               );
 
