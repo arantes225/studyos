@@ -381,7 +381,7 @@
     if(ccq) ccq.textContent="Qual achado diferencia uma urgência hipertensiva de uma emergência hipertensiva?";
 
     const meta=document.getElementById("error-meta");
-    if(meta) meta.textContent="Clínica Médica · Cardiologia · 1 de 5";
+    if(meta) meta.textContent="Clínica Médica · Cardiologia · 1 de 12";
 
     const q=document.getElementById("error-question");
     if(q) q.textContent="Paciente com PA muito elevada. Qual elemento define emergência hipertensiva?";
@@ -432,6 +432,55 @@
           theme:"Vacinação",
           ccq:"Qual é a lógica de revisar um erro no LURIA?",
           answer:"Recuperar ativamente a informação antes de conferir a resposta."
+        },
+        {
+          area:"Clínica Médica",
+          materia:"Endocrinologia",
+          theme:"Cetoacidose diabética",
+          ccq:"Qual alteração ácido-base é típica da cetoacidose diabética?",
+          answer:"Acidose metabólica com ânion gap aumentado."
+        },
+        {
+          area:"Cirurgia Geral",
+          materia:"Trauma",
+          theme:"Choque hemorrágico",
+          ccq:"Qual é a prioridade inicial no choque hemorrágico do trauma?",
+          answer:"Controle da hemorragia associado à ressuscitação hemodinâmica."
+        },
+        {
+          area:"Pediatria",
+          materia:"Neonatologia",
+          theme:"Icterícia neonatal",
+          ccq:"Quando a icterícia neonatal é considerada precoce?",
+          answer:"Quando surge nas primeiras 24 horas de vida."
+        },
+        {
+          area:"Ginecologia e Obstetrícia",
+          materia:"Obstetrícia",
+          theme:"Pré-eclâmpsia",
+          ccq:"Qual achado pode caracterizar gravidade na pré-eclâmpsia?",
+          answer:"PA ≥ 160/110 mmHg ou sinais de disfunção orgânica."
+        },
+        {
+          area:"Preventiva",
+          materia:"Epidemiologia",
+          theme:"Rastreamento",
+          ccq:"Qual medida representa a capacidade de um teste identificar doentes?",
+          answer:"Sensibilidade."
+        },
+        {
+          area:"Clínica Médica",
+          materia:"Neurologia",
+          theme:"AVC isquêmico",
+          ccq:"Qual exame de imagem é prioritário na avaliação inicial do AVC agudo?",
+          answer:"Tomografia de crânio sem contraste."
+        },
+        {
+          area:"Cirurgia Geral",
+          materia:"Hérnias",
+          theme:"Hérnia encarcerada",
+          ccq:"Qual achado sugere estrangulamento de uma hérnia encarcerada?",
+          answer:"Dor intensa associada a sinais de sofrimento isquêmico."
         }
       ];
 
