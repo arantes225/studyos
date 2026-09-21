@@ -220,12 +220,22 @@
   }
 
   function addRestartButton(){
-    if(page!=="configuracoes" || document.querySelector("[data-restart-onboarding]")) return;
+    if(page!=="configuracoes") return;
+
+    const nativeButton =
+      document.getElementById("restart-luria-onboarding");
+
+    if(nativeButton){
+      nativeButton.addEventListener("click", restart);
+      return;
+    }
+
+    if(document.querySelector("[data-restart-onboarding]")) return;
     const host=document.querySelector(".settings-page, .page");
     if(!host) return;
     const b=document.createElement("button");
     b.type="button"; b.dataset.restartOnboarding="1"; b.className="luria-restart-onboarding";
-    b.textContent="Refazer onboarding do LURIA";
+    b.textContent="Refazer onboarding";
     b.onclick=restart; host.appendChild(b);
   }
 
