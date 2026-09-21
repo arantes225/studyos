@@ -2948,3 +2948,74 @@ body::after {
 @media(max-width:620px){
   .qs-extraction-settings select{min-height:48px;border-radius:12px;font-size:13px}
 }
+
+
+/* =========================================================
+   LURIA — DIÁLOGOS GLOBAIS
+   ========================================================= */
+.luria-global-dialog{
+  width:min(430px,calc(100vw - 28px));
+  padding:0;
+  border:0;
+  border-radius:18px;
+  background:transparent;
+  color:var(--text);
+  overflow:visible;
+}
+.luria-global-dialog::backdrop{
+  background:rgba(10,18,32,.48);
+  backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);
+}
+.luria-global-dialog-card{
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr);
+  gap:14px;
+  padding:20px;
+  border:1px solid color-mix(in srgb,var(--border) 88%,var(--accent) 12%);
+  border-radius:18px;
+  background:var(--surface);
+  box-shadow:0 24px 70px rgba(15,23,42,.22),0 4px 16px rgba(15,23,42,.08);
+}
+.luria-global-dialog-icon{
+  width:42px;height:42px;display:grid;place-items:center;
+  border-radius:13px;
+  background:var(--accent-soft);
+  color:var(--accent);
+  font-size:17px;font-weight:900;
+}
+.luria-global-dialog-copy{min-width:0;padding-top:1px}
+.luria-global-dialog-eyebrow{
+  display:block;margin-bottom:3px;color:var(--accent);
+  font-size:8px;font-weight:900;letter-spacing:.14em;
+}
+.luria-global-dialog-title{
+  margin:0;color:var(--text);font-size:16px;font-weight:900;line-height:1.25;
+}
+.luria-global-dialog-message{
+  margin:7px 0 0;color:var(--muted);font-size:11px;line-height:1.55;
+  white-space:pre-line;
+}
+.luria-global-dialog-prompt{
+  grid-column:1/-1;display:grid;gap:6px;color:var(--muted);
+  font-size:9px;font-weight:800;
+}
+.luria-global-dialog-prompt[hidden]{display:none!important}
+.luria-global-dialog-input{
+  width:100%;min-height:42px;padding:0 12px;
+  border:1px solid var(--border);border-radius:11px;
+  background:var(--surface);color:var(--text);font:inherit;font-size:12px;outline:none;
+}
+.luria-global-dialog-input:focus{
+  border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);
+}
+.luria-global-dialog-actions{
+  grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px;margin-top:4px;
+}
+.luria-global-dialog-actions .button{min-width:92px}
+@media(max-width:520px){
+  .luria-global-dialog-card{grid-template-columns:36px minmax(0,1fr);padding:17px;gap:11px}
+  .luria-global-dialog-icon{width:36px;height:36px;border-radius:11px}
+  .luria-global-dialog-actions{display:grid;grid-template-columns:1fr 1fr}
+  .luria-global-dialog-actions .button{width:100%}
+}
