@@ -293,6 +293,11 @@ function sharedStudyratsRender(){
       '</div>';
     }).join('');
 
+    const participantCount=Math.max(1,ch.participants.length);
+    const shrink=Math.max(0.85,1-Math.max(0,participantCount-3)*0.05);
+    const runnerScale=(1.25*shrink).toFixed(3);
+    const laneHeight=Math.round(82*shrink);
+    const raceHeight=Math.max(400,150+(participantCount*laneHeight));
     const canDelete=ch.creator_user_id===window.docmapUser.id;
     const finished=ch.status==='finished';
 
@@ -310,7 +315,7 @@ function sharedStudyratsRender(){
         '<div class="studyrats-summary-item"><span class="studyrats-summary-icon">▣</span><span><small>Prazo</small><strong>'+formatStudyratsDate(ch.deadline)+'</strong><em>'+sharedStudyratsDeadlineText(ch.deadline)+'</em></span></div>'+
         '<div class="studyrats-summary-item"><span class="studyrats-summary-icon">●●</span><span><small>Participantes</small><strong>'+ch.participants.length+'</strong><em>Boa sorte, ratos de estudo!</em></span></div>'+
       '</div>'+
-      '<div class="studyrats-race-scene">'+
+      '<div class="studyrats-race-scene" style="--runner-scale:'+runnerScale+';--lane-height:'+laneHeight+'px;height:'+raceHeight+'px;min-height:'+raceHeight+'px">'+
         '<div class="studyrats-race-canvas">'+
           '<div class="studyrats-skyline"><i></i><i></i><i></i><i></i></div>'+
           '<div class="studyrats-lanes">'+lanes+'</div>'+
