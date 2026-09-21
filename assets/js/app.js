@@ -2533,6 +2533,141 @@ function wireLuriaDateInputs() {
 wireLuriaDateInputs();
 
 
+
+/* =========================================================
+   LURIA — SELETOR GLOBAL DE HORA
+   ========================================================= */
+
+function ensureLuriaTimePicker(input = null) {
+  let popover = document.getElementById("luria-time-picker");
+  const host = input?.closest?.("dialog[open]") || document.body;
+
+  if (popover) {
+    if (popover.parentElement !== host) host.appendChild(popover);
+    return popover;
+  }
+
+  popover = document.createElement("div");
+  popover.id = "luria-time-picker";
+  popover.className = "luria-time-picker";
+  popover.hidden = true;
+  popover.innerHTML = `
+    <div class="luria-time-picker-head">
+      <strong>Selecionar hora</strong>
+      <button type="button" data-time-close aria-label="Fechar">×</button>
+    </div>
+    <div class="luria-time-picker-body">
+      <label>
+        <span>Hora</span>
+        <select data-time-hour></select>
+      </label>
+      <span class="luria-time-separator">:</span>
+      <label>
+        <span>Minuto</span>
+        <select data-time-minute></select>
+      </label>
+    </div>
+    <div class="luria-time-quick">
+      <button type="button" data-time-quick="08:00">08:00</button>
+      <button type="button" data-time-quick="12:00">12:00</button>
+      <button type="button" data-time-quick="14:00">14:00</button>
+      <button type="button" data-time-quick="18:00">18:00</button>
+      <button type="button" data-time-quick="20:00">20:00</button>
+    </div>
+    <div class="luria-time-picker-foot">
+      <button type="button" data-time-now>Agora</button>
+      <button type="button" data-time-clear>Limpar</button>
+      <button type="button" class="primary" data-time-apply>Aplicar</button>
+    </div>
+  `;
+
+  const hour = popover.querySelector("[data-time-hour]");
+  const minute = popover.querySelector("[data-time-minute]");
+
+  hour.innerHTML = Array.from({length:24},(_,i)=>`<option value="${String(i).padStart(2,"0")}">${String(i).padStart(2,"0")}</option>`).join("");
+  minute.innerHTML = Array.from({length:12},(_,i)=>i*5).map(v=>`<option value="${String(v).padStart(2,"0")}">${String(v).padStart(2,"0")}</option>`).join("");
+
+  host.appendChild(popover);
+  return popover;
+}
+
+function openLuriaTimePicker(input) {
+  if (!input || input.disabled || input.readOnly) return;
+
+  const popover = ensureLuriaTimePicker(input);
+  const hour = popover.querySelector("[data-time-hour]");
+  const minute = popover.querySelector("[data-time-minute]");
+
+  const current = String(input.value || "").match(/^(\d{2}):(\d{2})$/);
+  const now = new Date();
+  hour.value = current ? current[1] : String(now.getHours()).padStart(2,"0");
+
+  const rawMinute = current ? Number(current[2]) : now.getMinutes();
+  const roundedMinute = Math.min(55, Math.round(rawMinute / 5) * 5);
+  minute.value = String(roundedMinute).padStart(2,"0");
+
+  function close() {
+    popover.hidden = true;
+    document.removeEventListener("pointerdown", outside, true);
+  }
+
+  function applyValue(value) {
+    input.value = value;
+    input.dispatchEvent(new Event("input",{bubbles:true}));
+    input.dispatchEvent(new Event("change",{bubbles:true}));
+    close();
+  }
+
+  function outside(event) {
+    if (event.target === input || popover.contains(event.target)) return;
+    close();
+  }
+
+  popover.querySelector("[data-time-close]").onclick = close;
+  popover.querySelector("[data-time-apply]").onclick = () =>
+    applyValue(`${hour.value}:${minute.value}`);
+
+  popover.querySelector("[data-time-now]").onclick = () => {
+    const now = new Date();
+    const m = Math.min(55, Math.round(now.getMinutes()/5)*5);
+    applyValue(`${String(now.getHours()).padStart(2,"0")}:${String(m).padStart(2,"0")}`);
+  };
+
+  popover.querySelector("[data-time-clear]").onclick = () => {
+    input.value = "";
+    input.dispatchEvent(new Event("change",{bubbles:true}));
+    close();
+  };
+
+  popover.querySelectorAll("[data-time-quick]").forEach(button => {
+    button.onclick = () => applyValue(button.dataset.timeQuick);
+  });
+
+  popover.hidden = false;
+
+  const rect = input.getBoundingClientRect();
+  const width = Math.min(320, window.innerWidth - 24);
+  let left = Math.min(Math.max(12, rect.left), window.innerWidth - width - 12);
+  let top = rect.bottom + 7;
+  if (top + 260 > window.innerHeight) top = Math.max(12, rect.top - 250);
+
+  popover.style.width = `${width}px`;
+  popover.style.left = `${left}px`;
+  popover.style.top = `${top}px`;
+
+  setTimeout(() => document.addEventListener("pointerdown", outside, true),0);
+}
+
+document.addEventListener("click", event => {
+  const input = event.target.closest?.('input[type="time"][data-luria-time-picker], input#event-time');
+  if (!input) return;
+  event.preventDefault();
+  event.stopPropagation();
+  try { input.blur(); } catch {}
+  openLuriaTimePicker(input);
+}, true);
+
+
 /* =========================================================
    LURIA — DIÁLOGOS GLOBAIS
    Substitui alert/confirm/prompt nativos por uma interface
