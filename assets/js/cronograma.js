@@ -11,6 +11,7 @@ const scheduleState = {
   existingTopicKeys: new Set(),
   existingEventKeys: new Set(),
   weekAnchor: startOfDaySchedule(new Date()),
+  plannerView: "week",
   draggingTopicId: null,
   alreadyDoneTopicId: null,
   themeSearch: "",
@@ -302,6 +303,25 @@ function formatWeekRangeSchedule(start, end) {
   }
 
   return `${formatShortSchedule(start)} – ${formatShortSchedule(end)} de ${end.getFullYear()}`;
+}
+
+function formatMonthLabelSchedule(date) {
+  const label = new Intl.DateTimeFormat("pt-BR", {
+    month: "long",
+    year: "numeric"
+  }).format(date);
+
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+function startOfMonthSchedule(date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function addMonthsSchedule(date, amount) {
+  const copy = startOfMonthSchedule(date);
+  copy.setMonth(copy.getMonth() + amount);
+  return copy;
 }
 
 function currentImportMode() {
@@ -3663,7 +3683,183 @@ function renderSummary() {
   }
 }
 
+function renderMonthTopicItem(topic) {
+  return `
+    <article
+      class="month-topic ${isTopicOverdue(topic) ? "is-overdue" : ""}"
+      draggable="true"
+      data-topic-id="${escapeScheduleHtml(topic.id)}"
+      title="${escapeScheduleHtml(topic.theme)}"
+    >
+      ${escapeScheduleHtml(topic.theme)}
+    </article>
+  `;
+}
+
+function renderMonthEventItem(event) {
+  return `
+    <div
+      class="month-event"
+      title="${escapeScheduleHtml(event.title)}"
+    >
+      ${escapeScheduleHtml(event.title)}
+    </div>
+  `;
+}
+
+function renderMonthPlanner() {
+  const planner =
+    document.getElementById("month-planner");
+
+  if (!planner) return;
+
+  const monthStart =
+    startOfMonthSchedule(scheduleState.weekAnchor);
+
+  const gridStart =
+    startOfWeekSchedule(monthStart);
+
+  const today =
+    startOfDaySchedule(new Date());
+
+  document.getElementById("planner-range").textContent =
+    formatMonthLabelSchedule(monthStart);
+
+  const weekdayLabels =
+    ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+
+  const days =
+    Array.from(
+      { length: 42 },
+      (_, index) =>
+        addDaysSchedule(gridStart, index)
+    );
+
+  planner.innerHTML =
+    weekdayLabels
+      .map(
+        (label) =>
+          `<div class="month-weekday">${label}</div>`
+      )
+      .join("")
+    +
+    days
+      .map(
+        (date) => {
+          const topics =
+            topicsOnDate(date);
+
+          const events =
+            eventsOnDate(date);
+
+          const allItems = [
+            ...topics.map(
+              renderMonthTopicItem
+            ),
+            ...events.map(
+              renderMonthEventItem
+            )
+          ];
+
+          const visible =
+            allItems.slice(0, 3);
+
+          const extra =
+            allItems.length - visible.length;
+
+          const inMonth =
+            date.getMonth()
+            === monthStart.getMonth();
+
+          return `
+            <section
+              class="month-day ${sameDateSchedule(date, today) ? "today" : ""} ${inMonth ? "" : "outside-month"}"
+              data-planner-date="${toISODateSchedule(date)}"
+            >
+              <div class="month-day-head">
+                <span class="month-day-number">${date.getDate()}</span>
+                ${allItems.length ? `<span class="month-day-count">${allItems.length}</span>` : ""}
+              </div>
+
+              <div class="month-day-items">
+                ${visible.join("")}
+                ${extra > 0 ? `<div class="month-more">+${extra} item${extra === 1 ? "" : "s"}</div>` : ""}
+              </div>
+            </section>
+          `;
+        }
+      )
+      .join("");
+}
+
+function updatePlannerViewControls() {
+  const isMonth =
+    scheduleState.plannerView === "month";
+
+  const weekPlanner =
+    document.getElementById("week-planner");
+
+  const monthPlanner =
+    document.getElementById("month-planner");
+
+  const weekButton =
+    document.getElementById("planner-view-week");
+
+  const monthButton =
+    document.getElementById("planner-view-month");
+
+  const todayButton =
+    document.getElementById("week-today");
+
+  if (weekPlanner) {
+    weekPlanner.hidden =
+      isMonth;
+  }
+
+  if (monthPlanner) {
+    monthPlanner.hidden =
+      !isMonth;
+  }
+
+  weekButton?.classList.toggle(
+    "active",
+    !isMonth
+  );
+
+  monthButton?.classList.toggle(
+    "active",
+    isMonth
+  );
+
+  weekButton?.setAttribute(
+    "aria-pressed",
+    !isMonth ? "true" : "false"
+  );
+
+  monthButton?.setAttribute(
+    "aria-pressed",
+    isMonth ? "true" : "false"
+  );
+
+  if (todayButton) {
+    todayButton.textContent =
+      isMonth
+        ? "Este mês"
+        : "Esta semana";
+  }
+}
+
 function renderPlanner() {
+  updatePlannerViewControls();
+
+  if (
+    scheduleState.plannerView
+    === "month"
+  ) {
+    renderMonthPlanner();
+    return;
+  }
+
   const planner = document.getElementById("week-planner");
   const start = startOfWeekSchedule(scheduleState.weekAnchor);
   const end = addDaysSchedule(start, 6);
@@ -6825,20 +7021,39 @@ function wireImportControls() {
 function wirePlannerNavigation() {
   document.getElementById("week-prev").addEventListener("click", () => {
     scheduleState.weekAnchor =
-      addDaysSchedule(scheduleState.weekAnchor, -7);
+      scheduleState.plannerView === "month"
+        ? addMonthsSchedule(scheduleState.weekAnchor, -1)
+        : addDaysSchedule(scheduleState.weekAnchor, -7);
 
     renderSchedule();
   });
 
   document.getElementById("week-next").addEventListener("click", () => {
     scheduleState.weekAnchor =
-      addDaysSchedule(scheduleState.weekAnchor, 7);
+      scheduleState.plannerView === "month"
+        ? addMonthsSchedule(scheduleState.weekAnchor, 1)
+        : addDaysSchedule(scheduleState.weekAnchor, 7);
 
     renderSchedule();
   });
 
   document.getElementById("week-today").addEventListener("click", () => {
-    scheduleState.weekAnchor = startOfDaySchedule(new Date());
+    scheduleState.weekAnchor =
+      startOfDaySchedule(new Date());
+
+    renderSchedule();
+  });
+
+  document.getElementById("planner-view-week")?.addEventListener("click", () => {
+    scheduleState.plannerView =
+      "week";
+
+    renderSchedule();
+  });
+
+  document.getElementById("planner-view-month")?.addEventListener("click", () => {
+    scheduleState.plannerView =
+      "month";
 
     renderSchedule();
   });
