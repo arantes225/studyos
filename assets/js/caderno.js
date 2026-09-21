@@ -3642,7 +3642,7 @@ function insertDivider(
     safeStyle ===
       "arabesque"
       ? `
-          <div class="notebook-divider arabesque">❦</div>
+          <div class="notebook-divider arabesque"><span class="notebook-divider-luria" contenteditable="false" aria-hidden="true"></span></div>
           <p><br></p>
         `
       : `
