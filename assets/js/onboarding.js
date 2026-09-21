@@ -889,35 +889,68 @@
       setTimeout(addQuestionSetsDemo,150);
       setTimeout(addQuestionSetsDemo,500);
     }
-    if(step.action==="questions-create"){
-      const btn=document.querySelector('[data-qs-mode="add"],[data-qs-mode="create"],[data-qs-tab="create"],[data-qs-mode="new"]');
-      btn?.click();
 
-      document
-        .querySelector('[data-qs-section="add"]')
-        ?.classList.add("active");
+    if(step.action==="questions-create"){
+      ensureQuestionsAddMode();
     }
 
-    if(step.action==="questions-answer"||step.action==="questions-key"){
-      // A partir de "Automático ou manual", todo o passeio permanece visualmente
-      // dentro de "Adicionar simulado". O painel de gabarito é exibido apenas
-      // como uma continuação demonstrativa do fluxo, sem trocar para "Meus simulados".
-      document.querySelector('[data-qs-mode="add"]')?.click();
-      document
-        .querySelector('[data-qs-section="add"]')
-        ?.classList.add("active");
+    if(step.action==="questions-file"){
+      ensureQuestionsAddMode();
+      simulateOnboardingFileSelection();
+      addOnboardingPdfPreview();
+    }
 
-      addQuestionsDemo();
+    if(step.action==="questions-pdf"){
+      ensureQuestionsAddMode();
+      simulateOnboardingFileSelection();
+      animateOnboardingPdf();
+    }
 
-      const answerPanel=document.getElementById("qs-answer-panel");
-      if(answerPanel){
-        answerPanel.hidden=false;
-        answerPanel.classList.add("active");
-        answerPanel.dataset.onboardingForcedActive="1";
+    if(step.action==="questions-extract"){
+      ensureQuestionsAddMode();
+      simulateOnboardingFileSelection();
+
+      const button=document.getElementById("qs-import");
+      if(button){
+        button.dataset.onboardingDemoExtract="1";
+        button.disabled=false;
       }
 
-      document.querySelector('[data-qs-mode="add"]')?.classList.add("active");
-      document.querySelector('[data-qs-mode="mine"]')?.classList.remove("active");
+      const status=document.getElementById("qs-import-status");
+      if(status){
+        status.textContent="Pronto para extrair as 10 questões do PDF de demonstração.";
+        status.className="qs-status";
+      }
+    }
+
+    if(step.action==="questions-answer"){
+      renderExtractedQuestionsDemo(false);
+    }
+
+    if(step.action==="questions-reader"){
+      renderExtractedQuestionsDemo(false);
+      openOnboardingAnswerReader(false);
+    }
+
+    if(step.action==="questions-answerkey"){
+      renderExtractedQuestionsDemo(false);
+      openOnboardingAnswerReader(true);
+    }
+
+    if(step.action==="questions-applykey"){
+      renderExtractedQuestionsDemo(false);
+      openOnboardingAnswerReader(true);
+
+      const apply=document.getElementById("qs-apply-answer-import");
+      if(apply){
+        apply.dataset.onboardingDemoApply="1";
+        apply.disabled=false;
+      }
+    }
+
+    if(step.action==="questions-applied"){
+      ensureQuestionsAddMode();
+      applyOnboardingAnswerKey();
     }
 
     if(step.action==="stats-tabs"){
