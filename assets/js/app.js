@@ -2072,13 +2072,17 @@ function prepararMobileMenu() {
    LURIA — CALENDÁRIO GLOBAL
    ========================================================= */
 
-function ensureLuriaCalendar() {
+function ensureLuriaCalendar(input = null) {
   let popover =
     document.getElementById(
       "luria-calendar"
     );
 
-  if (popover) return popover;
+  if (popover) {
+    const host = input?.closest?.("dialog[open]") || document.body;
+    if (popover.parentElement !== host) host.appendChild(popover);
+    return popover;
+  }
 
   popover =
     document.createElement(
@@ -2110,9 +2114,8 @@ function ensureLuriaCalendar() {
     </div>
   `;
 
-  document.body.appendChild(
-    popover
-  );
+  const host = input?.closest?.("dialog[open]") || document.body;
+  host.appendChild(popover);
 
   return popover;
 }
@@ -2182,7 +2185,7 @@ function openLuriaCalendar(
   }
 
   const popover =
-    ensureLuriaCalendar();
+    ensureLuriaCalendar(input);
 
   const selected =
     parseLuriaDate(
