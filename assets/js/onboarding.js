@@ -525,28 +525,333 @@
     });
   }
 
+  const ONBOARDING_ECG_QUESTIONS = [
+    "Qual é o ritmo cardíaco mais provável neste traçado?",
+    "Qual é o diagnóstico eletrocardiográfico mais provável?",
+    "O traçado abaixo é mais compatível com flutter atrial, fibrilação atrial, ritmo sinusal ou extrassístoles?",
+    "Qual alteração melhor descreve este eletrocardiograma?",
+    "O traçado é mais sugestivo de taquicardia ventricular, supraventricular, ritmo sinusal ou flutter?",
+    "Qual alteração aguda deve ser reconhecida neste traçado?",
+    "Qual distúrbio metabólico é sugerido por este traçado?",
+    "Qual distúrbio de condução o traçado sugere?",
+    "Qual é a principal interpretação deste traçado?",
+    "Qual é o achado mais provável neste traçado?"
+  ];
+
+  function ensureQuestionsAddMode(){
+    document.querySelector('[data-qs-mode="add"]')?.click();
+    document.querySelector('[data-qs-section="add"]')?.classList.add("active");
+    document.querySelector('[data-qs-mode="add"]')?.classList.add("active");
+    document.querySelector('[data-qs-mode="mine"]')?.classList.remove("active");
+  }
+
+  function simulateOnboardingFileSelection(){
+    ensureQuestionsAddMode();
+
+    const fileName=document.getElementById("qs-file-name");
+    const title=document.getElementById("qs-title");
+    const extraction=document.getElementById("qs-extraction-mode");
+    const source=document.getElementById("qs-source-profile");
+
+    if(fileName) fileName.textContent="simulado_onbording_eletrocardiograma.pdf";
+    if(title && !title.dataset.onboardingOriginalValue){
+      title.dataset.onboardingOriginalValue=title.value || "";
+      title.value="SIMULADO ONBORDING · Eletrocardiograma";
+    }
+    if(extraction) extraction.value="detailed";
+    if(source) source.value="general";
+
+    const status=document.getElementById("qs-import-status");
+    if(status){
+      status.dataset.onboardingOriginalText=status.textContent || "";
+      status.textContent="PDF de demonstração selecionado · 10 questões";
+      status.className="qs-status success";
+    }
+  }
+
+  async function loadOnboardingPdfBytes(){
+    if(window.__luriaOnboardingPdfBytes) return window.__luriaOnboardingPdfBytes;
+
+    const response=await fetch("/assets/onboarding/simulado-onboarding.b64?v=1",{cache:"force-cache"});
+    if(!response.ok) throw new Error("PDF de onboarding indisponível.");
+
+    const base64=(await response.text()).replace(/\s+/g,"");
+    const binary=atob(base64);
+    const bytes=new Uint8Array(binary.length);
+
+    for(let i=0;i<binary.length;i+=1){
+      bytes[i]=binary.charCodeAt(i);
+    }
+
+    window.__luriaOnboardingPdfBytes=bytes;
+    return bytes;
+  }
+
+  async function addOnboardingPdfPreview(){
+    simulateOnboardingFileSelection();
+
+    const automatic=document.querySelector('[data-qs-add-section="automatic"]');
+    if(!automatic) return null;
+
+    let host=document.getElementById("qs-onboarding-pdf-preview");
+    if(host) return host;
+
+    host=document.createElement("section");
+    host.id="qs-onboarding-pdf-preview";
+    host.dataset.onboardingDemo="1";
+    host.className="onboarding-pdf-preview";
+    host.innerHTML=`
+      <div class="onboarding-pdf-preview-head">
+        <div>
+          <strong>SIMULADO ONBORDING · Eletrocardiograma</strong>
+          <small>PDF de demonstração · 4 páginas · 10 questões</small>
+        </div>
+        <span>PDF</span>
+      </div>
+      <div class="onboarding-pdf-pages" data-onboarding-pdf-pages>
+        <div class="onboarding-pdf-loading">Carregando visualização do PDF…</div>
+      </div>
+    `;
+
+    automatic.appendChild(host);
+
+    try{
+      const bytes=await loadOnboardingPdfBytes();
+
+      if(!window.pdfjsLib){
+        throw new Error("Leitor de PDF não carregado.");
+      }
+
+      const doc=await window.pdfjsLib.getDocument({data:bytes.slice()}).promise;
+      const pages=host.querySelector("[data-onboarding-pdf-pages]");
+      pages.innerHTML="";
+
+      for(let pageNumber=1;pageNumber<=doc.numPages;pageNumber+=1){
+        const page=await doc.getPage(pageNumber);
+        const rawViewport=page.getViewport({scale:1});
+        const maxWidth=660;
+        const scale=Math.min(1.12,maxWidth/rawViewport.width);
+        const viewport=page.getViewport({scale});
+
+        const pageWrap=document.createElement("div");
+        pageWrap.className="onboarding-pdf-page";
+
+        const canvas=document.createElement("canvas");
+        canvas.width=Math.ceil(viewport.width);
+        canvas.height=Math.ceil(viewport.height);
+        canvas.setAttribute("aria-label",`Página ${pageNumber} do PDF de onboarding`);
+
+        pageWrap.appendChild(canvas);
+        pages.appendChild(pageWrap);
+
+        await page.render({
+          canvasContext:canvas.getContext("2d"),
+          viewport
+        }).promise;
+      }
+    }catch(error){
+      console.warn("Não foi possível renderizar o PDF do onboarding:",error);
+      const pages=host.querySelector("[data-onboarding-pdf-pages]");
+      if(pages){
+        pages.innerHTML='<div class="onboarding-pdf-loading">SIMULADO ONBORDING · Eletrocardiograma<br>10 questões prontas para extração.</div>';
+      }
+    }
+
+    return host;
+  }
+
+  function animateOnboardingPdf(){
+    addOnboardingPdfPreview().then(host=>{
+      const scroller=host?.querySelector("[data-onboarding-pdf-pages]");
+      if(!scroller) return;
+
+      scroller.scrollTop=0;
+      const max=()=>Math.max(0,scroller.scrollHeight-scroller.clientHeight);
+
+      const checkpoints=[0,.28,.58,.86,1];
+      checkpoints.forEach((point,index)=>{
+        setTimeout(()=>{
+          if(!document.body.contains(scroller)) return;
+          scroller.scrollTo({
+            top:max()*point,
+            behavior:"smooth"
+          });
+        },index*900);
+      });
+    });
+  }
+
+  function moveAnswerPanelIntoAdd(){
+    const panel=document.getElementById("qs-answer-panel");
+    const addSection=document.querySelector('[data-qs-section="add"]');
+
+    if(!panel || !addSection) return panel;
+
+    if(!document.getElementById("qs-onboarding-answer-marker")){
+      const marker=document.createElement("span");
+      marker.id="qs-onboarding-answer-marker";
+      marker.dataset.onboardingDemoMarker="1";
+      marker.hidden=true;
+      panel.parentNode?.insertBefore(marker,panel);
+    }
+
+    if(panel.parentNode!==addSection){
+      addSection.appendChild(panel);
+    }
+
+    panel.hidden=false;
+    panel.classList.add("active");
+    panel.dataset.onboardingForcedActive="1";
+
+    return panel;
+  }
+
+  function renderExtractedQuestionsDemo(applied=false){
+    ensureQuestionsAddMode();
+    simulateOnboardingFileSelection();
+
+    const panel=moveAnswerPanelIntoAdd();
+    if(!panel) return;
+
+    const title=document.getElementById("qs-current-title");
+    const total=document.getElementById("qs-summary-total");
+    const correct=document.getElementById("qs-summary-correct");
+    const wrong=document.getElementById("qs-summary-wrong");
+    const accuracy=document.getElementById("qs-summary-accuracy");
+
+    if(title) title.textContent="SIMULADO ONBORDING · Eletrocardiograma";
+    if(total) total.textContent="10";
+    if(correct) correct.textContent=applied ? "8" : "0";
+    if(wrong) wrong.textContent=applied ? "2" : "0";
+    if(accuracy) accuracy.textContent=applied ? "80%" : "—";
+
+    const list=document.getElementById("qs-question-list");
+    if(!list) return;
+
+    list.querySelectorAll("[data-onboarding-extracted-questions]").forEach(el=>el.remove());
+
+    const wrap=document.createElement("div");
+    wrap.dataset.onboardingDemo="1";
+    wrap.dataset.onboardingExtractedQuestions="1";
+
+    wrap.innerHTML=ONBOARDING_ECG_QUESTIONS.map((text,index)=>{
+      const number=index+1;
+      const isWrong=applied && (number===2 || number===5);
+
+      return `
+        <article class="qs-question ${isWrong ? "wrong" : ""}" data-onboarding-question="${number}">
+          <div class="qs-question-main">
+            <span class="qs-number">${number}</span>
+            <div class="qs-question-title">
+              <strong>Questão ${number}</strong>
+              <small>${text}</small>
+            </div>
+            <label class="qs-wrong-toggle">
+              <input type="checkbox" ${isWrong ? "checked" : ""} tabindex="-1">
+              <span>${applied ? (isWrong ? "Errei" : "Correta") : "Extraída"}</span>
+            </label>
+          </div>
+          ${isWrong ? `
+            <div class="qs-error-fields">
+              <label class="full">
+                <strong>Enviar ao Caderno de Erros</strong>
+                <small>Esta questão pode virar um CCQ de revisão.</small>
+              </label>
+            </div>
+          ` : ""}
+        </article>
+      `;
+    }).join("");
+
+    list.prepend(wrap);
+
+    const status=document.getElementById("qs-answer-status");
+    if(status){
+      status.textContent=applied
+        ? "Gabarito aplicado: 8 acertos e 2 erros."
+        : "10 questões extraídas com sucesso.";
+      status.className="qs-status success";
+    }
+  }
+
+  function openOnboardingAnswerReader(showKey=false){
+    ensureQuestionsAddMode();
+    renderExtractedQuestionsDemo(false);
+
+    const dialog=document.getElementById("qs-answer-import-dialog");
+    if(!dialog) return;
+
+    dialog.dataset.onboardingDemoDialog="1";
+    dialog.setAttribute("open","");
+    dialog.classList.add("onboarding-answer-reader-open");
+
+    const preview=document.getElementById("qs-answer-screenshot-preview");
+    const table=document.getElementById("qs-answer-import-table");
+    const status=document.getElementById("qs-answer-import-status");
+    const apply=document.getElementById("qs-apply-answer-import");
+
+    if(preview){
+      preview.innerHTML=`
+        <div class="onboarding-answer-reader-file" data-onboarding-demo="1">
+          <strong>gabarito_simulado_onbording.png</strong>
+          <small>Imagem de demonstração carregada</small>
+        </div>
+      `;
+    }
+
+    if(showKey){
+      const circles=Array.from({length:10},(_,i)=>{
+        const number=i+1;
+        const wrong=number===2 || number===5;
+        return `<span class="onboarding-answer-circle ${wrong ? "wrong" : "correct"}">${number}</span>`;
+      }).join("");
+
+      if(table){
+        table.innerHTML=`
+          <div id="qs-onboarding-answer-key" class="onboarding-answer-key" data-onboarding-demo="1">
+            <strong>Gabarito reconhecido</strong>
+            <div>${circles}</div>
+            <small>Vermelho = erro · Verde = acerto</small>
+          </div>
+        `;
+      }
+
+      if(status){
+        status.textContent="10 questões reconhecidas · 8 acertos · 2 erros";
+        status.className="qs-status success";
+      }
+
+      if(apply) apply.disabled=false;
+    }else{
+      if(table){
+        table.innerHTML=`
+          <div class="onboarding-answer-reader-hint" data-onboarding-demo="1">
+            O leitor identifica os números e as cores do resultado antes de preencher o simulado.
+          </div>
+        `;
+      }
+      if(status){
+        status.textContent="Imagem pronta para leitura.";
+        status.className="qs-status";
+      }
+    }
+  }
+
+  function applyOnboardingAnswerKey(){
+    const dialog=document.getElementById("qs-answer-import-dialog");
+    if(dialog){
+      dialog.removeAttribute("open");
+      dialog.classList.remove("onboarding-answer-reader-open");
+    }
+
+    renderExtractedQuestionsDemo(true);
+
+    const list=document.getElementById("qs-question-list");
+    list?.scrollIntoView({behavior:"smooth",block:"center"});
+  }
+
   function addQuestionsDemo(){
     addQuestionSetsDemo();
-    const panel=document.getElementById("qs-answer-panel");
-    if(panel){panel.hidden=false;panel.dataset.onboardingDemo="1";}
-    const title=document.getElementById("qs-current-title"); if(title) title.textContent="Simulado de onboarding";
-    const total=document.getElementById("qs-summary-total"); if(total) total.textContent="5";
-    const correct=document.getElementById("qs-summary-correct"); if(correct) correct.textContent="3";
-    const wrong=document.getElementById("qs-summary-wrong"); if(wrong) wrong.textContent="2";
-    const acc=document.getElementById("qs-summary-accuracy"); if(acc) acc.textContent="60%";
-    const list=document.getElementById("qs-question-list");
-    if(list && !list.querySelector("[data-onboarding-demo]")){
-      const wrap=document.createElement("div"); wrap.dataset.onboardingDemo="1";
-      const qs=[
-        ["1","Paciente hipertenso apresenta déficit neurológico agudo. Qual a prioridade inicial?","wrong"],
-        ["2","Qual é o agente mais comum da pneumonia adquirida na comunidade?",""],
-        ["3","Dor migratória para FID sugere qual diagnóstico?","wrong"],
-        ["4","Quando iniciar rastreio para diabetes em adultos de risco?",""],
-        ["5","Qual é a primeira etapa da avaliação primária no trauma?",""]
-      ];
-      wrap.innerHTML=qs.map(([n,t,w])=>'<article class="qs-question '+w+'"><div class="qs-question-main"><span class="qs-number">'+n+'</span><div class="qs-question-title"><strong>Questão '+n+'</strong><small>'+t+'</small></div><label class="qs-wrong-toggle"><input type="checkbox" '+(w?'checked':'')+'><span>'+(w?'Errei':'Correta')+'</span></label></div>'+(w?'<div class="qs-error-fields"><label class="full"><strong>Enviar ao Caderno de Erros</strong><small>Área, matéria, CCQ e explicação aparecem aqui.</small></label></div>':'')+'</article>').join("");
-      list.prepend(wrap);
-    }
   }
 
   function addDemoData(kind){
