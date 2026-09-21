@@ -1719,27 +1719,53 @@ async function loadNotifications() {
     return;
   }
 
+  const [
+    listResponse,
+    countResponse
+  ] =
+    await Promise.all([
+      sb
+        .from(
+          "notifications"
+        )
+        .select(
+          "id,type,title,body,href,metadata,read_at,created_at"
+        )
+        .order(
+          "created_at",
+          {
+            ascending:
+              false
+          }
+        )
+        .limit(
+          12
+        ),
+
+      sb
+        .from(
+          "notifications"
+        )
+        .select(
+          "id",
+          {
+            count:
+              "exact",
+            head:
+              true
+          }
+        )
+        .is(
+          "read_at",
+          null
+        )
+    ]);
+
   const {
     data,
     error
   } =
-    await sb
-      .from(
-        "notifications"
-      )
-      .select(
-        "id,type,title,body,href,metadata,read_at,created_at"
-      )
-      .order(
-        "created_at",
-        {
-          ascending:
-            false
-        }
-      )
-      .limit(
-        12
-      );
+    listResponse;
 
   if (error) {
     console.warn(
@@ -1757,10 +1783,13 @@ async function loadNotifications() {
     data || [];
 
   const unread =
-    rows.filter(
-      item =>
-        !item.read_at
-    ).length;
+    Number(
+      countResponse?.count
+      ?? rows.filter(
+        item =>
+          !item.read_at
+      ).length
+    );
 
   badge.hidden =
     unread === 0;
@@ -1842,11 +1871,24 @@ async function loadNotifications() {
       link => {
         link.addEventListener(
           "click",
-          () => {
-            markNotificationRead(
+          async (
+            event
+          ) => {
+            event.preventDefault();
+
+            const destination =
+              link.getAttribute(
+                "href"
+              )
+              || "/amigos/";
+
+            await markNotificationRead(
               link.dataset
                 .notificationId
             );
+
+            window.location.href =
+              destination;
           }
         );
       }
