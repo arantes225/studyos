@@ -25,7 +25,7 @@ function renderFriendPreview(friend=null,message=""){
       <span class="friend-avatar">${fEsc((friend.display_name||"U").charAt(0).toUpperCase())}</span>
       <span class="friend-copy">
         <strong>${fEsc(friend.display_name||"Usuário LURIA")}</strong>
-        <small>ID ${fEsc(friend.luria_id||"")}${friend.specialty?" · "+fEsc(friend.specialty):""}</small>
+        <small>ID ${fEsc(friend.luria_id||"")}</small>
       </span>
     </div>
   `;
@@ -84,7 +84,7 @@ async function loadFriends(){
         <span class="friend-avatar">${fEsc((friend.display_name||"U").charAt(0).toUpperCase())}</span>
         <span class="friend-copy">
           <strong>${fEsc(friend.display_name||"Usuário LURIA")}</strong>
-          <small>ID ${fEsc(friend.luria_id||"")}${friend.specialty?" · "+fEsc(friend.specialty):""}</small>
+          <small>ID ${fEsc(friend.luria_id||"")}</small>
         </span>
       </div>
       <div class="friends-actions">
