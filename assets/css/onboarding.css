@@ -172,3 +172,21 @@ body.luria-onboarding-exploring .settings-page{
   backdrop-filter:none!important;
   -webkit-backdrop-filter:none!important;
 }
+
+
+/* Onboarding v1.9 — destaque claro sem sombra gigante na tela liberada */
+.luria-onboarding-target-clear{
+  position:relative!important;
+  z-index:auto!important;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent,#184888) 58%,transparent)!important;
+  filter:none!important;
+  opacity:1!important;
+}
+body.luria-onboarding-exploring #luria-onboarding-overlay{
+  background:transparent!important;
+}
+body.luria-onboarding-exploring #luria-onboarding-overlay::before,
+body.luria-onboarding-exploring #luria-onboarding-overlay::after{
+  content:none!important;
+  display:none!important;
+}
