@@ -10,7 +10,7 @@
 .studyrats-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,.55fr);gap:10px}
 .studyrats-fields label{display:grid;gap:5px}
 .studyrats-fields label>span{font-size:8px;font-weight:800;color:var(--muted)}
-.studyrats-fields input,.studyrats-fields select{min-height:38px;width:100%;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);padding:0 10px;font:inherit;font-size:9px}
+.studyrats-fields input,.studyrats-fields select{min-height:42px;width:100%;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);padding:0 11px;font:inherit;font-size:11px;outline:none}.studyrats-fields input:focus,.studyrats-fields select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 .studyrats-section-title{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
 .studyrats-section-title strong{font-size:9px}
 .studyrats-section-title small{font-size:8px;color:var(--muted)}
@@ -37,11 +37,11 @@
 .studyrats-delete{border:0;background:transparent;color:var(--muted);font-size:14px;line-height:1;cursor:pointer;padding:4px}
 .studyrats-track{position:relative;padding:14px 14px 16px;background:linear-gradient(180deg,color-mix(in srgb,var(--accent-soft) 20%,transparent),transparent 72%)}
 .studyrats-track::after{content:"";position:absolute;right:20px;top:10px;bottom:10px;width:8px;border:1px solid color-mix(in srgb,var(--text) 18%,transparent);background:repeating-conic-gradient(color-mix(in srgb,var(--text) 75%,transparent) 0 25%,var(--surface) 0 50%) 0/8px 8px;border-radius:2px;opacity:.7}
-.studyrats-lane{display:grid;grid-template-columns:120px minmax(0,1fr) 62px;align-items:center;gap:10px;min-height:58px}
+.studyrats-lane{display:grid;grid-template-columns:150px minmax(0,1fr);align-items:center;gap:10px;min-height:58px}
 .studyrats-lane+.studyrats-lane{border-top:1px dashed color-mix(in srgb,var(--border) 75%,transparent)}
 .studyrats-runner{display:flex;align-items:center;gap:7px;min-width:0}
 .studyrats-rank{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);color:var(--muted);font-size:7px;font-weight:900;flex:0 0 auto}
-.studyrats-runner-name{font-size:8.5px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.studyrats-runner-copy{min-width:0}.studyrats-runner-copy strong{display:block;font-size:9px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.studyrats-runner-copy small{display:block;margin-top:2px;color:var(--muted);font-size:7.5px;font-weight:800}
 .studyrats-progress{height:40px;position:relative;margin-right:18px}
 .studyrats-progress::before{content:"";position:absolute;left:0;right:0;top:50%;height:4px;transform:translateY(-50%);border-radius:999px;background:color-mix(in srgb,var(--border) 58%,transparent)}
 .studyrats-progress-fill{position:absolute;left:0;top:50%;height:4px;transform:translateY(-50%);border-radius:999px;background:var(--accent);min-width:2px}
@@ -51,4 +51,4 @@
 .studyrats-score strong{display:block;font-size:10px}
 .studyrats-score small{display:block;color:var(--muted);font-size:7.5px;margin-top:2px}
 .studyrats-race-footer{display:flex;justify-content:space-between;gap:10px;padding:9px 13px;border-top:1px solid var(--border);font-size:8px;color:var(--muted)}
-@media(max-width:760px){.friends-grid{grid-template-columns:1fr}.friends-page{width:min(100%,360px);margin:0 auto}.friend-row,.inbox-row{align-items:flex-start;flex-direction:column}.friends-actions{width:100%}.studyrats-head{align-items:flex-start}.studyrats-head .button{flex:0 0 auto}.studyrats-fields{grid-template-columns:1fr}.studyrats-challenge-head{align-items:flex-start;flex-direction:column}.studyrats-challenge-meta{justify-content:flex-start}.studyrats-lane{grid-template-columns:84px minmax(0,1fr) 46px;gap:6px}.studyrats-track{padding-left:9px;padding-right:7px}.studyrats-track::after{right:8px}.studyrats-progress{margin-right:8px}.studyrats-score{padding-right:6px}.studyrats-race-footer{flex-direction:column}.studyrats-friend-chip{max-width:160px}.studyrats-runner-name{font-size:7.5px}}
+@media(max-width:760px){.friends-grid{grid-template-columns:1fr}.friends-page{width:min(100%,360px);margin:0 auto}.friend-row,.inbox-row{align-items:flex-start;flex-direction:column}.friends-actions{width:100%}.studyrats-head{align-items:flex-start}.studyrats-head .button{flex:0 0 auto}.studyrats-fields{grid-template-columns:1fr}.studyrats-challenge-head{align-items:flex-start;flex-direction:column}.studyrats-challenge-meta{justify-content:flex-start}.studyrats-lane{grid-template-columns:112px minmax(0,1fr);gap:6px}.studyrats-track{padding-left:9px;padding-right:7px}.studyrats-track::after{right:8px}.studyrats-progress{margin-right:8px}.studyrats-race-footer{flex-direction:column}.studyrats-friend-chip{max-width:160px}.studyrats-runner-copy strong{font-size:8px}.studyrats-runner-copy small{font-size:7px}}
