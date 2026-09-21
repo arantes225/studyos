@@ -93,7 +93,7 @@ async function loadFriends(){
     </div>`).join(""):'<div class="friends-empty">Nenhum amigo adicionado ainda.</div>';
 
   host.querySelectorAll("[data-remove-friend]").forEach(btn=>btn.addEventListener("click",async()=>{
-    if(!confirm("Remover esta pessoa da sua lista de amigos?"))return;
+    if(!await window.LuriaDialog.confirm("Remover esta pessoa da sua lista de amigos?"))return;
     const {error}=await friendsSb.rpc("remove_friend",{p_friend_user_id:btn.dataset.removeFriend});
     if(error){setFriendsStatus(error.message,"error");return;}
     await loadFriends();
@@ -199,7 +199,7 @@ async function initFriends(){
   document.getElementById("copy-my-id")?.addEventListener("click",async()=>{
     const id=document.getElementById("my-luria-id").textContent.trim();
     try{await navigator.clipboard.writeText(id);setFriendsStatus("Seu ID LURIA foi copiado.","success");}
-    catch{prompt("Copie seu ID LURIA:",id);}
+    catch{await window.LuriaDialog.prompt("Copie seu ID LURIA:",id);}
   });
   try{await Promise.all([loadOwnId(),loadFriends(),loadInbox()]);}
   catch(error){console.error(error);setFriendsStatus(error.message||"Não foi possível carregar Amigos.","error");}
