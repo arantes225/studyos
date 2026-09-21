@@ -3069,3 +3069,27 @@
   font-weight: 800;
   letter-spacing: .01em;
 }
+
+
+/* CADERNO v18.2 — rótulo do recolhedor de temas */
+.notebook-topic-panel-toggle {
+  width: auto !important;
+  min-width: 76px !important;
+  padding: 0 9px !important;
+  gap: 6px !important;
+}
+
+.notebook-topic-panel-arrow {
+  display: inline-block;
+  flex: 0 0 auto;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.notebook-topic-panel-label {
+  display: inline-block !important;
+  white-space: nowrap;
+  font-size: 9px;
+  font-weight: 750;
+  line-height: 1;
+}
