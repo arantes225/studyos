@@ -81,6 +81,22 @@
     const s=status();
     if(s.completed || s.skipped || s.started) return false;
     if(page==="admin") return false;
+
+    const forced =
+      new URLSearchParams(location.search)
+        .get("onboarding") === "1";
+
+    const createdAt =
+      window.docmapUser?.created_at
+        ? new Date(window.docmapUser.created_at).getTime()
+        : 0;
+
+    const isNewAccount =
+      createdAt > 0
+      && Date.now() - createdAt < 48 * 60 * 60 * 1000;
+
+    if(!forced && !isNewAccount) return false;
+
     s.started=true; s.step=0; saveState(s);
     if(page!=="configuracoes"){
       location.replace("/configuracoes/?onboarding=1");
@@ -216,6 +232,58 @@
   function challengeState(){
     try{return JSON.parse(localStorage.getItem(CHALLENGE_PREFIX+userId())||"{}");}catch{return{};}
   }
+
+  function saveChallenge(name){
+    if(!name) return;
+    const current=challengeState();
+    if(current[name]) return;
+    current[name]=true;
+    try{ localStorage.setItem(CHALLENGE_PREFIX+userId(),JSON.stringify(current)); }catch{}
+    document.getElementById("luria-discover-card")?.remove();
+    renderChallenges();
+  }
+
+  function trackChallenges(){
+    const s=status();
+    if(!s.completed) return;
+
+    if(page==="cronograma"){
+      document.addEventListener("click",(e)=>{
+        if(e.target.closest("button,.button,input[type=file]")) saveChallenge("schedule");
+      },{once:true});
+    }
+
+    if(page==="caderno"){
+      const editor=document.querySelector("#notebook-editor");
+      editor?.addEventListener("input",()=>saveChallenge("notebook"),{once:true});
+    }
+
+    if(page==="flashcards"){
+      document.addEventListener("click",(e)=>{
+        const t=e.target.closest("button,.button");
+        if(t && /salvar|criar|adicionar|novo/i.test(t.textContent||"")) saveChallenge("flashcards");
+      });
+    }
+
+    if(page==="erros"){
+      document.addEventListener("click",(e)=>{
+        const t=e.target.closest("button,.button");
+        if(t && /salvar|criar|adicionar/i.test(t.textContent||"")) saveChallenge("ccq");
+      });
+    }
+
+    if(page==="questoes"){
+      document.addEventListener("click",(e)=>{
+        const t=e.target.closest("button,.button");
+        if(t && /iniciar|lista|simulado|salvar/i.test(t.textContent||"")) saveChallenge("questions");
+      });
+    }
+
+    if(page==="dashboard"){
+      const value=Number(document.querySelector("[data-streak-value]")?.textContent||0);
+      if(value>0) saveChallenge("streak");
+    }
+  }
   function renderChallenges(){
     if(page!=="dashboard") return;
     const s=status();
@@ -245,6 +313,7 @@
     if(firstTimeRedirect()) return;
     addRestartButton();
     renderChallenges();
+    trackChallenges();
     const s=status();
     if(s.started && !s.completed && !s.skipped) setTimeout(render,650);
   });
