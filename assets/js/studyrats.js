@@ -61,9 +61,8 @@ function sharedStudyratAccessoryImg(value,className){
 }
 
 function sharedStudyratComposite(variant,accessory,className){
-  const rat=sharedStudyratVariant(variant);
-  return '<span class="'+(className||'studyrats-rat-composite')+' rat-variant-'+rat.id+'">'+
-    sharedRatImg(rat.id,'studyrats-rat-img')+
+  return '<span class="'+(className||'studyrats-rat-composite')+'">'+
+    sharedRatImg(variant,'studyrats-rat-img')+
     sharedStudyratAccessoryImg(accessory,'studyrats-accessory-img')+
   '</span>';
 }
