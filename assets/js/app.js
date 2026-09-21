@@ -321,7 +321,7 @@ function sidebarMarkup(user, profile = null) {
         <img
           id="luria-brand-logo"
           class="brand-logo-single luria-theme-logo"
-          src="assets/img/logo-icone-original.png?v=luria10"
+          src="/assets/img/logo-icone-original.png?v=luria10"
           alt="Logo LURIA"
         >
 
@@ -452,16 +452,16 @@ function updateLuriaLogo(theme) {
   }
 
   let source =
-    "assets/img/logo-icone-original.png?v=luria10";
+    "/assets/img/logo-icone-original.png?v=luria10";
 
   if (theme === "dark") {
     source =
-      "assets/img/logo-icone-azul-claro.png?v=luria10";
+      "/assets/img/logo-icone-azul-claro.png?v=luria10";
   }
 
   if (theme === "leila-mood") {
     source =
-      "assets/img/logo-icone-rosa-escuro.png?v=luria10";
+      "/assets/img/logo-icone-rosa-escuro.png?v=luria10";
   }
 
   if (
@@ -2698,7 +2698,7 @@ function ensureLuriaDialog() {
   dialog.innerHTML = `
     <form method="dialog" class="luria-global-dialog-card">
       <div class="luria-global-dialog-icon" aria-hidden="true">
-        <img class="luria-global-dialog-logo luria-theme-logo" src="assets/img/logo-icone-original.png?v=luria10" alt="">
+        <img class="luria-global-dialog-logo luria-theme-logo" src="/assets/img/logo-icone-original.png?v=luria10" alt="">
       </div>
       <div class="luria-global-dialog-copy">
         <span class="luria-global-dialog-eyebrow">LURIA</span>
@@ -2794,10 +2794,10 @@ function openLuriaDialog({
 
     logo.src =
       theme === "dark"
-        ? "assets/img/logo-icone-azul-claro.png?v=luria10"
+        ? "/assets/img/logo-icone-azul-claro.png?v=luria10"
         : theme === "leila-mood"
-          ? "assets/img/logo-icone-rosa-escuro.png?v=luria10"
-          : "assets/img/logo-icone-original.png?v=luria10";
+          ? "/assets/img/logo-icone-rosa-escuro.png?v=luria10"
+          : "/assets/img/logo-icone-original.png?v=luria10";
   }
 
   copy.textContent =
