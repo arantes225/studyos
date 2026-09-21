@@ -69,7 +69,7 @@
 
     {page:"editais", target:".exam-mode-tabs", title:"Editais e Provas", text:"Aqui você acompanha provas, inscrições, resultados e notas de corte. Vamos abrir Nova prova para mostrar cada campo.", action:"exam-new", top:true},
     {page:"editais", target:"#exam-dialog, #exam-form", title:"Nova prova", text:"Cadastre instituição, banca, status, datas, taxa, sua nota e a última nota de corte. Nada desta demonstração será salvo.", action:"exam-dialog"},
-    {page:"editais", target:"#exam-score, #exam-cutoff", title:"Cores da nota", text:"A comparação usa a nota de corte como referência: vermelho quando sua nota fica mais de 2 pontos abaixo; amarelo quando fica na faixa de ±2 pontos; verde quando fica mais de 2 pontos acima.", action:"exam-dialog"},
+    {page:"editais", target:"#exam-score, #exam-cutoff", title:"Cores da nota", text:"A comparação usa a nota de corte como referência: vermelho quando sua nota fica mais de 2 pontos abaixo; amarelo quando fica na faixa de ±2 pontos; verde quando fica mais de 2 pontos acima.", action:"exam-dialog", forceCardTop:true, scrollPageDown:true},
 
     {page:"amigos", target:".friends-card:first-of-type", title:"Amigos", text:"Cada usuário possui um ID LURIA. Adicione amigos pelo código e compartilhe materiais diretamente com eles.", top:true},
     {page:"amigos", target:".friends-card:last-of-type", title:"Materiais recebidos", text:"Decks de flashcards e cadernos enviados por amigos ficam reunidos aqui."},
@@ -1138,7 +1138,26 @@
     runStepAction(step);
 
     const target=resolveTarget(step.target) || document.querySelector(".main") || document.body;
-    if(step.noScroll){
+    if(step.scrollPageDown){
+      requestAnimationFrame(()=>{
+        window.scrollTo({
+          top:Math.max(
+            document.documentElement.scrollHeight,
+            document.body.scrollHeight
+          ),
+          left:0,
+          behavior:"smooth"
+        });
+
+        const examDialog=document.getElementById("exam-dialog");
+        if(examDialog){
+          examDialog.scrollTo({
+            top:examDialog.scrollHeight,
+            behavior:"smooth"
+          });
+        }
+      });
+    }else if(step.noScroll){
       window.scrollTo({top:0,left:0,behavior:"auto"});
     }else{
       target.scrollIntoView({behavior:"smooth",block:step.top?"start":"center"});
@@ -1186,6 +1205,12 @@
     const onboardingCard=overlay.querySelector(".luria-onboarding-card");
     const placeOnboardingCard=()=>{
       overlay.classList.remove("card-top");
+
+      if(step.forceCardTop){
+        overlay.classList.add("card-top");
+        return;
+      }
+
       if(!onboardingCard || !target) return;
 
       const targetRect=target.getBoundingClientRect();
