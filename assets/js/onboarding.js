@@ -984,6 +984,52 @@
       forcedAnswer.removeAttribute("data-onboarding-forced-active");
     }
 
+    const answerMarker=document.getElementById("qs-onboarding-answer-marker");
+    const answerPanel=document.getElementById("qs-answer-panel");
+    if(answerMarker && answerPanel && answerMarker.parentNode){
+      answerMarker.parentNode.insertBefore(answerPanel,answerMarker.nextSibling);
+      answerMarker.remove();
+    }
+
+    const answerDialog=document.getElementById("qs-answer-import-dialog");
+    if(answerDialog?.dataset.onboardingDemoDialog==="1"){
+      answerDialog.removeAttribute("open");
+      answerDialog.classList.remove("onboarding-answer-reader-open");
+      delete answerDialog.dataset.onboardingDemoDialog;
+    }
+
+    const answerPreview=document.getElementById("qs-answer-screenshot-preview");
+    const answerTable=document.getElementById("qs-answer-import-table");
+    if(answerPreview) answerPreview.innerHTML="";
+    if(answerTable) answerTable.innerHTML="";
+
+    const applyAnswer=document.getElementById("qs-apply-answer-import");
+    if(applyAnswer?.dataset.onboardingDemoApply==="1"){
+      applyAnswer.disabled=true;
+      delete applyAnswer.dataset.onboardingDemoApply;
+    }
+
+    const extractButton=document.getElementById("qs-import");
+    if(extractButton) delete extractButton.dataset.onboardingDemoExtract;
+
+    const fileName=document.getElementById("qs-file-name");
+    if(fileName?.textContent==="simulado_onbording_eletrocardiograma.pdf"){
+      fileName.textContent="Selecione um PDF";
+    }
+
+    const qsTitle=document.getElementById("qs-title");
+    if(qsTitle?.dataset.onboardingOriginalValue !== undefined){
+      qsTitle.value=qsTitle.dataset.onboardingOriginalValue;
+      delete qsTitle.dataset.onboardingOriginalValue;
+    }
+
+    const importStatus=document.getElementById("qs-import-status");
+    if(importStatus?.dataset.onboardingOriginalText !== undefined){
+      importStatus.textContent=importStatus.dataset.onboardingOriginalText;
+      delete importStatus.dataset.onboardingOriginalText;
+      importStatus.className="qs-status";
+    }
+
     const qsCount=document.getElementById("qs-set-count");
     if(qsCount?.dataset.onboardingOriginalText !== undefined){
       qsCount.textContent=qsCount.dataset.onboardingOriginalText;
