@@ -328,3 +328,20 @@ body.luria-onboarding-exploring #luria-onboarding-overlay::after{
   box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,#184888) 26%,transparent)!important;
   transition:transform .16s ease,box-shadow .16s ease;
 }
+
+
+/* Onboarding v2.1 — Editais: formulário de Nova prova nunca cobre o tour */
+body:has(#luria-onboarding-overlay) #exam-dialog.onboarding-exam-preview{
+  z-index:99980 !important;
+  position:fixed !important;
+}
+body:has(#luria-onboarding-overlay) #exam-dialog.onboarding-exam-preview::backdrop{
+  display:none !important;
+  background:transparent !important;
+}
+body:has(#luria-onboarding-overlay) #luria-onboarding-overlay{
+  z-index:99990 !important;
+}
+body:has(#luria-onboarding-overlay) #luria-onboarding-overlay .luria-onboarding-card{
+  z-index:99999 !important;
+}
