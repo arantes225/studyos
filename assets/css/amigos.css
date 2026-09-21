@@ -166,19 +166,19 @@
 
 .studyrats-rat-img.rat-0,
 .studyrats-badge-rat.rat-0,
-.studyrats-empty-rat.rat-0{background-image:url("/assets/img/studyrats/rat-gray.png?v=2")}
+.studyrats-empty-rat.rat-0{background-image:url("/assets/img/studyrats/rat-gray.png?v=3")}
 
 .studyrats-rat-img.rat-1,
 .studyrats-badge-rat.rat-1,
-.studyrats-empty-rat.rat-1{background-image:url("/assets/img/studyrats/rat-brown.png?v=2")}
+.studyrats-empty-rat.rat-1{background-image:url("/assets/img/studyrats/rat-brown.png?v=3")}
 
 .studyrats-rat-img.rat-2,
 .studyrats-badge-rat.rat-2,
-.studyrats-empty-rat.rat-2{background-image:url("/assets/img/studyrats/rat-white.png?v=2")}
+.studyrats-empty-rat.rat-2{background-image:url("/assets/img/studyrats/rat-white.png?v=3")}
 
 .studyrats-rat-img.rat-3,
 .studyrats-badge-rat.rat-3,
-.studyrats-empty-rat.rat-3{background-image:url("/assets/img/studyrats/rat-charcoal.png?v=2")}
+.studyrats-empty-rat.rat-3{background-image:url("/assets/img/studyrats/rat-charcoal.png?v=3")}
 
 :root[data-theme="dark"] .studyrats-rat-img{
   filter:
