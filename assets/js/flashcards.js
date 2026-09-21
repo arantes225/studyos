@@ -1508,21 +1508,42 @@ function updateCreateSubjectOptions() {
       "create-area"
     );
 
-  const subjectSelect =
+  const subjectInput =
     document.getElementById(
       "create-materia"
+    );
+
+  const subjectToggle =
+    document.getElementById(
+      "create-materia-toggle"
+    );
+
+  const subjectLabel =
+    document.getElementById(
+      "create-materia-label"
+    );
+
+  const subjectMenu =
+    document.getElementById(
+      "create-materia-menu"
     );
 
   if (
     !areaInput
     ||
-    !subjectSelect
+    !subjectInput
+    ||
+    !subjectToggle
+    ||
+    !subjectLabel
+    ||
+    !subjectMenu
   ) {
     return;
   }
 
   const current =
-    subjectSelect.value;
+    subjectInput.value;
 
   const area =
     normalizeFlashAreaName(
@@ -1535,73 +1556,110 @@ function updateCreateSubjectOptions() {
     ]
     || [];
 
-  subjectSelect.innerHTML =
+  subjectMenu.innerHTML =
     "";
 
-  const placeholder =
-    document.createElement(
-      "option"
+  if (!subjects.length) {
+    subjectInput.value =
+      "";
+
+    subjectLabel.textContent =
+      "Selecione primeiro a área";
+
+    subjectToggle.disabled =
+      true;
+
+    subjectMenu.hidden =
+      true;
+
+    subjectToggle.setAttribute(
+      "aria-expanded",
+      "false"
     );
 
-  placeholder.value =
-    "";
+    return;
+  }
 
-  placeholder.textContent =
-    subjects.length
-      ? "Selecione a matéria"
-      : "Selecione primeiro a área";
+  subjectToggle.disabled =
+    false;
 
-  subjectSelect.appendChild(
-    placeholder
-  );
+  const options =
+    [
+      ...subjects,
+      "Outra matéria"
+    ];
 
   for (
     const subject
-    of subjects
+    of options
   ) {
     const option =
       document.createElement(
-        "option"
+        "button"
       );
 
-    option.value =
+    option.type =
+      "button";
+
+    option.className =
+      "flash-subject-option";
+
+    option.setAttribute(
+      "role",
+      "option"
+    );
+
+    option.dataset.value =
       subject;
 
     option.textContent =
       subject;
 
-    subjectSelect.appendChild(
+    option.addEventListener(
+      "click",
+      event => {
+        event.stopPropagation();
+
+        subjectInput.value =
+          subject;
+
+        subjectLabel.textContent =
+          subject;
+
+        subjectMenu.hidden =
+          true;
+
+        subjectToggle.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+      }
+    );
+
+    subjectMenu.appendChild(
       option
     );
   }
-
-  const other =
-    document.createElement(
-      "option"
-    );
-
-  other.value =
-    "Outra matéria";
-
-  other.textContent =
-    "Outra matéria";
-
-  if (subjects.length) {
-    subjectSelect.appendChild(
-      other
-    );
-  }
-
-  subjectSelect.disabled =
-    false;
 
   if (
     subjects.includes(
       current
     )
+    ||
+    current ===
+      "Outra matéria"
   ) {
-    subjectSelect.value =
+    subjectInput.value =
       current;
+
+    subjectLabel.textContent =
+      current;
+  } else {
+    subjectInput.value =
+      "";
+
+    subjectLabel.textContent =
+      "Selecione a matéria";
   }
 }
 
@@ -1611,20 +1669,73 @@ function wireCreateTaxonomy() {
       "create-area"
     );
 
+  const subjectToggle =
+    document.getElementById(
+      "create-materia-toggle"
+    );
+
+  const subjectMenu =
+    document.getElementById(
+      "create-materia-menu"
+    );
+
   if (!areaInput) {
     return;
   }
 
-  [
-    "input",
+  areaInput.addEventListener(
     "change",
-    "blur"
-  ].forEach(
-    eventName => {
-      areaInput.addEventListener(
-        eventName,
-        updateCreateSubjectOptions
-      );
+    updateCreateSubjectOptions
+  );
+
+  subjectToggle
+    ?.addEventListener(
+      "click",
+      event => {
+        event.stopPropagation();
+
+        if (
+          subjectToggle.disabled
+          ||
+          !subjectMenu
+        ) {
+          return;
+        }
+
+        const willOpen =
+          subjectMenu.hidden;
+
+        subjectMenu.hidden =
+          !willOpen;
+
+        subjectToggle.setAttribute(
+          "aria-expanded",
+          willOpen
+            ? "true"
+            : "false"
+        );
+      }
+    );
+
+  document.addEventListener(
+    "click",
+    event => {
+      if (
+        !event.target.closest(
+          ".flash-subject-picker"
+        )
+        &&
+        subjectMenu
+      ) {
+        subjectMenu.hidden =
+          true;
+
+        subjectToggle
+          ?.setAttribute(
+            "aria-expanded",
+            "false"
+          );
+      }
     }
   );
 
