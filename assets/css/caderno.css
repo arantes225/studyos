@@ -2958,3 +2958,68 @@
 .notebook-font-select {
   min-width: 92px;
 }
+
+
+/* =========================================================
+   TOOLBAR — CONTROLES NO PADRÃO DE EDITORES DE TEXTO
+   ========================================================= */
+
+.notebook-align-current-icon {
+  min-width: 18px;
+  text-align: center;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.notebook-spacing-toggle {
+  min-width: 42px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.notebook-spacing-current {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  min-width: 20px;
+  justify-content: center;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.notebook-spacing-lines {
+  font-size: 15px;
+  transform: scaleX(.82);
+}
+
+.notebook-spacing-arrows {
+  margin-left: -2px;
+  font-size: 14px;
+}
+
+.notebook-spacing-current.is-value {
+  min-width: 24px;
+  font-size: 11px;
+  letter-spacing: -.02em;
+}
+
+.notebook-spacing-menu {
+  min-width: 210px;
+}
+
+.notebook-spacing-menu button {
+  grid-template-columns: 42px minmax(0, 1fr);
+}
+
+.notebook-spacing-option {
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  font-weight: 850;
+  color: var(--accent);
+}
+
+#notebook-align-toggle,
+#notebook-line-spacing {
+  justify-content: center;
+}
+
