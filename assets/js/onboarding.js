@@ -985,16 +985,45 @@
       setTimeout(()=>tabs[0]?.click(),Math.max(0,tabs.length)*500);
     }
 
-    if(step.action==="exam-new"){
-      document.querySelector('[data-exam-mode="new"]')?.click();
-      setTimeout(()=>{const d=document.getElementById("exam-dialog"); if(d&&!d.open){try{d.showModal();}catch{d.setAttribute("open","");}}},150);
-    }
-    if(step.action==="exam-dialog"){
-      const d=document.getElementById("exam-dialog"); if(d&&!d.open){try{d.showModal();}catch{d.setAttribute("open","");}}
-      const inst=document.getElementById("exam-institution"); if(inst&&!inst.value) inst.value="Hospital LURIA — demonstração";
-      const board=document.getElementById("exam-board"); if(board&&!board.value) board.value="ENARE";
-      const score=document.getElementById("exam-score"); if(score&&!score.value) score.value="78";
-      const cutoff=document.getElementById("exam-cutoff"); if(cutoff&&!cutoff.value) cutoff.value="80";
+    if(step.action==="exam-new" || step.action==="exam-dialog"){
+      const d=document.getElementById("exam-dialog");
+
+      if(d){
+        if(d.open){
+          try{ d.close(); }catch{}
+        }
+
+        // No onboarding o formulário é apenas exibido como demonstração.
+        // Não usamos showModal(), pois dialogs modais entram na top layer
+        // do navegador e ficam por cima do card do onboarding.
+        d.setAttribute("open","");
+        d.dataset.onboardingDemoDialog="1";
+        d.classList.add("onboarding-exam-preview");
+      }
+
+      const inst=document.getElementById("exam-institution");
+      if(inst && !inst.dataset.onboardingOriginalValue){
+        inst.dataset.onboardingOriginalValue=inst.value || "";
+        inst.value="Hospital LURIA — demonstração";
+      }
+
+      const board=document.getElementById("exam-board");
+      if(board && !board.dataset.onboardingOriginalValue){
+        board.dataset.onboardingOriginalValue=board.value || "";
+        board.value="ENARE";
+      }
+
+      const score=document.getElementById("exam-score");
+      if(score && !score.dataset.onboardingOriginalValue){
+        score.dataset.onboardingOriginalValue=score.value || "";
+        score.value="78";
+      }
+
+      const cutoff=document.getElementById("exam-cutoff");
+      if(cutoff && !cutoff.dataset.onboardingOriginalValue){
+        cutoff.dataset.onboardingOriginalValue=cutoff.value || "";
+        cutoff.value="80";
+      }
     }
   }
 
@@ -1067,7 +1096,20 @@
       delete qsCount.dataset.onboardingOriginalText;
     }
     const exam=document.getElementById("exam-dialog");
-    if(exam?.open){try{exam.close();}catch{}}
+    if(exam?.dataset.onboardingDemoDialog==="1"){
+      try{ if(exam.open) exam.close(); }catch{ exam.removeAttribute("open"); }
+      exam.removeAttribute("open");
+      exam.classList.remove("onboarding-exam-preview");
+      delete exam.dataset.onboardingDemoDialog;
+    }
+
+    ["exam-institution","exam-board","exam-score","exam-cutoff"].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el?.dataset.onboardingOriginalValue !== undefined){
+        el.value=el.dataset.onboardingOriginalValue;
+        delete el.dataset.onboardingOriginalValue;
+      }
+    });
   }
 
   function resolveTarget(selector){
