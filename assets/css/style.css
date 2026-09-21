@@ -2907,3 +2907,44 @@ body::after {
 }
 
 .nav-icon-settings{display:inline-grid;place-items:center;overflow:hidden;border-radius:5px}.nav-icon-settings img{display:block;width:18px;height:18px;object-fit:cover;border-radius:4px}
+
+
+/* Questões e Simulados — selects arredondados do Novo Simulado */
+.qs-extraction-settings .qs-field{position:relative}
+.qs-extraction-settings select{
+  width:100%;
+  min-height:50px;
+  appearance:none;
+  -webkit-appearance:none;
+  padding:0 44px 0 14px;
+  border:1px solid color-mix(in srgb,var(--border) 86%,var(--accent) 14%);
+  border-radius:13px;
+  background:
+    linear-gradient(45deg,transparent 50%,var(--muted) 50%) calc(100% - 19px) 22px/5px 5px no-repeat,
+    linear-gradient(135deg,var(--muted) 50%,transparent 50%) calc(100% - 14px) 22px/5px 5px no-repeat,
+    var(--surface);
+  color:var(--text);
+  box-shadow:0 1px 2px rgba(0,0,0,.035);
+  font:inherit;
+  font-size:13px;
+  font-weight:650;
+  outline:none;
+  cursor:pointer;
+  transition:border-color .16s ease,box-shadow .16s ease,background-color .16s ease;
+}
+.qs-extraction-settings select:hover{
+  border-color:color-mix(in srgb,var(--accent) 48%,var(--border));
+  background-color:color-mix(in srgb,var(--surface) 96%,var(--accent) 4%);
+}
+.qs-extraction-settings select:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--accent-soft),0 8px 24px rgba(0,0,0,.06);
+}
+.qs-extraction-settings select option{
+  background:var(--surface);
+  color:var(--text);
+  font-weight:600;
+}
+@media(max-width:620px){
+  .qs-extraction-settings select{min-height:48px;border-radius:12px;font-size:13px}
+}
