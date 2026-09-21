@@ -3093,3 +3093,54 @@
   font-weight: 750;
   line-height: 1;
 }
+
+
+/* CADERNO v18.3 — controle Temas compacto e estável */
+.notebook-topic-panel-toggle,
+.notebook-topic-panel.is-collapsed .notebook-topic-panel-toggle {
+  width: auto !important;
+  min-width: 0 !important;
+  height: 32px !important;
+  padding: 0 8px !important;
+  gap: 5px !important;
+  justify-content: center !important;
+  white-space: nowrap;
+}
+
+.notebook-topic-panel-arrow {
+  width: 10px;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 10px;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.notebook-topic-panel-label {
+  display: inline-block !important;
+  font-size: 9px;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.notebook-topic-panel.is-collapsed {
+  width: 82px;
+  min-width: 82px;
+}
+
+.notebook-workspace.topic-panel-collapsed {
+  grid-template-columns: 82px minmax(0, 1fr);
+}
+
+@media (max-width: 760px) {
+  .notebook-topic-panel.is-collapsed {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .notebook-workspace.topic-panel-collapsed {
+    grid-template-columns: 1fr;
+  }
+}
