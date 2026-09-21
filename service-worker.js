@@ -1,8 +1,9 @@
-const CACHE_VERSION = "luria-pwa-v63";
+const CACHE_VERSION = "luria-pwa-v64";
 const STATIC_CACHE = CACHE_VERSION + "-static";
 const RUNTIME_CACHE = CACHE_VERSION + "-runtime";
 
 const APP_SHELL = [
+  "/assets/vendor/supabase-2.110.6.js",
   "/assets/js/image-lightbox.js?v=1",
   "/assets/css/image-lightbox.css?v=1",
   "/",
