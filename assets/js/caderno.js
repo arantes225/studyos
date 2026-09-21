@@ -3731,28 +3731,36 @@ async function saveCurrentNotebook(
         membership?.mode === "edit"
       ) {
         const {
-          data,
+          data:
+            savedRows,
           error
         } =
-          await notebookSb
-            .from(
-              "study_notes"
-            )
-            .update({
-              content_html:
+          await notebookSb.rpc(
+            "save_shared_study_note_edit",
+            {
+              p_note_id:
+                current.note.id,
+
+              p_content_html:
                 contentHtml
-            })
-            .eq(
-              "id",
-              current.note.id
-            )
-            .select(
-              "id,user_id,topic_id,topic_title,area,materia,content_html,created_at,updated_at"
-            )
-            .single();
+            }
+          );
 
         if (error) {
           throw error;
+        }
+
+        const data =
+          Array.isArray(
+            savedRows
+          )
+            ? savedRows[0]
+            : savedRows;
+
+        if (!data?.id) {
+          throw new Error(
+            "O caderno compartilhado não retornou a versão salva."
+          );
         }
 
         Object.assign(
