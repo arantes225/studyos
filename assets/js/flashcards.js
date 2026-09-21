@@ -1507,6 +1507,54 @@ function normalizeFlashAreaName(value) {
     || raw;
 }
 
+const FLASHCARD_AREAS = [
+  "Clínica Médica",
+  "Pediatria",
+  "Ginecologia e Obstetrícia",
+  "Cirurgia Geral",
+  "Preventiva"
+];
+
+function wireCreateAreaPicker() {
+  const input = document.getElementById("create-area");
+  const toggle = document.getElementById("create-area-toggle");
+  const label = document.getElementById("create-area-label");
+  const menu = document.getElementById("create-area-menu");
+  if (!input || !toggle || !label || !menu) return;
+
+  menu.innerHTML = "";
+  FLASHCARD_AREAS.forEach(area => {
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className = "flash-area-option";
+    option.setAttribute("role", "option");
+    option.textContent = area;
+    option.addEventListener("click", event => {
+      event.stopPropagation();
+      input.value = area;
+      label.textContent = area;
+      menu.hidden = true;
+      toggle.setAttribute("aria-expanded", "false");
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    menu.appendChild(option);
+  });
+
+  toggle.addEventListener("click", event => {
+    event.stopPropagation();
+    const open = menu.hidden;
+    menu.hidden = !open;
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+
+  document.addEventListener("click", event => {
+    if (!event.target.closest(".flash-area-picker")) {
+      menu.hidden = true;
+      toggle.setAttribute("aria-expanded", "false");
+    }
+  });
+}
+
 function updateCreateSubjectOptions() {
   const areaInput =
     document.getElementById(
@@ -1669,6 +1717,8 @@ function updateCreateSubjectOptions() {
 }
 
 function wireCreateTaxonomy() {
+  wireCreateAreaPicker();
+
   const areaInput =
     document.getElementById(
       "create-area"
@@ -1771,6 +1821,9 @@ function clearCreateForm() {
       "create-back-image"
     )
     .value = "";
+
+  const areaLabel = document.getElementById("create-area-label");
+  if (areaLabel) areaLabel.textContent = "Selecione a área";
 
   updateCreateSubjectOptions();
 
