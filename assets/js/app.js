@@ -2074,6 +2074,285 @@ function prepararMobileMenu() {
 }
 
 
+/* =========================================================
+   LURIA — DIÁLOGOS GLOBAIS
+   Substitui alert/confirm/prompt nativos por uma interface
+   consistente em todas as páginas que carregam app.js.
+   ========================================================= */
+
+function ensureLuriaDialog() {
+  let dialog =
+    document.getElementById(
+      "luria-global-dialog"
+    );
+
+  if (dialog) {
+    return dialog;
+  }
+
+  dialog =
+    document.createElement(
+      "dialog"
+    );
+
+  dialog.id =
+    "luria-global-dialog";
+
+  dialog.className =
+    "luria-global-dialog";
+
+  dialog.innerHTML = `
+    <form method="dialog" class="luria-global-dialog-card">
+      <div class="luria-global-dialog-icon" aria-hidden="true">?</div>
+      <div class="luria-global-dialog-copy">
+        <span class="luria-global-dialog-eyebrow">LURIA</span>
+        <h2 class="luria-global-dialog-title">Confirmar ação</h2>
+        <p class="luria-global-dialog-message"></p>
+      </div>
+      <label class="luria-global-dialog-prompt" hidden>
+        <span>Resposta</span>
+        <input class="luria-global-dialog-input" type="text">
+      </label>
+      <div class="luria-global-dialog-actions">
+        <button class="button secondary luria-global-dialog-cancel" type="button">Cancelar</button>
+        <button class="button primary luria-global-dialog-confirm" type="button">Confirmar</button>
+      </div>
+    </form>
+  `;
+
+  document.body.appendChild(
+    dialog
+  );
+
+  return dialog;
+}
+
+
+function openLuriaDialog({
+  type = "alert",
+  message = "",
+  defaultValue = ""
+} = {}) {
+  const dialog =
+    ensureLuriaDialog();
+
+  const title =
+    dialog.querySelector(
+      ".luria-global-dialog-title"
+    );
+
+  const copy =
+    dialog.querySelector(
+      ".luria-global-dialog-message"
+    );
+
+  const icon =
+    dialog.querySelector(
+      ".luria-global-dialog-icon"
+    );
+
+  const cancel =
+    dialog.querySelector(
+      ".luria-global-dialog-cancel"
+    );
+
+  const confirmButton =
+    dialog.querySelector(
+      ".luria-global-dialog-confirm"
+    );
+
+  const promptWrap =
+    dialog.querySelector(
+      ".luria-global-dialog-prompt"
+    );
+
+  const input =
+    dialog.querySelector(
+      ".luria-global-dialog-input"
+    );
+
+  const isAlert =
+    type === "alert";
+
+  const isPrompt =
+    type === "prompt";
+
+  title.textContent =
+    isAlert
+      ? "Aviso"
+      : isPrompt
+        ? "Preencha a informação"
+        : "Confirmar ação";
+
+  icon.textContent =
+    isAlert
+      ? "i"
+      : isPrompt
+        ? "✎"
+        : "?";
+
+  copy.textContent =
+    String(
+      message
+      || ""
+    );
+
+  cancel.hidden =
+    isAlert;
+
+  promptWrap.hidden =
+    !isPrompt;
+
+  input.value =
+    isPrompt
+      ? String(
+          defaultValue
+          ?? ""
+        )
+      : "";
+
+  confirmButton.textContent =
+    isAlert
+      ? "Entendi"
+      : "Confirmar";
+
+  return new Promise(
+    resolve => {
+      let settled =
+        false;
+
+      const finish =
+        value => {
+          if (settled) return;
+
+          settled =
+            true;
+
+          dialog.close();
+
+          resolve(
+            value
+          );
+        };
+
+      const onConfirm =
+        () => {
+          finish(
+            isPrompt
+              ? input.value
+              : true
+          );
+        };
+
+      const onCancel =
+        () => {
+          finish(
+            isPrompt
+              ? null
+              : false
+          );
+        };
+
+      confirmButton.onclick =
+        onConfirm;
+
+      cancel.onclick =
+        onCancel;
+
+      dialog.oncancel =
+        event => {
+          event.preventDefault();
+
+          if (isAlert) {
+            finish(
+              true
+            );
+          } else {
+            onCancel();
+          }
+        };
+
+      dialog.onclose =
+        () => {
+          if (!settled) {
+            resolve(
+              isPrompt
+                ? null
+                : isAlert
+                  ? true
+                  : false
+            );
+          }
+        };
+
+      dialog.showModal();
+
+      requestAnimationFrame(
+        () => {
+          (
+            isPrompt
+              ? input
+              : confirmButton
+          )
+            ?.focus();
+        }
+      );
+    }
+  );
+}
+
+
+window.LuriaDialog = {
+  alert(
+    message
+  ) {
+    return openLuriaDialog({
+      type:
+        "alert",
+      message
+    });
+  },
+
+  confirm(
+    message
+  ) {
+    return openLuriaDialog({
+      type:
+        "confirm",
+      message
+    });
+  },
+
+  prompt(
+    message,
+    defaultValue = ""
+  ) {
+    return openLuriaDialog({
+      type:
+        "prompt",
+      message,
+      defaultValue
+    });
+  }
+};
+
+
+/*
+  Compatibilidade global:
+  scripts antigos continuam chamando alert/confirm/prompt,
+  mas passam a receber o visual LURIA. Confirm/prompt são
+  assíncronos; novas telas devem preferir window.LuriaDialog.
+*/
+window.luriaAlert =
+  window.LuriaDialog.alert;
+
+window.luriaConfirm =
+  window.LuriaDialog.confirm;
+
+window.luriaPrompt =
+  window.LuriaDialog.prompt;
+
+
 function essentialEntitlementsFallback() {
   return {
     plan: "essential",
@@ -2217,7 +2496,7 @@ function aplicarEntitlementsNaNavegacao(
               (event) => {
                 event.preventDefault();
 
-                window.alert(
+                window.LuriaDialog.alert(
                   "Este recurso está disponível no plano Plus."
                 );
               }
