@@ -17,7 +17,7 @@
 
   <link rel="stylesheet" href="assets/css/style.css?v=luria-pattern-12">
   <link rel="stylesheet" href="assets/css/image-lightbox.css?v=1">
-  <link rel="stylesheet" href="assets/css/flashcards.css?v=14.2">
+  <link rel="stylesheet" href="assets/css/flashcards.css?v=14.3">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
   <script defer src="assets/js/luria-brand-v5.js?v=9"></script>
   <link rel="canonical" href="/flashcards/">
@@ -464,11 +464,13 @@
 
               <label class="flash-field">
                 <span>Matéria</span>
-                <input
+                <select
                   id="create-materia"
-                  type="text"
-                  placeholder="Ex.: Cardiologia"
+                  class="flash-click-select"
+                  aria-label="Selecionar matéria"
                 >
+                  <option value="">Selecione primeiro a área</option>
+                </select>
               </label>
 
               <label class="flash-field full">
@@ -957,7 +959,7 @@
   <script src="assets/js/app.js?v=14.4"></script>
   <script src="assets/js/study-mode.js?v=13.0"></script>
   <script src="assets/js/sharing.js?v=1"></script>
-  <script src="assets/js/flashcards.js?v=15.2"></script>
+  <script src="assets/js/flashcards.js?v=15.3"></script>
 
     <script src="assets/js/image-lightbox.js?v=1"></script>
 <script defer src="assets/js/pwa.js?v=3"></script>
