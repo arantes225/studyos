@@ -73,9 +73,9 @@ function sharedStudyratsBindImageFallbacks(root){
         img.dataset.studyratSourceIndex=String(next);
         img.src=sources[next];
       }else{
-        const choice=img.closest('.studyrats-accessory-choice');
-        if(choice)choice.hidden=true;
         img.style.display='none';
+        const choice=img.closest('.studyrats-accessory-choice');
+        if(choice)choice.classList.add('is-image-missing');
       }
     });
   });
@@ -86,6 +86,26 @@ function sharedRatImg(variant,className){
   const item=sharedStudyratVariant(variant);
   const cls=(className||'studyrats-rat-img')+' rat-'+item.id;
   return '<img class="'+cls+'" src="'+item.src+'" alt="'+item.label+'" draggable="false" loading="eager" decoding="async">';
+}
+
+function sharedStudyratsApplyAccessorySelection(){
+  const host=document.getElementById('studyrats-accessory-picker-options');
+  if(!host)return;
+  host.querySelectorAll('[data-studyrat-accessory]').forEach(function(button){
+    const selected=button.dataset.studyratAccessory===sharedStudyratsMyAccessory;
+    button.classList.toggle('is-selected',selected);
+    button.setAttribute('aria-pressed',selected?'true':'false');
+  });
+}
+
+function sharedStudyratsApplyVariantSelection(){
+  const host=document.getElementById('studyrats-rat-picker-options');
+  if(!host)return;
+  host.querySelectorAll('[data-studyrat-variant]').forEach(function(button){
+    const selected=button.dataset.studyratVariant===sharedStudyratsMyVariant;
+    button.classList.toggle('is-selected',selected);
+    button.setAttribute('aria-pressed',selected?'true':'false');
+  });
 }
 
 function sharedStudyratsRenderRatPicker(){
@@ -146,7 +166,7 @@ async function sharedStudyratsSaveVariant(variant){
 
   const previous=sharedStudyratsMyVariant;
   sharedStudyratsMyVariant=next;
-  sharedStudyratsRenderRatPicker();
+  sharedStudyratsApplyVariantSelection();
 
   const status=document.getElementById('studyrats-rat-picker-status');
   if(status)status.textContent='Salvando...';
@@ -155,7 +175,7 @@ async function sharedStudyratsSaveVariant(variant){
   if(result.error){
     console.error(result.error);
     sharedStudyratsMyVariant=previous;
-    sharedStudyratsRenderRatPicker();
+    sharedStudyratsApplyVariantSelection();
     if(status)status.textContent='Não foi possível salvar o ratinho.';
     return;
   }
@@ -173,7 +193,7 @@ async function sharedStudyratsSaveAccessory(accessory){
 
   const previous=sharedStudyratsMyAccessory;
   sharedStudyratsMyAccessory=next;
-  sharedStudyratsRenderRatPicker();
+  sharedStudyratsApplyAccessorySelection();
 
   const status=document.getElementById('studyrats-rat-picker-status');
   if(status)status.textContent='Salvando acessório...';
@@ -182,7 +202,7 @@ async function sharedStudyratsSaveAccessory(accessory){
   if(result.error){
     console.error(result.error);
     sharedStudyratsMyAccessory=previous;
-    sharedStudyratsRenderRatPicker();
+    sharedStudyratsApplyAccessorySelection();
     if(status)status.textContent='Não foi possível salvar o acessório.';
     return;
   }
