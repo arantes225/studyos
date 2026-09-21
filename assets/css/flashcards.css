@@ -1365,3 +1365,19 @@
   .library-filters { grid-template-columns:1fr 1fr !important; }
   .library-filters input { grid-column:1 / -1; }
 }
+
+
+/* Novo flashcard — seletores nativos com área de toque confiável */
+#create-area,
+#create-materia {
+  min-height: 46px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#create-area:focus,
+#create-materia:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
