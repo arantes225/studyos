@@ -61,9 +61,9 @@
 .studyrats-road{height:44px;position:relative;margin-right:5px}
 .studyrats-road:before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:repeating-linear-gradient(90deg,color-mix(in srgb,#aab5c4 52%,transparent) 0 9px,transparent 9px 18px)}
 .studyrats-progress-fill{position:absolute;left:0;top:50%;height:7px;transform:translateY(-50%);border-radius:999px;background:var(--lane-color);box-shadow:0 1px 2px color-mix(in srgb,var(--lane-color) 25%,transparent);min-width:3px}
-.studyrats-mouse{position:absolute;top:50%;width:58px;height:42px;transform:translate(-28px,-50%);transition:left .35s ease;z-index:3;display:grid;place-items:center}
-.studyrats-rat-img{width:64px;height:44px;object-fit:contain;display:block;filter:drop-shadow(0 3px 4px rgba(24,35,50,.22));transition:filter .2s ease}
-.studyrats-track-score{position:absolute;top:50%;transform:translateY(-50%);font-size:8px;font-weight:900;color:var(--lane-color);white-space:nowrap;z-index:4;text-shadow:0 1px var(--surface)}
+.studyrats-mouse{position:absolute;top:50%;width:72px;height:50px;transform:translate(-34px,-50%);transition:left .35s ease;z-index:8;display:grid;place-items:center;overflow:visible;pointer-events:none}
+.studyrats-rat-img{width:72px;height:50px;object-fit:contain;display:block;transform:scale(1.9);transform-origin:center center;filter:drop-shadow(0 3px 4px rgba(24,35,50,.28));transition:filter .2s ease,transform .2s ease;position:relative;z-index:9}
+.studyrats-track-score{position:absolute;top:50%;transform:translateY(-50%);font-size:8px;font-weight:900;color:var(--lane-color);white-space:nowrap;z-index:10;text-shadow:0 1px var(--surface)}
 .studyrats-finish{position:absolute;right:13px;top:54px;bottom:17px;width:27px;z-index:5}
 .studyrats-finish i{position:absolute;left:8px;top:20px;bottom:0;width:13px;border:1px solid color-mix(in srgb,var(--text) 35%,transparent);background:repeating-conic-gradient(#fff 0 25%,#183f70 0 50%) 0/12px 12px;box-shadow:0 1px 3px rgba(0,0,0,.16)}
 .studyrats-finish span{position:absolute;right:-3px;top:0;transform:translateX(10%);padding:5px 8px;background:#246dca;color:#fff;font-size:7px;font-weight:1000;letter-spacing:.03em;border-radius:4px;box-shadow:0 3px 7px rgba(36,109,202,.22)}
@@ -75,11 +75,11 @@
 :root[data-theme="dark"] .studyrats-runner-card{background:color-mix(in srgb,var(--surface) 82%,transparent)}
 :root[data-theme="dark"] .studyrats-rat-img{
   filter:
-    drop-shadow(0 0 1px rgba(255,255,255,.98))
-    drop-shadow(0 0 4px rgba(125,190,255,.95))
-    drop-shadow(0 0 9px rgba(74,149,255,.72))
-    drop-shadow(0 0 15px rgba(58,126,255,.42))
-    drop-shadow(0 4px 6px rgba(0,0,0,.55));
+    drop-shadow(0 0 2px rgba(255,255,255,1))
+    drop-shadow(0 0 5px rgba(142,202,255,.98))
+    drop-shadow(0 0 10px rgba(73,151,255,.8))
+    drop-shadow(0 0 17px rgba(58,126,255,.52))
+    drop-shadow(0 4px 7px rgba(0,0,0,.62));
 }
 :root[data-theme="dark"] .studyrats-badge-rat,:root[data-theme="dark"] .studyrats-empty-rat{
   filter:drop-shadow(0 0 1px rgba(255,255,255,.95)) drop-shadow(0 0 6px rgba(93,164,255,.65));
