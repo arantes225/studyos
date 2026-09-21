@@ -333,16 +333,15 @@
   gap:8px!important;
 }
 .studyrats-runner-copy strong{
-  font-size:12px!important;
+  font-size:15px!important;
   line-height:1.15!important;
+  font-weight:1000!important;
 }
 .studyrats-runner-copy small{
-  font-size:9px!important;
+  display:none!important;
 }
 .studyrats-avatar{
-  width:30px!important;
-  height:30px!important;
-  font-size:8px!important;
+  display:none!important;
 }
 .studyrats-rank{
   width:24px!important;
@@ -373,7 +372,13 @@
   height:84px!important;
 }
 .studyrats-track-score{
-  font-size:10px!important;
+  font-size:11px!important;
+  font-weight:1000!important;
+  transform:translate(-50%,-50%)!important;
+  padding:2px 6px!important;
+  border-radius:999px!important;
+  background:color-mix(in srgb,var(--surface) 88%,transparent)!important;
+  box-shadow:0 1px 3px rgba(23,38,58,.08)!important;
 }
 .studyrats-finish{
   right:16px!important;
@@ -412,14 +417,13 @@
     left:32%!important;
   }
   .studyrats-runner-copy strong{
-    font-size:10px!important;
+    font-size:13px!important;
   }
   .studyrats-runner-copy small{
-    font-size:8px!important;
+    display:none!important;
   }
   .studyrats-avatar{
-    width:25px!important;
-    height:25px!important;
+    display:none!important;
   }
   .studyrats-rank{
     width:21px!important;
