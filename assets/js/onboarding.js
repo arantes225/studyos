@@ -45,7 +45,8 @@
     {page:"erros", target:"#new-error-image, #extract-error-image-text", title:"Extrair texto de um print", text:"Ao adicionar a imagem da questão, o botão Extrair texto pode transformar o conteúdo do print em texto para acelerar o registro do erro.", demo:"errors", action:"error-create"},
     {page:"erros", target:"[data-error-section=library], #error-library", title:"Biblioteca do Caderno de Erros", text:"Todos os erros ficam reunidos na Biblioteca, com busca, filtros, seleção e exportação.", demo:"errors", action:"error-library"},
 
-    {page:"questoes", target:".qs-mode-tabs, .qs-tabs, .page-heading", title:"Questões e Simulados", text:"Esta é uma das áreas mais importantes do LURIA. Você pode criar um simulado manualmente ou enviar um PDF para o sistema separar as questões, montar o gabarito e organizar seus erros.", demo:"questions", action:"questions-create", top:true},
+    {page:"questoes", target:".qs-mode-tabs, .qs-tabs, .page-heading", title:"Questões e Simulados", text:"Esta é uma das áreas mais importantes do LURIA. Você pode criar um simulado manualmente ou enviar um PDF para o sistema separar as questões, montar o gabarito e organizar seus erros.", demo:"questions", action:"questions-mine", top:true},
+    {page:"questoes", target:"#qs-history", title:"Meus simulados", text:"Aqui ficam os simulados que você criou ou importou. Durante o onboarding deixamos três simulados fictícios para você visualizar como aparecem os resultados, acertos, erros e aproveitamento sem alterar seus dados reais.", demo:"questions", action:"questions-mine"},
     {page:"questoes", target:".qs-add-mode-tabs", title:"Automático ou manual", text:"Automaticamente: envie um PDF e o LURIA tenta identificar cada questão. Manualmente: informe apenas o nome e o número de questões quando você quer usar somente o gabarito e as estatísticas.", demo:"questions", action:"questions-create", transparent:true},
     {page:"questoes", target:"#qs-extraction-mode", title:"Tipo de extração", text:"Extração rápida prioriza velocidade. Extração detalhada cruza mais estratégias e tenta preservar melhor questões, textos e imagens. Se o PDF for complexo, prefira a detalhada.", demo:"questions", action:"questions-create", transparent:true},
     {page:"questoes", target:"#qs-source-profile", title:"Origem do material", text:"Informe de onde veio o PDF. O perfil adapta a leitura ao padrão visual mais comum de cada cursinho, como MEDCOF, Aristo, Medway, Estratégia MED ou Medcurso.", demo:"questions", action:"questions-create", transparent:true},
@@ -84,7 +85,7 @@
     "Prepare o seu LURIA","Seu cronograma","PDF, Excel ou manual","Flashcards",
     "Caderno de Erros","Questões e Simulados","Automático ou manual","Tipo de extração",
     "Origem do material","Questões processadas","Importar print do gabarito",
-    "Enviar erros ao Caderno de Erros","Dashboard","Estatísticas","Editais e Provas",
+    "Enviar erros ao Caderno de Erros","Meus simulados","Dashboard","Estatísticas","Editais e Provas",
     "Amigos","Seu LURIA está pronto"
   ]);
 
@@ -452,7 +453,75 @@
     }
   }
 
+  function addQuestionSetsDemo(){
+    const host=document.getElementById("qs-history");
+    if(!host || host.querySelector("[data-onboarding-simulations]")) return;
+
+    const count=document.getElementById("qs-set-count");
+    if(count){
+      count.dataset.onboardingOriginalText=count.textContent || "";
+      count.textContent="3 simulados de demonstração";
+    }
+
+    host.querySelectorAll(".qs-empty").forEach(el=>el.hidden=true);
+
+    const wrap=document.createElement("div");
+    wrap.dataset.onboardingDemo="1";
+    wrap.dataset.onboardingSimulations="1";
+    wrap.style.display="contents";
+
+    const simulations=[
+      {title:"Simulado ENARE · Clínica Médica",total:100,correct:78,wrong:22,accuracy:"78,0%"},
+      {title:"Simulado Cirurgia Geral · Onboarding",total:80,correct:61,wrong:19,accuracy:"76,3%"},
+      {title:"Simulado Misto · R1 Acesso Direto",total:100,correct:84,wrong:16,accuracy:"84,0%"}
+    ];
+
+    wrap.innerHTML=simulations.map((sim,index)=>`
+      <article class="qs-set-card" data-onboarding-demo="1">
+        <h3>${sim.title}</h3>
+        <p>${sim.total} questões · demonstração</p>
+        <div class="qs-set-metrics">
+          <div><span>Acertos</span><strong>${sim.correct}</strong></div>
+          <div><span>Erros</span><strong>${sim.wrong}</strong></div>
+          <div><span>Acerto</span><strong>${sim.accuracy}</strong></div>
+        </div>
+        <div class="qs-set-actions">
+          <button
+            class="qs-mini-button primary"
+            type="button"
+            data-onboarding-simulation-open="${index}"
+          >
+            Abrir
+          </button>
+        </div>
+      </article>
+    `).join("");
+
+    host.prepend(wrap);
+
+    wrap.querySelectorAll("[data-onboarding-simulation-open]").forEach(button=>{
+      button.addEventListener("click",event=>{
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const panel=document.getElementById("qs-answer-panel");
+        if(panel) panel.hidden=false;
+        const title=document.getElementById("qs-current-title");
+        const sim=simulations[Number(button.dataset.onboardingSimulationOpen)||0];
+        if(title) title.textContent=sim.title;
+        const total=document.getElementById("qs-summary-total");
+        const correct=document.getElementById("qs-summary-correct");
+        const wrong=document.getElementById("qs-summary-wrong");
+        const accuracy=document.getElementById("qs-summary-accuracy");
+        if(total) total.textContent=String(sim.total);
+        if(correct) correct.textContent=String(sim.correct);
+        if(wrong) wrong.textContent=String(sim.wrong);
+        if(accuracy) accuracy.textContent=sim.accuracy;
+      },true);
+    });
+  }
+
   function addQuestionsDemo(){
+    addQuestionSetsDemo();
     const panel=document.getElementById("qs-answer-panel");
     if(panel){panel.hidden=false;panel.dataset.onboardingDemo="1";}
     const title=document.getElementById("qs-current-title"); if(title) title.textContent="Simulado de onboarding";
@@ -505,8 +574,13 @@
     }
     if(step.action==="error-library") activateTab('[data-error-tab="library"]');
 
+    if(step.action==="questions-mine"){
+      document.querySelector('[data-qs-mode="mine"]')?.click();
+      setTimeout(addQuestionSetsDemo,150);
+      setTimeout(addQuestionSetsDemo,500);
+    }
     if(step.action==="questions-create"){
-      const btn=document.querySelector('[data-qs-mode="create"],[data-qs-tab="create"],[data-qs-mode="new"]'); btn?.click();
+      const btn=document.querySelector('[data-qs-mode="add"],[data-qs-mode="create"],[data-qs-tab="create"],[data-qs-mode="new"]'); btn?.click();
     }
     if(step.action==="questions-answer"||step.action==="questions-key") addQuestionsDemo();
 
@@ -535,6 +609,11 @@
     document.querySelectorAll("#week-planner .empty-planner").forEach(el=>el.style.removeProperty("display"));
     const editor=document.querySelector("#notebook-editor[data-onboarding-touched]");
     if(editor){ editor.innerHTML=editor.dataset.onboardingOriginal||""; editor.removeAttribute("data-onboarding-original"); editor.removeAttribute("data-onboarding-touched"); }
+    const qsCount=document.getElementById("qs-set-count");
+    if(qsCount?.dataset.onboardingOriginalText !== undefined){
+      qsCount.textContent=qsCount.dataset.onboardingOriginalText;
+      delete qsCount.dataset.onboardingOriginalText;
+    }
     const exam=document.getElementById("exam-dialog");
     if(exam?.open){try{exam.close();}catch{}}
   }
