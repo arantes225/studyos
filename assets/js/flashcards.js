@@ -4566,8 +4566,7 @@ async function deleteFlashcardFromLibrary(
 
 
   if (card.shared) {
-    const confirmed =
-      window.confirm(
+    const confirmed = await window.LuriaDialog.confirm(
         "Remover este flashcard compartilhado da sua biblioteca? O original continuará com o autor."
       );
 
@@ -4633,8 +4632,7 @@ async function deleteFlashcardFromLibrary(
   }
 
 
-  const confirmed =
-    window.confirm(
+  const confirmed = await window.LuriaDialog.confirm(
       "Excluir este flashcard permanentemente? Esta ação não pode ser desfeita."
     );
 
