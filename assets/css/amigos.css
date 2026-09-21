@@ -112,3 +112,21 @@
   pointer-events:none;
 }
 .studyrats-road,.studyrats-progress-fill,.studyrats-road::before{box-sizing:border-box}
+
+/* Alinha o eixo das pistas com o centro visual da linha de chegada */
+.studyrats-finish{
+  top:50%;
+  bottom:auto;
+  height:calc(100% - 92px);
+  transform:translateY(-50%);
+}
+.studyrats-finish i{
+  top:50%;
+  bottom:auto;
+  height:100%;
+  transform:translateY(-50%);
+}
+.studyrats-lanes{
+  display:grid;
+  align-content:center;
+}
