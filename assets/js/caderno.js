@@ -16308,20 +16308,37 @@ function wireEvents() {
     );
 
 
-  [
-    "list",
-    "template",
-    "divider",
-    "table",
-    "image",
-    "align",
-    "callout"
-  ]
+  const notebookToolMenuToggles = {
+    list:
+      "notebook-list-toggle",
+    template:
+      "notebook-template",
+    divider:
+      "notebook-divider",
+    table:
+      "notebook-table-toggle",
+    image:
+      "notebook-image-add",
+    align:
+      "notebook-align-toggle",
+    callout:
+      "notebook-callout-toggle"
+  };
+
+  Object
+    .entries(
+      notebookToolMenuToggles
+    )
     .forEach(
-      (name) => {
+      (
+        [
+          name,
+          toggleId
+        ]
+      ) => {
         const toggle =
           document.getElementById(
-            `notebook-${name}-toggle`
+            toggleId
           );
 
         toggle
@@ -16336,6 +16353,12 @@ function wireEvents() {
             "click",
             (event) => {
               event.stopPropagation();
+
+              if (
+                toggle.disabled
+              ) {
+                return;
+              }
 
               saveSelection();
 
