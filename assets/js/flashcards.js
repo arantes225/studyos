@@ -1593,7 +1593,7 @@ function updateCreateSubjectOptions() {
   }
 
   subjectSelect.disabled =
-    !subjects.length;
+    false;
 
   if (
     subjects.includes(
