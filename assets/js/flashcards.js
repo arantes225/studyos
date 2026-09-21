@@ -1390,6 +1390,11 @@ const FLASHCARD_SUBJECTS_BY_AREA = {
     "Trauma Pélvico",
     "Queimaduras",
     "Abdome Agudo",
+    "Abdome Agudo Inflamatório",
+    "Abdome Agudo Obstrutivo",
+    "Abdome Agudo Perfurativo",
+    "Abdome Agudo Hemorrágico",
+    "Abdome Agudo Vascular",
     "Apendicite",
     "Obstrução Intestinal",
     "Perfuração de Víscera Oca",
@@ -1835,6 +1840,22 @@ function wireCreate() {
             "create-back-image"
           ).files[0]
           || null;
+
+        if (!area) {
+          setFlashStatus(
+            "create-status",
+            "Selecione uma área.",
+            "error"
+          );
+
+          document
+            .getElementById(
+              "create-area"
+            )
+            ?.focus();
+
+          return;
+        }
 
         if (!front || !back) {
           setFlashStatus(
