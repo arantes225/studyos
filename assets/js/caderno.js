@@ -857,6 +857,122 @@ function notebookImageExtension(
 }
 
 
+async function syncNotebookImageRefsFromHtml(
+  noteId,
+  html
+) {
+  if (!noteId) {
+    return;
+  }
+
+  const host =
+    document.createElement(
+      "div"
+    );
+
+  host.innerHTML =
+    String(
+      html
+      || ""
+    );
+
+  const assetIds =
+    Array.from(
+      host.querySelectorAll(
+        "img[data-luria-asset-id]"
+      )
+    )
+      .map(
+        image =>
+          String(
+            image.getAttribute(
+              "data-luria-asset-id"
+            )
+            || ""
+          )
+      )
+      .filter(
+        value =>
+          /^[0-9a-f-]{36}$/i
+            .test(
+              value
+            )
+      );
+
+  const {
+    data:
+      orphanPaths,
+    error
+  } =
+    await notebookSb.rpc(
+      "sync_study_note_image_refs",
+      {
+        p_note_id:
+          noteId,
+
+        p_asset_ids:
+          assetIds
+      }
+    );
+
+  if (error) {
+    throw error;
+  }
+
+  if (
+    Array.isArray(
+      orphanPaths
+    )
+    &&
+    orphanPaths.length
+  ) {
+    const {
+      error:
+        removeError
+    } =
+      await notebookSb
+        .storage
+        .from(
+          "docmap-assets"
+        )
+        .remove(
+          orphanPaths
+        );
+
+    if (
+      removeError
+    ) {
+      console.warn(
+        "Não foi possível limpar imagens sem referência:",
+        removeError
+      );
+      return;
+    }
+
+    const {
+      error:
+        cleanupError
+    } =
+      await notebookSb.rpc(
+        "delete_orphan_study_note_assets",
+        {
+          p_paths:
+            orphanPaths
+        }
+      );
+
+    if (
+      cleanupError
+    ) {
+      console.warn(
+        "Não foi possível limpar metadados de imagens:",
+        cleanupError
+      );
+    }
+  }
+}
+
+
 async function materializeNotebookImagesForShare(
   note
 ) {
@@ -3645,6 +3761,11 @@ async function saveCurrentNotebook(
           }
         );
 
+        await syncNotebookImageRefsFromHtml(
+          current.note.id,
+          data.content_html
+        );
+
         notebookState.editorDirty =
           false;
 
@@ -3803,6 +3924,19 @@ async function saveCurrentNotebook(
 
     return;
 
+  }
+
+
+  try {
+    await syncNotebookImageRefsFromHtml(
+      result.data.id,
+      result.data.content_html
+    );
+  } catch (imageSyncError) {
+    console.warn(
+      "Não foi possível sincronizar referências de imagem:",
+      imageSyncError
+    );
   }
 
 
