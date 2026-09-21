@@ -1,4 +1,4 @@
-const CACHE_VERSION = "luria-pwa-v82";
+const CACHE_VERSION = "luria-pwa-v83";
 const STATIC_CACHE = CACHE_VERSION + "-static";
 const RUNTIME_CACHE = CACHE_VERSION + "-runtime";
 
@@ -21,7 +21,7 @@ const APP_SHELL = [
   "/assets/js/storage-router.js?v=1.0.0",
   "/assets/js/pwa.js",
   "/assets/css/amigos.css?v=24",
-  "/assets/js/studyrats.js?v=21",
+  "/assets/js/studyrats.js?v=22",
   "/assets/img/studyrats/ratinhos/ratinho_verde_radioativo.webp?v=16",
   "/assets/img/studyrats/ratinhos/ratinho_laranja.webp?v=16",
   "/assets/img/studyrats/ratinhos/ratinho_tigrado.webp?v=16",
@@ -35,7 +35,7 @@ const APP_SHELL = [
   "/assets/img/studyrats/acessórios/cabeça/cabeça/colorful-cap.webp?v=16",
   "/assets/img/studyrats/acessórios/cabeça/cabeça/cowboy-hat.webp?v=16",
   "/assets/img/studyrats/acessórios/cabeça/cabeça/crown.webp?v=16",
-  "/assets/img/studyrats/acessórios/cabeça/cabeça/gamer-headset.webp?v=16",
+  "/assets/img/studyrats/acessórios/cabeça/cabeça/gamer-headset.webp?v=17",
   "/assets/img/studyrats/acessórios/cabeça/cabeça/magic-top-hat.webp?v=16",
   "/assets/img/studyrats/acessórios/cabeça/cabeça/mouse-ears-headband.webp?v=16",
   "/assets/img/studyrats/acessórios/cabeça/cabeça/pink-bow-hat.webp?v=16",
