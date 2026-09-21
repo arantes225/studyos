@@ -126,6 +126,19 @@
         padding: 0 !important;
       }
 
+      html.pwa-standalone body #sidebar.sidebar .nav-submenu[hidden] {
+        display: none !important;
+      }
+
+      html.pwa-standalone body #sidebar.sidebar .nav-group-chevron {
+        margin-left: auto !important;
+        transition: transform 160ms ease !important;
+      }
+
+      html.pwa-standalone body #sidebar.sidebar .nav-group-collapsed .nav-group-chevron {
+        transform: rotate(-90deg) !important;
+      }
+
       html.pwa-standalone body #sidebar.sidebar .nav-sublink {
         min-height: 36px !important;
         display: flex !important;
@@ -1423,6 +1436,7 @@ function prepararStudyMenu(
   const pageInsideStudy =
     [
       "ambientacao",
+      "caderno",
       "flashcards",
       "erros",
       "questoes"
