@@ -57,7 +57,7 @@
     {page:"questoes", target:"#qs-open-answer-import", title:"Leitor de gabarito", text:"Depois das questões extraídas, você pode importar um print do resultado. O leitor identifica as questões corretas e erradas e prepara o preenchimento do gabarito.", action:"questions-reader", transparent:true},
     {page:"questoes", target:"#qs-onboarding-answer-key", title:"Gabarito reconhecido", text:"Este é o gabarito de demonstração: as questões 2 e 5 foram erradas e aparecem em vermelho; as demais aparecem em verde.", action:"questions-answerkey", transparent:true},
     {page:"questoes", target:"#qs-apply-answer-import", title:"Introduzir gabarito", text:"Ao aplicar os resultados, o LURIA transfere essas marcações para o simulado. No onboarding fazemos isso apenas visualmente, sem salvar nenhum dado real.", action:"questions-applykey", transparent:true},
-    {page:"questoes", target:"#qs-question-list", title:"Gabarito aplicado", text:"Pronto: o simulado agora mostra 8 acertos, 2 erros e 80% de aproveitamento. As questões 2 e 5 ficam marcadas como erro para você revisar.", action:"questions-applied", transparent:true},
+    {page:"questoes", target:"#qs-question-list", title:"Gabarito aplicado", text:"Pronto: o simulado agora mostra 8 acertos, 2 erros e 80% de aproveitamento. Nas questões 2 e 5, o LURIA abre o cadastro detalhado do erro para você preencher Área, Matéria, Resposta correta, CCQ e, se quiser, registrar o que pensou antes de enviar ao Caderno de Erros.", action:"questions-applied", transparent:true},
     {page:"questoes", target:"#qs-send-errors, .qs-error-fields", title:"Enviar erros ao Caderno de Erros", text:"As questões erradas podem virar CCQs. Você pode ajustar Área, Matéria, Tema e explicação antes de enviar, ou escolher não mandar uma questão ao Caderno de Erros.", action:"questions-applied", transparent:true},
 
     {page:"dashboard", target:".topbar, .page-heading", title:"Dashboard", text:"O Dashboard reúne agenda, revisões, métricas, CCQ e progresso. Ele é o ponto de partida depois da configuração.", top:true},
@@ -801,11 +801,66 @@
             </label>
           </div>
           ${isWrong ? `
-            <div class="qs-error-fields">
-              <label class="full">
-                <strong>Enviar ao Caderno de Erros</strong>
-                <small>Esta questão pode virar um CCQ de revisão.</small>
+            <div class="qs-error-fields onboarding-error-registration">
+              <label class="qs-error-skip full">
+                <input type="checkbox" tabindex="-1">
+                <span>
+                  <strong>Não enviar para o Caderno de Erros</strong>
+                  <small>Se marcar esta opção, o erro continua contabilizado, mas não vira registro no Caderno de Erros.</small>
+                </span>
               </label>
+
+              <label class="qs-field">
+                <span>Área *</span>
+                <select tabindex="-1">
+                  <option selected>${number===2 ? "Clínica Médica" : "Clínica Médica"}</option>
+                </select>
+              </label>
+
+              <label class="qs-field">
+                <span>Matéria <small>(opcional)</small></span>
+                <input
+                  type="text"
+                  readonly
+                  value="${number===2 ? "Cardiologia" : "Cardiologia"}"
+                >
+              </label>
+
+              <label class="qs-field">
+                <span>Resposta correta *</span>
+                <select tabindex="-1">
+                  <option selected>${number===2 ? "A" : "A"}</option>
+                </select>
+              </label>
+
+              <label class="qs-field full">
+                <span>CCQ <small>(obrigatório para enviar ao Caderno de Erros)</small></span>
+                <input
+                  type="text"
+                  readonly
+                  value="${number===2
+                    ? "Qual característica do traçado ajuda a diferenciar fibrilação atrial de um ritmo sinusal?"
+                    : "Qual achado no ECG favorece taquicardia ventricular diante de uma taquicardia de QRS largo?"}"
+                >
+              </label>
+
+              <label class="qs-field full">
+                <span>O que pensei <small>(opcional)</small></span>
+                <textarea readonly>${number===2
+                  ? "Confundi a irregularidade do ritmo com uma arritmia supraventricular regular."
+                  : "Interpretei o QRS largo como aberrância de condução e não como origem ventricular."}</textarea>
+              </label>
+
+              <div class="onboarding-error-registration-summary full">
+                <strong>O que será enviado ao Caderno de Erros</strong>
+                <span><b>Área:</b> Clínica Médica</span>
+                <span><b>Matéria:</b> Cardiologia</span>
+                <span><b>Questão:</b> ${number}</span>
+                <span><b>Resposta correta:</b> A</span>
+                <span><b>CCQ:</b> ${number===2
+                  ? "Qual característica do traçado ajuda a diferenciar fibrilação atrial de um ritmo sinusal?"
+                  : "Qual achado no ECG favorece taquicardia ventricular diante de uma taquicardia de QRS largo?"}</span>
+              </div>
             </div>
           ` : ""}
         </article>
