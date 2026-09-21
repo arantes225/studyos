@@ -232,23 +232,134 @@
     }
   }
 
+  function addFlashDeckDemo(){
+    const host=document.getElementById("library-decks");
+    if(!host || host.querySelector("[data-onboarding-demo-decks]")) return;
+
+    const wrap=document.createElement("div");
+    wrap.dataset.onboardingDemo="1";
+    wrap.dataset.onboardingDemoDecks="1";
+    wrap.style.display="contents";
+    wrap.innerHTML=[
+      {
+        area:"Clínica Médica",
+        materia:"Cardiologia",
+        theme:"Hipertensão",
+        title:"Cardiologia · Hipertensão",
+        count:12
+      },
+      {
+        area:"Cirurgia Geral",
+        materia:"Trauma",
+        theme:"ATLS",
+        title:"Cirurgia · Trauma",
+        count:8
+      },
+      {
+        area:"Pediatria",
+        materia:"Puericultura",
+        theme:"Crescimento",
+        title:"Pediatria · Puericultura",
+        count:10
+      }
+    ].map(deck=>`
+      <article class="flash-deck-card" data-onboarding-demo="1">
+        <div class="flash-deck-taxonomy">
+          <span class="taxonomy-chip">${deck.area}</span>
+          <span class="taxonomy-chip">${deck.materia}</span>
+          <span class="taxonomy-chip accent">${deck.theme}</span>
+        </div>
+        <strong>${deck.title}</strong>
+        <small>${deck.count} flashcards · demonstração</small>
+        <div class="flash-deck-buttons">
+          <button class="button primary" type="button" data-onboarding-demo-action>
+            Revisar agora
+          </button>
+          <button class="button secondary" type="button" data-onboarding-demo-action>
+            Compartilhar
+          </button>
+        </div>
+      </article>
+    `).join("");
+
+    host.prepend(wrap);
+
+    wrap.querySelectorAll("[data-onboarding-demo-action]").forEach(button=>{
+      button.addEventListener("click",event=>{
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      },true);
+    });
+  }
+
   function addFlashDemo(){
     activateTab('[data-flash-tab="review"]');
+
     const stage=document.getElementById("review-stage");
     const empty=document.getElementById("review-empty");
+    const answer=document.getElementById("review-answer");
+    const ratings=document.getElementById("rating-actions");
+    const showAnswer=document.getElementById("show-answer");
+    const menu=document.querySelector(".review-card-menu-wrap");
+    const status=document.getElementById("review-status");
+
     if(empty) empty.hidden=true;
+
     if(stage){
       stage.hidden=false;
       stage.dataset.onboardingDemo="1";
-      const area=document.getElementById("review-area"); if(area){area.hidden=false;area.textContent="Clínica Médica";}
-      const materia=document.getElementById("review-materia"); if(materia){materia.hidden=false;materia.textContent="Cardiologia";}
-      const theme=document.getElementById("review-theme"); if(theme){theme.hidden=false;theme.textContent="Hipertensão";}
-      const front=document.getElementById("review-front"); if(front) front.textContent="Qual é a meta pressórica geral no tratamento da hipertensão?";
-      const back=document.getElementById("review-back"); if(back) back.textContent="Exemplo de resposta de demonstração. Classifique sua lembrança abaixo.";
-      const pos=document.getElementById("review-position"); if(pos) pos.textContent="1 / 5";
+      stage.dataset.onboardingFlashcard="1";
+
+      const area=document.getElementById("review-area");
+      if(area){area.hidden=false;area.textContent="Clínica Médica";}
+
+      const materia=document.getElementById("review-materia");
+      if(materia){materia.hidden=false;materia.textContent="Cardiologia";}
+
+      const theme=document.getElementById("review-theme");
+      if(theme){theme.hidden=false;theme.textContent="Onboarding · Hipertensão";}
+
+      const front=document.getElementById("review-front");
+      if(front) front.textContent="Qual é a meta pressórica geral no tratamento da hipertensão arterial?";
+
+      const back=document.getElementById("review-back");
+      if(back) back.textContent="Em geral, busca-se pressão arterial abaixo de 130/80 mmHg quando bem tolerado, individualizando a meta conforme o perfil clínico.";
+
+      const pos=document.getElementById("review-position");
+      if(pos) pos.textContent="1 / 1";
+
+      const session=document.getElementById("review-session-copy");
+      if(session) session.textContent="flashcard de onboarding";
+
+      if(answer) answer.hidden=true;
+      if(ratings) ratings.hidden=true;
+      if(showAnswer) showAnswer.hidden=false;
+      if(menu) menu.hidden=true;
+      if(status) status.textContent="";
     }
+
+    document.querySelectorAll("#rating-actions [data-rating]").forEach(button=>{
+      button.dataset.onboardingDemoRating="1";
+      if(button.dataset.onboardingGuardBound==="1") return;
+      button.dataset.onboardingGuardBound="1";
+      button.addEventListener("click",event=>{
+        if(button.dataset.onboardingDemoRating!=="1") return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const reviewStatus=document.getElementById("review-status");
+        if(reviewStatus) reviewStatus.textContent="Demonstração concluída — nenhuma revisão real foi alterada.";
+      },true);
+    });
+
     const lib=document.getElementById("library-list");
-    demoNode(lib,['HAS: meta pressórica','Pneumonia: tratamento','Apendicite: diagnóstico','Diabetes: rastreio','Trauma: avaliação inicial'].map((x,i)=>'<article class="onboarding-demo-card"><small>FLASHCARD '+(i+1)+'</small><strong>'+x+'</strong><span>Cartão de demonstração</span></article>').join(""));
+    demoNode(
+      lib,
+      ['HAS: meta pressórica','Pneumonia: tratamento','Apendicite: diagnóstico','Diabetes: rastreio','Trauma: avaliação inicial']
+        .map((x,i)=>'<article class="onboarding-demo-card"><small>FLASHCARD '+(i+1)+'</small><strong>'+x+'</strong><span>Cartão de demonstração</span></article>')
+        .join("")
+    );
+
+    addFlashDeckDemo();
   }
 
   function addErrorDemo(){
@@ -303,7 +414,11 @@
       const show=document.getElementById("show-answer"); if(show) show.hidden=true;
     }
     if(step.action==="flash-create") activateTab('[data-flash-tab="create"]');
-    if(step.action==="flash-library") activateTab('[data-flash-tab="library"]');
+    if(step.action==="flash-library"){
+      activateTab('[data-flash-tab="library"]');
+      setTimeout(addFlashDeckDemo,250);
+      setTimeout(addFlashDeckDemo,700);
+    }
 
     if(step.action==="error-review") activateTab('[data-error-tab="review"]');
     if(step.action==="error-create"){
@@ -338,6 +453,7 @@
 
   function clearDemo(){
     document.querySelectorAll("[data-onboarding-demo],[data-onboarding-demo-card],[data-onboarding-demo-error]").forEach(el=>el.remove());
+    document.querySelectorAll("[data-onboarding-demo-rating]").forEach(el=>el.removeAttribute("data-onboarding-demo-rating"));
     document.querySelectorAll("#week-planner .empty-planner").forEach(el=>el.style.removeProperty("display"));
     const editor=document.querySelector("#notebook-editor[data-onboarding-touched]");
     if(editor){ editor.innerHTML=editor.dataset.onboardingOriginal||""; editor.removeAttribute("data-onboarding-original"); editor.removeAttribute("data-onboarding-touched"); }
