@@ -1618,6 +1618,42 @@ function resetCcqProgress() {
   });
 }
 
+function fitDashboardCcqText(element) {
+  if (!element) return;
+
+  const maxSize = 24;
+  const minSize = 11;
+  const stage = element.closest(".dashboard-passive-ccq-stage");
+
+  element.style.fontSize = maxSize + "px";
+  element.style.webkitLineClamp = "unset";
+  element.style.display = "block";
+  element.style.overflow = "visible";
+
+  if (!stage) return;
+
+  const meta = stage.querySelector(".dashboard-passive-ccq-meta");
+  const availableHeight = Math.max(
+    44,
+    stage.clientHeight
+      - (meta?.offsetHeight || 0)
+      - 12
+  );
+
+  let size = maxSize;
+
+  while (
+    size > minSize
+    && (
+      element.scrollHeight > availableHeight
+      || element.scrollWidth > element.clientWidth + 1
+    )
+  ) {
+    size -= 0.5;
+    element.style.fontSize = size + "px";
+  }
+}
+
 function showDashboardCcq() {
   if (!dashboardCcqState.items.length) return;
 
@@ -1632,6 +1668,7 @@ function showDashboardCcq() {
 
   if (text) {
     text.textContent = item.ccq || "";
+    requestAnimationFrame(() => fitDashboardCcqText(text));
   }
 
   const summaryText =
