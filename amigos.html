@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" href="assets/img/favicon.png">
   <link rel="stylesheet" href="assets/css/style.css?v=16.2">
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=13">
-  <link rel="stylesheet" href="assets/css/amigos.css?v=15">
+  <link rel="stylesheet" href="assets/css/amigos.css?v=16">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=10">
   <script defer src="assets/js/luria-brand-v5.js?v=10"></script>
   <link rel="canonical" href="/amigos/">
@@ -69,10 +69,19 @@
         <section class="studyrats-rat-picker" aria-labelledby="studyrats-rat-picker-title">
           <div class="studyrats-rat-picker-copy">
             <span class="studyrats-kicker">SEU CORREDOR</span>
-            <strong id="studyrats-rat-picker-title">Escolha seu ratinho</strong>
-            <small>Esse será o seu ratinho em todas as corridas do Studyrats.</small>
+            <strong id="studyrats-rat-picker-title">Personalize seu ratinho</strong>
+            <small>Escolha a cor e um acessório. O visual aparece para todos nas corridas.</small>
           </div>
-          <div id="studyrats-rat-picker-options" class="studyrats-rat-picker-options" role="group" aria-label="Escolher ratinho"></div>
+          <div class="studyrats-rat-picker-controls">
+            <div class="studyrats-picker-group">
+              <span class="studyrats-picker-label">Ratinho</span>
+              <div id="studyrats-rat-picker-options" class="studyrats-rat-picker-options" role="group" aria-label="Escolher ratinho"></div>
+            </div>
+            <div class="studyrats-picker-group">
+              <span class="studyrats-picker-label">Acessório</span>
+              <div id="studyrats-accessory-picker-options" class="studyrats-accessory-picker-options" role="group" aria-label="Escolher acessório"></div>
+            </div>
+          </div>
           <small id="studyrats-rat-picker-status" class="studyrats-rat-picker-status" aria-live="polite"></small>
         </section>
 
@@ -117,7 +126,7 @@
   <script src="/assets/vendor/supabase-2.110.6.js"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=16.9"></script>
-  <script src="assets/js/studyrats.js?v=8"></script>
+  <script src="assets/js/studyrats.js?v=9"></script>
   <script src="assets/js/amigos.js?v=9"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
