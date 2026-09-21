@@ -2352,6 +2352,23 @@ window.luriaConfirm =
 window.luriaPrompt =
   window.LuriaDialog.prompt;
 
+/*
+  Ponte para código legado: evita qualquer popup nativo mesmo antes
+  de cada fluxo antigo ser migrado. Os handlers novos devem usar
+  LuriaDialog diretamente para aguardar a resposta.
+*/
+window.alert = function luriaLegacyAlert(
+  message
+) {
+  window.LuriaDialog.alert(
+    message
+  );
+
+  return undefined;
+};
+
+
+
 
 function essentialEntitlementsFallback() {
   return {
