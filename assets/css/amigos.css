@@ -52,13 +52,13 @@
 .studyrats-skyline i:before{width:42px;height:34px;left:15px}.studyrats-skyline i:after{width:50px;height:28px;right:8px}
 .studyrats-skyline i:nth-child(1){left:4%}.studyrats-skyline i:nth-child(2){left:31%;transform:scale(.8)}.studyrats-skyline i:nth-child(3){left:58%;transform:scale(1.12)}.studyrats-skyline i:nth-child(4){right:10%;transform:scale(.68)}
 .studyrats-lanes{display:grid;gap:0}
-.studyrats-lane{display:grid;grid-template-columns:142px minmax(0,1fr);align-items:center;gap:8px;min-height:45px;border-bottom:1px solid color-mix(in srgb,#c8d1dc 55%,var(--border))}
+.studyrats-lane{display:grid;grid-template-columns:156px minmax(0,1fr);align-items:center;gap:0;min-height:45px;border-bottom:1px solid color-mix(in srgb,#c8d1dc 55%,var(--border))}
 .studyrats-lane:first-child{border-top:1px solid color-mix(in srgb,#c8d1dc 55%,var(--border))}
-.studyrats-runner-card{display:flex;align-items:center;gap:7px;min-width:0;padding:4px 7px;background:color-mix(in srgb,var(--surface) 90%,transparent);border-radius:9px;box-shadow:0 1px 3px rgba(23,38,58,.04)}
+.studyrats-runner-card{display:flex;align-items:center;gap:7px;min-width:0;padding:4px 10px 4px 7px;background:color-mix(in srgb,var(--surface) 90%,transparent);border-radius:9px 0 0 9px;box-shadow:0 1px 3px rgba(23,38,58,.04)}
 .studyrats-rank{width:21px;height:21px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,#d9e0e9 80%,var(--surface));color:#536273;font-size:8px;font-weight:900;flex:0 0 auto}.studyrats-rank.is-first{background:#c89c3e;color:#fff}
 .studyrats-avatar{width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-size:7px;font-weight:900;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--border);flex:0 0 auto}
 .studyrats-runner-copy{min-width:0}.studyrats-runner-copy strong{display:block;font-size:8.5px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.studyrats-runner-copy small{display:block;margin-top:1px;color:var(--muted);font-size:7px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.studyrats-road{height:44px;position:relative;margin-right:5px}
+.studyrats-road{height:44px;position:relative;margin-right:5px;border-left:1px solid color-mix(in srgb,#9fb0c4 34%,var(--border));padding-left:0}
 .studyrats-road:before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:repeating-linear-gradient(90deg,color-mix(in srgb,#aab5c4 52%,transparent) 0 9px,transparent 9px 18px)}
 .studyrats-progress-fill{position:absolute;left:0;top:50%;height:7px;transform:translateY(-50%);border-radius:999px;background:var(--lane-color);box-shadow:0 1px 2px color-mix(in srgb,var(--lane-color) 25%,transparent);min-width:3px}
 .studyrats-mouse{position:absolute;top:50%;width:72px;height:50px;transform:translate(-34px,-50%);transition:left .35s ease;z-index:8;display:grid;place-items:center;overflow:visible;pointer-events:none}
@@ -97,3 +97,18 @@
   .studyrats-mouse{width:52px;height:38px}.studyrats-rat-img{width:58px;height:40px}.studyrats-track-score{font-size:7px}
   .studyrats-finish{right:7px}.studyrats-race-footer{flex-direction:column;align-items:flex-start}.studyrats-friend-chip{max-width:170px}
 }
+
+/* Guia visual: início das pistas alinhado à divisória central do ranking */
+.studyrats-lanes{position:relative}
+.studyrats-lanes::before{
+  content:"";
+  position:absolute;
+  left:156px;
+  top:0;
+  bottom:0;
+  width:1px;
+  background:color-mix(in srgb,#9fb0c4 36%,var(--border));
+  z-index:1;
+  pointer-events:none;
+}
+.studyrats-road,.studyrats-progress-fill,.studyrats-road::before{box-sizing:border-box}
