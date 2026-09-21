@@ -1,4 +1,4 @@
-const CACHE_VERSION = "luria-pwa-v55";
+const CACHE_VERSION = "luria-pwa-v56";
 const STATIC_CACHE = CACHE_VERSION + "-static";
 const RUNTIME_CACHE = CACHE_VERSION + "-runtime";
 
@@ -14,8 +14,8 @@ const APP_SHELL = [
   "/assets/css/landing.css",
   "/assets/css/pwa-mobile.css?v=9",
   "/assets/css/luria-brand-v5.css",
-  "/assets/js/app.js?v=16.7",
-  "/assets/js/onboarding.js?v=2.3",
+  "/assets/js/app.js?v=16.8",
+  "/assets/js/onboarding.js?v=2.4",
   "/assets/css/onboarding.css?v=1.9",
   "/assets/js/storage-router.js?v=1.0.0",
   "/assets/js/pwa.js",
