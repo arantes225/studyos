@@ -1562,6 +1562,51 @@
 .event-save-button{background:var(--accent)!important;border-color:var(--accent)!important}
 @media(max-width:620px){.event-date-time-grid{grid-template-columns:1fr}.calendar-actions{width:100%;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.calendar-actions .segmented-control,.calendar-actions .calendar-nav{width:100%;justify-content:space-evenly}.calendar-actions .segmented-control button,.calendar-actions .calendar-nav button{flex:1;padding-inline:6px}}
 
+
+/* Data e hora — visual LURIA */
+.event-dialog input[type="date"],
+.event-dialog input[type="time"]{
+  width:100%;
+  min-height:44px;
+  padding:0 12px;
+  border:1px solid color-mix(in srgb,var(--border) 84%,var(--accent) 16%);
+  border-radius:11px;
+  background:var(--surface);
+  color:var(--text);
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+  color-scheme:light dark;
+  outline:none;
+  box-shadow:none;
+  transition:border-color .16s ease,box-shadow .16s ease,background .16s ease;
+}
+.event-dialog input[type="date"]:hover,
+.event-dialog input[type="time"]:hover{
+  border-color:color-mix(in srgb,var(--accent) 48%,var(--border));
+  background:color-mix(in srgb,var(--accent) 3%,var(--surface));
+}
+.event-dialog input[type="date"]:focus,
+.event-dialog input[type="date"]:focus-visible,
+.event-dialog input[type="time"]:focus,
+.event-dialog input[type="time"]:focus-visible{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--accent-soft);
+  background:var(--surface);
+}
+.event-dialog input[type="date"]::-webkit-calendar-picker-indicator,
+.event-dialog input[type="time"]::-webkit-calendar-picker-indicator{
+  cursor:pointer;
+  opacity:.72;
+  border-radius:7px;
+  padding:5px;
+  background-color:var(--accent-soft);
+}
+.event-dialog input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.event-dialog input[type="time"]::-webkit-calendar-picker-indicator:hover{
+  opacity:1;
+}
+
 </style>
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
   <script defer src="assets/js/luria-brand-v5.js?v=9"></script>
