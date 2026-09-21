@@ -21,3 +21,22 @@
   .luria-onboarding-card{max-height:44vh;overflow:auto}
   #luria-onboarding-overlay.is-exploring .luria-onboarding-card{max-height:36vh}
 }
+
+
+/* Onboarding v1.3 — card permanece embaixo durante a exploração */
+#luria-onboarding-overlay.card-top .luria-onboarding-card{
+  top:auto !important;
+  bottom:max(22px,env(safe-area-inset-bottom)) !important;
+}
+#luria-onboarding-overlay.is-exploring .luria-onboarding-target{
+  box-shadow:0 0 0 3px rgba(96,165,250,.78) !important;
+}
+#luria-onboarding-overlay.is-exploring .luria-onboarding-dim{
+  background:transparent !important;
+}
+@media(max-width:700px){
+  #luria-onboarding-overlay.card-top .luria-onboarding-card{
+    top:auto !important;
+    bottom:max(10px,env(safe-area-inset-bottom)) !important;
+  }
+}
