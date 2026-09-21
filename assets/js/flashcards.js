@@ -5275,7 +5275,7 @@ async function deleteSelectedFlashcards() {
 
 
   if (
-    !window.confirm(
+    !await window.LuriaDialog.confirm(
       `${parts.join(". ")}. Continuar?`
     )
   ) {
