@@ -3144,3 +3144,27 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* CADERNO v18.4 — linha decorativa com símbolo LURIA */
+.notebook-editor .notebook-divider.arabesque {
+  color: transparent !important;
+}
+
+.notebook-divider-luria {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  display: inline-block;
+  background-color: var(--accent);
+  -webkit-mask: url("../img/logo-icone-original.png") center / contain no-repeat;
+  mask: url("../img/logo-icone-original.png") center / contain no-repeat;
+  pointer-events: none;
+}
+
+.notebook-line-preview.arabesque img {
+  width: 18px;
+  height: 18px;
+  display: block;
+  object-fit: contain;
+}
