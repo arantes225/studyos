@@ -17,15 +17,15 @@ const sharedStudyratVariants=[
 const sharedStudyratAccessories=[
   {id:'none',label:'Sem acessório',kind:'none',sources:[]},
   {id:'medal-silver',label:'Medalha prata',kind:'body',sources:['medalha-prata.png','medalha_prata.png','medal-silver.png','prata.png']},
-  {id:'cap-colorful',label:'Boné colorido',kind:'head',sources:['bone-colorido.png','boné-colorido.png','bone_colorido.png','boné_colorido.png','cap-colorful.png']},
-  {id:'cowboy-hat',label:'Cowboy',kind:'head',sources:['chapeu-cowboy.png','chapéu-cowboy.png','chapeu_de_cowboy.png','cowboy-hat.png']},
-  {id:'santa-hat',label:'Papai Noel',kind:'head',sources:['chapeu-papai-noel.png','chapéu-papai-noel.png','chapeu_papai_noel.png','santa-hat.png']},
-  {id:'pink-hat',label:'Chapéu rosa',kind:'head',sources:['chapeu-rosa.png','chapéu-rosa.png','chapeu_rosa.png','pink-hat.png']},
-  {id:'pink-glasses',label:'Óculos rosa',kind:'face',sources:['oculos-rosa.png','óculos-rosa.png','oculos_rosa.png','pink-glasses.png']},
-  {id:'crown',label:'Coroa',kind:'head',sources:['coroa.png','crown.png']},
+  {id:'cap-colorful',label:'Boné colorido',kind:'head',sources:['chapeu.png']},
+  {id:'cowboy-hat',label:'Cowboy',kind:'head',sources:['chapeu-de-cowboy.png']},
+  {id:'santa-hat',label:'Papai Noel',kind:'head',sources:['papai-noel.png']},
+  {id:'pink-hat',label:'Chapéu rosa',kind:'head',sources:['chapeu-rosa.png']},
+  {id:'pink-glasses',label:'Óculos rosa',kind:'face',sources:['oculos-rosa.png']},
+  {id:'crown',label:'Coroa',kind:'head',sources:['coroa.png']},
   {id:'pink-skirt',label:'Saia rosa',kind:'body',sources:['saia_rosa_com_laço_e_babados.png','saia-rosa.png','saia_rosa.png','pink-skirt.png']},
-  {id:'police-cap',label:'Policial',kind:'head',sources:['boné_policial_azul_com_distintivo_dourado.png','bone-policial.png','boné-policial.png','police-cap.png']},
-  {id:'astronaut-helmet',label:'Astronauta',kind:'helmet',sources:['capacete_de_astronauta_com_visor_azul.png','capacete-astronauta.png','astronaut-helmet.png']}
+  {id:'police-cap',label:'Policial',kind:'head',sources:['cap-policial.png']},
+  {id:'astronaut-helmet',label:'Astronauta',kind:'helmet',sources:['capacete-astronauta.png']}
 ];
 
 function sharedStudyratVariant(value){
@@ -41,7 +41,7 @@ function sharedStudyratAccessory(value){
 
 function sharedStudyratAccessorySources(item){
   return (item.sources||[]).map(function(file){
-    return '/assets/img/studyrats/'+encodeURIComponent(file).replace(/%2F/g,'/')+'?v=9';
+    return '/assets/img/studyrats/'+encodeURIComponent(file).replace(/%2F/g,'/')+'?v=14';
   });
 }
 
