@@ -2559,7 +2559,9 @@ function ensureLuriaDialog() {
 
   dialog.innerHTML = `
     <form method="dialog" class="luria-global-dialog-card">
-      <div class="luria-global-dialog-icon" aria-hidden="true">?</div>
+      <div class="luria-global-dialog-icon" aria-hidden="true">
+        <img class="luria-global-dialog-logo luria-theme-logo" src="assets/img/logo-icone-original.png?v=luria10" alt="">
+      </div>
       <div class="luria-global-dialog-copy">
         <span class="luria-global-dialog-eyebrow">LURIA</span>
         <h2 class="luria-global-dialog-title">Confirmar ação</h2>
@@ -2640,12 +2642,25 @@ function openLuriaDialog({
         ? "Preencha a informação"
         : "Confirmar ação";
 
-  icon.textContent =
-    isAlert
-      ? "i"
-      : isPrompt
-        ? "✎"
-        : "?";
+  const logo =
+    icon.querySelector(
+      ".luria-global-dialog-logo"
+    );
+
+  if (logo) {
+    const theme =
+      document.documentElement
+        .dataset
+        .theme
+      || "";
+
+    logo.src =
+      theme === "dark"
+        ? "assets/img/logo-icone-azul-claro.png?v=luria10"
+        : theme === "leila-mood"
+          ? "assets/img/logo-icone-rosa-escuro.png?v=luria10"
+          : "assets/img/logo-icone-original.png?v=luria10";
+  }
 
   copy.textContent =
     String(
