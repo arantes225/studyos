@@ -2575,3 +2575,333 @@ body::after {
   }
 }
 
+
+
+/* =========================================================
+   LURIA — CENTRAL GLOBAL DE NOTIFICAÇÕES
+   ========================================================= */
+
+.topbar {
+  position: relative;
+}
+
+.luria-notifications {
+  position: relative;
+  margin-left: auto;
+  flex: 0 0 auto;
+  z-index: 140;
+}
+
+.luria-notification-toggle {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .03);
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    transform 150ms ease;
+}
+
+.luria-notification-toggle:hover,
+.luria-notification-toggle[aria-expanded="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.luria-notification-toggle:active {
+  transform: scale(.96);
+}
+
+.luria-notification-toggle svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.luria-notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  background: #d84b4b;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.luria-notification-badge[hidden] {
+  display: none !important;
+}
+
+.luria-notification-panel {
+  position: absolute;
+  top: calc(100% + 9px);
+  right: 0;
+  width: min(370px, calc(100vw - 28px));
+  max-height: min(620px, calc(100vh - 100px));
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: var(--surface);
+  box-shadow:
+    0 18px 50px rgba(15, 23, 42, .16),
+    0 2px 8px rgba(15, 23, 42, .06);
+}
+
+.luria-notification-panel[hidden] {
+  display: none !important;
+}
+
+.luria-notification-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 61px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background:
+    color-mix(
+      in srgb,
+      var(--accent) 3%,
+      var(--surface)
+    );
+}
+
+.luria-notification-head strong,
+.luria-notification-head small {
+  display: block;
+}
+
+.luria-notification-head strong {
+  font-size: 13px;
+  font-weight: 880;
+}
+
+.luria-notification-head small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.luria-notification-read-all {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 820;
+  white-space: nowrap;
+}
+
+.luria-notification-read-all[hidden] {
+  display: none !important;
+}
+
+.luria-notification-list {
+  max-height: min(470px, calc(100vh - 195px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.luria-notification-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 12px 13px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  text-decoration: none;
+  transition: background 130ms ease;
+}
+
+.luria-notification-item:hover {
+  background: var(--surface-2);
+}
+
+.luria-notification-item.unread {
+  background:
+    color-mix(
+      in srgb,
+      var(--accent) 5.5%,
+      var(--surface)
+    );
+}
+
+.luria-notification-item.unread:hover {
+  background:
+    color-mix(
+      in srgb,
+      var(--accent) 8%,
+      var(--surface)
+    );
+}
+
+.luria-notification-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--accent) 18%,
+      var(--border)
+    );
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.luria-notification-copy {
+  min-width: 0;
+}
+
+.luria-notification-copy strong,
+.luria-notification-copy span,
+.luria-notification-copy small {
+  display: block;
+}
+
+.luria-notification-copy strong {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.luria-notification-copy span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.luria-notification-copy small {
+  margin-top: 5px;
+  color:
+    color-mix(
+      in srgb,
+      var(--muted) 82%,
+      transparent
+    );
+  font-size: 8px;
+  font-weight: 720;
+}
+
+.luria-notification-unread-dot {
+  width: 7px;
+  height: 7px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.luria-notification-empty,
+.luria-notification-loading {
+  min-height: 128px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 5px;
+  padding: 22px;
+  color: var(--muted);
+  font-size: 9px;
+  text-align: center;
+}
+
+.luria-notification-empty strong {
+  color: var(--text);
+  font-size: 11px;
+}
+
+.luria-notification-empty span {
+  max-width: 240px;
+  line-height: 1.45;
+}
+
+.luria-notification-footer {
+  min-height: 39px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 830;
+  text-decoration: none;
+}
+
+.luria-notification-footer:hover {
+  background: var(--accent-soft);
+}
+
+@media (max-width: 760px) {
+  .luria-notifications {
+    margin-left: auto;
+  }
+
+  .luria-notification-toggle {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+  }
+
+  .luria-notification-panel {
+    position: fixed;
+    top:
+      calc(
+        env(safe-area-inset-top)
+        + 58px
+      );
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-height:
+      calc(
+        100dvh
+        - env(safe-area-inset-top)
+        - 76px
+      );
+    border-radius: 14px;
+  }
+
+  .luria-notification-list {
+    max-height:
+      calc(
+        100dvh
+        - env(safe-area-inset-top)
+        - 190px
+      );
+  }
+}
