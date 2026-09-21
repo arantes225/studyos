@@ -25,7 +25,6 @@ const sharedStudyratAccessories=[
   {id:'crown',label:'Coroa',kind:'head',src:'/assets/img/studyrats/acessórios/cabeça/cabeça/crown.webp?v=16'},
   {id:'gamer-headset',label:'Headset gamer',kind:'head',src:'/assets/img/studyrats/acessórios/cabeça/cabeça/gamer-headset.webp?v=17'},
   {id:'magic-top-hat',label:'Cartola mágica',kind:'head',src:'/assets/img/studyrats/acessórios/cabeça/cabeça/magic-top-hat.webp?v=16'},
-  {id:'mouse-ears',label:'Tiara de orelhas',kind:'head',src:'/assets/img/studyrats/acessórios/cabeça/cabeça/mouse-ears-headband.webp?v=16'},
   {id:'pink-bow-hat',label:'Chapéu rosa',kind:'head',src:'/assets/img/studyrats/acessórios/cabeça/cabeça/pink-bow-hat.webp?v=16'},
   {id:'santa-hat',label:'Papai Noel',kind:'head',src:'/assets/img/studyrats/acessórios/cabeça/cabeça/santa-hat.webp?v=16'},
   {id:'unicorn-headband',label:'Tiara unicórnio',kind:'head',src:'/assets/img/studyrats/acessórios/cabeça/cabeça/unicorn-headband.webp?v=16'},
