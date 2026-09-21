@@ -23,7 +23,7 @@
     {page:"configuracoes", target:".interval-editor, [data-interval-field]", title:"Revisões", text:"Defina os intervalos de revisão. O LURIA distribui as revisões dentro dos dias permitidos."},
 
     {page:"cronograma", target:".topbar, .page-heading", title:"Seu cronograma", text:"O cronograma é a base da organização do LURIA. Você pode importar o material do cursinho por PDF ou Excel, ou montar tudo manualmente.", top:true, demo:"schedule"},
-    {page:"cronograma", target:"#file-drop, #schedule-file", title:"PDF, Excel ou manual", transparent:true, text:"PDF: envie o cronograma do cursinho. Excel: importe uma planilha estruturada. Manual: cadastre área, matéria, tema e data diretamente no LURIA. Em Explorar, você pode navegar por esses controles.", top:true, demo:"schedule"},
+    {page:"cronograma", target:"#file-drop, #schedule-file", title:"PDF, Excel ou manual", text:"PDF: envie o cronograma do cursinho. Excel: importe uma planilha estruturada. Manual: cadastre área, matéria, tema e data diretamente no LURIA.", top:true, noScroll:true, demo:"schedule"},
     {page:"cronograma", target:".import-mode, [name=import-mode], #manual-topic-form", title:"Como importar", transparent:true, text:"Você decide se as aulas entram já programadas ou no Deck. O cadastro manual serve para inserir uma aula por vez sem arquivo.", demo:"schedule"},
     {page:"cronograma", target:"#deck-panel, #deck-list", title:"Deck", text:"O Deck é a área de espera das aulas ainda não programadas. Deixamos duas atividades simuladas aqui para você visualizar como funciona.", demo:"schedule"},
     {page:"cronograma", target:"#week-planner", title:"Semana", text:"As aulas programadas aparecem distribuídas na semana. Deixamos cinco atividades simuladas para mostrar a organização visual.", demo:"schedule"},
@@ -196,8 +196,19 @@
       '<article class="onboarding-mini-activity"><strong>Trauma abdominal</strong><small>Cirurgia Geral · aguardando programação</small></article><article class="onboarding-mini-activity"><strong>Diabetes mellitus</strong><small>Clínica Médica · aguardando programação</small></article>');
 
     const week=document.getElementById("week-planner");
-    demoNode(week,
-      ['Seg · Hipertensão arterial','Ter · Pneumonia comunitária','Qua · Apendicite aguda','Qui · Pré-natal de baixo risco','Sex · Vacinação do adulto'].map((x,i)=>'<article class="onboarding-week-activity"><small>AULA '+(i+1)+'</small><strong>'+x+'</strong></article>').join(""));
+    if(week && !week.querySelector("[data-onboarding-week-card]")){
+      const examples=['Hipertensão arterial','Pneumonia comunitária','Apendicite aguda','Pré-natal de baixo risco','Vacinação do adulto'];
+      const dayBodies=[...week.querySelectorAll(".planner-day-body")].slice(0,5);
+      dayBodies.forEach((body,i)=>{
+        body.querySelectorAll(".empty-planner").forEach(el=>el.style.display="none");
+        const card=document.createElement("article");
+        card.dataset.onboardingDemo="1";
+        card.dataset.onboardingWeekCard="1";
+        card.className="topic-card onboarding-week-topic";
+        card.innerHTML='<div class="topic-card-head"><h3>'+examples[i]+'</h3></div><div class="topic-meta">Aula simulada · Onboarding</div>';
+        body.prepend(card);
+      });
+    }
 
     const list=document.getElementById("theme-library-list");
     const names=['Hipertensão arterial','Pneumonia comunitária','Apendicite aguda','Pré-natal','Vacinação','Trauma abdominal','Diabetes mellitus','Asma','Hemorragia digestiva','Puericultura'];
@@ -327,6 +338,7 @@
 
   function clearDemo(){
     document.querySelectorAll("[data-onboarding-demo],[data-onboarding-demo-card],[data-onboarding-demo-error]").forEach(el=>el.remove());
+    document.querySelectorAll("#week-planner .empty-planner").forEach(el=>el.style.removeProperty("display"));
     const editor=document.querySelector("#notebook-editor[data-onboarding-touched]");
     if(editor){ editor.innerHTML=editor.dataset.onboardingOriginal||""; editor.removeAttribute("data-onboarding-original"); editor.removeAttribute("data-onboarding-touched"); }
     const exam=document.getElementById("exam-dialog");
@@ -359,8 +371,12 @@
     runStepAction(step);
 
     const target=resolveTarget(step.target) || document.querySelector(".main") || document.body;
-    target.scrollIntoView({behavior:"smooth",block:step.top?"start":"center"});
-    const liberated = s.phase==="explore" || step.transparent===true;
+    if(step.noScroll){
+      window.scrollTo({top:0,left:0,behavior:"auto"});
+    }else{
+      target.scrollIntoView({behavior:"smooth",block:step.top?"start":"center"});
+    }
+    const liberated = s.phase==="explore";
     if(liberated){
       target.classList.remove("luria-onboarding-target");
       target.classList.add("luria-onboarding-target-clear");
@@ -387,7 +403,7 @@
         <div class="luria-onboarding-bar"><i style="width:${((s.step+1)/steps.length)*100}%"></i></div>
         <h2>${step.title}</h2>
         <p>${step.text}</p>
-        ${s.phase==="explore"?'<small class="luria-onboarding-explore-note">Tela liberada: você pode clicar, ler e configurar normalmente.</small>':""}
+        
         <div class="luria-onboarding-actions">
           <button type="button" data-onboarding-skip>Pular onboarding</button>
           <div>
