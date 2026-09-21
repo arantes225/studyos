@@ -3019,3 +3019,62 @@ body::after {
   .luria-global-dialog-actions{display:grid;grid-template-columns:1fr 1fr}
   .luria-global-dialog-actions .button{width:100%}
 }
+
+
+/* AGENDA v15 — controles alinhados e ação em largura total */
+body[data-page="dashboard"] .calendar-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+body[data-page="dashboard"] .calendar-controls-row {
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+body[data-page="dashboard"] .calendar-controls-row .segmented-control,
+body[data-page="dashboard"] .calendar-controls-row .calendar-nav {
+  display: flex;
+  align-items: stretch;
+  margin: 0;
+}
+
+body[data-page="dashboard"] .calendar-controls-row .segmented-control button,
+body[data-page="dashboard"] .calendar-controls-row .calendar-nav button {
+  min-height: 36px;
+}
+
+body[data-page="dashboard"] .calendar-add-event {
+  display: block;
+  width: 100%;
+  min-height: 36px;
+  margin: 0;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  body[data-page="dashboard"] .calendar-actions,
+  body[data-page="dashboard"] .calendar-controls-row {
+    width: 100%;
+  }
+
+  body[data-page="dashboard"] .calendar-controls-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  body[data-page="dashboard"] .calendar-controls-row .segmented-control,
+  body[data-page="dashboard"] .calendar-controls-row .calendar-nav {
+    width: 100%;
+  }
+
+  body[data-page="dashboard"] .calendar-controls-row .segmented-control button,
+  body[data-page="dashboard"] .calendar-controls-row .calendar-nav button {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
