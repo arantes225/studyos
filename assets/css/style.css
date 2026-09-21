@@ -3222,3 +3222,14 @@ input[type="date"]::-webkit-calendar-picker-indicator{
 .luria-calendar-foot button:hover{
   background:var(--accent-soft);
 }
+
+.luria-global-dialog-icon{
+  overflow:hidden;
+  padding:7px;
+}
+.luria-global-dialog-logo{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
