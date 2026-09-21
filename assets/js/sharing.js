@@ -66,7 +66,7 @@
                     <span class="luria-share-avatar">${esc((friend.display_name || "U").charAt(0).toUpperCase())}</span>
                     <span class="luria-share-friend-copy">
                       <strong>${esc(friend.display_name || "Usuário LURIA")}</strong>
-                      <small>ID ${esc(friend.luria_id || "")}${friend.specialty ? " · " + esc(friend.specialty) : ""}</small>
+                      <small>ID ${esc(friend.luria_id || "")}</small>
                     </span>
                     <span class="luria-share-send">Enviar</span>
                   </button>
