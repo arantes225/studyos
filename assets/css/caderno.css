@@ -3023,3 +3023,35 @@
   justify-content: center;
 }
 
+
+
+/* Estado ativo de negrito, itálico e sublinhado */
+#notebook-bold.is-active,
+#notebook-italic.is-active,
+#notebook-underline.is-active,
+#notebook-bold[aria-pressed="true"],
+#notebook-italic[aria-pressed="true"],
+#notebook-underline[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color:
+    color-mix(
+      in srgb,
+      var(--accent) 22%,
+      transparent
+    );
+}
+
+#notebook-bold.is-active:hover,
+#notebook-italic.is-active:hover,
+#notebook-underline.is-active:hover,
+#notebook-bold[aria-pressed="true"]:hover,
+#notebook-italic[aria-pressed="true"]:hover,
+#notebook-underline[aria-pressed="true"]:hover {
+  background:
+    color-mix(
+      in srgb,
+      var(--accent) 16%,
+      var(--surface)
+    );
+}
