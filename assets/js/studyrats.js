@@ -6,24 +6,37 @@ let sharedStudyratsMyAccessory='none';
 
 const sharedStudyratLaneColors=['#2f80ed','#36a96c','#f2994a','#8b5cf6','#eb5757','#24a0b5'];
 const sharedStudyratVariants=[
-  {id:'brown',label:'Marrom',src:'/assets/img/studyrats/rat-brown.png?v=9'},
-  {id:'gray',label:'Cinza',src:'/assets/img/studyrats/rat-gray.png?v=9'},
-  {id:'white',label:'Branco',src:'/assets/img/studyrats/rat-white.png?v=9'},
-  {id:'black',label:'Preto',src:'/assets/img/studyrats/rat-black.png?v=9'},
-  {id:'blue',label:'Azul',src:'/assets/img/studyrats/rat-blue.png?v=9'},
-  {id:'manchado',label:'Manchado',src:'/assets/img/studyrats/rat-manchado.png?v=9'}
+  {id:'green',label:'Verde radioativo',src:'/assets/img/studyrats/ratinhos/ratinho_verde_radioativo.webp?v=16'},
+  {id:'orange',label:'Laranja',src:'/assets/img/studyrats/ratinhos/ratinho_laranja.webp?v=16'},
+  {id:'tiger',label:'Tigrado',src:'/assets/img/studyrats/ratinhos/ratinho_tigrado.webp?v=16'},
+  {id:'pink',label:'Rosa choque',src:'/assets/img/studyrats/ratinhos/ratinho_rosa_choque.webp?v=16'},
+  {id:'brown',label:'Marrom',src:'/assets/img/studyrats/ratinhos/ratinho_marrom.webp?v=16'},
+  {id:'white',label:'Branco',src:'/assets/img/studyrats/ratinhos/ratinho_branco.webp?v=16'},
+  {id:'black',label:'Preto',src:'/assets/img/studyrats/ratinhos/ratinho_preto.webp?v=16'},
+  {id:'gray',label:'Cinza',src:'/assets/img/studyrats/ratinhos/ratinho_cinza.webp?v=16'},
+  {id:'blue',label:'Azul',src:'/assets/img/studyrats/ratinhos/ratinho_azul.webp?v=16'},
+  {id:'lavender',label:'Lavanda',src:'/assets/img/studyrats/ratinhos/ratinho_lavanda_manchado.webp?v=16'}
 ];
 
 const sharedStudyratAccessories=[
   {id:'none',label:'Sem acessório',kind:'none',src:''},
-  {id:'cap-colorful',label:'Boné colorido',kind:'head',src:'chapeu.png'},
-  {id:'cowboy-hat',label:'Cowboy',kind:'head',src:'chapeu-de-cowboy.png'},
-  {id:'santa-hat',label:'Papai Noel',kind:'head',src:'papai-noel.png'},
-  {id:'pink-hat',label:'Chapéu rosa',kind:'head',src:'chapeu-rosa.png'},
-  {id:'pink-glasses',label:'Óculos rosa',kind:'face',src:'oculos-rosa.png'},
-  {id:'crown',label:'Coroa',kind:'head',src:'coroa.png'},
-  {id:'police-cap',label:'Policial',kind:'head',src:'cap-policial.png'},
-  {id:'astronaut-helmet',label:'Astronauta',kind:'helmet',src:'capacete-astronauta.png'}
+  {id:'colorful-cap',label:'Boné colorido',kind:'head',src:'/assets/img/studyrats/acessórios/cabeça/cabeça/colorful-cap.webp?v=16'},
+  {id:'cowboy-hat',label:'Cowboy',kind:'head',src:'/assets/img/studyrats/acessórios/cabeça/cabeça/cowboy-hat.webp?v=16'},
+  {id:'crown',label:'Coroa',kind:'head',src:'/assets/img/studyrats/acessórios/cabeça/cabeça/crown.webp?v=16'},
+  {id:'gamer-headset',label:'Headset gamer',kind:'head',src:'/assets/img/studyrats/acessórios/cabeça/cabeça/gamer-headset.webp?v=16'},
+  {id:'magic-top-hat',label:'Cartola mágica',kind:'head',src:'/assets/img/studyrats/acessórios/cabeça/cabeça/magic-top-hat.webp?v=16'},
+  {id:'mouse-ears',label:'Tiara de orelhas',kind:'head',src:'/assets/img/studyrats/acessórios/cabeça/cabeça/mouse-ears-headband.webp?v=16'},
+  {id:'pink-bow-hat',label:'Chapéu rosa',kind:'head',src:'/assets/img/studyrats/acessórios/cabeça/cabeça/pink-bow-hat.webp?v=16'},
+  {id:'santa-hat',label:'Papai Noel',kind:'head',src:'/assets/img/studyrats/acessórios/cabeça/cabeça/santa-hat.webp?v=16'},
+  {id:'unicorn-headband',label:'Tiara unicórnio',kind:'head',src:'/assets/img/studyrats/acessórios/cabeça/cabeça/unicorn-headband.webp?v=16'},
+  {id:'viking-helmet',label:'Viking',kind:'head',src:'/assets/img/studyrats/acessórios/cabeça/cabeça/viking-helmet.webp?v=16'},
+  {id:'wizard-hat',label:'Chapéu de mago',kind:'head',src:'/assets/img/studyrats/acessórios/cabeça/cabeça/wizard-hat.webp?v=16'},
+  {id:'cyberpunk-visor',label:'Visor cyberpunk',kind:'face',src:'/assets/img/studyrats/acessórios/rosto/cyberpunk-visor.webp?v=16'},
+  {id:'pink-round-glasses',label:'Óculos rosa',kind:'face',src:'/assets/img/studyrats/acessórios/rosto/pink-round-glasses.webp?v=16'},
+  {id:'round-nerd-glasses',label:'Óculos nerd',kind:'face',src:'/assets/img/studyrats/acessórios/rosto/round-nerd-glasses.webp?v=16'},
+  {id:'angel-wings',label:'Asas',kind:'back',src:'/assets/img/studyrats/acessórios/costas/angel-wings.webp?v=16'},
+  {id:'rocket-flame',label:'Foguinho',kind:'back',src:'/assets/img/studyrats/acessórios/atras/atras/rocket-flame.webp?v=16'},
+  {id:'astronaut-helmet',label:'Astronauta',kind:'helmet',src:'/assets/img/studyrats/acessórios/atras/capacete-astronauta.png?v=16'}
 ];
 
 function sharedStudyratVariant(value){
@@ -39,14 +52,13 @@ function sharedStudyratAccessory(value){
 
 function sharedStudyratAccessorySources(item){
   if(!item||!item.src)return [];
-  return ['/assets/img/studyrats/'+encodeURIComponent(item.src)+'?v=15'];
+  return [item.src];
 }
 
 function sharedStudyratAccessoryImg(value,className){
   const item=sharedStudyratAccessory(value);
   if(item.id==='none'||!item.src)return '';
-  const src='/assets/img/studyrats/'+encodeURIComponent(item.src)+'?v=15';
-  return '<img class="'+(className||'studyrats-accessory-img')+' accessory-'+item.id+' accessory-kind-'+item.kind+'" src="'+src+'" alt="'+item.label+'" draggable="false" loading="eager" decoding="async">';
+  return '<img class="'+(className||'studyrats-accessory-img')+' accessory-'+item.id+' accessory-kind-'+item.kind+'" src="'+item.src+'" alt="'+item.label+'" draggable="false" loading="eager" decoding="async">';
 }
 
 function sharedStudyratComposite(variant,accessory,className){
