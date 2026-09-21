@@ -3314,39 +3314,62 @@ function carregarOnboardingGlobal() {
 
 
 async function iniciarApp() {
-  await carregarOnboardingGlobal();
+  // Não bloqueia a primeira pintura com o onboarding.
+  // Ele é carregado em segundo plano depois que a navegação principal estiver utilizável.
+  const onboardingPromise =
+    carregarOnboardingGlobal().catch(() => {});
 
-  const { data, error } = await sb.auth.getSession();
+  const { data, error } =
+    await sb.auth.getSession();
 
   if (error || !data.session) {
     window.location.replace("/login/");
     return;
   }
 
-  const user = data.session.user;
+  const user =
+    data.session.user;
+
+  const cachedTheme =
+    readCachedTheme(user.id);
+
+  if (cachedTheme) {
+    applyThemeSetting(
+      cachedTheme
+    );
+  }
+
+  // As consultas independentes agora rodam em paralelo.
+  // Antes elas eram aguardadas em série e somavam vários round-trips do Supabase.
+  const adminCheckPromise =
+    page === "admin"
+      ? verificarAcessoAdmin()
+      : Promise.resolve(null);
+
+  const [
+    entitlements,
+    profile,
+    ,
+    acessoAdminInicial
+  ] = await Promise.all([
+    carregarEntitlements(),
+    carregarPerfil(user.id),
+    carregarTema(user.id),
+    adminCheckPromise
+  ]);
 
   let acessoAdmin =
-    null;
+    acessoAdminInicial;
 
   if (
     page === "admin"
+    && acessoAdmin !== true
   ) {
-    acessoAdmin =
-      await verificarAcessoAdmin();
-
-    if (
-      !acessoAdmin
-    ) {
-      window.location.replace(
-        "/dashboard/"
-      );
-
-      return;
-    }
+    window.location.replace(
+      "/dashboard/"
+    );
+    return;
   }
-
-  const entitlements =
-    await carregarEntitlements();
 
   const requiredFeature =
     PAGE_FEATURES[page]
@@ -3359,14 +3382,10 @@ async function iniciarApp() {
       requiredFeature
     )
   ) {
-    // Nunca redirecione o Dashboard para ele mesmo.
-    // Se o RPC de entitlements vier incompleto/temporariamente indisponível,
-    // manter o Dashboard acessível evita um loop infinito /dashboard/ -> /dashboard/.
     if (page !== "dashboard") {
       window.location.replace(
         "/dashboard/"
       );
-
       return;
     }
 
@@ -3374,16 +3393,6 @@ async function iniciarApp() {
       "Entitlement de dashboard ausente; mantendo o Dashboard acessível para evitar loop de redirecionamento."
     );
   }
-
-  const cachedTheme = readCachedTheme(user.id);
-  if (cachedTheme) {
-    applyThemeSetting(cachedTheme);
-  }
-
-  const [profile] = await Promise.all([
-    carregarPerfil(user.id),
-    carregarTema(user.id)
-  ]);
 
   document.getElementById("sidebar").innerHTML =
     sidebarMarkup(user, profile);
@@ -3393,59 +3402,58 @@ async function iniciarApp() {
     || "light"
   );
 
-  iniciarLofiGlobal(user.id).catch((error) => {
-    console.warn(
-      "Não foi possível iniciar o player de lo-fi:",
-      error
+  const info =
+    PAGE_INFO[page]
+    || PAGE_INFO.dashboard;
+
+  document
+    .querySelectorAll("[data-page-title]")
+    .forEach((el) => {
+      el.textContent =
+        info.title;
+    });
+
+  document
+    .querySelectorAll("[data-page-eyebrow]")
+    .forEach((el) => {
+      el.textContent =
+        info.eyebrow;
+    });
+
+  document.getElementById("logout")
+    ?.addEventListener(
+      "click",
+      async () => {
+        await sb.auth.signOut();
+        window.location.replace(
+          "/login/"
+        );
+      }
     );
-  });
-
-  const info = PAGE_INFO[page] || PAGE_INFO.dashboard;
-
-  document.querySelectorAll("[data-page-title]").forEach((el) => {
-    el.textContent = info.title;
-  });
-
-  document.querySelectorAll("[data-page-eyebrow]").forEach((el) => {
-    el.textContent = info.eyebrow;
-  });
-
-  document.getElementById("logout")?.addEventListener("click", async () => {
-    await sb.auth.signOut();
-    window.location.replace("/login/");
-  });
 
   prepararMobileMenu();
-  prepararSidebarDesktop(user.id);
-  prepararStudyMenu(user.id);
+  prepararSidebarDesktop(
+    user.id
+  );
+  prepararStudyMenu(
+    user.id
+  );
   aplicarEntitlementsNaNavegacao(
     entitlements
   );
-
-  acessoAdmin =
-    await prepararAdminNavigation(
-      acessoAdmin
-    );
-
-  await registrarAcessoDiario();
   prepararConfiguracoes();
 
-  prepararNotificacoes(
-    user.id
-  ).catch(
-    error => {
-      console.warn(
-        "Não foi possível iniciar as notificações:",
-        error
-      );
-    }
+  // Expõe a página assim que autenticação, tema, perfil e acesso essencial estiverem resolvidos.
+  document.body.classList.add(
+    "app-ready"
   );
 
-  document.body.classList.add("app-ready");
-
-  window.docmapUser = user;
-  window.docmapSession = data.session;
-  window.docmapProfile = profile;
+  window.docmapUser =
+    user;
+  window.docmapSession =
+    data.session;
+  window.docmapProfile =
+    profile;
   window.docmapEntitlements =
     entitlements;
   window.docmapPlan =
@@ -3455,20 +3463,81 @@ async function iniciarApp() {
     acessoAdmin === true;
 
   window.dispatchEvent(
-    new CustomEvent("docmap:ready", {
-      detail: {
-        user,
-        session: data.session,
-        isAdmin:
-          window.docmapIsAdmin,
-        plan:
-          window.docmapPlan,
-        entitlements:
-          window.docmapEntitlements
+    new CustomEvent(
+      "docmap:ready",
+      {
+        detail: {
+          user,
+          session:
+            data.session,
+          isAdmin:
+            window.docmapIsAdmin,
+          plan:
+            window.docmapPlan,
+          entitlements:
+            window.docmapEntitlements
+        }
       }
-    })
+    )
   );
-}
 
+  // Tudo abaixo é complementar e não deve segurar a navegação.
+  iniciarLofiGlobal(
+    user.id
+  ).catch(
+    (error) => {
+      console.warn(
+        "Não foi possível iniciar o player de lo-fi:",
+        error
+      );
+    }
+  );
+
+  prepararNotificacoes(
+    user.id
+  ).catch(
+    (error) => {
+      console.warn(
+        "Não foi possível iniciar as notificações:",
+        error
+      );
+    }
+  );
+
+  registrarAcessoDiario()
+    .catch(
+      (error) => {
+        console.warn(
+          "Não foi possível registrar o acesso diário:",
+          error
+        );
+      }
+    );
+
+  // Em páginas comuns, a checagem de Admin não é necessária para a primeira pintura.
+  if (page !== "admin") {
+    prepararAdminNavigation()
+      .then(
+        (isAdmin) => {
+          window.docmapIsAdmin =
+            isAdmin === true;
+        }
+      )
+      .catch(
+        (error) => {
+          console.warn(
+            "Não foi possível preparar a navegação Admin:",
+            error
+          );
+        }
+      );
+  } else {
+    prepararAdminNavigation(
+      true
+    ).catch(() => {});
+  }
+
+  onboardingPromise.catch(() => {});
+}
 
 iniciarApp();
