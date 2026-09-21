@@ -362,3 +362,32 @@ body:has(#luria-onboarding-overlay) #luria-onboarding-overlay{
 body:has(#luria-onboarding-overlay) #luria-onboarding-overlay .luria-onboarding-card{
   z-index:100000 !important;
 }
+
+
+/* Onboarding v2.3 — cadastro detalhado dos erros após aplicar gabarito */
+.onboarding-error-registration{
+  margin-top:10px;
+  padding:12px;
+  border:1px solid color-mix(in srgb,var(--accent,#184888) 28%,var(--border,#dbe3ee));
+  border-radius:12px;
+  background:color-mix(in srgb,var(--accent,#184888) 4%,var(--surface,#fff));
+}
+.onboarding-error-registration .qs-field input[readonly],
+.onboarding-error-registration .qs-field textarea[readonly]{
+  opacity:1;
+  cursor:default;
+}
+.onboarding-error-registration-summary{
+  display:grid;
+  gap:5px;
+  padding:11px 12px;
+  border:1px dashed var(--accent,#184888);
+  border-radius:10px;
+  background:var(--surface,#fff);
+  font-size:10px;
+  line-height:1.45;
+}
+.onboarding-error-registration-summary strong{
+  margin-bottom:2px;
+  color:var(--accent,#184888);
+}
