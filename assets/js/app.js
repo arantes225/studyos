@@ -2506,7 +2506,7 @@ function wireLuriaDateInputs() {
     event => {
       const input =
         event.target.closest?.(
-          'input[type="date"]'
+          'input[type="date"], input[data-luria-calendar="deck"]'
         );
 
       if (!input) return;
