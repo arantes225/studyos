@@ -92,3 +92,18 @@ body.luria-onboarding-exploring #luria-onboarding-overlay .luria-onboarding-card
   z-index: 99995 !important;
   pointer-events: auto !important;
 }
+
+
+/* Onboarding v1.6 — modos + transparência contextual */
+.luria-onboarding-mode .luria-onboarding-card{max-width:700px}
+.luria-onboarding-mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
+.luria-onboarding-mode-grid button{min-height:124px;padding:16px;border:1px solid var(--border,#dbe3ee);border-radius:14px;background:var(--surface-2,#f6f8fb);color:var(--text,#172033);text-align:left;cursor:pointer;transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease}
+.luria-onboarding-mode-grid button:hover{border-color:var(--accent,#184888);box-shadow:0 8px 24px rgba(0,0,0,.08);transform:translateY(-1px)}
+.luria-onboarding-mode-grid strong,.luria-onboarding-mode-grid small{display:block}.luria-onboarding-mode-grid strong{font-size:15px}.luria-onboarding-mode-grid small{margin-top:7px;color:var(--muted,#667085);font-size:11px;line-height:1.45}
+.luria-onboarding-cancel{margin-top:12px;width:100%;min-height:38px;border:1px solid var(--border,#dbe3ee);border-radius:10px;background:transparent;color:var(--muted,#667085);font-weight:700}
+body.luria-onboarding-exploring #luria-onboarding-overlay .luria-onboarding-card{background:color-mix(in srgb,var(--surface,#fff) 94%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+body.luria-onboarding-exploring #luria-onboarding-overlay .luria-onboarding-dim{display:none!important}
+body.luria-onboarding-exploring .luria-onboarding-target{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,#184888) 72%,transparent)!important}
+.qs-onboarding-help{min-height:34px;margin-left:auto;padding:0 12px;border:1px solid var(--accent,#184888);border-radius:10px;background:var(--accent-soft,rgba(24,72,136,.08));color:var(--accent,#184888);font:inherit;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap}
+.qs-onboarding-help:hover{background:color-mix(in srgb,var(--accent,#184888) 12%,var(--surface,#fff))}
+@media(max-width:700px){.luria-onboarding-mode-grid{grid-template-columns:1fr}.luria-onboarding-mode-grid button{min-height:96px}.qs-onboarding-help{width:100%;margin:8px 0 0}}
