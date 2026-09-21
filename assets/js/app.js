@@ -374,9 +374,16 @@ function sidebarMarkup(user, profile = null) {
 
       <a class="nav-link ${page === "configuracoes" ? "active" : ""}" href="/configuracoes/">
         <span class="nav-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.12 2.12-.06-.06A1.7 1.7 0 0 0 15.74 19.34a1.7 1.7 0 0 0-1.02 1.56V21h-3v-.1a1.7 1.7 0 0 0-1.02-1.56A1.7 1.7 0 0 0 8.82 19l-.06.06-2.12-2.12.06-.06A1.7 1.7 0 0 0 7.04 15a1.7 1.7 0 0 0-1.56-1.02H5v-3h.48A1.7 1.7 0 0 0 7.04 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.12-2.12.06.06A1.7 1.7 0 0 0 10.7 4.66 1.7 1.7 0 0 0 11.72 3.1V3h3v.1a1.7 1.7 0 0 0 1.02 1.56A1.7 1.7 0 0 0 17.62 5l.06-.06 2.12 2.12-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.56 1.02H21v3h-.04A1.7 1.7 0 0 0 19.4 15z"></path>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3.25"></circle>
+            <path d="M12 2.75v2.1"></path>
+            <path d="M12 19.15v2.1"></path>
+            <path d="M21.25 12h-2.1"></path>
+            <path d="M4.85 12h-2.1"></path>
+            <path d="M18.55 5.45l-1.48 1.48"></path>
+            <path d="M6.93 17.07l-1.48 1.48"></path>
+            <path d="M18.55 18.55l-1.48-1.48"></path>
+            <path d="M6.93 6.93L5.45 5.45"></path>
           </svg>
         </span><span>Configurações</span>
       </a>
