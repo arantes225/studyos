@@ -17,7 +17,7 @@
 
   <link rel="stylesheet" href="assets/css/style.css?v=luria-pattern-14">
   <link rel="stylesheet" href="assets/css/image-lightbox.css?v=1">
-  <link rel="stylesheet" href="assets/css/flashcards.css?v=16">
+  <link rel="stylesheet" href="assets/css/flashcards.css?v=16.1">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
   <script defer src="assets/js/luria-brand-v5.js?v=9"></script>
   <link rel="canonical" href="/flashcards/">
@@ -451,21 +451,28 @@
 
             <div class="flash-form-grid">
 
-              <label class="flash-field">
+              <div class="flash-field">
                 <span>Área *</span>
-                <select
-                  id="create-area"
-                  class="flash-click-select"
-                  aria-label="Selecionar área"
-                >
-                  <option value="">Selecione a área</option>
-                  <option value="Clínica Médica">Clínica Médica</option>
-                  <option value="Pediatria">Pediatria</option>
-                  <option value="Ginecologia e Obstetrícia">Ginecologia e Obstetrícia</option>
-                  <option value="Cirurgia Geral">Cirurgia Geral</option>
-                  <option value="Preventiva">Preventiva</option>
-                </select>
-              </label>
+                <div class="flash-area-picker">
+                  <button
+                    id="create-area-toggle"
+                    class="flash-click-select flash-area-toggle"
+                    type="button"
+                    aria-haspopup="listbox"
+                    aria-expanded="false"
+                  >
+                    <span id="create-area-label">Selecione a área</span>
+                    <span class="flash-area-chevron" aria-hidden="true">⌄</span>
+                  </button>
+                  <div
+                    id="create-area-menu"
+                    class="flash-area-menu"
+                    role="listbox"
+                    hidden
+                  ></div>
+                  <input id="create-area" type="hidden" value="">
+                </div>
+              </div>
 
               <div class="flash-field">
                 <span>Matéria <small>(opcional)</small></span>
@@ -983,7 +990,7 @@
   <script src="assets/js/app.js?v=14.8"></script>
   <script src="assets/js/study-mode.js?v=13.0"></script>
   <script src="assets/js/sharing.js?v=3"></script>
-  <script src="assets/js/flashcards.js?v=15.3"></script>
+  <script src="assets/js/flashcards.js?v=15.4"></script>
 
     <script src="assets/js/image-lightbox.js?v=1"></script>
 <script defer src="assets/js/pwa.js?v=3"></script>
