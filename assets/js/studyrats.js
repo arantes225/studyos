@@ -2,19 +2,10 @@ let sharedStudyratsRows=[];
 let sharedStudyratsChannel=null;
 let sharedStudyratsTimer=null;
 
-const sharedStudyratAssets=[
-  'assets/img/studyrats/rat-gray.png',
-  'assets/img/studyrats/rat-brown.png',
-  'assets/img/studyrats/rat-white.png',
-  'assets/img/studyrats/rat-charcoal.png'
-];
 const sharedStudyratLaneColors=['#2f80ed','#36a96c','#f2994a','#8b5cf6','#eb5757','#24a0b5'];
 
-function sharedRatAsset(index){
-  return sharedStudyratAssets[index%sharedStudyratAssets.length];
-}
 function sharedRatImg(index,className){
-  return '<img class="'+(className||'studyrats-rat-img')+'" src="'+sharedRatAsset(index)+'" alt="" aria-hidden="true">';
+  return '<span class="'+(className||'studyrats-rat-img')+' rat-'+(index%4)+'" aria-hidden="true"></span>';
 }
 function sharedStudyratsInitials(name){
   return String(name||'L').trim().split(/\s+/).slice(0,2).map(function(part){return part.charAt(0).toUpperCase();}).join('')||'L';
