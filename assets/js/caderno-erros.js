@@ -1524,7 +1524,7 @@ async function deleteEditingErrorImage() {
 
   if (!item?.question_image_path) return;
 
-  const confirmed = window.confirm(
+  const confirmed = await window.LuriaDialog.confirm(
     "Excluir a imagem deste item? O arquivo será apagado do Storage."
   );
   if (!confirmed) return;
@@ -3599,8 +3599,7 @@ async function deleteErrorFromLibrary(
   }
 
 
-  const confirmed =
-    window.confirm(
+  const confirmed = await window.LuriaDialog.confirm(
       "Excluir este item do Caderno de Erros permanentemente? Esta ação não pode ser desfeita."
     );
 
@@ -4283,8 +4282,7 @@ async function deleteSelectedErrors() {
   }
 
 
-  const confirmed =
-    window.confirm(
+  const confirmed = await window.LuriaDialog.confirm(
       `Excluir ${ids.length} item${ids.length === 1 ? "" : "s"} do Caderno permanentemente?`
     );
 
