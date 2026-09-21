@@ -614,69 +614,54 @@
 .studyrats-empty-composite .accessory-rocket-flame{left:-17px;top:23px}
 .studyrats-empty-composite .accessory-astronaut-helmet{left:56px;top:20px}
 
-/* Studyrats preview accessory positioning v20 — grouped fine tuning */
-/* Chapéus: -10%, um pouco para baixo e para a esquerda */
+/* Studyrats preview accessory positioning v21 — fine tuning solicitado */
 .studyrats-preview-composite .accessory-colorful-cap{
-  width:33px!important;height:23px!important;left:30px!important;top:2px!important;transform:rotate(3deg)!important;
+  width:31.35px!important;height:21.85px!important;left:30px!important;top:5px!important;transform:rotate(3deg)!important;
 }
 .studyrats-preview-composite .accessory-cowboy-hat{
-  width:42px!important;height:26px!important;left:23px!important;top:1px!important;transform:rotate(2deg)!important;
+  width:39.9px!important;height:24.7px!important;left:23px!important;top:6px!important;transform:rotate(2deg)!important;
+}
+.studyrats-preview-composite .accessory-crown{
+  width:24.25px!important;height:20.37px!important;left:35px!important;top:9px!important;
+}
+.studyrats-preview-composite .accessory-gamer-headset{
+  width:30.6px!important;height:27.2px!important;left:28px!important;top:6px!important;
 }
 .studyrats-preview-composite .accessory-magic-top-hat{
-  width:37px!important;height:29px!important;left:26px!important;top:-2px!important;transform:rotate(2deg)!important;
+  width:35.15px!important;height:27.55px!important;left:26px!important;top:3px!important;transform:rotate(2deg)!important;
+}
+.studyrats-preview-composite .accessory-mouse-ears{
+  width:27.9px!important;height:19.8px!important;left:29px!important;top:8px!important;
 }
 .studyrats-preview-composite .accessory-pink-bow-hat{
-  width:42px!important;height:25px!important;left:24px!important;top:1px!important;transform:rotate(2deg)!important;
+  width:39.9px!important;height:23.75px!important;left:21px!important;top:6px!important;transform:rotate(2deg)!important;
 }
 .studyrats-preview-composite .accessory-santa-hat{
-  width:34px!important;height:26px!important;left:28px!important;top:-2px!important;transform:rotate(5deg)!important;
-}
-.studyrats-preview-composite .accessory-viking-helmet{
-  width:37px!important;height:24px!important;left:24px!important;top:1px!important;
-}
-.studyrats-preview-composite .accessory-wizard-hat{
-  width:36px!important;height:29px!important;left:23px!important;top:-4px!important;transform:rotate(2deg)!important;
-}
-
-/* Coroa: -10%, para baixo e para a esquerda */
-.studyrats-preview-composite .accessory-crown{
-  width:25px!important;height:21px!important;left:35px!important;top:2px!important;
-}
-
-/* Tiaras: -15%, para baixo e para a esquerda */
-.studyrats-preview-composite .accessory-mouse-ears{
-  width:31px!important;height:22px!important;left:29px!important;top:4px!important;
+  width:32.64px!important;height:24.96px!important;left:24px!important;top:4px!important;transform:rotate(5deg)!important;
 }
 .studyrats-preview-composite .accessory-unicorn-headband{
-  width:30px!important;height:23px!important;left:27px!important;top:-1px!important;
+  width:25.5px!important;height:19.55px!important;left:24px!important;top:7px!important;
 }
-
-/* Headset: preserva o ajuste atual */
-.studyrats-preview-composite .accessory-gamer-headset{
-  width:36px!important;height:32px!important;left:31px!important;top:1px!important;
+.studyrats-preview-composite .accessory-viking-helmet{
+  width:35.52px!important;height:23.04px!important;left:23px!important;top:5px!important;
 }
-
-/* Rosto / óculos: mover para a esquerda */
+.studyrats-preview-composite .accessory-wizard-hat{
+  width:34.2px!important;height:27.55px!important;left:22px!important;top:3px!important;transform:rotate(2deg)!important;
+}
 .studyrats-preview-composite .accessory-cyberpunk-visor{
-  left:31px!important;
+  width:34.34px!important;height:20.2px!important;left:28px!important;
 }
 .studyrats-preview-composite .accessory-pink-round-glasses,
 .studyrats-preview-composite .accessory-round-nerd-glasses{
-  left:32px!important;
+  left:29px!important;
 }
-
-/* Costas: subir mais e um pouco para a esquerda */
 .studyrats-preview-composite .accessory-angel-wings{
-  left:-3px!important;top:-26px!important;
+  left:-7px!important;top:-34px!important;
 }
-
-/* Foguinho: invertido e 5% menor */
 .studyrats-preview-composite .accessory-rocket-flame{
   width:40px!important;height:27px!important;
   transform:none!important;
 }
-
-/* Capacete de astronauta: -8% */
 .studyrats-preview-composite .accessory-astronaut-helmet{
-  width:26px!important;height:24px!important;left:39px!important;top:12px!important;
+  width:26.52px!important;height:24.48px!important;left:37px!important;top:10px!important;
 }
