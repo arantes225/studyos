@@ -14232,6 +14232,53 @@ async function renderNotebookPdfCanvasAttempt(
 }
 
 
+function collectNotebookPdfProtectedRanges(
+  paper
+) {
+  if (!paper) {
+    return [];
+  }
+
+  const paperRect =
+    paper.getBoundingClientRect();
+
+  return Array.from(
+    paper.querySelectorAll(
+      ".notebook-study-block"
+    )
+  )
+    .map(
+      block => {
+        const rect =
+          block.getBoundingClientRect();
+
+        return {
+          top:
+            rect.top
+            - paperRect.top,
+          bottom:
+            rect.bottom
+            - paperRect.top
+        };
+      }
+    )
+    .filter(
+      range =>
+        Number.isFinite(
+          range.top
+        )
+        &&
+        Number.isFinite(
+          range.bottom
+        )
+        &&
+        range.bottom
+        >
+        range.top
+    );
+}
+
+
 async function renderNotebookPdfCanvas(
   entry
 ) {
@@ -14330,7 +14377,18 @@ async function renderNotebookPdfCanvas(
         );
       }
 
-      return canvas;
+      return {
+        canvas,
+        protectedRanges:
+          collectNotebookPdfProtectedRanges(
+            paper
+          ),
+        sourceCssHeight:
+          Math.max(
+            1,
+            paper.getBoundingClientRect().height
+          )
+      };
 
     } catch (
       canvasError
@@ -14364,7 +14422,19 @@ async function renderNotebookPdfCanvas(
         );
       }
 
-      return fallbackCanvas;
+      return {
+        canvas:
+          fallbackCanvas,
+        protectedRanges:
+          collectNotebookPdfProtectedRanges(
+            paper
+          ),
+        sourceCssHeight:
+          Math.max(
+            1,
+            paper.getBoundingClientRect().height
+          )
+      };
     }
   }
 
@@ -14377,7 +14447,9 @@ function addNotebookCanvasToPdf(
   doc,
   canvas,
   firstPage = false,
-  assets = null
+  assets = null,
+  protectedRanges = [],
+  sourceCssHeight = null
 ) {
   const pageWidth =
     210;
@@ -14420,6 +14492,46 @@ function addNotebookCanvasToPdf(
       )
     );
 
+  const canvasScaleY =
+    sourceCssHeight
+      ? (
+          canvas.height
+          /
+          sourceCssHeight
+        )
+      : 1;
+
+  const protectedCanvasRanges =
+    protectedRanges
+      .map(
+        range => ({
+          top:
+            Math.max(
+              0,
+              Math.floor(
+                range.top
+                *
+                canvasScaleY
+              )
+            ),
+          bottom:
+            Math.min(
+              canvas.height,
+              Math.ceil(
+                range.bottom
+                *
+                canvasScaleY
+              )
+            )
+        })
+      )
+      .filter(
+        range =>
+          range.bottom
+          >
+          range.top
+      );
+
   let sourceY =
     0;
 
@@ -14441,13 +14553,75 @@ function addNotebookCanvasToPdf(
       doc.addPage();
     }
 
-    const sliceHeight =
+    let sliceHeight =
       Math.min(
         sourcePageHeight,
         canvas.height
         -
         sourceY
       );
+
+    let proposedEnd =
+      sourceY
+      +
+      sliceHeight;
+
+    /*
+      Callouts são blocos atômicos na exportação.
+      Se a quebra de página cair no meio de um callout,
+      terminamos a página imediatamente antes dele e
+      movemos o bloco inteiro para a página seguinte.
+    */
+    for (
+      const range
+      of protectedCanvasRanges
+    ) {
+      const cutsBlock =
+        range.top
+        >
+        sourceY
+        &&
+        range.top
+        <
+        proposedEnd
+        &&
+        range.bottom
+        >
+        proposedEnd;
+
+      if (
+        cutsBlock
+      ) {
+        proposedEnd =
+          range.top;
+
+        sliceHeight =
+          proposedEnd
+          -
+          sourceY;
+
+        break;
+      }
+    }
+
+    /*
+      Proteção contra uma página vazia em casos extremos.
+      Um callout maior que uma página inteira é mantido
+      o máximo possível, mas não trava o exportador.
+    */
+    if (
+      sliceHeight
+      <=
+      1
+    ) {
+      sliceHeight =
+        Math.min(
+          sourcePageHeight,
+          canvas.height
+          -
+          sourceY
+        );
+    }
 
     const pageCanvas =
       document.createElement(
@@ -14895,16 +15069,18 @@ async function exportSelectedPdf() {
         entries[index];
 
       try {
-        const canvas =
+        const visual =
           await renderNotebookPdfCanvas(
             entry
           );
 
         addNotebookCanvasToPdf(
           doc,
-          canvas,
+          visual.canvas,
           index === 0,
-          assets
+          assets,
+          visual.protectedRanges,
+          visual.sourceCssHeight
         );
 
       } catch (
