@@ -1760,6 +1760,25 @@ async function saveExam() {
     loadExamSimulationMetrics()
   ]);
 
+  /*
+    O módulo visual v16 mantém um cache próprio das notas de corte.
+    Após criar/editar uma prova, sincroniza esse cache antes de
+    redesenhar os cards para que a nota de corte apareça imediatamente.
+  */
+  if (
+    typeof window.refreshExamV16 ===
+    "function"
+  ) {
+    try {
+      await window.refreshExamV16();
+    } catch (error) {
+      console.warn(
+        "Não foi possível atualizar a nota de corte no card:",
+        error
+      );
+    }
+  }
+
 
   if (
     wasCreating
