@@ -94,7 +94,14 @@
   function stepAt(index,s=status()){ return activeSteps(s)[Math.max(0,Math.min(index,activeSteps(s).length-1))]; }
   function routeForActiveStep(i,s=status()){ return ROUTES[stepAt(i,s)?.page] || "/dashboard/"; }
 
-  function routeForStep(i){ return routeForActiveStep(i); }
+  function routeForStep(i,s=status()){
+    const base=routeForActiveStep(i,s);
+    const params=new URLSearchParams();
+    params.set("onboarding","1");
+    params.set("step",String(i));
+    if(s.mode) params.set("mode",s.mode);
+    return base+"?"+params.toString();
+  }
   function normalizePath(){ return location.pathname.replace(/\.html$/,"/").replace(/\/+/g,"/"); }
   function onCorrectPage(step){ return page === step.page; }
 
@@ -162,7 +169,7 @@
     if(!s.mode){ chooseMode(false); return true; }
     s.started=true; s.step=0; saveState(s);
     if(page!=="configuracoes"){
-      location.replace("/configuracoes/?onboarding=1");
+      location.replace(routeForStep(0,s));
       return true;
     }
     return false;
@@ -343,7 +350,8 @@
     const steps=activeSteps(s);
     const step=steps[Math.min(s.step,steps.length-1)];
     if(!onCorrectPage(step)){
-      location.replace(routeForStep(s.step)+"?onboarding=1");
+      const forced=new URLSearchParams(location.search).get("onboarding")==="1";
+      if(forced) location.replace(routeForStep(s.step,s));
       return;
     }
     ensureStyles();
@@ -420,7 +428,7 @@
     s.step=Math.max(0,Math.min(steps.length-1,s.step+delta)); s.phase="explain"; saveState(s);
     clearOverlay(); clearDemo();
     const next=stepAt(s.step,s);
-    if(next.page!==page) location.href=routeForStep(s.step)+"?onboarding=1";
+    if(next.page!==page) location.href=routeForStep(s.step,s);
     else setTimeout(render,120);
   }
 
@@ -592,14 +600,31 @@
 
   window.LuriaOnboarding={restart,startQuestionsGuide:()=>{questionsGuideIndex=0;renderQuestionsGuide();}};
 
+  function syncStateFromUrl(){
+    const params=new URLSearchParams(location.search);
+    if(params.get("onboarding")!=="1") return;
+    const rawStep=Number(params.get("step"));
+    const mode=params.get("mode");
+    const current=status();
+    if(Number.isInteger(rawStep)&&rawStep>=0) current.step=rawStep;
+    if(mode==="full"||mode==="summary") current.mode=mode;
+    current.started=true;
+    current.completed=false;
+    current.skipped=false;
+    if(!current.phase) current.phase="explain";
+    saveState(current);
+  }
+
   window.addEventListener("docmap:ready",()=>{
     ensureStyles();
+    syncStateFromUrl();
     if(firstTimeRedirect()) return;
     addRestartButton();
     addQuestionsHelpButton();
     renderChallenges();
     trackChallenges();
     const s=status();
-    if(s.started && !s.completed && !s.skipped) setTimeout(render,650);
+    const forced=new URLSearchParams(location.search).get("onboarding")==="1";
+    if(forced && s.started && !s.completed && !s.skipped) setTimeout(render,650);
   });
 })();
