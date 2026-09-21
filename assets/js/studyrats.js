@@ -15,17 +15,15 @@ const sharedStudyratVariants=[
 ];
 
 const sharedStudyratAccessories=[
-  {id:'none',label:'Sem acessório',kind:'none',sources:[]},
-  {id:'medal-silver',label:'Medalha prata',kind:'body',sources:['medalha-prata.png','medalha_prata.png','medal-silver.png','prata.png']},
-  {id:'cap-colorful',label:'Boné colorido',kind:'head',sources:['chapeu.png']},
-  {id:'cowboy-hat',label:'Cowboy',kind:'head',sources:['chapeu-de-cowboy.png']},
-  {id:'santa-hat',label:'Papai Noel',kind:'head',sources:['papai-noel.png']},
-  {id:'pink-hat',label:'Chapéu rosa',kind:'head',sources:['chapeu-rosa.png']},
-  {id:'pink-glasses',label:'Óculos rosa',kind:'face',sources:['oculos-rosa.png']},
-  {id:'crown',label:'Coroa',kind:'head',sources:['coroa.png']},
-  {id:'pink-skirt',label:'Saia rosa',kind:'body',sources:['saia_rosa_com_laço_e_babados.png','saia-rosa.png','saia_rosa.png','pink-skirt.png']},
-  {id:'police-cap',label:'Policial',kind:'head',sources:['cap-policial.png']},
-  {id:'astronaut-helmet',label:'Astronauta',kind:'helmet',sources:['capacete-astronauta.png']}
+  {id:'none',label:'Sem acessório',kind:'none',src:''},
+  {id:'cap-colorful',label:'Boné colorido',kind:'head',src:'chapeu.png'},
+  {id:'cowboy-hat',label:'Cowboy',kind:'head',src:'chapeu-de-cowboy.png'},
+  {id:'santa-hat',label:'Papai Noel',kind:'head',src:'papai-noel.png'},
+  {id:'pink-hat',label:'Chapéu rosa',kind:'head',src:'chapeu-rosa.png'},
+  {id:'pink-glasses',label:'Óculos rosa',kind:'face',src:'oculos-rosa.png'},
+  {id:'crown',label:'Coroa',kind:'head',src:'coroa.png'},
+  {id:'police-cap',label:'Policial',kind:'head',src:'cap-policial.png'},
+  {id:'astronaut-helmet',label:'Astronauta',kind:'helmet',src:'capacete-astronauta.png'}
 ];
 
 function sharedStudyratVariant(value){
@@ -40,18 +38,15 @@ function sharedStudyratAccessory(value){
 }
 
 function sharedStudyratAccessorySources(item){
-  return (item.sources||[]).map(function(file){
-    return '/assets/img/studyrats/'+encodeURIComponent(file).replace(/%2F/g,'/')+'?v=14';
-  });
+  if(!item||!item.src)return [];
+  return ['/assets/img/studyrats/'+encodeURIComponent(item.src)+'?v=15'];
 }
 
 function sharedStudyratAccessoryImg(value,className){
   const item=sharedStudyratAccessory(value);
-  if(item.id==='none')return '';
-  const sources=sharedStudyratAccessorySources(item);
-  if(!sources.length)return '';
-  const encoded=encodeURIComponent(JSON.stringify(sources));
-  return '<img class="'+(className||'studyrats-accessory-img')+' accessory-'+item.id+' accessory-kind-'+item.kind+'" src="'+sources[0]+'" data-studyrat-sources="'+encoded+'" data-studyrat-source-index="0" alt="'+item.label+'" draggable="false" loading="eager" decoding="async">';
+  if(item.id==='none'||!item.src)return '';
+  const src='/assets/img/studyrats/'+encodeURIComponent(item.src)+'?v=15';
+  return '<img class="'+(className||'studyrats-accessory-img')+' accessory-'+item.id+' accessory-kind-'+item.kind+'" src="'+src+'" alt="'+item.label+'" draggable="false" loading="eager" decoding="async">';
 }
 
 function sharedStudyratComposite(variant,accessory,className){
@@ -62,23 +57,7 @@ function sharedStudyratComposite(variant,accessory,className){
 }
 
 function sharedStudyratsBindImageFallbacks(root){
-  (root||document).querySelectorAll('img[data-studyrat-sources]').forEach(function(img){
-    if(img.dataset.fallbackBound==='1')return;
-    img.dataset.fallbackBound='1';
-    img.addEventListener('error',function(){
-      let sources=[];
-      try{sources=JSON.parse(decodeURIComponent(img.dataset.studyratSources||''));}catch(e){}
-      const next=(Number(img.dataset.studyratSourceIndex)||0)+1;
-      if(next<sources.length){
-        img.dataset.studyratSourceIndex=String(next);
-        img.src=sources[next];
-      }else{
-        img.style.display='none';
-        const choice=img.closest('.studyrats-accessory-choice');
-        if(choice)choice.classList.add('is-image-missing');
-      }
-    });
-  });
+  // PNGs are mapped directly; no fallback assets are used.
 }
 
 
