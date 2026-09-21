@@ -1272,6 +1272,359 @@ async function uploadFlashImage(
   return reference || path;
 }
 
+
+const FLASHCARD_SUBJECTS_BY_AREA = {
+  "Clínica Médica": [
+    "Cardiologia",
+    "Pneumologia",
+    "Gastroenterologia",
+    "Hepatologia",
+    "Nefrologia",
+    "Endocrinologia e Metabologia",
+    "Hematologia e Hemoterapia",
+    "Reumatologia",
+    "Infectologia",
+    "Neurologia",
+    "Dermatologia",
+    "Geriatria",
+    "Psiquiatria",
+    "Oncologia Clínica",
+    "Alergia e Imunologia",
+    "Medicina Intensiva",
+    "Urgência e Emergência",
+    "Toxicologia",
+    "Distúrbios hidroeletrolíticos e ácido-base",
+    "Nutrologia",
+    "Cuidados Paliativos",
+    "Doenças Raras e Genética Clínica"
+  ],
+
+  "Pediatria": [
+    "Neonatologia",
+    "Puericultura",
+    "Crescimento e Desenvolvimento",
+    "Aleitamento Materno",
+    "Nutrição Infantil",
+    "Imunizações",
+    "Infectologia Pediátrica",
+    "Pneumologia Pediátrica",
+    "Cardiologia Pediátrica",
+    "Gastroenterologia Pediátrica",
+    "Hepatologia Pediátrica",
+    "Nefrologia Pediátrica",
+    "Urologia Pediátrica",
+    "Endocrinologia Pediátrica",
+    "Neurologia Pediátrica",
+    "Hematologia Pediátrica",
+    "Oncologia Pediátrica",
+    "Reumatologia Pediátrica",
+    "Alergia e Imunologia Pediátrica",
+    "Dermatologia Pediátrica",
+    "Genética Médica",
+    "Adolescência",
+    "Emergências Pediátricas",
+    "Terapia Intensiva Pediátrica",
+    "Cirurgia Pediátrica",
+    "Doenças Respiratórias da Infância",
+    "Diarreia e Desidratação",
+    "Febre sem sinais localizatórios",
+    "Violência e Maus-tratos",
+    "Desenvolvimento Neuropsicomotor"
+  ],
+
+  "Ginecologia e Obstetrícia": [
+    "Pré-natal de baixo risco",
+    "Pré-natal de alto risco",
+    "Medicina Fetal",
+    "Trabalho de Parto",
+    "Assistência ao Parto",
+    "Puerpério",
+    "Hemorragias da Gestação",
+    "Hemorragia Pós-parto",
+    "Síndromes Hipertensivas da Gestação",
+    "Diabetes na Gestação",
+    "Prematuridade",
+    "Rotura Prematura de Membranas",
+    "Infecções na Gestação",
+    "Isoimunização Rh",
+    "Gestação Múltipla",
+    "Restrição de Crescimento Fetal",
+    "Doença Trofoblástica Gestacional",
+    "Contracepção",
+    "Planejamento Reprodutivo",
+    "Infertilidade e Reprodução Humana",
+    "Endocrinologia Ginecológica",
+    "Puberdade e Amenorreias",
+    "Sangramento Uterino Anormal",
+    "Climatério e Menopausa",
+    "Dor Pélvica e Endometriose",
+    "Infecções Ginecológicas e IST",
+    "Uroginecologia",
+    "Prolapso Genital",
+    "Patologia do Trato Genital Inferior",
+    "Oncologia Ginecológica",
+    "Patologia Mamária e Mastologia",
+    "Massas Pélvicas e Tumores Ovarianos",
+    "Sexualidade e Disfunções Sexuais",
+    "Cirurgia Ginecológica"
+  ],
+
+  "Cirurgia Geral": [
+    "Princípios de Cirurgia",
+    "Pré-operatório e Risco Cirúrgico",
+    "Pós-operatório e Complicações",
+    "Choque e Reposição Volêmica",
+    "Nutrição em Cirurgia",
+    "Infecção e Antibioticoprofilaxia",
+    "Trauma",
+    "ATLS e Atendimento Inicial ao Politraumatizado",
+    "Trauma Cranioencefálico",
+    "Trauma Torácico",
+    "Trauma Abdominal",
+    "Trauma Pélvico",
+    "Queimaduras",
+    "Abdome Agudo",
+    "Apendicite",
+    "Obstrução Intestinal",
+    "Perfuração de Víscera Oca",
+    "Hemorragia Digestiva",
+    "Doença do Refluxo e Esôfago",
+    "Cirurgia Gástrica",
+    "Cirurgia Bariátrica e Metabólica",
+    "Intestino Delgado",
+    "Coloproctologia",
+    "Doença Diverticular",
+    "Doenças Anorretais",
+    "Fígado",
+    "Vias Biliares",
+    "Pâncreas",
+    "Baço",
+    "Hérnias e Parede Abdominal",
+    "Cirurgia Vascular",
+    "Cirurgia Torácica",
+    "Cirurgia de Cabeça e Pescoço",
+    "Urologia",
+    "Cirurgia Oncológica",
+    "Cirurgia Pediátrica",
+    "Cirurgia Plástica",
+    "Anestesiologia",
+    "Ortopedia e Traumatologia",
+    "Cirurgia do Aparelho Digestivo",
+    "Acessos, Drenos e Procedimentos",
+    "Transplantes"
+  ],
+
+  "Preventiva": [
+    "Epidemiologia",
+    "Bioestatística",
+    "Medicina Baseada em Evidências",
+    "SUS: Princípios e Diretrizes",
+    "Legislação do SUS",
+    "Leis 8.080 e 8.142",
+    "Atenção Primária à Saúde",
+    "Estratégia Saúde da Família",
+    "Medicina de Família e Comunidade",
+    "Territorialização e Adscrição",
+    "Promoção da Saúde",
+    "Prevenção e Rastreamento",
+    "Vigilância Epidemiológica",
+    "Vigilância Sanitária",
+    "Vigilância em Saúde Ambiental",
+    "Vigilância em Saúde do Trabalhador",
+    "Imunizações e Calendário Vacinal",
+    "Doenças de Notificação Compulsória",
+    "Indicadores de Saúde",
+    "Demografia e Transição Epidemiológica",
+    "Sistemas de Informação em Saúde",
+    "Planejamento e Gestão em Saúde",
+    "Financiamento do SUS",
+    "Redes de Atenção à Saúde",
+    "Regulação em Saúde",
+    "Saúde Coletiva",
+    "Saúde do Trabalhador",
+    "Saúde Ambiental e Saneamento",
+    "Ética Médica",
+    "Bioética",
+    "Atestados, Declarações e Documentos Médicos",
+    "Segurança do Paciente",
+    "Epidemiologia Clínica",
+    "Testes Diagnósticos",
+    "Estudos Observacionais",
+    "Ensaios Clínicos",
+    "Revisões Sistemáticas e Metanálises",
+    "Medidas de Frequência e Associação",
+    "Políticas Nacionais de Saúde",
+    "Equidade e Determinantes Sociais da Saúde"
+  ]
+};
+
+function normalizeFlashAreaName(value) {
+  const raw =
+    String(value || "")
+      .trim();
+
+  const normalized =
+    raw
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+
+  const aliases = {
+    "clinica medica":
+      "Clínica Médica",
+    "pediatria":
+      "Pediatria",
+    "ginecologia e obstetricia":
+      "Ginecologia e Obstetrícia",
+    "ginecologia obstetricia":
+      "Ginecologia e Obstetrícia",
+    "go":
+      "Ginecologia e Obstetrícia",
+    "cirurgia geral":
+      "Cirurgia Geral",
+    "preventiva":
+      "Preventiva",
+    "medicina preventiva":
+      "Preventiva",
+    "medicina preventiva e social":
+      "Preventiva",
+    "saude coletiva":
+      "Preventiva"
+  };
+
+  return aliases[normalized]
+    || raw;
+}
+
+function updateCreateSubjectOptions() {
+  const areaInput =
+    document.getElementById(
+      "create-area"
+    );
+
+  const subjectSelect =
+    document.getElementById(
+      "create-materia"
+    );
+
+  if (
+    !areaInput
+    ||
+    !subjectSelect
+  ) {
+    return;
+  }
+
+  const current =
+    subjectSelect.value;
+
+  const area =
+    normalizeFlashAreaName(
+      areaInput.value
+    );
+
+  const subjects =
+    FLASHCARD_SUBJECTS_BY_AREA[
+      area
+    ]
+    || [];
+
+  subjectSelect.innerHTML =
+    "";
+
+  const placeholder =
+    document.createElement(
+      "option"
+    );
+
+  placeholder.value =
+    "";
+
+  placeholder.textContent =
+    subjects.length
+      ? "Selecione a matéria"
+      : "Selecione primeiro a área";
+
+  subjectSelect.appendChild(
+    placeholder
+  );
+
+  for (
+    const subject
+    of subjects
+  ) {
+    const option =
+      document.createElement(
+        "option"
+      );
+
+    option.value =
+      subject;
+
+    option.textContent =
+      subject;
+
+    subjectSelect.appendChild(
+      option
+    );
+  }
+
+  const other =
+    document.createElement(
+      "option"
+    );
+
+  other.value =
+    "Outra matéria";
+
+  other.textContent =
+    "Outra matéria";
+
+  if (subjects.length) {
+    subjectSelect.appendChild(
+      other
+    );
+  }
+
+  subjectSelect.disabled =
+    !subjects.length;
+
+  if (
+    subjects.includes(
+      current
+    )
+  ) {
+    subjectSelect.value =
+      current;
+  }
+}
+
+function wireCreateTaxonomy() {
+  const areaInput =
+    document.getElementById(
+      "create-area"
+    );
+
+  if (!areaInput) {
+    return;
+  }
+
+  [
+    "input",
+    "change",
+    "blur"
+  ].forEach(
+    eventName => {
+      areaInput.addEventListener(
+        eventName,
+        updateCreateSubjectOptions
+      );
+    }
+  );
+
+  updateCreateSubjectOptions();
+}
+
 function clearCreateForm() {
   [
     "create-area",
@@ -1297,6 +1650,8 @@ function clearCreateForm() {
     )
     .value = "";
 
+  updateCreateSubjectOptions();
+
   setFlashStatus(
     "create-status",
     ""
@@ -1304,6 +1659,8 @@ function clearCreateForm() {
 }
 
 function wireCreate() {
+  wireCreateTaxonomy();
+
   document
     .getElementById(
       "clear-create-card"
