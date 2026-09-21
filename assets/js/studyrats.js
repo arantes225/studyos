@@ -2,24 +2,22 @@ let sharedStudyratsRows=[];
 let sharedStudyratsChannel=null;
 let sharedStudyratsTimer=null;
 
-function sharedRatSvg(){
-  return '<svg viewBox="0 0 120 82" aria-hidden="true">'+
-    '<path d="M20 48C4 44-1 29 10 18c8-8 19-9 28-5" fill="none" stroke="var(--rat-tail,#7a6a63)" stroke-width="5.5" stroke-linecap="round"/>'+
-    '<ellipse cx="58" cy="47" rx="34" ry="23" fill="var(--rat-fill,#d8cfc7)" stroke="var(--rat-stroke,#4d443f)" stroke-width="4"/>'+
-    '<path d="M33 43c8-15 35-20 54-7-8-11-28-16-44-10-8 3-12 9-10 17Z" fill="var(--rat-shadow,#c4b3a7)" opacity=".9"/>'+
-    '<ellipse cx="89" cy="42" rx="18" ry="15" fill="var(--rat-fill,#d8cfc7)" stroke="var(--rat-stroke,#4d443f)" stroke-width="4"/>'+
-    '<circle cx="82" cy="24" r="10" fill="var(--rat-fill,#d8cfc7)" stroke="var(--rat-stroke,#4d443f)" stroke-width="4"/>'+
-    '<circle cx="92" cy="22" r="9" fill="var(--rat-fill,#d8cfc7)" stroke="var(--rat-stroke,#4d443f)" stroke-width="4"/>'+
-    '<circle cx="82" cy="24" r="4.8" fill="var(--rat-ear,#e6aeb5)"/>'+
-    '<circle cx="92" cy="22" r="4.2" fill="var(--rat-ear,#e6aeb5)"/>'+
-    '<ellipse cx="106" cy="45" rx="4.7" ry="3.7" fill="var(--rat-nose,#c9868e)" stroke="var(--rat-stroke,#4d443f)" stroke-width="1.8"/>'+
-    '<circle cx="96" cy="39" r="2.9" fill="#241f1d"/><circle cx="96.8" cy="38.1" r=".9" fill="#fff"/>'+
-    '<path d="M104 48c-3 3-8 4-12 2" fill="none" stroke="var(--rat-stroke,#4d443f)" stroke-width="2.2" stroke-linecap="round"/>'+
-    '<path d="M106 43l11-4M107 46h12M106 49l10 5" fill="none" stroke="var(--rat-stroke,#4d443f)" stroke-width="1.8" stroke-linecap="round" opacity=".85"/>'+
-    '<path d="M45 66l-7 8M66 66l8 7M80 58l8 5" fill="none" stroke="var(--rat-stroke,#4d443f)" stroke-width="4" stroke-linecap="round"/>'+
-    '<ellipse cx="67" cy="52" rx="17" ry="10" fill="var(--rat-belly,#efe7df)" opacity=".72"/>'+
-    '<path d="M42 48c6 2 10 2 15 0" fill="none" stroke="var(--rat-stroke,#4d443f)" stroke-width="1.7" stroke-linecap="round" opacity=".28"/>'+
-  '</svg>';
+const sharedStudyratAssets=[
+  'assets/img/studyrats/rat-gray.png',
+  'assets/img/studyrats/rat-brown.png',
+  'assets/img/studyrats/rat-white.png',
+  'assets/img/studyrats/rat-charcoal.png'
+];
+const sharedStudyratLaneColors=['#2f80ed','#36a96c','#f2994a','#8b5cf6','#eb5757','#24a0b5'];
+
+function sharedRatAsset(index){
+  return sharedStudyratAssets[index%sharedStudyratAssets.length];
+}
+function sharedRatImg(index,className){
+  return '<img class="'+(className||'studyrats-rat-img')+'" src="'+sharedRatAsset(index)+'" alt="" aria-hidden="true">';
+}
+function sharedStudyratsInitials(name){
+  return String(name||'L').trim().split(/\s+/).slice(0,2).map(function(part){return part.charAt(0).toUpperCase();}).join('')||'L';
 }
 
 function sharedStudyratsGroup(rows){
@@ -60,8 +58,8 @@ function sharedStudyratsDeadlineText(date){
   const diff=Math.ceil((end-now)/86400000);
   if(diff<0)return 'Encerrado';
   if(diff===0)return 'Termina hoje';
-  if(diff===1)return '1 dia restante';
-  return diff+' dias restantes';
+  if(diff===1)return 'Falta 1 dia';
+  return 'Faltam '+diff+' dias';
 }
 
 async function sharedStudyratsLoad(){
@@ -81,8 +79,9 @@ function sharedStudyratsRender(){
   const host=document.getElementById('studyrats-list');
   if(!host)return;
   const challenges=sharedStudyratsGroup(sharedStudyratsRows);
+
   if(!challenges.length){
-    host.innerHTML='<div class="studyrats-empty"><div><strong>Nenhuma corrida ativa</strong><span>Crie um desafio, escolha seus amigos e veja quem acumula mais até a data limite.</span></div></div>';
+    host.innerHTML='<div class="studyrats-empty"><div>'+sharedRatImg(0,'studyrats-empty-rat')+'<strong>Nenhuma corrida ativa</strong><span>Crie um desafio com seus amigos e acompanhe os ratinhos avançando até a chegada.</span></div></div>';
     return;
   }
 
@@ -90,37 +89,55 @@ function sharedStudyratsRender(){
     const type=studyratsTypeLabels[ch.type]||studyratsTypeLabels.flashcards;
     const ordered=(ch.participants||[]).slice().sort(function(a,b){return b.value-a.value;});
     const leaderValue=ordered.length?Math.max.apply(null,ordered.map(function(p){return Number(p.value)||0;})):0;
-    const timeFraction=sharedStudyratsTimeFraction(ch.created_at,ch.deadline);
+    const timeFraction=ch.status==='finished'?1:sharedStudyratsTimeFraction(ch.created_at,ch.deadline);
 
     const lanes=ordered.map(function(p,index){
       const value=Number(p.value)||0;
       const performanceRatio=leaderValue>0?Math.max(0,Math.min(1,value/leaderValue)):0;
       const movementFactor=0.25+(0.75*performanceRatio);
-      const pct=Math.max(5,Math.min(88,5+(83*timeFraction*movementFactor)));
+      const pct=Math.max(4,Math.min(93,4+(89*timeFraction*movementFactor)));
       const score=Number.isInteger(value)?value:value.toFixed(1);
-      const mouseColor=index===0?'var(--accent)':'color-mix(in srgb,var(--text) 62%,var(--muted))';
+      const laneColor=sharedStudyratLaneColors[index%sharedStudyratLaneColors.length];
 
-      return '<div class="studyrats-lane">'+
-        '<div class="studyrats-runner"><span class="studyrats-rank">'+(index+1)+'</span><span class="studyrats-runner-copy"><strong>'+fEsc(p.name)+'</strong><small>'+fEsc(score)+' '+fEsc(type.unit)+'</small></span></div>'+
-        '<div class="studyrats-progress"><span class="studyrats-progress-fill" style="width:'+pct+'%"></span><span class="studyrats-mouse" style="left:'+pct+'%;color:'+mouseColor+'">'+sharedRatSvg()+'</span></div>'+
+      return '<div class="studyrats-lane" style="--lane-color:'+laneColor+'">'+
+        '<div class="studyrats-runner-card">'+
+          '<span class="studyrats-rank '+(index===0?'is-first':'')+'">'+(index+1)+'</span>'+
+          '<span class="studyrats-avatar">'+fEsc(sharedStudyratsInitials(p.name))+'</span>'+
+          '<span class="studyrats-runner-copy"><strong>'+fEsc(p.name)+'</strong><small>'+fEsc(score)+' '+fEsc(type.unit)+'</small></span>'+
+        '</div>'+
+        '<div class="studyrats-road">'+
+          '<span class="studyrats-road-dash"></span>'+
+          '<span class="studyrats-progress-fill" style="width:'+pct+'%"></span>'+
+          '<span class="studyrats-mouse" style="left:'+pct+'%">'+sharedRatImg(index)+'</span>'+
+          '<span class="studyrats-track-score" style="left:min(calc('+pct+'% + 40px),calc(100% - 62px))">'+fEsc(score)+' '+fEsc(type.unit)+'</span>'+
+        '</div>'+
       '</div>';
     }).join('');
 
     const canDelete=ch.creator_user_id===window.docmapUser.id;
     const finished=ch.status==='finished';
-    const statusText=finished?'Desafio encerrado':'Corrida em andamento';
 
     return '<article class="studyrats-challenge">'+
       '<div class="studyrats-challenge-head">'+
-        '<div class="studyrats-challenge-title"><span class="studyrats-race-badge">'+sharedRatSvg()+'</span><span><strong>'+fEsc(type.title)+'</strong><small>'+ch.participants.length+' participantes · '+statusText+'</small></span></div>'+
-        '<div class="studyrats-challenge-meta">'+
-          '<span class="studyrats-pill">Até '+formatStudyratsDate(ch.deadline)+'</span>'+
-          '<span class="studyrats-pill">'+sharedStudyratsDeadlineText(ch.deadline)+'</span>'+
-          (canDelete?'<button class="studyrats-delete" type="button" aria-label="Apagar desafio" data-delete-studyrat="'+fEsc(ch.id)+'">×</button>':'')+
+        '<div class="studyrats-challenge-title">'+
+          '<span class="studyrats-race-badge">'+sharedRatImg(0,'studyrats-badge-rat')+'</span>'+
+          '<span><strong>'+fEsc(type.title)+'</strong><small>'+(finished?'Desafio encerrado':'Quem estiver na frente na data limite vence.')+'</small></span>'+
         '</div>'+
+        (canDelete?'<button class="studyrats-delete" type="button" aria-label="Apagar desafio" data-delete-studyrat="'+fEsc(ch.id)+'">×</button>':'')+
       '</div>'+
-      '<div class="studyrats-track">'+lanes+'</div>'+
-      '<div class="studyrats-race-footer"><span>A pista combina tempo restante e desempenho relativo.</span><span>'+fEsc(type.title)+' até '+formatStudyratsDate(ch.deadline)+'</span></div>'+
+      '<div class="studyrats-summary">'+
+        '<div class="studyrats-summary-item"><span class="studyrats-status-dot '+(finished?'is-finished':'')+'"></span><span><small>Status</small><strong>'+(finished?'Encerrado':'Desafio ativo')+'</strong></span></div>'+
+        '<div class="studyrats-summary-item"><span class="studyrats-summary-icon">↗</span><span><small>Modalidade</small><strong>'+fEsc(type.title)+'</strong></span></div>'+
+        '<div class="studyrats-summary-item"><span class="studyrats-summary-icon">▣</span><span><small>Prazo</small><strong>'+formatStudyratsDate(ch.deadline)+'</strong><em>'+sharedStudyratsDeadlineText(ch.deadline)+'</em></span></div>'+
+        '<div class="studyrats-summary-item"><span class="studyrats-summary-icon">●●</span><span><small>Participantes</small><strong>'+ch.participants.length+'</strong><em>Boa sorte, ratos de estudo!</em></span></div>'+
+      '</div>'+
+      '<div class="studyrats-race-scene">'+
+        '<div class="studyrats-skyline"><i></i><i></i><i></i><i></i></div>'+
+        '<div class="studyrats-lanes">'+lanes+'</div>'+
+        '<div class="studyrats-finish"><span>CHEGADA</span><i></i></div>'+
+        '<div class="studyrats-bush studyrats-bush-left"></div><div class="studyrats-bush studyrats-bush-right"></div>'+
+      '</div>'+
+      '<div class="studyrats-race-footer"><span>Os ratinhos avançam com o tempo e com o desempenho relativo de cada participante.</span><strong>'+fEsc(type.title)+' · até '+formatStudyratsDate(ch.deadline)+'</strong></div>'+
     '</article>';
   }).join('');
 
@@ -161,11 +178,10 @@ async function sharedStudyratsStart(){
       p_friend_user_ids:selected
     });
     if(result.error)throw result.error;
-
     document.getElementById('studyrats-create').hidden=true;
     document.querySelectorAll('#studyrats-friends input:checked').forEach(function(el){el.checked=false;});
     await sharedStudyratsLoad();
-    setFriendsStatus('Desafio Studyrats criado para todos os participantes.','success');
+    setFriendsStatus('Desafio Studyrats criado.','success');
   }catch(error){
     console.error(error);
     setFriendsStatus(error.message||'Não foi possível criar o desafio.','error');
@@ -177,7 +193,6 @@ async function sharedStudyratsStart(){
 window.initSharedStudyrats=function(){
   const create=document.getElementById('studyrats-create');
   const deadline=document.getElementById('studyrats-deadline');
-
   if(deadline&&!deadline.value)deadline.value=defaultDeadline();
 
   document.getElementById('studyrats-toggle-create')?.addEventListener('click',function(){create.hidden=!create.hidden;});
