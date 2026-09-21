@@ -101,7 +101,7 @@
   function ensureStyles(){
     if(document.getElementById("luria-onboarding-css")) return;
     const l=document.createElement("link");
-    l.id="luria-onboarding-css"; l.rel="stylesheet"; l.href="/assets/css/onboarding.css?v=1.7";
+    l.id="luria-onboarding-css"; l.rel="stylesheet"; l.href="/assets/css/onboarding.css?v=1.8";
     document.head.appendChild(l);
   }
 
@@ -344,15 +344,17 @@
 
     const target=resolveTarget(step.target) || document.querySelector(".main") || document.body;
     target.scrollIntoView({behavior:"smooth",block:step.top?"start":"center"});
+    const liberated = s.phase==="explore" || step.transparent===true;
     target.classList.add("luria-onboarding-target");
+    target.classList.toggle("luria-onboarding-target-clear", liberated);
 
     const overlay=document.createElement("div");
     overlay.id="luria-onboarding-overlay";
-    overlay.classList.toggle("is-exploring",s.phase==="explore" || step.transparent===true);
-    document.body.classList.toggle("luria-onboarding-exploring",s.phase==="explore" || step.transparent===true);
+    overlay.classList.toggle("is-exploring",liberated);
+    document.body.classList.toggle("luria-onboarding-exploring",liberated);
     overlay.classList.toggle("card-top",!!step.top);
     overlay.innerHTML=`
-      <div class="luria-onboarding-dim"></div>
+      ${liberated ? "" : '<div class="luria-onboarding-dim"></div>'}
       <section class="luria-onboarding-card" role="dialog" aria-label="Onboarding LURIA">
         <div class="luria-onboarding-progress"><span>Conhecendo o LURIA</span><strong>${s.step+1} de ${steps.length}</strong></div>
         <div class="luria-onboarding-bar"><i style="width:${((s.step+1)/steps.length)*100}%"></i></div>
@@ -384,7 +386,7 @@
   function clearOverlay(){
     document.body.classList.remove("luria-onboarding-exploring");
     document.getElementById("luria-onboarding-overlay")?.remove();
-    document.querySelectorAll(".luria-onboarding-target").forEach(el=>el.classList.remove("luria-onboarding-target"));
+    document.querySelectorAll(".luria-onboarding-target").forEach(el=>{el.classList.remove("luria-onboarding-target");el.classList.remove("luria-onboarding-target-clear");});
   }
 
   function move(delta){
