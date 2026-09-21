@@ -17,45 +17,54 @@
   };
 
   const STEPS = [
-    {page:"configuracoes", target:".settings-page, .page", title:"Prepare o seu LURIA", text:"Começamos pelas configurações. Ajuste seu nome, especialidade, sexo, dias de estudo e preferências de revisão. O LURIA usa essas escolhas para adaptar sua rotina."},
-    {page:"configuracoes", target:".setting-row", title:"Seu perfil", text:"Preencha seus dados principais. Eles personalizam sua conta e deixam a navegação com a sua cara."},
+    {page:"configuracoes", target:".settings-page, .page", title:"Prepare o seu LURIA", text:"Começamos pelas configurações. Ajuste nome, especialidade, sexo, dias de estudo e preferências. Depois de ler, clique em Explorar para deixar a tela livre e configurar enquanto este texto continua visível.", top:true},
+    {page:"configuracoes", target:".setting-row", title:"Seu perfil", text:"Preencha seus dados principais. No modo Explorar o fundo fica transparente e os campos continuam totalmente utilizáveis."},
     {page:"configuracoes", target:"[data-weekday], .weekday-grid, .study-days, .setting-row:nth-of-type(2)", title:"Dias de estudo", text:"Escolha em quais dias você quer estudar. O cronograma e as revisões respeitam essa disponibilidade."},
-    {page:"configuracoes", target:".interval-editor, [data-interval-field]", title:"Revisões", text:"Aqui você define os intervalos de revisão. O LURIA distribui as revisões automaticamente dentro dos dias permitidos."},
+    {page:"configuracoes", target:".interval-editor, [data-interval-field]", title:"Revisões", text:"Defina os intervalos de revisão. O LURIA distribui as revisões dentro dos dias permitidos."},
 
-    {page:"cronograma", target:".page, .schedule-page", title:"Seu cronograma", text:"O cronograma é a base da organização do LURIA. Você pode importar o material do seu cursinho ou montar tudo manualmente."},
-    {page:"cronograma", target:"input[type=file], .import-card, .schedule-import, [id*=upload], [id*=import]", title:"PDF, Excel ou manual", text:"Você pode subir o PDF do cursinho, importar uma planilha Excel ou cadastrar aulas manualmente. Escolha o caminho que combina com seu material."},
-    {page:"cronograma", target:"[id*=modality], [class*=modality], [id*=modalidade], [class*=modalidade]", title:"Modalidades", text:"Modalidades separam diferentes objetivos ou trilhas de estudo. Use-as quando quiser organizar cronogramas distintos sem misturar os conteúdos."},
-    {page:"cronograma", target:"[id*=deck], [class*=deck]", title:"Deck", text:"O Deck reúne aulas ou temas que você quer separar do fluxo principal. É útil para montar blocos personalizados de estudo e revisão."},
-    {page:"cronograma", target:"[id*=list], [class*=theme-library], [class*=list]", title:"Lista de aulas", text:"A lista mostra suas aulas e permite filtrar, selecionar, editar, excluir, marcar como feita e organizar conteúdos em conjunto."},
-    {page:"cronograma", target:"button, .button", title:"Ações do cronograma", text:"Os botões do cronograma servem para criar, importar, filtrar, editar e reorganizar suas aulas. Durante o uso, o LURIA mantém agenda e revisões sincronizadas."},
+    {page:"cronograma", target:".topbar, .page-heading", title:"Seu cronograma", text:"O cronograma é a base da organização do LURIA. Você pode importar o material do cursinho por PDF ou Excel, ou montar tudo manualmente.", top:true, demo:"schedule"},
+    {page:"cronograma", target:"#file-drop, #schedule-file", title:"PDF, Excel ou manual", text:"PDF: envie o cronograma do cursinho. Excel: importe uma planilha estruturada. Manual: cadastre área, matéria, tema e data diretamente no LURIA. Em Explorar, você pode navegar por esses controles.", top:true, demo:"schedule"},
+    {page:"cronograma", target:".import-mode, [name=import-mode], #manual-topic-form", title:"Como importar", text:"Você decide se as aulas entram já programadas ou no Deck. O cadastro manual serve para inserir uma aula por vez sem arquivo.", demo:"schedule"},
+    {page:"cronograma", target:"#deck-panel, #deck-list", title:"Deck", text:"O Deck é a área de espera das aulas ainda não programadas. Deixamos duas atividades simuladas aqui para você visualizar como funciona.", demo:"schedule"},
+    {page:"cronograma", target:"#week-planner", title:"Semana", text:"As aulas programadas aparecem distribuídas na semana. Deixamos cinco atividades simuladas para mostrar a organização visual.", demo:"schedule"},
+    {page:"cronograma", target:".theme-library-panel, #theme-library-list", title:"Lista de aulas", text:"A lista reúne todo o cronograma. Você pode pesquisar, filtrar, selecionar, mover para o Deck, marcar como feita e excluir. Há dez aulas simuladas para você visualizar.", demo:"schedule"},
 
-    {page:"caderno", target:".notebook-topic-panel, #notebook-topic-list", title:"Aulas na lateral", text:"As aulas do seu cronograma aparecem nesta lateral. Durante o onboarding, incluímos aulas de simulação para você entender o fluxo." , demo:"notebook"},
-    {page:"caderno", target:"#notebook-editor, .notebook-document", title:"Caderno da aula", text:"Ao abrir uma aula, o caderno correspondente aparece aqui. Você pode estudar, anotar e organizar o conteúdo sem sair do fluxo da aula.", demo:"notebook"},
-    {page:"caderno", target:".notebook-toolbar", title:"Ferramentas do caderno", text:"Use estilos de texto, fonte, alinhamento, listas, estruturas prontas, linhas, tabelas, imagens, emojis e callouts. As linhas divisórias são blocos fixos para não serem quebradas acidentalmente.", demo:"notebook"},
+    {page:"caderno", target:".notebook-topic-panel, #notebook-topic-list", title:"Aulas na lateral", text:"As aulas do cronograma aparecem nesta lateral. As aulas de onboarding são apenas simulações e permitem visualizar o fluxo sem mexer no seu conteúdo.", demo:"notebook"},
+    {page:"caderno", target:"#notebook-editor, .notebook-document", title:"Caderno da aula", text:"Ao abrir uma aula, o caderno correspondente aparece aqui. No modo Explorar você consegue ler e testar a interface com o fundo totalmente transparente.", demo:"notebook"},
+    {page:"caderno", target:".notebook-toolbar", title:"Ferramentas do caderno", text:"Aqui ficam estilos, fonte, alinhamento, listas, estruturas, linhas, tabelas, imagens, emojis e callouts.", demo:"notebook"},
 
-    {page:"flashcards", target:".page, .flashcards-page", title:"Flashcards", text:"Crie cartões por área e matéria. Depois, o LURIA organiza as revisões e mostra o que precisa ser revisto na Agenda.", demo:"flashcards"},
-    {page:"flashcards", target:"[class*=flashcard], [id*=flashcard]", title:"Revisão ativa", text:"Abra, responda mentalmente e revele a resposta. Os cartões de demonstração existem apenas para você experimentar o funcionamento.", demo:"flashcards"},
+    {page:"flashcards", target:".flash-tabs", title:"Flashcards", text:"O fluxo tem Revisar, Criar, Importar e Biblioteca. Vamos passar pelas partes principais com cinco cartões de demonstração.", demo:"flashcards", action:"flash-review", top:true},
+    {page:"flashcards", target:".flash-review-panel, #review-stage", title:"Revisar um flashcard", text:"Leia a frente e clique em Mostrar resposta. Depois que o cartão vira, aparecem Difícil, Intermediário e Fácil para classificar sua lembrança.", demo:"flashcards", action:"flash-review"},
+    {page:"flashcards", target:"#rating-actions, #show-answer", title:"Difícil, intermediário ou fácil", text:"Experimente Mostrar resposta. A classificação define como o cartão volta para suas revisões.", demo:"flashcards", action:"flash-answer"},
+    {page:"flashcards", target:"[data-flash-section=create]", title:"Criar flashcard", text:"Em Criar, escolha Área, opcionalmente Matéria e Tema, escreva frente e verso e adicione imagens se quiser.", demo:"flashcards", action:"flash-create"},
+    {page:"flashcards", target:"[data-flash-section=library], #library-list, #library-decks", title:"Biblioteca e Decks", text:"A Biblioteca reúne os seus cartões e os organiza em decks. Você pode filtrar, revisar, compartilhar, exportar e gerenciar conjuntos.", demo:"flashcards", action:"flash-library"},
 
-    {page:"erros", target:".page, .error-notebook-page", title:"Caderno de erros", text:"Transforme erros em material de revisão. Salve a questão, explicação, imagem e CCQ para revisar depois.", demo:"errors"},
-    {page:"erros", target:"[id*=ccq], [class*=ccq], form", title:"CCQ", text:"O CCQ resume o ponto que você errou em uma pergunta curta de revisão. Ele reaparece na sua rotina e também pode ser exibido no Dashboard.", demo:"errors"},
+    {page:"erros", target:".error-tabs", title:"Caderno de Erros", text:"Aqui você revisa erros, cria novos registros, consulta a Biblioteca e importa conteúdo. Deixamos cinco exemplos para visualizar o funcionamento.", demo:"errors", action:"error-review", top:true},
+    {page:"erros", target:".error-review-panel, #error-stage", title:"Revisão dos erros", text:"O CCQ aparece primeiro para revisão ativa. Depois você pode abrir os detalhes da questão, resposta correta e raciocínio.", demo:"errors", action:"error-review"},
+    {page:"erros", target:"[data-error-section=create], #error-create-form", title:"Novo Caderno de Erro", text:"No Novo erro você organiza Área, Matéria, Tema, CCQ, questão e resposta. Também pode anexar um print da questão.", demo:"errors", action:"error-create"},
+    {page:"erros", target:"#new-error-image, #extract-error-image-text", title:"Extrair texto de um print", text:"Ao adicionar a imagem da questão, o botão Extrair texto pode transformar o conteúdo do print em texto para acelerar o registro do erro.", demo:"errors", action:"error-create"},
+    {page:"erros", target:"[data-error-section=library], #error-library", title:"Biblioteca do Caderno de Erros", text:"Todos os erros ficam reunidos na Biblioteca, com busca, filtros, seleção e exportação.", demo:"errors", action:"error-library"},
 
-    {page:"questoes", target:".page, .questions-page", title:"Questões e Simulados", text:"Aqui você cria listas, registra questões e acompanha simulados. Os erros podem ser enviados diretamente para o Caderno de Erros."},
-    {page:"questoes", target:"input[type=file], [id*=pdf], [id*=gabarito], [class*=upload]", title:"Importação", text:"Quando disponível, você pode importar o PDF e o gabarito. O LURIA processa as questões e usa o resultado para alimentar suas métricas e revisões."},
-    {page:"questoes", target:"button, .button", title:"Listas e simulados", text:"Use listas para blocos de questões e simulados para sessões completas. Você pode acompanhar acertos, erros e evolução ao longo do tempo."},
+    {page:"questoes", target:".qs-mode-tabs, .qs-tabs, .page-heading", title:"Questões e Simulados", text:"Vamos simular a criação de uma lista, a leitura das questões e o preenchimento do gabarito sem salvar nada na sua conta.", demo:"questions", action:"questions-create", top:true},
+    {page:"questoes", target:"[data-qs-section=create], [data-qs-section=import], #qs-create-manual", title:"Adicionar questões", text:"Você pode criar um simulado manual ou importar material. A simulação abaixo mostra como as questões ficam depois de processadas.", demo:"questions", action:"questions-create"},
+    {page:"questoes", target:"#qs-answer-panel, #qs-question-list", title:"Questões processadas", text:"Aqui estão questões simuladas. Você consegue ler o enunciado e visualizar como o LURIA separa cada item.", demo:"questions", action:"questions-answer"},
+    {page:"questoes", target:"#qs-open-answer-import, #qs-question-list", title:"Gabarito e erros", text:"O print do gabarito pode ser lido e as respostas sinalizadas. Questões marcadas como erro abrem os campos usados para enviar conteúdo ao Caderno de Erros.", demo:"questions", action:"questions-key"},
 
-    {page:"dashboard", target:".page, .dashboard-page", title:"Dashboard", text:"O Dashboard reúne o que importa hoje: agenda, revisões, métricas e CCQ. Ele é o ponto de partida depois que seu LURIA está configurado."},
-    {page:"dashboard", target:".calendar-panel, #calendar", title:"Agenda", text:"Tudo que o LURIA agenda aparece aqui. Aulas, flashcards, CCQs e revisões ficam concentrados na mesma rotina."},
-    {page:"dashboard", target:"[data-sidebar-streak-card], .streak-card, [id*=streak]", title:"Ofensiva", text:"A ofensiva registra sua sequência de dias de estudo. Estude em dias consecutivos para mantê-la; ao passar um dia sem atividade, a sequência é reiniciada."},
+    {page:"dashboard", target:".topbar, .page-heading", title:"Dashboard", text:"O Dashboard reúne agenda, revisões, métricas, CCQ e progresso. Ele é o ponto de partida depois da configuração.", top:true},
+    {page:"dashboard", target:".calendar-panel, #calendar", title:"Agenda", text:"Aulas, flashcards, CCQs e revisões aparecem na mesma rotina. Você pode alternar entre Dia, Semana e Mês."},
+    {page:"dashboard", target:"#dashboard-streak-card, [data-sidebar-streak-card]", title:"Ofensiva", text:"A ofensiva aparece tanto no Dashboard quanto no menu lateral. Ela registra sua sequência de dias de estudo; um dia pulado reinicia a sequência.", action:"streak"},
 
-    {page:"estatisticas", target:".page, .stats-page", title:"Estatísticas", text:"Conforme você usa o LURIA, esta área transforma sua atividade em indicadores de desempenho, retenção, volume e pontos de atenção."},
-    {page:"estatisticas", target:"[data-stats-panel], .stats-tabs, .segmented-control", title:"Visões por recurso", text:"Alterne entre a visão geral e as estatísticas específicas de aulas, flashcards, Caderno de Erros e questões."},
+    {page:"estatisticas", target:".topbar, .page-heading", title:"Estatísticas", text:"Esta área transforma sua atividade em indicadores de desempenho, retenção, volume e pontos de atenção.", top:true},
+    {page:"estatisticas", target:".stats-tabs", title:"Visões por recurso", text:"Este menu fica no topo. Durante a apresentação o LURIA percorre Geral, Aulas, Flashcards, Caderno de Erros e Questões para você visualizar cada painel.", action:"stats-tabs", top:true},
 
-    {page:"editais", target:".page", title:"Editais e Provas", text:"Organize seus processos seletivos, acompanhe provas, notas e referências de corte em um único lugar."},
+    {page:"editais", target:".exam-mode-tabs", title:"Editais e Provas", text:"Aqui você acompanha provas, inscrições, resultados e notas de corte. Vamos abrir Nova prova para mostrar cada campo.", action:"exam-new", top:true},
+    {page:"editais", target:"#exam-dialog, #exam-form", title:"Nova prova", text:"Cadastre instituição, banca, status, datas, taxa, sua nota e a última nota de corte. Nada desta demonstração será salvo.", action:"exam-dialog"},
+    {page:"editais", target:"#exam-score, #exam-cutoff", title:"Cores da nota", text:"A comparação usa a nota de corte como referência: vermelho quando sua nota fica mais de 2 pontos abaixo; amarelo quando fica na faixa de ±2 pontos; verde quando fica mais de 2 pontos acima.", action:"exam-dialog"},
 
-    {page:"amigos", target:".friends-card:first-of-type", title:"Amigos", text:"Cada usuário possui um ID LURIA. Adicione seus amigos por esse código e compartilhe materiais diretamente com eles."},
-    {page:"amigos", target:".friends-card:last-of-type", title:"Materiais recebidos", text:"Decks de flashcards e cadernos enviados por amigos ficam reunidos aqui para você aceitar e usar."},
+    {page:"amigos", target:".friends-card:first-of-type", title:"Amigos", text:"Cada usuário possui um ID LURIA. Adicione amigos pelo código e compartilhe materiais diretamente com eles.", top:true},
+    {page:"amigos", target:".friends-card:last-of-type", title:"Materiais recebidos", text:"Decks de flashcards e cadernos enviados por amigos ficam reunidos aqui."},
 
-    {page:"dashboard", target:".page, .dashboard-page", title:"Seu LURIA está pronto", text:"O tour terminou. Os conteúdos de demonstração desaparecem e começa a etapa Conheça o LURIA: 6 desafios para transformar o tutorial em uso real.", finish:true}
+    {page:"dashboard", target:".topbar, .page-heading", title:"Seu LURIA está pronto", text:"O tour terminou. Agora começa Conheça o LURIA: seis desafios para transformar o tutorial em uso real.", finish:true, top:true}
   ];
 
   function userId(){ return window.docmapUser?.id || "guest"; }
@@ -105,44 +114,162 @@
     return false;
   }
 
+  function activateTab(selector){
+    const button=document.querySelector(selector);
+    if(button) button.click();
+  }
+
+  function demoNode(host, html, className="onboarding-demo-block"){
+    if(!host || host.querySelector(":scope > [data-onboarding-demo]")) return;
+    const node=document.createElement("div");
+    node.dataset.onboardingDemo="1";
+    node.className=className;
+    node.innerHTML=html;
+    host.prepend(node);
+  }
+
+  function addScheduleDemo(){
+    const deck=document.getElementById("deck-panel");
+    if(deck) deck.hidden=false;
+    demoNode(document.getElementById("deck-list"),
+      '<article class="onboarding-mini-activity"><strong>Trauma abdominal</strong><small>Cirurgia Geral · aguardando programação</small></article><article class="onboarding-mini-activity"><strong>Diabetes mellitus</strong><small>Clínica Médica · aguardando programação</small></article>');
+
+    const week=document.getElementById("week-planner");
+    demoNode(week,
+      ['Seg · Hipertensão arterial','Ter · Pneumonia comunitária','Qua · Apendicite aguda','Qui · Pré-natal de baixo risco','Sex · Vacinação do adulto'].map((x,i)=>'<article class="onboarding-week-activity"><small>AULA '+(i+1)+'</small><strong>'+x+'</strong></article>').join(""));
+
+    const list=document.getElementById("theme-library-list");
+    const names=['Hipertensão arterial','Pneumonia comunitária','Apendicite aguda','Pré-natal','Vacinação','Trauma abdominal','Diabetes mellitus','Asma','Hemorragia digestiva','Puericultura'];
+    demoNode(list,names.map((x,i)=>'<div class="onboarding-list-row"><span><strong>'+x+'</strong><small>'+(i%2?'Clínica / revisão':'Onboarding · aula simulada')+'</small></span><span>'+(i<5?'Programada':'No deck')+'</span></div>').join(""));
+  }
+
+  function addNotebookDemo(){
+    const list=document.querySelector("#notebook-topic-list, .notebook-topic-list");
+    if(list && !list.querySelector("[data-onboarding-demo]")){
+      const box=document.createElement("div");
+      box.dataset.onboardingDemo="1";
+      box.className="onboarding-demo-lessons";
+      box.innerHTML='<div class="onboarding-demo-label">SIMULAÇÃO</div><button type="button">Onboarding — Hipertensão arterial</button><button type="button">Onboarding — Pneumonia</button><button type="button">Onboarding — Apendicite</button><button type="button">Onboarding — Diabetes</button><button type="button">Onboarding — Trauma</button>';
+      list.prepend(box);
+    }
+    const editor=document.querySelector("#notebook-editor");
+    if(editor && !editor.dataset.onboardingTouched){
+      editor.dataset.onboardingTouched="1";
+      editor.dataset.onboardingOriginal=editor.innerHTML;
+      editor.innerHTML='<h2>Hipertensão arterial</h2><p><strong>Definição:</strong> condição clínica caracterizada por elevação sustentada da pressão arterial.</p><h3>Quadro clínico</h3><p>Exemplo de anotação organizada dentro do caderno da aula.</p><div class="notebook-divider arabesque" contenteditable="false"><span class="notebook-divider-luria" aria-hidden="true"></span></div><h3>Revisão</h3><p>Este conteúdo existe somente durante o onboarding.</p>';
+    }
+  }
+
+  function addFlashDemo(){
+    activateTab('[data-flash-tab="review"]');
+    const stage=document.getElementById("review-stage");
+    const empty=document.getElementById("review-empty");
+    if(empty) empty.hidden=true;
+    if(stage){
+      stage.hidden=false;
+      stage.dataset.onboardingDemo="1";
+      const area=document.getElementById("review-area"); if(area){area.hidden=false;area.textContent="Clínica Médica";}
+      const materia=document.getElementById("review-materia"); if(materia){materia.hidden=false;materia.textContent="Cardiologia";}
+      const theme=document.getElementById("review-theme"); if(theme){theme.hidden=false;theme.textContent="Hipertensão";}
+      const front=document.getElementById("review-front"); if(front) front.textContent="Qual é a meta pressórica geral no tratamento da hipertensão?";
+      const back=document.getElementById("review-back"); if(back) back.textContent="Exemplo de resposta de demonstração. Classifique sua lembrança abaixo.";
+      const pos=document.getElementById("review-position"); if(pos) pos.textContent="1 / 5";
+    }
+    const lib=document.getElementById("library-list");
+    demoNode(lib,['HAS: meta pressórica','Pneumonia: tratamento','Apendicite: diagnóstico','Diabetes: rastreio','Trauma: avaliação inicial'].map((x,i)=>'<article class="onboarding-demo-card"><small>FLASHCARD '+(i+1)+'</small><strong>'+x+'</strong><span>Cartão de demonstração</span></article>').join(""));
+  }
+
+  function addErrorDemo(){
+    activateTab('[data-error-tab="review"]');
+    const stage=document.getElementById("error-stage"); if(stage) stage.hidden=false;
+    const empty=document.getElementById("error-empty"); if(empty) empty.hidden=true;
+    const ccq=document.getElementById("error-ccq"); if(ccq) ccq.textContent="Qual achado diferencia uma urgência hipertensiva de uma emergência hipertensiva?";
+    const meta=document.getElementById("error-meta"); if(meta) meta.textContent="Clínica Médica · Cardiologia · 1 de 5";
+    const q=document.getElementById("error-question"); if(q) q.textContent="Paciente com PA muito elevada. Qual elemento define emergência hipertensiva?";
+    const a=document.getElementById("error-correct-answer"); if(a) a.textContent="Lesão aguda de órgão-alvo.";
+    const lib=document.getElementById("error-library");
+    demoNode(lib,['Emergência hipertensiva','CURB-65','Apendicite','DM gestacional','Vacinação'].map((x,i)=>'<article class="onboarding-demo-card"><small>ERRO '+(i+1)+'</small><strong>'+x+'</strong><span>CCQ de demonstração · revisão programada</span></article>').join(""));
+  }
+
+  function addQuestionsDemo(){
+    const panel=document.getElementById("qs-answer-panel");
+    if(panel){panel.hidden=false;panel.dataset.onboardingDemo="1";}
+    const title=document.getElementById("qs-current-title"); if(title) title.textContent="Simulado de onboarding";
+    const total=document.getElementById("qs-summary-total"); if(total) total.textContent="5";
+    const correct=document.getElementById("qs-summary-correct"); if(correct) correct.textContent="3";
+    const wrong=document.getElementById("qs-summary-wrong"); if(wrong) wrong.textContent="2";
+    const acc=document.getElementById("qs-summary-accuracy"); if(acc) acc.textContent="60%";
+    const list=document.getElementById("qs-question-list");
+    if(list && !list.querySelector("[data-onboarding-demo]")){
+      const wrap=document.createElement("div"); wrap.dataset.onboardingDemo="1";
+      const qs=[
+        ["1","Paciente hipertenso apresenta déficit neurológico agudo. Qual a prioridade inicial?","wrong"],
+        ["2","Qual é o agente mais comum da pneumonia adquirida na comunidade?",""],
+        ["3","Dor migratória para FID sugere qual diagnóstico?","wrong"],
+        ["4","Quando iniciar rastreio para diabetes em adultos de risco?",""],
+        ["5","Qual é a primeira etapa da avaliação primária no trauma?",""]
+      ];
+      wrap.innerHTML=qs.map(([n,t,w])=>'<article class="qs-question '+w+'"><div class="qs-question-main"><span class="qs-number">'+n+'</span><div class="qs-question-title"><strong>Questão '+n+'</strong><small>'+t+'</small></div><label class="qs-wrong-toggle"><input type="checkbox" '+(w?'checked':'')+'><span>'+(w?'Errei':'Correta')+'</span></label></div>'+(w?'<div class="qs-error-fields"><label class="full"><strong>Enviar ao Caderno de Erros</strong><small>Área, matéria, CCQ e explicação aparecem aqui.</small></label></div>':'')+'</article>').join("");
+      list.prepend(wrap);
+    }
+  }
+
   function addDemoData(kind){
-    if(kind==="notebook"){
-      const list=document.querySelector("#notebook-topic-list, .notebook-topic-list");
-      if(list && !list.querySelector("[data-onboarding-demo]")){
-        const box=document.createElement("div");
-        box.dataset.onboardingDemo="1";
-        box.className="onboarding-demo-lessons";
-        box.innerHTML='<div class="onboarding-demo-label">SIMULAÇÃO</div><button type="button">Onboarding — Hipertensão arterial</button><button type="button">Onboarding — Pneumonia</button><button type="button">Onboarding — Apendicite</button>';
-        list.prepend(box);
-      }
-      const editor=document.querySelector("#notebook-editor");
-      if(editor && !editor.textContent.trim()){
-        editor.dataset.onboardingOriginal="";
-        editor.innerHTML='<h2>Hipertensão arterial</h2><p><strong>Definição:</strong> exemplo de como suas anotações podem ficar organizadas dentro do LURIA.</p><div class="notebook-study-block"><strong>Quadro clínico</strong><p>Use estruturas, tabelas, imagens e callouts para organizar o estudo.</p></div><div class="notebook-divider arabesque" contenteditable="false"><span class="notebook-divider-luria" aria-hidden="true"></span></div><p><strong>Revisão:</strong> este é apenas um conteúdo de demonstração do onboarding.</p>';
-      }
+    if(kind==="schedule") addScheduleDemo();
+    if(kind==="notebook") addNotebookDemo();
+    if(kind==="flashcards") addFlashDemo();
+    if(kind==="errors") addErrorDemo();
+    if(kind==="questions") addQuestionsDemo();
+  }
+
+  function runStepAction(step){
+    if(step.action==="flash-review") activateTab('[data-flash-tab="review"]');
+    if(step.action==="flash-answer"){
+      activateTab('[data-flash-tab="review"]');
+      const answer=document.getElementById("review-answer"); if(answer) answer.hidden=false;
+      const ratings=document.getElementById("rating-actions"); if(ratings) ratings.hidden=false;
+      const show=document.getElementById("show-answer"); if(show) show.hidden=true;
     }
-    if(kind==="flashcards"){
-      const host=document.querySelector(".flashcards-page, .page");
-      if(host && !host.querySelector("[data-onboarding-demo-card]")){
-        const card=document.createElement("div"); card.dataset.onboardingDemoCard="1"; card.className="onboarding-demo-card";
-        card.innerHTML='<small>SIMULAÇÃO</small><strong>Qual é o objetivo dos flashcards no LURIA?</strong><span>Revisão ativa e espaçada dos conteúdos que você quer consolidar.</span>';
-        host.appendChild(card);
-      }
+    if(step.action==="flash-create") activateTab('[data-flash-tab="create"]');
+    if(step.action==="flash-library") activateTab('[data-flash-tab="library"]');
+
+    if(step.action==="error-review") activateTab('[data-error-tab="review"]');
+    if(step.action==="error-create"){
+      activateTab('[data-error-tab="create"]');
+      const form=document.getElementById("error-create-form"); if(form) form.hidden=false;
     }
-    if(kind==="errors"){
-      const host=document.querySelector(".error-notebook-page, .page");
-      if(host && !host.querySelector("[data-onboarding-demo-error]")){
-        const card=document.createElement("div"); card.dataset.onboardingDemoError="1"; card.className="onboarding-demo-card";
-        card.innerHTML='<small>SIMULAÇÃO</small><strong>CCQ: Qual foi o principal conceito que levou ao erro?</strong><span>Exemplo de CCQ criado a partir de uma questão errada.</span>';
-        host.appendChild(card);
-      }
+    if(step.action==="error-library") activateTab('[data-error-tab="library"]');
+
+    if(step.action==="questions-create"){
+      const btn=document.querySelector('[data-qs-mode="create"],[data-qs-tab="create"],[data-qs-mode="new"]'); btn?.click();
+    }
+    if(step.action==="questions-answer"||step.action==="questions-key") addQuestionsDemo();
+
+    if(step.action==="stats-tabs"){
+      const tabs=[...document.querySelectorAll(".stats-tab")];
+      tabs.forEach((tab,i)=>setTimeout(()=>tab.click(),i*500));
+      setTimeout(()=>tabs[0]?.click(),Math.max(0,tabs.length)*500);
+    }
+
+    if(step.action==="exam-new"){
+      document.querySelector('[data-exam-mode="new"]')?.click();
+      setTimeout(()=>{const d=document.getElementById("exam-dialog"); if(d&&!d.open){try{d.showModal();}catch{d.setAttribute("open","");}}},150);
+    }
+    if(step.action==="exam-dialog"){
+      const d=document.getElementById("exam-dialog"); if(d&&!d.open){try{d.showModal();}catch{d.setAttribute("open","");}}
+      const inst=document.getElementById("exam-institution"); if(inst&&!inst.value) inst.value="Hospital LURIA — demonstração";
+      const board=document.getElementById("exam-board"); if(board&&!board.value) board.value="ENARE";
+      const score=document.getElementById("exam-score"); if(score&&!score.value) score.value="78";
+      const cutoff=document.getElementById("exam-cutoff"); if(cutoff&&!cutoff.value) cutoff.value="80";
     }
   }
 
   function clearDemo(){
     document.querySelectorAll("[data-onboarding-demo],[data-onboarding-demo-card],[data-onboarding-demo-error]").forEach(el=>el.remove());
-    const editor=document.querySelector("#notebook-editor[data-onboarding-original]");
-    if(editor){ editor.innerHTML=""; editor.removeAttribute("data-onboarding-original"); }
+    const editor=document.querySelector("#notebook-editor[data-onboarding-touched]");
+    if(editor){ editor.innerHTML=editor.dataset.onboardingOriginal||""; editor.removeAttribute("data-onboarding-original"); editor.removeAttribute("data-onboarding-touched"); }
+    const exam=document.getElementById("exam-dialog");
+    if(exam?.open){try{exam.close();}catch{}}
   }
 
   function resolveTarget(selector){
@@ -158,6 +285,7 @@
     clearOverlay();
     const s=status();
     if(!s.started || s.completed || s.skipped) return;
+    if(!s.phase) s.phase="explain";
     const step=STEPS[Math.min(s.step,STEPS.length-1)];
     if(!onCorrectPage(step)){
       location.replace(routeForStep(s.step)+"?onboarding=1");
@@ -165,25 +293,29 @@
     }
     ensureStyles();
     if(step.demo) addDemoData(step.demo);
+    runStepAction(step);
 
     const target=resolveTarget(step.target) || document.querySelector(".main") || document.body;
-    target.scrollIntoView({behavior:"smooth",block:"center"});
+    target.scrollIntoView({behavior:"smooth",block:step.top?"start":"center"});
     target.classList.add("luria-onboarding-target");
 
     const overlay=document.createElement("div");
     overlay.id="luria-onboarding-overlay";
+    overlay.classList.toggle("is-exploring",s.phase==="explore");
+    overlay.classList.toggle("card-top",!!step.top);
     overlay.innerHTML=`
       <div class="luria-onboarding-dim"></div>
-      <section class="luria-onboarding-card" role="dialog" aria-modal="true" aria-label="Onboarding LURIA">
+      <section class="luria-onboarding-card" role="dialog" aria-label="Onboarding LURIA">
         <div class="luria-onboarding-progress"><span>Conhecendo o LURIA</span><strong>${s.step+1} de ${STEPS.length}</strong></div>
         <div class="luria-onboarding-bar"><i style="width:${((s.step+1)/STEPS.length)*100}%"></i></div>
         <h2>${step.title}</h2>
         <p>${step.text}</p>
+        ${s.phase==="explore"?'<small class="luria-onboarding-explore-note">Tela liberada: você pode clicar, ler e configurar normalmente.</small>':""}
         <div class="luria-onboarding-actions">
           <button type="button" data-onboarding-skip>Pular onboarding</button>
           <div>
             <button type="button" data-onboarding-back ${s.step===0?"disabled":""}>Voltar</button>
-            <button type="button" class="primary" data-onboarding-next>${step.finish?"Concluir":"Próximo"}</button>
+            <button type="button" class="primary" data-onboarding-next>${step.finish?"Concluir":s.phase==="explain"?"Explorar":"Continuar"}</button>
           </div>
         </div>
       </section>`;
@@ -191,7 +323,14 @@
 
     overlay.querySelector("[data-onboarding-skip]").onclick=()=>finish(true);
     overlay.querySelector("[data-onboarding-back]").onclick=()=>move(-1);
-    overlay.querySelector("[data-onboarding-next]").onclick=()=>step.finish?finish(false):move(1);
+    overlay.querySelector("[data-onboarding-next]").onclick=()=>{
+      if(step.finish) return finish(false);
+      if(s.phase==="explain"){
+        s.phase="explore"; saveState(s); render();
+      } else {
+        move(1);
+      }
+    };
   }
 
   function clearOverlay(){
@@ -201,7 +340,7 @@
 
   function move(delta){
     const s=status();
-    s.step=Math.max(0,Math.min(STEPS.length-1,s.step+delta)); saveState(s);
+    s.step=Math.max(0,Math.min(STEPS.length-1,s.step+delta)); s.phase="explain"; saveState(s);
     clearOverlay(); clearDemo();
     const next=STEPS[s.step];
     if(next.page!==page) location.href=routeForStep(s.step)+"?onboarding=1";
