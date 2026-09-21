@@ -3642,7 +3642,7 @@ function insertDivider(
     safeStyle ===
       "arabesque"
       ? `
-          <div class="notebook-divider arabesque"><span class="notebook-divider-luria" contenteditable="false" aria-hidden="true"></span></div>
+          <div class="notebook-divider arabesque" contenteditable="false"><span class="notebook-divider-luria" aria-hidden="true"></span></div>
           <p><br></p>
         `
       : `
@@ -4326,6 +4326,108 @@ function removeBlankNotebookTableRowAndFocusPrevious(
 
 
   return true;
+}
+
+
+function notebookAtomicDividerFromNode(
+  node
+) {
+  const element =
+    node?.nodeType === Node.ELEMENT_NODE
+      ? node
+      : node?.parentElement;
+
+
+  return element
+    ?.closest?.(
+      ".notebook-divider"
+    )
+    || null;
+}
+
+
+function keepCaretOutsideNotebookDivider(
+  event
+) {
+  if (
+    !notebookState.editorEditable
+  ) {
+    return;
+  }
+
+
+  const selection =
+    window.getSelection();
+
+
+  if (
+    !selection
+    || !selection.rangeCount
+  ) {
+    return;
+  }
+
+
+  const divider =
+    notebookAtomicDividerFromNode(
+      selection.anchorNode
+    );
+
+
+  if (!divider) {
+    return;
+  }
+
+
+  event?.preventDefault();
+
+
+  const target =
+    event?.key === "ArrowUp"
+      ? divider.previousElementSibling
+      : divider.nextElementSibling;
+
+
+  const paragraph =
+    target
+    || document.createElement(
+      "p"
+    );
+
+
+  if (!target) {
+    paragraph.innerHTML =
+      "<br>";
+
+    divider.after(
+      paragraph
+    );
+  }
+
+
+  const range =
+    document.createRange();
+
+
+  range.selectNodeContents(
+    paragraph
+  );
+
+
+  range.collapse(
+    event?.key === "ArrowUp"
+      ? false
+      : true
+  );
+
+
+  selection.removeAllRanges();
+  selection.addRange(
+    range
+  );
+
+
+  saveSelection();
 }
 
 
@@ -16091,6 +16193,18 @@ function wireEvents() {
     ?.addEventListener(
       "keydown",
       (event) => {
+        keepCaretOutsideNotebookDivider(
+          event
+        );
+
+
+        if (
+          event.defaultPrevented
+        ) {
+          return;
+        }
+
+
         handleNotebookEditorTableBackspace(
           event
         );
@@ -16106,6 +16220,99 @@ function wireEvents() {
         handleNotebookEditorTableEnter(
           event
         );
+      }
+    );
+
+
+  editor
+    ?.addEventListener(
+      "pointerdown",
+      (event) => {
+        const divider =
+          event.target
+            ?.closest?.(
+              ".notebook-divider"
+            );
+
+
+        if (
+          !divider
+          || !notebookState.editorEditable
+        ) {
+          return;
+        }
+
+
+        event.preventDefault();
+
+
+        const rect =
+          divider.getBoundingClientRect();
+
+
+        const goAbove =
+          event.clientY
+          <
+          rect.top
+          +
+          rect.height / 2;
+
+
+        let target =
+          goAbove
+            ? divider.previousElementSibling
+            : divider.nextElementSibling;
+
+
+        if (!target) {
+          target =
+            document.createElement(
+              "p"
+            );
+
+          target.innerHTML =
+            "<br>";
+
+
+          if (goAbove) {
+            divider.before(
+              target
+            );
+          } else {
+            divider.after(
+              target
+            );
+          }
+        }
+
+
+        const selection =
+          window.getSelection();
+
+
+        const range =
+          document.createRange();
+
+
+        range.selectNodeContents(
+          target
+        );
+
+
+        range.collapse(
+          goAbove
+            ? false
+            : true
+        );
+
+
+        selection.removeAllRanges();
+        selection.addRange(
+          range
+        );
+
+
+        saveSelection();
       }
     );
 
