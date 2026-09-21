@@ -3183,3 +3183,36 @@
   -webkit-user-select: none;
   pointer-events: none;
 }
+
+
+/* CADERNO v18.6 — toolbar funcional no PWA/mobile */
+@media (max-width: 760px) {
+  .notebook-toolbar {
+    overflow: visible !important;
+    overflow-x: visible !important;
+    flex-wrap: wrap !important;
+    align-content: center;
+    -webkit-overflow-scrolling: auto;
+  }
+
+  .notebook-tool-menu-wrap,
+  .notebook-emoji-wrap {
+    position: relative !important;
+    z-index: 610 !important;
+  }
+
+  .notebook-tool-menu,
+  .notebook-emoji-menu,
+  #notebook-callout-menu {
+    z-index: 620 !important;
+    max-width: min(270px, calc(100vw - 32px));
+    touch-action: manipulation;
+  }
+
+  .notebook-tool-button,
+  .notebook-study-tool,
+  .notebook-tool-menu button {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
