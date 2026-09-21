@@ -2698,7 +2698,7 @@ function ensureLuriaDialog() {
   dialog.innerHTML = `
     <form method="dialog" class="luria-global-dialog-card">
       <div class="luria-global-dialog-icon" aria-hidden="true">
-        <img class="luria-global-dialog-logo luria-theme-logo" src="/assets/img/logo-icone-original.png?v=luria10" alt="">
+        <img class="luria-global-dialog-logo" src="/assets/img/logo-icone-original.png?v=luria10" alt="">
       </div>
       <div class="luria-global-dialog-copy">
         <span class="luria-global-dialog-eyebrow">LURIA</span>
