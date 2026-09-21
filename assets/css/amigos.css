@@ -593,7 +593,7 @@
 .studyrats-accessory-img.accessory-round-nerd-glasses{width:31px;height:19px;left:40px;top:12px}
 
 .studyrats-accessory-img.accessory-angel-wings{width:62px;height:44px;left:2px;top:-10px}
-.studyrats-accessory-img.accessory-rocket-flame{width:42px;height:28px;left:-12px;top:12px;transform:scaleX(-1)}
+.studyrats-accessory-img.accessory-rocket-flame{width:42px;height:28px;left:-12px;top:12px;transform:none}
 .studyrats-accessory-img.accessory-astronaut-helmet{z-index:14;width:27px;height:25px;left:43px;top:12px}
 
 .studyrats-empty-composite .accessory-colorful-cap{left:43px;top:0}
@@ -673,7 +673,7 @@
 /* Foguinho: invertido e 5% menor */
 .studyrats-preview-composite .accessory-rocket-flame{
   width:40px!important;height:27px!important;
-  transform:scaleX(-1)!important;
+  transform:none!important;
 }
 
 /* Capacete de astronauta: -8% */
