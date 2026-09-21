@@ -40,6 +40,14 @@ function sharedStudyratsGroup(rows){
   return Array.from(map.values());
 }
 
+function sharedStudyratsTimeFraction(createdAt,deadline){
+  const start=new Date(createdAt).getTime();
+  const end=new Date(String(deadline).slice(0,10)+'T23:59:59').getTime();
+  const now=Date.now();
+  if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start)return 1;
+  return Math.max(0,Math.min(1,(now-start)/(end-start)));
+}
+
 function sharedStudyratsDeadlineText(date){
   if(!date)return 'Sem prazo';
   const end=new Date(String(date).slice(0,10)+'T23:59:59');
@@ -77,17 +85,19 @@ function sharedStudyratsRender(){
     const type=studyratsTypeLabels[ch.type]||studyratsTypeLabels.flashcards;
     const ordered=(ch.participants||[]).slice().sort(function(a,b){return b.value-a.value;});
     const leaderValue=ordered.length?Math.max.apply(null,ordered.map(function(p){return Number(p.value)||0;})):0;
+    const timeFraction=sharedStudyratsTimeFraction(ch.created_at,ch.deadline);
 
     const lanes=ordered.map(function(p,index){
       const value=Number(p.value)||0;
-      const pct=leaderValue>0?Math.max(5,Math.min(88,(value/leaderValue)*88)):5;
+      const performanceRatio=leaderValue>0?Math.max(0,Math.min(1,value/leaderValue)):0;
+      const movementFactor=0.25+(0.75*performanceRatio);
+      const pct=Math.max(5,Math.min(88,5+(83*timeFraction*movementFactor)));
       const score=Number.isInteger(value)?value:value.toFixed(1);
       const mouseColor=index===0?'var(--accent)':'color-mix(in srgb,var(--text) 62%,var(--muted))';
 
       return '<div class="studyrats-lane">'+
-        '<div class="studyrats-runner"><span class="studyrats-rank">'+(index+1)+'</span><span class="studyrats-runner-name">'+fEsc(p.name)+'</span></div>'+
+        '<div class="studyrats-runner"><span class="studyrats-rank">'+(index+1)+'</span><span class="studyrats-runner-copy"><strong>'+fEsc(p.name)+'</strong><small>'+fEsc(score)+' '+fEsc(type.unit)+'</small></span></div>'+
         '<div class="studyrats-progress"><span class="studyrats-progress-fill" style="width:'+pct+'%"></span><span class="studyrats-mouse" style="left:'+pct+'%;color:'+mouseColor+'">'+sharedRatSvg()+'</span></div>'+
-        '<div class="studyrats-score"><strong>'+fEsc(score)+'</strong><small>'+fEsc(type.unit)+'</small></div>'+
       '</div>';
     }).join('');
 
@@ -105,7 +115,7 @@ function sharedStudyratsRender(){
         '</div>'+
       '</div>'+
       '<div class="studyrats-track">'+lanes+'</div>'+
-      '<div class="studyrats-race-footer"><span>Posição relativa ao participante que está na frente.</span><span>'+fEsc(type.title)+' até '+formatStudyratsDate(ch.deadline)+'</span></div>'+
+      '<div class="studyrats-race-footer"><span>A pista combina tempo restante e desempenho relativo.</span><span>'+fEsc(type.title)+' até '+formatStudyratsDate(ch.deadline)+'</span></div>'+
     '</article>';
   }).join('');
 
