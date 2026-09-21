@@ -427,9 +427,19 @@
     location.href="/dashboard/";
   }
 
-  function restart(){
-    const s={started:true,completed:false,skipped:false,step:0}; saveState(s);
-    location.href="/configuracoes/?onboarding=1";
+  function restart(event){
+    event?.preventDefault?.();
+    clearOverlay();
+    clearDemo();
+    const s={started:false,completed:false,skipped:false,step:0,phase:"explain",mode:null};
+    saveState(s);
+
+    if(page==="configuracoes"){
+      chooseMode(true);
+      return;
+    }
+
+    location.href="/configuracoes/?onboarding=1&restart=1";
   }
 
   function addRestartButton(){
@@ -439,7 +449,7 @@
       document.getElementById("restart-luria-onboarding");
 
     if(nativeButton){
-      nativeButton.addEventListener("click", restart);
+      nativeButton.onclick=restart;
       return;
     }
 
@@ -570,6 +580,12 @@
     b.onclick=()=>{questionsGuideIndex=0;renderQuestionsGuide();};
     host.appendChild(b);
   }
+
+  document.addEventListener("click",event=>{
+    const restartButton=event.target.closest?.("#restart-luria-onboarding,[data-restart-onboarding]");
+    if(!restartButton) return;
+    restart(event);
+  });
 
   window.LuriaOnboarding={restart,startQuestionsGuide:()=>{questionsGuideIndex=0;renderQuestionsGuide();}};
 
