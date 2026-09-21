@@ -1478,3 +1478,15 @@
 .error-create-form .flash-area-option:hover,.error-create-form .flash-area-option:focus-visible,.error-create-form .flash-subject-option:hover,.error-create-form .flash-subject-option:focus-visible{padding-left:15px;background:var(--accent-soft);color:var(--accent);outline:none}
 .error-create-form .flash-area-option + .flash-area-option,.error-create-form .flash-subject-option + .flash-subject-option{margin-top:2px}
 @media(max-width:620px){.error-create-form .flash-area-toggle,.error-create-form .flash-subject-toggle{min-height:48px;border-radius:12px;font-size:13px}.error-create-form .flash-area-menu,.error-create-form .flash-subject-menu{max-height:min(44vh,310px);border-radius:13px}.error-create-form .flash-area-option,.error-create-form .flash-subject-option{min-height:46px;font-size:13px}}
+
+
+/* Custom picker: suppress legacy native-select chevron */
+.error-create-form .error-area-create-field::after,
+.error-create-form .error-field:has(#new-error-area)::after {
+  content: none !important;
+  display: none !important;
+}
+.error-create-form #new-error-area,
+.error-create-form #new-error-materia {
+  background-image: none !important;
+}
