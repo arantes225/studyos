@@ -3145,3 +3145,80 @@ input[type="date"]::-webkit-calendar-picker-indicator{
   .luria-calendar{padding:12px;border-radius:15px}
   .luria-calendar-days button{font-size:11px}
 }
+
+
+/* Calendário LURIA — acabamento visual do tema */
+.luria-calendar{
+  border-radius:18px!important;
+  background:var(--surface)!important;
+  color:var(--text)!important;
+  font-family:inherit!important;
+  border:1px solid color-mix(in srgb,var(--border) 78%,var(--accent) 22%)!important;
+  box-shadow:0 20px 55px color-mix(in srgb,var(--text) 16%,transparent)!important;
+  overflow:hidden;
+}
+.luria-calendar,
+.luria-calendar button,
+.luria-calendar span,
+.luria-calendar strong{
+  font-family:inherit!important;
+}
+.luria-calendar-head{
+  margin:-13px -13px 11px;
+  padding:13px 13px 10px;
+  background:color-mix(in srgb,var(--accent) 7%,var(--surface));
+  border-bottom:1px solid var(--border);
+}
+.luria-calendar-head strong{
+  color:var(--text);
+  font-size:12px;
+  font-weight:900;
+}
+.luria-calendar-head button{
+  border-radius:10px!important;
+  background:var(--surface)!important;
+  border:1px solid var(--border)!important;
+  color:var(--accent)!important;
+}
+.luria-calendar-head button:hover{
+  background:var(--accent-soft)!important;
+  border-color:var(--accent)!important;
+}
+.luria-calendar-weekdays span{
+  color:var(--muted)!important;
+  font-size:8px!important;
+  letter-spacing:.03em;
+}
+.luria-calendar-days button{
+  border-radius:10px!important;
+  color:var(--text)!important;
+  background:transparent!important;
+}
+.luria-calendar-days button:hover{
+  background:var(--accent-soft)!important;
+  color:var(--accent)!important;
+}
+.luria-calendar-days button.is-today{
+  color:var(--accent)!important;
+  box-shadow:inset 0 0 0 1.5px var(--accent)!important;
+}
+.luria-calendar-days button.is-selected{
+  background:var(--accent)!important;
+  color:var(--surface)!important;
+  box-shadow:0 5px 13px color-mix(in srgb,var(--accent) 28%,transparent)!important;
+}
+.luria-calendar-foot{
+  margin:11px -13px -13px;
+  padding:10px 13px 12px;
+  background:color-mix(in srgb,var(--accent) 4%,var(--surface));
+  border-top:1px solid var(--border);
+}
+.luria-calendar-foot button{
+  padding:6px 8px;
+  border-radius:8px;
+  color:var(--accent)!important;
+  font-weight:900;
+}
+.luria-calendar-foot button:hover{
+  background:var(--accent-soft);
+}
