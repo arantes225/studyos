@@ -1638,3 +1638,14 @@
 .flash-area-option { width:100%; min-height:42px; padding:10px 12px; border:0; border-radius:9px; background:transparent; color:var(--text); text-align:left; font:inherit; font-size:12px; font-weight:620; cursor:pointer; transition:background .12s ease,color .12s ease,padding-left .12s ease; }
 .flash-area-option:hover,.flash-area-option:focus-visible { padding-left:15px; background:var(--accent-soft); color:var(--accent); outline:none; }
 .flash-area-option + .flash-area-option { margin-top:2px; }
+
+/* Biblioteca — ação destrutiva */
+#flash-library-delete-selected:not(:disabled){
+  background:var(--danger)!important;
+  border-color:var(--danger)!important;
+  color:#fff!important;
+}
+#flash-library-delete-selected:not(:disabled):hover{
+  background:color-mix(in srgb,var(--danger) 86%,#000)!important;
+  border-color:color-mix(in srgb,var(--danger) 86%,#000)!important;
+}
