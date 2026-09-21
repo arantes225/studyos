@@ -1,4 +1,4 @@
-const CACHE_VERSION = "luria-pwa-v65";
+const CACHE_VERSION = "luria-pwa-v66";
 const STATIC_CACHE = CACHE_VERSION + "-static";
 const RUNTIME_CACHE = CACHE_VERSION + "-runtime";
 
@@ -15,17 +15,17 @@ const APP_SHELL = [
   "/assets/css/landing.css",
   "/assets/css/pwa-mobile.css?v=13",
   "/assets/css/luria-brand-v5.css",
-  "/assets/js/app.js?v=16.8",
+  "/assets/js/app.js?v=16.9",
   "/assets/js/onboarding.js?v=2.4",
   "/assets/css/onboarding.css?v=1.9",
   "/assets/js/storage-router.js?v=1.0.0",
   "/assets/js/pwa.js",
   "/assets/css/amigos.css?v=14",
-  "/assets/js/studyrats.js?v=4",
-    "/assets/img/studyrats/rat-brown.svg?v=1",
-  "/assets/img/studyrats/rat-gray.svg?v=1",
-  "/assets/img/studyrats/rat-charcoal.svg?v=1",
-  "/assets/img/studyrats/rat-white.svg?v=1",
+  "/assets/js/studyrats.js?v=7",
+  "/assets/img/studyrats/rat-brown.png?v=7",
+  "/assets/img/studyrats/rat-gray.png?v=7",
+  "/assets/img/studyrats/rat-charcoal.png?v=7",
+  "/assets/img/studyrats/rat-white.png?v=7",
     "/assets/img/favicon.png",
   "/assets/img/logo-icone-original.png",
   "/assets/img/logo-principal.png",
@@ -61,6 +61,23 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+
+  // Arquivos críticos de inicialização: sempre tenta a rede primeiro.
+  // Evita o app.js antigo ficar preso no cache e causar tela vazia/atraso entre páginas.
+  if (url.pathname === "/assets/js/app.js") {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const copy = response.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
 
   if (request.mode === "navigate") {
     event.respondWith(
