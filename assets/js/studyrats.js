@@ -67,6 +67,17 @@ function sharedRatImg(variant,className){
   return '<img class="'+cls+'" src="'+item.src+'" alt="'+item.label+'" draggable="false" loading="eager" decoding="async">';
 }
 
+function sharedStudyratsUpdateLargePreview(){
+  const host=document.getElementById('studyrats-preview-large-stage');
+  if(!host)return;
+  host.innerHTML=sharedStudyratComposite(
+    sharedStudyratsMyVariant,
+    sharedStudyratsMyAccessory,
+    'studyrats-rat-composite studyrats-preview-composite'
+  );
+  sharedStudyratsBindImageFallbacks(host);
+}
+
 function sharedStudyratsApplyAccessorySelection(){
   const host=document.getElementById('studyrats-accessory-picker-options');
   if(!host)return;
@@ -75,6 +86,7 @@ function sharedStudyratsApplyAccessorySelection(){
     button.classList.toggle('is-selected',selected);
     button.setAttribute('aria-pressed',selected?'true':'false');
   });
+  sharedStudyratsUpdateLargePreview();
 }
 
 function sharedStudyratsApplyVariantSelection(){
@@ -85,6 +97,7 @@ function sharedStudyratsApplyVariantSelection(){
     button.classList.toggle('is-selected',selected);
     button.setAttribute('aria-pressed',selected?'true':'false');
   });
+  sharedStudyratsUpdateLargePreview();
 }
 
 function sharedStudyratsRenderRatPicker(){
@@ -122,6 +135,8 @@ function sharedStudyratsRenderRatPicker(){
       });
     });
   }
+
+  sharedStudyratsUpdateLargePreview();
 }
 
 async function sharedStudyratsLoadMyVariant(){
@@ -137,6 +152,7 @@ async function sharedStudyratsLoadMyVariant(){
     if(result.data.studyrat_accessory)sharedStudyratsMyAccessory=sharedStudyratAccessory(result.data.studyrat_accessory).id;
   }
   sharedStudyratsRenderRatPicker();
+  sharedStudyratsUpdateLargePreview();
 }
 
 async function sharedStudyratsSaveVariant(variant){
