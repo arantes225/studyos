@@ -9,6 +9,8 @@
     snapshot: null,
     logistics: null,
     costItems: [],
+    storageBreakdown: null,
+    planPrices: [],
     customers: [],
     pinConfigured: false,
     pinUnlocked: false,
@@ -530,6 +532,32 @@
   }
 
 
+  function renderStorageBreakdown(data) {
+    state.storageBreakdown = data || {};
+    const total = Number(data?.total_bytes || 0);
+    if ($("admin-storage-total")) $("admin-storage-total").textContent = formatBytes(total);
+    const list = $("admin-storage-breakdown-list");
+    if (!list) return;
+    const items = Array.isArray(data?.items) ? data.items : [];
+    list.innerHTML = items.length ? items.map(item => {
+      const pct = Number(item.percent || 0);
+      return `<div class="admin-storage-row"><div class="admin-storage-row-head"><strong>${esc(item.category)}</strong><span>${esc(formatBytes(item.bytes))} · ${esc(formatPercent(pct))}</span></div><div class="admin-storage-type-track"><span style="width:${Math.min(100,pct).toFixed(2)}%"></span></div><small>${esc(formatNumber(item.objects))} arquivo${Number(item.objects)===1?"":"s"}</small></div>`;
+    }).join("") : '<div class="admin-empty-mini">Nenhum arquivo no Storage.</div>';
+  }
+
+  function renderPlanPrices(items) {
+    state.planPrices = Array.isArray(items) ? items : [];
+    const grid = $("admin-plan-price-grid");
+    if (!grid) return;
+    const labels={free:"Free",essential:"Essential",plus:"Plus",pro:"Pro"};
+    grid.innerHTML = state.planPrices.map(item => `<article class="admin-plan-price-card" data-plan="${esc(item.plan_slug)}"><strong>Plano ${esc(labels[item.plan_slug]||item.plan_slug)}</strong><label><span>Mensal</span><div class="admin-price-input"><b>R$</b><input data-price="monthly_price_cents" inputmode="decimal" value="${(Number(item.monthly_price_cents||0)/100).toFixed(2).replace(".",",")}"></div></label><label><span>Anual à vista</span><div class="admin-price-input"><b>R$</b><input data-price="annual_cash_price_cents" inputmode="decimal" value="${(Number(item.annual_cash_price_cents||0)/100).toFixed(2).replace(".",",")}"></div></label><label><span>Anual parcelado</span><div class="admin-price-input"><b>R$</b><input data-price="annual_installment_price_cents" inputmode="decimal" value="${(Number(item.annual_installment_price_cents||0)/100).toFixed(2).replace(".",",")}"></div></label><label><span>Parcelas</span><input class="admin-installments-input" data-price="annual_installments" type="number" min="1" max="24" value="${Number(item.annual_installments||12)}"></label></article>`).join("");
+  }
+
+  function moneyInputToCents(value) {
+    const normalized=String(value||"0").replace(/\s/g,"").replace(/\./g,"").replace(",",".");
+    return Math.max(0,Math.round((Number(normalized)||0)*100));
+  }
+
   function renderLogistics(logistics, metrics) {
     state.logistics =
       logistics || {};
@@ -942,7 +970,9 @@
       dashboardResponse,
       logisticsResponse,
       costItemsResponse,
-      storageUsageResponse
+      storageUsageResponse,
+      storageBreakdownResponse,
+      planPricesResponse
     ] =
       await Promise.all([
         sb.rpc(
@@ -960,7 +990,9 @@
         ),
         sb.rpc(
           "admin_customer_storage_usage"
-        )
+        ),
+        sb.rpc("admin_storage_breakdown"),
+        sb.rpc("admin_plan_prices_snapshot")
       ]);
 
     const {
@@ -1028,6 +1060,12 @@
         ? costItemsResponse.data
         : [];
     }
+
+    if (storageBreakdownResponse?.error) console.warn("Falha no detalhamento do Storage:", storageBreakdownResponse.error);
+    renderStorageBreakdown(storageBreakdownResponse?.data || {});
+
+    if (planPricesResponse?.error) console.warn("Falha ao carregar preços dos planos:", planPricesResponse.error);
+    renderPlanPrices(planPricesResponse?.data || []);
 
     const storageByUser =
       new Map(
@@ -1586,6 +1624,26 @@
           renderCustomers();
         }
       );
+
+    $("admin-save-plan-prices")?.addEventListener("click", async () => {
+      const button=$("admin-save-plan-prices");
+      const items=Array.from(document.querySelectorAll(".admin-plan-price-card")).map(card=>({
+        plan_slug:card.dataset.plan,
+        monthly_price_cents:moneyInputToCents(card.querySelector('[data-price="monthly_price_cents"]')?.value),
+        annual_cash_price_cents:moneyInputToCents(card.querySelector('[data-price="annual_cash_price_cents"]')?.value),
+        annual_installment_price_cents:moneyInputToCents(card.querySelector('[data-price="annual_installment_price_cents"]')?.value),
+        annual_installments:Math.max(1,Number(card.querySelector('[data-price="annual_installments"]')?.value||12))
+      }));
+      if(button){button.disabled=true;button.textContent="Salvando...";}
+      try{
+        const {data,error}=await sb.rpc("admin_save_plan_prices",{p_items:items});
+        if(error) throw error;
+        renderPlanPrices(data||items);
+        if(button) button.textContent="Salvo";
+        setTimeout(()=>{if(button)button.textContent="Salvar valores";},900);
+      }catch(error){console.error(error);if(button)button.textContent="Erro ao salvar";}
+      finally{if(button)button.disabled=false;}
+    });
 
     $("admin-edit-costs")
       ?.addEventListener(
