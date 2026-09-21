@@ -3233,3 +3233,11 @@ input[type="date"]::-webkit-calendar-picker-indicator{
   height:100%;
   object-fit:contain;
 }
+
+/* Calendário dentro de modal: mantém o picker acima do conteúdo do dialog */
+dialog[open] > .luria-calendar{
+  z-index:2147483647!important;
+}
+dialog[open]{
+  overflow:visible!important;
+}
