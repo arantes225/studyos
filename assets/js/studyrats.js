@@ -261,6 +261,7 @@ function sharedStudyratsRender(){
 
   if(!challenges.length){
     host.innerHTML='<div class="studyrats-empty"><div>'+sharedStudyratComposite(sharedStudyratsMyVariant,sharedStudyratsMyAccessory,'studyrats-empty-composite')+'<strong>Nenhuma corrida ativa</strong><span>Crie um desafio com seus amigos e acompanhe os ratinhos avançando até a chegada.</span></div></div>';
+    sharedStudyratsBindImageFallbacks(host);
     return;
   }
 
