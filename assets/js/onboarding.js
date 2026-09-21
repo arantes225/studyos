@@ -896,6 +896,15 @@
 
     if(step.action==="questions-file"){
       ensureQuestionsAddMode();
+
+      const fileLabel=document.querySelector('label[for="qs-file"]');
+      fileLabel?.classList.add("onboarding-demo-click");
+
+      setTimeout(()=>{
+        fileLabel?.classList.remove("onboarding-demo-click");
+        simulateOnboardingFileSelection();
+        addOnboardingPdfPreview();
+      },650);
     }
 
     if(step.action==="questions-pdf"){
