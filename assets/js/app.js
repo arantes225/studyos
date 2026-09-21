@@ -1470,6 +1470,557 @@ function prepararStudyMenu(
 }
 
 
+
+function notificationTimeLabel(value) {
+  const date =
+    new Date(
+      value
+    );
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return "";
+  }
+
+  const diff =
+    Date.now()
+    - date.getTime();
+
+  const minutes =
+    Math.floor(
+      diff / 60000
+    );
+
+  if (minutes < 1) {
+    return "agora";
+  }
+
+  if (minutes < 60) {
+    return `${minutes} min`;
+  }
+
+  const hours =
+    Math.floor(
+      minutes / 60
+    );
+
+  if (hours < 24) {
+    return `${hours}h`;
+  }
+
+  const days =
+    Math.floor(
+      hours / 24
+    );
+
+  if (days < 7) {
+    return `${days}d`;
+  }
+
+  return new Intl.DateTimeFormat(
+    "pt-BR",
+    {
+      day:
+        "2-digit",
+      month:
+        "2-digit"
+    }
+  ).format(
+    date
+  );
+}
+
+
+function notificationIcon(type) {
+  if (
+    type ===
+    "friend_added"
+  ) {
+    return "◎";
+  }
+
+  if (
+    type ===
+    "direct_share"
+  ) {
+    return "↗";
+  }
+
+  return "•";
+}
+
+
+function ensureNotificationCenter() {
+  const topbar =
+    document.querySelector(
+      ".topbar"
+    );
+
+  if (
+    !topbar
+    || document.getElementById(
+      "luria-notifications"
+    )
+  ) {
+    return;
+  }
+
+  const center =
+    document.createElement(
+      "div"
+    );
+
+  center.id =
+    "luria-notifications";
+
+  center.className =
+    "luria-notifications";
+
+  center.innerHTML = `
+    <button
+      id="luria-notification-toggle"
+      class="luria-notification-toggle"
+      type="button"
+      aria-label="Notificações"
+      aria-expanded="false"
+      aria-controls="luria-notification-panel"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
+        ></path>
+        <path
+          d="M10 21h4"
+        ></path>
+      </svg>
+
+      <span
+        id="luria-notification-badge"
+        class="luria-notification-badge"
+        hidden
+      ></span>
+    </button>
+
+    <section
+      id="luria-notification-panel"
+      class="luria-notification-panel"
+      hidden
+    >
+      <header class="luria-notification-head">
+        <div>
+          <strong>Notificações</strong>
+          <small id="luria-notification-subtitle">
+            Novidades do LURIA
+          </small>
+        </div>
+
+        <button
+          id="luria-notification-read-all"
+          class="luria-notification-read-all"
+          type="button"
+          hidden
+        >
+          Marcar como lidas
+        </button>
+      </header>
+
+      <div
+        id="luria-notification-list"
+        class="luria-notification-list"
+      >
+        <div class="luria-notification-loading">
+          Carregando...
+        </div>
+      </div>
+
+      <a
+        class="luria-notification-footer"
+        href="/amigos/"
+      >
+        Abrir Amigos
+      </a>
+    </section>
+  `;
+
+  topbar.appendChild(
+    center
+  );
+}
+
+
+async function markNotificationRead(
+  notificationId
+) {
+  if (!notificationId) {
+    return;
+  }
+
+  const {
+    error
+  } =
+    await sb
+      .from(
+        "notifications"
+      )
+      .update({
+        read_at:
+          new Date()
+            .toISOString()
+      })
+      .eq(
+        "id",
+        notificationId
+      )
+      .is(
+        "read_at",
+        null
+      );
+
+  if (error) {
+    console.warn(
+      "Não foi possível marcar a notificação como lida:",
+      error.message
+    );
+  }
+}
+
+
+async function loadNotifications() {
+  const list =
+    document.getElementById(
+      "luria-notification-list"
+    );
+
+  const badge =
+    document.getElementById(
+      "luria-notification-badge"
+    );
+
+  const subtitle =
+    document.getElementById(
+      "luria-notification-subtitle"
+    );
+
+  const readAll =
+    document.getElementById(
+      "luria-notification-read-all"
+    );
+
+  if (
+    !list
+    || !badge
+  ) {
+    return;
+  }
+
+  const {
+    data,
+    error
+  } =
+    await sb
+      .from(
+        "notifications"
+      )
+      .select(
+        "id,type,title,body,href,metadata,read_at,created_at"
+      )
+      .order(
+        "created_at",
+        {
+          ascending:
+            false
+        }
+      )
+      .limit(
+        12
+      );
+
+  if (error) {
+    console.warn(
+      "Não foi possível carregar notificações:",
+      error.message
+    );
+
+    list.innerHTML =
+      '<div class="luria-notification-empty">Não foi possível carregar as notificações.</div>';
+
+    return;
+  }
+
+  const rows =
+    data || [];
+
+  const unread =
+    rows.filter(
+      item =>
+        !item.read_at
+    ).length;
+
+  badge.hidden =
+    unread === 0;
+
+  badge.textContent =
+    unread > 99
+      ? "99+"
+      : String(
+          unread
+        );
+
+  if (subtitle) {
+    subtitle.textContent =
+      unread
+        ? `${unread} não lida${unread === 1 ? "" : "s"}`
+        : "Tudo em dia";
+  }
+
+  if (readAll) {
+    readAll.hidden =
+      unread === 0;
+  }
+
+  if (!rows.length) {
+    list.innerHTML =
+      `
+        <div class="luria-notification-empty">
+          <strong>Nenhuma notificação</strong>
+          <span>Novos amigos e conteúdos recebidos aparecerão aqui.</span>
+        </div>
+      `;
+
+    return;
+  }
+
+  list.innerHTML =
+    rows
+      .map(
+        item => `
+          <a
+            class="luria-notification-item ${item.read_at ? "" : "unread"}"
+            href="${escapeHtml(item.href || "/amigos/")}"
+            data-notification-id="${escapeHtml(item.id)}"
+          >
+            <span class="luria-notification-icon">
+              ${notificationIcon(item.type)}
+            </span>
+
+            <span class="luria-notification-copy">
+              <strong>
+                ${escapeHtml(item.title || "Notificação")}
+              </strong>
+
+              <span>
+                ${escapeHtml(item.body || "")}
+              </span>
+
+              <small>
+                ${escapeHtml(notificationTimeLabel(item.created_at))}
+              </small>
+            </span>
+
+            ${item.read_at
+              ? ""
+              : '<i class="luria-notification-unread-dot" aria-label="Não lida"></i>'
+            }
+          </a>
+        `
+      )
+      .join(
+        ""
+      );
+
+  list
+    .querySelectorAll(
+      "[data-notification-id]"
+    )
+    .forEach(
+      link => {
+        link.addEventListener(
+          "click",
+          () => {
+            markNotificationRead(
+              link.dataset
+                .notificationId
+            );
+          }
+        );
+      }
+    );
+}
+
+
+async function prepararNotificacoes(
+  userId
+) {
+  ensureNotificationCenter();
+
+  const center =
+    document.getElementById(
+      "luria-notifications"
+    );
+
+  const toggle =
+    document.getElementById(
+      "luria-notification-toggle"
+    );
+
+  const panel =
+    document.getElementById(
+      "luria-notification-panel"
+    );
+
+  const readAll =
+    document.getElementById(
+      "luria-notification-read-all"
+    );
+
+  if (
+    !center
+    || !toggle
+    || !panel
+  ) {
+    return;
+  }
+
+  toggle.addEventListener(
+    "click",
+    async (
+      event
+    ) => {
+      event.stopPropagation();
+
+      const opening =
+        panel.hidden;
+
+      panel.hidden =
+        !opening;
+
+      toggle.setAttribute(
+        "aria-expanded",
+        String(
+          opening
+        )
+      );
+
+      if (opening) {
+        await loadNotifications();
+      }
+    }
+  );
+
+  panel.addEventListener(
+    "click",
+    event =>
+      event.stopPropagation()
+  );
+
+  readAll?.addEventListener(
+    "click",
+    async () => {
+      readAll.disabled =
+        true;
+
+      const {
+        error
+      } =
+        await sb
+          .from(
+            "notifications"
+          )
+          .update({
+            read_at:
+              new Date()
+                .toISOString()
+          })
+          .eq(
+            "user_id",
+            userId
+          )
+          .is(
+            "read_at",
+            null
+          );
+
+      readAll.disabled =
+        false;
+
+      if (error) {
+        console.warn(
+          "Não foi possível marcar as notificações como lidas:",
+          error.message
+        );
+
+        return;
+      }
+
+      await loadNotifications();
+    }
+  );
+
+  document.addEventListener(
+    "click",
+    () => {
+      if (
+        panel.hidden
+      ) {
+        return;
+      }
+
+      panel.hidden =
+        true;
+
+      toggle.setAttribute(
+        "aria-expanded",
+        "false"
+      );
+    }
+  );
+
+  await loadNotifications();
+
+  const channel =
+    sb
+      .channel(
+        `luria-notifications-${userId}`
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:
+            "INSERT",
+          schema:
+            "public",
+          table:
+            "notifications",
+          filter:
+            `user_id=eq.${userId}`
+        },
+        () => {
+          loadNotifications();
+        }
+      )
+      .subscribe();
+
+  window.addEventListener(
+    "beforeunload",
+    () => {
+      sb.removeChannel(
+        channel
+      );
+    },
+    {
+      once:
+        true
+    }
+  );
+}
+
+
 function prepararMobileMenu() {
   const open = document.getElementById("menu-open");
   const close = document.getElementById("sidebar-close");
@@ -1811,6 +2362,17 @@ async function iniciarApp() {
 
   await registrarAcessoDiario();
   prepararConfiguracoes();
+
+  prepararNotificacoes(
+    user.id
+  ).catch(
+    error => {
+      console.warn(
+        "Não foi possível iniciar as notificações:",
+        error
+      );
+    }
+  );
 
   document.body.classList.add("app-ready");
 
