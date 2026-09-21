@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-title" content="LURIA">
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria2">
-  <link rel="stylesheet" href="assets/css/style.css?v=luria-pattern-14">
+  <link rel="stylesheet" href="assets/css/style.css?v=agenda-controls-15">
   <style id="fase3-inline">
 /* =========================================================
    FASE 3 — DASHBOARD + AGENDA
@@ -1759,18 +1759,21 @@
             </div>
 
             <div class="calendar-actions">
-              <div class="segmented-control" aria-label="Visualização da agenda">
-                <button id="view-day" type="button">Dia</button>
-                <button id="view-week" class="active" type="button">Semana</button>
-                <button id="view-month" type="button">Mês</button>
+              <div class="calendar-controls-row">
+                <div class="segmented-control" aria-label="Visualização da agenda">
+                  <button id="view-day" type="button">Dia</button>
+                  <button id="view-week" class="active" type="button">Semana</button>
+                  <button id="view-month" type="button">Mês</button>
+                </div>
+
+                <div class="calendar-nav">
+                  <button id="calendar-prev" type="button" aria-label="Período anterior">‹</button>
+                  <button id="calendar-today" type="button">Hoje</button>
+                  <button id="calendar-next" type="button" aria-label="Próximo período">›</button>
+                </div>
               </div>
 
-              <div class="calendar-nav">
-                <button id="calendar-prev" type="button" aria-label="Período anterior">‹</button>
-                <button id="calendar-today" type="button">Hoje</button>
-                <button id="calendar-next" type="button" aria-label="Próximo período">›</button>
-              </div>
-              <button id="calendar-add-event" class="calendar-add-event" type="button">＋ Adicionar evento</button>
+              <button id="calendar-add-event" class="calendar-add-event" type="button">Adicionar evento</button>
             </div>
           </div>
 
