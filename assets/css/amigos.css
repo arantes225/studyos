@@ -166,19 +166,19 @@
 
 .studyrats-rat-img.rat-0,
 .studyrats-badge-rat.rat-0,
-.studyrats-empty-rat.rat-0{background-image:url("/assets/img/studyrats/rat-gray.png?v=3")}
+.studyrats-empty-rat.rat-0{background-image:url("/assets/img/studyrats/rat-brown.png?v=4")}
 
 .studyrats-rat-img.rat-1,
 .studyrats-badge-rat.rat-1,
-.studyrats-empty-rat.rat-1{background-image:url("/assets/img/studyrats/rat-brown.png?v=3")}
+.studyrats-empty-rat.rat-1{background-image:url("/assets/img/studyrats/rat-brown.png?v=4")}
 
 .studyrats-rat-img.rat-2,
 .studyrats-badge-rat.rat-2,
-.studyrats-empty-rat.rat-2{background-image:url("/assets/img/studyrats/rat-white.png?v=3")}
+.studyrats-empty-rat.rat-2{background-image:url("/assets/img/studyrats/rat-white.png?v=4")}
 
 .studyrats-rat-img.rat-3,
 .studyrats-badge-rat.rat-3,
-.studyrats-empty-rat.rat-3{background-image:url("/assets/img/studyrats/rat-charcoal.png?v=3")}
+.studyrats-empty-rat.rat-3{background-image:url("/assets/img/studyrats/rat-brown.png?v=4")}
 
 :root[data-theme="dark"] .studyrats-rat-img{
   filter:
@@ -192,4 +192,21 @@
 :root[data-theme="dark"] .studyrats-badge-rat,
 :root[data-theme="dark"] .studyrats-empty-rat{
   filter:drop-shadow(0 0 2px rgba(255,255,255,.95)) drop-shadow(0 0 7px rgba(93,164,255,.72));
+}
+
+/* Distinção visual das variações usando apenas assets verificados */
+.studyrats-rat-img.rat-0{filter:grayscale(.45) brightness(.95) drop-shadow(0 3px 4px rgba(24,35,50,.28))}
+.studyrats-rat-img.rat-1{filter:drop-shadow(0 3px 4px rgba(24,35,50,.28))}
+.studyrats-rat-img.rat-2{filter:brightness(1.04) drop-shadow(0 3px 4px rgba(24,35,50,.24))}
+.studyrats-rat-img.rat-3{filter:grayscale(.85) brightness(.52) contrast(1.25) drop-shadow(0 3px 4px rgba(24,35,50,.32))}
+:root[data-theme="dark"] .studyrats-rat-img.rat-0,
+:root[data-theme="dark"] .studyrats-rat-img.rat-1,
+:root[data-theme="dark"] .studyrats-rat-img.rat-2,
+:root[data-theme="dark"] .studyrats-rat-img.rat-3{
+  filter:
+    drop-shadow(0 0 2px rgba(255,255,255,1))
+    drop-shadow(0 0 5px rgba(142,202,255,.98))
+    drop-shadow(0 0 10px rgba(73,151,255,.8))
+    drop-shadow(0 0 17px rgba(58,126,255,.52))
+    drop-shadow(0 4px 7px rgba(0,0,0,.62));
 }
