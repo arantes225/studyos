@@ -1551,8 +1551,11 @@
 }
 
 
-.calendar-nav-stack{display:grid;gap:7px;justify-items:stretch}
-.calendar-add-event{width:100%;min-height:34px;border:1px solid color-mix(in srgb,#7c3aed 40%,var(--border));border-radius:10px;background:color-mix(in srgb,#7c3aed 12%,var(--surface));color:#6d28d9;font:inherit;font-size:10px;font-weight:850;cursor:pointer}
+.calendar-actions{display:grid;grid-template-columns:max-content max-content;align-items:stretch;justify-content:end;gap:7px 10px}
+.calendar-actions .segmented-control,.calendar-actions .calendar-nav{grid-row:1}
+.calendar-actions .segmented-control{grid-column:1}
+.calendar-actions .calendar-nav{grid-column:2}
+.calendar-add-event{grid-column:1 / -1;grid-row:2;width:100%;min-height:34px;border:1px solid color-mix(in srgb,#7c3aed 40%,var(--border));border-radius:10px;background:color-mix(in srgb,#7c3aed 12%,var(--surface));color:#6d28d9;font:inherit;font-size:10px;font-weight:850;cursor:pointer}
 .calendar-add-event:hover{background:color-mix(in srgb,#7c3aed 18%,var(--surface));border-color:#7c3aed}
 .agenda-card.personal-event{border-color:color-mix(in srgb,#7c3aed 40%,var(--border));background:color-mix(in srgb,#7c3aed 9%,var(--surface));box-shadow:inset 3px 0 0 #7c3aed}
 .agenda-card.personal-event .agenda-kind{color:#6d28d9}
@@ -1560,7 +1563,7 @@
 .event-date-time-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .event-dialog .field small{font-weight:500;color:var(--muted)}
 .event-save-button{background:#7c3aed!important;border-color:#7c3aed!important}
-@media(max-width:620px){.event-date-time-grid{grid-template-columns:1fr}.calendar-nav-stack{width:100%}}
+@media(max-width:620px){.event-date-time-grid{grid-template-columns:1fr}.calendar-actions{width:100%;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.calendar-actions .segmented-control,.calendar-actions .calendar-nav{width:100%;justify-content:space-evenly}.calendar-actions .segmented-control button,.calendar-actions .calendar-nav button{flex:1;padding-inline:6px}}
 
 </style>
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
@@ -1762,14 +1765,12 @@
                 <button id="view-month" type="button">Mês</button>
               </div>
 
-              <div class="calendar-nav-stack">
-                <div class="calendar-nav">
-                  <button id="calendar-prev" type="button" aria-label="Período anterior">‹</button>
-                  <button id="calendar-today" type="button">Hoje</button>
-                  <button id="calendar-next" type="button" aria-label="Próximo período">›</button>
-                </div>
-                <button id="calendar-add-event" class="calendar-add-event" type="button">＋ Adicionar evento</button>
+              <div class="calendar-nav">
+                <button id="calendar-prev" type="button" aria-label="Período anterior">‹</button>
+                <button id="calendar-today" type="button">Hoje</button>
+                <button id="calendar-next" type="button" aria-label="Próximo período">›</button>
               </div>
+              <button id="calendar-add-event" class="calendar-add-event" type="button">＋ Adicionar evento</button>
             </div>
           </div>
 
