@@ -6,10 +6,10 @@ const sharedStudyratLaneColors=['#2f80ed','#36a96c','#f2994a','#8b5cf6','#eb5757
 
 function sharedRatImg(index,className){
   const variants=[
-    '/assets/img/studyrats/rat-brown.png?v=7',
-    '/assets/img/studyrats/rat-gray.png?v=7',
-    '/assets/img/studyrats/rat-white.png?v=7',
-    '/assets/img/studyrats/rat-charcoal.png?v=7'
+    '/assets/img/studyrats/rat-brown.svg?v=1',
+    '/assets/img/studyrats/rat-gray.svg?v=1',
+    '/assets/img/studyrats/rat-white.svg?v=1',
+    '/assets/img/studyrats/rat-charcoal.svg?v=1'
   ];
   const i=((Number(index)||0)%variants.length+variants.length)%variants.length;
   const cls=(className||'studyrats-rat-img')+' rat-'+i;
