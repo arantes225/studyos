@@ -4995,6 +4995,112 @@ function keepCaretOutsideNotebookDivider(
 }
 
 
+function removeAdjacentNotebookDivider(
+  event
+) {
+  if (
+    !notebookState.editorEditable
+    || ![
+      "Backspace",
+      "Delete"
+    ].includes(event.key)
+  ) {
+    return false;
+  }
+
+  const selection =
+    window.getSelection();
+
+  if (
+    !selection
+    || !selection.rangeCount
+    || !selection.isCollapsed
+  ) {
+    return false;
+  }
+
+  const editor =
+    document.getElementById(
+      "notebook-editor"
+    );
+
+  const range =
+    selection.getRangeAt(0);
+
+  let block =
+    range.startContainer.nodeType === Node.ELEMENT_NODE
+      ? range.startContainer
+      : range.startContainer.parentElement;
+
+  block =
+    block?.closest?.(
+      "p,h1,h2,h3,li,blockquote,div"
+    );
+
+  if (
+    !editor
+    || !block
+    || block === editor
+    || !editor.contains(block)
+    || block.classList.contains("notebook-divider")
+  ) {
+    return false;
+  }
+
+  const probe =
+    document.createRange();
+
+  probe.selectNodeContents(block);
+
+  const before =
+    probe.cloneRange();
+
+  before.setEnd(
+    range.startContainer,
+    range.startOffset
+  );
+
+  const after =
+    probe.cloneRange();
+
+  after.setStart(
+    range.startContainer,
+    range.startOffset
+  );
+
+  const atStart =
+    before.toString().length === 0;
+
+  const atEnd =
+    after.toString().length === 0;
+
+  const divider =
+    event.key === "Backspace" && atStart
+      ? block.previousElementSibling
+      : event.key === "Delete" && atEnd
+        ? block.nextElementSibling
+        : null;
+
+  if (
+    !divider?.classList?.contains(
+      "notebook-divider"
+    )
+  ) {
+    return false;
+  }
+
+  event.preventDefault();
+  divider.remove();
+
+  saveSelection();
+  scheduleSave();
+
+  return true;
+}
+
+
+
+
 function handleNotebookEditorTableBackspace(
   event
 ) {
@@ -16757,6 +16863,15 @@ function wireEvents() {
     ?.addEventListener(
       "keydown",
       (event) => {
+        if (
+          removeAdjacentNotebookDivider(
+            event
+          )
+        ) {
+          return;
+        }
+
+
         keepCaretOutsideNotebookDivider(
           event
         );
