@@ -3314,3 +3314,30 @@ dialog[open]{
   .luria-time-picker{padding:12px;border-radius:15px}
   .luria-time-picker-quick{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
+
+/* Logo exclusiva dos popups: nunca herdar dimensões das logos de fundo/tema */
+#luria-global-dialog .luria-global-dialog-icon{
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  min-height:42px!important;
+  overflow:hidden!important;
+  padding:7px!important;
+}
+#luria-global-dialog .luria-global-dialog-logo{
+  position:static!important;
+  inset:auto!important;
+  display:block!important;
+  width:28px!important;
+  height:28px!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:28px!important;
+  max-height:28px!important;
+  margin:0!important;
+  padding:0!important;
+  object-fit:contain!important;
+  transform:none!important;
+  opacity:1!important;
+  pointer-events:none!important;
+}
