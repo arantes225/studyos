@@ -29,7 +29,7 @@
 
   <link
     rel="stylesheet"
-    href="assets/css/caderno-erros.css?v=13.8"
+    href="assets/css/caderno-erros.css?v=14.0"
   >
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
   <script defer src="assets/js/luria-brand-v5.js?v=9"></script>
@@ -188,19 +188,33 @@
               <label class="error-field error-area-create-field">
                 <span>Área <b class="error-required-mark">*</b></span>
 
-                <select
-                  id="new-error-area"
-                  data-luria-general-area-select
-                  data-blank-label="Selecione uma área"
-                  required
-                >
-                  <option value="">Selecione uma área</option>
-                  <option value="Clínica Médica">Clínica Médica</option>
-                  <option value="Pediatria">Pediatria</option>
-                  <option value="Ginecologia e Obstetrícia">Ginecologia e Obstetrícia</option>
-                  <option value="Cirurgia Geral">Cirurgia Geral</option>
-                  <option value="Preventiva">Preventiva</option>
-                </select>
+                <div class="error-area-picker">
+                  <button
+                    id="new-error-area-toggle"
+                    class="error-area-picker-toggle"
+                    type="button"
+                    aria-haspopup="listbox"
+                    aria-expanded="false"
+                  >
+                    <span id="new-error-area-label">Selecione uma área</span>
+                    <span class="error-area-picker-chevron" aria-hidden="true">⌄</span>
+                  </button>
+
+                  <div
+                    id="new-error-area-menu"
+                    class="error-area-picker-menu"
+                    role="listbox"
+                    hidden
+                  >
+                    <button type="button" role="option" data-error-area-value="Clínica Médica">Clínica Médica</button>
+                    <button type="button" role="option" data-error-area-value="Pediatria">Pediatria</button>
+                    <button type="button" role="option" data-error-area-value="Ginecologia e Obstetrícia">Ginecologia e Obstetrícia</button>
+                    <button type="button" role="option" data-error-area-value="Cirurgia Geral">Cirurgia Geral</button>
+                    <button type="button" role="option" data-error-area-value="Preventiva">Preventiva</button>
+                  </div>
+
+                  <input id="new-error-area" type="hidden" value="">
+                </div>
               </label>
 
 
@@ -964,7 +978,7 @@
   <script src="assets/js/app.js?v=14.8"></script>
   <script src="assets/js/study-mode.js?v=13.0"></script>
 
-  <script src="assets/js/caderno-erros.js?v=13.5"></script>
+  <script src="assets/js/caderno-erros.js?v=13.6"></script>
 
     <script src="assets/js/image-lightbox.js?v=1"></script>
 <script defer src="assets/js/pwa.js?v=3"></script>
