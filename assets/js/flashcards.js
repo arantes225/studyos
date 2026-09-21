@@ -6104,7 +6104,7 @@ async function openFlashShareDialog(
           );
 
         } catch {
-          window.prompt(
+          await window.LuriaDialog.prompt(
             "Copie o link:",
             url.toString()
           );
