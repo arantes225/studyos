@@ -364,14 +364,92 @@
 
   function addErrorDemo(){
     activateTab('[data-error-tab="review"]');
-    const stage=document.getElementById("error-stage"); if(stage) stage.hidden=false;
-    const empty=document.getElementById("error-empty"); if(empty) empty.hidden=true;
-    const ccq=document.getElementById("error-ccq"); if(ccq) ccq.textContent="Qual achado diferencia uma urgência hipertensiva de uma emergência hipertensiva?";
-    const meta=document.getElementById("error-meta"); if(meta) meta.textContent="Clínica Médica · Cardiologia · 1 de 5";
-    const q=document.getElementById("error-question"); if(q) q.textContent="Paciente com PA muito elevada. Qual elemento define emergência hipertensiva?";
-    const a=document.getElementById("error-correct-answer"); if(a) a.textContent="Lesão aguda de órgão-alvo.";
+
+    const stage=document.getElementById("error-stage");
+    if(stage) stage.hidden=false;
+
+    const empty=document.getElementById("error-empty");
+    if(empty) empty.hidden=true;
+
+    const ccq=document.getElementById("error-ccq");
+    if(ccq) ccq.textContent="Qual achado diferencia uma urgência hipertensiva de uma emergência hipertensiva?";
+
+    const meta=document.getElementById("error-meta");
+    if(meta) meta.textContent="Clínica Médica · Cardiologia · 1 de 5";
+
+    const q=document.getElementById("error-question");
+    if(q) q.textContent="Paciente com PA muito elevada. Qual elemento define emergência hipertensiva?";
+
+    const a=document.getElementById("error-correct-answer");
+    if(a) a.textContent="Lesão aguda de órgão-alvo.";
+
     const lib=document.getElementById("error-library");
-    demoNode(lib,['Emergência hipertensiva','CURB-65','Apendicite','DM gestacional','Vacinação'].map((x,i)=>'<article class="onboarding-demo-card"><small>ERRO '+(i+1)+'</small><strong>'+x+'</strong><span>CCQ de demonstração · revisão programada</span></article>').join(""));
+
+    if(lib && !lib.querySelector("[data-onboarding-error-library]")){
+      const wrap=document.createElement("div");
+      wrap.dataset.onboardingDemo="1";
+      wrap.dataset.onboardingErrorLibrary="1";
+      wrap.className="onboarding-error-library-demo";
+
+      const items=[
+        {
+          area:"Clínica Médica",
+          materia:"Cardiologia",
+          theme:"Emergência hipertensiva",
+          ccq:"Qual achado define emergência hipertensiva?",
+          answer:"Lesão aguda de órgão-alvo."
+        },
+        {
+          area:"Clínica Médica",
+          materia:"Pneumologia",
+          theme:"Pneumonia comunitária",
+          ccq:"Qual escore pode auxiliar na avaliação de gravidade da PAC?",
+          answer:"CURB-65."
+        },
+        {
+          area:"Cirurgia Geral",
+          materia:"Abdome agudo",
+          theme:"Apendicite",
+          ccq:"Qual sinal clínico clássico pode ocorrer na apendicite?",
+          answer:"Dor migratória para fossa ilíaca direita."
+        },
+        {
+          area:"Ginecologia e Obstetrícia",
+          materia:"Pré-natal",
+          theme:"Diabetes gestacional",
+          ccq:"Em que período costuma ser feito o TOTG 75 g quando indicado?",
+          answer:"Entre 24 e 28 semanas."
+        },
+        {
+          area:"Pediatria",
+          materia:"Imunizações",
+          theme:"Vacinação",
+          ccq:"Qual é a lógica de revisar um erro no LURIA?",
+          answer:"Recuperar ativamente a informação antes de conferir a resposta."
+        }
+      ];
+
+      wrap.innerHTML=items.map((item,index)=>`
+        <article class="onboarding-demo-card onboarding-error-library-card">
+          <div class="onboarding-error-library-head">
+            <small>ERRO ${index+1}</small>
+            <span>${item.area}</span>
+          </div>
+          <strong>${item.theme}</strong>
+          <span>${item.materia}</span>
+          <div class="onboarding-error-library-ccq">
+            <small>CCQ</small>
+            <p>${item.ccq}</p>
+          </div>
+          <div class="onboarding-error-library-answer">
+            <small>Resposta</small>
+            <p>${item.answer}</p>
+          </div>
+        </article>
+      `).join("");
+
+      lib.prepend(wrap);
+    }
   }
 
   function addQuestionsDemo(){
