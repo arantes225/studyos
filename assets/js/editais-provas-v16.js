@@ -1440,6 +1440,18 @@
     );
   }
 
+  /*
+    API pública mínima para o módulo principal de Editais.
+    Permite recarregar score/cutoff_history depois de criar ou editar
+    uma prova sem depender de reload da página.
+  */
+  window.refreshExamV16 =
+    async function refreshExamV16() {
+      await loadExamData();
+      decorateCards();
+    };
+
+
   async function init() {
     wireEvents();
     observeList();
