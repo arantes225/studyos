@@ -28,11 +28,12 @@
 .studyrats-rat-choice{position:relative;min-width:0;height:70px;padding:4px 4px 6px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--muted);display:grid;grid-template-rows:1fr auto;place-items:center;gap:1px;cursor:pointer;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease,background .15s ease}
 .studyrats-rat-choice:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--accent) 45%,var(--border))}
 .studyrats-rat-choice.is-selected{border-color:var(--accent);background:color-mix(in srgb,var(--accent-soft) 62%,var(--surface));box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent)}
-.studyrats-rat-choice-img{width:64px;height:45px;object-fit:contain;display:block;transform:scale(1.22);transform-origin:center center;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(24,35,50,.18))}
+.studyrats-rat-choice-img{width:64px;height:45px;object-fit:contain;display:block;transform:scale(1.22);transform-origin:center center;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(24,35,50,.18));image-rendering:auto}
 .studyrats-rat-choice span{font-size:7.5px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .studyrats-rat-choice i{position:absolute;top:5px;right:5px;width:16px;height:16px;border-radius:50%;display:none;place-items:center;background:var(--accent);color:#fff;font-size:9px;font-style:normal;font-weight:1000;box-shadow:0 2px 5px color-mix(in srgb,var(--accent) 24%,transparent)}
 .studyrats-rat-choice.is-selected i{display:grid}
 .studyrats-rat-picker-status{min-width:88px;text-align:right;color:var(--muted);font-size:8px;font-weight:800}
+:root[data-theme="dark"] .studyrats-rat-choice-img{filter:drop-shadow(0 0 2px rgba(255,255,255,.9)) drop-shadow(0 0 6px rgba(93,164,255,.55))}
 
 .studyrats-list{display:grid;gap:16px}
 .studyrats-empty{min-height:190px;border:1px dashed var(--border);border-radius:15px;display:grid;place-items:center;text-align:center;padding:22px;background:linear-gradient(180deg,color-mix(in srgb,var(--accent-soft) 18%,var(--surface)),var(--surface))}
@@ -143,14 +144,85 @@
   display:grid;
   align-content:center;
 }
-/* Studyrats PNG assets */
+
+/* Studyrats rat sprites — robust rendering on web and PWA */
 .studyrats-rat-img,
 .studyrats-badge-rat,
-.studyrats-empty-rat,
-.studyrats-rat-choice-img{image-rendering:auto}
+.studyrats-empty-rat{
+  display:block;
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:contain;
+  image-rendering:auto;
+}
 
-:root[data-theme="dark"] .studyrats-rat-choice-img{
-  filter:drop-shadow(0 0 2px rgba(255,255,255,.9)) drop-shadow(0 0 6px rgba(93,164,255,.55));
+.studyrats-rat-img{
+  width:72px;
+  height:50px;
+  transform:scale(1.55);
+  transform-origin:center center;
+  position:relative;
+  z-index:9;
+  filter:drop-shadow(0 3px 4px rgba(24,35,50,.28));
+  transition:filter .2s ease,transform .2s ease;
+}
+
+.studyrats-badge-rat{
+  width:58px;
+  height:40px;
+}
+
+.studyrats-empty-rat{
+  width:88px;
+  height:58px;
+  margin:0 auto 6px;
+}
+
+.studyrats-rat-img.rat-0,
+.studyrats-badge-rat.rat-0,
+.studyrats-empty-rat.rat-0{background-image:url("/assets/img/studyrats/rat-brown.png?v=8")}
+
+.studyrats-rat-img.rat-1,
+.studyrats-badge-rat.rat-1,
+.studyrats-empty-rat.rat-1{background-image:url("/assets/img/studyrats/rat-brown.png?v=8")}
+
+.studyrats-rat-img.rat-2,
+.studyrats-badge-rat.rat-2,
+.studyrats-empty-rat.rat-2{background-image:url("/assets/img/studyrats/rat-white.png?v=8")}
+
+.studyrats-rat-img.rat-3,
+.studyrats-badge-rat.rat-3,
+.studyrats-empty-rat.rat-3{background-image:url("/assets/img/studyrats/rat-brown.png?v=8")}
+
+:root[data-theme="dark"] .studyrats-rat-img{
+  filter:
+    drop-shadow(0 0 2px rgba(255,255,255,1))
+    drop-shadow(0 0 5px rgba(142,202,255,.98))
+    drop-shadow(0 0 10px rgba(73,151,255,.8))
+    drop-shadow(0 0 17px rgba(58,126,255,.52))
+    drop-shadow(0 4px 7px rgba(0,0,0,.62));
+}
+
+:root[data-theme="dark"] .studyrats-badge-rat,
+:root[data-theme="dark"] .studyrats-empty-rat{
+  filter:drop-shadow(0 0 2px rgba(255,255,255,.95)) drop-shadow(0 0 7px rgba(93,164,255,.72));
+}
+
+/* Distinção visual das variações usando apenas assets verificados */
+.studyrats-rat-img.rat-0{filter:grayscale(.45) brightness(.95) drop-shadow(0 3px 4px rgba(24,35,50,.28))}
+.studyrats-rat-img.rat-1{filter:drop-shadow(0 3px 4px rgba(24,35,50,.28))}
+.studyrats-rat-img.rat-2{filter:brightness(1.04) drop-shadow(0 3px 4px rgba(24,35,50,.24))}
+.studyrats-rat-img.rat-3{filter:grayscale(.85) brightness(.52) contrast(1.25) drop-shadow(0 3px 4px rgba(24,35,50,.32))}
+:root[data-theme="dark"] .studyrats-rat-img.rat-0,
+:root[data-theme="dark"] .studyrats-rat-img.rat-1,
+:root[data-theme="dark"] .studyrats-rat-img.rat-2,
+:root[data-theme="dark"] .studyrats-rat-img.rat-3{
+  filter:
+    drop-shadow(0 0 2px rgba(255,255,255,1))
+    drop-shadow(0 0 5px rgba(142,202,255,.98))
+    drop-shadow(0 0 10px rgba(73,151,255,.8))
+    drop-shadow(0 0 17px rgba(58,126,255,.52))
+    drop-shadow(0 4px 7px rgba(0,0,0,.62));
 }
 
 @media(max-width:760px){
