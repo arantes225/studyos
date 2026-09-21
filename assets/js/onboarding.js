@@ -17,14 +17,14 @@
   };
 
   const STEPS = [
-    {page:"configuracoes", target:".settings-page, .page", title:"Prepare o seu LURIA", text:"Começamos pelas configurações. Ajuste nome, especialidade, sexo, dias de estudo e preferências. Depois de ler, clique em Explorar para deixar a tela livre e configurar enquanto este texto continua visível.", top:true},
-    {page:"configuracoes", target:".setting-row", title:"Seu perfil", text:"Preencha seus dados principais. No modo Explorar o fundo fica transparente e os campos continuam totalmente utilizáveis."},
-    {page:"configuracoes", target:"[data-weekday], .weekday-grid, .study-days, .setting-row:nth-of-type(2)", title:"Dias de estudo", text:"Escolha em quais dias você quer estudar. O cronograma e as revisões respeitam essa disponibilidade."},
+    {page:"configuracoes", target:".settings-page, .page", title:"Prepare o seu LURIA", transparent:true, text:"Começamos pelas configurações. Ajuste nome, especialidade, sexo, dias de estudo e preferências. Depois de ler, clique em Explorar para deixar a tela livre e configurar enquanto este texto continua visível.", top:true},
+    {page:"configuracoes", target:".setting-row", title:"Seu perfil", transparent:true, text:"Preencha seus dados principais. No modo Explorar o fundo fica transparente e os campos continuam totalmente utilizáveis."},
+    {page:"configuracoes", target:"[data-weekday], .weekday-grid, .study-days, .setting-row:nth-of-type(2)", title:"Dias de estudo", transparent:true, text:"Escolha em quais dias você quer estudar. O cronograma e as revisões respeitam essa disponibilidade."},
     {page:"configuracoes", target:".interval-editor, [data-interval-field]", title:"Revisões", text:"Defina os intervalos de revisão. O LURIA distribui as revisões dentro dos dias permitidos."},
 
     {page:"cronograma", target:".topbar, .page-heading", title:"Seu cronograma", text:"O cronograma é a base da organização do LURIA. Você pode importar o material do cursinho por PDF ou Excel, ou montar tudo manualmente.", top:true, demo:"schedule"},
-    {page:"cronograma", target:"#file-drop, #schedule-file", title:"PDF, Excel ou manual", text:"PDF: envie o cronograma do cursinho. Excel: importe uma planilha estruturada. Manual: cadastre área, matéria, tema e data diretamente no LURIA. Em Explorar, você pode navegar por esses controles.", top:true, demo:"schedule"},
-    {page:"cronograma", target:".import-mode, [name=import-mode], #manual-topic-form", title:"Como importar", text:"Você decide se as aulas entram já programadas ou no Deck. O cadastro manual serve para inserir uma aula por vez sem arquivo.", demo:"schedule"},
+    {page:"cronograma", target:"#file-drop, #schedule-file", title:"PDF, Excel ou manual", transparent:true, text:"PDF: envie o cronograma do cursinho. Excel: importe uma planilha estruturada. Manual: cadastre área, matéria, tema e data diretamente no LURIA. Em Explorar, você pode navegar por esses controles.", top:true, demo:"schedule"},
+    {page:"cronograma", target:".import-mode, [name=import-mode], #manual-topic-form", title:"Como importar", transparent:true, text:"Você decide se as aulas entram já programadas ou no Deck. O cadastro manual serve para inserir uma aula por vez sem arquivo.", demo:"schedule"},
     {page:"cronograma", target:"#deck-panel, #deck-list", title:"Deck", text:"O Deck é a área de espera das aulas ainda não programadas. Deixamos duas atividades simuladas aqui para você visualizar como funciona.", demo:"schedule"},
     {page:"cronograma", target:"#week-planner", title:"Semana", text:"As aulas programadas aparecem distribuídas na semana. Deixamos cinco atividades simuladas para mostrar a organização visual.", demo:"schedule"},
     {page:"cronograma", target:".theme-library-panel, #theme-library-list", title:"Lista de aulas", text:"A lista reúne todo o cronograma. Você pode pesquisar, filtrar, selecionar, mover para o Deck, marcar como feita e excluir. Há dez aulas simuladas para você visualizar.", demo:"schedule"},
@@ -45,10 +45,15 @@
     {page:"erros", target:"#new-error-image, #extract-error-image-text", title:"Extrair texto de um print", text:"Ao adicionar a imagem da questão, o botão Extrair texto pode transformar o conteúdo do print em texto para acelerar o registro do erro.", demo:"errors", action:"error-create"},
     {page:"erros", target:"[data-error-section=library], #error-library", title:"Biblioteca do Caderno de Erros", text:"Todos os erros ficam reunidos na Biblioteca, com busca, filtros, seleção e exportação.", demo:"errors", action:"error-library"},
 
-    {page:"questoes", target:".qs-mode-tabs, .qs-tabs, .page-heading", title:"Questões e Simulados", text:"Vamos simular a criação de uma lista, a leitura das questões e o preenchimento do gabarito sem salvar nada na sua conta.", demo:"questions", action:"questions-create", top:true},
-    {page:"questoes", target:"[data-qs-section=create], [data-qs-section=import], #qs-create-manual", title:"Adicionar questões", text:"Você pode criar um simulado manual ou importar material. A simulação abaixo mostra como as questões ficam depois de processadas.", demo:"questions", action:"questions-create"},
-    {page:"questoes", target:"#qs-answer-panel, #qs-question-list", title:"Questões processadas", text:"Aqui estão questões simuladas. Você consegue ler o enunciado e visualizar como o LURIA separa cada item.", demo:"questions", action:"questions-answer"},
-    {page:"questoes", target:"#qs-open-answer-import, #qs-question-list", title:"Gabarito e erros", text:"O print do gabarito pode ser lido e as respostas sinalizadas. Questões marcadas como erro abrem os campos usados para enviar conteúdo ao Caderno de Erros.", demo:"questions", action:"questions-key"},
+    {page:"questoes", target:".qs-mode-tabs, .qs-tabs, .page-heading", title:"Questões e Simulados", text:"Esta é uma das áreas mais importantes do LURIA. Você pode criar um simulado manualmente ou enviar um PDF para o sistema separar as questões, montar o gabarito e organizar seus erros.", demo:"questions", action:"questions-create", top:true},
+    {page:"questoes", target:".qs-add-mode-tabs", title:"Automático ou manual", text:"Automaticamente: envie um PDF e o LURIA tenta identificar cada questão. Manualmente: informe apenas o nome e o número de questões quando você quer usar somente o gabarito e as estatísticas.", demo:"questions", action:"questions-create", transparent:true},
+    {page:"questoes", target:"#qs-extraction-mode", title:"Tipo de extração", text:"Extração rápida prioriza velocidade. Extração detalhada cruza mais estratégias e tenta preservar melhor questões, textos e imagens. Se o PDF for complexo, prefira a detalhada.", demo:"questions", action:"questions-create", transparent:true},
+    {page:"questoes", target:"#qs-source-profile", title:"Origem do material", text:"Informe de onde veio o PDF. O perfil adapta a leitura ao padrão visual mais comum de cada cursinho, como MEDCOF, Aristo, Medway, Estratégia MED ou Medcurso.", demo:"questions", action:"questions-create", transparent:true},
+    {page:"questoes", target:"#qs-import", title:"Extrair questões", text:"Depois de escolher o PDF, o tipo de extração e a origem, clique em Extrair questões. O PDF original é usado apenas para o processamento e não deve permanecer armazenado.", demo:"questions", action:"questions-create", transparent:true},
+    {page:"questoes", target:"#qs-answer-panel, #qs-question-list", title:"Questões processadas", text:"Após a extração, confira se a separação ficou correta. Cada questão aparece individualmente e pode trazer texto e imagem quando detectados.", demo:"questions", action:"questions-answer", transparent:true},
+    {page:"questoes", target:"#qs-open-answer-import", title:"Importar print do gabarito", text:"Se você tiver um print do gabarito, envie aqui. O LURIA tenta reconhecer as marcações e preencher rapidamente quais questões foram corretas, erradas ou anuladas.", demo:"questions", action:"questions-key", transparent:true},
+    {page:"questoes", target:"#qs-save-key", title:"Salvar gabarito", text:"Revise as marcações antes de salvar. As questões não marcadas como erro são consideradas corretas no fechamento do gabarito.", demo:"questions", action:"questions-key", transparent:true},
+    {page:"questoes", target:"#qs-send-errors, .qs-error-fields", title:"Enviar erros ao Caderno de Erros", text:"Questões marcadas como erro podem virar CCQs. Você pode ajustar Área, Matéria, Tema e explicação antes de enviar, ou marcar uma questão para não ir ao Caderno de Erros.", demo:"questions", action:"questions-key", transparent:true},
 
     {page:"dashboard", target:".topbar, .page-heading", title:"Dashboard", text:"O Dashboard reúne agenda, revisões, métricas, CCQ e progresso. Ele é o ponto de partida depois da configuração.", top:true},
     {page:"dashboard", target:".calendar-panel, #calendar", title:"Agenda", text:"Aulas, flashcards, CCQs e revisões aparecem na mesma rotina. Você pode alternar entre Dia, Semana e Mês."},
@@ -75,7 +80,21 @@
   function saveState(s){ try { localStorage.setItem(stateKey(), JSON.stringify(s)); } catch {} }
   function status(){ return readState() || {started:false, completed:false, skipped:false, step:0}; }
 
-  function routeForStep(i){ return ROUTES[STEPS[i]?.page] || "/dashboard/"; }
+  const SUMMARY_TITLES = new Set([
+    "Prepare o seu LURIA","Seu cronograma","PDF, Excel ou manual","Flashcards",
+    "Caderno de Erros","Questões e Simulados","Automático ou manual","Tipo de extração",
+    "Origem do material","Questões processadas","Importar print do gabarito",
+    "Enviar erros ao Caderno de Erros","Dashboard","Estatísticas","Editais e Provas",
+    "Amigos","Seu LURIA está pronto"
+  ]);
+
+  function activeSteps(s=status()){
+    return s.mode==="summary" ? STEPS.filter(step=>SUMMARY_TITLES.has(step.title)) : STEPS;
+  }
+  function stepAt(index,s=status()){ return activeSteps(s)[Math.max(0,Math.min(index,activeSteps(s).length-1))]; }
+  function routeForActiveStep(i,s=status()){ return ROUTES[stepAt(i,s)?.page] || "/dashboard/"; }
+
+  function routeForStep(i){ return routeForActiveStep(i); }
   function normalizePath(){ return location.pathname.replace(/\.html$/,"/").replace(/\/+/g,"/"); }
   function onCorrectPage(step){ return page === step.page; }
 
@@ -84,6 +103,34 @@
     const l=document.createElement("link");
     l.id="luria-onboarding-css"; l.rel="stylesheet"; l.href="/assets/css/onboarding.css?v=1.4.3";
     document.head.appendChild(l);
+  }
+
+  function chooseMode(existing=false){
+    ensureStyles();
+    clearOverlay();
+    const overlay=document.createElement("div");
+    overlay.id="luria-onboarding-overlay";
+    overlay.className="luria-onboarding-mode";
+    overlay.innerHTML=`
+      <div class="luria-onboarding-dim"></div>
+      <section class="luria-onboarding-card luria-onboarding-mode-card" role="dialog" aria-label="Escolher onboarding">
+        <span class="eyebrow">Primeiros passos</span>
+        <h2>Como você quer conhecer o LURIA?</h2>
+        <p>Você pode fazer o tour completo ou uma versão resumida. O guia de Questões e Simulados continuará disponível dentro da própria página.</p>
+        <div class="luria-onboarding-mode-grid">
+          <button type="button" data-mode="full"><strong>Onboarding completo</strong><small>Passa por todas as áreas, botões principais e fluxos.</small></button>
+          <button type="button" data-mode="summary"><strong>Onboarding resumido</strong><small>Mostra só o essencial, com atenção especial aos simulados.</small></button>
+        </div>
+        ${existing?'<button type="button" class="luria-onboarding-cancel" data-mode-cancel>Cancelar</button>':""}
+      </section>`;
+    document.body.appendChild(overlay);
+    overlay.querySelectorAll("[data-mode]").forEach(btn=>btn.onclick=()=>{
+      const s={started:true,completed:false,skipped:false,step:0,phase:"explain",mode:btn.dataset.mode};
+      saveState(s); clearOverlay();
+      if(page!=="configuracoes") location.href="/configuracoes/?onboarding=1";
+      else setTimeout(render,100);
+    });
+    overlay.querySelector("[data-mode-cancel]")?.addEventListener("click",clearOverlay);
   }
 
   function firstTimeRedirect(){
@@ -106,7 +153,7 @@
 
     if(!forced && !isNewAccount) return false;
 
-    s.started=true; s.step=0; saveState(s);
+    if(!s.mode){ chooseMode(false); return true; }\n    s.started=true; s.step=0; saveState(s);
     if(page!=="configuracoes"){
       location.replace("/configuracoes/?onboarding=1");
       return true;
@@ -286,7 +333,7 @@
     const s=status();
     if(!s.started || s.completed || s.skipped) return;
     if(!s.phase) s.phase="explain";
-    const step=STEPS[Math.min(s.step,STEPS.length-1)];
+    const steps=activeSteps(s);\n    const step=steps[Math.min(s.step,steps.length-1)];
     if(!onCorrectPage(step)){
       location.replace(routeForStep(s.step)+"?onboarding=1");
       return;
@@ -301,14 +348,14 @@
 
     const overlay=document.createElement("div");
     overlay.id="luria-onboarding-overlay";
-    overlay.classList.toggle("is-exploring",s.phase==="explore");
-    document.body.classList.toggle("luria-onboarding-exploring",s.phase==="explore");
+    overlay.classList.toggle("is-exploring",s.phase==="explore" || step.transparent===true);
+    document.body.classList.toggle("luria-onboarding-exploring",s.phase==="explore" || step.transparent===true);
     overlay.classList.toggle("card-top",!!step.top);
     overlay.innerHTML=`
       <div class="luria-onboarding-dim"></div>
       <section class="luria-onboarding-card" role="dialog" aria-label="Onboarding LURIA">
-        <div class="luria-onboarding-progress"><span>Conhecendo o LURIA</span><strong>${s.step+1} de ${STEPS.length}</strong></div>
-        <div class="luria-onboarding-bar"><i style="width:${((s.step+1)/STEPS.length)*100}%"></i></div>
+        <div class="luria-onboarding-progress"><span>Conhecendo o LURIA</span><strong>${s.step+1} de ${steps.length}</strong></div>
+        <div class="luria-onboarding-bar"><i style="width:${((s.step+1)/steps.length)*100}%"></i></div>
         <h2>${step.title}</h2>
         <p>${step.text}</p>
         ${s.phase==="explore"?'<small class="luria-onboarding-explore-note">Tela liberada: você pode clicar, ler e configurar normalmente.</small>':""}
@@ -342,9 +389,9 @@
 
   function move(delta){
     const s=status();
-    s.step=Math.max(0,Math.min(STEPS.length-1,s.step+delta)); s.phase="explain"; saveState(s);
+    const steps=activeSteps(s);\n    s.step=Math.max(0,Math.min(steps.length-1,s.step+delta)); s.phase="explain"; saveState(s);
     clearOverlay(); clearDemo();
-    const next=STEPS[s.step];
+    const next=stepAt(s.step,s);
     if(next.page!==page) location.href=routeForStep(s.step)+"?onboarding=1";
     else setTimeout(render,120);
   }
@@ -457,12 +504,54 @@
     target?.insertBefore(card,target.children[1]||null);
   }
 
-  window.LuriaOnboarding={restart};
+  const QUESTIONS_GUIDE = [
+    {target:".qs-mode-tabs, .page-heading",title:"Visão geral",text:"Aqui você alterna entre o painel, adicionar simulado, seus simulados e a biblioteca."},
+    {target:".qs-add-mode-tabs",title:"Automático ou manual",text:"Automático usa um PDF. Manual cria apenas a estrutura do simulado e o gabarito, sem precisar extrair questões."},
+    {target:"#qs-extraction-mode",title:"Tipo de extração",text:"Rápida é mais ágil. Detalhada usa mais estratégias e é a indicada quando o PDF tem imagens, colunas ou diagramação complexa."},
+    {target:"#qs-source-profile",title:"Origem do material",text:"Escolha o cursinho para adaptar o extrator ao padrão visual mais provável do PDF."},
+    {target:"#qs-import",title:"Extrair questões",text:"Inicia a leitura do PDF. Depois confira a separação das questões antes de trabalhar com o gabarito."},
+    {target:"#qs-open-answer-import",title:"Print do gabarito",text:"Use um print para o LURIA tentar identificar acertos, erros e anuladas automaticamente."},
+    {target:"#qs-save-key",title:"Salvar gabarito",text:"Confirme as marcações. O que não estiver marcado como erro será considerado correto."},
+    {target:"#qs-send-errors",title:"Caderno de Erros",text:"Envie somente os erros que você quer revisar. Antes do envio, você pode ajustar Área, Matéria, Tema e CCQ."}
+  ];
+  let questionsGuideIndex=0;
+  function renderQuestionsGuide(){
+    clearOverlay(); ensureStyles();
+    const step=QUESTIONS_GUIDE[questionsGuideIndex];
+    const target=resolveTarget(step.target)||document.querySelector(".main")||document.body;
+    target.scrollIntoView({behavior:"smooth",block:"center"});
+    target.classList.add("luria-onboarding-target");
+    const overlay=document.createElement("div");
+    overlay.id="luria-onboarding-overlay"; overlay.className="is-exploring";
+    document.body.classList.add("luria-onboarding-exploring");
+    overlay.innerHTML=`<section class="luria-onboarding-card" role="dialog" aria-label="Ajuda de simulados">
+      <div class="luria-onboarding-progress"><span>Guia de Simulados</span><strong>${questionsGuideIndex+1} de ${QUESTIONS_GUIDE.length}</strong></div>
+      <div class="luria-onboarding-bar"><i style="width:${((questionsGuideIndex+1)/QUESTIONS_GUIDE.length)*100}%"></i></div>
+      <h2>${step.title}</h2><p>${step.text}</p>
+      <small class="luria-onboarding-explore-note">A página permanece transparente e utilizável durante este guia.</small>
+      <div class="luria-onboarding-actions"><button type="button" data-guide-close>Fechar</button><div><button type="button" data-guide-back ${questionsGuideIndex===0?"disabled":""}>Voltar</button><button type="button" class="primary" data-guide-next>${questionsGuideIndex===QUESTIONS_GUIDE.length-1?"Concluir":"Próximo"}</button></div></div>
+    </section>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector("[data-guide-close]").onclick=clearOverlay;
+    overlay.querySelector("[data-guide-back]").onclick=()=>{questionsGuideIndex=Math.max(0,questionsGuideIndex-1);renderQuestionsGuide();};
+    overlay.querySelector("[data-guide-next]").onclick=()=>{if(questionsGuideIndex>=QUESTIONS_GUIDE.length-1){clearOverlay();return;}questionsGuideIndex++;renderQuestionsGuide();};
+  }
+  function addQuestionsHelpButton(){
+    if(page!=="questoes"||document.getElementById("qs-onboarding-help")) return;
+    const host=document.querySelector(".qs-mode-tabs, .qs-tabs, .topbar");
+    if(!host) return;
+    const b=document.createElement("button");
+    b.id="qs-onboarding-help"; b.type="button"; b.className="qs-onboarding-help"; b.textContent="Como funcionam os simulados?";
+    b.onclick=()=>{questionsGuideIndex=0;renderQuestionsGuide();};
+    host.appendChild(b);
+  }
+
+  window.LuriaOnboarding={restart,startQuestionsGuide:()=>{questionsGuideIndex=0;renderQuestionsGuide();}};
 
   window.addEventListener("docmap:ready",()=>{
     ensureStyles();
     if(firstTimeRedirect()) return;
-    addRestartButton();
+    addRestartButton();\n    addQuestionsHelpButton();
     renderChallenges();
     trackChallenges();
     const s=status();
