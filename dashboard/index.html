@@ -99,6 +99,23 @@
   min-width: 0;
 }
 
+.day-calendar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.day-calendar .calendar-day {
+  min-height: 260px;
+  border-right: 0;
+}
+
+.day-calendar .calendar-day-body {
+  min-height: 210px;
+}
+
 .week-calendar {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -335,6 +352,16 @@
 
 .month-day:nth-child(7n) {
   border-right: 0;
+}
+
+.month-day[data-calendar-date] {
+  cursor: pointer;
+  transition: background .15s ease, box-shadow .15s ease;
+}
+
+.month-day[data-calendar-date]:hover {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .month-day.outside {
@@ -1523,10 +1550,23 @@
   font-size: 11.5px;
 }
 
+
+.calendar-nav-stack{display:grid;gap:7px;justify-items:stretch}
+.calendar-add-event{width:100%;min-height:34px;border:1px solid color-mix(in srgb,#7c3aed 40%,var(--border));border-radius:10px;background:color-mix(in srgb,#7c3aed 12%,var(--surface));color:#6d28d9;font:inherit;font-size:10px;font-weight:850;cursor:pointer}
+.calendar-add-event:hover{background:color-mix(in srgb,#7c3aed 18%,var(--surface));border-color:#7c3aed}
+.agenda-card.personal-event{border-color:color-mix(in srgb,#7c3aed 40%,var(--border));background:color-mix(in srgb,#7c3aed 9%,var(--surface));box-shadow:inset 3px 0 0 #7c3aed}
+.agenda-card.personal-event .agenda-kind{color:#6d28d9}
+.agenda-card.personal-event .agenda-subtitle{color:#7c3aed;font-weight:750}
+.event-date-time-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.event-dialog .field small{font-weight:500;color:var(--muted)}
+.event-save-button{background:#7c3aed!important;border-color:#7c3aed!important}
+@media(max-width:620px){.event-date-time-grid{grid-template-columns:1fr}.calendar-nav-stack{width:100%}}
+
 </style>
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
-  <script defer src="assets/js/luria-brand-v5.js?v=8"></script>
+  <script defer src="assets/js/luria-brand-v5.js?v=9"></script>
   <link rel="canonical" href="/dashboard/">
+  <script>(function(){try{if(location.pathname.endsWith("/dashboard.html"))history.replaceState(null,"","/dashboard/"+location.search+location.hash);}catch(e){}})();</script>
 </head>
 <body data-page="dashboard">
   <div class="app-shell">
@@ -1722,10 +1762,13 @@
                 <button id="view-month" type="button">Mês</button>
               </div>
 
-              <div class="calendar-nav">
-                <button id="calendar-prev" type="button" aria-label="Período anterior">‹</button>
-                <button id="calendar-today" type="button">Hoje</button>
-                <button id="calendar-next" type="button" aria-label="Próximo período">›</button>
+              <div class="calendar-nav-stack">
+                <div class="calendar-nav">
+                  <button id="calendar-prev" type="button" aria-label="Período anterior">‹</button>
+                  <button id="calendar-today" type="button">Hoje</button>
+                  <button id="calendar-next" type="button" aria-label="Próximo período">›</button>
+                </div>
+                <button id="calendar-add-event" class="calendar-add-event" type="button">＋ Adicionar evento</button>
               </div>
             </div>
           </div>
@@ -1736,6 +1779,39 @@
       </div>
     </main>
   </div>
+
+  <dialog id="event-dialog" class="move-dialog event-dialog">
+    <form id="event-form" method="dialog">
+      <div class="dialog-heading">
+        <div>
+          <span class="metric-label">Agenda pessoal</span>
+          <h2>Adicionar evento</h2>
+        </div>
+        <button id="event-close" class="dialog-close" type="button" aria-label="Fechar">×</button>
+      </div>
+
+      <label class="field">
+        Nome do evento
+        <input id="event-name" type="text" maxlength="120" placeholder="Ex.: Consulta, reunião, compromisso" required>
+      </label>
+
+      <div class="event-date-time-grid">
+        <label class="field">
+          Data
+          <input id="event-date" type="date" required>
+        </label>
+        <label class="field">
+          Hora <small>(opcional)</small>
+          <input id="event-time" type="time">
+        </label>
+      </div>
+
+      <div class="dialog-actions">
+        <button id="event-cancel" class="button secondary" type="button">Cancelar</button>
+        <button class="button primary event-save-button" type="submit">Adicionar evento</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="move-dialog" class="move-dialog">
     <form id="move-form" method="dialog">
@@ -1768,7 +1844,7 @@
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=14.9"></script>
   <script src="assets/js/study-mode.js?v=12.1"></script>
-  <script src="assets/js/dashboard.js?v=27.1"></script>
+  <script src="assets/js/dashboard.js?v=27.2"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
 </html>
