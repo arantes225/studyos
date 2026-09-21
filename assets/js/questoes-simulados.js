@@ -8462,7 +8462,7 @@ async function deleteSelectedSets() {
 
 
   const confirmed =
-    window.confirm(
+    await window.LuriaDialog.confirm(
       `Excluir ${ids.length} simulado${ids.length === 1 ? "" : "s"} e seus gabaritos?`
     );
 
@@ -15353,7 +15353,7 @@ async function deleteSet(setId) {
   if (!set) return;
 
   const confirmed =
-    window.confirm(
+    await window.LuriaDialog.confirm(
       `Excluir "${set.title}" e o gabarito associado?`
     );
 
