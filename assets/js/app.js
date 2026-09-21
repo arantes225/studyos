@@ -144,6 +144,59 @@
 
       html.pwa-standalone body #sidebar.sidebar .streak-mini {
         display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        min-height: 72px !important;
+        padding: 8px 9px !important;
+        border-radius: 11px !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+      }
+
+      html.pwa-standalone body #sidebar.sidebar .streak-mini-icon {
+        width: 64px !important;
+        height: 64px !important;
+        flex: 0 0 64px !important;
+        display: grid !important;
+        place-items: center !important;
+      }
+
+      html.pwa-standalone body #sidebar.sidebar .streak-mini-flame {
+        max-width: 60px !important;
+        max-height: 64px !important;
+      }
+
+      html.pwa-standalone body #sidebar.sidebar .streak-mini-snow {
+        max-width: 60px !important;
+        max-height: 60px !important;
+        font-size: 42px !important;
+      }
+
+      html.pwa-standalone body #sidebar.sidebar .streak-mini-copy {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+      }
+
+      html.pwa-standalone body #sidebar.sidebar .streak-mini-copy strong,
+      html.pwa-standalone body #sidebar.sidebar .streak-mini-copy small {
+        max-width: 100% !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+
+      html.pwa-standalone body #sidebar.sidebar .streak-mini-copy strong {
+        font-size: 12px !important;
+        line-height: 1.15 !important;
+        white-space: nowrap !important;
+      }
+
+      html.pwa-standalone body #sidebar.sidebar .streak-mini-copy small {
+        font-size: 9px !important;
+        line-height: 1.15 !important;
+        white-space: normal !important;
       }
 
       html.pwa-standalone body #sidebar.sidebar .user-mini {
