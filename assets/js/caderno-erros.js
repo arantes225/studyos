@@ -2167,7 +2167,115 @@ async function saveNewError() {
 }
 
 
+function wireNewErrorAreaPicker() {
+  const toggle =
+    document.getElementById(
+      "new-error-area-toggle"
+    );
+
+  const menu =
+    document.getElementById(
+      "new-error-area-menu"
+    );
+
+  const input =
+    document.getElementById(
+      "new-error-area"
+    );
+
+  const label =
+    document.getElementById(
+      "new-error-area-label"
+    );
+
+  if (
+    !toggle
+    ||
+    !menu
+    ||
+    !input
+    ||
+    !label
+  ) {
+    return;
+  }
+
+  toggle.addEventListener(
+    "click",
+    event => {
+      event.stopPropagation();
+
+      const willOpen =
+        menu.hidden;
+
+      menu.hidden =
+        !willOpen;
+
+      toggle.setAttribute(
+        "aria-expanded",
+        willOpen
+          ? "true"
+          : "false"
+      );
+    }
+  );
+
+  menu
+    .querySelectorAll(
+      "[data-error-area-value]"
+    )
+    .forEach(
+      option => {
+        option.addEventListener(
+          "click",
+          event => {
+            event.stopPropagation();
+
+            input.value =
+              option.dataset
+                .errorAreaValue
+              || "";
+
+            label.textContent =
+              input.value
+              || "Selecione uma área";
+
+            menu.hidden =
+              true;
+
+            toggle.setAttribute(
+              "aria-expanded",
+              "false"
+            );
+          }
+        );
+      }
+    );
+
+  document.addEventListener(
+    "click",
+    event => {
+      if (
+        !event.target.closest(
+          ".error-area-picker"
+        )
+      ) {
+        menu.hidden =
+          true;
+
+        toggle.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+      }
+    }
+  );
+}
+
+
 function wireNewError() {
+  wireNewErrorAreaPicker();
+
   document
     .getElementById(
       "toggle-error-form"
