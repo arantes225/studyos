@@ -190,3 +190,135 @@ body.luria-onboarding-exploring #luria-onboarding-overlay::after{
   content:none!important;
   display:none!important;
 }
+
+
+/* Onboarding v2.0 — PDF + leitor de gabarito em Questões e Simulados */
+.onboarding-pdf-preview{
+  margin-top:16px;
+  padding:12px;
+  border:1px solid var(--border,#dbe3ee);
+  border-radius:14px;
+  background:var(--surface-2,#f6f8fb);
+}
+.onboarding-pdf-preview-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+}
+.onboarding-pdf-preview-head div{display:grid;gap:3px}
+.onboarding-pdf-preview-head strong{font-size:12px;color:var(--text,#172033)}
+.onboarding-pdf-preview-head small{font-size:9px;color:var(--muted,#667085)}
+.onboarding-pdf-preview-head>span{
+  display:inline-grid;
+  place-items:center;
+  min-width:40px;
+  min-height:26px;
+  border-radius:8px;
+  background:var(--accent,#184888);
+  color:#fff;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+.onboarding-pdf-pages{
+  height:min(48vh,520px);
+  overflow:auto;
+  scroll-behavior:smooth;
+  padding:10px;
+  border:1px solid var(--border,#dbe3ee);
+  border-radius:11px;
+  background:#dfe4ea;
+}
+.onboarding-pdf-page{
+  width:min(100%,680px);
+  margin:0 auto 12px;
+  padding:8px;
+  border-radius:8px;
+  background:#fff;
+  box-shadow:0 5px 18px rgba(13,25,44,.14);
+}
+.onboarding-pdf-page canvas{
+  display:block;
+  width:100%;
+  height:auto;
+}
+.onboarding-pdf-loading{
+  min-height:180px;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  color:var(--muted,#667085);
+  text-align:center;
+  font-size:11px;
+  line-height:1.5;
+}
+.onboarding-answer-reader-open{
+  z-index:99991!important;
+}
+.onboarding-answer-reader-file{
+  display:grid;
+  gap:4px;
+  width:100%;
+  padding:14px;
+  border:1px dashed var(--accent,#184888);
+  border-radius:12px;
+  background:var(--accent-soft,rgba(24,72,136,.08));
+  text-align:center;
+}
+.onboarding-answer-reader-file strong{font-size:11px}
+.onboarding-answer-reader-file small{font-size:9px;color:var(--muted,#667085)}
+.onboarding-answer-reader-hint{
+  padding:16px;
+  border:1px solid var(--border,#dbe3ee);
+  border-radius:11px;
+  color:var(--muted,#667085);
+  font-size:10px;
+  text-align:center;
+}
+.onboarding-answer-key{
+  display:grid;
+  gap:12px;
+  padding:16px;
+  border:1px solid var(--border,#dbe3ee);
+  border-radius:12px;
+  background:var(--surface,#fff);
+}
+.onboarding-answer-key>strong{
+  font-size:12px;
+  text-align:center;
+}
+.onboarding-answer-key>div{
+  display:grid;
+  grid-template-columns:repeat(10,minmax(34px,1fr));
+  gap:8px;
+}
+.onboarding-answer-circle{
+  aspect-ratio:1;
+  display:grid;
+  place-items:center;
+  min-width:34px;
+  border-radius:50%;
+  color:#fff;
+  font-size:12px;
+  font-weight:900;
+  box-shadow:inset 0 -2px 0 rgba(0,0,0,.08);
+}
+.onboarding-answer-circle.correct{background:#1c9b45}
+.onboarding-answer-circle.wrong{background:#df3030}
+.onboarding-answer-key>small{
+  color:var(--muted,#667085);
+  font-size:9px;
+  text-align:center;
+}
+#qs-question-list>[data-onboarding-extracted-questions]{
+  display:grid;
+  gap:9px;
+}
+@media(max-width:700px){
+  .onboarding-pdf-pages{height:42vh;padding:6px}
+  .onboarding-answer-key>div{
+    grid-template-columns:repeat(5,minmax(34px,1fr));
+  }
+}
