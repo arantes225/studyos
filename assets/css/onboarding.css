@@ -147,3 +147,28 @@ body.luria-onboarding-exploring .luria-onboarding-target{
     background:color-mix(in srgb,var(--surface,#fff) 62%,transparent)!important;
   }
 }
+
+
+/* Onboarding v1.8 — tela liberada sem qualquer película */
+#luria-onboarding-overlay.is-exploring{
+  background:transparent!important;
+  pointer-events:none!important;
+}
+#luria-onboarding-overlay.is-exploring .luria-onboarding-dim{
+  display:none!important;
+}
+.luria-onboarding-target-clear{
+  z-index:auto!important;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent,#184888) 58%,transparent)!important;
+  filter:none!important;
+  opacity:1!important;
+}
+body.luria-onboarding-exploring .app-shell,
+body.luria-onboarding-exploring .main,
+body.luria-onboarding-exploring .page,
+body.luria-onboarding-exploring .settings-page{
+  opacity:1!important;
+  filter:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
