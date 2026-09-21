@@ -17385,6 +17385,69 @@ function wireEvents() {
       "notebook-line-spacing"
   };
 
+  // iOS/PWA: o WebKit instalado pode engolir o click sintetizado
+  // depois de tocar em controles dentro da toolbar sticky. Tratamos touchend
+  // como a ativação real e cancelamos o click fantasma subsequente.
+  const notebookToolbar =
+    document.querySelector(
+      ".notebook-toolbar"
+    );
+
+  let notebookLastTouchActivation =
+    0;
+
+  notebookToolbar
+    ?.addEventListener(
+      "touchend",
+      (event) => {
+        const button =
+          event.target
+            ?.closest
+            ?.(
+              "button"
+            );
+
+        if (
+          !button
+          || button.disabled
+          || !notebookToolbar.contains(
+            button
+          )
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        notebookLastTouchActivation =
+          Date.now();
+
+        button.click();
+      },
+      {
+        passive: false
+      }
+    );
+
+  notebookToolbar
+    ?.addEventListener(
+      "click",
+      (event) => {
+        if (
+          event.isTrusted
+          && Date.now()
+            - notebookLastTouchActivation
+            < 650
+        ) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+      },
+      true
+    );
+
+
   // iOS/PWA: preserve a seleção antes de qualquer toque na toolbar.
   // Sem isso o WebKit move o foco para o botão e comandos parecem não responder.
   document
