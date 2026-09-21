@@ -3078,3 +3078,70 @@ body[data-page="dashboard"] .calendar-add-event {
     min-width: 0;
   }
 }
+
+
+/* =========================================================
+   LURIA — CALENDÁRIO
+   ========================================================= */
+.luria-calendar{
+  position:fixed;
+  z-index:100000;
+  padding:13px;
+  border:1px solid color-mix(in srgb,var(--border) 84%,var(--accent) 16%);
+  border-radius:16px;
+  background:color-mix(in srgb,var(--surface) 97%,var(--accent) 3%);
+  color:var(--text);
+  box-shadow:0 22px 60px rgba(15,23,42,.20),0 4px 14px rgba(15,23,42,.08);
+  user-select:none;
+}
+.luria-calendar[hidden]{display:none!important}
+.luria-calendar-head{
+  display:grid;grid-template-columns:34px 1fr 34px;align-items:center;gap:7px;margin-bottom:11px;
+}
+.luria-calendar-head strong{
+  text-align:center;text-transform:capitalize;font-size:12px;font-weight:900;
+}
+.luria-calendar-head button{
+  width:34px;height:34px;border:1px solid var(--border);border-radius:10px;
+  background:var(--surface);color:var(--text);font:inherit;font-size:19px;cursor:pointer;
+}
+.luria-calendar-head button:hover{
+  border-color:var(--accent);background:var(--accent-soft);color:var(--accent);
+}
+.luria-calendar-weekdays,.luria-calendar-days{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:4px;
+}
+.luria-calendar-weekdays{margin-bottom:5px}
+.luria-calendar-weekdays span{
+  text-align:center;color:var(--muted);font-size:7.5px;font-weight:900;text-transform:uppercase;
+}
+.luria-calendar-days button{
+  aspect-ratio:1;border:0;border-radius:9px;background:transparent;color:var(--text);
+  font:inherit;font-size:10px;font-weight:750;cursor:pointer;
+}
+.luria-calendar-days button:hover{
+  background:var(--accent-soft);color:var(--accent);
+}
+.luria-calendar-days button.is-today{
+  box-shadow:inset 0 0 0 1.5px var(--accent);color:var(--accent);
+}
+.luria-calendar-days button.is-selected{
+  background:var(--accent);color:var(--surface);box-shadow:0 5px 12px color-mix(in srgb,var(--accent) 25%,transparent);
+}
+.luria-calendar-foot{
+  display:flex;justify-content:space-between;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);
+}
+.luria-calendar-foot button{
+  border:0;background:transparent;color:var(--accent);font:inherit;font-size:9px;font-weight:900;cursor:pointer;
+}
+input[type="date"]{
+  cursor:pointer;
+}
+input[type="date"]::-webkit-calendar-picker-indicator{
+  opacity:.72;
+  cursor:pointer;
+}
+@media(max-width:520px){
+  .luria-calendar{padding:12px;border-radius:15px}
+  .luria-calendar-days button{font-size:11px}
+}
