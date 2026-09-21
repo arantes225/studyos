@@ -261,16 +261,16 @@
 .studyrats-badge-composite>.studyrats-rat-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform:none!important}
 
 .studyrats-accessory-img{position:absolute;z-index:12;object-fit:contain;pointer-events:none;transform-origin:center}
-.studyrats-rat-composite .accessory-medal-silver{width:22px;height:24px;left:31px;top:18px}
-.studyrats-rat-composite .accessory-cap-colorful{width:43px;height:30px;left:34px;top:-9px;transform:rotate(4deg)}
-.studyrats-rat-composite .accessory-cowboy-hat{width:54px;height:34px;left:27px;top:-10px;transform:rotate(3deg)}
-.studyrats-rat-composite .accessory-santa-hat{width:46px;height:37px;left:34px;top:-14px;transform:rotate(7deg)}
-.studyrats-rat-composite .accessory-pink-hat{width:54px;height:33px;left:27px;top:-9px;transform:rotate(2deg)}
-.studyrats-rat-composite .accessory-pink-glasses{width:31px;height:20px;left:44px;top:13px;transform:rotate(2deg)}
-.studyrats-rat-composite .accessory-crown{width:31px;height:24px;left:40px;top:-8px;transform:rotate(2deg)}
-.studyrats-rat-composite .accessory-pink-skirt{width:48px;height:27px;left:15px;top:26px}
-.studyrats-rat-composite .accessory-police-cap{width:39px;height:27px;left:38px;top:-8px;transform:rotate(2deg)}
-.studyrats-rat-composite .accessory-astronaut-helmet{width:48px;height:45px;left:33px;top:0}
+.studyrats-accessory-img.accessory-medal-silver{width:22px;height:24px;left:31px;top:18px}
+.studyrats-accessory-img.accessory-cap-colorful{width:43px;height:30px;left:34px;top:-9px;transform:rotate(4deg)}
+.studyrats-accessory-img.accessory-cowboy-hat{width:54px;height:34px;left:27px;top:-10px;transform:rotate(3deg)}
+.studyrats-accessory-img.accessory-santa-hat{width:46px;height:37px;left:34px;top:-14px;transform:rotate(7deg)}
+.studyrats-accessory-img.accessory-pink-hat{width:54px;height:33px;left:27px;top:-9px;transform:rotate(2deg)}
+.studyrats-accessory-img.accessory-pink-glasses{width:31px;height:20px;left:44px;top:13px;transform:rotate(2deg)}
+.studyrats-accessory-img.accessory-crown{width:31px;height:24px;left:40px;top:-8px;transform:rotate(2deg)}
+.studyrats-accessory-img.accessory-pink-skirt{width:48px;height:27px;left:15px;top:26px}
+.studyrats-accessory-img.accessory-police-cap{width:39px;height:27px;left:38px;top:-8px;transform:rotate(2deg)}
+.studyrats-accessory-img.accessory-astronaut-helmet{width:48px;height:45px;left:33px;top:0}
 
 .studyrats-empty-composite .studyrats-accessory-img{transform:scale(1.35)}
 .studyrats-badge-composite .studyrats-accessory-img{transform:scale(.83)}
