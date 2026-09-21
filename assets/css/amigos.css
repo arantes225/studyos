@@ -231,3 +231,62 @@
   .studyrats-rat-choice{height:66px}
   .studyrats-rat-picker-status{text-align:left;min-height:11px}
 }
+
+
+/* Studyrats accessories */
+.studyrats-rat-picker{grid-template-columns:minmax(150px,.55fr) minmax(0,1.8fr) auto;align-items:start}
+.studyrats-rat-picker-controls{display:grid;gap:10px;min-width:0}
+.studyrats-picker-group{display:grid;gap:5px;min-width:0}
+.studyrats-picker-label{font-size:8px;font-weight:1000;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.studyrats-accessory-picker-options{display:flex;gap:7px;min-width:0;overflow-x:auto;padding:1px 1px 4px;scrollbar-width:thin}
+.studyrats-accessory-choice{position:relative;flex:0 0 72px;height:68px;padding:4px 4px 6px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--muted);display:grid;grid-template-rows:1fr auto;place-items:center;gap:1px;cursor:pointer;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease,background .15s ease}
+.studyrats-accessory-choice:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--accent) 45%,var(--border))}
+.studyrats-accessory-choice.is-selected{border-color:var(--accent);background:color-mix(in srgb,var(--accent-soft) 62%,var(--surface));box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent)}
+.studyrats-accessory-choice-img{width:54px;height:43px;object-fit:contain;display:block;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(24,35,50,.16));image-rendering:auto}
+.studyrats-accessory-choice span{font-size:7px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:64px}
+.studyrats-accessory-choice i{position:absolute;top:5px;right:5px;width:16px;height:16px;border-radius:50%;display:none;place-items:center;background:var(--accent);color:#fff;font-size:9px;font-style:normal;font-weight:1000}
+.studyrats-accessory-choice.is-selected i{display:grid}
+.studyrats-accessory-none{width:34px!important;height:34px;border-radius:50%;display:grid!important;place-items:center;background:var(--surface-2);border:1px dashed var(--border);font-size:18px!important;color:var(--muted);max-width:none!important}
+:root[data-theme="dark"] .studyrats-accessory-choice-img{filter:drop-shadow(0 0 2px rgba(255,255,255,.55)) drop-shadow(0 0 5px rgba(93,164,255,.35))}
+
+.studyrats-rat-composite,
+.studyrats-empty-composite,
+.studyrats-badge-composite{position:relative;display:block;overflow:visible;pointer-events:none}
+.studyrats-rat-composite{width:72px;height:50px}
+.studyrats-empty-composite{width:100px;height:70px;margin:0 auto 6px}
+.studyrats-badge-composite{width:58px;height:42px}
+
+.studyrats-rat-composite>.studyrats-rat-img,
+.studyrats-empty-composite>.studyrats-rat-img,
+.studyrats-badge-composite>.studyrats-rat-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform:none!important}
+
+.studyrats-accessory-img{position:absolute;z-index:12;object-fit:contain;pointer-events:none;transform-origin:center}
+.studyrats-rat-composite .accessory-medal-silver{width:22px;height:24px;left:31px;top:18px}
+.studyrats-rat-composite .accessory-cap-colorful{width:43px;height:30px;left:34px;top:-9px;transform:rotate(4deg)}
+.studyrats-rat-composite .accessory-cowboy-hat{width:54px;height:34px;left:27px;top:-10px;transform:rotate(3deg)}
+.studyrats-rat-composite .accessory-santa-hat{width:46px;height:37px;left:34px;top:-14px;transform:rotate(7deg)}
+.studyrats-rat-composite .accessory-pink-hat{width:54px;height:33px;left:27px;top:-9px;transform:rotate(2deg)}
+.studyrats-rat-composite .accessory-pink-glasses{width:31px;height:20px;left:44px;top:13px;transform:rotate(2deg)}
+.studyrats-rat-composite .accessory-crown{width:31px;height:24px;left:40px;top:-8px;transform:rotate(2deg)}
+.studyrats-rat-composite .accessory-pink-skirt{width:48px;height:27px;left:15px;top:26px}
+.studyrats-rat-composite .accessory-police-cap{width:39px;height:27px;left:38px;top:-8px;transform:rotate(2deg)}
+.studyrats-rat-composite .accessory-astronaut-helmet{width:48px;height:45px;left:33px;top:0}
+
+.studyrats-empty-composite .studyrats-accessory-img{transform:scale(1.35)}
+.studyrats-badge-composite .studyrats-accessory-img{transform:scale(.83)}
+.studyrats-empty-composite .accessory-medal-silver{left:42px;top:28px}
+.studyrats-empty-composite .accessory-cap-colorful{left:48px;top:-4px}
+.studyrats-empty-composite .accessory-cowboy-hat{left:38px;top:-5px}
+.studyrats-empty-composite .accessory-santa-hat{left:48px;top:-10px}
+.studyrats-empty-composite .accessory-pink-hat{left:38px;top:-4px}
+.studyrats-empty-composite .accessory-pink-glasses{left:61px;top:21px}
+.studyrats-empty-composite .accessory-crown{left:55px;top:-3px}
+.studyrats-empty-composite .accessory-pink-skirt{left:22px;top:38px}
+.studyrats-empty-composite .accessory-police-cap{left:53px;top:-3px}
+.studyrats-empty-composite .accessory-astronaut-helmet{left:48px;top:10px}
+
+@media(max-width:760px){
+  .studyrats-rat-picker{grid-template-columns:1fr}
+  .studyrats-accessory-choice{flex-basis:66px;height:64px}
+  .studyrats-accessory-choice-img{width:48px;height:39px}
+}
