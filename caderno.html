@@ -16,7 +16,7 @@
   <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria2">
   <link rel="stylesheet" href="assets/css/style.css?v=luria-pattern-13">
   <link rel="stylesheet" href="assets/css/image-lightbox.css?v=1">
-  <link rel="stylesheet" href="assets/css/caderno.css?v=18.2">
+  <link rel="stylesheet" href="assets/css/caderno.css?v=18.3">
   <link rel="canonical" href="/caderno/">
   <script>(function(){try{if(location.pathname.endsWith("/caderno.html"))history.replaceState(null,"","/caderno/"+location.search+location.hash);}catch(e){}})();</script>
 </head>
@@ -245,8 +245,12 @@
                     aria-expanded="false"
                     disabled
                   >
-                    <span class="notebook-tool-glyph">≡</span>
-                    Alinhar
+                    <span
+                      id="notebook-align-current-icon"
+                      class="notebook-tool-glyph notebook-align-current-icon"
+                      aria-hidden="true"
+                    >☰</span>
+                    <span class="sr-only">Alinhar</span>
                   </button>
 
                   <div
@@ -261,39 +265,78 @@
 
                     <button type="button" data-align="left">
                       <span class="notebook-align-glyph">☰</span>
-                      <span>Esquerda</span>
+                      <span>Alinhar à esquerda</span>
                     </button>
 
                     <button type="button" data-align="center">
                       <span class="notebook-align-glyph">≡</span>
-                      <span>Centralizado</span>
+                      <span>Centralizar</span>
                     </button>
 
                     <button type="button" data-align="right">
                       <span class="notebook-align-glyph">☷</span>
-                      <span>Direita</span>
+                      <span>Alinhar à direita</span>
                     </button>
 
                     <button type="button" data-align="justify">
                       <span class="notebook-align-glyph">▤</span>
-                      <span>Justificado</span>
+                      <span>Justificar</span>
                     </button>
                   </div>
                 </div>
 
-                <select
-                  id="notebook-line-spacing"
-                  class="notebook-style-select notebook-spacing-select"
-                  aria-label="Espaçamento entre linhas"
-                  title="Espaçamento entre linhas"
-                  disabled
-                >
-                  <option value="">Espaçamento</option>
-                  <option value="1">1,0</option>
-                  <option value="1.15">1,15</option>
-                  <option value="1.5">1,5</option>
-                  <option value="2">2,0</option>
-                </select>
+                <div class="notebook-tool-menu-wrap">
+                  <button
+                    id="notebook-line-spacing"
+                    class="notebook-tool-button notebook-tool-text notebook-premium-tool notebook-spacing-toggle"
+                    type="button"
+                    aria-label="Espaçamento entre linhas"
+                    title="Espaçamento entre linhas"
+                    aria-expanded="false"
+                    disabled
+                  >
+                    <span
+                      id="notebook-spacing-current"
+                      class="notebook-spacing-current"
+                      aria-hidden="true"
+                    >
+                      <span class="notebook-spacing-lines">☰</span>
+                      <span class="notebook-spacing-arrows">↕</span>
+                    </span>
+                    <span class="sr-only">Espaçamento entre linhas</span>
+                  </button>
+
+                  <div
+                    id="notebook-spacing-menu"
+                    class="notebook-tool-menu notebook-spacing-menu"
+                    hidden
+                  >
+                    <div class="notebook-tool-menu-head">
+                      <strong>Espaçamento entre linhas</strong>
+                      <small>Escolha o espaçamento do parágrafo.</small>
+                    </div>
+
+                    <button type="button" data-line-spacing="1">
+                      <span class="notebook-spacing-option">1,0</span>
+                      <span>Simples</span>
+                    </button>
+
+                    <button type="button" data-line-spacing="1.15">
+                      <span class="notebook-spacing-option">1,15</span>
+                      <span>1,15</span>
+                    </button>
+
+                    <button type="button" data-line-spacing="1.5">
+                      <span class="notebook-spacing-option">1,5</span>
+                      <span>1,5</span>
+                    </button>
+
+                    <button type="button" data-line-spacing="2">
+                      <span class="notebook-spacing-option">2,0</span>
+                      <span>Duplo</span>
+                    </button>
+                  </div>
+                </div>
 
                 <span class="notebook-toolbar-divider"></span>
 
@@ -1117,7 +1160,7 @@
     }
   </style>
 
-  <script src="assets/js/caderno.js?v=17.6"></script>
+  <script src="assets/js/caderno.js?v=17.7"></script>
     <script src="assets/js/image-lightbox.js?v=1"></script>
 <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
