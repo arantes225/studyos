@@ -231,7 +231,7 @@ async function initFriends(){
     try{await navigator.clipboard.writeText(id);setFriendsStatus("Seu ID LURIA foi copiado.","success");}
     catch{await window.LuriaDialog.prompt("Copie seu ID LURIA:",id);}
   });
-  initStudyrats();
+  window.initSharedStudyrats?.();
   try{await Promise.all([loadOwnId(),loadFriends(),loadInbox()]);}
   catch(error){console.error(error);setFriendsStatus(error.message||"Não foi possível carregar Amigos.","error");}
 }
