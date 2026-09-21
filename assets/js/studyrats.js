@@ -2,15 +2,30 @@ let sharedStudyratsRows=[];
 let sharedStudyratsChannel=null;
 let sharedStudyratsTimer=null;
 let sharedStudyratsMyVariant='brown';
+let sharedStudyratsMyAccessory='none';
 
 const sharedStudyratLaneColors=['#2f80ed','#36a96c','#f2994a','#8b5cf6','#eb5757','#24a0b5'];
 const sharedStudyratVariants=[
-  {id:'brown',label:'Marrom',src:'/assets/img/studyrats/rat-brown.png?v=8'},
-  {id:'gray',label:'Cinza',src:'/assets/img/studyrats/rat-gray.png?v=8'},
-  {id:'white',label:'Branco',src:'/assets/img/studyrats/rat-white.png?v=8'},
-  {id:'black',label:'Preto',src:'/assets/img/studyrats/rat-black.png?v=8'},
-  {id:'blue',label:'Azul',src:'/assets/img/studyrats/rat-blue.png?v=8'},
-  {id:'manchado',label:'Manchado',src:'/assets/img/studyrats/rat-manchado.png?v=8'}
+  {id:'brown',label:'Marrom',src:'/assets/img/studyrats/rat-brown.png?v=9'},
+  {id:'gray',label:'Cinza',src:'/assets/img/studyrats/rat-gray.png?v=9'},
+  {id:'white',label:'Branco',src:'/assets/img/studyrats/rat-white.png?v=9'},
+  {id:'black',label:'Preto',src:'/assets/img/studyrats/rat-black.png?v=9'},
+  {id:'blue',label:'Azul',src:'/assets/img/studyrats/rat-blue.png?v=9'},
+  {id:'manchado',label:'Manchado',src:'/assets/img/studyrats/rat-manchado.png?v=9'}
+];
+
+const sharedStudyratAccessories=[
+  {id:'none',label:'Sem acessório',kind:'none',sources:[]},
+  {id:'medal-silver',label:'Medalha prata',kind:'body',sources:['medalha-prata.png','medalha_prata.png','medal-silver.png','prata.png']},
+  {id:'cap-colorful',label:'Boné colorido',kind:'head',sources:['bone-colorido.png','boné-colorido.png','bone_colorido.png','boné_colorido.png','cap-colorful.png']},
+  {id:'cowboy-hat',label:'Cowboy',kind:'head',sources:['chapeu-cowboy.png','chapéu-cowboy.png','chapeu_de_cowboy.png','cowboy-hat.png']},
+  {id:'santa-hat',label:'Papai Noel',kind:'head',sources:['chapeu-papai-noel.png','chapéu-papai-noel.png','chapeu_papai_noel.png','santa-hat.png']},
+  {id:'pink-hat',label:'Chapéu rosa',kind:'head',sources:['chapeu-rosa.png','chapéu-rosa.png','chapeu_rosa.png','pink-hat.png']},
+  {id:'pink-glasses',label:'Óculos rosa',kind:'face',sources:['oculos-rosa.png','óculos-rosa.png','oculos_rosa.png','pink-glasses.png']},
+  {id:'crown',label:'Coroa',kind:'head',sources:['coroa.png','crown.png']},
+  {id:'pink-skirt',label:'Saia rosa',kind:'body',sources:['saia_rosa_com_laço_e_babados.png','saia-rosa.png','saia_rosa.png','pink-skirt.png']},
+  {id:'police-cap',label:'Policial',kind:'head',sources:['boné_policial_azul_com_distintivo_dourado.png','bone-policial.png','boné-policial.png','police-cap.png']},
+  {id:'astronaut-helmet',label:'Astronauta',kind:'helmet',sources:['capacete_de_astronauta_com_visor_azul.png','capacete-astronauta.png','astronaut-helmet.png']}
 ];
 
 function sharedStudyratVariant(value){
@@ -20,6 +35,52 @@ function sharedStudyratVariant(value){
   }
   return sharedStudyratVariants.find(function(item){return item.id===value;})||sharedStudyratVariants[0];
 }
+function sharedStudyratAccessory(value){
+  return sharedStudyratAccessories.find(function(item){return item.id===value;})||sharedStudyratAccessories[0];
+}
+
+function sharedStudyratAccessorySources(item){
+  return (item.sources||[]).map(function(file){
+    return '/assets/img/studyrats/'+encodeURIComponent(file).replace(/%2F/g,'/')+'?v=9';
+  });
+}
+
+function sharedStudyratAccessoryImg(value,className){
+  const item=sharedStudyratAccessory(value);
+  if(item.id==='none')return '';
+  const sources=sharedStudyratAccessorySources(item);
+  if(!sources.length)return '';
+  const encoded=encodeURIComponent(JSON.stringify(sources));
+  return '<img class="'+(className||'studyrats-accessory-img')+' accessory-'+item.id+' accessory-kind-'+item.kind+'" src="'+sources[0]+'" data-studyrat-sources="'+encoded+'" data-studyrat-source-index="0" alt="'+item.label+'" draggable="false" loading="eager" decoding="async">';
+}
+
+function sharedStudyratComposite(variant,accessory,className){
+  return '<span class="'+(className||'studyrats-rat-composite')+'">'+
+    sharedRatImg(variant,'studyrats-rat-img')+
+    sharedStudyratAccessoryImg(accessory,'studyrats-accessory-img')+
+  '</span>';
+}
+
+function sharedStudyratsBindImageFallbacks(root){
+  (root||document).querySelectorAll('img[data-studyrat-sources]').forEach(function(img){
+    if(img.dataset.fallbackBound==='1')return;
+    img.dataset.fallbackBound='1';
+    img.addEventListener('error',function(){
+      let sources=[];
+      try{sources=JSON.parse(decodeURIComponent(img.dataset.studyratSources||''));}catch(e){}
+      const next=(Number(img.dataset.studyratSourceIndex)||0)+1;
+      if(next<sources.length){
+        img.dataset.studyratSourceIndex=String(next);
+        img.src=sources[next];
+      }else{
+        const choice=img.closest('.studyrats-accessory-choice');
+        if(choice)choice.hidden=true;
+        img.style.display='none';
+      }
+    });
+  });
+}
+
 
 function sharedRatImg(variant,className){
   const item=sharedStudyratVariant(variant);
@@ -46,16 +107,35 @@ function sharedStudyratsRenderRatPicker(){
   });
 }
 
+  const accessoryHost=document.getElementById('studyrats-accessory-picker-options');
+  if(accessoryHost){
+    accessoryHost.innerHTML=sharedStudyratAccessories.map(function(item){
+      const selected=item.id===sharedStudyratsMyAccessory;
+      const preview=item.id==='none'
+        ? '<span class="studyrats-accessory-none">×</span>'
+        : sharedStudyratAccessoryImg(item.id,'studyrats-accessory-choice-img');
+      return '<button type="button" class="studyrats-accessory-choice '+(selected?'is-selected':'')+'" data-studyrat-accessory="'+item.id+'" aria-pressed="'+(selected?'true':'false')+'" title="'+item.label+'">'+
+        preview+'<span>'+item.label+'</span><i aria-hidden="true">✓</i></button>';
+    }).join('');
+    sharedStudyratsBindImageFallbacks(accessoryHost);
+    accessoryHost.querySelectorAll('[data-studyrat-accessory]').forEach(function(button){
+      button.addEventListener('click',function(){
+        sharedStudyratsSaveAccessory(button.dataset.studyratAccessory);
+      });
+    });
+  }
+
 async function sharedStudyratsLoadMyVariant(){
   if(!window.supabaseClient||!window.docmapUser)return;
   const result=await window.supabaseClient
     .from('profiles')
-    .select('studyrat_variant')
+    .select('studyrat_variant, studyrat_accessory')
     .eq('user_id',window.docmapUser.id)
     .maybeSingle();
 
-  if(!result.error&&result.data?.studyrat_variant){
-    sharedStudyratsMyVariant=sharedStudyratVariant(result.data.studyrat_variant).id;
+  if(!result.error&&result.data){
+    if(result.data.studyrat_variant)sharedStudyratsMyVariant=sharedStudyratVariant(result.data.studyrat_variant).id;
+    if(result.data.studyrat_accessory)sharedStudyratsMyAccessory=sharedStudyratAccessory(result.data.studyrat_accessory).id;
   }
   sharedStudyratsRenderRatPicker();
 }
@@ -86,6 +166,33 @@ async function sharedStudyratsSaveVariant(variant){
   }
   await sharedStudyratsLoad();
 }
+
+async function sharedStudyratsSaveAccessory(accessory){
+  const next=sharedStudyratAccessory(accessory).id;
+  if(next===sharedStudyratsMyAccessory)return;
+
+  const previous=sharedStudyratsMyAccessory;
+  sharedStudyratsMyAccessory=next;
+  sharedStudyratsRenderRatPicker();
+
+  const status=document.getElementById('studyrats-rat-picker-status');
+  if(status)status.textContent='Salvando acessório...';
+
+  const result=await window.supabaseClient.rpc('set_studyrat_accessory',{p_accessory:next});
+  if(result.error){
+    console.error(result.error);
+    sharedStudyratsMyAccessory=previous;
+    sharedStudyratsRenderRatPicker();
+    if(status)status.textContent='Não foi possível salvar o acessório.';
+    return;
+  }
+
+  if(status){
+    status.textContent='Acessório selecionado.';
+    setTimeout(function(){if(status.textContent==='Acessório selecionado.')status.textContent='';},1800);
+  }
+  await sharedStudyratsLoad();
+}
 function sharedStudyratsInitials(name){
   return String(name||'L').trim().split(/\s+/).slice(0,2).map(function(part){return part.charAt(0).toUpperCase();}).join('')||'L';
 }
@@ -108,6 +215,7 @@ function sharedStudyratsGroup(rows){
       id:row.participant_user_id,
       name:row.participant_name||'Usuário LURIA',
       variant:sharedStudyratVariant(row.studyrat_variant||'brown').id,
+      accessory:sharedStudyratAccessory(row.studyrat_accessory||'none').id,
       value:Number(row.progress)||0
     });
   });
@@ -152,7 +260,7 @@ function sharedStudyratsRender(){
   const challenges=sharedStudyratsGroup(sharedStudyratsRows);
 
   if(!challenges.length){
-    host.innerHTML='<div class="studyrats-empty"><div>'+sharedRatImg(sharedStudyratsMyVariant,'studyrats-empty-rat')+'<strong>Nenhuma corrida ativa</strong><span>Crie um desafio com seus amigos e acompanhe os ratinhos avançando até a chegada.</span></div></div>';
+    host.innerHTML='<div class="studyrats-empty"><div>'+sharedStudyratComposite(sharedStudyratsMyVariant,sharedStudyratsMyAccessory,'studyrats-empty-composite')+'<strong>Nenhuma corrida ativa</strong><span>Crie um desafio com seus amigos e acompanhe os ratinhos avançando até a chegada.</span></div></div>';
     return;
   }
 
@@ -179,7 +287,7 @@ function sharedStudyratsRender(){
         '<div class="studyrats-road">'+
           '<span class="studyrats-road-dash"></span>'+
           '<span class="studyrats-progress-fill" style="width:'+pct+'%"></span>'+
-          '<span class="studyrats-mouse" style="left:'+pct+'%">'+sharedRatImg(p.variant)+'</span>'+
+          '<span class="studyrats-mouse" style="left:'+pct+'%">'+sharedStudyratComposite(p.variant,p.accessory)+'</span>'+
           '<span class="studyrats-track-score" style="left:min(calc('+pct+'% + 40px),calc(100% - 62px))">'+fEsc(score)+' '+fEsc(type.unit)+'</span>'+
         '</div>'+
       '</div>';
@@ -191,7 +299,7 @@ function sharedStudyratsRender(){
     return '<article class="studyrats-challenge">'+
       '<div class="studyrats-challenge-head">'+
         '<div class="studyrats-challenge-title">'+
-          '<span class="studyrats-race-badge">'+sharedRatImg(sharedStudyratsMyVariant,'studyrats-badge-rat')+'</span>'+
+          '<span class="studyrats-race-badge">'+sharedStudyratComposite(sharedStudyratsMyVariant,sharedStudyratsMyAccessory,'studyrats-badge-composite')+'</span>'+
           '<span><strong>'+fEsc(type.title)+'</strong><small>'+(finished?'Desafio encerrado':'Quem estiver na frente na data limite vence.')+'</small></span>'+
         '</div>'+
         (canDelete?'<button class="studyrats-delete" type="button" aria-label="Apagar desafio" data-delete-studyrat="'+fEsc(ch.id)+'">×</button>':'')+
@@ -211,6 +319,8 @@ function sharedStudyratsRender(){
       '<div class="studyrats-race-footer"><span>Os ratinhos avançam com o tempo e com o desempenho relativo de cada participante.</span><strong>'+fEsc(type.title)+' · até '+formatStudyratsDate(ch.deadline)+'</strong></div>'+
     '</article>';
   }).join('');
+
+  sharedStudyratsBindImageFallbacks(host);
 
   host.querySelectorAll('[data-delete-studyrat]').forEach(function(btn){
     btn.addEventListener('click',async function(){
