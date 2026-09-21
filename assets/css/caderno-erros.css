@@ -1344,3 +1344,42 @@
 
 
 /* Novo erro — área sem efeito visual ao passar o mouse */
+
+
+/* Novo erro — Área sem qualquer efeito de hover */
+.error-area-create-field:hover,
+.error-area-create-field:hover #new-error-area,
+.error-field:has(#new-error-area):hover,
+.error-field:has(#new-error-area):hover #new-error-area {
+  border-color: inherit;
+  background: inherit;
+  background-image: inherit;
+  box-shadow: inherit;
+  transform: none;
+  filter: none;
+}
+
+#new-error-area {
+  transition: none !important;
+}
+
+#new-error-area:hover {
+  border-color: color-mix(in srgb, var(--border) 82%, var(--accent) 18%) !important;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--surface) 96%, var(--accent) 4%),
+      var(--surface)
+    ) !important;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--surface) 96%, var(--accent) 4%),
+      var(--surface)
+    ) !important;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, .03),
+    inset 0 1px 0 rgba(255, 255, 255, .35) !important;
+  transform: none !important;
+  filter: none !important;
+}
