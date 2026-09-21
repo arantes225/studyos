@@ -17,7 +17,7 @@
 
   <link rel="stylesheet" href="assets/css/style.css?v=luria-pattern-13">
   <link rel="stylesheet" href="assets/css/image-lightbox.css?v=1">
-  <link rel="stylesheet" href="assets/css/flashcards.css?v=14.5">
+  <link rel="stylesheet" href="assets/css/flashcards.css?v=14.6">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
   <script defer src="assets/js/luria-brand-v5.js?v=9"></script>
   <link rel="canonical" href="/flashcards/">
@@ -467,16 +467,35 @@
                 </select>
               </label>
 
-              <label class="flash-field">
+              <div class="flash-field">
                 <span>Matéria</span>
-                <select
-                  id="create-materia"
-                  class="flash-click-select"
-                  aria-label="Selecionar matéria"
-                >
-                  <option value="">Selecione primeiro a área</option>
-                </select>
-              </label>
+
+                <div class="flash-subject-picker">
+                  <button
+                    id="create-materia-toggle"
+                    class="flash-click-select flash-subject-toggle"
+                    type="button"
+                    aria-haspopup="listbox"
+                    aria-expanded="false"
+                  >
+                    <span id="create-materia-label">Selecione primeiro a área</span>
+                    <span class="flash-subject-chevron" aria-hidden="true">⌄</span>
+                  </button>
+
+                  <div
+                    id="create-materia-menu"
+                    class="flash-subject-menu"
+                    role="listbox"
+                    hidden
+                  ></div>
+
+                  <input
+                    id="create-materia"
+                    type="hidden"
+                    value=""
+                  >
+                </div>
+              </div>
 
               <label class="flash-field full">
                 <span>Tema</span>
@@ -964,7 +983,7 @@
   <script src="assets/js/app.js?v=14.5"></script>
   <script src="assets/js/study-mode.js?v=13.0"></script>
   <script src="assets/js/sharing.js?v=3"></script>
-  <script src="assets/js/flashcards.js?v=15.5"></script>
+  <script src="assets/js/flashcards.js?v=15.6"></script>
 
     <script src="assets/js/image-lightbox.js?v=1"></script>
 <script defer src="assets/js/pwa.js?v=3"></script>
