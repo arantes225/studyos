@@ -1564,3 +1564,19 @@ body.admin-unlocked #admin-app {
     font-size: 8.5px;
   }
 }
+
+
+/* Admin 1.5 — período, logística e financeiro */
+.admin-topbar{position:relative}
+.admin-range{position:absolute;left:50%;transform:translateX(-50%);display:grid;justify-items:center;gap:5px}
+.admin-range label{font-size:8px;font-weight:850;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.admin-range select{min-height:40px;min-width:126px;appearance:none;-webkit-appearance:none;padding:0 38px 0 14px;border:1px solid color-mix(in srgb,var(--border) 82%,var(--accent) 18%);border-radius:13px;background:linear-gradient(45deg,transparent 50%,var(--muted) 50%) calc(100% - 18px) 18px/5px 5px no-repeat,linear-gradient(135deg,var(--muted) 50%,transparent 50%) calc(100% - 13px) 18px/5px 5px no-repeat,var(--surface);color:var(--text);font:inherit;font-size:11px;font-weight:750;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.05);outline:none;cursor:pointer}
+.admin-range select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft),0 8px 24px rgba(0,0,0,.07)}
+.admin-storage-breakdown,.admin-plan-pricing{padding:14px;border:1px solid var(--border);border-radius:14px;background:var(--surface-2)}
+.admin-subsection-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.admin-subsection-head strong,.admin-subsection-head small{display:block}.admin-subsection-head strong{font-size:11px}.admin-subsection-head small{margin-top:3px;color:var(--muted);font-size:8px}
+.admin-storage-breakdown-list{display:grid;gap:10px}.admin-storage-row{display:grid;gap:5px}.admin-storage-row-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.admin-storage-row-head strong{font-size:10px}.admin-storage-row-head span,.admin-storage-row small{color:var(--muted);font-size:8px}.admin-storage-type-track{height:7px;overflow:hidden;border-radius:999px;background:var(--surface)}.admin-storage-type-track span{display:block;height:100%;border-radius:inherit;background:var(--accent)}
+.admin-plan-price-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.admin-plan-price-card{display:grid;gap:9px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}.admin-plan-price-card>strong{font-size:11px}.admin-plan-price-card label{display:grid;gap:4px}.admin-plan-price-card label>span{color:var(--muted);font-size:8px;font-weight:750}.admin-price-input{display:grid;grid-template-columns:auto 1fr;align-items:center;min-height:36px;padding-left:9px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2)}.admin-price-input b{font-size:9px;color:var(--muted)}.admin-price-input input,.admin-installments-input{width:100%;min-width:0;height:34px;padding:0 8px;border:0;outline:0;background:transparent;color:var(--text);font:inherit;font-size:10px;font-weight:750}.admin-installments-input{border:1px solid var(--border);border-radius:9px;background:var(--surface-2)}
+.admin-financial-section{display:grid;gap:13px}
+@media(max-width:900px){.admin-plan-price-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.admin-range{position:static;transform:none;justify-self:end}.admin-range label{display:none}.admin-plan-price-grid{grid-template-columns:1fr 1fr}.admin-storage-row-head{align-items:flex-start;flex-direction:column;gap:3px}}
