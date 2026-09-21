@@ -3,17 +3,22 @@ let sharedStudyratsChannel=null;
 let sharedStudyratsTimer=null;
 
 function sharedRatSvg(){
-  return '<svg viewBox="0 0 92 64" aria-hidden="true">'+
-    '<path d="M20 42c-9-1-14-7-13-15 1-9 10-16 23-17 11-1 23 2 31 9 5 4 8 10 8 16 0 11-10 18-25 19-10 1-19-1-24-5z" fill="currentColor"/>'+
-    '<circle cx="58" cy="16" r="10" fill="currentColor"/>'+
-    '<circle cx="70" cy="22" r="8" fill="currentColor" opacity=".82"/>'+
-    '<ellipse cx="76" cy="33" rx="8" ry="7" fill="currentColor"/>'+
-    '<circle cx="75" cy="28" r="2.3" fill="var(--surface)"/>'+
-    '<circle cx="87" cy="34" r="3.2" fill="currentColor"/>'+
-    '<path d="M18 39C4 39 1 30 4 22c2-5 6-8 10-9" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>'+
-    '<path d="M29 52l-7 8M48 52l8 7" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>'+
-    '<path d="M63 39c3 2 7 2 10 0" fill="none" stroke="var(--surface)" stroke-width="2.4" stroke-linecap="round" opacity=".9"/>'+
-    '<path d="M83 36l8 2M82 39l8 5M82 33l8-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".75"/>'+
+  return '<svg viewBox="0 0 120 82" aria-hidden="true">'+
+    '<path d="M20 48C4 44-1 29 10 18c8-8 19-9 28-5" fill="none" stroke="var(--rat-tail,#7a6a63)" stroke-width="5.5" stroke-linecap="round"/>'+
+    '<ellipse cx="58" cy="47" rx="34" ry="23" fill="var(--rat-fill,#d8cfc7)" stroke="var(--rat-stroke,#4d443f)" stroke-width="4"/>'+
+    '<path d="M33 43c8-15 35-20 54-7-8-11-28-16-44-10-8 3-12 9-10 17Z" fill="var(--rat-shadow,#c4b3a7)" opacity=".9"/>'+
+    '<ellipse cx="89" cy="42" rx="18" ry="15" fill="var(--rat-fill,#d8cfc7)" stroke="var(--rat-stroke,#4d443f)" stroke-width="4"/>'+
+    '<circle cx="82" cy="24" r="10" fill="var(--rat-fill,#d8cfc7)" stroke="var(--rat-stroke,#4d443f)" stroke-width="4"/>'+
+    '<circle cx="92" cy="22" r="9" fill="var(--rat-fill,#d8cfc7)" stroke="var(--rat-stroke,#4d443f)" stroke-width="4"/>'+
+    '<circle cx="82" cy="24" r="4.8" fill="var(--rat-ear,#e6aeb5)"/>'+
+    '<circle cx="92" cy="22" r="4.2" fill="var(--rat-ear,#e6aeb5)"/>'+
+    '<ellipse cx="106" cy="45" rx="4.7" ry="3.7" fill="var(--rat-nose,#c9868e)" stroke="var(--rat-stroke,#4d443f)" stroke-width="1.8"/>'+
+    '<circle cx="96" cy="39" r="2.9" fill="#241f1d"/><circle cx="96.8" cy="38.1" r=".9" fill="#fff"/>'+
+    '<path d="M104 48c-3 3-8 4-12 2" fill="none" stroke="var(--rat-stroke,#4d443f)" stroke-width="2.2" stroke-linecap="round"/>'+
+    '<path d="M106 43l11-4M107 46h12M106 49l10 5" fill="none" stroke="var(--rat-stroke,#4d443f)" stroke-width="1.8" stroke-linecap="round" opacity=".85"/>'+
+    '<path d="M45 66l-7 8M66 66l8 7M80 58l8 5" fill="none" stroke="var(--rat-stroke,#4d443f)" stroke-width="4" stroke-linecap="round"/>'+
+    '<ellipse cx="67" cy="52" rx="17" ry="10" fill="var(--rat-belly,#efe7df)" opacity=".72"/>'+
+    '<path d="M42 48c6 2 10 2 15 0" fill="none" stroke="var(--rat-stroke,#4d443f)" stroke-width="1.7" stroke-linecap="round" opacity=".28"/>'+
   '</svg>';
 }
 
