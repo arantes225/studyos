@@ -2512,6 +2512,7 @@ function wireLuriaDateInputs() {
       if (!input) return;
 
       event.preventDefault();
+      event.stopPropagation();
 
       try {
         input.blur();
@@ -2520,7 +2521,8 @@ function wireLuriaDateInputs() {
       openLuriaCalendar(
         input
       );
-    }
+    },
+    true
   );
 }
 
