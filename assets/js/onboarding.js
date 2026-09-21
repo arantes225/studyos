@@ -302,6 +302,7 @@
     const overlay=document.createElement("div");
     overlay.id="luria-onboarding-overlay";
     overlay.classList.toggle("is-exploring",s.phase==="explore");
+    document.body.classList.toggle("luria-onboarding-exploring",s.phase==="explore");
     overlay.classList.toggle("card-top",!!step.top);
     overlay.innerHTML=`
       <div class="luria-onboarding-dim"></div>
@@ -334,6 +335,7 @@
   }
 
   function clearOverlay(){
+    document.body.classList.remove("luria-onboarding-exploring");
     document.getElementById("luria-onboarding-overlay")?.remove();
     document.querySelectorAll(".luria-onboarding-target").forEach(el=>el.classList.remove("luria-onboarding-target"));
   }
