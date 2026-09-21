@@ -573,3 +573,43 @@
 .studyrats-empty-composite .accessory-angel-wings{left:10px;top:10px}
 .studyrats-empty-composite .accessory-rocket-flame{left:-29px;top:23px}
 .studyrats-empty-composite .accessory-astronaut-helmet{left:43px;top:8px}
+
+
+/* Studyrats preview fit adjustments v17 */
+.studyrats-accessory-img.accessory-colorful-cap{width:41px;height:29px;left:31px;top:-5px;transform:rotate(3deg)}
+.studyrats-accessory-img.accessory-cowboy-hat{width:52px;height:32px;left:23px;top:-7px;transform:rotate(2deg)}
+.studyrats-accessory-img.accessory-crown{width:31px;height:25px;left:36px;top:-5px}
+.studyrats-accessory-img.accessory-gamer-headset{width:40px;height:35px;left:29px;top:-3px}
+.studyrats-accessory-img.accessory-magic-top-hat{width:45px;height:35px;left:27px;top:-10px;transform:rotate(2deg)}
+.studyrats-accessory-img.accessory-mouse-ears{width:40px;height:29px;left:30px;top:-3px}
+.studyrats-accessory-img.accessory-pink-bow-hat{width:52px;height:31px;left:24px;top:-6px;transform:rotate(2deg)}
+.studyrats-accessory-img.accessory-santa-hat{width:42px;height:32px;left:29px;top:-10px;transform:rotate(5deg)}
+.studyrats-accessory-img.accessory-unicorn-headband{width:39px;height:30px;left:28px;top:-8px}
+.studyrats-accessory-img.accessory-viking-helmet{width:45px;height:30px;left:25px;top:-6px}
+.studyrats-accessory-img.accessory-wizard-hat{width:44px;height:36px;left:24px;top:-12px;transform:rotate(2deg)}
+
+.studyrats-accessory-img.accessory-cyberpunk-visor{width:34px;height:20px;left:39px;top:11px}
+.studyrats-accessory-img.accessory-pink-round-glasses{width:31px;height:19px;left:40px;top:12px}
+.studyrats-accessory-img.accessory-round-nerd-glasses{width:31px;height:19px;left:40px;top:12px}
+
+.studyrats-accessory-img.accessory-angel-wings{width:62px;height:44px;left:2px;top:-10px}
+.studyrats-accessory-img.accessory-rocket-flame{width:42px;height:28px;left:-12px;top:12px;transform:scaleX(-1)}
+.studyrats-accessory-img.accessory-astronaut-helmet{z-index:14;width:27px;height:25px;left:43px;top:12px}
+
+.studyrats-empty-composite .accessory-colorful-cap{left:43px;top:0}
+.studyrats-empty-composite .accessory-cowboy-hat{left:32px;top:-1px}
+.studyrats-empty-composite .accessory-crown{left:49px;top:1px}
+.studyrats-empty-composite .accessory-gamer-headset{left:40px;top:5px}
+.studyrats-empty-composite .accessory-magic-top-hat{left:38px;top:-6px}
+.studyrats-empty-composite .accessory-mouse-ears{left:41px;top:2px}
+.studyrats-empty-composite .accessory-pink-bow-hat{left:33px;top:0}
+.studyrats-empty-composite .accessory-santa-hat{left:41px;top:-5px}
+.studyrats-empty-composite .accessory-unicorn-headband{left:39px;top:-4px}
+.studyrats-empty-composite .accessory-viking-helmet{left:35px;top:0}
+.studyrats-empty-composite .accessory-wizard-hat{left:34px;top:-7px}
+.studyrats-empty-composite .accessory-cyberpunk-visor{left:56px;top:20px}
+.studyrats-empty-composite .accessory-pink-round-glasses{left:57px;top:21px}
+.studyrats-empty-composite .accessory-round-nerd-glasses{left:57px;top:21px}
+.studyrats-empty-composite .accessory-angel-wings{left:5px;top:-2px}
+.studyrats-empty-composite .accessory-rocket-flame{left:-17px;top:23px}
+.studyrats-empty-composite .accessory-astronaut-helmet{left:56px;top:20px}
