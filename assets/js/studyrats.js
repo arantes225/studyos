@@ -311,10 +311,12 @@ function sharedStudyratsRender(){
         '<div class="studyrats-summary-item"><span class="studyrats-summary-icon">●●</span><span><small>Participantes</small><strong>'+ch.participants.length+'</strong><em>Boa sorte, ratos de estudo!</em></span></div>'+
       '</div>'+
       '<div class="studyrats-race-scene">'+
-        '<div class="studyrats-skyline"><i></i><i></i><i></i><i></i></div>'+
-        '<div class="studyrats-lanes">'+lanes+'</div>'+
-        '<div class="studyrats-finish"><span>CHEGADA</span><i></i></div>'+
-        '<div class="studyrats-bush studyrats-bush-left"></div><div class="studyrats-bush studyrats-bush-right"></div>'+
+        '<div class="studyrats-race-canvas">'+
+          '<div class="studyrats-skyline"><i></i><i></i><i></i><i></i></div>'+
+          '<div class="studyrats-lanes">'+lanes+'</div>'+
+          '<div class="studyrats-finish"><span>CHEGADA</span><i></i></div>'+
+          '<div class="studyrats-bush studyrats-bush-left"></div><div class="studyrats-bush studyrats-bush-right"></div>'+
+        '</div>'+
       '</div>'+
       '<div class="studyrats-race-footer"><span>Os ratinhos avançam com o tempo e com o desempenho relativo de cada participante.</span><strong>'+fEsc(type.title)+' · até '+formatStudyratsDate(ch.deadline)+'</strong></div>'+
     '</article>';
