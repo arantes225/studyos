@@ -15,6 +15,12 @@ let importFileKind =
 let ankiDeckAreaMap =
   new Map();
 
+let ankiDeckSubjectMap =
+  new Map();
+
+let ankiDeckThemeMap =
+  new Map();
+
 let ankiImportStats = {
   packageFormat: null,
   sourceDecks: [],
@@ -2668,10 +2674,16 @@ async function parseAnkiPackage(
           || "",
 
         materia:
-          "",
+          ankiDeckSubjectMap.get(
+            sourceDeck
+          )
+          || "",
 
         theme:
-          "",
+          ankiDeckThemeMap.get(
+            sourceDeck
+          )
+          || "",
 
         front_text:
           converted.front,
@@ -2811,8 +2823,37 @@ function renderAnkiDeckMap() {
         (
           deck,
           index
-        ) => `
-          <label class="anki-deck-row">
+        ) => {
+          const area =
+            ankiDeckAreaMap.get(
+              deck
+            )
+            || sourceDeckDefaultArea(
+              deck
+            );
+
+          const subjects =
+            FLASHCARD_SUBJECTS_BY_AREA[
+              normalizeFlashAreaName(
+                area
+              )
+            ]
+            || [];
+
+          const selectedSubject =
+            ankiDeckSubjectMap.get(
+              deck
+            )
+            || "";
+
+          const selectedTheme =
+            ankiDeckThemeMap.get(
+              deck
+            )
+            || "";
+
+          return `
+          <div class="anki-deck-row">
 
             <span class="anki-deck-source">
               <strong>
@@ -2826,28 +2867,63 @@ function renderAnkiDeckMap() {
               </small>
             </span>
 
-            <input
-              type="text"
-              value="${escapeFlashHtml(
-                ankiDeckAreaMap.get(
-                  deck
-                )
-                || sourceDeckDefaultArea(
-                  deck
-                )
-              )}"
-              data-anki-deck-area="${index}"
-              list="medical-areas"
-              data-luria-area-input
-              placeholder="Área no LURIA"
-            >
+            <label class="anki-deck-field">
+              <span>Área</span>
+              <input
+                type="text"
+                value="${escapeFlashHtml(
+                  area
+                )}"
+                data-anki-deck-area="${index}"
+                list="medical-areas"
+                data-luria-area-input
+                placeholder="Área no LURIA"
+              >
+            </label>
+
+            <label class="anki-deck-field">
+              <span>Matéria</span>
+              <select
+                data-anki-deck-subject="${index}"
+                ${subjects.length ? "" : "disabled"}
+              >
+                <option value="">
+                  ${subjects.length ? "Selecione a matéria" : "Escolha a área primeiro"}
+                </option>
+                ${subjects
+                  .map(
+                    subject => `
+                      <option
+                        value="${escapeFlashHtml(subject)}"
+                        ${subject === selectedSubject ? "selected" : ""}
+                      >
+                        ${escapeFlashHtml(subject)}
+                      </option>
+                    `
+                  )
+                  .join("")}
+              </select>
+            </label>
+
+            <label class="anki-deck-field">
+              <span>Tema / subtema</span>
+              <input
+                type="text"
+                value="${escapeFlashHtml(
+                  selectedTheme
+                )}"
+                data-anki-deck-theme="${index}"
+                placeholder="Ex.: Insuficiência cardíaca"
+              >
+            </label>
 
             <span class="anki-deck-count">
               ${counts.get(deck) || 0} cards
             </span>
 
-          </label>
-        `
+          </div>
+        `;
+        }
       )
       .join("");
 
@@ -2859,7 +2935,7 @@ function renderAnkiDeckMap() {
     .forEach(
       (input) => {
         input.addEventListener(
-          "input",
+          "change",
           () => {
             const index =
               Number(
@@ -2873,22 +2949,23 @@ function renderAnkiDeckMap() {
                   index
                 ];
 
-
             if (!deck) {
               return;
             }
 
-
             const area =
               input.value
                 .trim();
-
 
             ankiDeckAreaMap.set(
               deck,
               area
             );
 
+            ankiDeckSubjectMap.set(
+              deck,
+              ""
+            );
 
             importRows =
               importRows.map(
@@ -2897,11 +2974,65 @@ function renderAnkiDeckMap() {
                     === deck
                       ? {
                           ...row,
-                          area
+                          area,
+                          materia:
+                            ""
                         }
                       : row
               );
 
+            renderImportPreview();
+          }
+        );
+      }
+    );
+
+
+  document
+    .querySelectorAll(
+      "[data-anki-deck-subject]"
+    )
+    .forEach(
+      (select) => {
+        select.addEventListener(
+          "change",
+          () => {
+            const index =
+              Number(
+                select.dataset
+                  .ankiDeckSubject
+              );
+
+            const deck =
+              ankiImportStats
+                .sourceDecks[
+                  index
+                ];
+
+            if (!deck) {
+              return;
+            }
+
+            const materia =
+              select.value
+                .trim();
+
+            ankiDeckSubjectMap.set(
+              deck,
+              materia
+            );
+
+            importRows =
+              importRows.map(
+                (row) =>
+                  row.source_deck
+                    === deck
+                      ? {
+                          ...row,
+                          materia
+                        }
+                      : row
+              );
 
             renderImportPreview(
               false
@@ -2911,6 +3042,68 @@ function renderAnkiDeckMap() {
       }
     );
 
+
+  document
+    .querySelectorAll(
+      "[data-anki-deck-theme]"
+    )
+    .forEach(
+      (input) => {
+        const updateTheme =
+          () => {
+            const index =
+              Number(
+                input.dataset
+                  .ankiDeckTheme
+              );
+
+            const deck =
+              ankiImportStats
+                .sourceDecks[
+                  index
+                ];
+
+            if (!deck) {
+              return;
+            }
+
+            const theme =
+              input.value
+                .trim();
+
+            ankiDeckThemeMap.set(
+              deck,
+              theme
+            );
+
+            importRows =
+              importRows.map(
+                (row) =>
+                  row.source_deck
+                    === deck
+                      ? {
+                          ...row,
+                          theme
+                        }
+                      : row
+              );
+
+            renderImportPreview(
+              false
+            );
+          };
+
+        input.addEventListener(
+          "input",
+          updateTheme
+        );
+
+        input.addEventListener(
+          "change",
+          updateTheme
+        );
+      }
+    );
 
   if (mediaNote) {
     const media =
@@ -3160,6 +3353,12 @@ async function parseSpreadsheetImport(
   ankiDeckAreaMap =
     new Map();
 
+  ankiDeckSubjectMap =
+    new Map();
+
+  ankiDeckThemeMap =
+    new Map();
+
   ankiImportStats = {
     packageFormat:
       null,
@@ -3228,6 +3427,12 @@ function resetImportUi() {
     "spreadsheet";
 
   ankiDeckAreaMap =
+    new Map();
+
+  ankiDeckSubjectMap =
+    new Map();
+
+  ankiDeckThemeMap =
     new Map();
 
   ankiImportStats = {
@@ -3522,12 +3727,36 @@ function wireImport() {
                       ),
 
               materia:
-                row.materia
-                || null,
+                importFileKind ===
+                  "anki"
+                    ? (
+                        ankiDeckSubjectMap
+                          .get(
+                            row.source_deck
+                          )
+                        || row.materia
+                        || null
+                      )
+                    : (
+                        row.materia
+                        || null
+                      ),
 
               theme:
-                row.theme
-                || null,
+                importFileKind ===
+                  "anki"
+                    ? (
+                        ankiDeckThemeMap
+                          .get(
+                            row.source_deck
+                          )
+                        || row.theme
+                        || null
+                      )
+                    : (
+                        row.theme
+                        || null
+                      ),
 
               front_text:
                 row.front_text,
