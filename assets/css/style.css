@@ -3241,3 +3241,76 @@ dialog[open] > .luria-calendar{
 dialog[open]{
   overflow:visible!important;
 }
+
+
+/* LURIA — seletor de hora do Adicionar evento */
+.luria-time-picker{
+  position:fixed;
+  z-index:100001;
+  padding:13px;
+  border:1px solid color-mix(in srgb,var(--border) 80%,var(--accent) 20%);
+  border-radius:18px;
+  background:var(--surface);
+  color:var(--text);
+  box-shadow:0 22px 60px rgba(15,23,42,.20),0 4px 14px rgba(15,23,42,.08);
+  font-family:inherit;
+  user-select:none;
+}
+.luria-time-picker[hidden]{display:none!important}
+.luria-time-picker-head{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin:-13px -13px 12px;padding:13px;
+  background:color-mix(in srgb,var(--accent) 7%,var(--surface));
+  border-bottom:1px solid var(--border);
+}
+.luria-time-picker-head strong{font-size:12px;font-weight:900}
+.luria-time-picker-head button{
+  width:30px;height:30px;border:1px solid var(--border);border-radius:9px;
+  background:var(--surface);color:var(--muted);font:inherit;font-size:17px;cursor:pointer
+}
+.luria-time-picker-body{
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:9px
+}
+.luria-time-picker-body label{display:grid;gap:5px}
+.luria-time-picker-body label span{
+  color:var(--muted);font-size:8px;font-weight:850;text-transform:uppercase;letter-spacing:.04em
+}
+.luria-time-picker-body select{
+  width:100%;min-height:48px;padding:0 12px;
+  border:1px solid var(--border);border-radius:12px;
+  background:var(--surface-2);color:var(--text);
+  font:inherit;font-size:16px;font-weight:850;text-align:center;outline:none;cursor:pointer
+}
+.luria-time-picker-body select:focus{
+  border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)
+}
+.luria-time-separator{
+  padding-bottom:12px;color:var(--accent);font-size:21px;font-weight:900
+}
+.luria-time-quick{
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:11px
+}
+.luria-time-quick button{
+  min-height:34px;border:1px solid var(--border);border-radius:9px;
+  background:var(--surface-2);color:var(--text);font:inherit;font-size:9px;font-weight:800;cursor:pointer
+}
+.luria-time-quick button:hover{
+  border-color:var(--accent);background:var(--accent-soft);color:var(--accent)
+}
+.luria-time-picker-foot{
+  display:grid;grid-template-columns:auto auto 1fr;gap:7px;margin:12px -13px -13px;padding:10px 13px 12px;
+  border-top:1px solid var(--border);background:color-mix(in srgb,var(--accent) 4%,var(--surface))
+}
+.luria-time-picker-foot button{
+  min-height:34px;padding:0 10px;border:0;border-radius:9px;background:transparent;
+  color:var(--accent);font:inherit;font-size:9px;font-weight:900;cursor:pointer
+}
+.luria-time-picker-foot button.primary{
+  justify-self:end;background:var(--accent);color:var(--surface);min-width:86px
+}
+#event-time{cursor:pointer}
+#event-time::-webkit-calendar-picker-indicator{opacity:.75;cursor:pointer}
+@media(max-width:520px){
+  .luria-time-picker{padding:12px;border-radius:15px}
+  .luria-time-picker-quick{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
