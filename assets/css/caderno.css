@@ -3216,3 +3216,14 @@
     -webkit-tap-highlight-color: transparent;
   }
 }
+
+/* Biblioteca — ação destrutiva */
+#notebook-library-delete:not(:disabled){
+  background:var(--danger)!important;
+  border-color:var(--danger)!important;
+  color:#fff!important;
+}
+#notebook-library-delete:not(:disabled):hover{
+  background:color-mix(in srgb,var(--danger) 86%,#000)!important;
+  border-color:color-mix(in srgb,var(--danger) 86%,#000)!important;
+}
