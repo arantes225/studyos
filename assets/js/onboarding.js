@@ -82,7 +82,7 @@
   function ensureStyles(){
     if(document.getElementById("luria-onboarding-css")) return;
     const l=document.createElement("link");
-    l.id="luria-onboarding-css"; l.rel="stylesheet"; l.href="/assets/css/onboarding.css?v=1.3";
+    l.id="luria-onboarding-css"; l.rel="stylesheet"; l.href="/assets/css/onboarding.css?v=1.4.3";
     document.head.appendChild(l);
   }
 
