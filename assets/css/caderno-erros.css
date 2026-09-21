@@ -1383,3 +1383,85 @@
   transform: none !important;
   filter: none !important;
 }
+
+
+/* Área do Novo Erro — menu próprio sem qualquer hover no campo */
+.error-area-picker {
+  position: relative;
+  width: 100%;
+}
+
+.error-area-picker-toggle {
+  width: 100%;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 13px;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, var(--accent) 18%);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: none;
+  transform: none;
+  filter: none;
+  transition: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.error-area-picker-toggle:hover {
+  border-color: color-mix(in srgb, var(--border) 82%, var(--accent) 18%);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: none;
+  transform: none;
+  filter: none;
+}
+
+.error-area-picker-toggle:focus,
+.error-area-picker-toggle:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.error-area-picker-chevron {
+  color: var(--muted);
+  line-height: 1;
+}
+
+.error-area-picker-menu {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.error-area-picker-menu button {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.error-area-picker-menu button:hover {
+  background: var(--surface-2);
+}
