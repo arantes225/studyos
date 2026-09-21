@@ -127,8 +127,7 @@ async function loadInbox(){
         const {error}=await friendsSb.rpc("redeem_flashcard_deck_share",{p_token:btn.dataset.token});
         if(error)throw error;
       }else{
-        const personalize=confirm("Deseja adicionar e personalizar este caderno?\n\nOK = editar em cima\nCancelar = somente leitura");
-        const {error}=await friendsSb.rpc("redeem_study_note_bundle_share",{p_token:btn.dataset.token,p_mode:personalize?"overlay":"view"});
+        const {error}=await friendsSb.rpc("redeem_study_note_bundle_share",{p_token:btn.dataset.token,p_mode:"view"});
         if(error)throw error;
       }
       const { error: openedError } = await friendsSb.rpc(
