@@ -459,3 +459,56 @@
     font-size:9px!important;
   }
 }
+
+
+/* Studyrats v22 — preview grande da personalização */
+.studyrats-preview-large{
+  margin-top:12px;
+  display:grid;
+  gap:7px;
+}
+.studyrats-preview-large-label{
+  color:var(--muted);
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.12em;
+}
+.studyrats-preview-large-stage{
+  min-height:150px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border:1px dashed color-mix(in srgb,var(--accent) 32%,var(--border));
+  border-radius:14px;
+  background:
+    radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--accent-soft) 65%,transparent),transparent 66%),
+    var(--surface);
+}
+.studyrats-preview-composite{
+  width:72px!important;
+  height:50px!important;
+  transform:scale(2.25)!important;
+  transform-origin:center center!important;
+  position:relative!important;
+  display:block!important;
+  overflow:visible!important;
+  pointer-events:none!important;
+}
+.studyrats-preview-composite>.studyrats-rat-img{
+  position:absolute!important;
+  inset:0!important;
+  width:72px!important;
+  height:50px!important;
+  object-fit:contain!important;
+  transform:none!important;
+}
+:root[data-theme="dark"] .studyrats-preview-composite>.studyrats-rat-img{
+  filter:
+    drop-shadow(0 0 2px rgba(255,255,255,.95))
+    drop-shadow(0 0 7px rgba(93,164,255,.58))
+    drop-shadow(0 4px 7px rgba(0,0,0,.42));
+}
+@media(max-width:760px){
+  .studyrats-preview-large-stage{min-height:135px}
+  .studyrats-preview-composite{transform:scale(2)!important}
+}
