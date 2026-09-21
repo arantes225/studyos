@@ -48,12 +48,35 @@
           <button value="cancel" class="luria-share-close" aria-label="Fechar">×</button>
         </div>
 
-        <div class="luria-share-options">
-          <button type="button" class="luria-share-option" data-share-action="friend">
-            <strong>Enviar dentro do LURIA</strong>
-            <span>Escolha um amigo e envie diretamente.</span>
-          </button>
+        <div class="luria-share-direct">
+          <div class="luria-share-direct-head">
+            <strong>Enviar para amigo</strong>
+            <span>Clique no nome de um amigo já adicionado.</span>
+          </div>
 
+          <div class="luria-share-friends-list">
+            ${friends.length
+              ? friends.map(friend => `
+                  <button
+                    type="button"
+                    class="luria-share-friend"
+                    data-friend-id="${esc(friend.user_id)}"
+                    title="Enviar para ${esc(friend.display_name || "Usuário LURIA")}"
+                  >
+                    <span class="luria-share-avatar">${esc((friend.display_name || "U").charAt(0).toUpperCase())}</span>
+                    <span class="luria-share-friend-copy">
+                      <strong>${esc(friend.display_name || "Usuário LURIA")}</strong>
+                      <small>ID ${esc(friend.luria_id || "")}${friend.specialty ? " · " + esc(friend.specialty) : ""}</small>
+                    </span>
+                    <span class="luria-share-send">Enviar</span>
+                  </button>
+                `).join("")
+              : `<div class="luria-share-empty">Você ainda não adicionou amigos. Vá até <a href="/amigos/">Amigos</a> para adicionar por ID.</div>`
+            }
+          </div>
+        </div>
+
+        <div class="luria-share-options luria-share-secondary-options">
           <button type="button" class="luria-share-option" data-share-action="link">
             <strong>Gerar link</strong>
             <span>Compartilhe com qualquer pessoa que tenha conta no LURIA.</span>
@@ -61,31 +84,10 @@
 
           ${allowExport ? `
             <button type="button" class="luria-share-option" data-share-action="export">
-              <strong>Exportar</strong>
-              <span>Baixe o material em PDF.</span>
+              <strong>Exportar PDF</strong>
+              <span>Baixe o material para fora do LURIA.</span>
             </button>
           ` : ""}
-        </div>
-
-        <div class="luria-share-friends" hidden>
-          <div class="luria-share-friends-head">
-            <button type="button" data-share-back>←</button>
-            <strong>Enviar para amigo</strong>
-          </div>
-          <div class="luria-share-friends-list">
-            ${friends.length
-              ? friends.map(friend => `
-                  <button type="button" class="luria-share-friend" data-friend-id="${esc(friend.user_id)}">
-                    <span class="luria-share-avatar">${esc((friend.display_name || "U").charAt(0).toUpperCase())}</span>
-                    <span>
-                      <strong>${esc(friend.display_name || "Usuário LURIA")}</strong>
-                      <small>ID ${esc(friend.luria_id || "")}${friend.specialty ? " · " + esc(friend.specialty) : ""}</small>
-                    </span>
-                  </button>
-                `).join("")
-              : `<div class="luria-share-empty">Você ainda não adicionou amigos. Vá até <a href="/amigos/">Amigos</a> para adicionar por ID.</div>`
-            }
-          </div>
         </div>
 
         <div class="luria-share-status" aria-live="polite"></div>
@@ -105,13 +107,20 @@
         .luria-share-head p{margin:0;color:var(--muted,#5f6f82);font-size:10px}
         .luria-share-close{border:0;background:transparent;color:var(--muted);font-size:25px;cursor:pointer}
         .luria-share-options,.luria-share-friends-list{display:grid;gap:8px}
+        .luria-share-direct{display:grid;gap:9px;margin-bottom:14px}
+        .luria-share-direct-head{display:grid;gap:2px}
+        .luria-share-direct-head strong{font-size:11px}
+        .luria-share-direct-head span{color:var(--muted);font-size:8.5px}
+        .luria-share-secondary-options{padding-top:12px;border-top:1px solid var(--border)}
         .luria-share-option,.luria-share-friend{width:100%;text-align:left;border:1px solid var(--border);background:var(--surface-2,#f1f5f9);color:var(--text);border-radius:12px;padding:12px;cursor:pointer}
         .luria-share-option strong,.luria-share-friend strong{display:block;font-size:11px}
         .luria-share-option span,.luria-share-friend small{display:block;margin-top:3px;color:var(--muted);font-size:8.5px}
-        .luria-share-friends-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-        .luria-share-friends-head button{border:0;background:transparent;color:var(--text);cursor:pointer;font-size:18px}
-        .luria-share-friend{display:flex;align-items:center;gap:10px}
+        .luria-share-friend{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:10px;transition:border-color .15s ease,background .15s ease,transform .15s ease}
+        .luria-share-friend:hover{border-color:var(--accent);background:var(--accent-soft,#e7eef7);transform:translateY(-1px)}
         .luria-share-avatar{width:34px;height:34px;border-radius:50%;display:grid!important;place-items:center;background:var(--accent-soft,#e7eef7);color:var(--accent);font-weight:900}
+        .luria-share-friend-copy{min-width:0}
+        .luria-share-friend-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .luria-share-send{margin:0!important;color:var(--accent)!important;font-size:8px!important;font-weight:900!important}
         .luria-share-empty{padding:14px;border:1px dashed var(--border);border-radius:12px;color:var(--muted);font-size:9px}
         .luria-share-status{min-height:16px;margin-top:10px;font-size:9px;color:var(--muted)}
       `;
@@ -120,8 +129,6 @@
 
     document.body.appendChild(dialog);
 
-    const optionsView = dialog.querySelector(".luria-share-options");
-    const friendsView = dialog.querySelector(".luria-share-friends");
     const status = dialog.querySelector(".luria-share-status");
 
     async function run(fn, success) {
@@ -135,16 +142,6 @@
         throw error;
       }
     }
-
-    dialog.querySelector('[data-share-action="friend"]')?.addEventListener("click", () => {
-      optionsView.hidden = true;
-      friendsView.hidden = false;
-    });
-
-    dialog.querySelector("[data-share-back]")?.addEventListener("click", () => {
-      friendsView.hidden = true;
-      optionsView.hidden = false;
-    });
 
     dialog.querySelector('[data-share-action="link"]')?.addEventListener("click", async () => {
       try {
