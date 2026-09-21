@@ -25,6 +25,7 @@
       title = "Compartilhar",
       count = 0,
       allowExport = true,
+      modes = [],
       onLink,
       onExport,
       onFriend
@@ -47,6 +48,28 @@
           </div>
           <button value="cancel" class="luria-share-close" aria-label="Fechar">×</button>
         </div>
+
+        ${modes.length ? `
+          <div class="luria-share-mode-section">
+            <strong>Como deseja compartilhar?</strong>
+            <div class="luria-share-mode-list">
+              ${modes.map((mode, index) => `
+                <label class="luria-share-mode">
+                  <input
+                    type="radio"
+                    name="luria-share-mode"
+                    value="${esc(mode.value)}"
+                    ${index === 0 ? "checked" : ""}
+                  >
+                  <span>
+                    <strong>${esc(mode.title)}</strong>
+                    <small>${esc(mode.description || "")}</small>
+                  </span>
+                </label>
+              `).join("")}
+            </div>
+          </div>
+        ` : ""}
 
         <div class="luria-share-direct">
           <div class="luria-share-direct-head">
@@ -108,6 +131,14 @@
         .luria-share-close{border:0;background:transparent;color:var(--muted);font-size:25px;cursor:pointer}
         .luria-share-options,.luria-share-friends-list{display:grid;gap:8px}
         .luria-share-direct{display:grid;gap:9px;margin-bottom:14px}
+        .luria-share-mode-section{display:grid;gap:8px;margin:4px 0 14px}
+        .luria-share-mode-section>strong{font-size:11px}
+        .luria-share-mode-list{display:grid;gap:7px}
+        .luria-share-mode{display:grid;grid-template-columns:auto 1fr;gap:9px;align-items:flex-start;padding:10px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2,#f1f5f9);cursor:pointer}
+        .luria-share-mode input{margin-top:2px;accent-color:var(--accent)}
+        .luria-share-mode span{display:grid;gap:2px}
+        .luria-share-mode strong{font-size:10px}
+        .luria-share-mode small{color:var(--muted);font-size:8.5px;line-height:1.35}
         .luria-share-direct-head{display:grid;gap:2px}
         .luria-share-direct-head strong{font-size:11px}
         .luria-share-direct-head span{color:var(--muted);font-size:8.5px}
@@ -131,6 +162,17 @@
 
     const status = dialog.querySelector(".luria-share-status");
 
+    function selectedMode() {
+      return (
+        dialog
+          .querySelector(
+            'input[name="luria-share-mode"]:checked'
+          )
+          ?.value
+        || "view"
+      );
+    }
+
     async function run(fn, success) {
       try {
         status.textContent = "Processando...";
@@ -146,7 +188,9 @@
     dialog.querySelector('[data-share-action="link"]')?.addEventListener("click", async () => {
       try {
         await run(async () => {
-          await onLink?.();
+          await onLink?.(
+            selectedMode()
+          );
         }, "Link gerado.");
       } catch {}
     });
@@ -163,7 +207,10 @@
       button.addEventListener("click", async () => {
         try {
           await run(async () => {
-            await onFriend?.(button.dataset.friendId);
+            await onFriend?.(
+              button.dataset.friendId,
+              selectedMode()
+            );
           }, "Material enviado dentro do LURIA.");
         } catch {}
       });
