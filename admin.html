@@ -14,7 +14,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria7">
   <link rel="stylesheet" href="assets/css/style.css?v=luria-pattern-14">
-  <link rel="stylesheet" href="assets/css/admin.css?v=1.4">
+  <link rel="stylesheet" href="assets/css/admin.css?v=1.5">
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=10">
   <link rel="canonical" href="/admin/">
   <script>(function(){try{if(location.pathname.endsWith("/admin.html"))history.replaceState(null,"","/admin/"+location.search+location.hash);}catch(e){}})();</script>
@@ -157,122 +157,35 @@
 
         <section class="admin-section admin-logistics-section">
           <div class="admin-section-head">
-            <div>
-              <span class="eyebrow">Logística & financeiro</span>
-              <h2>Infraestrutura, tráfego e projeção mensal</h2>
-            </div>
-
-            <div class="admin-logistics-head-meta">
-              <span id="admin-logistics-plan" class="admin-infra-plan">Supabase —</span>
-              <small id="admin-logistics-updated"></small>
-            </div>
+            <div><span class="eyebrow">Logística</span><h2>Base de dados, Storage e tráfego</h2></div>
+            <div class="admin-logistics-head-meta"><span id="admin-logistics-plan" class="admin-infra-plan">Supabase —</span><small id="admin-logistics-updated"></small></div>
           </div>
-
-          <div id="admin-infra-grid" class="admin-infra-grid">
-            <article class="admin-infra-card">
-              <span>Base de dados</span>
-              <strong>—</strong>
-              <small>Carregando...</small>
-            </article>
+          <div id="admin-infra-grid" class="admin-infra-grid"></div>
+          <div class="admin-storage-breakdown">
+            <div class="admin-subsection-head"><div><strong>Composição do Storage</strong><small>Espaço ocupado por tipo de arquivo</small></div><strong id="admin-storage-total">—</strong></div>
+            <div id="admin-storage-breakdown-list" class="admin-storage-breakdown-list"></div>
           </div>
-
-          <section
-            id="admin-storage-expansion-alert"
-            class="admin-storage-expansion-alert"
-            aria-live="polite"
-            hidden
-          >
-            <div class="admin-storage-expansion-row">
-              <span
-                id="admin-storage-expansion-percent"
-                class="admin-storage-expansion-badge"
-              >
-                80%
-              </span>
-
-              <div class="admin-storage-expansion-copy">
-                <strong>
-                  Storage próximo do limite — plano de expansão disponível
-                </strong>
-
-                <small id="admin-storage-expansion-summary">
-                  O guia de expansão ficará disponível quando o Storage atingir 80%.
-                </small>
-              </div>
-
-              <button
-                id="admin-storage-expansion-open"
-                class="button secondary admin-storage-expansion-open"
-                type="button"
-                aria-expanded="false"
-                aria-controls="admin-storage-expansion-content"
-              >
-                Abrir
-              </button>
-            </div>
-
-            <small
-              id="admin-storage-expansion-source"
-              class="admin-storage-expansion-source"
-            ></small>
-
-            <pre
-              id="admin-storage-expansion-content"
-              class="admin-storage-expansion-content"
-              hidden
-            ></pre>
+          <section id="admin-storage-expansion-alert" class="admin-storage-expansion-alert" aria-live="polite" hidden>
+            <div class="admin-storage-expansion-row"><span id="admin-storage-expansion-percent" class="admin-storage-expansion-badge">80%</span><div class="admin-storage-expansion-copy"><strong>Storage próximo do limite — plano de expansão disponível</strong><small id="admin-storage-expansion-summary">O guia de expansão ficará disponível quando o Storage atingir 80%.</small></div><button id="admin-storage-expansion-open" class="button secondary admin-storage-expansion-open" type="button" aria-expanded="false" aria-controls="admin-storage-expansion-content">Abrir</button></div>
+            <small id="admin-storage-expansion-source" class="admin-storage-expansion-source"></small><pre id="admin-storage-expansion-content" class="admin-storage-expansion-content" hidden></pre>
           </section>
+          <div class="admin-logistics-note"><span>ℹ</span><p>Base, Storage e cache são medidos pelo projeto. Egress e cached egress dependem dos dados de uso/observabilidade da plataforma; enquanto não houver uma fonte automática disponível no painel, o LURIA os identifica como não mensurados em vez de estimar números falsos.</p></div>
+        </section>
 
-          <div class="admin-finance-wrap">
-            <div class="admin-finance-grid">
-              <article class="admin-finance-card income">
-                <span>Entradas projetadas</span>
-                <strong id="admin-projected-revenue">—</strong>
-                <small>MRR estimado para o mês</small>
-              </article>
-
-              <article class="admin-finance-card cost">
-                <span>Custos projetados</span>
-                <strong id="admin-projected-costs">—</strong>
-                <small>Infraestrutura + IA + taxas cadastradas</small>
-              </article>
-
-              <article class="admin-finance-card balance">
-                <span>Saldo projetado</span>
-                <strong id="admin-projected-balance">—</strong>
-                <small id="admin-projected-margin">Receita menos custos</small>
-              </article>
-            </div>
-
-            <div class="admin-cost-breakdown-head">
-              <div>
-                <strong>Composição dos custos mensais</strong>
-                <small>Valores usados na projeção financeira</small>
-              </div>
-              <button id="admin-edit-costs" class="button secondary admin-edit-costs" type="button">
-                Editar custos
-              </button>
-            </div>
-
-            <div id="admin-cost-breakdown" class="admin-cost-breakdown"></div>
+        <section class="admin-section admin-financial-section">
+          <div class="admin-section-head"><div><span class="eyebrow">Financeiro</span><h2>Receita, custos e planos</h2></div></div>
+          <div class="admin-finance-grid">
+            <article class="admin-finance-card income"><span>Entradas projetadas</span><strong id="admin-projected-revenue">—</strong><small>Receita mensal estimada</small></article>
+            <article class="admin-finance-card cost"><span>Custos projetados</span><strong id="admin-projected-costs">—</strong><small>Infraestrutura + IA + taxas</small></article>
+            <article class="admin-finance-card balance"><span>Saldo projetado</span><strong id="admin-projected-balance">—</strong><small id="admin-projected-margin">Receita menos custos</small></article>
           </div>
-
-          <div class="admin-logistics-note">
-            <span>ℹ</span>
-            <p>
-              Base, Storage e cache vêm diretamente do PostgreSQL/Supabase.
-              O egress real e o cached egress são medidos pela plataforma Supabase
-              e não são expostos pelo banco; por isso aparecem como não mensurados
-              até conectarmos uma fonte de billing/usage.
-            </p>
-
-            <a
-              href="https://supabase.com/dashboard/org/pozqdgelrxrceapfexxt/usage"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Ver uso no Supabase ↗
-            </a>
+          <div class="admin-plan-pricing">
+            <div class="admin-subsection-head"><div><strong>Valores dos planos</strong><small>Mensal, anual à vista e anual parcelado</small></div><button id="admin-save-plan-prices" class="button secondary" type="button">Salvar valores</button></div>
+            <div id="admin-plan-price-grid" class="admin-plan-price-grid"></div>
+          </div>
+          <div class="admin-finance-wrap">
+            <div class="admin-cost-breakdown-head"><div><strong>Composição dos custos mensais</strong><small>Valores usados na projeção financeira</small></div><button id="admin-edit-costs" class="button secondary admin-edit-costs" type="button">Editar custos</button></div>
+            <div id="admin-cost-breakdown" class="admin-cost-breakdown"></div>
           </div>
         </section>
 
@@ -398,7 +311,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=14.7"></script>
-  <script src="assets/js/admin.js?v=1.4"></script>
+  <script src="assets/js/admin.js?v=1.5"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
