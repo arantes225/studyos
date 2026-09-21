@@ -373,18 +373,8 @@ function sidebarMarkup(user, profile = null) {
       </a>
 
       <a class="nav-link ${page === "configuracoes" ? "active" : ""}" href="/configuracoes/">
-        <span class="nav-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-            <circle cx="12" cy="12" r="4"></circle>
-            <path d="M12 2.5v2"></path>
-            <path d="M12 19.5v2"></path>
-            <path d="M2.5 12h2"></path>
-            <path d="M19.5 12h2"></path>
-            <path d="m5.28 5.28 1.42 1.42"></path>
-            <path d="m17.3 17.3 1.42 1.42"></path>
-            <path d="m18.72 5.28-1.42 1.42"></path>
-            <path d="m6.7 17.3-1.42 1.42"></path>
-          </svg>
+        <span class="nav-icon nav-icon-settings" aria-hidden="true">
+          <img src="/assets/img/pwa-icon-192.png?v=3" alt="">
         </span><span>Configurações</span>
       </a>
 
