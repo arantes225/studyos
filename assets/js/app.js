@@ -15,7 +15,7 @@
         height: 100vh !important;
         height: 100dvh !important;
         padding:
-          max(18px, env(safe-area-inset-top))
+          max(30px, calc(env(safe-area-inset-top) + 12px))
           18px
           calc(18px + env(safe-area-inset-bottom))
           18px !important;
