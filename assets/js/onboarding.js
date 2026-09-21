@@ -114,13 +114,13 @@
   function ensureStyles(){
     let l=document.getElementById("luria-onboarding-css");
     if(l){
-      if(!String(l.href||"").includes("v=1.9")) l.href="/assets/css/onboarding.css?v=1.9";
+      if(!String(l.href||"").includes("v=2.0")) l.href="/assets/css/onboarding.css?v=2.0";
       return;
     }
     l=document.createElement("link");
     l.id="luria-onboarding-css";
     l.rel="stylesheet";
-    l.href="/assets/css/onboarding.css?v=1.9";
+    l.href="/assets/css/onboarding.css?v=2.0";
     document.head.appendChild(l);
   }
 
@@ -896,8 +896,6 @@
 
     if(step.action==="questions-file"){
       ensureQuestionsAddMode();
-      simulateOnboardingFileSelection();
-      addOnboardingPdfPreview();
     }
 
     if(step.action==="questions-pdf"){
