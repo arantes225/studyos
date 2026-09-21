@@ -2287,7 +2287,40 @@ async function prepararAdminNavigation(
 }
 
 
+function carregarOnboardingGlobal() {
+  if (
+    window.LuriaOnboarding
+    || document.getElementById("luria-onboarding-script")
+  ) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    const script =
+      document.createElement("script");
+
+    script.id =
+      "luria-onboarding-script";
+
+    script.src =
+      "/assets/js/onboarding.js?v=1.1";
+
+    script.onload =
+      () => resolve();
+
+    script.onerror =
+      () => resolve();
+
+    document.head.appendChild(
+      script
+    );
+  });
+}
+
+
 async function iniciarApp() {
+  await carregarOnboardingGlobal();
+
   const { data, error } = await sb.auth.getSession();
 
   if (error || !data.session) {
