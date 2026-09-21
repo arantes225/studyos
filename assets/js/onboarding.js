@@ -159,7 +159,8 @@
 
     if(!forced && !isNewAccount) return false;
 
-    if(!s.mode){ chooseMode(false); return true; }\n    s.started=true; s.step=0; saveState(s);
+    if(!s.mode){ chooseMode(false); return true; }
+    s.started=true; s.step=0; saveState(s);
     if(page!=="configuracoes"){
       location.replace("/configuracoes/?onboarding=1");
       return true;
@@ -339,7 +340,8 @@
     const s=status();
     if(!s.started || s.completed || s.skipped) return;
     if(!s.phase) s.phase="explain";
-    const steps=activeSteps(s);\n    const step=steps[Math.min(s.step,steps.length-1)];
+    const steps=activeSteps(s);
+    const step=steps[Math.min(s.step,steps.length-1)];
     if(!onCorrectPage(step)){
       location.replace(routeForStep(s.step)+"?onboarding=1");
       return;
@@ -414,7 +416,8 @@
 
   function move(delta){
     const s=status();
-    const steps=activeSteps(s);\n    s.step=Math.max(0,Math.min(steps.length-1,s.step+delta)); s.phase="explain"; saveState(s);
+    const steps=activeSteps(s);
+    s.step=Math.max(0,Math.min(steps.length-1,s.step+delta)); s.phase="explain"; saveState(s);
     clearOverlay(); clearDemo();
     const next=stepAt(s.step,s);
     if(next.page!==page) location.href=routeForStep(s.step)+"?onboarding=1";
@@ -592,7 +595,8 @@
   window.addEventListener("docmap:ready",()=>{
     ensureStyles();
     if(firstTimeRedirect()) return;
-    addRestartButton();\n    addQuestionsHelpButton();
+    addRestartButton();
+    addQuestionsHelpButton();
     renderChallenges();
     trackChallenges();
     const s=status();
