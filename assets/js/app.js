@@ -378,14 +378,8 @@ function sidebarMarkup(user, profile = null) {
         </span><span>Configurações</span>
       </a>
 
-      <a
-        id="admin-nav-link"
-        class="nav-link ${page === "admin" ? "active" : ""}"
-        href="/admin/"
-        hidden
-      >
-        <span class="nav-icon">◆</span><span>Admin</span>
-      </a>
+      <!-- O item Admin é inserido via JavaScript somente após o RPC is_admin() confirmar o usuário. -->
+      <span id="admin-nav-slot"></span>
     </nav>
 
     <div class="sidebar-footer">
@@ -2562,12 +2556,12 @@ async function verificarAcessoAdmin() {
 async function prepararAdminNavigation(
   acessoAdmin = null
 ) {
-  const link =
+  const slot =
     document.getElementById(
-      "admin-nav-link"
+      "admin-nav-slot"
     );
 
-  if (!link) {
+  if (!slot) {
     return false;
   }
 
@@ -2576,10 +2570,33 @@ async function prepararAdminNavigation(
       ? acessoAdmin
       : await verificarAcessoAdmin();
 
-  link.hidden =
-    !isAdmin;
+  if (!isAdmin) {
+    slot.replaceChildren();
+    return false;
+  }
 
-  return isAdmin;
+  const link =
+    document.createElement(
+      "a"
+    );
+
+  link.id =
+    "admin-nav-link";
+
+  link.className =
+    `nav-link ${page === "admin" ? "active" : ""}`;
+
+  link.href =
+    "/admin/";
+
+  link.innerHTML =
+    '<span class="nav-icon">◆</span><span>Admin</span>';
+
+  slot.replaceWith(
+    link
+  );
+
+  return true;
 }
 
 
