@@ -892,13 +892,21 @@
 
     if(step.action==="questions-create"){
       ensureQuestionsAddMode();
+
+      if(step.title!=="Automático ou manual"){
+        simulateOnboardingFileSelection();
+      }
     }
 
     if(step.action==="questions-file"){
       ensureQuestionsAddMode();
 
       const fileLabel=document.querySelector('label[for="qs-file"]');
-      fileLabel?.classList.add("onboarding-demo-click");
+      if(fileLabel){
+        fileLabel.dataset.onboardingPointerLocked="1";
+        fileLabel.style.pointerEvents="none";
+        fileLabel.classList.add("onboarding-demo-click");
+      }
 
       setTimeout(()=>{
         fileLabel?.classList.remove("onboarding-demo-click");
@@ -921,6 +929,8 @@
       if(button){
         button.dataset.onboardingDemoExtract="1";
         button.disabled=false;
+        button.dataset.onboardingPointerLocked="1";
+        button.style.pointerEvents="none";
       }
 
       const status=document.getElementById("qs-import-status");
@@ -936,6 +946,13 @@
 
     if(step.action==="questions-reader"){
       renderExtractedQuestionsDemo(false);
+
+      const readerButton=document.getElementById("qs-open-answer-import");
+      if(readerButton){
+        readerButton.dataset.onboardingPointerLocked="1";
+        readerButton.style.pointerEvents="none";
+      }
+
       openOnboardingAnswerReader(false);
     }
 
@@ -952,6 +969,8 @@
       if(apply){
         apply.dataset.onboardingDemoApply="1";
         apply.disabled=false;
+        apply.dataset.onboardingPointerLocked="1";
+        apply.style.pointerEvents="none";
       }
     }
 
@@ -1015,6 +1034,11 @@
       applyAnswer.disabled=true;
       delete applyAnswer.dataset.onboardingDemoApply;
     }
+
+    document.querySelectorAll('[data-onboarding-pointer-locked="1"]').forEach(el=>{
+      el.style.removeProperty("pointer-events");
+      delete el.dataset.onboardingPointerLocked;
+    });
 
     const extractButton=document.getElementById("qs-import");
     if(extractButton) delete extractButton.dataset.onboardingDemoExtract;
