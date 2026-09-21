@@ -580,9 +580,35 @@
       setTimeout(addQuestionSetsDemo,500);
     }
     if(step.action==="questions-create"){
-      const btn=document.querySelector('[data-qs-mode="add"],[data-qs-mode="create"],[data-qs-tab="create"],[data-qs-mode="new"]'); btn?.click();
+      const btn=document.querySelector('[data-qs-mode="add"],[data-qs-mode="create"],[data-qs-tab="create"],[data-qs-mode="new"]');
+      btn?.click();
+
+      document
+        .querySelector('[data-qs-section="add"]')
+        ?.classList.add("active");
     }
-    if(step.action==="questions-answer"||step.action==="questions-key") addQuestionsDemo();
+
+    if(step.action==="questions-answer"||step.action==="questions-key"){
+      // A partir de "Automático ou manual", todo o passeio permanece visualmente
+      // dentro de "Adicionar simulado". O painel de gabarito é exibido apenas
+      // como uma continuação demonstrativa do fluxo, sem trocar para "Meus simulados".
+      document.querySelector('[data-qs-mode="add"]')?.click();
+      document
+        .querySelector('[data-qs-section="add"]')
+        ?.classList.add("active");
+
+      addQuestionsDemo();
+
+      const answerPanel=document.getElementById("qs-answer-panel");
+      if(answerPanel){
+        answerPanel.hidden=false;
+        answerPanel.classList.add("active");
+        answerPanel.dataset.onboardingForcedActive="1";
+      }
+
+      document.querySelector('[data-qs-mode="add"]')?.classList.add("active");
+      document.querySelector('[data-qs-mode="mine"]')?.classList.remove("active");
+    }
 
     if(step.action==="stats-tabs"){
       const tabs=[...document.querySelectorAll(".stats-tab")];
@@ -609,6 +635,12 @@
     document.querySelectorAll("#week-planner .empty-planner").forEach(el=>el.style.removeProperty("display"));
     const editor=document.querySelector("#notebook-editor[data-onboarding-touched]");
     if(editor){ editor.innerHTML=editor.dataset.onboardingOriginal||""; editor.removeAttribute("data-onboarding-original"); editor.removeAttribute("data-onboarding-touched"); }
+    const forcedAnswer=document.querySelector('[data-onboarding-forced-active="1"]');
+    if(forcedAnswer){
+      forcedAnswer.classList.remove("active");
+      forcedAnswer.removeAttribute("data-onboarding-forced-active");
+    }
+
     const qsCount=document.getElementById("qs-set-count");
     if(qsCount?.dataset.onboardingOriginalText !== undefined){
       qsCount.textContent=qsCount.dataset.onboardingOriginalText;
