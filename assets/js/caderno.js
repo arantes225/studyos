@@ -16369,10 +16369,42 @@ function wireEvents() {
         button
           ?.addEventListener(
             "click",
-            () =>
+            () => {
               execEditorCommand(
                 command
-              )
+              );
+
+              let isActive =
+                false;
+
+              try {
+                isActive =
+                  document.queryCommandState(
+                    command
+                  );
+              } catch (
+                error
+              ) {
+                isActive =
+                  button.classList.contains(
+                    "is-active"
+                  )
+                  ? false
+                  : true;
+              }
+
+              button.classList.toggle(
+                "is-active",
+                isActive
+              );
+
+              button.setAttribute(
+                "aria-pressed",
+                isActive
+                  ? "true"
+                  : "false"
+              );
+            }
           );
 
       }
