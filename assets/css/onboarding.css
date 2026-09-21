@@ -322,3 +322,9 @@ body.luria-onboarding-exploring #luria-onboarding-overlay::after{
     grid-template-columns:repeat(5,minmax(34px,1fr));
   }
 }
+
+.onboarding-demo-click{
+  transform:translateY(1px) scale(.98);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,#184888) 26%,transparent)!important;
+  transition:transform .16s ease,box-shadow .16s ease;
+}
