@@ -1715,6 +1715,10 @@ function clearNewErrorForm() {
   }
 
 
+  const areaLabel=document.getElementById("new-error-area-label");
+  if(areaLabel) areaLabel.textContent="Selecione a área";
+  updateNewErrorSubjectOptions();
+
   setNewErrorImageInfo(
     ""
   );
@@ -2167,111 +2171,56 @@ async function saveNewError() {
 }
 
 
-function wireNewErrorAreaPicker() {
-  const toggle =
-    document.getElementById(
-      "new-error-area-toggle"
-    );
+const ERROR_AREAS = ["Clínica Médica","Pediatria","Ginecologia e Obstetrícia","Cirurgia Geral","Preventiva"];
 
-  const menu =
-    document.getElementById(
-      "new-error-area-menu"
-    );
+const ERROR_SUBJECTS_BY_AREA = {
+  "Clínica Médica":["Cardiologia","Pneumologia","Gastroenterologia","Hepatologia","Nefrologia","Endocrinologia e Metabologia","Hematologia e Hemoterapia","Reumatologia","Infectologia","Neurologia","Dermatologia","Geriatria","Psiquiatria","Oncologia Clínica","Alergia e Imunologia","Medicina Intensiva","Urgência e Emergência","Toxicologia","Distúrbios hidroeletrolíticos e ácido-base","Nutrologia","Cuidados Paliativos"],
+  "Pediatria":["Neonatologia","Puericultura","Crescimento e Desenvolvimento","Aleitamento Materno","Nutrição Infantil","Imunizações","Infectologia Pediátrica","Pneumologia Pediátrica","Cardiologia Pediátrica","Gastroenterologia Pediátrica","Nefrologia Pediátrica","Endocrinologia Pediátrica","Neurologia Pediátrica","Hematologia Pediátrica","Oncologia Pediátrica","Emergências Pediátricas","Cirurgia Pediátrica","Diarreia e Desidratação","Desenvolvimento Neuropsicomotor"],
+  "Ginecologia e Obstetrícia":["Pré-natal de baixo risco","Pré-natal de alto risco","Medicina Fetal","Trabalho de Parto","Assistência ao Parto","Puerpério","Hemorragias da Gestação","Hemorragia Pós-parto","Síndromes Hipertensivas da Gestação","Diabetes na Gestação","Prematuridade","Rotura Prematura de Membranas","Infecções na Gestação","Contracepção","Planejamento Reprodutivo","Infertilidade e Reprodução Humana","Endocrinologia Ginecológica","Sangramento Uterino Anormal","Climatério e Menopausa","Dor Pélvica e Endometriose","Infecções Ginecológicas e IST","Uroginecologia","Oncologia Ginecológica","Patologia Mamária e Mastologia","Cirurgia Ginecológica"],
+  "Cirurgia Geral":["Princípios de Cirurgia","Pré-operatório e Risco Cirúrgico","Pós-operatório e Complicações","Choque e Reposição Volêmica","Nutrição em Cirurgia","Infecção e Antibioticoprofilaxia","Trauma","ATLS e Atendimento Inicial ao Politraumatizado","Trauma Cranioencefálico","Trauma Torácico","Trauma Abdominal","Trauma Pélvico","Queimaduras","Abdome Agudo","Abdome Agudo Inflamatório","Abdome Agudo Obstrutivo","Abdome Agudo Perfurativo","Abdome Agudo Hemorrágico","Abdome Agudo Vascular","Apendicite","Obstrução Intestinal","Perfuração de Víscera Oca","Hemorragia Digestiva","Doença do Refluxo e Esôfago","Cirurgia Gástrica","Cirurgia Bariátrica e Metabólica","Coloproctologia","Doença Diverticular","Doenças Anorretais","Fígado","Vias Biliares","Pâncreas","Baço","Hérnias e Parede Abdominal","Cirurgia Vascular","Cirurgia Torácica","Cirurgia de Cabeça e Pescoço","Urologia","Cirurgia Oncológica","Cirurgia Pediátrica","Cirurgia Plástica","Anestesiologia","Ortopedia e Traumatologia","Acessos, Drenos e Procedimentos","Transplantes"],
+  "Preventiva":["Epidemiologia","Bioestatística","Medicina Baseada em Evidências","SUS: Princípios e Diretrizes","Legislação do SUS","Leis 8.080 e 8.142","Atenção Primária à Saúde","Estratégia Saúde da Família","Medicina de Família e Comunidade","Promoção da Saúde","Prevenção e Rastreamento","Vigilância Epidemiológica","Vigilância Sanitária","Vigilância em Saúde Ambiental","Vigilância em Saúde do Trabalhador","Imunizações e Calendário Vacinal","Doenças de Notificação Compulsória","Indicadores de Saúde","Planejamento e Gestão em Saúde","Financiamento do SUS","Redes de Atenção à Saúde","Regulação em Saúde","Saúde Coletiva","Ética Médica","Bioética","Segurança do Paciente","Epidemiologia Clínica","Testes Diagnósticos","Estudos Observacionais","Ensaios Clínicos","Revisões Sistemáticas e Metanálises"]
+};
 
-  const input =
-    document.getElementById(
-      "new-error-area"
-    );
-
-  const label =
-    document.getElementById(
-      "new-error-area-label"
-    );
-
-  if (
-    !toggle
-    ||
-    !menu
-    ||
-    !input
-    ||
-    !label
-  ) {
-    return;
-  }
-
-  toggle.addEventListener(
-    "click",
-    event => {
-      event.stopPropagation();
-
-      const willOpen =
-        menu.hidden;
-
-      menu.hidden =
-        !willOpen;
-
-      toggle.setAttribute(
-        "aria-expanded",
-        willOpen
-          ? "true"
-          : "false"
-      );
-    }
-  );
-
-  menu
-    .querySelectorAll(
-      "[data-error-area-value]"
-    )
-    .forEach(
-      option => {
-        option.addEventListener(
-          "click",
-          event => {
-            event.stopPropagation();
-
-            input.value =
-              option.dataset
-                .errorAreaValue
-              || "";
-
-            label.textContent =
-              input.value
-              || "Selecione uma área";
-
-            menu.hidden =
-              true;
-
-            toggle.setAttribute(
-              "aria-expanded",
-              "false"
-            );
-          }
-        );
-      }
-    );
-
-  document.addEventListener(
-    "click",
-    event => {
-      if (
-        !event.target.closest(
-          ".error-area-picker"
-        )
-      ) {
-        menu.hidden =
-          true;
-
-        toggle.setAttribute(
-          "aria-expanded",
-          "false"
-        );
-      }
-    }
-  );
+function updateNewErrorSubjectOptions() {
+  const area=document.getElementById("new-error-area");
+  const input=document.getElementById("new-error-materia");
+  const toggle=document.getElementById("new-error-materia-toggle");
+  const label=document.getElementById("new-error-materia-label");
+  const menu=document.getElementById("new-error-materia-menu");
+  if(!area||!input||!toggle||!label||!menu)return;
+  menu.innerHTML="";
+  const subjects=ERROR_SUBJECTS_BY_AREA[area.value]||[];
+  input.value="";
+  label.textContent=subjects.length?"Selecione a matéria":"Selecione primeiro a área";
+  toggle.disabled=!subjects.length;
+  menu.hidden=true;
+  toggle.setAttribute("aria-expanded","false");
+  [...subjects,"Outra matéria"].forEach(subject=>{
+    const option=document.createElement("button");
+    option.type="button"; option.className="flash-subject-option"; option.textContent=subject;
+    option.addEventListener("click",event=>{event.stopPropagation();input.value=subject;label.textContent=subject;menu.hidden=true;toggle.setAttribute("aria-expanded","false");});
+    menu.appendChild(option);
+  });
 }
 
+function wireNewErrorAreaPicker() {
+  const input=document.getElementById("new-error-area"),toggle=document.getElementById("new-error-area-toggle"),label=document.getElementById("new-error-area-label"),menu=document.getElementById("new-error-area-menu");
+  const subjectToggle=document.getElementById("new-error-materia-toggle"),subjectMenu=document.getElementById("new-error-materia-menu");
+  if(!input||!toggle||!label||!menu)return;
+  menu.innerHTML="";
+  ERROR_AREAS.forEach(area=>{
+    const option=document.createElement("button"); option.type="button"; option.className="flash-area-option"; option.textContent=area;
+    option.addEventListener("click",event=>{event.stopPropagation();input.value=area;label.textContent=area;menu.hidden=true;toggle.setAttribute("aria-expanded","false");updateNewErrorSubjectOptions();});
+    menu.appendChild(option);
+  });
+  toggle.addEventListener("click",event=>{event.stopPropagation();const open=menu.hidden;menu.hidden=!open;toggle.setAttribute("aria-expanded",open?"true":"false");});
+  subjectToggle?.addEventListener("click",event=>{event.stopPropagation();if(subjectToggle.disabled||!subjectMenu)return;const open=subjectMenu.hidden;subjectMenu.hidden=!open;subjectToggle.setAttribute("aria-expanded",open?"true":"false");});
+  document.addEventListener("click",event=>{
+    if(!event.target.closest(".flash-area-picker")){menu.hidden=true;toggle.setAttribute("aria-expanded","false");}
+    if(subjectMenu&&!event.target.closest(".flash-subject-picker")){subjectMenu.hidden=true;subjectToggle?.setAttribute("aria-expanded","false");}
+  });
+  updateNewErrorSubjectOptions();
+}
 
 function wireNewError() {
   wireNewErrorAreaPicker();
