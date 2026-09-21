@@ -4201,8 +4201,7 @@ async function applyBaseSchedule() {
       .join(", ");
 
 
-  const confirmed =
-    window.confirm(
+  const confirmed = await window.LuriaDialog.confirm(
       `Adicionar ${distributed.length} aula${distributed.length === 1 ? "" : "s"} do cronograma genérico de ${modeLabel}?\n\nDias de aula: ${studyDaysLabel}\nData limite: ${formatDateLabelSchedule(endValue)}`
     );
 
@@ -4819,7 +4818,7 @@ async function returnSelectedThemesToDeck() {
       );
 
   if (!eligible.length) {
-    window.alert(
+    window.LuriaDialog.alert(
       "Nenhuma das aulas selecionadas pode ser removida para o deck."
     );
 
@@ -4829,8 +4828,7 @@ async function returnSelectedThemesToDeck() {
   }
 
 
-  const confirmed =
-    window.confirm(
+  const confirmed = await window.LuriaDialog.confirm(
       `Remover ${eligible.length} aula${eligible.length === 1 ? "" : "s"} selecionada${eligible.length === 1 ? "" : "s"} das datas atuais e enviar para o Deck não programado?`
     );
 
@@ -4880,7 +4878,7 @@ async function returnSelectedThemesToDeck() {
       error
     );
 
-    window.alert(
+    window.LuriaDialog.alert(
       `Não foi possível remover as aulas para o deck: ${error.message}`
     );
 
@@ -4912,11 +4910,11 @@ async function markSelectedThemesAlreadyDone() {
   const withDate = selectedTopics.filter((topic) => Boolean(topic.scheduled_date));
 
   if (!withDate.length) {
-    window.alert("As aulas selecionadas estão no deck e não possuem data no cronograma.");
+    window.LuriaDialog.alert("As aulas selecionadas estão no deck e não possuem data no cronograma.");
     return;
   }
 
-  const confirmed = window.confirm(`Marcar ${withDate.length} aula${withDate.length === 1 ? "" : "s"} como já feita${withDate.length === 1 ? "" : "s"} usando exatamente as datas em que estão agendadas no cronograma?`);
+  const confirmed = await window.LuriaDialog.confirm(`Marcar ${withDate.length} aula${withDate.length === 1 ? "" : "s"} como já feita${withDate.length === 1 ? "" : "s"} usando exatamente as datas em que estão agendadas no cronograma?`);
   if (!confirmed) return;
 
   const button = document.getElementById("theme-done-selected");
@@ -4930,11 +4928,11 @@ async function markSelectedThemesAlreadyDone() {
     const skipped = Number(data?.skipped || 0);
     scheduleState.selectedThemeIds.clear();
     closeThemeBulkMenu();
-    window.alert(`${marked} aula${marked === 1 ? "" : "s"} marcada${marked === 1 ? "" : "s"} como já feita${marked === 1 ? "" : "s"}.${skipped ? ` ${skipped} selecionada${skipped === 1 ? "" : "s"} não tinham data ou já estavam concluídas.` : ""}`);
+    window.LuriaDialog.alert(`${marked} aula${marked === 1 ? "" : "s"} marcada${marked === 1 ? "" : "s"} como já feita${marked === 1 ? "" : "s"}.${skipped ? ` ${skipped} selecionada${skipped === 1 ? "" : "s"} não tinham data ou já estavam concluídas.` : ""}`);
     await loadTopics();
   } catch (error) {
     console.error(error);
-    window.alert(`Não foi possível marcar as aulas: ${error.message}`);
+    window.LuriaDialog.alert(`Não foi possível marcar as aulas: ${error.message}`);
   } finally {
     if (button) button.disabled = false;
   }
@@ -4953,8 +4951,7 @@ async function deleteSelectedThemes() {
   }
 
 
-  const confirmed =
-    window.confirm(
+  const confirmed = await window.LuriaDialog.confirm(
       `Excluir ${ids.length} aula${ids.length === 1 ? "" : "s"} permanentemente do cronograma?`
     );
 
@@ -5002,7 +4999,7 @@ async function deleteSelectedThemes() {
     );
 
 
-    window.alert(
+    window.LuriaDialog.alert(
       `Não foi possível excluir as aulas selecionadas: ${error.message}`
     );
 
@@ -5243,8 +5240,7 @@ function renderThemeLibrary() {
           }
 
 
-          const confirmed =
-            window.confirm(
+          const confirmed = await window.LuriaDialog.confirm(
               `Remover "${topic.theme}" da data atual e enviar para o Deck não programado?`
             );
 
@@ -6016,7 +6012,7 @@ function wireDynamicInteractions() {
       const date = input?.value;
 
       if (!date) {
-        alert("Escolha uma data.");
+        window.LuriaDialog.alert("Escolha uma data.");
         return;
       }
 
@@ -6041,7 +6037,7 @@ function wireDynamicInteractions() {
 
       if (!topic) return;
 
-      const confirmed = window.confirm(
+      const confirmed = await window.LuriaDialog.confirm(
         `Remover "${topic.theme}" desta data e enviar para o Deck não programado?`
       );
 
@@ -6132,7 +6128,7 @@ async function scheduleTopic(topicId, date) {
 
   if (error) {
     console.error(error);
-    alert(`Não foi possível agendar: ${error.message}`);
+    window.LuriaDialog.alert(`Não foi possível agendar: ${error.message}`);
     return;
   }
 
@@ -6154,7 +6150,7 @@ async function returnTopicToDeck(topicId) {
 
   if (error) {
     console.error(error);
-    alert(`Não foi possível devolver ao deck: ${error.message}`);
+    window.LuriaDialog.alert(`Não foi possível devolver ao deck: ${error.message}`);
     return;
   }
 
@@ -6166,7 +6162,7 @@ async function completeTopic(topicId) {
 
   if (!topic) return;
 
-  const confirmed = window.confirm(
+  const confirmed = await window.LuriaDialog.confirm(
     `Concluir "${topic.theme}"? As revisões da matéria serão distribuídas automaticamente.`
   );
 
@@ -6178,7 +6174,7 @@ async function completeTopic(topicId) {
 
   if (error) {
     console.error(error);
-    alert(`Não foi possível concluir: ${error.message}`);
+    window.LuriaDialog.alert(`Não foi possível concluir: ${error.message}`);
     return;
   }
 
@@ -6233,11 +6229,11 @@ async function submitAlreadyDone(event) {
 
   if (error) {
     console.error(error);
-    alert(`Não foi possível marcar como já feita: ${error.message}`);
+    window.LuriaDialog.alert(`Não foi possível marcar como já feita: ${error.message}`);
     return;
   }
 
-  alert(
+  window.LuriaDialog.alert(
     `"${topic?.theme || "Aula"}" foi marcada como já feita. As revisões foram distribuídas na agenda.`
   );
 
@@ -6249,7 +6245,7 @@ async function deleteTopic(topicId) {
 
   if (!topic) return;
 
-  const confirmed = window.confirm(
+  const confirmed = await window.LuriaDialog.confirm(
     `Excluir "${topic.theme}" do cronograma?`
   );
 
@@ -6262,7 +6258,7 @@ async function deleteTopic(topicId) {
 
   if (error) {
     console.error(error);
-    alert(`Não foi possível excluir: ${error.message}`);
+    window.LuriaDialog.alert(`Não foi possível excluir: ${error.message}`);
     return;
   }
 
@@ -6286,8 +6282,7 @@ async function deleteScheduleEvent(
   }
 
 
-  const confirmed =
-    window.confirm(
+  const confirmed = await window.LuriaDialog.confirm(
       `Excluir "${event.title}" do cronograma?`
     );
 
@@ -6316,7 +6311,7 @@ async function deleteScheduleEvent(
       error
     );
 
-    alert(
+    window.LuriaDialog.alert(
       `Não foi possível excluir: ${error.message}`
     );
 
@@ -6645,8 +6640,7 @@ async function reorganizeAdvancedLessons() {
     return;
   }
 
-  const confirmed =
-    window.confirm(
+  const confirmed = await window.LuriaDialog.confirm(
       "Adiantar o cronograma agora? O LURIA compactará as aulas futuras para frente, usando no máximo 3 dias de aula por semana e respeitando o máximo diário configurado."
     );
 
