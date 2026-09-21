@@ -1710,6 +1710,9 @@ function sanitizeHtml(
       let keepImageAlt =
         "";
 
+      let keepImageAssetId =
+        "";
+
       if (
         child.tagName ===
         "SPAN"
@@ -1996,7 +1999,7 @@ function sanitizeHtml(
               src
             );
 
-        const assetId =
+        keepImageAssetId =
           String(
             child.getAttribute(
               "data-luria-asset-id"
@@ -2096,13 +2099,13 @@ function sanitizeHtml(
         if (
           child.tagName === "IMG"
           &&
-          typeof assetId !== "undefined"
-          &&
-          /^[0-9a-f-]{36}$/i.test(assetId)
+          /^[0-9a-f-]{36}$/i.test(
+            keepImageAssetId
+          )
         ) {
           child.setAttribute(
             "data-luria-asset-id",
-            assetId
+            keepImageAssetId
           );
         }
       }
