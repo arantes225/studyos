@@ -16144,8 +16144,12 @@ function wireEvents() {
         );
 
 
-        event.target.value =
-          "p";
+        event.target.title =
+          event.target
+            .selectedOptions?.[0]
+            ?.textContent
+            ?.trim()
+          || "Estilo do texto";
 
       }
     );
@@ -16195,10 +16199,57 @@ function wireEvents() {
         button.addEventListener(
           "click",
           () => {
-            applyNotebookAlignment(
+            const alignment =
               button.dataset
-                .align
+                .align;
+
+            applyNotebookAlignment(
+              alignment
             );
+
+            const icon =
+              document.getElementById(
+                "notebook-align-current-icon"
+              );
+
+            const glyphs = {
+              left:
+                "☰",
+              center:
+                "≡",
+              right:
+                "☷",
+              justify:
+                "▤"
+            };
+
+            if (icon) {
+              icon.textContent =
+                glyphs[alignment]
+                || "☰";
+            }
+
+            const toggle =
+              document.getElementById(
+                "notebook-align-toggle"
+              );
+
+            if (toggle) {
+              const labels = {
+                left:
+                  "Alinhar à esquerda",
+                center:
+                  "Centralizar",
+                right:
+                  "Alinhar à direita",
+                justify:
+                  "Justificar"
+              };
+
+              toggle.title =
+                labels[alignment]
+                || "Alinhamento";
+            }
 
             closeNotebookToolMenus();
           }
@@ -16208,25 +16259,71 @@ function wireEvents() {
 
 
   document
-    .getElementById(
-      "notebook-line-spacing"
+    .querySelectorAll(
+      "[data-line-spacing]"
     )
-    ?.addEventListener(
-      "change",
-      event => {
-        const spacing =
-          event.target.value;
+    .forEach(
+      button => {
+        button.addEventListener(
+          "mousedown",
+          event =>
+            event.preventDefault()
+        );
 
+        button.addEventListener(
+          "click",
+          () => {
+            const spacing =
+              button.dataset
+                .lineSpacing;
 
-        if (spacing) {
-          applyNotebookLineSpacing(
-            spacing
-          );
-        }
+            if (!spacing) {
+              return;
+            }
 
+            applyNotebookLineSpacing(
+              spacing
+            );
 
-        event.target.value =
-          "";
+            const current =
+              document.getElementById(
+                "notebook-spacing-current"
+              );
+
+            if (current) {
+              const labels = {
+                "1":
+                  "1,0",
+                "1.15":
+                  "1,15",
+                "1.5":
+                  "1,5",
+                "2":
+                  "2,0"
+              };
+
+              current.textContent =
+                labels[spacing]
+                || spacing;
+
+              current.classList.add(
+                "is-value"
+              );
+            }
+
+            const toggle =
+              document.getElementById(
+                "notebook-line-spacing"
+              );
+
+            if (toggle) {
+              toggle.title =
+                `Espaçamento ${spacing.replace(".", ",")}`;
+            }
+
+            closeNotebookToolMenus();
+          }
+        );
       }
     );
 
@@ -16322,7 +16419,9 @@ function wireEvents() {
     align:
       "notebook-align-toggle",
     callout:
-      "notebook-callout-toggle"
+      "notebook-callout-toggle",
+    spacing:
+      "notebook-line-spacing"
   };
 
   Object
