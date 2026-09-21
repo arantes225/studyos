@@ -12984,6 +12984,31 @@ function closeEmojiMenu() {
    MENUS COMPACTOS DA BARRA
    ========================================================= */
 
+function notebookToolToggleId(
+  name
+) {
+  return {
+    list:
+      "notebook-list-toggle",
+    template:
+      "notebook-template",
+    divider:
+      "notebook-divider",
+    table:
+      "notebook-table-toggle",
+    image:
+      "notebook-image-add",
+    align:
+      "notebook-align-toggle",
+    callout:
+      "notebook-callout-toggle"
+  }[
+    name
+  ]
+  || `notebook-${name}-toggle`;
+}
+
+
 function closeNotebookToolMenus(
   except = null
 ) {
@@ -13004,26 +13029,28 @@ function closeNotebookToolMenus(
           return;
         }
 
+
         const menu =
           document.getElementById(
             `notebook-${name}-menu`
           );
 
+
         const toggle =
           document.getElementById(
-            `notebook-${name}-toggle`
+            notebookToolToggleId(
+              name
+            )
           );
 
-        if (
-          menu
-        ) {
+
+        if (menu) {
           menu.hidden =
             true;
         }
 
-        if (
-          toggle
-        ) {
+
+        if (toggle) {
           toggle.setAttribute(
             "aria-expanded",
             "false"
@@ -13042,10 +13069,14 @@ function toggleNotebookToolMenu(
       `notebook-${name}-menu`
     );
 
+
   const toggle =
     document.getElementById(
-      `notebook-${name}-toggle`
+      notebookToolToggleId(
+        name
+      )
     );
+
 
   if (
     !menu
@@ -13055,8 +13086,10 @@ function toggleNotebookToolMenu(
     return;
   }
 
+
   const opening =
     menu.hidden;
+
 
   closeNotebookToolMenus(
     opening
@@ -13064,10 +13097,13 @@ function toggleNotebookToolMenu(
       : null
   );
 
+
   closeEmojiMenu();
+
 
   menu.hidden =
     !opening;
+
 
   toggle.setAttribute(
     "aria-expanded",
