@@ -2868,3 +2868,17 @@
     font-size: 7px !important;
   }
 }
+
+@media (max-width:760px){
+  .pwa-standalone body[data-page="amigos"] .studyrats-lane{
+    grid-template-columns:102px minmax(0,1fr) !important;
+    gap:0 !important;
+  }
+  .pwa-standalone body[data-page="amigos"] .studyrats-lanes::before{
+    left:102px !important;
+  }
+  .pwa-standalone body[data-page="amigos"] .studyrats-runner-card{
+    border-radius:7px 0 0 7px !important;
+    padding-right:7px !important;
+  }
+}
