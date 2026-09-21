@@ -17385,6 +17385,21 @@ function wireEvents() {
       "notebook-line-spacing"
   };
 
+  // iOS/PWA: preserve a seleção antes de qualquer toque na toolbar.
+  // Sem isso o WebKit move o foco para o botão e comandos parecem não responder.
+  document
+    .querySelector(".notebook-toolbar")
+    ?.addEventListener(
+      "touchstart",
+      () => {
+        saveSelection();
+      },
+      {
+        passive: true
+      }
+    );
+
+
   Object
     .entries(
       notebookToolMenuToggles
@@ -17403,9 +17418,16 @@ function wireEvents() {
 
         toggle
           ?.addEventListener(
-            "mousedown",
-            (event) =>
-              event.preventDefault()
+            "pointerdown",
+            (event) => {
+              saveSelection();
+
+              if (
+                event.pointerType === "mouse"
+              ) {
+                event.preventDefault();
+              }
+            }
           );
 
         toggle
