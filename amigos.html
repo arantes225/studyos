@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" href="assets/img/favicon.png">
   <link rel="stylesheet" href="assets/css/style.css?v=16.2">
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=10">
-  <link rel="stylesheet" href="assets/css/amigos.css?v=2">
+  <link rel="stylesheet" href="assets/css/amigos.css?v=3">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=10">
   <script defer src="assets/js/luria-brand-v5.js?v=10"></script>
   <link rel="canonical" href="/amigos/">
@@ -55,6 +55,55 @@
             <div id="friends-inbox" class="friends-inbox"></div>
           </section>
         </div>
+
+        <section class="studyrats-card" aria-labelledby="studyrats-title">
+          <div class="studyrats-head">
+            <div>
+              <span class="studyrats-kicker">DESAFIOS ENTRE AMIGOS</span>
+              <h2 id="studyrats-title">Studyrats</h2>
+              <p>Crie uma corrida de estudo e veja quem chega mais longe até a data limite.</p>
+            </div>
+            <button id="studyrats-toggle-create" class="button primary" type="button">Novo desafio</button>
+          </div>
+
+          <div id="studyrats-create" class="studyrats-create" hidden>
+            <div class="studyrats-fields">
+              <label>
+                <span>Tipo de desafio</span>
+                <select id="studyrats-type">
+                  <option value="flashcards">Mais flashcards</option>
+                  <option value="study_days">Mais dias de estudo</option>
+                  <option value="retention">Maior retenção</option>
+                  <option value="classes">Mais aulas vistas</option>
+                  <option value="ccqs">Mais CCQs respondidos</option>
+                </select>
+              </label>
+              <label>
+                <span>Meta</span>
+                <input id="studyrats-goal" type="number" min="1" step="1" value="100">
+              </label>
+              <label>
+                <span>Data limite</span>
+                <input id="studyrats-deadline" type="date">
+              </label>
+            </div>
+
+            <div class="studyrats-people-block">
+              <div class="studyrats-section-title">
+                <strong>Participantes</strong>
+                <small>Você já entra automaticamente.</small>
+              </div>
+              <div id="studyrats-friends" class="studyrats-friends"></div>
+            </div>
+
+            <div class="studyrats-create-actions">
+              <button id="studyrats-cancel" class="button secondary" type="button">Cancelar</button>
+              <button id="studyrats-start" class="button primary" type="button">Iniciar desafio</button>
+            </div>
+          </div>
+
+          <div id="studyrats-list" class="studyrats-list"></div>
+        </section>
       </div>
     </main>
   </div>
@@ -62,7 +111,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=15.5"></script>
-  <script src="assets/js/amigos.js?v=7"></script>
+  <script src="assets/js/amigos.js?v=8"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
 </html>
