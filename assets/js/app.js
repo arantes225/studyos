@@ -2069,6 +2069,466 @@ function prepararMobileMenu() {
 
 
 /* =========================================================
+   LURIA — CALENDÁRIO GLOBAL
+   ========================================================= */
+
+function ensureLuriaCalendar() {
+  let popover =
+    document.getElementById(
+      "luria-calendar"
+    );
+
+  if (popover) return popover;
+
+  popover =
+    document.createElement(
+      "div"
+    );
+
+  popover.id =
+    "luria-calendar";
+
+  popover.className =
+    "luria-calendar";
+
+  popover.hidden =
+    true;
+
+  popover.innerHTML = `
+    <div class="luria-calendar-head">
+      <button type="button" data-cal-prev aria-label="Mês anterior">‹</button>
+      <strong data-cal-title></strong>
+      <button type="button" data-cal-next aria-label="Próximo mês">›</button>
+    </div>
+    <div class="luria-calendar-weekdays">
+      <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+    </div>
+    <div class="luria-calendar-days" data-cal-days></div>
+    <div class="luria-calendar-foot">
+      <button type="button" data-cal-today>Hoje</button>
+      <button type="button" data-cal-clear>Limpar</button>
+    </div>
+  `;
+
+  document.body.appendChild(
+    popover
+  );
+
+  return popover;
+}
+
+
+function parseLuriaDate(
+  value
+) {
+  const match =
+    String(
+      value
+      || ""
+    )
+      .match(
+        /^(\d{4})-(\d{2})-(\d{2})$/
+      );
+
+  if (!match) return null;
+
+  return new Date(
+    Number(match[1]),
+    Number(match[2]) - 1,
+    Number(match[3])
+  );
+}
+
+
+function luriaDateIso(
+  date
+) {
+  const y =
+    date.getFullYear();
+
+  const m =
+    String(
+      date.getMonth() + 1
+    )
+      .padStart(
+        2,
+        "0"
+      );
+
+  const d =
+    String(
+      date.getDate()
+    )
+      .padStart(
+        2,
+        "0"
+      );
+
+  return `${y}-${m}-${d}`;
+}
+
+
+function openLuriaCalendar(
+  input
+) {
+  if (
+    !input
+    ||
+    input.disabled
+    ||
+    input.readOnly
+  ) {
+    return;
+  }
+
+  const popover =
+    ensureLuriaCalendar();
+
+  const selected =
+    parseLuriaDate(
+      input.value
+    );
+
+  let cursor =
+    selected
+      ? new Date(
+          selected.getFullYear(),
+          selected.getMonth(),
+          1
+        )
+      : new Date();
+
+  cursor.setDate(
+    1
+  );
+
+  function close() {
+    popover.hidden =
+      true;
+
+    document.removeEventListener(
+      "pointerdown",
+      outside,
+      true
+    );
+  }
+
+  function choose(
+    date
+  ) {
+    input.value =
+      luriaDateIso(
+        date
+      );
+
+    input.dispatchEvent(
+      new Event(
+        "input",
+        {
+          bubbles:
+            true
+        }
+      )
+    );
+
+    input.dispatchEvent(
+      new Event(
+        "change",
+        {
+          bubbles:
+            true
+        }
+      )
+    );
+
+    close();
+  }
+
+  function render() {
+    const title =
+      popover.querySelector(
+        "[data-cal-title]"
+      );
+
+    title.textContent =
+      cursor.toLocaleDateString(
+        "pt-BR",
+        {
+          month:
+            "long",
+          year:
+            "numeric"
+        }
+      );
+
+    const days =
+      popover.querySelector(
+        "[data-cal-days]"
+      );
+
+    days.innerHTML =
+      "";
+
+    const first =
+      new Date(
+        cursor.getFullYear(),
+        cursor.getMonth(),
+        1
+      );
+
+    const last =
+      new Date(
+        cursor.getFullYear(),
+        cursor.getMonth() + 1,
+        0
+      );
+
+    const today =
+      new Date();
+
+    const currentSelected =
+      parseLuriaDate(
+        input.value
+      );
+
+    for (
+      let i = 0;
+      i < first.getDay();
+      i += 1
+    ) {
+      const spacer =
+        document.createElement(
+          "span"
+        );
+
+      spacer.className =
+        "luria-calendar-spacer";
+
+      days.appendChild(
+        spacer
+      );
+    }
+
+    for (
+      let day = 1;
+      day <= last.getDate();
+      day += 1
+    ) {
+      const date =
+        new Date(
+          cursor.getFullYear(),
+          cursor.getMonth(),
+          day
+        );
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+      button.type =
+        "button";
+
+      button.textContent =
+        String(
+          day
+        );
+
+      if (
+        luriaDateIso(date) ===
+        luriaDateIso(today)
+      ) {
+        button.classList.add(
+          "is-today"
+        );
+      }
+
+      if (
+        currentSelected
+        &&
+        luriaDateIso(date) ===
+          luriaDateIso(currentSelected)
+      ) {
+        button.classList.add(
+          "is-selected"
+        );
+      }
+
+      button.onclick =
+        () => choose(
+          date
+        );
+
+      days.appendChild(
+        button
+      );
+    }
+  }
+
+  function outside(
+    event
+  ) {
+    if (
+      event.target === input
+      ||
+      popover.contains(
+        event.target
+      )
+    ) {
+      return;
+    }
+
+    close();
+  }
+
+  popover
+    .querySelector(
+      "[data-cal-prev]"
+    )
+    .onclick =
+      () => {
+        cursor.setMonth(
+          cursor.getMonth() - 1
+        );
+
+        render();
+      };
+
+  popover
+    .querySelector(
+      "[data-cal-next]"
+    )
+    .onclick =
+      () => {
+        cursor.setMonth(
+          cursor.getMonth() + 1
+        );
+
+        render();
+      };
+
+  popover
+    .querySelector(
+      "[data-cal-today]"
+    )
+    .onclick =
+      () => choose(
+        new Date()
+      );
+
+  popover
+    .querySelector(
+      "[data-cal-clear]"
+    )
+    .onclick =
+      () => {
+        if (input.required) {
+          close();
+          return;
+        }
+
+        input.value =
+          "";
+
+        input.dispatchEvent(
+          new Event(
+            "change",
+            {
+              bubbles:
+                true
+            }
+          )
+        );
+
+        close();
+      };
+
+  render();
+
+  popover.hidden =
+    false;
+
+  const rect =
+    input.getBoundingClientRect();
+
+  const width =
+    Math.min(
+      330,
+      window.innerWidth - 24
+    );
+
+  let left =
+    Math.min(
+      Math.max(
+        12,
+        rect.left
+      ),
+      window.innerWidth - width - 12
+    );
+
+  let top =
+    rect.bottom + 7;
+
+  if (
+    top + 390 >
+    window.innerHeight
+  ) {
+    top =
+      Math.max(
+        12,
+        rect.top - 370
+      );
+  }
+
+  popover.style.width =
+    `${width}px`;
+
+  popover.style.left =
+    `${left}px`;
+
+  popover.style.top =
+    `${top}px`;
+
+  setTimeout(
+    () => document.addEventListener(
+      "pointerdown",
+      outside,
+      true
+    ),
+    0
+  );
+}
+
+
+function wireLuriaDateInputs() {
+  document.addEventListener(
+    "click",
+    event => {
+      const input =
+        event.target.closest?.(
+          'input[type="date"]'
+        );
+
+      if (!input) return;
+
+      event.preventDefault();
+
+      try {
+        input.blur();
+      } catch {}
+
+      openLuriaCalendar(
+        input
+      );
+    }
+  );
+}
+
+
+wireLuriaDateInputs();
+
+
+/* =========================================================
    LURIA — DIÁLOGOS GLOBAIS
    Substitui alert/confirm/prompt nativos por uma interface
    consistente em todas as páginas que carregam app.js.
