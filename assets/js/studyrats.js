@@ -1,19 +1,90 @@
 let sharedStudyratsRows=[];
 let sharedStudyratsChannel=null;
 let sharedStudyratsTimer=null;
+let sharedStudyratsMyVariant='brown';
 
 const sharedStudyratLaneColors=['#2f80ed','#36a96c','#f2994a','#8b5cf6','#eb5757','#24a0b5'];
+const sharedStudyratVariants=[
+  {id:'brown',label:'Marrom',src:'/assets/img/studyrats/rat-brown.png?v=8'},
+  {id:'gray',label:'Cinza',src:'/assets/img/studyrats/rat-gray.png?v=8'},
+  {id:'white',label:'Branco',src:'/assets/img/studyrats/rat-white.png?v=8'},
+  {id:'black',label:'Preto',src:'/assets/img/studyrats/rat-black.png?v=8'},
+  {id:'blue',label:'Azul',src:'/assets/img/studyrats/rat-blue.png?v=8'},
+  {id:'manchado',label:'Manchado',src:'/assets/img/studyrats/rat-manchado.png?v=8'}
+];
 
-function sharedRatImg(index,className){
-  const variants=[
-    '/assets/img/studyrats/rat-brown.svg?v=1',
-    '/assets/img/studyrats/rat-gray.svg?v=1',
-    '/assets/img/studyrats/rat-white.svg?v=1',
-    '/assets/img/studyrats/rat-charcoal.svg?v=1'
-  ];
-  const i=((Number(index)||0)%variants.length+variants.length)%variants.length;
-  const cls=(className||'studyrats-rat-img')+' rat-'+i;
-  return '<img class="'+cls+'" src="'+variants[i]+'" alt="" aria-hidden="true" draggable="false">';
+function sharedStudyratVariant(value){
+  if(typeof value==='number'){
+    const i=((value%sharedStudyratVariants.length)+sharedStudyratVariants.length)%sharedStudyratVariants.length;
+    return sharedStudyratVariants[i];
+  }
+  return sharedStudyratVariants.find(function(item){return item.id===value;})||sharedStudyratVariants[0];
+}
+
+function sharedRatImg(variant,className){
+  const item=sharedStudyratVariant(variant);
+  const cls=(className||'studyrats-rat-img')+' rat-'+item.id;
+  return '<img class="'+cls+'" src="'+item.src+'" alt="'+item.label+'" draggable="false" loading="eager" decoding="async">';
+}
+
+function sharedStudyratsRenderRatPicker(){
+  const host=document.getElementById('studyrats-rat-picker-options');
+  if(!host)return;
+  host.innerHTML=sharedStudyratVariants.map(function(item){
+    const selected=item.id===sharedStudyratsMyVariant;
+    return '<button type="button" class="studyrats-rat-choice '+(selected?'is-selected':'')+'" data-studyrat-variant="'+item.id+'" aria-pressed="'+(selected?'true':'false')+'" title="'+item.label+'">'+
+      sharedRatImg(item.id,'studyrats-rat-choice-img')+
+      '<span>'+item.label+'</span>'+
+      '<i aria-hidden="true">✓</i>'+
+    '</button>';
+  }).join('');
+
+  host.querySelectorAll('[data-studyrat-variant]').forEach(function(button){
+    button.addEventListener('click',function(){
+      sharedStudyratsSaveVariant(button.dataset.studyratVariant);
+    });
+  });
+}
+
+async function sharedStudyratsLoadMyVariant(){
+  if(!window.supabaseClient||!window.docmapUser)return;
+  const result=await window.supabaseClient
+    .from('profiles')
+    .select('studyrat_variant')
+    .eq('user_id',window.docmapUser.id)
+    .maybeSingle();
+
+  if(!result.error&&result.data?.studyrat_variant){
+    sharedStudyratsMyVariant=sharedStudyratVariant(result.data.studyrat_variant).id;
+  }
+  sharedStudyratsRenderRatPicker();
+}
+
+async function sharedStudyratsSaveVariant(variant){
+  const next=sharedStudyratVariant(variant).id;
+  if(next===sharedStudyratsMyVariant)return;
+
+  const previous=sharedStudyratsMyVariant;
+  sharedStudyratsMyVariant=next;
+  sharedStudyratsRenderRatPicker();
+
+  const status=document.getElementById('studyrats-rat-picker-status');
+  if(status)status.textContent='Salvando...';
+
+  const result=await window.supabaseClient.rpc('set_studyrat_variant',{p_variant:next});
+  if(result.error){
+    console.error(result.error);
+    sharedStudyratsMyVariant=previous;
+    sharedStudyratsRenderRatPicker();
+    if(status)status.textContent='Não foi possível salvar o ratinho.';
+    return;
+  }
+
+  if(status){
+    status.textContent='Ratinho selecionado.';
+    setTimeout(function(){if(status.textContent==='Ratinho selecionado.')status.textContent='';},1800);
+  }
+  await sharedStudyratsLoad();
 }
 function sharedStudyratsInitials(name){
   return String(name||'L').trim().split(/\s+/).slice(0,2).map(function(part){return part.charAt(0).toUpperCase();}).join('')||'L';
@@ -36,6 +107,7 @@ function sharedStudyratsGroup(rows){
     map.get(row.challenge_id).participants.push({
       id:row.participant_user_id,
       name:row.participant_name||'Usuário LURIA',
+      variant:sharedStudyratVariant(row.studyrat_variant||'brown').id,
       value:Number(row.progress)||0
     });
   });
@@ -80,7 +152,7 @@ function sharedStudyratsRender(){
   const challenges=sharedStudyratsGroup(sharedStudyratsRows);
 
   if(!challenges.length){
-    host.innerHTML='<div class="studyrats-empty"><div>'+sharedRatImg(0,'studyrats-empty-rat')+'<strong>Nenhuma corrida ativa</strong><span>Crie um desafio com seus amigos e acompanhe os ratinhos avançando até a chegada.</span></div></div>';
+    host.innerHTML='<div class="studyrats-empty"><div>'+sharedRatImg(sharedStudyratsMyVariant,'studyrats-empty-rat')+'<strong>Nenhuma corrida ativa</strong><span>Crie um desafio com seus amigos e acompanhe os ratinhos avançando até a chegada.</span></div></div>';
     return;
   }
 
@@ -107,7 +179,7 @@ function sharedStudyratsRender(){
         '<div class="studyrats-road">'+
           '<span class="studyrats-road-dash"></span>'+
           '<span class="studyrats-progress-fill" style="width:'+pct+'%"></span>'+
-          '<span class="studyrats-mouse" style="left:'+pct+'%">'+sharedRatImg(index)+'</span>'+
+          '<span class="studyrats-mouse" style="left:'+pct+'%">'+sharedRatImg(p.variant)+'</span>'+
           '<span class="studyrats-track-score" style="left:min(calc('+pct+'% + 40px),calc(100% - 62px))">'+fEsc(score)+' '+fEsc(type.unit)+'</span>'+
         '</div>'+
       '</div>';
@@ -119,7 +191,7 @@ function sharedStudyratsRender(){
     return '<article class="studyrats-challenge">'+
       '<div class="studyrats-challenge-head">'+
         '<div class="studyrats-challenge-title">'+
-          '<span class="studyrats-race-badge">'+sharedRatImg(0,'studyrats-badge-rat')+'</span>'+
+          '<span class="studyrats-race-badge">'+sharedRatImg(sharedStudyratsMyVariant,'studyrats-badge-rat')+'</span>'+
           '<span><strong>'+fEsc(type.title)+'</strong><small>'+(finished?'Desafio encerrado':'Quem estiver na frente na data limite vence.')+'</small></span>'+
         '</div>'+
         (canDelete?'<button class="studyrats-delete" type="button" aria-label="Apagar desafio" data-delete-studyrat="'+fEsc(ch.id)+'">×</button>':'')+
@@ -199,6 +271,8 @@ window.initSharedStudyrats=function(){
   document.getElementById('studyrats-start')?.addEventListener('click',sharedStudyratsStart);
 
   renderStudyratsFriendOptions();
+  sharedStudyratsRenderRatPicker();
+  sharedStudyratsLoadMyVariant();
   sharedStudyratsLoad();
 
   if(sharedStudyratsChannel)window.supabaseClient.removeChannel(sharedStudyratsChannel);
