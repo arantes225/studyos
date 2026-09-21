@@ -1,4 +1,4 @@
-const CACHE_VERSION = "luria-pwa-v59";
+const CACHE_VERSION = "luria-pwa-v60";
 const STATIC_CACHE = CACHE_VERSION + "-static";
 const RUNTIME_CACHE = CACHE_VERSION + "-runtime";
 
@@ -12,14 +12,14 @@ const APP_SHELL = [
   "/amigos/",
   "/assets/css/style.css?v=16.4",
   "/assets/css/landing.css",
-  "/assets/css/pwa-mobile.css?v=12",
+  "/assets/css/pwa-mobile.css?v=13",
   "/assets/css/luria-brand-v5.css",
   "/assets/js/app.js?v=16.8",
   "/assets/js/onboarding.js?v=2.4",
   "/assets/css/onboarding.css?v=1.9",
   "/assets/js/storage-router.js?v=1.0.0",
   "/assets/js/pwa.js",
-  "/assets/css/amigos.css?v=9",
+  "/assets/css/amigos.css?v=10",
   "/assets/js/studyrats.js?v=5",
   "/assets/img/studyrats/rat-gray.png",
   "/assets/img/studyrats/rat-brown.png",
