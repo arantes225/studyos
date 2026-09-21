@@ -128,7 +128,10 @@ const notebookState = {
     new Map(),
 
   overlays:
-    new Map()
+    new Map(),
+
+  realtimeChannel:
+    null
 };
 
 
@@ -18644,6 +18647,186 @@ async function loadData() {
 
 
 /* =========================================================
+   REALTIME — EDIÇÃO SINCRONIZADA
+   ========================================================= */
+
+function applyNotebookRealtimeUpdate(
+  updated
+) {
+  if (
+    !updated?.id
+    ||
+    !notebookState.user
+  ) {
+    return;
+  }
+
+  const existing =
+    noteById(
+      updated.id
+    );
+
+  if (!existing) {
+    return;
+  }
+
+  const membership =
+    sharedMembershipFor(
+      updated.id
+    );
+
+  const canReceiveLiveEdit =
+    existing.user_id ===
+      notebookState.user.id
+    ||
+    membership?.mode ===
+      "edit";
+
+  if (!canReceiveLiveEdit) {
+    return;
+  }
+
+  const wasShared =
+    Boolean(
+      existing.is_shared
+    );
+
+  Object.assign(
+    existing,
+    updated,
+    {
+      is_shared:
+        wasShared
+    }
+  );
+
+  notebookState
+    .notesById
+    .set(
+      existing.id,
+      existing
+    );
+
+  if (
+    existing.topic_id
+  ) {
+    notebookState
+      .notesByTopic
+      .set(
+        existing.topic_id,
+        existing
+      );
+  }
+
+  const current =
+    getCurrentDocument();
+
+  if (
+    current?.note?.id !==
+    updated.id
+  ) {
+    renderLibrary();
+    return;
+  }
+
+  /*
+    Se esta tela ainda tem uma alteração local não salva,
+    não substituímos o editor. Assim evitamos apagar texto
+    que a pessoa está digitando no exato momento da chegada
+    do evento remoto.
+  */
+  if (
+    notebookState.editorDirty
+  ) {
+    setSaveStatus(
+      "Há uma alteração nova de outro colaborador. Salve sua edição para sincronizar.",
+      "saving"
+    );
+
+    return;
+  }
+
+  const editor =
+    document.getElementById(
+      "notebook-editor"
+    );
+
+  if (editor) {
+    const remoteHtml =
+      sanitizeHtml(
+        updated.content_html
+        || ""
+      );
+
+    if (
+      editor.innerHTML !==
+      remoteHtml
+    ) {
+      editor.innerHTML =
+        remoteHtml;
+    }
+  }
+
+  renderLibrary();
+
+  setSaveStatus(
+    "Atualizado em tempo real",
+    "saved"
+  );
+}
+
+
+function startNotebookRealtime() {
+  if (
+    !notebookSb
+    ||
+    !notebookState.user
+  ) {
+    return;
+  }
+
+  if (
+    notebookState.realtimeChannel
+  ) {
+    notebookSb.removeChannel(
+      notebookState.realtimeChannel
+    );
+
+    notebookState.realtimeChannel =
+      null;
+  }
+
+  const channel =
+    notebookSb
+      .channel(
+        `study-notes-live-${notebookState.user.id}`
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:
+            "UPDATE",
+
+          schema:
+            "public",
+
+          table:
+            "study_notes"
+        },
+        payload => {
+          applyNotebookRealtimeUpdate(
+            payload.new
+          );
+        }
+      )
+      .subscribe();
+
+  notebookState.realtimeChannel =
+    channel;
+}
+
+
+/* =========================================================
    INIT
    ========================================================= */
 
@@ -18679,6 +18862,8 @@ async function initNotebook() {
     await redeemNotebookShareFromUrl();
 
     await loadData();
+
+    startNotebookRealtime();
 
 
     renderTopicList();
