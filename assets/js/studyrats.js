@@ -105,7 +105,6 @@ function sharedStudyratsRenderRatPicker(){
       sharedStudyratsSaveVariant(button.dataset.studyratVariant);
     });
   });
-}
 
   const accessoryHost=document.getElementById('studyrats-accessory-picker-options');
   if(accessoryHost){
@@ -124,6 +123,7 @@ function sharedStudyratsRenderRatPicker(){
       });
     });
   }
+}
 
 async function sharedStudyratsLoadMyVariant(){
   if(!window.supabaseClient||!window.docmapUser)return;
