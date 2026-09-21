@@ -3168,3 +3168,18 @@
   display: block;
   object-fit: contain;
 }
+
+
+/* CADERNO v18.5 — divisores atômicos */
+.notebook-editor .notebook-divider {
+  user-select: none;
+  -webkit-user-select: none;
+  caret-color: transparent;
+  cursor: default;
+}
+
+.notebook-editor .notebook-divider * {
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+}
