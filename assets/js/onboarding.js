@@ -99,9 +99,15 @@
   function onCorrectPage(step){ return page === step.page; }
 
   function ensureStyles(){
-    if(document.getElementById("luria-onboarding-css")) return;
-    const l=document.createElement("link");
-    l.id="luria-onboarding-css"; l.rel="stylesheet"; l.href="/assets/css/onboarding.css?v=1.8";
+    let l=document.getElementById("luria-onboarding-css");
+    if(l){
+      if(!String(l.href||"").includes("v=1.9")) l.href="/assets/css/onboarding.css?v=1.9";
+      return;
+    }
+    l=document.createElement("link");
+    l.id="luria-onboarding-css";
+    l.rel="stylesheet";
+    l.href="/assets/css/onboarding.css?v=1.9";
     document.head.appendChild(l);
   }
 
@@ -345,8 +351,19 @@
     const target=resolveTarget(step.target) || document.querySelector(".main") || document.body;
     target.scrollIntoView({behavior:"smooth",block:step.top?"start":"center"});
     const liberated = s.phase==="explore" || step.transparent===true;
-    target.classList.add("luria-onboarding-target");
-    target.classList.toggle("luria-onboarding-target-clear", liberated);
+    if(liberated){
+      target.classList.remove("luria-onboarding-target");
+      target.classList.add("luria-onboarding-target-clear");
+      target.style.setProperty("box-shadow","0 0 0 2px color-mix(in srgb,var(--accent,#184888) 58%,transparent)","important");
+      target.style.setProperty("filter","none","important");
+      target.style.setProperty("opacity","1","important");
+    }else{
+      target.classList.remove("luria-onboarding-target-clear");
+      target.classList.add("luria-onboarding-target");
+      target.style.removeProperty("box-shadow");
+      target.style.removeProperty("filter");
+      target.style.removeProperty("opacity");
+    }
 
     const overlay=document.createElement("div");
     overlay.id="luria-onboarding-overlay";
@@ -386,7 +403,13 @@
   function clearOverlay(){
     document.body.classList.remove("luria-onboarding-exploring");
     document.getElementById("luria-onboarding-overlay")?.remove();
-    document.querySelectorAll(".luria-onboarding-target").forEach(el=>{el.classList.remove("luria-onboarding-target");el.classList.remove("luria-onboarding-target-clear");});
+    document.querySelectorAll(".luria-onboarding-target,.luria-onboarding-target-clear").forEach(el=>{
+      el.classList.remove("luria-onboarding-target");
+      el.classList.remove("luria-onboarding-target-clear");
+      el.style.removeProperty("box-shadow");
+      el.style.removeProperty("filter");
+      el.style.removeProperty("opacity");
+    });
   }
 
   function move(delta){
