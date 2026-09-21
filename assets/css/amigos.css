@@ -613,3 +613,60 @@
 .studyrats-empty-composite .accessory-angel-wings{left:5px;top:-2px}
 .studyrats-empty-composite .accessory-rocket-flame{left:-17px;top:23px}
 .studyrats-empty-composite .accessory-astronaut-helmet{left:56px;top:20px}
+
+
+/* Studyrats preview accessory positioning v18 */
+.studyrats-preview-composite .accessory-colorful-cap{
+  transform:translateY(3px) scale(.9) rotate(3deg)!important;
+}
+.studyrats-preview-composite .accessory-cowboy-hat{
+  transform:translateY(3px) scale(.9) rotate(2deg)!important;
+}
+.studyrats-preview-composite .accessory-crown{
+  transform:translateY(3px) scale(.9)!important;
+}
+.studyrats-preview-composite .accessory-gamer-headset{
+  transform:translateY(3px) scale(.9)!important;
+}
+.studyrats-preview-composite .accessory-magic-top-hat{
+  transform:translateY(3px) scale(.9) rotate(2deg)!important;
+}
+.studyrats-preview-composite .accessory-mouse-ears{
+  transform:translateY(3px) scale(.9)!important;
+}
+.studyrats-preview-composite .accessory-pink-bow-hat{
+  transform:translateY(3px) scale(.9) rotate(2deg)!important;
+}
+.studyrats-preview-composite .accessory-santa-hat{
+  transform:translateY(3px) scale(.9) rotate(5deg)!important;
+}
+.studyrats-preview-composite .accessory-unicorn-headband{
+  transform:translateY(3px) scale(.9)!important;
+}
+.studyrats-preview-composite .accessory-viking-helmet{
+  transform:translateY(3px) scale(.9)!important;
+}
+.studyrats-preview-composite .accessory-wizard-hat{
+  transform:translateY(3px) scale(.9) rotate(2deg)!important;
+}
+
+.studyrats-preview-composite .accessory-cyberpunk-visor,
+.studyrats-preview-composite .accessory-pink-round-glasses,
+.studyrats-preview-composite .accessory-round-nerd-glasses{
+  transform:translateX(-4px)!important;
+}
+
+.studyrats-preview-composite .accessory-angel-wings{
+  transform:translate(-3px,-9px)!important;
+}
+
+.studyrats-preview-composite .accessory-rocket-flame{
+  transform:scaleX(-1)!important;
+}
+
+.studyrats-preview-composite .accessory-astronaut-helmet{
+  width:28.5px!important;
+  height:26.25px!important;
+  left:40px!important;
+  top:12px!important;
+}
