@@ -395,7 +395,7 @@
     overlay.id="luria-onboarding-overlay";
     overlay.classList.toggle("is-exploring",liberated);
     document.body.classList.toggle("luria-onboarding-exploring",liberated);
-    overlay.classList.toggle("card-top",!!step.top);
+    overlay.classList.remove("card-top");
     overlay.innerHTML=`
       ${liberated ? "" : '<div class="luria-onboarding-dim"></div>'}
       <section class="luria-onboarding-card" role="dialog" aria-label="Onboarding LURIA">
@@ -413,6 +413,28 @@
         </div>
       </section>`;
     document.body.appendChild(overlay);
+
+    // O card fica embaixo por padrão. Só sobe quando cobrir o elemento
+    // que está sendo explicado na parte inferior da tela.
+    const onboardingCard=overlay.querySelector(".luria-onboarding-card");
+    const placeOnboardingCard=()=>{
+      overlay.classList.remove("card-top");
+      if(!onboardingCard || !target) return;
+
+      const targetRect=target.getBoundingClientRect();
+      const cardRect=onboardingCard.getBoundingClientRect();
+      const bottomGap=Math.max(10,window.innerHeight-cardRect.top);
+      const safetyGap=18;
+      const wouldCoverTarget=
+        targetRect.bottom > window.innerHeight-bottomGap-safetyGap
+        && targetRect.top < window.innerHeight-safetyGap;
+
+      if(wouldCoverTarget){
+        overlay.classList.add("card-top");
+      }
+    };
+
+    requestAnimationFrame(placeOnboardingCard);
 
     overlay.querySelector("[data-onboarding-skip]").onclick=()=>finish(true);
     overlay.querySelector("[data-onboarding-back]").onclick=()=>move(-1);
