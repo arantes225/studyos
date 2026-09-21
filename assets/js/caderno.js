@@ -505,10 +505,17 @@ function applyNotebookTopicPanelState(
   if (
     button
   ) {
-    button.textContent =
-      notebookState.topicPanelCollapsed
-        ? "›"
-        : "‹";
+    const arrow =
+      button.querySelector(
+        "#notebook-topic-panel-arrow"
+      );
+
+    if (arrow) {
+      arrow.textContent =
+        notebookState.topicPanelCollapsed
+          ? "›"
+          : "‹";
+    }
 
 
     button.setAttribute(
