@@ -1929,15 +1929,17 @@
 }
 
 .notebook-topic-panel-toggle {
-  width: 32px;
+  min-width: 32px;
   height: 32px;
 
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 
   flex: 0 0 auto;
 
-  padding: 0;
+  padding: 0 10px;
 
   border: 1px solid var(--border);
   border-radius: 9px;
@@ -1946,7 +1948,6 @@
   color: var(--muted);
 
   font: inherit;
-  font-size: 22px;
   line-height: 1;
 
   cursor: pointer;
@@ -2002,7 +2003,8 @@
 
 .notebook-topic-panel.is-collapsed
 .notebook-topic-panel-toggle {
-  width: 34px;
+  width: auto;
+  min-width: 76px;
   height: 34px;
 }
 
@@ -3054,4 +3056,16 @@
       var(--accent) 16%,
       var(--surface)
     );
+}
+
+
+.notebook-topic-panel-arrow {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.notebook-topic-panel-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .01em;
 }
