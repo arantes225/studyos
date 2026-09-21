@@ -156,7 +156,8 @@ function kindMeta(kind) {
     final_review: { label: "Reta final", className: "lesson" },
     other: { label: "Evento", className: "default" },
     exam: { label: "Prova", className: "exam" },
-    registration_deadline: { label: "Inscrição", className: "registration" }
+    registration_deadline: { label: "Inscrição", className: "registration" },
+    personal_event: { label: "Evento", className: "personal-event" }
   };
 
   return map[kind] || { label: "Atividade", className: "default" };
@@ -2184,6 +2185,184 @@ async function loadDashboardMetrics() {
   await loadTodaySummary();
 }
 
+function openEventDialog() {
+  const dialog =
+    document.getElementById(
+      "event-dialog"
+    );
+
+  const dateInput =
+    document.getElementById(
+      "event-date"
+    );
+
+  const nameInput =
+    document.getElementById(
+      "event-name"
+    );
+
+  const timeInput =
+    document.getElementById(
+      "event-time"
+    );
+
+  if (!dialog) return;
+
+  if (nameInput) nameInput.value = "";
+  if (timeInput) timeInput.value = "";
+  if (dateInput) {
+    dateInput.value =
+      toISODate(
+        agendaState.anchorDate
+        || new Date()
+      );
+  }
+
+  dialog.showModal();
+
+  requestAnimationFrame(
+    () => nameInput?.focus()
+  );
+}
+
+
+function closeEventDialog() {
+  document
+    .getElementById(
+      "event-dialog"
+    )
+    ?.close();
+}
+
+
+async function handleEventForm(
+  event
+) {
+  event.preventDefault();
+
+  const name =
+    String(
+      document
+        .getElementById(
+          "event-name"
+        )
+        ?.value
+      || ""
+    )
+      .trim();
+
+  const date =
+    String(
+      document
+        .getElementById(
+          "event-date"
+        )
+        ?.value
+      || ""
+    )
+      .trim();
+
+  const time =
+    String(
+      document
+        .getElementById(
+          "event-time"
+        )
+        ?.value
+      || ""
+    )
+      .trim();
+
+  if (!name) {
+    document
+      .getElementById(
+        "event-name"
+      )
+      ?.focus();
+
+    return;
+  }
+
+  if (!date) {
+    document
+      .getElementById(
+        "event-date"
+      )
+      ?.focus();
+
+    return;
+  }
+
+  const submit =
+    document.querySelector(
+      "#event-form button[type='submit']"
+    );
+
+  if (submit) {
+    submit.disabled = true;
+    submit.textContent = "Adicionando...";
+  }
+
+  const {
+    error
+  } =
+    await dashboardSb
+      .from(
+        "schedule_events"
+      )
+      .insert({
+        user_id:
+          window.docmapUser.id,
+
+        title:
+          name,
+
+        event_type:
+          "personal_event",
+
+        event_date:
+          date,
+
+        event_time:
+          time || null,
+
+        source:
+          "manual",
+
+        confidence:
+          "high",
+
+        metadata: {
+          created_from:
+            "agenda"
+        }
+      });
+
+  if (submit) {
+    submit.disabled = false;
+    submit.textContent = "Adicionar evento";
+  }
+
+  if (error) {
+    console.error(error);
+    setCalendarStatus(
+      "Não foi possível adicionar o evento.",
+      "error"
+    );
+    return;
+  }
+
+  closeEventDialog();
+
+  setCalendarStatus(
+    "Evento adicionado.",
+    "success"
+  );
+
+  await loadAgenda();
+}
+
+
 function wireDashboardControls() {
   const dayButton =
     document.getElementById(
@@ -2301,6 +2480,43 @@ function wireDashboardControls() {
         await loadAgenda();
       }
     );
+
+  document
+    .getElementById(
+      "calendar-add-event"
+    )
+    ?.addEventListener(
+      "click",
+      openEventDialog
+    );
+
+  document
+    .getElementById(
+      "event-form"
+    )
+    ?.addEventListener(
+      "submit",
+      handleEventForm
+    );
+
+  document
+    .getElementById(
+      "event-cancel"
+    )
+    ?.addEventListener(
+      "click",
+      closeEventDialog
+    );
+
+  document
+    .getElementById(
+      "event-close"
+    )
+    ?.addEventListener(
+      "click",
+      closeEventDialog
+    );
+
 
   document
     .getElementById(
