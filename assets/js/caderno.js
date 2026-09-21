@@ -827,9 +827,299 @@ async function createNotebookShareLink(
   }
 }
 
+async function notebookDataImageBlob(
+  dataUrl
+) {
+  const response =
+    await fetch(
+      dataUrl
+    );
+
+  return response.blob();
+}
+
+
+function notebookImageExtension(
+  mimeType
+) {
+  const mime =
+    String(
+      mimeType
+      || ""
+    )
+      .toLowerCase();
+
+  if (mime.includes("png")) return "png";
+  if (mime.includes("webp")) return "webp";
+  if (mime.includes("gif")) return "gif";
+
+  return "jpg";
+}
+
+
+async function materializeNotebookImagesForShare(
+  note
+) {
+  if (
+    !note?.id
+    ||
+    note.is_shared
+  ) {
+    return note;
+  }
+
+  const host =
+    document.createElement(
+      "div"
+    );
+
+  host.innerHTML =
+    String(
+      note.content_html
+      || ""
+    );
+
+  const images =
+    Array.from(
+      host.querySelectorAll(
+        "img"
+      )
+    );
+
+  const assetIds =
+    [];
+
+  let changed =
+    false;
+
+  for (
+    const image
+    of images
+  ) {
+    const existingId =
+      String(
+        image.getAttribute(
+          "data-luria-asset-id"
+        )
+        || ""
+      );
+
+    if (
+      /^[0-9a-f-]{36}$/i
+        .test(
+          existingId
+        )
+    ) {
+      assetIds.push(
+        existingId
+      );
+
+      continue;
+    }
+
+    const src =
+      String(
+        image.getAttribute(
+          "src"
+        )
+        || ""
+      );
+
+    if (
+      !/^data:image\/(?:png|jpeg|jpg|webp|gif);base64,/i
+        .test(
+          src
+        )
+    ) {
+      continue;
+    }
+
+    const hash =
+      await notebookHashText(
+        src
+      );
+
+    if (!hash) {
+      continue;
+    }
+
+    const blob =
+      await notebookDataImageBlob(
+        src
+      );
+
+    const mimeType =
+      blob.type
+      || "image/jpeg";
+
+    const extension =
+      notebookImageExtension(
+        mimeType
+      );
+
+    const storagePath =
+      `notebook-assets/${hash}.${extension}`;
+
+    const uploadResult =
+      await notebookSb
+        .storage
+        .from(
+          "docmap-assets"
+        )
+        .upload(
+          storagePath,
+          blob,
+          {
+            upsert:
+              false,
+
+            contentType:
+              mimeType,
+
+            cacheControl:
+              "31536000"
+          }
+        );
+
+    if (
+      uploadResult.error
+      &&
+      !/already exists|duplicate|409/i
+        .test(
+          String(
+            uploadResult.error.message
+            || ""
+          )
+        )
+    ) {
+      throw uploadResult.error;
+    }
+
+    const publicUrl =
+      notebookSb
+        .storage
+        .from(
+          "docmap-assets"
+        )
+        .getPublicUrl(
+          storagePath
+        )
+        .data
+        .publicUrl;
+
+    const {
+      data:
+        assetId,
+      error:
+        assetError
+    } =
+      await notebookSb.rpc(
+        "register_study_note_image_asset",
+        {
+          p_note_id:
+            note.id,
+
+          p_hash:
+            hash,
+
+          p_storage_path:
+            storagePath,
+
+          p_mime_type:
+            mimeType
+        }
+      );
+
+    if (assetError) {
+      throw assetError;
+    }
+
+    image.setAttribute(
+      "src",
+      publicUrl
+    );
+
+    image.setAttribute(
+      "data-luria-asset-id",
+      assetId
+    );
+
+    assetIds.push(
+      assetId
+    );
+
+    changed =
+      true;
+  }
+
+  const normalizedHtml =
+    sanitizeHtml(
+      host.innerHTML
+    );
+
+  if (changed) {
+    const {
+      data,
+      error
+    } =
+      await notebookSb
+        .from(
+          "study_notes"
+        )
+        .update({
+          content_html:
+            normalizedHtml
+        })
+        .eq(
+          "id",
+          note.id
+        )
+        .eq(
+          "user_id",
+          notebookState.user.id
+        )
+        .select(
+          "id,user_id,topic_id,topic_title,area,materia,content_html,created_at,updated_at"
+        )
+        .single();
+
+    if (error) {
+      throw error;
+    }
+
+    Object.assign(
+      note,
+      data
+    );
+  }
+
+  const {
+    error:
+      syncError
+  } =
+    await notebookSb.rpc(
+      "sync_study_note_image_refs",
+      {
+        p_note_id:
+          note.id,
+
+        p_asset_ids:
+          assetIds
+      }
+    );
+
+  if (syncError) {
+    throw syncError;
+  }
+
+  return note;
+}
+
+
 async function createNotebookBundleToken(
   entries,
-  title = "Cadernos LURIA"
+  title = "Cadernos LURIA",
+  mode = "view"
 ) {
   const owned =
     (entries || []).filter(
@@ -843,12 +1133,21 @@ async function createNotebookBundleToken(
     );
   }
 
+  for (
+    const entry
+    of owned
+  ) {
+    await materializeNotebookImagesForShare(
+      entry.note
+    );
+  }
+
   const {
     data,
     error
   } =
     await notebookSb.rpc(
-      "create_study_note_bundle_share",
+      "create_study_note_bundle_share_v2",
       {
         p_note_ids:
           owned.map(
@@ -857,7 +1156,10 @@ async function createNotebookBundleToken(
           ),
 
         p_title:
-          title
+          title,
+
+        p_mode:
+          mode
       }
     );
 
@@ -897,20 +1199,31 @@ async function openNotebookShareDialog(
     return;
   }
 
-  let cachedToken =
-    null;
+  const cachedTokens =
+    new Map();
 
   const getToken =
-    async () => {
-      if (!cachedToken) {
-        cachedToken =
+    async (
+      mode = "view"
+    ) => {
+      if (
+        !cachedTokens.has(
+          mode
+        )
+      ) {
+        cachedTokens.set(
+          mode,
           await createNotebookBundleToken(
             owned,
-            title
-          );
+            title,
+            mode
+          )
+        );
       }
 
-      return cachedToken;
+      return cachedTokens.get(
+        mode
+      );
     };
 
   await window.LuriaSharing.open({
@@ -919,10 +1232,37 @@ async function openNotebookShareDialog(
     count:
       owned.length,
 
+    modes: [
+      {
+        value: "view",
+        title: "Sincronizado · somente visualizar",
+        description: "Recebe suas atualizações, mas não pode editar."
+      },
+      {
+        value: "overlay",
+        title: "Sincronizado · personalizar",
+        description: "Recebe suas atualizações e pode fazer anotações privadas por cima."
+      },
+      {
+        value: "edit",
+        title: "Sincronizado · editar comigo",
+        description: "Edita o mesmo caderno original e as alterações aparecem para todos."
+      },
+      {
+        value: "copy",
+        title: "Enviar uma cópia",
+        description: "Cria um caderno independente; imagens são reutilizadas sem duplicação."
+      }
+    ],
+
     onLink:
-      async () => {
+      async (
+        mode
+      ) => {
         const token =
-          await getToken();
+          await getToken(
+            mode
+          );
 
         const url =
           new URL(
@@ -956,10 +1296,13 @@ async function openNotebookShareDialog(
 
     onFriend:
       async (
-        friendUserId
+        friendUserId,
+        mode
       ) => {
         const token =
-          await getToken();
+          await getToken(
+            mode
+          );
 
         const {
           error
@@ -1034,11 +1377,6 @@ async function redeemNotebookBundleFromUrl() {
     return null;
   }
 
-  const personalize =
-    window.confirm(
-      "Deseja personalizar os cadernos recebidos?\n\nOK = editar em cima\nCancelar = somente leitura"
-    );
-
   const {
     data,
     error
@@ -1050,9 +1388,7 @@ async function redeemNotebookBundleFromUrl() {
           token,
 
         p_mode:
-          personalize
-            ? "overlay"
-            : "view"
+          "view"
       }
     );
 
@@ -1538,8 +1874,27 @@ function sanitizeHtml(
               src
             );
 
+        const validSharedImage =
+          /^https:\/\/[^/]+\/storage\/v1\/object\/public\/docmap-assets\/notebook-assets\//i
+            .test(
+              src
+            );
+
+        const assetId =
+          String(
+            child.getAttribute(
+              "data-luria-asset-id"
+            )
+            || ""
+          )
+            .trim();
+
         if (
-          !validDataImage
+          (
+            !validDataImage
+            &&
+            !validSharedImage
+          )
           ||
           keptImages >= 2
         ) {
@@ -1621,6 +1976,19 @@ function sanitizeHtml(
           "alt",
           keepImageAlt
         );
+
+        if (
+          child.tagName === "IMG"
+          &&
+          typeof assetId !== "undefined"
+          &&
+          /^[0-9a-f-]{36}$/i.test(assetId)
+        ) {
+          child.setAttribute(
+            "data-luria-asset-id",
+            assetId
+          );
+        }
       }
 
 
@@ -2639,7 +3007,11 @@ function renderDocument() {
   */
   notebookState.editorEditable =
     current.note?.is_shared
-      ? sharedMembership?.mode === "overlay"
+      ? (
+          sharedMembership?.mode === "overlay"
+          ||
+          sharedMembership?.mode === "edit"
+        )
       : (
           !current.note
           ||
@@ -2735,7 +3107,11 @@ function renderDocument() {
         ? (
             sharedMembership?.mode === "overlay"
               ? "Compartilhado · suas alterações são privadas"
-              : "Compartilhado · somente leitura"
+              : (
+                  sharedMembership?.mode === "edit"
+                    ? "Compartilhado · edição sincronizada"
+                    : "Compartilhado · somente leitura"
+                )
           )
         : "Salvo",
       "saved"
@@ -3226,19 +3602,70 @@ async function saveCurrentNotebook(
   if (
     current.note?.is_shared
   ) {
+    const membership =
+      sharedMembershipFor(
+        current.note.id
+      );
+
     try {
-      await saveSharedNotebookOverlay(
-        current.note,
-        contentHtml
-      );
+      if (
+        membership?.mode === "edit"
+      ) {
+        const {
+          data,
+          error
+        } =
+          await notebookSb
+            .from(
+              "study_notes"
+            )
+            .update({
+              content_html:
+                contentHtml
+            })
+            .eq(
+              "id",
+              current.note.id
+            )
+            .select(
+              "id,user_id,topic_id,topic_title,area,materia,content_html,created_at,updated_at"
+            )
+            .single();
 
-      notebookState.editorDirty =
-        false;
+        if (error) {
+          throw error;
+        }
 
-      setSaveStatus(
-        "Personalização salva sobre o material original",
-        "saved"
-      );
+        Object.assign(
+          current.note,
+          data,
+          {
+            is_shared:
+              true
+          }
+        );
+
+        notebookState.editorDirty =
+          false;
+
+        setSaveStatus(
+          "Alterações sincronizadas com o caderno original",
+          "saved"
+        );
+      } else {
+        await saveSharedNotebookOverlay(
+          current.note,
+          contentHtml
+        );
+
+        notebookState.editorDirty =
+          false;
+
+        setSaveStatus(
+          "Personalização salva sobre o material original",
+          "saved"
+        );
+      }
 
       renderLibrary();
 
@@ -3246,7 +3673,7 @@ async function saveCurrentNotebook(
       console.error(error);
 
       setSaveStatus(
-        `Erro ao salvar personalização: ${error.message}`,
+        `Erro ao salvar: ${error.message}`,
         "error"
       );
     }
@@ -13455,7 +13882,7 @@ function renderLibrary() {
                 entry.note.is_shared
                   ? `
                     <span class="notebook-shared-badge">
-                      ${sharedMembershipFor(entry.note.id)?.mode === "overlay" ? "Compartilhado · personalizado" : "Compartilhado"}
+                      ${sharedMembershipFor(entry.note.id)?.mode === "overlay" ? "Compartilhado · personalizado" : (sharedMembershipFor(entry.note.id)?.mode === "edit" ? "Compartilhado · edição" : "Compartilhado")}
                     </span>
                   `
                   : ""
