@@ -281,13 +281,12 @@ function sharedStudyratsRender(){
       return '<div class="studyrats-lane" style="--lane-color:'+laneColor+'">'+
         '<div class="studyrats-runner-card">'+
           '<span class="studyrats-rank '+(index===0?'is-first':'')+'">'+(index+1)+'</span>'+
-          '<span class="studyrats-runner-copy"><strong>'+fEsc(p.name)+'</strong></span>'+
+          '<span class="studyrats-runner-copy"><strong>'+fEsc(p.name)+'</strong><small>'+fEsc(score)+' '+fEsc(type.unit)+'</small></span>'+
         '</div>'+
         '<div class="studyrats-road">'+
           '<span class="studyrats-road-dash"></span>'+
           '<span class="studyrats-progress-fill" style="width:'+pct+'%"></span>'+
           '<span class="studyrats-mouse" style="left:'+pct+'%">'+sharedStudyratComposite(p.variant,p.accessory)+'</span>'+
-          '<span class="studyrats-track-score" style="left:clamp(44px,calc('+pct+'% - 76px),calc(100% - 58px))">'+fEsc(score)+' '+fEsc(type.unit)+'</span>'+
         '</div>'+
       '</div>';
     }).join('');
