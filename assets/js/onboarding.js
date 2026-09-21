@@ -49,7 +49,7 @@
     {page:"questoes", target:"#qs-history", title:"Meus simulados", text:"Aqui ficam os simulados que você criou ou importou. Durante o onboarding deixamos três simulados fictícios para você visualizar como aparecem os resultados, acertos, erros e aproveitamento sem alterar seus dados reais.", demo:"questions", action:"questions-mine"},
     {page:"questoes", target:".qs-add-mode-tabs", title:"Automático ou manual", text:"A partir daqui o passeio acontece dentro de Adicionar simulado. Automaticamente, você envia um PDF e o LURIA identifica as questões. Manualmente, você informa o nome e a quantidade de questões e usa somente o gabarito e as estatísticas.", demo:"questions", action:"questions-create", transparent:true},
     {page:"questoes", target:"label[for='qs-file']", title:"Selecionar arquivo", text:"No modo automático, clique em Escolher PDF. Para o onboarding, o LURIA já separou um Simulado Onbording de Eletrocardiograma para demonstrar o fluxo sem usar nenhum arquivo seu.", action:"questions-file", transparent:true},
-    {page:"questoes", target:"#qs-onboarding-pdf-preview", title:"Visualizando o PDF", text:"Antes de extrair, você consegue conferir o material. Durante esta etapa o PDF de demonstração percorre as páginas apenas para você visualizar como um arquivo real entra no fluxo.", action:"questions-pdf", transparent:true, noScroll:true},
+    {page:"questoes", target:"#qs-onboarding-pdf-preview", title:"Visualizando o PDF", text:"Antes de extrair, você consegue conferir o material. Durante esta etapa o PDF de demonstração percorre as páginas apenas para você visualizar como um arquivo real entra no fluxo.", action:"questions-pdf", transparent:true, forceCardTop:true},
     {page:"questoes", target:"#qs-extraction-mode", title:"Tipo de extração", text:"Extração rápida prioriza velocidade. Extração detalhada cruza mais estratégias e tenta preservar melhor questões, textos e imagens. Se o PDF for complexo, prefira a detalhada.", action:"questions-create", transparent:true},
     {page:"questoes", target:"#qs-source-profile", title:"Origem do material", text:"Informe de onde veio o PDF. O perfil adapta a leitura ao padrão visual mais comum de cada cursinho, como MEDCOF, Aristo, Medway, Estratégia MED ou Medcurso. Neste exemplo usamos Geral.", action:"questions-create", transparent:true},
     {page:"questoes", target:"#qs-import", title:"Extrair questões", text:"Com o arquivo, o tipo de extração e a origem definidos, clique em Extrair questões. No onboarding simulamos o processamento local sem gravar nada no banco.", action:"questions-extract", transparent:true},
@@ -967,7 +967,39 @@
     if(step.action==="questions-pdf"){
       ensureQuestionsAddMode();
       simulateOnboardingFileSelection();
-      animateOnboardingPdf();
+
+      addOnboardingPdfPreview().then(host=>{
+        if(!host) return;
+
+        requestAnimationFrame(()=>{
+          host.scrollIntoView({
+            behavior:"smooth",
+            block:"center"
+          });
+        });
+
+        const scroller=host.querySelector("[data-onboarding-pdf-pages]");
+        if(!scroller) return;
+
+        scroller.scrollTop=0;
+
+        const animate=()=>{
+          const max=Math.max(0,scroller.scrollHeight-scroller.clientHeight);
+          const checkpoints=[0,.25,.5,.75,1];
+
+          checkpoints.forEach((point,index)=>{
+            setTimeout(()=>{
+              if(!document.body.contains(scroller)) return;
+              scroller.scrollTo({
+                top:max*point,
+                behavior:"smooth"
+              });
+            },index*1100);
+          });
+        };
+
+        setTimeout(animate,350);
+      });
     }
 
     if(step.action==="questions-extract"){
