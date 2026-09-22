@@ -2018,33 +2018,166 @@ ${common}
 
 TAREFA
 Audite cientificamente TODAS as 200 questões de forma independente.
-Resolva antes de olhar o gabarito.
+Resolva cada item antes de olhar o gabarito original.
 Abra e confira as fontes.
-Dê quality_score 0–100 para cada item.
+Atribua uma nota objetiva de 0–100 usando a rubrica abaixo.
+O corte mínimo real é 95/100.
 
-PESOS RECOMENDADOS
-- correção científica: 30
-- gabarito + única melhor resposta: 20
-- fonte específica do gabarito: 15
-- distratores: 10
-- explicações A-D: 10
-- fidelidade ao estilo: 10
-- clareza/redação: 5
+RUBRICA SISTEMÁTICA — 100 PONTOS
 
-APROVAÇÃO
-approved somente se:
-quality_score >= 95
+1. CORREÇÃO CIENTÍFICA — 25 pontos
+25 = plenamente correta, atual e sem ressalvas relevantes.
+20–24 = correta, mas com pequena imprecisão ou nuance ausente.
+10–19 = parcialmente correta ou dependente de contexto não explicitado.
+0–9 = erro científico relevante ou conduta insegura.
+
+2. GABARITO + ÚNICA MELHOR RESPOSTA — 20 pontos
+20 = apenas uma alternativa é claramente a melhor.
+15–19 = correta, mas outra alternativa pode gerar dúvida razoável.
+5–14 = ambiguidade importante ou formulação deficiente.
+0 = gabarito errado ou múltiplas respostas defensáveis.
+
+3. FONTE ESPECÍFICA DO GABARITO — 15 pontos
+15 = fonte primária/oficial atual sustenta diretamente o gabarito.
+12–14 = fonte adequada, mas seção/trecho poderia ser melhor especificado.
+5–11 = fonte genérica, indireta ou secundária.
+0–4 = fonte inexistente, incorreta, desatualizada ou que não sustenta a resposta.
+
+4. QUALIDADE DOS DISTRATORES — 10 pontos
+10 = todos plausíveis, discriminativos e baseados em erros reais.
+8–9 = bons, com um distrator um pouco fraco.
+5–7 = vários previsíveis ou pouco plausíveis.
+0–4 = distratores caricatos, absurdos ou entregando a resposta.
+
+5. EXPLICAÇÕES A–D — 10 pontos
+10 = todas corretas, específicas e didáticas.
+8–9 = corretas, mas pouco aprofundadas em um item.
+5–7 = genéricas ou incompletas.
+0–4 = explicações erradas, contraditórias ou ausentes.
+
+6. FIDELIDADE À BANCA — 10 pontos
+10 = muito semelhante ao padrão real recente da banca.
+8–9 = boa aderência com pequenas diferenças.
+5–7 = parcialmente semelhante / estilo genérico.
+0–4 = não se parece com a banca ou parece outra banca.
+
+7. CLAREZA E QUALIDADE DA REDAÇÃO — 5 pontos
+5 = clara, precisa, sem pistas artificiais.
+4 = pequena melhoria possível.
+2–3 = redação confusa ou redundante.
+0–1 = compreensão comprometida.
+
+8. NÍVEL DE DIFICULDADE E PODER DISCRIMINATIVO — 5 pontos
+5 = dificuldade adequada ao perfil e exige raciocínio compatível.
+4 = ligeiramente fácil/difícil demais.
+2–3 = pouco discriminativa.
+0–1 = trivial ou artificialmente difícil.
+
+HARD FAILS — REPROVAÇÃO AUTOMÁTICA
+Mesmo que a soma seja >=95, marque needs_revision ou rejected se houver:
+- gabarito incorreto;
+- duas ou mais respostas defensáveis;
+- ambiguidade clínica relevante;
+- conduta potencialmente perigosa;
+- dose, intervalo, idade, ponto de corte ou contraindicação incorretos;
+- fonte inexistente/falsa;
+- fonte que não sustenta o gabarito;
+- recomendação claramente desatualizada;
+- questão reconhecível como cópia/paráfrase próxima de prova anterior;
+- informação essencial ausente no enunciado;
+- conflito sério entre gabarito e explicação.
+
+REGRAS DE STATUS
+approved:
+quality_score >=95
 AND hard_fail=false
 AND ambiguity=false
 AND single_best_answer=true
 AND answer_source_issue=null.
 
-Abaixo de 95 = needs_revision.
-Erro estrutural grave/irrecuperável = rejected.
+needs_revision:
+- quality_score <95;
+- qualquer hard fail recuperável;
+- ciência correta mas estilo insuficiente;
+- fonte insuficiente;
+- distratores/exposição/explicação abaixo do padrão.
+
+rejected:
+- questão estruturalmente ruim;
+- ciência comprometida;
+- cópia problemática;
+- necessidade de reconstrução extensa;
+- risco clínico grave não corrigível por ajuste simples.
+
+OBRIGAÇÃO DE DIAGNÓSTICO
+Para TODA questão com nota abaixo de 100, diga exatamente onde os pontos foram perdidos.
+Não escreva apenas “pode melhorar”.
+Seja específico.
+
+OBRIGAÇÃO DE MELHORIA DETALHADA
+Para toda questão com quality_score <95, forneça uma seção estruturada de melhoria contendo:
+
+improvement_priority:
+- critical
+- high
+- medium
+- low
+
+improvement_plan:
+1. O que está ruim
+2. Por que isso reduz a qualidade
+3. Como corrigir
+4. Exemplo concreto de correção
+5. O que preservar da versão atual
+6. Risco de descaracterizar a banca ao corrigir
+7. Qual seria a nota estimada após a correção
+
+Também preencher:
+
+how_to_improve_science
+- Dizer exatamente que conteúdo científico precisa ser alterado, se houver.
+- Citar fonte melhor quando necessário.
+
+how_to_improve_answer_key
+- Explicar se o gabarito precisa mudar ou se apenas precisa ficar mais inequívoco.
+
+how_to_improve_source
+- Informar qual fonte seria melhor.
+- Preferir MS/PCDT/sociedade brasileira/diretriz internacional primária.
+- Informar documento e URL verificável quando possível.
+
+how_to_improve_distractors
+- Dizer quais alternativas estão fracas.
+- Explicar por quê.
+- Propor distratores mais plausíveis sem criar segunda resposta correta.
+
+how_to_improve_explanations
+- Dizer qual explicação está vaga/incorreta.
+- Propor a lógica que deveria constar.
+
+how_to_improve_style
+- Comparar com provas recentes da MESMA banca.
+- Dizer exatamente o que falta: tamanho, densidade, tipo de caso, linguagem, cálculo, RAS, critérios formais, etc.
+- Não validar estilo apenas contra o perfil interno fornecido.
+- Se não houver material primário suficiente, usar style_confidence="low".
+
+how_to_improve_difficulty
+- Dizer se está fácil/difícil demais.
+- Sugerir qual dado, etapa cognitiva ou aproximação de distratores melhoraria a discriminação.
+
+how_to_improve_wording
+- Sugerir ajustes de redação que removam pistas, redundâncias ou ambiguidade.
+
+PARA QUESTÕES >=95
+Mesmo se approved, forneça:
+- strongest_point
+- remaining_minor_risk
+- optional_polish
+Isso permite melhorar questões já boas sem obrigar correção.
 
 SAÍDA JSON EXATA
 {
-  "schema_version":"1.0",
+  "schema_version":"1.1",
   "review_stage":"perplexity_initial",
   "batch_number":N,
   "block_number":N,
@@ -2053,38 +2186,100 @@ SAÍDA JSON EXATA
   "reviews":[
     {
       "question_id":"...",
-      "quality_score":0-100,
+      "quality_score":0,
       "component_scores":{
-        "scientific":0-30,
-        "answer":0-20,
-        "answer_source":0-15,
-        "distractors":0-10,
-        "explanations":0-10,
-        "style":0-10,
-        "writing":0-5
+        "scientific":0,
+        "answer_key":0,
+        "answer_source":0,
+        "distractors":0,
+        "explanations":0,
+        "style":0,
+        "writing":0,
+        "difficulty":0
       },
       "independent_answer":"A|B|C|D",
       "original_answer":"A|B|C|D",
       "status":"approved|needs_revision|rejected",
       "confidence":"high|medium|low",
+      "style_confidence":"high|medium|low",
       "ambiguity":false,
       "single_best_answer":true,
       "hard_fail":false,
       "hard_fail_reasons":[],
+      "points_lost":[
+        {"criterion":"distractors","points_lost":2,"reason":"..."}
+      ],
       "scientific_issue":null,
       "source_issue":null,
       "answer_source_issue":null,
       "explanation_issue":null,
       "distractor_issue":null,
       "style_issue":null,
+      "difficulty_issue":null,
+      "wording_issue":null,
+      "improvement_priority":"low|medium|high|critical",
+      "improvement_plan":{
+        "what_is_wrong":"",
+        "why_it_matters":"",
+        "how_to_fix":"",
+        "concrete_example":"",
+        "what_to_preserve":"",
+        "style_risk":"",
+        "estimated_score_after_fix":0
+      },
+      "how_to_improve_science":null,
+      "how_to_improve_answer_key":null,
+      "how_to_improve_source":null,
+      "how_to_improve_distractors":null,
+      "how_to_improve_explanations":null,
+      "how_to_improve_style":null,
+      "how_to_improve_difficulty":null,
+      "how_to_improve_wording":null,
+      "strongest_point":null,
+      "remaining_minor_risk":null,
+      "optional_polish":null,
       "suggested_correction":null,
-      "verified_sources":[{"institution":"","document":"","year":"","url":"","section":null}]
+      "verified_sources":[
+        {
+          "institution":"",
+          "document":"",
+          "year":"",
+          "url":"",
+          "section":null
+        }
+      ]
     }
   ],
-  "summary":{"total":200,"approved":0,"needs_revision":0,"rejected":0}
+  "summary":{
+    "total":200,
+    "approved":0,
+    "needs_revision":0,
+    "rejected":0,
+    "mean_quality_score":0,
+    "median_quality_score":0,
+    "pct_95_plus":0,
+    "pct_90_949":0,
+    "pct_below_90":0,
+    "most_common_quality_losses":[],
+    "top_5_systematic_problems":[],
+    "top_5_prompt_improvements":[]
+  }
 }
 
-O JSON será importado no Supabase e vinculado ao question_id + bloco. Não inclua texto fora do JSON.`;
+ANÁLISE SISTÊMICA DO BLOCO
+Além de revisar questões individualmente, identifique padrões de erro recorrentes do GERADOR.
+Em summary.top_5_systematic_problems, diga por exemplo:
+- distratores fáceis demais;
+- stems curtos demais;
+- baixa densidade de dados;
+- fonte genérica;
+- explicações superficiais;
+- curva de dificuldade inadequada;
+- pouca fidelidade à banca.
+
+Em summary.top_5_prompt_improvements, escreva mudanças concretas que deveriam ser incorporadas AO PROMPT MESTRE DA BANCA para aumentar a taxa de questões >=95 no próximo bloco.
+
+Não inclua texto fora do JSON.`;
 
     if (stage === "chatgpt_correction") return `PROMPT DE SEGMENTO 3 — CORREÇÃO CHATGPT A PARTIR DO SUPABASE
 ${common}
