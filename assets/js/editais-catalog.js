@@ -17,6 +17,13 @@
       .replaceAll("'", "&#039;");
   }
 
+  function normalizeNationalLabel(value) {
+    return String(value ?? "")
+      .replace(/\bNac\.(?=\s|$)/gi, "Nacional")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
   function formatDate(value) {
     if (!value) return "A definir";
     const [y, m, d] = String(value).split("-").map(Number);
@@ -94,8 +101,8 @@
                 ${row.uf ? `<span class="catalog-uf">${escapeHtml(row.uf)}</span>` : ""}
                 <span class="catalog-status ${statusClass(row)}">${escapeHtml(status)}</span>
               </div>
-              <h3>${escapeHtml(row.institution)}</h3>
-              <p>${escapeHtml(row.board || "Banca a confirmar")}</p>
+              <h3>${escapeHtml(normalizeNationalLabel(row.institution))}</h3>
+              <p>${escapeHtml(normalizeNationalLabel(row.board) || "Banca a confirmar")}</p>
             </div>
           </div>
 
@@ -172,8 +179,8 @@
             .from("exams")
             .insert({
               user_id: window.docmapUser.id,
-              institution: row.institution,
-              board: row.board || null,
+              institution: normalizeNationalLabel(row.institution),
+              board: normalizeNationalLabel(row.board) || null,
               exam_date: row.exam_date || null,
               registration_deadline: row.registration_end || null,
               fee: row.fee ?? null,
