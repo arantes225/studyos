@@ -2912,7 +2912,7 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
         const score = item.style_score == null ? "Em calibração" : `Fidelidade atual: ${Number(item.style_score).toLocaleString("pt-BR",{maximumFractionDigits:1})}/10`;
         const url = String(item.style_reference_url || "").startsWith("https://") ? item.style_reference_url : "";
         return `
-          <details class="admin-qf-board-manual" ${index === 0 ? "open" : ""}>
+          <details class="admin-qf-board-manual">
             <summary>
               <div>
                 <span class="admin-qf-board-index">${String(index+1).padStart(2,"0")}</span>
