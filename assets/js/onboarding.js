@@ -1336,33 +1336,31 @@
       </section>`;
     document.body.appendChild(overlay);
 
-    // O card fica embaixo por padrão. Só sobe quando cobrir o elemento
-    // que está sendo explicado na parte inferior da tela.
+    // Regra de posicionamento: o card fica embaixo por padrão.
+    // Ele só sobe se a posição inferior realmente invadir a área destacada.
     const onboardingCard=overlay.querySelector(".luria-onboarding-card");
     const placeOnboardingCard=()=>{
       overlay.classList.remove("card-top");
-
-      if(step.forceCardTop){
-        overlay.classList.add("card-top");
-        return;
-      }
-
       if(!onboardingCard || !target) return;
 
-      const targetRect=target.getBoundingClientRect();
-      const cardRect=onboardingCard.getBoundingClientRect();
-      const bottomGap=Math.max(10,window.innerHeight-cardRect.top);
-      const safetyGap=18;
-      const wouldCoverTarget=
-        targetRect.bottom > window.innerHeight-bottomGap-safetyGap
-        && targetRect.top < window.innerHeight-safetyGap;
+      requestAnimationFrame(()=>{
+        const targetRect=target.getBoundingClientRect();
+        const cardRect=onboardingCard.getBoundingClientRect();
+        const safetyGap=16;
 
-      if(wouldCoverTarget){
-        overlay.classList.add("card-top");
-      }
+        const overlapsTarget=
+          cardRect.left < targetRect.right + safetyGap
+          && cardRect.right > targetRect.left - safetyGap
+          && cardRect.top < targetRect.bottom + safetyGap
+          && cardRect.bottom > targetRect.top - safetyGap;
+
+        if(overlapsTarget){
+          overlay.classList.add("card-top");
+        }
+      });
     };
 
-    requestAnimationFrame(placeOnboardingCard);
+    placeOnboardingCard();
 
     overlay.querySelector("[data-onboarding-skip]").onclick=()=>finish(true);
     overlay.querySelector("[data-onboarding-back]").onclick=()=>move(-1);
@@ -1556,6 +1554,27 @@
       <div class="luria-onboarding-actions"><button type="button" data-guide-close>Fechar</button><div><button type="button" data-guide-back ${questionsGuideIndex===0?"disabled":""}>Voltar</button><button type="button" class="primary" data-guide-next>${questionsGuideIndex===QUESTIONS_GUIDE.length-1?"Concluir":"Próximo"}</button></div></div>
     </section>`;
     document.body.appendChild(overlay);
+
+    // No Guia de Simulados vale a mesma regra do onboarding:
+    // manter o card embaixo e movê-lo para cima somente se cobrir o alvo.
+    const guideCard=overlay.querySelector(".luria-onboarding-card");
+    const positionGuideCard=()=>{
+      overlay.classList.remove("card-top");
+      if(!guideCard || !target) return;
+      requestAnimationFrame(()=>{
+        const targetRect=target.getBoundingClientRect();
+        const cardRect=guideCard.getBoundingClientRect();
+        const safetyGap=16;
+        const overlapsTarget=
+          cardRect.left < targetRect.right + safetyGap
+          && cardRect.right > targetRect.left - safetyGap
+          && cardRect.top < targetRect.bottom + safetyGap
+          && cardRect.bottom > targetRect.top - safetyGap;
+        if(overlapsTarget) overlay.classList.add("card-top");
+      });
+    };
+    positionGuideCard();
+
     overlay.querySelector("[data-guide-close]").onclick=clearOverlay;
     overlay.querySelector("[data-guide-back]").onclick=()=>{questionsGuideIndex=Math.max(0,questionsGuideIndex-1);renderQuestionsGuide();};
     overlay.querySelector("[data-guide-next]").onclick=()=>{if(questionsGuideIndex>=QUESTIONS_GUIDE.length-1){clearOverlay();return;}questionsGuideIndex++;renderQuestionsGuide();};
