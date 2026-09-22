@@ -1740,8 +1740,9 @@
     const qualityLabel = value => {
       if (value == null) return "Sem nota";
       const n = Number(value);
-      if (n >= 95) return "Excelente";
-      if (n >= 90) return "Aprovado";
+      if (n >= 98) return "Excelente";
+      if (n >= 95) return "Aprovado";
+      if (n >= 90) return "Quase lá · revisar";
       if (n >= 80) return "Bom · revisar";
       if (n >= 70) return "Atenção";
       return "Crítico";
@@ -1951,7 +1952,7 @@ REGRAS GERAIS
 - Trabalhe sempre com question_id imutável.
 - O formato canônico entre IAs e backend é JSON.
 - Não use Excel como formato máquina-a-máquina.
-- Corte mínimo de qualidade: 90/100.
+- Corte mínimo de qualidade: 95/100.
 - Mesmo com nota >=90, hard fail impede aprovação.
 - Hard fails incluem: gabarito divergente, duas alternativas defensáveis, ambiguidade relevante, conduta potencialmente perigosa, dose/ponto de corte incorreto, fonte inexistente, fonte que não sustenta o gabarito, recomendação desatualizada ou questão reconhecível como cópia.
 - Toda questão precisa de fonte específica do gabarito.
@@ -2032,13 +2033,13 @@ PESOS RECOMENDADOS
 
 APROVAÇÃO
 approved somente se:
-quality_score >= 90
+quality_score >= 95
 AND hard_fail=false
 AND ambiguity=false
 AND single_best_answer=true
 AND answer_source_issue=null.
 
-Abaixo de 90 = needs_revision.
+Abaixo de 95 = needs_revision.
 Erro estrutural grave/irrecuperável = rejected.
 
 SAÍDA JSON EXATA
@@ -2140,7 +2141,7 @@ TAREFA
 Reaudite APENAS as questões corrigidas na versão mais recente.
 Ignore o parecer anterior como autoridade: resolva novamente.
 Confira novamente a fonte específica do gabarito.
-Use o mesmo corte >=90 e os mesmos hard fails.
+Use o mesmo corte >=95 e os mesmos hard fails.
 
 SAÍDA JSON
 {
@@ -2175,7 +2176,7 @@ SAÍDA JSON
   ]
 }
 
-O resultado será importado novamente no Supabase. Só depois que as 200 estiverem machine-approved o Admin deve liberar a aprovação humana do bloco.`;
+O resultado será importado novamente no Supabase. Só depois que as 200 estiverem com quality_score >=95, sem hard fail e machine-approved o Admin deve liberar a aprovação humana do bloco.`;
 
     if (stage === "lot_chatgpt_final") return `PROMPT DE SEGMENTO 6A — REVISÃO FINAL CHATGPT DO LOTE DE 1.000
 ${common}
