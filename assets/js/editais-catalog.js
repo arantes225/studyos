@@ -5,6 +5,9 @@
   let loaded = false;
   let loadingPromise = null;
   let rows = [];
+  let pendingEnamedRow = null;
+  let pendingEnamedButton = null;
+  let cutoffOptionsLoaded = false;
 
   const $ = (id) => document.getElementById(id);
 
@@ -37,6 +40,235 @@
     if (row.edital_url) return "available";
     if (/breve/i.test(String(row.status_text || ""))) return "soon";
     return "monitoring";
+  }
+
+
+  function isEnamedOrEnare(row) {
+    const haystack = [
+      row?.institution,
+      row?.board,
+      row?.status_text
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    return /\b(?:ENAMED|ENARE)\b/i.test(haystack);
+  }
+
+  async function ensureCutoffOptions() {
+    if (cutoffOptionsLoaded) return;
+
+    const { data, error } = await sb.rpc("get_enare_cutoff_options");
+    if (error) throw error;
+
+    const hospitals = Array.isArray(data?.hospitals) ? data.hospitals : [];
+    const specialties = Array.isArray(data?.specialties) ? data.specialties : [];
+
+    const hospitalList = $("enamed-hospital-options");
+    const specialtyList = $("enamed-specialty-options");
+
+    if (hospitalList) {
+      hospitalList.innerHTML = hospitals
+        .map((value) => `<option value="${escapeHtml(value)}"></option>`)
+        .join("");
+    }
+
+    if (specialtyList) {
+      specialtyList.innerHTML = specialties
+        .map((value) => `<option value="${escapeHtml(value)}"></option>`)
+        .join("");
+    }
+
+    cutoffOptionsLoaded = true;
+  }
+
+  function closeEnamedDialog() {
+    $("enamed-target-dialog")?.close();
+    pendingEnamedRow = null;
+    pendingEnamedButton = null;
+  }
+
+  async function addCatalogExam(row, button, extra = {}) {
+    button.disabled = true;
+    const original = button.dataset.originalLabel || button.textContent;
+    button.dataset.originalLabel = original;
+    button.textContent = "Adicionando...";
+
+    try {
+      const { data: existing, error: lookupError } = await sb
+        .from("exams")
+        .select("id")
+        .eq("institution", row.institution)
+        .limit(1)
+        .maybeSingle();
+
+      if (lookupError) throw lookupError;
+
+      if (existing?.id) {
+        button.textContent = "Já adicionada";
+        return true;
+      }
+
+      const { error } = await sb
+        .from("exams")
+        .insert({
+          user_id: window.docmapUser.id,
+          institution: row.institution,
+          board: row.board || null,
+          exam_date: row.exam_date || null,
+          registration_deadline: row.registration_end || null,
+          fee: row.fee ?? null,
+          notes: "Importado automaticamente da Central de editais.",
+          status: "planned",
+          edital_url: row.edital_url || null,
+          registration_url: row.registration_url || null,
+          target_specialty: extra.target_specialty || null,
+          target_hospital: extra.target_hospital || null,
+          cutoff_history: Array.isArray(extra.cutoff_history)
+            ? extra.cutoff_history
+            : []
+        });
+
+      if (error) throw error;
+
+      button.textContent = "Adicionada";
+
+      if (typeof window.loadExams === "function") {
+        await window.loadExams();
+      }
+
+      if (typeof window.loadExamMetrics === "function") {
+        await window.loadExamMetrics();
+      }
+
+      if (typeof window.refreshExamV16 === "function") {
+        await window.refreshExamV16();
+      }
+
+      return true;
+    } catch (error) {
+      console.error(error);
+      button.disabled = false;
+      button.textContent = original;
+      window.LuriaDialog?.alert?.("Não foi possível adicionar este edital às suas provas.");
+      return false;
+    }
+  }
+
+  async function openEnamedDialog(row, button) {
+    pendingEnamedRow = row;
+    pendingEnamedButton = button;
+
+    const hospital = $("enamed-target-hospital");
+    const specialty = $("enamed-target-specialty");
+    const status = $("enamed-target-status");
+
+    if (hospital) hospital.value = "";
+    if (specialty) specialty.value = "";
+    if (status) {
+      status.textContent = "";
+      status.className = "enamed-target-status";
+    }
+
+    $("enamed-target-dialog")?.showModal();
+
+    try {
+      await ensureCutoffOptions();
+    } catch (error) {
+      console.warn("Não foi possível carregar as sugestões de ENARE:", error);
+    }
+
+    requestAnimationFrame(() => specialty?.focus());
+  }
+
+  async function submitEnamedTarget(event) {
+    event.preventDefault();
+
+    const row = pendingEnamedRow;
+    const button = pendingEnamedButton;
+    const hospital = $("enamed-target-hospital")?.value.trim() || "";
+    const specialty = $("enamed-target-specialty")?.value.trim() || "";
+    const submit = $("enamed-target-submit");
+    const status = $("enamed-target-status");
+
+    if (!row || !button) {
+      closeEnamedDialog();
+      return;
+    }
+
+    if (!specialty || !hospital) {
+      if (status) {
+        status.textContent = "Informe a especialidade pretendida e o hospital.";
+        status.className = "enamed-target-status error";
+      }
+      return;
+    }
+
+    if (submit) {
+      submit.disabled = true;
+      submit.textContent = "Buscando notas...";
+    }
+
+    if (status) {
+      status.textContent = "Buscando histórico de notas de corte...";
+      status.className = "enamed-target-status";
+    }
+
+    try {
+      const { data, error } = await sb.rpc("search_enare_cutoffs", {
+        p_hospital: hospital,
+        p_specialty: specialty
+      });
+
+      if (error) throw error;
+
+      const historyRaw = Array.isArray(data?.history) ? data.history : [];
+
+      if (!historyRaw.length) {
+        if (status) {
+          status.textContent =
+            "Não encontrei notas para essa combinação. Confira o nome da especialidade e do hospital.";
+          status.className = "enamed-target-status error";
+        }
+        return;
+      }
+
+      const history = historyRaw
+        .map((item) => ({
+          year: String(item.year || ""),
+          score: Number(item.score) / 10
+        }))
+        .filter((item) =>
+          item.year &&
+          Number.isFinite(item.score) &&
+          item.score >= 0 &&
+          item.score <= 100
+        )
+        .slice(0, 8);
+
+      const added = await addCatalogExam(row, button, {
+        target_specialty: data?.specialty || specialty,
+        target_hospital: data?.hospital || hospital,
+        cutoff_history: history
+      });
+
+      if (added) {
+        $("enamed-target-dialog")?.close();
+        pendingEnamedRow = null;
+        pendingEnamedButton = null;
+      }
+    } catch (error) {
+      console.error(error);
+      if (status) {
+        status.textContent = "Não foi possível buscar as notas de corte agora.";
+        status.className = "enamed-target-status error";
+      }
+    } finally {
+      if (submit) {
+        submit.disabled = false;
+        submit.textContent = "Buscar notas e adicionar";
+      }
+    }
   }
 
   function filteredRows() {
@@ -149,56 +381,12 @@
         const row = rows.find((item) => item.id === button.dataset.catalogAdd);
         if (!row || !window.docmapUser?.id) return;
 
-        button.disabled = true;
-        const original = button.textContent;
-        button.textContent = "Adicionando...";
-
-        try {
-          const { data: existing, error: lookupError } = await sb
-            .from("exams")
-            .select("id")
-            .eq("institution", row.institution)
-            .limit(1)
-            .maybeSingle();
-
-          if (lookupError) throw lookupError;
-
-          if (existing?.id) {
-            button.textContent = "Já adicionada";
-            return;
-          }
-
-          const { error } = await sb
-            .from("exams")
-            .insert({
-              user_id: window.docmapUser.id,
-              institution: row.institution,
-              board: row.board || null,
-              exam_date: row.exam_date || null,
-              registration_deadline: row.registration_end || null,
-              fee: row.fee ?? null,
-              notes: "Importado automaticamente da Central de editais.",
-              status: "planned",
-              edital_url: row.edital_url || null,
-              registration_url: row.registration_url || null
-            });
-
-          if (error) throw error;
-
-          button.textContent = "Adicionada";
-
-          if (typeof window.loadExams === "function") {
-            await window.loadExams();
-          }
-          if (typeof window.loadExamMetrics === "function") {
-            await window.loadExamMetrics();
-          }
-        } catch (error) {
-          console.error(error);
-          button.disabled = false;
-          button.textContent = original;
-          window.LuriaDialog?.alert?.("Não foi possível adicionar este edital às suas provas.");
+        if (isEnamedOrEnare(row)) {
+          await openEnamedDialog(row, button);
+          return;
         }
+
+        await addCatalogExam(row, button);
       });
     });
   }
@@ -272,6 +460,10 @@
   }
 
   window.loadLuriaExamCatalog = loadCatalog;
+
+  $("enamed-target-form")?.addEventListener("submit", submitEnamedTarget);
+  $("enamed-target-close")?.addEventListener("click", closeEnamedDialog);
+  $("enamed-target-cancel")?.addEventListener("click", closeEnamedDialog);
 
   $("catalog-search")?.addEventListener("input", renderCatalog);
   $("catalog-uf")?.addEventListener("change", renderCatalog);
