@@ -16,7 +16,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/logos/favicon.png?v=luria7">
   <link rel="stylesheet" href="assets/css/style.css?v=16.6">
-  <link rel="stylesheet" href="assets/css/admin.css?v=3.4">
+  <link rel="stylesheet" href="assets/css/admin.css?v=3.5">
   <link rel="stylesheet" href="assets/css/admin-editais.css?v=3">
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=14">
   <link rel="canonical" href="/admin/">
@@ -120,7 +120,31 @@
             Editais
             <span id="admin-editais-pending-badge" class="admin-tab-badge" hidden>0</span>
           </button>
+          <button class="admin-view-tab" type="button" data-admin-view-tab="plans" aria-selected="false">
+            Planos
+          </button>
         </nav>
+
+        <section class="admin-section admin-plan-settings" data-admin-view="plans" hidden>
+          <div class="admin-section-head">
+            <div>
+              <span class="eyebrow">Configurações de planos</span>
+              <h2>Permissões e limites</h2>
+              <p>Defina o que cada tipo de cliente pode usar. Alterações passam a valer na próxima atualização dos entitlements do usuário.</p>
+            </div>
+            <button id="admin-save-plan-features" class="button primary" type="button">
+              Salvar permissões
+            </button>
+          </div>
+
+          <div id="admin-plan-features-status" class="admin-plan-features-status" aria-live="polite"></div>
+
+          <div class="admin-plan-features-wrap">
+            <div id="admin-plan-features-grid" class="admin-plan-features-grid">
+              <div class="admin-plan-features-loading">Carregando permissões...</div>
+            </div>
+          </div>
+        </section>
 
         <section class="admin-section admin-editais-section" data-admin-view="editais" hidden>
           <div class="admin-section-head">
@@ -1146,9 +1170,9 @@ Prefira fonte primária/oficial atual.</pre>
 
   <script src="/assets/vendor/supabase-2.110.6.js"></script>
   <script src="assets/js/supabase.js"></script>
-  <script src="assets/js/app.js?v=17.2"></script>
+  <script src="assets/js/app.js?v=17.3"></script>
   <script src="assets/js/admin-editais.js?v=3"></script>
-  <script src="assets/js/admin.js?v=3.6"></script>
+  <script src="assets/js/admin.js?v=3.7"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
