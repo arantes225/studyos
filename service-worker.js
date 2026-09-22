@@ -1,4 +1,4 @@
-const CACHE_VERSION = "luria-pwa-v93";
+const CACHE_VERSION = "luria-pwa-v94";
 const STATIC_CACHE = CACHE_VERSION + "-static";
 const RUNTIME_CACHE = CACHE_VERSION + "-runtime";
 
@@ -9,10 +9,9 @@ const APP_SHELL = [
   "/",
   "/index.html",
   "/manifest.webmanifest?v=4",
-  "/assets/img/logo-icone-original.png?v=pwa4",
+  "/assets/img/logos/logo-icone-original.png?v=pwa4",
   "/login/",
   "/dashboard/",
-  "/amigos/",
   "/assets/css/style.css?v=16.4",
   "/assets/css/landing.css",
   "/assets/css/pwa-mobile.css?v=13",
@@ -23,36 +22,7 @@ const APP_SHELL = [
   "/assets/css/onboarding.css?v=1.9",
   "/assets/js/storage-router.js?v=1.0.0",
   "/assets/js/pwa.js",
-  "/assets/css/amigos.css?v=35",
-  "/assets/js/studyrats.js?v=29",
-  "/assets/img/studyrats/ratinhos/ratinho_verde_radioativo.webp?v=16",
-  "/assets/img/studyrats/ratinhos/ratinho_laranja.webp?v=16",
-  "/assets/img/studyrats/ratinhos/ratinho_tigrado.webp?v=16",
-  "/assets/img/studyrats/ratinhos/ratinho_rosa_choque.webp?v=16",
-  "/assets/img/studyrats/ratinhos/ratinho_marrom.webp?v=16",
-  "/assets/img/studyrats/ratinhos/ratinho_branco.webp?v=16",
-  "/assets/img/studyrats/ratinhos/ratinho_preto.webp?v=16",
-  "/assets/img/studyrats/ratinhos/ratinho_cinza.webp?v=16",
-  "/assets/img/studyrats/ratinhos/ratinho_azul.webp?v=16",
-  "/assets/img/studyrats/ratinhos/ratinho_lavanda_manchado.webp?v=16",
-  "/assets/img/studyrats/acessórios/cabeça/cabeça/colorful-cap.webp?v=16",
-  "/assets/img/studyrats/acessórios/cabeça/cabeça/cowboy-hat.webp?v=16",
-  "/assets/img/studyrats/acessórios/cabeça/cabeça/crown.webp?v=16",
-  "/assets/img/studyrats/acessórios/cabeça/cabeça/gamer-headset.webp?v=17",
-  "/assets/img/studyrats/acessórios/cabeça/cabeça/magic-top-hat.webp?v=16",
-  "/assets/img/studyrats/acessórios/cabeça/cabeça/mouse-ears-headband.webp?v=16",
-  "/assets/img/studyrats/acessórios/cabeça/cabeça/pink-bow-hat.webp?v=16",
-  "/assets/img/studyrats/acessórios/cabeça/cabeça/santa-hat.webp?v=16",
-  "/assets/img/studyrats/acessórios/cabeça/cabeça/unicorn-headband.webp?v=16",
-  "/assets/img/studyrats/acessórios/cabeça/cabeça/viking-helmet.webp?v=16",
-  "/assets/img/studyrats/acessórios/cabeça/cabeça/wizard-hat.webp?v=16",
-  "/assets/img/studyrats/acessórios/rosto/cyberpunk-visor.webp?v=16",
-  "/assets/img/studyrats/acessórios/rosto/pink-round-glasses.webp?v=16",
-  "/assets/img/studyrats/acessórios/rosto/round-nerd-glasses.webp?v=16",
-  "/assets/img/studyrats/acessórios/costas/angel-wings.webp?v=16",
-  "/assets/img/studyrats/acessórios/atras/atras/rocket-flame.webp?v=16",
-  "/assets/img/studyrats/acessórios/atras/capacete-astronauta.png?v=16",
-  "/assets/img/logo-principal.png",
+  "/assets/img/logos/logo-principal.png",
 ];
 
 self.addEventListener("install", (event) => {
