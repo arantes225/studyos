@@ -3244,3 +3244,34 @@ body.admin-unlocked #admin-app {
   .admin-plan-settings .admin-section-head{align-items:stretch;flex-direction:column}
   #admin-save-plan-features{width:100%}
 }
+
+
+.admin-customer-plan-select{
+  min-width:112px;
+  height:34px;
+  padding:0 28px 0 9px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--surface-2);
+  color:var(--text);
+  font:inherit;
+  font-size:9px;
+  font-weight:800;
+  cursor:pointer;
+  transition:border-color .16s ease,box-shadow .16s ease,opacity .16s ease;
+}
+.admin-customer-plan-select:hover,
+.admin-customer-plan-select:focus{
+  border-color:var(--accent);
+  outline:none;
+}
+.admin-customer-plan-select.is-saving{
+  opacity:.55;
+  cursor:wait;
+}
+.admin-customer-plan-select.is-saved{
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent);
+}
+.admin-customer-plan-select.is-error{
+  border-color:var(--danger);
+}
