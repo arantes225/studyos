@@ -1088,7 +1088,8 @@ function wirePreviewEditor() {
 
 
 function setPdfModeState(
-  enabled
+  enabled,
+  preferDeck = false
 ) {
   const dates =
     document.querySelector(
@@ -1100,20 +1101,61 @@ function setPdfModeState(
       'input[name="import-mode"][value="deck"]'
     );
 
-  if (
-    enabled
-    && dates
-  ) {
-    dates.checked =
-      true;
+  if (deck) {
+    // PDFs também podem vir sem datas (por exemplo, cronogramas organizados por blocos).
+    // Nesses casos as aulas devem poder ir diretamente para o Deck.
+    deck.disabled =
+      false;
   }
 
-  if (deck) {
-    deck.disabled =
-      enabled;
+  if (!enabled) {
+    if (dates) {
+      dates.checked =
+        true;
+    }
+
+    return;
+  }
+
+  if (
+    preferDeck
+    && deck
+  ) {
+    deck.checked =
+      true;
   }
 }
 
+
+function syncImportModeToRows(
+  rows
+) {
+  const lessons =
+    (rows || [])
+      .filter(
+        (row) =>
+          row.kind ===
+          "lesson"
+      );
+
+  if (!lessons.length) {
+    return;
+  }
+
+  const hasDatedLesson =
+    lessons.some(
+      (row) =>
+        Boolean(
+          row.date
+        )
+    );
+
+  setPdfModeState(
+    scheduleState.fileType
+      === "pdf",
+    !hasDatedLesson
+  );
+}
 
 function isPdfFile(
   file
@@ -1404,37 +1446,56 @@ function makePdfRow({
   title,
   kind,
   pageNumber,
-  confidence
+  confidence,
+  area = "",
+  materia = "",
+  sourceBlock = null
 }) {
+  const normalizedTitle =
+    cleanText(
+      title
+    );
+
   return {
     rowNumber:
       pageNumber,
 
     sourceLabel:
-      `PDF · pág. ${pageNumber}`,
+      [
+        `PDF · pág. ${pageNumber}`,
+        sourceBlock
+      ]
+        .filter(Boolean)
+        .join(" · "),
 
     sourcePage:
       pageNumber,
+
+    sourceBlock:
+      sourceBlock
+      || null,
 
     date:
       date
       || null,
 
     area:
-      "",
+      cleanText(
+        area
+      ),
 
     materia:
-      "",
+      cleanText(
+        materia
+      ),
 
     theme:
-      cleanText(
-        title
-      ),
+      normalizedTitle,
 
     kind:
       kind
       || classifyScheduleKind(
-        title
+        normalizedTitle
       ),
 
     alreadyDone:
@@ -1451,7 +1512,7 @@ function makePdfRow({
       (
         kind
         || classifyScheduleKind(
-          title
+          normalizedTitle
         )
       ) === "lesson",
 
@@ -1462,7 +1523,6 @@ function makePdfRow({
       []
   };
 }
-
 
 function dedupeParsedRows(
   rows
@@ -2074,6 +2134,499 @@ function parseMonthlyPlannerPage({
 }
 
 
+
+const PDF_COURSE_PRIORITY_WORDS =
+  new Set([
+    "alta",
+    "media",
+    "baixa",
+    "bonus",
+    "diamante"
+  ]);
+
+
+function stripPdfCourseMarker(
+  value
+) {
+  return cleanText(
+    String(
+      value
+      || ""
+    )
+      .replace(
+        /^[▲💎🎁◆♦︎♦\s]+/u,
+        ""
+      )
+      .replace(
+        /\s+\d{1,3}%\s*$/,
+        ""
+      )
+  );
+}
+
+
+function parsePdfCourseBlock(
+  value
+) {
+  const text =
+    stripPdfCourseMarker(
+      value
+    );
+
+  const match =
+    text.match(
+      /\bBloco\s+(\d+)(?:\s*\(\s*(\d+)\s+aulas?\s*\))?/i
+    );
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    number:
+      Number(
+        match[1]
+      ),
+
+    lessonCount:
+      match[2]
+        ? Number(
+            match[2]
+          )
+        : null,
+
+    label:
+      `Bloco ${match[1]}`
+  };
+}
+
+
+function parsePdfCourseArea(
+  value
+) {
+  const raw =
+    stripPdfCourseMarker(
+      value
+    );
+
+  if (!raw) {
+    return null;
+  }
+
+  let normalized =
+    normalizeHeader(
+      raw
+    );
+
+  const parts =
+    normalized.split(
+      " "
+    );
+
+  if (
+    parts.length
+    && PDF_COURSE_PRIORITY_WORDS.has(
+      parts[
+        parts.length - 1
+      ]
+    )
+  ) {
+    parts.pop();
+
+    normalized =
+      parts.join(
+        " "
+      );
+  }
+
+  if (
+    /^clinica medica\b/
+      .test(
+        normalized
+      )
+  ) {
+    return "Clínica Médica";
+  }
+
+  if (
+    /^(?:g\.?\s*o\.?|go|ginecologia(?: e obstetricia)?)\b/
+      .test(
+        normalized
+      )
+  ) {
+    return "Ginecologia e Obstetrícia";
+  }
+
+  if (
+    /^pediatria\b/
+      .test(
+        normalized
+      )
+  ) {
+    return "Pediatria";
+  }
+
+  if (
+    /^preventiva\b/
+      .test(
+        normalized
+      )
+  ) {
+    return "Preventiva";
+  }
+
+  if (
+    /^cirurgia\b/
+      .test(
+        normalized
+      )
+  ) {
+    return "Cirurgia Geral";
+  }
+
+  if (
+    /^(?:1\.)?onboarding\b/
+      .test(
+        normalized
+      )
+  ) {
+    return "Onboarding";
+  }
+
+  return null;
+}
+
+
+function isPdfCourseNoiseLine(
+  value
+) {
+  const text =
+    stripPdfCourseMarker(
+      value
+    );
+
+  const normalized =
+    normalizeHeader(
+      text
+    );
+
+  if (!normalized) {
+    return true;
+  }
+
+  if (
+    normalized.includes(
+      "cronograma - extensivo programado"
+    )
+    || normalized ===
+      "cronograma"
+    || normalized.startsWith(
+      "progresso:"
+    )
+    || normalized.startsWith(
+      "extensivo programado"
+    )
+    || normalized ===
+      "alta media baixa bonus diamante"
+    || normalized ===
+      "estatisticas"
+    || normalized.startsWith(
+      "https://aulas.medcof.com.br/cronograma"
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    /^\d+\/\d+$/
+      .test(
+        normalized
+      )
+    || /^\d{1,3}%$/
+      .test(
+        normalized
+      )
+    || /^\d{1,2}\/\d{1,2}\/\d{2,4}(?:,\s*\d{1,2}:\d{2})?$/
+      .test(
+        normalized
+      )
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+
+function pdfCourseTitleFromSegment(
+  segment
+) {
+  for (
+    const line
+    of segment
+  ) {
+    const text =
+      stripPdfCourseMarker(
+        line.text
+      );
+
+    if (
+      isPdfCourseNoiseLine(
+        text
+      )
+      || parsePdfCourseBlock(
+        text
+      )
+      || parsePdfCourseArea(
+        text
+      )
+    ) {
+      continue;
+    }
+
+    // Linhas do professor neste layout quase sempre carregam 0/2, 1/2 etc.
+    // Não devem virar tema quando uma página começa no meio de um card.
+    if (
+      /\b\d+\s*\/\s*\d+\b/
+        .test(
+          text
+        )
+    ) {
+      continue;
+    }
+
+    const cleaned =
+      cleanText(
+        text.replace(
+          /\s+\d{1,3}%\s*$/,
+          ""
+        )
+      );
+
+    if (
+      cleaned.length
+      < 3
+    ) {
+      continue;
+    }
+
+    return cleaned;
+  }
+
+  return "";
+}
+
+
+function parseBlockCoursePdfPage({
+  tokens,
+  pageNumber,
+  currentBlock = null,
+  pendingLines = []
+}) {
+  const pageLines =
+    groupPdfTokensByY(
+      tokens,
+      4.5
+    )
+      .map(
+        (group) => ({
+          text:
+            pdfLineText(
+              group
+            ),
+
+          x:
+            Math.min(
+              ...group.tokens
+                .map(
+                  (token) =>
+                    token.x
+                )
+            ),
+
+          y:
+            group.y
+        })
+      )
+      .filter(
+        (line) =>
+          !isPdfCourseNoiseLine(
+            line.text
+          )
+      );
+
+  const lines =
+    [
+      ...(pendingLines || []),
+      ...pageLines
+    ];
+
+  const rows =
+    [];
+
+  let block =
+    currentBlock;
+
+  let segmentStart =
+    0;
+
+
+  for (
+    let index = 0;
+    index < lines.length;
+    index += 1
+  ) {
+    const line =
+      lines[
+        index
+      ];
+
+    const detectedBlock =
+      parsePdfCourseBlock(
+        line.text
+      );
+
+    if (
+      detectedBlock
+    ) {
+      block =
+        detectedBlock;
+
+      segmentStart =
+        index + 1;
+
+      continue;
+    }
+
+
+    const area =
+      parsePdfCourseArea(
+        line.text
+      );
+
+    if (!area) {
+      continue;
+    }
+
+
+    const segment =
+      lines.slice(
+        segmentStart,
+        index
+      );
+
+    const title =
+      pdfCourseTitleFromSegment(
+        segment
+      );
+
+
+    if (title) {
+      rows.push(
+        makePdfRow({
+          date:
+            null,
+
+          title,
+
+          kind:
+            classifyScheduleKind(
+              title
+            ),
+
+          pageNumber,
+          confidence:
+            "high",
+
+          area,
+
+          sourceBlock:
+            block?.label
+            || null
+        })
+      );
+    }
+
+
+    segmentStart =
+      index + 1;
+  }
+
+
+  const tail =
+    lines.slice(
+      segmentStart
+    )
+      .filter(
+        (line) =>
+          !parsePdfCourseBlock(
+            line.text
+          )
+          && !parsePdfCourseArea(
+            line.text
+          )
+          && !isPdfCourseNoiseLine(
+            line.text
+          )
+      )
+      .slice(
+        0,
+        8
+      );
+
+
+  return {
+    rows,
+
+    currentBlock:
+      block,
+
+    pendingLines:
+      tail
+  };
+}
+
+
+function looksLikeBlockCoursePdf(
+  text
+) {
+  const source =
+    String(
+      text
+      || ""
+    );
+
+  const normalized =
+    normalizeHeader(
+      source
+    );
+
+  return (
+    /\bBloco\s+\d+(?:\s*\(\s*\d+\s+aulas?\s*\))?/i
+      .test(
+        source
+      )
+    && (
+      normalized.includes(
+        "clinica medica"
+      )
+      || normalized.includes(
+        "pediatria"
+      )
+      || normalized.includes(
+        "preventiva"
+      )
+      || normalized.includes(
+        "cirurgia"
+      )
+      || normalized.includes(
+        "g.o"
+      )
+    )
+  );
+}
+
+
 function parseGenericPdfLines({
   tokens,
   pageNumber
@@ -2229,12 +2782,12 @@ async function parsePdfFile(
         pageNumber
       );
 
-    const content =
+    const pageText =
       await page
         .getTextContent();
 
     firstPagesText.push(
-      content.items
+      pageText.items
         .map(
           (item) =>
             item.str
@@ -2246,9 +2799,19 @@ async function parsePdfFile(
   }
 
 
+  const firstPagesCombined =
+    firstPagesText.join(
+      " "
+    );
+
   const yearRange =
     parseYearRangeText(
-      `${file.name} ${firstPagesText.join(" ")}`
+      `${file.name} ${firstPagesCombined}`
+    );
+
+  const blockCourseDocument =
+    looksLikeBlockCoursePdf(
+      firstPagesCombined
     );
 
 
@@ -2260,6 +2823,15 @@ async function parsePdfFile(
 
   let plannerPages =
     0;
+
+  let blockCoursePages =
+    0;
+
+  let currentCourseBlock =
+    null;
+
+  let pendingCourseLines =
+    [];
 
 
   for (
@@ -2282,6 +2854,35 @@ async function parsePdfFile(
       await extractPdfPageTokens(
         page
       );
+
+
+    if (
+      blockCourseDocument
+    ) {
+      const parsedPage =
+        parseBlockCoursePdfPage({
+          ...pageData,
+          pageNumber,
+          currentBlock:
+            currentCourseBlock,
+          pendingLines:
+            pendingCourseLines
+        });
+
+      rows.push(
+        ...parsedPage.rows
+      );
+
+      currentCourseBlock =
+        parsedPage.currentBlock;
+
+      pendingCourseLines =
+        parsedPage.pendingLines;
+
+      blockCoursePages += 1;
+
+      continue;
+    }
 
 
     const normalizedText =
@@ -2365,7 +2966,9 @@ async function parsePdfFile(
     < 2
   ) {
     throw new Error(
-      "Não consegui reconstruir este PDF automaticamente. Tente Excel/CSV ou outro PDF com texto selecionável."
+      blockCourseDocument
+        ? "Reconheci o formato em blocos, mas não consegui extrair pelo menos duas aulas. Verifique se o PDF possui texto selecionável."
+        : "Não consegui reconstruir este PDF automaticamente. Tente Excel/CSV ou outro PDF com texto selecionável."
     );
   }
 
@@ -2376,14 +2979,26 @@ async function parsePdfFile(
 
     detected: {
       parser:
-        plannerPages
-          ? "monthly-planner"
-          : "generic-pdf",
+        blockCourseDocument
+          ? "block-course-pdf"
+          : plannerPages
+            ? "monthly-planner"
+            : "generic-pdf",
 
       plannerPages,
 
+      blockCoursePages,
+
       pageCount:
         pdf.numPages,
+
+      hasDates:
+        deduped.some(
+          (row) =>
+            Boolean(
+              row.date
+            )
+        ),
 
       startYear:
         yearRange
@@ -2395,7 +3010,6 @@ async function parsePdfFile(
     }
   };
 }
-
 
 async function parseWorkbookFile(
   file
@@ -2591,6 +3205,11 @@ async function parseSelectedFile(
 
     scheduleState.parsedRows =
       result.rows;
+
+
+    syncImportModeToRows(
+      scheduleState.parsedRows
+    );
 
 
     applyDuplicateFlags();
@@ -3040,11 +3659,13 @@ async function confirmImport() {
 
           scheduled_date:
             mode === "dates"
+            && row.date
               ? row.date
               : null,
 
           deck_order:
             mode === "deck"
+            || !row.date
               ? index + 1
               : null,
 
