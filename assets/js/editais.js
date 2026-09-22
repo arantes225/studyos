@@ -33,6 +33,24 @@ const highlightedExamId =
   );
 
 
+function normalizeNationalLabel(
+  value
+) {
+  return String(
+    value ?? ""
+  )
+    .replace(
+      /\bNac\.(?=\s|$)/gi,
+      "Nacional"
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
+    .trim();
+}
+
+
 function examEscape(
   value
 ) {
@@ -759,13 +777,17 @@ function renderExams() {
 
                   <h3>
                     ${examEscape(
-                      exam.institution
+                      normalizeNationalLabel(
+                        exam.institution
+                      )
                     )}
                   </h3>
 
                   <p>
                     ${examEscape(
-                      exam.board
+                      normalizeNationalLabel(
+                        exam.board
+                      )
                       || "Banca não informada"
                     )}
                   </p>
@@ -1394,7 +1416,9 @@ function openExamDialog(
         "exam-institution"
       )
       .value =
-        exam.institution
+        normalizeNationalLabel(
+          exam.institution
+        )
         || "";
 
 
@@ -1403,7 +1427,9 @@ function openExamDialog(
         "exam-board"
       )
       .value =
-        exam.board
+        normalizeNationalLabel(
+          exam.board
+        )
         || "";
 
 
@@ -1538,12 +1564,13 @@ async function saveExam() {
 
 
   const institution =
-    document
-      .getElementById(
-        "exam-institution"
-      )
-      .value
-      .trim();
+    normalizeNationalLabel(
+      document
+        .getElementById(
+          "exam-institution"
+        )
+        .value
+    );
 
 
   if (!institution) {
@@ -1587,12 +1614,13 @@ async function saveExam() {
     institution,
 
     board:
-      document
-        .getElementById(
-          "exam-board"
-        )
-        .value
-        .trim()
+      normalizeNationalLabel(
+        document
+          .getElementById(
+            "exam-board"
+          )
+          .value
+      )
       || null,
 
     status:
