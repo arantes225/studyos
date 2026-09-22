@@ -140,48 +140,73 @@
                 </button>
               ` : ""}
             </div>
+
+            <div class="admin-edital-kebab">
+              <button
+                class="admin-edital-kebab-button"
+                type="button"
+                aria-label="Opções do edital"
+                aria-expanded="false"
+                data-edital-menu-toggle="${esc(item.id)}"
+              >
+                ⋮
+              </button>
+
+              <div
+                class="admin-edital-kebab-menu"
+                data-edital-menu="${esc(item.id)}"
+                hidden
+              >
+                <button type="button" data-edit-edital="${esc(item.id)}">
+                  Editar
+                </button>
+                <button class="danger" type="button" data-delete-edital="${esc(item.id)}">
+                  Apagar
+                </button>
+              </div>
+            </div>
           </div>
 
           <form class="admin-edital-form" data-admin-edital-form="${esc(item.id)}">
             <div class="admin-edital-grid">
               <label class="wide">
                 <span>Instituição</span>
-                <input name="institution" type="text" value="${esc(item.institution || "")}" required>
+                <input name="institution" type="text" value="${esc(item.institution || "")}" required disabled>
               </label>
 
               <label>
                 <span>UF</span>
-                <input name="uf" type="text" maxlength="8" value="${esc(item.uf || "")}">
+                <input name="uf" type="text" maxlength="8" value="${esc(item.uf || "")}" disabled>
               </label>
 
               <label>
                 <span>Banca</span>
-                <input name="board" type="text" value="${esc(item.board || "")}">
+                <input name="board" type="text" value="${esc(item.board || "")}" disabled>
               </label>
 
               <label>
                 <span>Início inscrição</span>
-                <input name="registration_start" type="date" value="${esc(dateValue(item.registration_start))}">
+                <input name="registration_start" type="date" value="${esc(dateValue(item.registration_start))}" disabled>
               </label>
 
               <label>
                 <span>Fim inscrição</span>
-                <input name="registration_end" type="date" value="${esc(dateValue(item.registration_end))}">
+                <input name="registration_end" type="date" value="${esc(dateValue(item.registration_end))}" disabled>
               </label>
 
               <label>
                 <span>Data da prova</span>
-                <input name="exam_date" type="date" value="${esc(dateValue(item.exam_date))}">
+                <input name="exam_date" type="date" value="${esc(dateValue(item.exam_date))}" disabled>
               </label>
 
               <label>
                 <span>Gabarito</span>
-                <input name="answer_key_date" type="date" value="${esc(dateValue(item.answer_key_date))}">
+                <input name="answer_key_date" type="date" value="${esc(dateValue(item.answer_key_date))}" disabled>
               </label>
 
               <label>
                 <span>Taxa</span>
-                <input name="fee" type="number" min="0" step="0.01" value="${esc(moneyValue(item.fee))}">
+                <input name="fee" type="number" min="0" step="0.01" value="${esc(moneyValue(item.fee))}" disabled>
               </label>
 
               <label class="wide">
@@ -191,6 +216,7 @@
                   type="url"
                   value="${esc(item.edital_url || "")}"
                   placeholder="Cole aqui o link que deve aparecer para os usuários"
+                  disabled
                 >
               </label>
 
@@ -201,12 +227,13 @@
                   type="url"
                   value="${esc(item.registration_url || "")}"
                   placeholder="https://..."
+                  disabled
                 >
               </label>
 
               <label class="wide">
                 <span>Observação administrativa</span>
-                <textarea name="admin_notes" rows="2" placeholder="Notas internas; não aparecem para os usuários.">${esc(item.admin_notes || "")}</textarea>
+                <textarea name="admin_notes" rows="2" placeholder="Notas internas; não aparecem para os usuários." disabled>${esc(item.admin_notes || "")}</textarea>
               </label>
             </div>
 
@@ -217,7 +244,7 @@
               </small>
 
               <div class="admin-edital-publish-actions">
-                <button class="button secondary" type="submit">
+                <button class="button secondary" type="submit" data-edit-save hidden>
                   ${pending ? "Salvar e revisar" : "Salvar alterações"}
                 </button>
 
@@ -351,6 +378,81 @@
   });
 
   document.addEventListener("click", async (event) => {
+    const menuToggle = event.target.closest?.("[data-edital-menu-toggle]");
+
+    if (menuToggle) {
+      const id = menuToggle.dataset.editalMenuToggle;
+      const menu = document.querySelector(
+        `[data-edital-menu="${CSS.escape(id)}"]`
+      );
+
+      document.querySelectorAll("[data-edital-menu]").forEach((item) => {
+        if (item !== menu) item.hidden = true;
+      });
+
+      if (menu) {
+        const opening = menu.hidden;
+        menu.hidden = !opening;
+        menuToggle.setAttribute("aria-expanded", opening ? "true" : "false");
+      }
+
+      return;
+    }
+
+    const editButton = event.target.closest?.("[data-edit-edital]");
+
+    if (editButton) {
+      const id = editButton.dataset.editEdital;
+      const form = document.querySelector(
+        `[data-admin-edital-form="${CSS.escape(id)}"]`
+      );
+
+      if (form) {
+        form.querySelectorAll("input, textarea, select").forEach((field) => {
+          field.disabled = false;
+        });
+
+        const save = form.querySelector("[data-edit-save]");
+        if (save) save.hidden = false;
+
+        form.classList.add("editing");
+        form.querySelector("input, textarea, select")?.focus();
+      }
+
+      const menu = document.querySelector(
+        `[data-edital-menu="${CSS.escape(id)}"]`
+      );
+      if (menu) menu.hidden = true;
+
+      return;
+    }
+
+    const deleteButton = event.target.closest?.("[data-delete-edital]");
+
+    if (deleteButton) {
+      const id = deleteButton.dataset.deleteEdital;
+      deleteButton.disabled = true;
+
+      try {
+        const { data, error } = await sb.rpc(
+          "admin_delete_exam_catalog",
+          { p_id: id }
+        );
+
+        if (error || data !== true) {
+          throw error || new Error("Não foi possível apagar.");
+        }
+
+        await load(true);
+      } catch (error) {
+        console.error(error);
+        deleteButton.disabled = false;
+        window.LuriaDialog?.alert?.("Não foi possível apagar o edital.");
+      }
+
+      return;
+    }
+
     const publishButton = event.target.closest?.("[data-publish-edital]");
 
     if (publishButton) {
@@ -368,12 +470,6 @@
         window.LuriaDialog?.alert?.("Informe o link oficial do edital antes de publicar.");
         return;
       }
-
-      const confirmed = await window.LuriaDialog?.confirm?.(
-        `Publicar "${item.institution}" na Central de editais?`
-      );
-
-      if (confirmed === false) return;
 
       publishButton.disabled = true;
       const original = publishButton.textContent;
@@ -409,9 +505,30 @@
     const input = form?.elements?.namedItem("edital_url");
 
     if (item?.source_edital_url && input) {
+      form?.querySelectorAll("input, textarea, select").forEach((field) => {
+        field.disabled = false;
+      });
+
+      const save = form?.querySelector("[data-edit-save]");
+      if (save) save.hidden = false;
+
+      form?.classList.add("editing");
       input.value = item.source_edital_url;
       input.focus();
     }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (
+      event.target.closest?.("[data-edital-menu-toggle]")
+      || event.target.closest?.("[data-edital-menu]")
+    ) {
+      return;
+    }
+
+    document.querySelectorAll("[data-edital-menu]").forEach((menu) => {
+      menu.hidden = true;
+    });
   });
 
   $("admin-editais-search")?.addEventListener("input", render);
