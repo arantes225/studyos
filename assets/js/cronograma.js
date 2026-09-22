@@ -16,6 +16,7 @@ const scheduleState = {
   alreadyDoneTopicId: null,
   themeSearch: "",
   themeAreaFilter: "",
+  themeBlockFilter: "",
   themeDateFrom: "",
   themeDateTo: "",
   themeCompletionFilter: "all",
@@ -63,6 +64,13 @@ const HEADER_ALIASES = {
     "disciplina",
     "subarea",
     "sub area"
+  ],
+
+  bloco: [
+    "bloco",
+    "block",
+    "modulo",
+    "módulo"
   ],
 
   theme: [
@@ -458,6 +466,7 @@ function parseWorkbookRows(matrix, sheetName) {
     date: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.date),
     area: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.area),
     materia: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.materia),
+    bloco: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.bloco),
     theme: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.theme),
     done: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.done),
     studiedDate: findHeaderIndex(normalizedHeaders, HEADER_ALIASES.studiedDate),
@@ -484,6 +493,7 @@ function parseWorkbookRows(matrix, sheetName) {
     const theme = cleanText(getCell(row, indexes.theme));
     const area = cleanText(getCell(row, indexes.area));
     const materia = cleanText(getCell(row, indexes.materia));
+    const bloco = cleanText(getCell(row, indexes.bloco));
 
     const rawDate = getCell(row, indexes.date);
     const rawDone = getCell(row, indexes.done);
@@ -503,6 +513,7 @@ function parseWorkbookRows(matrix, sheetName) {
       !theme &&
       !area &&
       !materia &&
+      !bloco &&
       !cleanText(rawDate) &&
       !cleanText(rawDone) &&
       !cleanText(rawStudiedDate);
@@ -537,6 +548,7 @@ function parseWorkbookRows(matrix, sheetName) {
       date,
       area,
       materia,
+      bloco,
       theme,
       kind,
       alreadyDone,
@@ -1455,6 +1467,7 @@ function makePdfRow({
   confidence,
   area = "",
   materia = "",
+  bloco = "",
   sourceBlock = null
 }) {
   const normalizedTitle =
@@ -1493,6 +1506,13 @@ function makePdfRow({
     materia:
       cleanText(
         materia
+      ),
+
+    bloco:
+      cleanText(
+        bloco
+        || sourceBlock
+        || ""
       ),
 
     theme:
