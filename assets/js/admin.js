@@ -2681,8 +2681,20 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
     }
 
     if (dash) {
-      dash.innerHTML = state.questionStyles.length ? state.questionStyles.map(item => {
+      dash.innerHTML = state.questionStyles.length ? state.questionStyles.map((item,index) => {
         const score = item.style_score == null ? "calibrando" : `${Number(item.style_score).toLocaleString("pt-BR",{maximumFractionDigits:1})}/10`;
+        const slug = String(item.exam_style || `banca-${index+1}`).replace(/[^a-z0-9]/gi,"-").toLowerCase();
+        const masterPromptId = `qf-dashboard-${slug}-master`;
+        const promptStages = [
+          ["01","Prompt mestre · geração",null,"chatgpt"],
+          ["02","ChatGPT · checagem inicial","chatgpt_initial","chatgpt"],
+          ["03","Perplexity · auditoria","perplexity_initial","perplexity"],
+          ["04","ChatGPT · julgar parecer","chatgpt_adjudication","chatgpt"],
+          ["05","ChatGPT · corrigir consenso","chatgpt_correction","chatgpt"],
+          ["06","Perplexity · reauditoria","perplexity_reaudit","perplexity"],
+          ["07A","ChatGPT · revisão global das 1.000","lot_chatgpt_final","chatgpt"],
+          ["07B","Perplexity · auditoria final das 1.000","lot_perplexity_final","perplexity"]
+        ];
         return `
           <article class="admin-qf-style-card">
             <div class="admin-qf-style-card-head">
@@ -2731,6 +2743,35 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
                 <small>Prontas</small>
               </span>
             </div>
+
+            <details class="admin-qf-style-prompts">
+              <summary>
+                <span>Prompts da banca</span>
+                <small>Abrir geração, auditorias e revisões</small>
+              </summary>
+              <div class="admin-qf-style-prompts-body">
+                ${promptStages.map(([num,label,stage,provider]) => {
+                  const pid = stage
+                    ? `qf-dashboard-${slug}-${stage}`
+                    : masterPromptId;
+                  const promptText = stage
+                    ? buildBoardSegmentPrompt(item,stage)
+                    : (item.full_generation_brief || item.generation_instructions || item.recommended_generation_rules || "");
+                  return `
+                    <details class="admin-qf-style-prompt-item">
+                      <summary><b>${esc(num)}</b><span>${esc(label)}</span></summary>
+                      <div>
+                        <div class="admin-qf-style-prompt-actions">
+                          <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Copiar</button>
+                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>
+                        </div>
+                        <pre id="${esc(pid)}" class="admin-qf-prompt">${esc(promptText)}</pre>
+                      </div>
+                    </details>
+                  `;
+                }).join("")}
+              </div>
+            </details>
           </article>
         `;
       }).join("") : '<div class="admin-factory-empty-wide">Nenhum perfil de banca configurado.</div>';
@@ -3222,18 +3263,20 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
       });
     });
 
-    $("admin-qf-style-manual")?.addEventListener("click", async event => {
-      const copy = event.target.closest("[data-inline-prompt].admin-qf-copy-inline");
-      if (copy) {
-        const target = $(copy.dataset.inlinePrompt);
-        if (target) await copyAdminPrompt(copy.dataset.inlinePrompt, copy);
-        return;
-      }
-      const ai = event.target.closest("[data-inline-prompt].admin-qf-ai-inline");
-      if (ai) {
-        const target = $(ai.dataset.inlinePrompt);
-        if (target) await copyAndOpenAI(target.textContent || "", ai.dataset.aiProvider, ai);
-      }
+    ["admin-qf-style-dashboard","admin-qf-style-manual"].forEach(containerId => {
+      $(containerId)?.addEventListener("click", async event => {
+        const copy = event.target.closest("[data-inline-prompt].admin-qf-copy-inline");
+        if (copy) {
+          const target = $(copy.dataset.inlinePrompt);
+          if (target) await copyAdminPrompt(copy.dataset.inlinePrompt, copy);
+          return;
+        }
+        const ai = event.target.closest("[data-inline-prompt].admin-qf-ai-inline");
+        if (ai) {
+          const target = $(ai.dataset.inlinePrompt);
+          if (target) await copyAndOpenAI(target.textContent || "", ai.dataset.aiProvider, ai);
+        }
+      });
     });
 
     $("admin-qf-bad-open")?.addEventListener("click", async () => {
