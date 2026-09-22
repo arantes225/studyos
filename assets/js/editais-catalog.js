@@ -165,6 +165,7 @@
             .from("exams")
             .select("id")
             .eq("institution", row.institution)
+            .limit(1)
             .maybeSingle();
 
           if (lookupError) throw lookupError;
