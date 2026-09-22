@@ -3177,7 +3177,15 @@ function essentialEntitlementsFallback() {
       questions: { enabled: false, limit: 0 },
       question_import: { enabled: false, limit: 0 },
       simulations: { enabled: false, limit: 0 },
+      statistics_general: { enabled: true, limit: null },
       advanced_statistics: { enabled: false, limit: 0 },
+      notebook_images: { enabled: false, limit: 0 },
+      error_notebook_images: { enabled: false, limit: 0 },
+      flashcard_images: { enabled: false, limit: 0 },
+      studyrats_accessories: { enabled: false, limit: 0 },
+      studyrats_variants: { enabled: false, limit: 1 },
+      automatic_schedule: { enabled: false, limit: 0 },
+      automatic_questions: { enabled: false, limit: 0 },
       ai: { enabled: false, limit: 0 }
     }
   };
