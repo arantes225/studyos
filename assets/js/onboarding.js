@@ -1530,6 +1530,17 @@
   function renderQuestionsGuide(){
     clearOverlay(); ensureStyles();
     const step=QUESTIONS_GUIDE[questionsGuideIndex];
+
+    // A partir de "Automático ou manual", o guia deve acontecer dentro
+    // da própria tela "Adicionar simulado", para que os controles
+    // destacados estejam visíveis e no contexto correto.
+    if(step.title==="Automático ou manual"){
+      const addTab=document.querySelector('[data-qs-mode="add"]');
+      if(addTab && !addTab.classList.contains("active")){
+        addTab.click();
+      }
+    }
+
     const target=resolveTarget(step.target)||document.querySelector(".main")||document.body;
     target.scrollIntoView({behavior:"smooth",block:"center"});
     target.classList.add("luria-onboarding-target");
