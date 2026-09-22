@@ -668,3 +668,23 @@
 .studyrats-preview-composite .accessory-astronaut-helmet{
   width:26.52px!important;height:24.48px!important;left:41px!important;top:14px!important;
 }
+
+
+/* Studyrats — ajuste manual do acessório no preview */
+.studyrats-preview-composite>.studyrats-accessory-img{
+  cursor:grab!important;
+  touch-action:none!important;
+  user-select:none!important;
+  -webkit-user-drag:none!important;
+}
+.studyrats-preview-composite>.studyrats-accessory-img.is-dragging{
+  cursor:grabbing!important;
+}
+.studyrats-preview-drag-hint{
+  display:block;
+  margin-top:6px;
+  color:var(--muted);
+  font-size:8px;
+  font-weight:700;
+  text-align:center;
+}
