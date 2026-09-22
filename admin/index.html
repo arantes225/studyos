@@ -16,7 +16,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/logos/favicon.png?v=luria7">
   <link rel="stylesheet" href="assets/css/style.css?v=16.6">
-  <link rel="stylesheet" href="assets/css/admin.css?v=3.2">
+  <link rel="stylesheet" href="assets/css/admin.css?v=3.3">
   <link rel="stylesheet" href="assets/css/admin-editais.css?v=3">
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=14">
   <link rel="canonical" href="/admin/">
@@ -325,20 +325,6 @@
             </div>
           </div>
 
-          <section class="admin-qf-block-tracker-panel" aria-labelledby="admin-qf-block-tracker-title">
-            <div class="admin-qf-block-tracker-head">
-              <div>
-                <span class="eyebrow">Acompanhamento operacional</span>
-                <strong id="admin-qf-block-tracker-title">Blocos em produção</strong>
-                <small>Banca, fase atual, fidelidade, confiabilidade e o próximo prompt operacional.</small>
-              </div>
-              <span id="admin-qf-block-tracker-count">0 blocos</span>
-            </div>
-            <div id="admin-qf-block-tracker" class="admin-qf-block-tracker">
-              <div class="admin-factory-empty-wide">Carregando blocos...</div>
-            </div>
-          </section>
-
           <section class="admin-qf-bad-folder" aria-labelledby="admin-qf-bad-title">
             <div class="admin-qf-bad-folder-head">
               <div>
@@ -373,6 +359,22 @@
             </div>
             <span>200 × 5 = 1.000</span>
           </div>
+        </section>
+
+        <section class="admin-section admin-qf-block-tracker-section" data-admin-view="factory" aria-labelledby="admin-qf-block-tracker-title">
+          <section class="admin-qf-block-tracker-panel">
+            <div class="admin-qf-block-tracker-head">
+              <div>
+                <span class="eyebrow">Acompanhamento operacional</span>
+                <strong id="admin-qf-block-tracker-title">Blocos em produção</strong>
+                <small>Banca, fase atual, fidelidade, confiabilidade e o próximo prompt operacional.</small>
+              </div>
+              <span id="admin-qf-block-tracker-count">0 blocos</span>
+            </div>
+            <div id="admin-qf-block-tracker" class="admin-qf-block-tracker">
+              <div class="admin-factory-empty-wide">Carregando blocos...</div>
+            </div>
+          </section>
         </section>
 
         <section class="admin-section admin-qf-manual admin-qf-manual-pro" data-admin-view="factory" aria-labelledby="admin-qf-manual-title">
@@ -420,7 +422,7 @@
             <div class="admin-factory-empty-wide">Carregando perfis editoriais...</div>
           </div>
 
-          <details class="admin-qf-manual-card admin-qf-science-card" open>
+          <details class="admin-qf-manual-card admin-qf-science-card">
             <summary>Base científica por área — de onde tirar o conteúdo</summary>
             <div class="admin-qf-science-intro">
               <strong>Hierarquia padrão</strong>
@@ -438,7 +440,7 @@
             </div>
           </details>
 
-          <details class="admin-qf-manual-card" open>
+          <details class="admin-qf-manual-card">
             <summary>Como transformar uma prova anterior em perfil — sem copiar questão</summary>
             <div class="admin-qf-method-grid">
               <article><strong>1. Amostra</strong><p>Usar preferencialmente 2–3 provas públicas recentes da banca e o edital/matriz vigente. Registrar anos analisados.</p></article>
@@ -1140,7 +1142,7 @@ Prefira fonte primária/oficial atual.</pre>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=17.0"></script>
   <script src="assets/js/admin-editais.js?v=3"></script>
-  <script src="assets/js/admin.js?v=3.5"></script>
+  <script src="assets/js/admin.js?v=3.6"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
