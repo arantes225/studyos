@@ -135,12 +135,74 @@ Prioridade:
 
 Temas prioritários: princípios e organização do SUS, APS/RAS, epidemiologia, bioestatística aplicada, vigilância, notificação compulsória, investigação de surtos, imunização, saúde do trabalhador, promoção/prevenção, equidade, determinantes sociais, gestão e segurança do paciente.
 
+## 5A. Perfil de prova / estilo editorial
+
+Cada questão deve ter um campo separado `exam_style`. Esse campo representa o estilo da banca/prova, não a fonte científica.
+
+Exemplos:
+- ENAMED
+- ENARE
+- SES-DF
+- SUS-SP
+- REVALIDA
+- RESIDÊNCIA-GERAL
+- OUTRO
+
+### Como calibrar um estilo
+
+Para cada banca, usar preferencialmente as provas públicas mais recentes disponíveis e o edital/matriz vigente como amostra de calibração. O objetivo é extrair CARACTERÍSTICAS EDITORIAIS, não reutilizar o conteúdo das questões.
+
+Mapear e registrar:
+1. tamanho médio e distribuição do comprimento dos enunciados;
+2. proporção de casos clínicos versus perguntas diretas;
+3. profundidade média de raciocínio;
+4. peso relativo de diagnóstico, conduta, prevenção, urgência, seguimento e epidemiologia;
+5. número de etapas cognitivas exigidas;
+6. padrão de distratores (plausibilidade, proximidade conceitual, armadilhas comuns);
+7. nível médio de dificuldade;
+8. frequência de dados laboratoriais, exames de imagem descritos e sinais vitais;
+9. uso de contexto de APS/SUS/hospital/urgência;
+10. temas e subtemas mais incidentes;
+11. extensão média das alternativas;
+12. grau de literalidade de diretrizes versus integração clínica;
+13. terminologia e estilo de redação;
+14. distribuição entre áreas.
+
+O perfil deve ser recalibrado quando novas provas relevantes forem publicadas.
+
+### Regra de geração por estilo
+
+Ao gerar uma questão com `exam_style = SUS-SP`, por exemplo, a IA deve:
+- usar o perfil estatístico/editorial extraído das provas recentes do SUS-SP;
+- reproduzir aproximadamente comprimento, profundidade, dificuldade e tipo de raciocínio;
+- manter quatro alternativas apenas quando esse for o formato-alvo definido para o banco;
+- usar conteúdo científico autoral e atual;
+- nunca copiar, adaptar de forma reconhecível ou reconstruir uma questão original da banca.
+
+A mesma regra vale para SES-DF, ENARE, ENAMED, Revalida e outros perfis.
+
+### Separação obrigatória
+
+`exam_style` controla a FORMA.
+As referências científicas controlam o CONTEÚDO.
+
+Exemplo:
+- exam_style: SUS-SP
+- área: Clínica Médica
+- tema: Insuficiência Cardíaca
+- fonte científica: Diretriz SBC vigente
+- perfil editorial: SUS-SP calibrado com provas recentes
+
+Assim, uma mesma competência clínica pode originar questões diferentes nos estilos ENAMED, SUS-SP ou SES-DF sem alterar a base científica.
+
 ## 6. Prompt mestre — geração de bloco de 200
 
 Você é o GERADOR EDITORIAL de questões médicas autorais do LURIA/StudyOS.
 
 TAREFA:
-Produza um bloco de 200 questões inéditas de Medicina alinhadas à Matriz de Referência Comum do ENAMED e às fontes brasileiras indicadas no catálogo editorial.
+Produza um bloco de 200 questões inéditas de Medicina usando o perfil de prova solicitado e as fontes brasileiras indicadas no catálogo editorial.
+
+Antes de gerar, leia o perfil editorial correspondente em exam_style. Use as provas públicas mais recentes daquela banca apenas para calibrar forma, comprimento, profundidade, dificuldade, incidência temática e padrão de distratores. Não copie nem reconstrua questões originais.
 
 REGRAS OBRIGATÓRIAS:
 1. Não copie nem parafraseie de forma reconhecível questões de provas anteriores ou bancos comerciais.
