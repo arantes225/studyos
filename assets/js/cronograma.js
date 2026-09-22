@@ -917,6 +917,20 @@ function renderPreview() {
 
             <td>
               <input
+                class="preview-input"
+                type="text"
+                value="${escapeScheduleHtml(
+                  row.bloco
+                  || ""
+                )}"
+                placeholder="Opcional"
+                data-preview-field="bloco"
+                data-preview-index="${index}"
+              >
+            </td>
+
+            <td>
+              <input
                 class="preview-input title-input"
                 type="text"
                 value="${escapeScheduleHtml(
@@ -3520,6 +3534,10 @@ async function insertAlreadyDoneRow(
           row.materia
           || null,
 
+        bloco:
+          row.bloco
+          || null,
+
         theme:
           row.theme,
 
@@ -3710,6 +3728,10 @@ async function confirmImport() {
             row.materia
             || null,
 
+          bloco:
+            row.bloco
+            || null,
+
           theme:
             row.theme,
 
@@ -3804,6 +3826,10 @@ async function confirmImport() {
 
           materia:
             row.materia
+            || null,
+
+          bloco:
+            row.bloco
             || null,
 
           source:
