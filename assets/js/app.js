@@ -387,7 +387,7 @@ function sidebarMarkup(user, profile = null) {
         <img
           id="luria-brand-logo"
           class="brand-logo-single luria-theme-logo"
-          src="/assets/img/logo-icone-original.png?v=luria10"
+          src="/assets/img/logos/logo-icone-original.png?v=luria10"
           alt="Logo LURIA"
         >
 
@@ -440,7 +440,7 @@ function sidebarMarkup(user, profile = null) {
 
       <a class="nav-link ${page === "configuracoes" ? "active" : ""}" href="/configuracoes/">
         <span class="nav-icon nav-icon-settings" aria-hidden="true">
-          <img src="/assets/img/pwa-icon-192.png?v=3" alt="">
+          <img src="/assets/img/logos/pwa-icon-192.png?v=3" alt="">
         </span><span>Configurações</span>
       </a>
 
@@ -518,16 +518,16 @@ function updateLuriaLogo(theme) {
   }
 
   let source =
-    "/assets/img/logo-icone-original.png?v=luria10";
+    "/assets/img/logos/logo-icone-original.png?v=luria10";
 
   if (theme === "dark") {
     source =
-      "/assets/img/logo-icone-azul-claro.png?v=luria10";
+      "/assets/img/logos/logo-icone-azul-claro.png?v=luria10";
   }
 
   if (theme === "leila-mood") {
     source =
-      "/assets/img/logo-icone-rosa-escuro.png?v=luria10";
+      "/assets/img/logos/logo-icone-rosa-escuro.png?v=luria10";
   }
 
   if (
@@ -2765,7 +2765,7 @@ function ensureLuriaDialog() {
   dialog.innerHTML = `
     <form method="dialog" class="luria-global-dialog-card">
       <div class="luria-global-dialog-icon" aria-hidden="true">
-        <img class="luria-global-dialog-logo" src="/assets/img/logo-icone-original.png?v=luria10" alt="">
+        <img class="luria-global-dialog-logo" src="/assets/img/logos/logo-icone-original.png?v=luria10" alt="">
       </div>
       <div class="luria-global-dialog-copy">
         <span class="luria-global-dialog-eyebrow">LURIA</span>
@@ -2861,10 +2861,10 @@ function openLuriaDialog({
 
     logo.src =
       theme === "dark"
-        ? "/assets/img/logo-icone-azul-claro.png?v=luria10"
+        ? "/assets/img/logos/logo-icone-azul-claro.png?v=luria10"
         : theme === "leila-mood"
-          ? "/assets/img/logo-icone-rosa-escuro.png?v=luria10"
-          : "/assets/img/logo-icone-original.png?v=luria10";
+          ? "/assets/img/logos/logo-icone-rosa-escuro.png?v=luria10"
+          : "/assets/img/logos/logo-icone-original.png?v=luria10";
   }
 
   copy.textContent =
