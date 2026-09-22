@@ -8,13 +8,13 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Cronograma · LURIA</title>
   <link rel="manifest" href="/manifest.webmanifest?v=4">
-  <link rel="apple-touch-icon" href="/assets/img/logo-icone-original.png?v=pwa4">
+  <link rel="apple-touch-icon" href="/assets/img/logos/logo-icone-original.png?v=pwa4">
   <meta name="theme-color" content="#0A2342">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="LURIA">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="icon" type="image/png" href="/assets/img/logo-icone-original.png?v=favicon2">
+  <link rel="icon" type="image/png" href="/assets/img/logos/logo-icone-original.png?v=favicon2">
   <link rel="stylesheet" href="assets/css/style.css?v=16.4">
 
   <style>
@@ -299,6 +299,40 @@
       background: var(--surface);
     }
 
+    .planner-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .planner-view-toggle {
+      display: inline-flex;
+      gap: 3px;
+      padding: 3px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: var(--surface-2);
+    }
+
+    .planner-view-toggle button {
+      min-height: 36px;
+      border: 0;
+      border-radius: 8px;
+      padding: 0 12px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 11px;
+    }
+
+    .planner-view-toggle button.active {
+      background: var(--surface);
+      color: var(--accent);
+      box-shadow: 0 1px 3px rgba(15, 35, 65, .08);
+    }
+
     .week-planner {
       display: grid;
       grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -306,6 +340,127 @@
       border: 1px solid var(--border);
       border-radius: 14px;
       overflow: hidden;
+    }
+
+    .month-planner {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      background: var(--border);
+      gap: 1px;
+    }
+
+    .month-planner[hidden],
+    .week-planner[hidden] {
+      display: none !important;
+    }
+
+    .month-weekday {
+      min-height: 38px;
+      display: grid;
+      place-items: center;
+      padding: 0 6px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .month-day {
+      min-width: 0;
+      min-height: 132px;
+      padding: 7px;
+      background: var(--surface);
+      position: relative;
+    }
+
+    .month-day.outside-month {
+      background: color-mix(in srgb, var(--surface-2) 55%, var(--surface));
+      opacity: .72;
+    }
+
+    .month-day.drop-target {
+      outline: 2px dashed var(--accent);
+      outline-offset: -3px;
+      background: var(--accent-soft);
+    }
+
+    .month-day-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .month-day-number {
+      width: 25px;
+      height: 25px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: var(--text);
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .month-day.today .month-day-number {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .month-day-count {
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 800;
+    }
+
+    .month-day-items {
+      display: grid;
+      gap: 4px;
+    }
+
+    .month-topic,
+    .month-event {
+      min-width: 0;
+      padding: 5px 6px;
+      border-radius: 7px;
+      font-size: 8px;
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .month-topic {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      color: var(--text);
+      cursor: grab;
+      font-weight: 800;
+    }
+
+    .month-topic.is-overdue {
+      border-left-color: var(--danger);
+    }
+
+    .month-event {
+      border-left: 3px solid #7f8da6;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-weight: 750;
+    }
+
+    .month-more {
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 800;
+      padding: 2px 3px;
     }
 
     .planner-day {
@@ -604,9 +759,27 @@
         flex-direction: column;
       }
 
-      .planner-nav {
+      .planner-tools {
         width: 100%;
         justify-content: space-between;
+      }
+
+      .planner-nav {
+        flex: 1 1 auto;
+        justify-content: space-between;
+      }
+
+      .planner-view-toggle {
+        flex: 0 0 auto;
+      }
+
+      .month-planner {
+        overflow-x: auto;
+        grid-template-columns: repeat(7, minmax(96px, 1fr));
+      }
+
+      .month-day {
+        min-height: 112px;
       }
     }
 
@@ -1801,9 +1974,10 @@
 
 </style>
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
-  <script defer src="assets/js/luria-brand-v5.js?v=8"></script>
+  <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=15">
   <link rel="canonical" href="/cronograma/">
+  <script>(function(){try{if(location.pathname.endsWith("/cronograma.html"))history.replaceState(null,"","/cronograma/"+location.search+location.hash);}catch(e){}})();</script>
 </head>
 
 <body data-page="cronograma">
@@ -2116,14 +2290,22 @@
                 <p id="planner-range">Carregando...</p>
               </div>
 
-              <div class="planner-nav">
-                <button id="week-prev" type="button">‹</button>
-                <button id="week-today" type="button">Esta semana</button>
-                <button id="week-next" type="button">›</button>
+              <div class="planner-tools">
+                <div class="planner-view-toggle" role="group" aria-label="Visualização do planejador">
+                  <button id="planner-view-week" class="active" type="button" aria-pressed="true">Semana</button>
+                  <button id="planner-view-month" type="button" aria-pressed="false">Mês</button>
+                </div>
+
+                <div class="planner-nav">
+                  <button id="week-prev" type="button" aria-label="Período anterior">‹</button>
+                  <button id="week-today" type="button">Esta semana</button>
+                  <button id="week-next" type="button" aria-label="Próximo período">›</button>
+                </div>
               </div>
             </div>
 
             <div id="week-planner" class="week-planner"></div>
+            <div id="month-planner" class="month-planner" hidden></div>
           </section>
 
           <section class="overdue-organizer">
@@ -2553,10 +2735,10 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="assets/js/supabase.js"></script>
-  <script src="assets/js/app.js?v=16.8"></script>
+  <script src="assets/js/app.js?v=17.0"></script>
   <script src="assets/js/study-mode.js?v=12.1"></script>
   <script src="assets/js/cronograma-base-data.js?v=12.6"></script>
-  <script src="assets/js/cronograma.js?v=16.2"></script>
+  <script src="assets/js/cronograma.js?v=16.4"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
