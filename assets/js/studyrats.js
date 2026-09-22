@@ -407,7 +407,7 @@ function sharedStudyratsRender(){
         '<div class="studyrats-road">'+
           '<span class="studyrats-road-dash"></span>'+
           '<span class="studyrats-progress-fill" style="width:'+pct+'%"></span>'+
-          '<span class="studyrats-mouse" style="left:'+pct+'%">'+sharedStudyratComposite(p.variant,p.accessory,null,p.accessoryX,p.accessoryY)+'</span>'+
+          '<span class="studyrats-mouse" style="left:'+pct+'%">'+sharedStudyratComposite(p.variant,p.accessory,'studyrats-rat-composite studyrats-race-fitted',p.accessoryX,p.accessoryY)+'</span>'+
         '</div>'+
       '</div>';
     }).join('');
