@@ -1,4 +1,4 @@
-const CACHE_VERSION = "luria-pwa-v95";
+const CACHE_VERSION = "luria-pwa-v96";
 const STATIC_CACHE = CACHE_VERSION + "-static";
 const RUNTIME_CACHE = CACHE_VERSION + "-runtime";
 
@@ -55,7 +55,13 @@ self.addEventListener("fetch", (event) => {
 
   // Arquivos críticos de inicialização: sempre tenta a rede primeiro.
   // Evita o app.js antigo ficar preso no cache e causar tela vazia/atraso entre páginas.
-  if (url.pathname === "/assets/js/app.js") {
+  if (
+    url.pathname === "/assets/js/app.js" ||
+    url.pathname === "/assets/js/auth.js" ||
+    url.pathname === "/assets/js/supabase.js" ||
+    url.pathname === "/login/" ||
+    url.pathname === "/login.html"
+  ) {
     event.respondWith(
       fetch(request)
         .then((response) => {
