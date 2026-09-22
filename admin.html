@@ -16,7 +16,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/logos/favicon.png?v=luria7">
   <link rel="stylesheet" href="assets/css/style.css?v=16.2">
-  <link rel="stylesheet" href="assets/css/admin.css?v=2.2">
+  <link rel="stylesheet" href="assets/css/admin.css?v=2.3">
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=10">
   <link rel="canonical" href="/admin/">
   <script>(function(){try{if(location.pathname.endsWith("/admin.html"))history.replaceState(null,"","/admin/"+location.search+location.hash);}catch(e){}})();</script>
@@ -234,6 +234,21 @@
               <div class="admin-factory-empty-wide">Carregando distribuição por banca...</div>
             </div>
           </div>
+
+          <section class="admin-qf-bad-folder" aria-labelledby="admin-qf-bad-title">
+            <div class="admin-qf-bad-folder-head">
+              <div>
+                <span class="eyebrow">Arquivo editorial</span>
+                <strong id="admin-qf-bad-title">Questões ruins</strong>
+                <small>Questões rejeitadas ficam preservadas aqui com motivo, etapa da falha e snapshot da versão.</small>
+              </div>
+              <div class="admin-qf-bad-folder-actions">
+                <span><b id="admin-qf-bad-count">0</b> arquivadas</span>
+                <button id="admin-qf-bad-open" class="button secondary" type="button">Abrir pasta</button>
+              </div>
+            </div>
+            <div id="admin-qf-bad-by-style" class="admin-qf-bad-by-style"></div>
+          </section>
 
           <div class="admin-factory-batches-head">
             <div>
@@ -943,6 +958,27 @@ Prefira fonte primária/oficial atual.</pre>
     </div>
   </dialog>
 
+  <dialog id="admin-qf-bad-dialog" class="admin-qf-dialog admin-qf-bad-dialog">
+    <div class="admin-qf-dialog-shell">
+      <div class="admin-qf-dialog-head">
+        <div>
+          <span class="eyebrow">Arquivo editorial</span>
+          <h2>Questões ruins</h2>
+          <p id="admin-qf-bad-meta">0 questões arquivadas</p>
+        </div>
+        <button id="admin-qf-bad-close" class="dialog-close" type="button" aria-label="Fechar">×</button>
+      </div>
+      <div id="admin-qf-bad-list" class="admin-qf-question-list">
+        <div class="admin-factory-empty-wide">Nenhuma questão ruim arquivada.</div>
+      </div>
+      <div class="admin-qf-pagination">
+        <button id="admin-qf-bad-prev" class="button secondary" type="button">Anterior</button>
+        <span id="admin-qf-bad-page-info">0–0 de 0</span>
+        <button id="admin-qf-bad-next" class="button secondary" type="button">Próximas</button>
+      </div>
+    </div>
+  </dialog>
+
   <dialog id="admin-cost-editor" class="admin-cost-dialog">
     <form id="admin-cost-form" method="dialog">
       <div class="admin-cost-dialog-head">
@@ -975,7 +1011,7 @@ Prefira fonte primária/oficial atual.</pre>
   <script src="/assets/vendor/supabase-2.110.6.js"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=17.0"></script>
-  <script src="assets/js/admin.js?v=2.3"></script>
+  <script src="assets/js/admin.js?v=2.4"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
