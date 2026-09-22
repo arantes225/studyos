@@ -157,21 +157,64 @@ Uma boa questão SES-DF pode receber style=10 mesmo sem mencionar APS/RAS, se su
 
 ## UERJ — prompt de auditoria
 
-Audite todas as questões UERJ com a rubrica oficial.
+Audite todas as questões UERJ com a rubrica oficial e corte >=97.
 
-Refaça independentemente todos os cálculos:
+IDENTIDADE
+- Preserve UERJ como banca analítica, porém não quantitativa por padrão.
+- A dificuldade deve vir principalmente de integração médica, fisiologia, laboratório, critérios e decisão.
+- Cálculo explícito deve ser minoritário e clinicamente funcional.
+
+REFaÇA INDEPENDENTEMENTE TODOS OS CÁLCULOS quando aplicável:
 - fórmula de Winter;
 - ânion gap;
 - gap osmolar;
+- correção de sódio;
 - odds/probabilidade pós-teste;
-- RV;
+- razão de verossimilhança;
 - NNT/NNH;
 - hazard ratio;
 - eletrólitos e compensações.
 
-A dificuldade deve vir do raciocínio clínico, não de obscuridade matemática.
+Para cada questão com cálculo, exija:
+1. fórmula;
+2. resultado;
+3. significado clínico.
 
-Compare proporção de itens numéricos/laboratoriais com provas reais e marque se o lote estiver artificialmente quantitativo.
+Não penalize um item por “falta de cálculo” quando a pergunta não exige esse cálculo para haver uma única melhor resposta.
+
+AMBIGUIDADE
+- Só marque ambiguity=true se existirem duas respostas defensáveis ou faltar dado que realmente impeça a decisão.
+- Comentário insuficientemente detalhado NÃO transforma automaticamente um stem correto em ambíguo.
+- Confira o texto original antes de alegar ausência de dado.
+
+DISTRATORES
+- Em itens numéricos, cada distrator deve derivar de um erro real previsível.
+- Em itens clínicos, priorize diagnósticos, mecanismos, exames ou condutas próximas.
+- Números aleatórios ou opções sem relação devem perder pontos.
+
+UTILIDADE CLÍNICA
+Pergunte: “Este cálculo modifica diagnóstico, classificação, prognóstico ou conduta?”
+Se não modificar, considere se o item está artificialmente quantitativo.
+
+ANÁLISE GLOBAL
+Quantifique:
+- percentage_calculation_questions;
+- percentage_lab_interpretation;
+- percentage_pure_clinical;
+- percentage_management;
+- percentage_diagnostic;
+- percentage_epidemiology.
+
+Como referência flexível pós-T5, cerca de 10–20% de cálculo explícito pode ser compatível se as provas oficiais recentes sustentarem isso; NÃO trate como quota fixa.
+
+FONTES E EXPLICAÇÕES
+- Fonte definitiva: documento real + ano + URL + seção/recomendação quando confirmável.
+- “Fonte candidata” bloqueia aprovação.
+- Explicações A–D específicas.
+- Nos itens numéricos, explicar também qual erro de cálculo/raciocínio levaria a cada distrator.
+
+Pergunta de controle:
+“A identidade analítica da UERJ está sendo medida por raciocínio médico ou por matemática decorativa?”
 
 ## PSU-GO — prompt de auditoria
 
