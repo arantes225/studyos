@@ -466,12 +466,6 @@ function parseWorkbookRows(matrix, sheetName) {
 
   const mode = currentImportMode();
 
-  if (mode === "dates" && indexes.date < 0) {
-    throw new Error(
-      'No modo "Importar datas", a planilha precisa ter uma coluna Data.'
-    );
-  }
-
   const parsed = [];
 
   for (
@@ -522,22 +516,11 @@ function parseWorkbookRows(matrix, sheetName) {
       );
 
     if (
-      (
-        mode === "dates"
-        || kind !== "lesson"
-      )
+      kind !== "lesson"
       && !alreadyDone
       && !date
     ) {
-      errors.push("Data inválida/ausente");
-    }
-
-    if (
-      indexes.studiedDate >= 0
-      && cleanText(rawStudiedDate)
-      && !studiedDate
-    ) {
-      errors.push("Data estudada inválida");
+      errors.push("Data obrigatória para evento");
     }
 
     parsed.push({
@@ -661,26 +644,12 @@ function validateImportRow(row) {
     currentImportMode();
 
   if (
-    (
-      mode === "dates"
-      || row.kind !== "lesson"
-    )
+    row.kind !== "lesson"
     && !row.alreadyDone
     && !row.date
   ) {
     errors.push(
-      "Data obrigatória"
-    );
-  }
-
-  if (
-    row.studiedDate
-    && !parseExcelDate(
-      row.studiedDate
-    )
-  ) {
-    errors.push(
-      "Data estudada inválida"
+      "Data obrigatória para evento"
     );
   }
 
