@@ -2080,6 +2080,99 @@ SAÍDA JSON
 
 O resultado será importado novamente no Supabase. Só depois que as 200 estiverem machine-approved o Admin deve liberar a aprovação humana do bloco.`;
 
+    if (stage === "lot_chatgpt_final") return `PROMPT DE SEGMENTO 6A — REVISÃO FINAL CHATGPT DO LOTE DE 1.000
+${common}
+
+CONTEXTO
+Os cinco blocos de 200 já passaram por:
+- geração;
+- checagem ChatGPT;
+- auditoria independente Perplexity;
+- correção das questões abaixo de 90 ou com hard fail;
+- reauditoria Perplexity;
+- aprovação humana bloco a bloco.
+
+TAREFA
+Audite o LOTE INTEIRO de 1.000 como conjunto.
+Verifique:
+- duplicatas e quase duplicatas;
+- concentração temática;
+- curva de dificuldade;
+- distribuição de letras;
+- aderência global ao estilo ${style};
+- cobertura das áreas;
+- questões excessivamente semelhantes entre blocos;
+- consistência das fontes;
+- itens de alto risco;
+- questões corrigidas em versões >1;
+- equilíbrio entre diagnóstico, conduta, prevenção, seguimento, urgência e epidemiologia.
+
+Não reescreva silenciosamente.
+Sinalize tudo que precisar voltar.
+
+SAÍDA JSON
+{
+  "schema_version":"1.0",
+  "review_stage":"lot_chatgpt_final",
+  "batch_number":N,
+  "reviewer":"ChatGPT",
+  "lote_status":"approved|needs_revision",
+  "questions_flagged":[],
+  "duplicate_clusters":[],
+  "answer_source_problems":[],
+  "outdated_sources":[],
+  "guideline_conflicts":[],
+  "coverage_gaps":[],
+  "style_problems":[],
+  "difficulty_findings":[],
+  "answer_letter_distribution":{},
+  "comments":[]
+}
+
+O lote só pode seguir se não houver pendência relevante.`;
+
+    if (stage === "lot_perplexity_final") return `PROMPT DE SEGMENTO 6B — REVISÃO FINAL PERPLEXITY DO LOTE DE 1.000
+${common}
+
+CONTEXTO
+Este lote de 1.000 já foi aprovado bloco a bloco e passou pela revisão final do ChatGPT.
+
+TAREFA
+Faça auditoria final independente, orientada por evidência.
+Priorize:
+1. todas as questões sinalizadas anteriormente;
+2. todas com version >1;
+3. todas de alto risco clínico;
+4. todas com alteração de fonte/gabarito;
+5. uma amostra ampla e distribuída das demais;
+6. atualização recente de diretrizes;
+7. conflitos de guideline;
+8. duplicações;
+9. problemas de fidelidade editorial do conjunto.
+
+Confirme novamente se a fonte específica do gabarito sustenta a resposta.
+
+SAÍDA JSON
+{
+  "schema_version":"1.0",
+  "review_stage":"lot_perplexity_final",
+  "batch_number":N,
+  "reviewer":"Perplexity",
+  "lote_status":"approved|needs_revision",
+  "questions_flagged":[],
+  "answer_key_disagreements":[],
+  "answer_source_problems":[],
+  "outdated_sources":[],
+  "guideline_conflicts":[],
+  "duplicate_or_near_duplicate":[],
+  "high_risk_rechecks":[],
+  "coverage_gaps":[],
+  "style_problems":[],
+  "comments":[]
+}
+
+Não considere consenso entre modelos como evidência. Prefira fonte primária/oficial atual.`;
+
     return "";
   }
 
@@ -2272,8 +2365,26 @@ O resultado será importado novamente no Supabase. Só depois que as 200 estiver
                 </div>
                 <div class="admin-qf-segment-human final">
                   <span>06</span>
-                  <div><strong>Revisão final das 1.000</strong><small>Somente depois dos cinco blocos aprovados por você: revisão global ChatGPT + Perplexity do lote inteiro.</small></div>
+                  <div><strong>Revisão final das 1.000</strong><small>Somente depois dos cinco blocos aprovados por você. A revisão é global e olha o lote como conjunto.</small></div>
                 </div>
+                ${[
+                  ["06A","ChatGPT · revisão global das 1.000","lot_chatgpt_final","chatgpt"],
+                  ["06B","Perplexity · auditoria final das 1.000","lot_perplexity_final","perplexity"]
+                ].map(([num,label,stage,provider]) => {
+                  const pid=`qf-${String(item.exam_style||"style").replace(/[^a-z0-9]/gi,"-").toLowerCase()}-${stage}`;
+                  return `
+                    <details class="admin-qf-segment-card final">
+                      <summary><span>${num}</span><strong>${esc(label)}</strong></summary>
+                      <div class="admin-qf-segment-card-body">
+                        <div class="admin-qf-segment-actions">
+                          <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Copiar</button>
+                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>
+                        </div>
+                        <pre id="${esc(pid)}" class="admin-qf-prompt">${esc(buildBoardSegmentPrompt(item,stage))}</pre>
+                      </div>
+                    </details>
+                  `;
+                }).join("")}
               </section>
             </div>
           </details>
