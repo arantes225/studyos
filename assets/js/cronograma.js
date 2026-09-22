@@ -5388,6 +5388,59 @@ function populateAreaFilter() {
     : "";
 }
 
+function populateBlockFilter() {
+  const select =
+    document.getElementById(
+      "theme-block-filter"
+    );
+
+  if (!select) return;
+
+  const current =
+    scheduleState.themeBlockFilter;
+
+  const blocks =
+    Array.from(
+      new Set(
+        getActiveTopicsForLibrary()
+          .map(
+            (topic) =>
+              String(
+                topic.bloco
+                || ""
+              ).trim()
+          )
+          .filter(Boolean)
+      )
+    ).sort(
+      (a, b) =>
+        a.localeCompare(
+          b,
+          "pt-BR",
+          {
+            numeric: true,
+            sensitivity: "base"
+          }
+        )
+    );
+
+  select.innerHTML =
+    '<option value="">Todos os blocos</option>'
+    + blocks.map(
+        (bloco) =>
+          '<option value="'
+          + escapeScheduleHtml(bloco)
+          + '">'
+          + escapeScheduleHtml(bloco)
+          + '</option>'
+      ).join("");
+
+  select.value =
+    blocks.includes(current)
+      ? current
+      : "";
+}
+
 function normalizeSearchText(value) {
   return String(value ?? "")
     .normalize("NFD")
@@ -5438,6 +5491,9 @@ function filteredLibraryTopics() {
   const areaFilter =
     scheduleState.themeAreaFilter;
 
+  const blockFilter =
+    scheduleState.themeBlockFilter;
+
   const dateFrom =
     scheduleState.themeDateFrom;
 
@@ -5453,6 +5509,16 @@ function filteredLibraryTopics() {
       if (
         areaFilter
         && topic.area !== areaFilter
+      ) {
+        return false;
+      }
+
+      if (
+        blockFilter
+        && String(
+          topic.bloco
+          || ""
+        ) !== blockFilter
       ) {
         return false;
       }
@@ -5502,7 +5568,8 @@ function filteredLibraryTopics() {
           [
             topic.theme,
             topic.materia,
-            topic.area
+            topic.area,
+            topic.bloco
           ]
             .filter(Boolean)
             .join(" ")
@@ -6575,6 +6642,7 @@ function renderThemeLibrary() {
   if (!container || !count) return;
 
   populateAreaFilter();
+  populateBlockFilter();
 
   const bulk =
     document.querySelector(
@@ -7069,6 +7137,7 @@ function wireThemeLibraryBulkActions() {
 function themeFiltersAreActive() {
   return Boolean(
     scheduleState.themeAreaFilter
+    || scheduleState.themeBlockFilter
     || scheduleState.themeDateFrom
     || scheduleState.themeDateTo
     || (
@@ -7174,6 +7243,11 @@ function wireThemeLibraryFilters() {
       "theme-area-filter"
     );
 
+  const block =
+    document.getElementById(
+      "theme-block-filter"
+    );
+
   const completion =
     document.getElementById(
       "theme-completion-filter"
@@ -7206,6 +7280,17 @@ function wireThemeLibraryFilters() {
     () => {
       scheduleState.themeAreaFilter =
         area.value;
+
+      updateThemeFilterButtonState();
+      renderThemeLibrary();
+    }
+  );
+
+  block?.addEventListener(
+    "change",
+    () => {
+      scheduleState.themeBlockFilter =
+        block.value;
 
       updateThemeFilterButtonState();
       renderThemeLibrary();
@@ -7299,6 +7384,9 @@ function wireThemeLibraryFilters() {
         scheduleState.themeAreaFilter =
           "";
 
+        scheduleState.themeBlockFilter =
+          "";
+
         scheduleState.themeCompletionFilter =
           "all";
 
@@ -7311,6 +7399,11 @@ function wireThemeLibraryFilters() {
 
         if (area) {
           area.value =
+            "";
+        }
+
+        if (block) {
+          block.value =
             "";
         }
 
