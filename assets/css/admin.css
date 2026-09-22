@@ -2018,3 +2018,110 @@ body.admin-unlocked #admin-app {
   .admin-qf-review-pills{grid-column:1/-1;justify-content:flex-start}
   .admin-qf-review-notes{grid-template-columns:1fr}
 }
+
+
+/* Question factory 1.8 — 200-question blocks, 5 blocks per lot */
+.admin-factory-flow{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(110px,1fr)) auto minmax(190px,1.35fr) auto minmax(145px,1fr);
+  gap:8px;
+  align-items:stretch;
+  overflow-x:auto;
+  padding-bottom:3px;
+}
+.admin-factory-flow article{
+  display:grid;
+  align-content:center;
+  gap:3px;
+  min-width:110px;
+  padding:11px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface);
+}
+.admin-factory-flow article strong{font-size:9px}
+.admin-factory-flow article small{color:var(--muted);font-size:7px}
+.admin-factory-flow-review{
+  border-color:color-mix(in srgb,#3b82f6 40%,var(--border)) !important;
+  background:color-mix(in srgb,#3b82f6 5%,var(--surface)) !important;
+}
+.admin-factory-flow-ready{
+  border-color:color-mix(in srgb,#22c55e 40%,var(--border)) !important;
+  background:color-mix(in srgb,#22c55e 5%,var(--surface)) !important;
+}
+.admin-factory-flow-arrow{
+  align-self:center;
+  color:var(--muted);
+  font-size:15px;
+  font-weight:900;
+}
+.admin-qf-block-grid{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:6px;
+}
+.admin-qf-block-mini{
+  display:grid;
+  gap:6px;
+  padding:8px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--surface-2);
+}
+.admin-qf-block-mini>div strong,
+.admin-qf-block-mini>div small{display:block}
+.admin-qf-block-mini>div strong{font-size:8px}
+.admin-qf-block-mini>div small{margin-top:2px;color:var(--muted);font-size:7px}
+.admin-qf-block-state{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:20px;
+  padding:0 6px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:var(--surface);
+  color:var(--muted);
+  font-size:6.5px;
+  font-weight:850;
+  white-space:nowrap;
+}
+.admin-qf-block-state.approved,
+.admin-qf-block-state.merged{color:#16803c;border-color:color-mix(in srgb,#22c55e 45%,var(--border))}
+.admin-qf-block-state.needs_revision{color:#a56d09;border-color:color-mix(in srgb,#eab308 45%,var(--border))}
+.admin-qf-block-state.rejected{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 45%,var(--border))}
+.admin-qf-block-state.perplexity_review,
+.admin-qf-block-state.pending{color:#2563eb;border-color:color-mix(in srgb,#3b82f6 45%,var(--border))}
+.admin-qf-final-review{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:8px;
+  align-items:center;
+  padding:8px 9px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--surface-2);
+}
+.admin-qf-final-review>span{
+  color:var(--muted);
+  font-size:7px;
+  font-weight:800;
+  text-transform:uppercase;
+}
+.admin-qf-final-review>strong{font-size:8px}
+.admin-qf-final-review>div{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:4px;
+}
+@media(max-width:980px){
+  .admin-qf-block-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .admin-factory-flow{grid-template-columns:repeat(5,120px) auto 190px auto 145px}
+}
+@media(max-width:720px){
+  .admin-qf-block-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-qf-block-mini:last-child{grid-column:1/-1}
+  .admin-qf-final-review{grid-template-columns:1fr}
+  .admin-qf-final-review>div{justify-content:flex-start}
+}
