@@ -315,6 +315,223 @@ Quando `exam_style` for informado:
 5. nunca copiar ou reconstruir questão reconhecível de prova anterior;
 6. recalibrar o perfil após novas provas relevantes ou novo lote piloto auditado.
 
+## 5C. Manual operacional detalhado por banca
+
+Esta seção existe para que qualquer IA, em qualquer conversa futura, entenda exatamente o que o usuário quer quando disser "faça no estilo X".
+
+### Regra universal de calibração
+
+Para qualquer `exam_style`:
+1. localizar preferencialmente 2 a 3 provas públicas recentes da banca/processo;
+2. verificar também o edital/matriz da edição vigente quando existir;
+3. usar esses materiais SOMENTE para aprender forma, incidência e nível;
+4. medir comprimento de enunciado, proporção de casos, dificuldade, etapas cognitivas, padrão de alternativas e uso de dados;
+5. gerar novo conteúdo clínico do zero;
+6. justificar gabarito por fontes científicas independentes da prova anterior;
+7. nunca copiar, reconstruir ou parafrasear de modo reconhecível uma questão da banca.
+
+### SUS-SP
+
+**Onde observar o estilo**
+- Provas recentes do processo SUS-SP/VUNESP.
+- Preferir os 2–3 ciclos públicos mais recentes.
+- Usar o edital vigente para confirmar formato da edição.
+
+**Como deve parecer**
+- Predomínio de casos clínicos.
+- Enunciado médio, aproximadamente 3–7 linhas.
+- Forte presença de pronto-socorro, enfermaria, APS e SUS.
+- Raciocínio geralmente em 2–3 etapas.
+- Perguntas frequentemente terminam em diagnóstico, próxima conduta, prioridade, encaminhamento ou prevenção.
+- Distratores devem representar condutas plausíveis, mas incompletas, atrasadas ou inadequadas.
+- Deve haver espaço para Saúde Coletiva/APS, sem transformar toda a prova em políticas públicas.
+
+**Ajustes já aprendidos**
+- Evitar histórias mais longas que o necessário.
+- Quando a questão for de urgência, inserir tempos, gravidade ou dados que realmente mudem a conduta.
+- Em obstetrícia e clínica, alguns dados laboratoriais podem aumentar fidelidade.
+- Manter pequena parcela de itens conceituais puros.
+
+**Não fazer**
+- Não transformar SUS-SP em ENAMED com excesso de contextualização.
+- Não criar quatro alternativas em que três são absurdas.
+- Não copiar caso clínico anterior trocando idade/nome.
+
+### ENARE
+
+**Onde observar o estilo**
+- Cadernos oficiais recentes do ENARE/HU Brasil.
+- Edital/documentos da edição vigente.
+- Provas anteriores servem para padrão nacional e incidência; não para fonte científica.
+
+**Como deve parecer**
+- Linguagem uniforme e nacional.
+- Casos clínicos de comprimento moderado, geralmente mais desenvolvidos que perguntas diretas clássicas.
+- Cobertura ampla das grandes áreas.
+- Equilíbrio entre diagnóstico, conduta, prevenção, epidemiologia e SUS.
+- Raciocínio em 2–3 etapas.
+- Diretrizes nacionais aparecem implicitamente na decisão correta.
+
+**Ajustes já aprendidos**
+- Nosso primeiro piloto ficou um pouco curto/fácil.
+- Nas novas gerações, aumentar levemente tamanho e dificuldade.
+- Inserir mais decisões multi-etapas e epidemiologia/prevenção intermediária.
+
+**Não fazer**
+- Não deixar o bloco inteiro com perguntas fáceis de reconhecimento direto.
+- Não deixar a banca com "cara" excessiva de prova estadual/local.
+
+### Santa Casa-SP
+
+**Onde observar o estilo**
+- Provas e editais recentes da Santa Casa de São Paulo.
+- Confirmar a banca da edição vigente antes de gerar um lote novo.
+
+**Como deve parecer**
+- Mais tradicional, técnico e acadêmico.
+- Mistura relevante de casos clínicos curtos e questões conceituais puras.
+- Enunciados curtos a médios.
+- Raciocínio frequente em 1–2 etapas.
+- Maior espaço para fisiopatologia, critérios, associações e conceitos clássicos.
+- Pode usar formatos EXCETO, INCORRETA ou NÃO corresponde.
+- Distratores próximos, mudando detalhe técnico, ponto de corte ou associação.
+
+**Ajustes já aprendidos**
+- Aumentar fisiopatologia, MBE e critérios.
+- Reduzir storytelling em parte do bloco.
+- Evitar deixar Pediatria/Preventiva com "cara de ENAMED" quando o objetivo for Santa Casa.
+
+**Não fazer**
+- Não usar EXCETO em excesso.
+- Não criar pegadinha puramente semântica sem valor médico.
+
+### SES-DF
+
+**Onde observar o estilo**
+- Provas recentes da residência SES-DF e documentos da banca da edição vigente.
+- Usar cenários compatíveis com a rede pública, sem inventar regra local não documentada.
+
+**Como deve parecer**
+- Casos clínicos médios a longos.
+- Forte integração APS → UPA/hospital → especialidade → retorno à APS.
+- Perguntas de conduta prioritária, estratificação de risco, encaminhamento e organização do cuidado.
+- Raciocínio 2–3 etapas.
+- Saúde Coletiva e RAS devem aparecer com peso real.
+- Cenários: UBS/ESF, UPA, hospital regional, vigilância e atenção domiciliar.
+
+**Ajustes já aprendidos**
+- Aumentar casos multi-etapas.
+- Ampliar discretamente Saúde Coletiva.
+- Dar atenção a coordenação, transição pós-alta e cuidado compartilhado.
+
+**Não fazer**
+- Não inventar fluxos específicos do DF sem fonte.
+- Não reduzir a banca a leis do SUS; ela continua sendo clínica.
+
+### UERJ
+
+**Onde observar o estilo**
+- Cadernos recentes da residência UERJ/CEPUERJ.
+- Preferir provas de acesso direto para calibrar o banco geral.
+
+**Como deve parecer**
+- Quatro alternativas.
+- Casos densos, porém objetivos.
+- Alta informação discriminativa por linha.
+- Uso frequente de laboratório, sinais, valores e critérios formais.
+- Distratores fortes.
+- Dificuldade média/alta.
+- Boa presença de diagnóstico, conduta e epidemiologia/MBE.
+- Raciocínio 2–3 etapas.
+
+**Ajustes já aprendidos**
+- Inserir mais dados laboratoriais que realmente diferenciem hipóteses.
+- Evitar questões fáceis demais.
+- Usar mais estratificação e critérios formais.
+
+**Não fazer**
+- Não tornar o enunciado longo apenas para parecer difícil.
+- Não inserir dado redundante que não mude raciocínio.
+
+### PSU-GO
+
+**Estado**
+- Perfil em calibração inicial no segundo lote piloto.
+
+**Onde observar o estilo**
+- Provas públicas recentes do PSU Goiás/AREMG.
+- Editais e publicações oficiais da AREMG.
+- Como há proximidade operacional com processos AREMG, NÃO assumir automaticamente que o estilo é idêntico ao PSU-MG; validar nos cadernos.
+
+**Hipótese de perfil inicial**
+- Enunciados curtos a médios.
+- Mistura de casos clínicos e conceitos.
+- Cobertura das grandes áreas.
+- Questões objetivas de diagnóstico e conduta.
+- Parte relevante de itens de reconhecimento direto.
+- Distratores plausíveis, sem excesso de storytelling.
+
+**O que a próxima auditoria deve medir**
+- comprimento real médio;
+- proporção caso/conceito;
+- dificuldade;
+- frequência de questões quantitativas;
+- quanto se aproxima ou se afasta do PSU-MG;
+- incidência por área.
+
+### PSU-MG
+
+**Estado**
+- Perfil em calibração inicial no segundo lote piloto.
+
+**Onde observar o estilo**
+- Provas e gabaritos recentes do PSU Minas Gerais/AREMG.
+- Editais oficiais da AREMG.
+- Preferir cadernos gerais de entrada direta para calibrar o banco.
+
+**Hipótese de perfil inicial**
+- Casos objetivos e técnicos.
+- Enunciados curtos a médios.
+- Conhecimento clássico + aplicação clínica.
+- Espaço para critérios, epidemiologia e MBE quantitativa.
+- Dificuldade intermediária a alta em parte do caderno.
+- Distratores tecnicamente discriminativos.
+
+**O que a próxima auditoria deve medir**
+- verdadeira densidade clínica;
+- distribuição de questões diretas versus multi-etapas;
+- frequência de cálculos/MBE;
+- padrão de alternativas;
+- diferença editorial real para PSU-GO.
+
+## 5D. Como decidir a fonte científica
+
+A IA deve seguir este raciocínio:
+- A banca define "como perguntar".
+- A área médica define "onde checar a resposta".
+- A data da diretriz define "qual recomendação é atual".
+
+Exemplos:
+- `exam_style=SUS-SP`, tema IAM → estilo pelas provas SUS-SP; ciência pela SBC/MS.
+- `exam_style=UERJ`, tema pré-eclâmpsia → estilo pelas provas UERJ; ciência por FEBRASGO/MS.
+- `exam_style=SES-DF`, tema TB → estilo pela SES-DF; ciência pelo Ministério da Saúde.
+- `exam_style=Santa Casa-SP`, tema MBE → estilo Santa Casa; conceito metodológico por referência oficial/metodológica apropriada.
+
+## 5E. Regras mínimas de uma questão publicável
+
+Toda questão final deve ter:
+- uma única melhor resposta;
+- quatro alternativas no padrão interno atual;
+- explicação de A, B, C e D;
+- mensagem-chave;
+- área, tema, subtema e dificuldade;
+- `exam_style`;
+- fonte institucional/documento/ano/URL;
+- versão;
+- auditoria do bloco;
+- auditoria final do lote;
+- nenhuma pendência científica crítica.
+
 ## 6. Prompt mestre — geração de bloco de 200
 
 Você é o GERADOR EDITORIAL de questões médicas autorais do LURIA/StudyOS.
