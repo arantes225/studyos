@@ -1582,6 +1582,18 @@
   }
 
   function switchTab(tab) {
+    const detailedAllowed =
+      window.LuriaEntitlements?.enabled(
+        "advanced_statistics"
+      ) === true;
+
+    if (
+      tab !== "geral"
+      && !detailedAllowed
+    ) {
+      tab = "geral";
+    }
+
     state.tab = tab;
     document.querySelectorAll("[data-tab]").forEach(x=>x.classList.toggle("active",x.dataset.tab===tab));
     document.querySelectorAll("[data-stats-panel]").forEach(x=>x.hidden=x.dataset.statsPanel!==tab);
@@ -1645,6 +1657,24 @@
     state.initialized=true;
     setHeading();
     wire();
+
+    const detailedAllowed =
+      window.LuriaEntitlements?.enabled(
+        "advanced_statistics"
+      ) === true;
+
+    if (!detailedAllowed) {
+      document
+        .querySelectorAll(
+          '[data-tab]:not([data-tab="geral"])'
+        )
+        .forEach(
+          button => {
+            button.hidden = true;
+          }
+        );
+    }
+
     switchTab("geral");
 
     try{
