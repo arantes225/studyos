@@ -1639,6 +1639,43 @@
   font-weight:800;
   cursor:pointer;
 }
+.agenda-manager-bulk{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px solid var(--border);
+}
+.agenda-manager-select-all{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  color:var(--text);
+  font-size:10px;
+  font-weight:800;
+  cursor:pointer;
+}
+.agenda-manager-select-all input,
+.agenda-manager-row-select input{
+  accent-color:var(--accent);
+}
+.agenda-manager-delete-selected{
+  min-height:36px;
+  padding:0 12px;
+  border:1px solid color-mix(in srgb,var(--danger) 45%,var(--border));
+  border-radius:9px;
+  background:color-mix(in srgb,var(--danger) 9%,var(--surface));
+  color:var(--danger);
+  font-size:10px;
+  font-weight:850;
+  cursor:pointer;
+}
+.agenda-manager-delete-selected:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
 .agenda-manager-list{
   display:grid;
   gap:7px;
@@ -1655,13 +1692,17 @@
 .agenda-manager-row{
   position:relative;
   display:grid;
-  grid-template-columns:minmax(0,1fr) auto auto;
+  grid-template-columns:auto minmax(0,1fr) auto auto;
   gap:12px;
   align-items:center;
   padding:10px 11px;
   border:1px solid var(--border);
   border-radius:10px;
   background:var(--surface);
+}
+.agenda-manager-row-select{
+  display:grid;
+  place-items:center;
 }
 .agenda-manager-copy{min-width:0}
 .agenda-manager-copy strong{
@@ -1727,9 +1768,12 @@
 .agenda-manager-menu button.danger{color:var(--danger)}
 @media(max-width:620px){
   .agenda-manager-filters{grid-template-columns:1fr}
-  .agenda-manager-row{grid-template-columns:minmax(0,1fr) auto}
-  .agenda-manager-date{grid-column:1}
-  .agenda-manager-menu-wrap{grid-column:2;grid-row:1 / span 2}
+  .agenda-manager-bulk{align-items:stretch;flex-direction:column}
+  .agenda-manager-delete-selected{width:100%}
+  .agenda-manager-row{grid-template-columns:auto minmax(0,1fr) auto}
+  .agenda-manager-date{grid-column:2}
+  .agenda-manager-menu-wrap{grid-column:3;grid-row:1 / span 2}
+  .agenda-manager-row-select{grid-column:1;grid-row:1 / span 2}
 }
 
 /* Data e hora — visual LURIA */
@@ -2015,6 +2059,22 @@
               </button>
             </div>
 
+            <div class="agenda-manager-bulk">
+              <label class="agenda-manager-select-all">
+                <input id="agenda-manager-select-all" type="checkbox">
+                <span>Selecionar todos</span>
+              </label>
+
+              <button
+                id="agenda-manager-delete-selected"
+                class="agenda-manager-delete-selected"
+                type="button"
+                disabled
+              >
+                Apagar selecionados
+              </button>
+            </div>
+
             <div id="agenda-manager-list" class="agenda-manager-list"></div>
           </section>
 
@@ -2089,7 +2149,7 @@
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=17.0"></script>
   <script src="assets/js/study-mode.js?v=12.1"></script>
-  <script src="assets/js/dashboard.js?v=27.5"></script>
+  <script src="assets/js/dashboard.js?v=27.6"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
 </html>
