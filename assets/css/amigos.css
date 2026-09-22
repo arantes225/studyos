@@ -907,3 +907,63 @@
   position:absolute!important;
   box-sizing:border-box!important;
 }
+
+
+/* Studyrats PWA mobile alignment fix v27
+   pwa-mobile.css reduz todas as .studyrats-rat-img para 53x37.
+   Isso deslocava o rato em relação aos acessórios, que usam a base 72x50.
+   Aqui o preview e a corrida voltam explicitamente para a mesma base da web. */
+@media (max-width:760px){
+  .pwa-standalone body[data-page="amigos"] .studyrats-preview-composite,
+  .pwa-standalone body[data-page="amigos"] .studyrats-race-fitted{
+    width:72px!important;
+    height:50px!important;
+    position:relative!important;
+  }
+
+  .pwa-standalone body[data-page="amigos"] .studyrats-preview-composite{
+    transform:scale(2.25)!important;
+    transform-origin:center center!important;
+  }
+
+  .pwa-standalone body[data-page="amigos"] .studyrats-race-fitted{
+    transform:scale(var(--runner-scale,1.25)) scale(1.6667)!important;
+    transform-origin:center center!important;
+  }
+
+  .pwa-standalone body[data-page="amigos"] .studyrats-preview-composite>.studyrats-rat-img,
+  .pwa-standalone body[data-page="amigos"] .studyrats-race-fitted>.studyrats-rat-img{
+    position:absolute!important;
+    inset:0!important;
+    width:72px!important;
+    height:50px!important;
+    object-fit:contain!important;
+  }
+
+  .pwa-standalone body[data-page="amigos"] .studyrats-preview-composite>.studyrats-rat-img.rat-brown,
+  .pwa-standalone body[data-page="amigos"] .studyrats-race-fitted>.studyrats-rat-img.rat-brown{
+    top:-7px!important;bottom:auto!important;
+  }
+  .pwa-standalone body[data-page="amigos"] .studyrats-preview-composite>.studyrats-rat-img.rat-blue,
+  .pwa-standalone body[data-page="amigos"] .studyrats-race-fitted>.studyrats-rat-img.rat-blue{
+    top:1px!important;bottom:auto!important;
+  }
+  .pwa-standalone body[data-page="amigos"] .studyrats-preview-composite>.studyrats-rat-img.rat-white,
+  .pwa-standalone body[data-page="amigos"] .studyrats-race-fitted>.studyrats-rat-img.rat-white{
+    top:-6px!important;bottom:auto!important;
+  }
+  .pwa-standalone body[data-page="amigos"] .studyrats-preview-composite>.studyrats-rat-img.rat-black,
+  .pwa-standalone body[data-page="amigos"] .studyrats-race-fitted>.studyrats-rat-img.rat-black{
+    top:-7px!important;bottom:auto!important;
+  }
+  .pwa-standalone body[data-page="amigos"] .studyrats-preview-composite>.studyrats-rat-img.rat-gray,
+  .pwa-standalone body[data-page="amigos"] .studyrats-race-fitted>.studyrats-rat-img.rat-gray{
+    top:-3px!important;bottom:auto!important;
+    transform:scale(1.134)!important;
+  }
+
+  .pwa-standalone body[data-page="amigos"] .studyrats-preview-composite>.studyrats-accessory-img,
+  .pwa-standalone body[data-page="amigos"] .studyrats-race-fitted>.studyrats-accessory-img{
+    position:absolute!important;
+  }
+}
