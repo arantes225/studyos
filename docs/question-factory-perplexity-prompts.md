@@ -444,3 +444,70 @@ Focos do Gemini:
 - Em vacinação e neonatologia, exigir seção/tabela/protocolo específico.
 - Questões protocolodependentes devem declarar o protocolo ou fornecer critério que produza uma única melhor resposta.
 - Só recomendar READY_FOR_200 quando network_artificial for residual, AI_PATTERN_RISK deixar de ser high e a correta não for previsível pelo comprimento.
+
+
+## USP-SP — prompt de auditoria inicial
+
+Audite apenas questões USP-SP.
+
+STATUS:
+CALIBRACAO_INICIAL.
+
+Use material primário FUVEST/COREME-FMUSP.
+A edição COREME/FM nº 02/2026 confirma prova objetiva com 4 alternativas e uma correta.
+
+Antes de pontuar style:
+- localizar questões oficiais;
+- registrar years_available;
+- number_of_questions_sampled;
+- primary_sources_found;
+- confidence_in_style_profile.
+
+Não assumir que prova USP é necessariamente longa, obscura ou excessivamente difícil.
+Style mede fidelidade observável, não prestígio institucional.
+
+Decisão:
+READY_FOR_PILOT | NEEDS_MORE_PRIMARY_STYLE_DATA | NEEDS_PROMPT_REFINEMENT.
+
+## UNIFESP — prompt de auditoria inicial
+
+Audite apenas questões UNIFESP.
+
+STATUS:
+NEEDS_PRIMARY_STYLE_DATA.
+
+Não use residência multiprofissional como proxy.
+Não use USP, SUS-SP ou outra prova paulista como identidade substituta.
+
+Antes de gerar ou pontuar estilo:
+- localizar edital médico vigente;
+- localizar caderno/prova oficial;
+- registrar >=20 questões oficiais quando possível;
+- medir formato, extensão, comandos, casos, dificuldade e distratores.
+
+Sem fonte médica primária suficiente:
+style_confidence=low.
+
+Decisão:
+READY_FOR_PILOT | NEEDS_MORE_PRIMARY_STYLE_DATA.
+
+## AMP-PR — prompt de auditoria inicial
+
+Audite apenas questões AMP-PR.
+
+STATUS:
+CALIBRACAO_INICIAL.
+
+Usar material AMP/UCAMP.
+A AMP confirma 25ª edição em 2026, com prova geral e específica.
+Não misturar acesso direto com prova de pré-requisito.
+
+Antes de pontuar style:
+- amostrar preferencialmente >=20 questões da prova geral;
+- usar 2023–2025 como base primária quando acessível;
+- registrar years_available, number_of_questions_sampled e confidence_in_style_profile.
+
+Não tratar “prova do Paraná” como perfil genérico regional.
+
+Decisão:
+READY_FOR_PILOT | NEEDS_MORE_PRIMARY_STYLE_DATA | NEEDS_PROMPT_REFINEMENT.
