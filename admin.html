@@ -14,7 +14,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria7">
   <link rel="stylesheet" href="assets/css/style.css?v=16.2">
-  <link rel="stylesheet" href="assets/css/admin.css?v=1.8">
+  <link rel="stylesheet" href="assets/css/admin.css?v=1.9">
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=10">
   <link rel="canonical" href="/admin/">
   <script>(function(){try{if(location.pathname.endsWith("/admin.html"))history.replaceState(null,"","/admin/"+location.search+location.hash);}catch(e){}})();</script>
@@ -240,6 +240,248 @@
           </div>
         </section>
 
+        <section class="admin-section admin-qf-manual" aria-labelledby="admin-qf-manual-title">
+          <div class="admin-section-head">
+            <div>
+              <span class="eyebrow">Manual editorial</span>
+              <h2 id="admin-qf-manual-title">Prompts e referências da fábrica</h2>
+            </div>
+            <a class="button secondary admin-qf-manual-link" href="/docs/question-factory-manual.md" target="_blank" rel="noopener">Abrir manual completo</a>
+          </div>
+
+          <div class="admin-qf-manual-note">
+            <strong>Contrato oficial da fábrica</strong>
+            <span>Produção em blocos de 200 → revisão Perplexity de cada bloco → 5 blocos aprovados formam 1 lote de 1.000 → revisão final ChatGPT, Perplexity ou dupla → publicação → limpeza dos temporários.</span>
+          </div>
+
+          <div class="admin-qf-manual-grid">
+            <details class="admin-qf-manual-card" open>
+              <summary>Referências por área · ENAMED</summary>
+              <div class="admin-qf-reference-list">
+                <article>
+                  <strong>Base obrigatória do ENAMED</strong>
+                  <p>Matriz de Referência Comum para Avaliação da Formação Médica — Portaria Inep nº 478/2025; manual e documentos oficiais do Enamed. A matriz atual trabalha com Clínica Médica, Cirurgia Geral, Ginecologia e Obstetrícia, Pediatria, Medicina da Família e Comunidade, Saúde Mental e Saúde Coletiva.</p>
+                  <div class="admin-qf-ref-links">
+                    <a href="https://www.gov.br/inep/pt-br/areas-de-atuacao/avaliacao-e-exames-educacionais/enamed" target="_blank" rel="noopener">Inep · Enamed</a>
+                    <a href="https://www.gov.br/inep/pt-br/centrais-de-conteudo/legislacao/enamed/2025" target="_blank" rel="noopener">Portaria 478/2025</a>
+                    <a href="https://download.inep.gov.br/enamed/nota_tecnica_n_19_2025.pdf" target="_blank" rel="noopener">Nota Técnica 19/2025</a>
+                  </div>
+                </article>
+
+                <article>
+                  <strong>Clínica Médica</strong>
+                  <p>MS/PCDT e linhas de cuidado → SBC → SBD → SBPT → SBEM → SBN → SBR → SBI e demais sociedades nacionais pertinentes.</p>
+                  <div class="admin-qf-ref-links">
+                    <a href="https://www.gov.br/saude/pt-br/assuntos/pcdt" target="_blank" rel="noopener">MS · PCDT</a>
+                    <a href="https://www.portal.cardiol.br/diretrizes" target="_blank" rel="noopener">SBC · Diretrizes</a>
+                  </div>
+                </article>
+
+                <article>
+                  <strong>Cirurgia Geral</strong>
+                  <p>MS → Colégio Brasileiro de Cirurgiões (CBC) → CBCD → SBAIT → INCA, conforme o tema. Priorizar abdome agudo, trauma, choque/hemorragia, perioperatório, complicações e princípios oncológicos.</p>
+                </article>
+
+                <article>
+                  <strong>Ginecologia e Obstetrícia</strong>
+                  <p>Ministério da Saúde — Saúde da Mulher, pré-natal, IST e planejamento reprodutivo → FEBRASGO → PCDT/MS aplicável.</p>
+                </article>
+
+                <article>
+                  <strong>Pediatria</strong>
+                  <p>Ministério da Saúde — Caderneta da Criança, PNI, aleitamento e alimentação complementar → Sociedade Brasileira de Pediatria (SBP).</p>
+                </article>
+
+                <article>
+                  <strong>Medicina da Família e Comunidade</strong>
+                  <p>Ministério da Saúde — APS, protocolos da Atenção Básica e linhas de cuidado → SBMFC. Priorizar longitudinalidade, coordenação, rastreamento, multimorbidade e abordagem centrada na pessoa.</p>
+                  <div class="admin-qf-ref-links">
+                    <a href="https://bvsms.saude.gov.br/protocolos-da-atencao-basica/" target="_blank" rel="noopener">BVS/MS · Protocolos APS</a>
+                  </div>
+                </article>
+
+                <article>
+                  <strong>Saúde Mental</strong>
+                  <p>Ministério da Saúde — RAPS, CAPS, políticas de saúde mental, álcool e outras drogas → ABP quando houver diretriz técnica nacional atual.</p>
+                  <div class="admin-qf-ref-links">
+                    <a href="https://www.gov.br/saude/pt-br/composicao/saes/desmad/raps" target="_blank" rel="noopener">MS · RAPS</a>
+                  </div>
+                </article>
+
+                <article>
+                  <strong>Saúde Coletiva</strong>
+                  <p>Constituição Federal, Leis 8.080/1990 e 8.142/1990, normas do SUS, Ministério da Saúde, vigilância epidemiológica, PNI e políticas nacionais. CONASS/CONASEMS podem complementar.</p>
+                </article>
+              </div>
+              <div class="admin-qf-source-priority">
+                <strong>Hierarquia de fonte</strong>
+                <span>Inep/Matriz → Ministério da Saúde e normas oficiais → sociedade médica brasileira → referência internacional apenas quando necessário.</span>
+              </div>
+            </details>
+
+            <details class="admin-qf-manual-card">
+              <summary>Prompt mestre · gerar 200 questões</summary>
+              <div class="admin-qf-prompt-wrap">
+                <button class="button secondary admin-qf-copy" type="button" data-copy-target="qf-prompt-generate">Copiar prompt</button>
+                <pre id="qf-prompt-generate" class="admin-qf-prompt">Você é o GERADOR EDITORIAL de questões médicas autorais do LURIA/StudyOS.
+
+TAREFA:
+Produza um bloco de 200 questões inéditas de Medicina alinhadas à Matriz de Referência Comum do ENAMED e às fontes brasileiras indicadas no catálogo editorial.
+
+REGRAS:
+1. Não copie nem parafraseie de forma reconhecível questões de provas anteriores ou bancos comerciais.
+2. Use ENAMED/ENARE/Revalida apenas como referência de estilo, complexidade, competências e incidência temática.
+3. Cada questão deve ter exatamente 4 alternativas (A-D) e apenas uma resposta correta.
+4. Prefira situações clínicas contextualizadas e tomada de decisão.
+5. O enunciado deve ser autossuficiente e inequívoco.
+6. Evite pegadinhas sem valor educacional e distratores absurdos.
+7. Explique A, B, C e D individualmente, dizendo por que cada alternativa está correta ou incorreta.
+8. Inclua mensagem-chave curta.
+9. Inclua área, tema, subtema e dificuldade.
+10. Cite fonte institucional, documento, ano, URL e, quando possível, seção/capítulo/página.
+11. Não invente referências.
+12. Em conflito, prefira fonte brasileira oficial vigente e sinalize a divergência.
+13. Distribua aproximadamente 20% fácil, 55-60% média e 20-25% difícil.
+14. Não publique. Status inicial: generated.
+15. Retorne JSON válido no schema do projeto.
+
+CRITÉRIO:
+Avaliar reconhecer, interpretar, decidir ou conduzir situação compatível com prática médica e SUS; evitar simples decoreba.</pre>
+              </div>
+            </details>
+
+            <details class="admin-qf-manual-card">
+              <summary>Prompt Perplexity · revisar bloco de 200</summary>
+              <div class="admin-qf-prompt-wrap">
+                <button class="button secondary admin-qf-copy" type="button" data-copy-target="qf-prompt-perplexity-block">Copiar prompt</button>
+                <pre id="qf-prompt-perplexity-block" class="admin-qf-prompt">Você é o AUDITOR CIENTÍFICO INDEPENDENTE de um bloco de 200 questões médicas.
+
+IMPORTANTE:
+Resolva cada questão de forma independente ANTES de olhar o gabarito fornecido.
+
+PARA CADA QUESTÃO:
+1. Determine sua própria resposta correta.
+2. Compare com o gabarito original.
+3. Verifique se existe uma única alternativa defensável.
+4. Verifique se o enunciado fornece dados suficientes.
+5. Audite A, B, C e D individualmente.
+6. Audite as explicações de A-D.
+7. Verifique números, doses, critérios, pontos de corte e condutas.
+8. Procure recomendação desatualizada.
+9. Confirme que a fonte citada existe e sustenta a afirmação central.
+10. Quando necessário, busque fonte primária/oficial mais recente.
+11. Verifique compatibilidade com contexto brasileiro/SUS e ENAMED.
+12. Não reescreva silenciosamente.
+
+RETORNO POR QUESTÃO:
+question_id
+independent_answer
+status: approved | needs_revision | rejected
+confidence: high | medium | low
+ambiguity: true | false
+scientific_issue
+source_issue
+explanation_issue
+suggested_correction
+verified_sources
+
+REGRA:
+Divergência de gabarito, duas alternativas plausíveis, fonte inexistente, recomendação desatualizada ou incerteza em tema de segurança do paciente = needs_revision.</pre>
+              </div>
+            </details>
+
+            <details class="admin-qf-manual-card">
+              <summary>Prompt de correção · após auditoria</summary>
+              <div class="admin-qf-prompt-wrap">
+                <button class="button secondary admin-qf-copy" type="button" data-copy-target="qf-prompt-correction">Copiar prompt</button>
+                <pre id="qf-prompt-correction" class="admin-qf-prompt">Você é o EDITOR DE CORREÇÃO do LURIA.
+
+Receba a questão original e o parecer da auditoria.
+- Preserve question_id.
+- Corrija somente o necessário.
+- Resolva ambiguidades.
+- Atualize o gabarito se tecnicamente necessário.
+- Reescreva alternativas apenas quando necessário.
+- Atualize as explicações A-D para ficarem coerentes com a versão corrigida.
+- Corrija ou substitua referências inválidas/desatualizadas.
+- Preserve o histórico do parecer.
+- Gere nova versão e marque como pronta para nova checagem, nunca como published.</pre>
+              </div>
+            </details>
+
+            <details class="admin-qf-manual-card">
+              <summary>Prompt ChatGPT · revisão final do lote de 1.000</summary>
+              <div class="admin-qf-prompt-wrap">
+                <button class="button secondary admin-qf-copy" type="button" data-copy-target="qf-prompt-chatgpt-final">Copiar prompt</button>
+                <pre id="qf-prompt-chatgpt-final" class="admin-qf-prompt">Você é o REVISOR FINAL EDITORIAL de um lote de 1.000 questões que já passaram por revisão em blocos de 200.
+
+AUDITE O LOTE COMO CONJUNTO:
+1. Distribuição entre as 7 áreas da Matriz do ENAMED.
+2. Distribuição de temas e lacunas relevantes.
+3. Redundância, duplicação semântica e questões quase iguais.
+4. Curva de dificuldade.
+5. Qualidade dos distratores.
+6. Excesso de decoreba versus raciocínio clínico.
+7. Terminologia, unidades, siglas e símbolos.
+8. Fontes desatualizadas ou conflitantes.
+9. Questões de alto risco clínico.
+10. Gabaritos potencialmente inconsistentes.
+11. Explicações que contradizem o gabarito.
+12. Compatibilidade com prática brasileira e SUS.
+13. Equilíbrio entre prevenção, diagnóstico, conduta, urgência e seguimento.
+
+SAÍDA:
+lote_status: approved | needs_revision
+summary
+distribution_findings
+duplicate_clusters
+questions_to_recheck
+source_updates
+editorial_issues
+final_recommendations
+
+Não aprove um lote com pendências relevantes.</pre>
+              </div>
+            </details>
+
+            <details class="admin-qf-manual-card">
+              <summary>Prompt Perplexity · revisão final do lote de 1.000</summary>
+              <div class="admin-qf-prompt-wrap">
+                <button class="button secondary admin-qf-copy" type="button" data-copy-target="qf-prompt-perplexity-final">Copiar prompt</button>
+                <pre id="qf-prompt-perplexity-final" class="admin-qf-prompt">Você é o AUDITOR FINAL EXTERNO de um lote de 1.000 questões médicas previamente revisadas em blocos de 200.
+
+Faça auditoria orientada por evidência:
+- reavalie questões difíceis, controversas e de alto risco;
+- confirme atualização das referências oficiais;
+- detecte mudanças recentes de diretrizes;
+- identifique fontes que não sustentam a afirmação;
+- procure duplicações e padrões de erro;
+- confira a cobertura temática da Matriz de Referência Comum.
+
+RETORNO:
+lote_status: approved | needs_revision
+questions_flagged[]
+outdated_sources[]
+guideline_conflicts[]
+duplicate_or_near_duplicate[]
+high_risk_rechecks[]
+coverage_gaps[]
+comments
+
+Nunca altere o lote silenciosamente. Apenas audite e sinalize.</pre>
+              </div>
+            </details>
+
+            <details class="admin-qf-manual-card">
+              <summary>Regra da revisão final dupla</summary>
+              <div class="admin-qf-double-rule">
+                <p><strong>Modo preferencial: ChatGPT + Perplexity independentes.</strong></p>
+                <p>Se ambos aprovarem, o lote pode seguir. Se qualquer um marcar <code>needs_revision</code>, volta para correção. Divergência sobre uma questão bloqueia a questão até rechecagem na fonte primária oficial. Consenso entre IAs não substitui evidência documental.</p>
+              </div>
+            </details>
+          </div>
+        </section>
+
         <section class="admin-section">
           <div class="admin-section-head admin-customer-head">
             <div>
@@ -381,7 +623,7 @@
   <script src="/assets/vendor/supabase-2.110.6.js"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=16.9"></script>
-  <script src="assets/js/admin.js?v=1.7"></script>
+  <script src="assets/js/admin.js?v=1.8"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
