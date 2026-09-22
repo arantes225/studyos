@@ -7,6 +7,8 @@ const entrarButton = document.getElementById("entrar");
 const criarButton = document.getElementById("criar-conta");
 const mensagem = document.getElementById("mensagem");
 
+const AUTH_STORAGE_KEY = "sb-sxdsfklllilhdyuamvvg-auth-token";
+
 function mostrarMensagem(texto, tipo = "") {
   mensagem.textContent = texto;
   mensagem.className = `auth-message ${tipo}`.trim();
@@ -15,6 +17,31 @@ function mostrarMensagem(texto, tipo = "") {
 function setCarregando(ativo) {
   entrarButton.disabled = ativo;
   criarButton.disabled = ativo;
+}
+
+function isNetworkError(error) {
+  const message = String(error?.message || error || "").toLowerCase();
+  return (
+    message.includes("failed to fetch") ||
+    message.includes("fetch failed") ||
+    message.includes("network") ||
+    message.includes("load failed")
+  );
+}
+
+function limparSessaoLocalCorrompida() {
+  try {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+  } catch (_) {}
+}
+
+async function tentarLogin(email, password) {
+  try {
+    const result = await sb.auth.signInWithPassword({ email, password });
+    return result;
+  } catch (error) {
+    return { data: null, error };
+  }
 }
 
 async function entrar(event) {
@@ -31,10 +58,22 @@ async function entrar(event) {
   setCarregando(true);
   mostrarMensagem("Entrando...");
 
-  const { error } = await sb.auth.signInWithPassword({ email, password });
+  let result = await tentarLogin(email, password);
 
-  if (error) {
-    mostrarMensagem(error.message, "error");
+  // Se houver uma sessão local antiga/corrompida ou uma falha transitória de rede,
+  // limpa somente o estado local e tenta uma única vez de novo.
+  if (result.error && isNetworkError(result.error)) {
+    limparSessaoLocalCorrompida();
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    result = await tentarLogin(email, password);
+  }
+
+  if (result.error) {
+    const message = isNetworkError(result.error)
+      ? "Não foi possível conectar ao servidor de autenticação. Atualize a página e tente novamente."
+      : result.error.message;
+
+    mostrarMensagem(message, "error");
     setCarregando(false);
     return;
   }
@@ -59,39 +98,60 @@ async function criarConta() {
   setCarregando(true);
   mostrarMensagem("Criando conta...");
 
-  const { data, error } = await sb.auth.signUp({ email, password });
+  try {
+    const { data, error } = await sb.auth.signUp({ email, password });
 
-  if (error) {
-    if (error.message.toLowerCase().includes("rate limit")) {
-      mostrarMensagem(
-        "O Supabase limitou temporariamente os e-mails de cadastro. Use a conta já criada ou tente novamente mais tarde.",
-        "error"
-      );
-    } else {
-      mostrarMensagem(error.message, "error");
+    if (error) {
+      if (error.message.toLowerCase().includes("rate limit")) {
+        mostrarMensagem(
+          "O Supabase limitou temporariamente os e-mails de cadastro. Use a conta já criada ou tente novamente mais tarde.",
+          "error"
+        );
+      } else {
+        mostrarMensagem(error.message, "error");
+      }
+
+      setCarregando(false);
+      return;
     }
 
+    if (data.session) {
+      window.location.replace("/dashboard/");
+      return;
+    }
+
+    mostrarMensagem(
+      "Conta criada. Se a confirmação por e-mail estiver ativa, confirme o e-mail antes de entrar.",
+      "success"
+    );
+  } catch (error) {
+    mostrarMensagem(
+      isNetworkError(error)
+        ? "Não foi possível conectar ao servidor de autenticação."
+        : "Não foi possível criar a conta.",
+      "error"
+    );
+  } finally {
     setCarregando(false);
-    return;
   }
-
-  if (data.session) {
-    window.location.replace("/dashboard/");
-    return;
-  }
-
-  mostrarMensagem(
-    "Conta criada. Se a confirmação por e-mail estiver ativa, confirme o e-mail antes de entrar.",
-    "success"
-  );
-  setCarregando(false);
 }
 
 (async function verificarSessao() {
-  const { data } = await sb.auth.getSession();
+  try {
+    const { data, error } = await sb.auth.getSession();
 
-  if (data.session) {
-    window.location.replace("/dashboard/");
+    if (error && isNetworkError(error)) {
+      limparSessaoLocalCorrompida();
+      return;
+    }
+
+    if (data?.session) {
+      window.location.replace("/dashboard/");
+    }
+  } catch (error) {
+    if (isNetworkError(error)) {
+      limparSessaoLocalCorrompida();
+    }
   }
 })();
 
