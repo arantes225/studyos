@@ -910,14 +910,29 @@ async function carregarLofiSobDemanda(manager) {
         }
       );
 
-      const publicUrl =
-        sb.storage
+      const {
+        data: signedAudio,
+        error: signedAudioError
+      } =
+        await sb.storage
           .from(manager.track.storage_bucket)
-          .getPublicUrl(manager.track.storage_path)
-          .data
-          .publicUrl;
+          .createSignedUrl(
+            manager.track.storage_path,
+            60 * 60 * 12
+          );
 
-      manager.audio.src = publicUrl;
+      if (
+        signedAudioError
+        || !signedAudio?.signedUrl
+      ) {
+        throw signedAudioError
+        || new Error(
+          "Não foi possível gerar a URL do áudio."
+        );
+      }
+
+      manager.audio.src =
+        signedAudio.signedUrl;
       manager.audio.load();
 
       return true;
@@ -967,14 +982,33 @@ async function trocarFaixaLofi(manager, trackId) {
   manager.audio.loop =
     nextTrack.loop_enabled !== false;
 
-  const publicUrl =
-    sb.storage
+  const {
+    data: signedAudio,
+    error: signedAudioError
+  } =
+    await sb.storage
       .from(nextTrack.storage_bucket)
-      .getPublicUrl(nextTrack.storage_path)
-      .data
-      .publicUrl;
+      .createSignedUrl(
+        nextTrack.storage_path,
+        60 * 60 * 12
+      );
 
-  manager.audio.src = publicUrl;
+  if (
+    signedAudioError
+    || !signedAudio?.signedUrl
+  ) {
+    manager.error =
+      "Não foi possível carregar o áudio.";
+
+    updateLofiControls(
+      manager
+    );
+
+    return;
+  }
+
+  manager.audio.src =
+    signedAudio.signedUrl;
   manager.audio.load();
 
   writeLofiState(
