@@ -1192,6 +1192,17 @@ Se esses critérios não forem atingidos, manter `NEEDS_ONE_MORE_CALIBRATION`.
 - Próximo passo obrigatório: >=20 questões médicas oficiais, idealmente de 2–3 edições.
 - Proibido usar multiprofissional ou outra banca paulista como proxy silencioso.
 
+
+
+### Aprendizado específico AMP-PR após calibração inicial
+- Status: `NEEDS_MORE_PRIMARY_STYLE_DATA`.
+- A auditoria encontrou média 81,3 e mediana 81, mas parte da perda de style decorreu de penalização inválida pelo formato de quatro alternativas.
+- O LURIA mantém exatamente A–D, independentemente de a AMP oficial usar A–E.
+- Estrutura AMP confirmada: Prova Geral de 100 questões, seis áreas básicas equilibradas e uma única correta.
+- Para fidelidade, reproduzir matriz, comandos, nível de raciocínio, stem e distratores — não o número de alternativas.
+- O lote piloto não representa a matriz AMP: só Clínica Médica, Cirurgia Geral e Pediatria.
+- Próxima calibração deve incluir Obstetrícia, Ginecologia e Medicina Preventiva e Social, quebrar blocos temáticos e reduzir AI_PATTERN_RISK.
+
 ## 15. Terceira barreira independente — Gemini
 
 Depois que o lote de 1.000 passar pela revisão global do ChatGPT e do Perplexity:
