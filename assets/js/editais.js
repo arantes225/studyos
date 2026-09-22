@@ -2052,16 +2052,16 @@ function activateEditaisSource(
   }
 
 
-  if (aristo) {
-    aristo.hidden =
+  if (catalog) {
+    catalog.hidden =
       source
-      !== "aristo";
+      !== "catalog";
   }
 
 
   if (
     source
-    === "aristo"
+    === "catalog"
   ) {
     if (
       typeof window.loadLuriaExamCatalog
