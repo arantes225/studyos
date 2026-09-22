@@ -748,9 +748,9 @@ Cada bloco possui 200 questões e segue esta sequência:
 1. **Geração ChatGPT** — cria as 200 questões no perfil da banca.
 2. **Checagem inicial ChatGPT** — valida estrutura, duplicação, fontes e coerência antes da auditoria independente.
 3. **Auditoria Perplexity** — resolve cada item de forma independente, atribui `quality_score` de 0 a 100 e verifica fonte do gabarito.
-4. **Questões abaixo de 90 ou com hard fail** — entram em `needs_revision` e aparecem no Admin como “a rever”.
+4. **Questões abaixo de 95 ou com hard fail** — entram em `needs_revision` e aparecem no Admin como “a rever”.
 5. **Correção ChatGPT** — lê o parecer salvo no Supabase, corrige apenas as sinalizadas e incrementa `version`.
-6. **Reauditoria Perplexity** — revisa a nova versão. Questão continua em correção enquanto não atingir >=90 sem hard fail.
+6. **Reauditoria Perplexity** — revisa a nova versão. Questão continua em correção enquanto não atingir >=95 sem hard fail.
 7. **Aprovação humana** — somente quando as 200 estão machine-approved o Admin libera SIM/NÃO. SIM move o bloco para o lote.
 8. Cinco blocos aprovados pelo administrador formam **1 lote de 1.000**.
 9. **Revisão final ChatGPT das 1.000** — avalia o lote como conjunto: duplicações, cobertura, dificuldade, distribuição, fontes e consistência editorial.
@@ -759,7 +759,7 @@ Cada bloco possui 200 questões e segue esta sequência:
 
 ### Nota de qualidade
 
-O corte operacional é 90/100. Nota alta não supera hard fail.
+O corte operacional é 95/100. Nota alta não supera hard fail.
 
 Hard fails incluem:
 - gabarito incorreto ou divergente;
