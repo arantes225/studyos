@@ -8,6 +8,14 @@ let sharedStudyratsMyAccessoryX=0;
 let sharedStudyratsMyAccessoryY=0;
 let sharedStudyratsCustomizerLoaded=false;
 
+function sharedStudyratsIsStandalone(){
+  return Boolean(
+    window.matchMedia?.("(display-mode: standalone)")?.matches
+    || window.navigator.standalone === true
+    || document.documentElement.classList.contains("pwa-standalone")
+  );
+}
+
 const sharedStudyratLaneColors=['#2f80ed','#36a96c','#f2994a','#8b5cf6','#eb5757','#24a0b5'];
 const sharedStudyratVariants=[
   {id:'green',label:'Verde radioativo',src:'/assets/img/studyrats/ratinhos/ratinho_verde_radioativo.webp?v=16'},
@@ -186,7 +194,7 @@ function sharedStudyratsUpdateLargePreview(){
   );
   sharedStudyratsBindImageFallbacks(host);
   const customizer=document.getElementById('studyrats-customizer');
-  if(customizer&&!customizer.hidden)sharedStudyratsBindAccessoryDrag();
+  if(customizer&&!customizer.hidden&&!sharedStudyratsIsStandalone())sharedStudyratsBindAccessoryDrag();
 }
 
 function sharedStudyratsApplyAccessorySelection(){
@@ -589,7 +597,12 @@ window.initSharedStudyrats=function(){
 
   const customizer=document.getElementById('studyrats-customizer');
   const customizeButton=document.getElementById('studyrats-toggle-customize');
+  if(sharedStudyratsIsStandalone()){
+    if(customizer)customizer.hidden=true;
+    if(customizeButton)customizeButton.hidden=true;
+  }
   customizeButton?.addEventListener('click',function(){
+    if(sharedStudyratsIsStandalone())return;
     if(!customizer)return;
     const opening=customizer.hidden;
     customizer.hidden=!opening;
