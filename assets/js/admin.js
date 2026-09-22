@@ -17,7 +17,12 @@
     wired: false,
     storageGuide: "",
     storageGuidePath: "",
-    storageGuideError: ""
+    storageGuideError: "",
+    questionFactory: null,
+    qfBatchNumber: null,
+    qfOffset: 0,
+    qfPageSize: 100,
+    qfTotal: 0
   };
 
   const METRICS = [
@@ -1270,7 +1275,8 @@
 
     await Promise.all([
       load(),
-      loadStorageExpansionGuide()
+      loadStorageExpansionGuide(),
+      loadQuestionFactory()
     ]);
   }
 
@@ -1504,7 +1510,199 @@
       );
   }
 
+
+  function qfStatusLabel(value) {
+    const labels = {
+      building: "Construindo",
+      perplexity_review: "Perplexity",
+      needs_revision: "Correção",
+      approved: "Aprovado",
+      merged: "No lote",
+      reviewing: "Revisão final",
+      ready: "Pronto",
+      published: "Publicado",
+      pending: "Pendente",
+      rejected: "Rejeitado"
+    };
+    return labels[String(value || "")] || "Pendente";
+  }
+
+  function qfReviewPill(label, status) {
+    const tone = ["approved","needs_revision","rejected"].includes(status) ? status : "";
+    return '<span class="admin-qf-review-pill '+esc(tone)+'">'+esc(label)+': '+esc(qfStatusLabel(status))+'</span>';
+  }
+
+  function renderQuestionFactory(snapshot) {
+    state.questionFactory = snapshot || {};
+    const totals = snapshot?.totals || {};
+    if ($("admin-qf-total")) $("admin-qf-total").textContent = formatNumber(totals.questions);
+    if ($("admin-qf-blocks")) $("admin-qf-blocks").textContent = formatNumber(totals.blocks);
+    if ($("admin-qf-block-review")) $("admin-qf-block-review").textContent = formatNumber(totals.blocks_in_review);
+    if ($("admin-qf-lots-ready")) $("admin-qf-lots-ready").textContent = formatNumber(totals.lots_ready_for_final_review);
+    if ($("admin-qf-ready")) $("admin-qf-ready").textContent = formatNumber(totals.ready);
+    if ($("admin-qf-published")) $("admin-qf-published").textContent = formatNumber(totals.published);
+
+    const batches = Array.isArray(snapshot?.batches) ? snapshot.batches : [];
+    if ($("admin-qf-batch-count")) $("admin-qf-batch-count").textContent =
+      `${formatNumber(batches.length)} lote${batches.length === 1 ? "" : "s"}`;
+
+    const wrap = $("admin-qf-batches");
+    if (!wrap) return;
+    if (!batches.length) {
+      wrap.innerHTML = '<div class="admin-factory-empty-wide">Nenhum lote criado ainda.</div>';
+      return;
+    }
+
+    wrap.innerHTML = batches.map(batch => {
+      const blocks = Array.isArray(batch.blocks) ? batch.blocks : [];
+      const progress = Math.min(100, (Number(batch.question_count || 0) / 1000) * 100);
+      const blockCards = [1,2,3,4,5].map(n => {
+        const block = blocks.find(x => Number(x.block_number) === n);
+        const count = Number(block?.question_count || 0);
+        const status = block?.perplexity_review_status || block?.status || "building";
+        return `
+          <div class="admin-qf-block-mini">
+            <div><strong>Bloco ${n}</strong><small>${count}/200</small></div>
+            <span class="admin-qf-block-state ${esc(status)}">${esc(qfStatusLabel(status))}</span>
+          </div>
+        `;
+      }).join("");
+
+      const finalMode = batch.final_review_mode === "chatgpt"
+        ? "ChatGPT"
+        : batch.final_review_mode === "perplexity"
+          ? "Perplexity"
+          : "ChatGPT + Perplexity";
+
+      return `
+        <article class="admin-qf-batch-card">
+          <div class="admin-qf-batch-card-head">
+            <div>
+              <strong>Lote ${String(Number(batch.batch_number || 0)).padStart(3,"0")}</strong>
+              <small>${formatNumber(batch.question_count)} de 1.000 questões</small>
+            </div>
+            <span class="admin-factory-badge">${esc(qfStatusLabel(batch.status))}</span>
+          </div>
+          <div class="admin-qf-batch-progress" aria-hidden="true"><span style="width:${progress.toFixed(1)}%"></span></div>
+          <div class="admin-qf-block-grid">${blockCards}</div>
+          <div class="admin-qf-final-review">
+            <span>Revisão final</span>
+            <strong>${esc(finalMode)}</strong>
+            <div>
+              ${batch.final_review_mode !== "perplexity" ? qfReviewPill("ChatGPT", batch.final_review_chatgpt_status) : ""}
+              ${batch.final_review_mode !== "chatgpt" ? qfReviewPill("Perplexity", batch.final_review_perplexity_status) : ""}
+            </div>
+          </div>
+          <button class="button secondary admin-qf-open-batch" type="button" data-qf-batch="${Number(batch.batch_number)}">Ver questões</button>
+        </article>
+      `;
+    }).join("");
+  }
+
+  async function loadQuestionFactory() {
+    const { data, error } = await sb.rpc("admin_question_factory_snapshot");
+    if (error) {
+      console.warn("Não foi possível carregar a fábrica de questões:", error);
+      return;
+    }
+    renderQuestionFactory(data || {});
+  }
+
+  function renderQuestionFactoryBatch(data) {
+    const questions = Array.isArray(data?.questions) ? data.questions : [];
+    state.qfTotal = Number(data?.total || 0);
+    const start = state.qfTotal ? Number(data?.offset || 0) + 1 : 0;
+    const end = Math.min(Number(data?.offset || 0) + questions.length, state.qfTotal);
+
+    if ($("admin-qf-dialog-title")) $("admin-qf-dialog-title").textContent =
+      `Lote ${String(Number(data?.batch_number || 0)).padStart(3,"0")}`;
+    if ($("admin-qf-dialog-meta")) $("admin-qf-dialog-meta").textContent =
+      `${formatNumber(state.qfTotal)} questões · ${esc(data?.final_review_mode === "double" ? "revisão final dupla" : data?.final_review_mode || "revisão final")}`;
+    if ($("admin-qf-page-info")) $("admin-qf-page-info").textContent = `${start}–${end} de ${state.qfTotal}`;
+
+    const list = $("admin-qf-question-list");
+    if (list) {
+      list.innerHTML = questions.length ? questions.map(q => {
+        const code = q.question_code || `Q${String(q.sequence_no || 0).padStart(4,"0")}`;
+        const block = q.block_number ? `Bloco ${q.block_number} · ${q.block_sequence_no || "—"}/200` : "Sem bloco";
+        return `
+          <details class="admin-qf-question">
+            <summary>
+              <span class="admin-qf-question-code">${esc(code)}</span>
+              <div class="admin-qf-question-title">
+                <strong>${esc(q.enunciado)}</strong>
+                <small>${esc(block)} · ${esc(q.area || "—")} · ${esc(q.tema || "—")}</small>
+              </div>
+              <div class="admin-qf-review-pills">
+                ${qfReviewPill("Perplexity bloco", q.block_review_status)}
+                ${qfReviewPill("ChatGPT lote", q.lot_review_chatgpt_status)}
+                ${qfReviewPill("Perplexity lote", q.lot_review_perplexity_status)}
+              </div>
+            </summary>
+            <div class="admin-qf-question-body">
+              <p>${esc(q.enunciado)}</p>
+              <div class="admin-qf-alternatives">
+                ${["A","B","C","D"].map(letter => {
+                  const val = q["alternativa_"+letter.toLowerCase()] || "";
+                  return '<div class="admin-qf-alt '+(q.gabarito === letter ? "correct" : "")+'"><strong>'+letter+'</strong> — '+esc(val)+'</div>';
+                }).join("")}
+              </div>
+              <div class="admin-qf-review-notes">
+                <article><strong>Revisão do bloco · Perplexity</strong><small>${esc(q.block_review_notes || "Ainda sem parecer.")}</small></article>
+                <article><strong>Revisão final · ChatGPT</strong><small>${esc(q.lot_review_chatgpt_notes || "Ainda sem parecer.")}</small></article>
+                <article><strong>Revisão final · Perplexity</strong><small>${esc(q.lot_review_perplexity_notes || "Ainda sem parecer.")}</small></article>
+              </div>
+              <div class="admin-qf-source">Fonte: ${esc(q.fonte_instituicao || "—")} · ${esc(q.fonte_documento || "—")} · ${esc(q.fonte_ano || "—")}</div>
+            </div>
+          </details>
+        `;
+      }).join("") : '<div class="admin-factory-empty-wide">Esse lote ainda não possui questões.</div>';
+    }
+
+    const prev = $("admin-qf-prev");
+    const next = $("admin-qf-next");
+    if (prev) prev.disabled = state.qfOffset <= 0;
+    if (next) next.disabled = state.qfOffset + state.qfPageSize >= state.qfTotal;
+  }
+
+  async function openQuestionFactoryBatch(batchNumber, offset = 0) {
+    state.qfBatchNumber = Number(batchNumber);
+    state.qfOffset = Math.max(0, Number(offset || 0));
+    const dialog = $("admin-qf-dialog");
+    if (dialog && !dialog.open) dialog.showModal();
+    const list = $("admin-qf-question-list");
+    if (list) list.innerHTML = '<div class="admin-factory-empty-wide">Carregando questões...</div>';
+
+    const { data, error } = await sb.rpc("admin_question_factory_batch", {
+      p_batch_number: state.qfBatchNumber,
+      p_limit: state.qfPageSize,
+      p_offset: state.qfOffset
+    });
+    if (error) {
+      console.error(error);
+      if (list) list.innerHTML = '<div class="admin-factory-empty-wide">Não foi possível carregar este lote.</div>';
+      return;
+    }
+    renderQuestionFactoryBatch(data || {});
+  }
+
   function wire() {
+    $("admin-qf-batches")?.addEventListener("click", event => {
+      const button = event.target.closest("[data-qf-batch]");
+      if (!button) return;
+      openQuestionFactoryBatch(button.dataset.qfBatch, 0);
+    });
+
+    $("admin-qf-dialog-close")?.addEventListener("click", () => $("admin-qf-dialog")?.close());
+    $("admin-qf-prev")?.addEventListener("click", () => {
+      if (!state.qfBatchNumber) return;
+      openQuestionFactoryBatch(state.qfBatchNumber, Math.max(0, state.qfOffset - state.qfPageSize));
+    });
+    $("admin-qf-next")?.addEventListener("click", () => {
+      if (!state.qfBatchNumber) return;
+      openQuestionFactoryBatch(state.qfBatchNumber, state.qfOffset + state.qfPageSize);
+    });
+
     $("admin-storage-expansion-open")
       ?.addEventListener(
         "click",
