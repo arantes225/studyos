@@ -494,7 +494,17 @@
   overflow:visible!important;
   pointer-events:none!important;
 }
-.studyrats-preview-composite>.studyrats-rat-img{
+.studyrats-race-fitted{
+  width:72px!important;
+  height:50px!important;
+  transform:scale(calc(var(--runner-scale,1.25) * 1.6667))!important;
+  transform-origin:center center!important;
+  position:relative!important;
+  display:block!important;
+  overflow:visible!important;
+  pointer-events:none!important;
+}
+:is(.studyrats-preview-composite,.studyrats-race-fitted)>.studyrats-rat-img{
   position:absolute!important;
   inset:0!important;
   width:72px!important;
@@ -502,11 +512,11 @@
   object-fit:contain!important;
   transform:none!important;
 }
-.studyrats-preview-composite>.studyrats-rat-img.rat-brown{top:-7px!important;bottom:auto!important;transform:none!important}
-.studyrats-preview-composite>.studyrats-rat-img.rat-blue{top:1px!important;bottom:auto!important;transform:none!important}
-.studyrats-preview-composite>.studyrats-rat-img.rat-white{top:-6px!important;bottom:auto!important;transform:none!important}
-.studyrats-preview-composite>.studyrats-rat-img.rat-black{top:-7px!important;bottom:auto!important;transform:none!important}
-.studyrats-preview-composite>.studyrats-rat-img.rat-gray{top:-3px!important;bottom:auto!important;transform:scale(1.134)!important}
+:is(.studyrats-preview-composite,.studyrats-race-fitted)>.studyrats-rat-img.rat-brown{top:-7px!important;bottom:auto!important;transform:none!important}
+:is(.studyrats-preview-composite,.studyrats-race-fitted)>.studyrats-rat-img.rat-blue{top:1px!important;bottom:auto!important;transform:none!important}
+:is(.studyrats-preview-composite,.studyrats-race-fitted)>.studyrats-rat-img.rat-white{top:-6px!important;bottom:auto!important;transform:none!important}
+:is(.studyrats-preview-composite,.studyrats-race-fitted)>.studyrats-rat-img.rat-black{top:-7px!important;bottom:auto!important;transform:none!important}
+:is(.studyrats-preview-composite,.studyrats-race-fitted)>.studyrats-rat-img.rat-gray{top:-3px!important;bottom:auto!important;transform:scale(1.134)!important}
 :root[data-theme="dark"] .studyrats-preview-composite>.studyrats-rat-img{
   filter:
     drop-shadow(0 0 2px rgba(255,255,255,.95))
@@ -620,52 +630,52 @@
 .studyrats-empty-composite .accessory-astronaut-helmet{left:56px;top:20px}
 
 /* Studyrats preview accessory positioning v24 — fine tuning solicitado */
-.studyrats-preview-composite .accessory-colorful-cap{
+:is(.studyrats-preview-composite,.studyrats-race-fitted) .accessory-colorful-cap{
   width:28.31px!important;height:19.73px!important;left:36px!important;top:10px!important;transform:rotate(3deg)!important;
 }
-.studyrats-preview-composite .accessory-cowboy-hat{
+:is(.studyrats-preview-composite,.studyrats-race-fitted) .accessory-cowboy-hat{
   width:36.40px!important;height:22.53px!important;left:30px!important;top:8px!important;transform:rotate(2deg)!important;
 }
-.studyrats-preview-composite .accessory-crown{
+:is(.studyrats-preview-composite,.studyrats-race-fitted) .accessory-crown{
   width:23.06px!important;height:19.37px!important;left:37px!important;top:6px!important;
 }
-.studyrats-preview-composite .accessory-gamer-headset{
+:is(.studyrats-preview-composite,.studyrats-race-fitted) .accessory-gamer-headset{
   width:22.24px!important;height:19.77px!important;left:36px!important;top:12px!important;
 }
-.studyrats-preview-composite .accessory-magic-top-hat{
+:is(.studyrats-preview-composite,.studyrats-race-fitted) .accessory-magic-top-hat{
   width:28.56px!important;height:22.39px!important;left:33px!important;top:6px!important;transform:rotate(2deg)!important;
 }
-.studyrats-preview-composite .accessory-pink-bow-hat{
+:is(.studyrats-preview-composite,.studyrats-race-fitted) .accessory-pink-bow-hat{
   width:37.94px!important;height:22.58px!important;left:29px!important;top:9px!important;transform:rotate(2deg)!important;
 }
-.studyrats-preview-composite .accessory-santa-hat{
+:is(.studyrats-preview-composite,.studyrats-race-fitted) .accessory-santa-hat{
   width:29.48px!important;height:22.54px!important;left:29px!important;top:8px!important;transform:rotate(5deg)!important;
 }
-.studyrats-preview-composite .accessory-unicorn-headband{
+:is(.studyrats-preview-composite,.studyrats-race-fitted) .accessory-unicorn-headband{
   width:21.87px!important;height:16.76px!important;left:39px!important;top:10px!important;
 }
-.studyrats-preview-composite .accessory-viking-helmet{
+:is(.studyrats-preview-composite,.studyrats-race-fitted) .accessory-viking-helmet{
   width:32.40px!important;height:21.02px!important;left:9px!important;top:6px!important;
 }
-.studyrats-preview-composite .accessory-wizard-hat{
+:is(.studyrats-preview-composite,.studyrats-race-fitted) .accessory-wizard-hat{
   width:28.37px!important;height:22.84px!important;left:31px!important;top:5px!important;transform:rotate(2deg)!important;
 }
-.studyrats-preview-composite .accessory-cyberpunk-visor{
+:is(.studyrats-preview-composite,.studyrats-race-fitted) .accessory-cyberpunk-visor{
   width:34.34px!important;height:20.2px!important;left:32px!important;top:15px!important;
 }
-.studyrats-preview-composite .accessory-pink-round-glasses{
+:is(.studyrats-preview-composite,.studyrats-race-fitted) .accessory-pink-round-glasses{
   left:35px!important;top:16px!important;
 }
-.studyrats-preview-composite .accessory-round-nerd-glasses{
+:is(.studyrats-preview-composite,.studyrats-race-fitted) .accessory-round-nerd-glasses{
   left:35px!important;top:16px!important;
 }
-.studyrats-preview-composite .accessory-angel-wings{
+:is(.studyrats-preview-composite,.studyrats-race-fitted) .accessory-angel-wings{
   left:-9px!important;top:-14px!important;
 }
-.studyrats-preview-composite .accessory-rocket-flame{
+:is(.studyrats-preview-composite,.studyrats-race-fitted) .accessory-rocket-flame{
   width:46.31px!important;height:31.26px!important;left:-8px!important;top:12px!important;transform:none!important;
 }
-.studyrats-preview-composite .accessory-astronaut-helmet{
+:is(.studyrats-preview-composite,.studyrats-race-fitted) .accessory-astronaut-helmet{
   width:26.52px!important;height:24.48px!important;left:41px!important;top:14px!important;
 }
 
@@ -673,6 +683,7 @@
 /* Studyrats — ajuste manual do acessório no preview */
 .studyrats-preview-composite>.studyrats-accessory-img{
   cursor:grab!important;
+  pointer-events:auto!important;
   touch-action:none!important;
   user-select:none!important;
   -webkit-user-drag:none!important;
