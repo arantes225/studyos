@@ -2752,3 +2752,35 @@ body.admin-unlocked #admin-app {
   .admin-qf-review-import-actions{flex-direction:column}
   .admin-qf-review-import-actions .button{width:100%}
 }
+
+
+/* Question factory 2.8 — pipeline status + batch final review actions */
+.admin-qf-block-pipeline{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+}
+.admin-qf-block-pipeline .admin-qf-review-pill{
+  font-size:5.8px;
+  min-height:19px;
+  padding:0 5px;
+}
+.admin-qf-batch-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+}
+.admin-qf-batch-actions .button{
+  min-height:32px;
+  padding:0 7px;
+  font-size:7px;
+}
+.admin-qf-block-mini-actions:has(.admin-qf-correction-import){
+  grid-template-columns:1fr 1fr;
+}
+.admin-qf-correction-import{
+  grid-column:1/-1;
+}
+@media(max-width:620px){
+  .admin-qf-batch-actions{grid-template-columns:1fr}
+}
