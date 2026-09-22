@@ -7403,6 +7403,19 @@ function focusLibraryTopic(topicId) {
 function switchScheduleAddMode(
   mode
 ) {
+  const automaticAllowed =
+    window.LuriaEntitlements?.enabled(
+      "automatic_schedule"
+    ) === true;
+
+  if (
+    mode === "automatic"
+    && !automaticAllowed
+  ) {
+    mode =
+      "manual";
+  }
+
   if (
     ![
       "automatic",
@@ -7413,7 +7426,9 @@ function switchScheduleAddMode(
     )
   ) {
     mode =
-      "automatic";
+      automaticAllowed
+        ? "automatic"
+        : "manual";
   }
 
 
@@ -9082,8 +9097,28 @@ async function initCronograma() {
     loadTopics()
   ]);
 
+  const automaticAllowed =
+    window.LuriaEntitlements?.enabled(
+      "automatic_schedule"
+    ) === true;
+
+  const automaticButton =
+    document.querySelector(
+      '[data-schedule-add-mode="automatic"]'
+    );
+
+  if (
+    automaticButton
+    && !automaticAllowed
+  ) {
+    automaticButton.hidden =
+      true;
+  }
+
   switchScheduleAddMode(
-    "automatic"
+    automaticAllowed
+      ? "automatic"
+      : "manual"
   );
 
   document.addEventListener(
