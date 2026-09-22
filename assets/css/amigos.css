@@ -502,11 +502,11 @@
   object-fit:contain!important;
   transform:none!important;
 }
-.studyrats-preview-composite>.studyrats-rat-img.rat-brown{top:-10px!important;bottom:auto!important;transform:none!important}
+.studyrats-preview-composite>.studyrats-rat-img.rat-brown{top:-4px!important;bottom:auto!important;transform:none!important}
 .studyrats-preview-composite>.studyrats-rat-img.rat-blue{top:1px!important;bottom:auto!important;transform:none!important}
-.studyrats-preview-composite>.studyrats-rat-img.rat-white{top:-7px!important;bottom:auto!important;transform:none!important}
-.studyrats-preview-composite>.studyrats-rat-img.rat-black{top:-10px!important;bottom:auto!important;transform:none!important}
-.studyrats-preview-composite>.studyrats-rat-img.rat-gray{top:-4px!important;bottom:auto!important;transform:scale(1.134)!important}
+.studyrats-preview-composite>.studyrats-rat-img.rat-white{top:-5px!important;bottom:auto!important;transform:none!important}
+.studyrats-preview-composite>.studyrats-rat-img.rat-black{top:-4px!important;bottom:auto!important;transform:none!important}
+.studyrats-preview-composite>.studyrats-rat-img.rat-gray{top:-2px!important;bottom:auto!important;transform:scale(1.134)!important}
 :root[data-theme="dark"] .studyrats-preview-composite>.studyrats-rat-img{
   filter:
     drop-shadow(0 0 2px rgba(255,255,255,.95))
