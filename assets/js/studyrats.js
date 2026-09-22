@@ -3,6 +3,9 @@ let sharedStudyratsChannel=null;
 let sharedStudyratsTimer=null;
 let sharedStudyratsMyVariant='brown';
 let sharedStudyratsMyAccessory='none';
+let sharedStudyratsAccessoryOffsets={};
+let sharedStudyratsMyAccessoryX=0;
+let sharedStudyratsMyAccessoryY=0;
 
 const sharedStudyratLaneColors=['#2f80ed','#36a96c','#f2994a','#8b5cf6','#eb5757','#24a0b5'];
 const sharedStudyratVariants=[
@@ -54,16 +57,19 @@ function sharedStudyratAccessorySources(item){
   return [item.src];
 }
 
-function sharedStudyratAccessoryImg(value,className){
+function sharedStudyratAccessoryImg(value,className,offsetX,offsetY){
   const item=sharedStudyratAccessory(value);
   if(item.id==='none'||!item.src)return '';
-  return '<img class="'+(className||'studyrats-accessory-img')+' accessory-'+item.id+' accessory-kind-'+item.kind+'" src="'+item.src+'" alt="'+item.label+'" draggable="false" loading="eager" decoding="async">';
+  const x=Number(offsetX)||0;
+  const y=Number(offsetY)||0;
+  const style=(x||y)?' style="translate:'+x+'px '+y+'px"':'';
+  return '<img class="'+(className||'studyrats-accessory-img')+' accessory-'+item.id+' accessory-kind-'+item.kind+'" src="'+item.src+'" alt="'+item.label+'" draggable="false" loading="eager" decoding="async"'+style+'>';
 }
 
-function sharedStudyratComposite(variant,accessory,className){
+function sharedStudyratComposite(variant,accessory,className,offsetX,offsetY){
   return '<span class="'+(className||'studyrats-rat-composite')+'">'+
     sharedRatImg(variant,'studyrats-rat-img')+
-    sharedStudyratAccessoryImg(accessory,'studyrats-accessory-img')+
+    sharedStudyratAccessoryImg(accessory,'studyrats-accessory-img',offsetX,offsetY)+
   '</span>';
 }
 
@@ -78,15 +84,94 @@ function sharedRatImg(variant,className){
   return '<img class="'+cls+'" src="'+item.src+'" alt="'+item.label+'" draggable="false" loading="eager" decoding="async">';
 }
 
+function sharedStudyratsCurrentAccessoryOffset(accessory){
+  const raw=sharedStudyratsAccessoryOffsets&&sharedStudyratsAccessoryOffsets[accessory];
+  return {
+    x:Number(raw&&raw.x)||0,
+    y:Number(raw&&raw.y)||0
+  };
+}
+
+function sharedStudyratsBindAccessoryDrag(){
+  const host=document.getElementById('studyrats-preview-large-stage');
+  const composite=host&&host.querySelector('.studyrats-preview-composite');
+  const accessory=composite&&composite.querySelector('.studyrats-accessory-img');
+  if(!accessory||sharedStudyratsMyAccessory==='none')return;
+
+  let startPointerX=0;
+  let startPointerY=0;
+  let startX=sharedStudyratsMyAccessoryX;
+  let startY=sharedStudyratsMyAccessoryY;
+  let dragging=false;
+
+  accessory.addEventListener('pointerdown',function(event){
+    event.preventDefault();
+    dragging=true;
+    startPointerX=event.clientX;
+    startPointerY=event.clientY;
+    startX=sharedStudyratsMyAccessoryX;
+    startY=sharedStudyratsMyAccessoryY;
+    accessory.classList.add('is-dragging');
+    accessory.setPointerCapture?.(event.pointerId);
+  });
+
+  accessory.addEventListener('pointermove',function(event){
+    if(!dragging)return;
+    event.preventDefault();
+    const visualWidth=composite.getBoundingClientRect().width||72;
+    const logicalWidth=composite.offsetWidth||72;
+    const scale=visualWidth/logicalWidth||1;
+    const x=Math.max(-60,Math.min(60,startX+(event.clientX-startPointerX)/scale));
+    const y=Math.max(-45,Math.min(45,startY+(event.clientY-startPointerY)/scale));
+    sharedStudyratsMyAccessoryX=Math.round(x*100)/100;
+    sharedStudyratsMyAccessoryY=Math.round(y*100)/100;
+    accessory.style.translate=sharedStudyratsMyAccessoryX+'px '+sharedStudyratsMyAccessoryY+'px';
+  });
+
+  async function finishDrag(event){
+    if(!dragging)return;
+    dragging=false;
+    accessory.classList.remove('is-dragging');
+    try{accessory.releasePointerCapture?.(event.pointerId);}catch(_){}
+    sharedStudyratsAccessoryOffsets[sharedStudyratsMyAccessory]={
+      x:sharedStudyratsMyAccessoryX,
+      y:sharedStudyratsMyAccessoryY
+    };
+    const status=document.getElementById('studyrats-rat-picker-status');
+    if(status)status.textContent='Salvando posição...';
+    const result=await window.supabaseClient.rpc('set_studyrat_accessory_position',{
+      p_accessory:sharedStudyratsMyAccessory,
+      p_x:sharedStudyratsMyAccessoryX,
+      p_y:sharedStudyratsMyAccessoryY
+    });
+    if(result.error){
+      console.error(result.error);
+      if(status)status.textContent='Não foi possível salvar a posição.';
+      return;
+    }
+    if(status){
+      status.textContent='Posição salva.';
+      setTimeout(function(){if(status.textContent==='Posição salva.')status.textContent='';},1400);
+    }
+    await sharedStudyratsLoad();
+  }
+
+  accessory.addEventListener('pointerup',finishDrag);
+  accessory.addEventListener('pointercancel',finishDrag);
+}
+
 function sharedStudyratsUpdateLargePreview(){
   const host=document.getElementById('studyrats-preview-large-stage');
   if(!host)return;
   host.innerHTML=sharedStudyratComposite(
     sharedStudyratsMyVariant,
     sharedStudyratsMyAccessory,
-    'studyrats-rat-composite studyrats-preview-composite'
+    'studyrats-rat-composite studyrats-preview-composite',
+    sharedStudyratsMyAccessoryX,
+    sharedStudyratsMyAccessoryY
   );
   sharedStudyratsBindImageFallbacks(host);
+  sharedStudyratsBindAccessoryDrag();
 }
 
 function sharedStudyratsApplyAccessorySelection(){
@@ -154,13 +239,17 @@ async function sharedStudyratsLoadMyVariant(){
   if(!window.supabaseClient||!window.docmapUser)return;
   const result=await window.supabaseClient
     .from('profiles')
-    .select('studyrat_variant, studyrat_accessory')
+    .select('studyrat_variant, studyrat_accessory, studyrat_accessory_offsets')
     .eq('user_id',window.docmapUser.id)
     .maybeSingle();
 
   if(!result.error&&result.data){
     if(result.data.studyrat_variant)sharedStudyratsMyVariant=sharedStudyratVariant(result.data.studyrat_variant).id;
     if(result.data.studyrat_accessory)sharedStudyratsMyAccessory=sharedStudyratAccessory(result.data.studyrat_accessory).id;
+    sharedStudyratsAccessoryOffsets=result.data.studyrat_accessory_offsets||{};
+    const offset=sharedStudyratsCurrentAccessoryOffset(sharedStudyratsMyAccessory);
+    sharedStudyratsMyAccessoryX=offset.x;
+    sharedStudyratsMyAccessoryY=offset.y;
   }
   sharedStudyratsRenderRatPicker();
   sharedStudyratsUpdateLargePreview();
@@ -199,6 +288,9 @@ async function sharedStudyratsSaveAccessory(accessory){
 
   const previous=sharedStudyratsMyAccessory;
   sharedStudyratsMyAccessory=next;
+  const offset=sharedStudyratsCurrentAccessoryOffset(next);
+  sharedStudyratsMyAccessoryX=offset.x;
+  sharedStudyratsMyAccessoryY=offset.y;
   sharedStudyratsApplyAccessorySelection();
 
   const status=document.getElementById('studyrats-rat-picker-status');
@@ -242,6 +334,8 @@ function sharedStudyratsGroup(rows){
       name:row.participant_name||'Usuário LURIA',
       variant:sharedStudyratVariant(row.studyrat_variant||'brown').id,
       accessory:sharedStudyratAccessory(row.studyrat_accessory||'none').id,
+      accessoryX:Number(row.studyrat_accessory_x)||0,
+      accessoryY:Number(row.studyrat_accessory_y)||0,
       value:Number(row.progress)||0
     });
   });
@@ -270,7 +364,7 @@ function sharedStudyratsDeadlineText(date){
 async function sharedStudyratsLoad(){
   const host=document.getElementById('studyrats-list');
   if(!host||!window.supabaseClient)return;
-  const result=await window.supabaseClient.rpc('my_studyrats_challenges');
+  const result=await window.supabaseClient.rpc('my_studyrats_challenges_v2');
   if(result.error){
     console.error(result.error);
     host.innerHTML='<div class="studyrats-empty"><div><strong>Não foi possível carregar os desafios</strong><span>Tente atualizar a página.</span></div></div>';
@@ -286,7 +380,7 @@ function sharedStudyratsRender(){
   const challenges=sharedStudyratsGroup(sharedStudyratsRows);
 
   if(!challenges.length){
-    host.innerHTML='<div class="studyrats-empty"><div>'+sharedStudyratComposite(sharedStudyratsMyVariant,sharedStudyratsMyAccessory,'studyrats-empty-composite')+'<strong>Nenhuma corrida ativa</strong><span>Crie um desafio com seus amigos e acompanhe os ratinhos avançando até a chegada.</span></div></div>';
+    host.innerHTML='<div class="studyrats-empty"><div>'+sharedStudyratComposite(sharedStudyratsMyVariant,sharedStudyratsMyAccessory,'studyrats-empty-composite',sharedStudyratsMyAccessoryX,sharedStudyratsMyAccessoryY)+'<strong>Nenhuma corrida ativa</strong><span>Crie um desafio com seus amigos e acompanhe os ratinhos avançando até a chegada.</span></div></div>';
     sharedStudyratsBindImageFallbacks(host);
     return;
   }
@@ -313,7 +407,7 @@ function sharedStudyratsRender(){
         '<div class="studyrats-road">'+
           '<span class="studyrats-road-dash"></span>'+
           '<span class="studyrats-progress-fill" style="width:'+pct+'%"></span>'+
-          '<span class="studyrats-mouse" style="left:'+pct+'%">'+sharedStudyratComposite(p.variant,p.accessory)+'</span>'+
+          '<span class="studyrats-mouse" style="left:'+pct+'%">'+sharedStudyratComposite(p.variant,p.accessory,null,p.accessoryX,p.accessoryY)+'</span>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -329,7 +423,7 @@ function sharedStudyratsRender(){
     return '<article class="studyrats-challenge">'+
       '<div class="studyrats-challenge-head">'+
         '<div class="studyrats-challenge-title">'+
-          '<span class="studyrats-race-badge">'+sharedStudyratComposite(sharedStudyratsMyVariant,sharedStudyratsMyAccessory,'studyrats-badge-composite')+'</span>'+
+          '<span class="studyrats-race-badge">'+sharedStudyratComposite(sharedStudyratsMyVariant,sharedStudyratsMyAccessory,'studyrats-badge-composite',sharedStudyratsMyAccessoryX,sharedStudyratsMyAccessoryY)+'</span>'+
           '<span><strong>'+fEsc(type.title)+'</strong><small>'+(finished?'Desafio encerrado':'Quem estiver na frente na data limite vence.')+'</small></span>'+
         '</div>'+
         (canDelete?'<button class="studyrats-delete" type="button" aria-label="Apagar desafio" data-delete-studyrat="'+fEsc(ch.id)+'">×</button>':'')+
