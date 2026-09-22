@@ -1674,7 +1674,10 @@
                   <p>${esc(item.calibration_source_note || "Usar provas públicas recentes e edital vigente.")}</p>
                   <small>Anos de referência: ${esc(item.reference_years || "atualizar antes da geração")}</small>
                 </div>
-                ${url ? `<a class="button secondary" href="${esc(url)}" target="_blank" rel="noopener">Fonte oficial</a>` : ""}
+                <div class="admin-qf-board-actions">
+                  <button class="button primary admin-qf-copy-board" type="button" data-style-copy-index="${index}">Copiar tudo desta banca</button>
+                  ${url ? `<a class="button secondary" href="${esc(url)}" target="_blank" rel="noopener">Fonte oficial</a>` : ""}
+                </div>
               </section>
 
               <div class="admin-qf-board-specs">
@@ -1718,6 +1721,18 @@
               <section class="admin-qf-board-calibration">
                 <span class="eyebrow">Estado da calibração</span>
                 <p>${esc(item.calibration_notes || "Perfil ainda sem nota de calibração.")}</p>
+              </section>
+
+              <section class="admin-qf-board-master">
+                <div class="admin-qf-board-master-head">
+                  <div>
+                    <span class="eyebrow">Bloco mestre copiável</span>
+                    <strong>Prompt completo — ${esc(item.exam_style)}</strong>
+                    <small>Este texto é autocontido: pode ser colado em uma nova conversa sem contexto anterior.</small>
+                  </div>
+                  <button class="button primary admin-qf-copy-board" type="button" data-style-copy-index="${index}">Copiar bloco inteiro</button>
+                </div>
+                <pre class="admin-qf-board-master-text">${esc(item.full_generation_brief || item.generation_instructions || "")}</pre>
               </section>
             </div>
           </details>
@@ -1855,6 +1870,50 @@
   }
 
   function wire() {
+    $("admin-qf-style-manual")?.addEventListener("click", async event => {
+      const button = event.target.closest("[data-style-copy-index]");
+      if (!button) return;
+      event.preventDefault();
+      event.stopPropagation();
+
+      const index = Number(button.dataset.styleCopyIndex);
+      const item = state.questionStyles[index];
+      if (!item) return;
+
+      const text = item.full_generation_brief || item.generation_instructions || "";
+      const original = button.textContent || "Copiar tudo desta banca";
+
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const area = document.createElement("textarea");
+          area.value = text;
+          area.setAttribute("readonly", "");
+          area.style.position = "absolute";
+          area.style.left = "-9999px";
+          document.body.appendChild(area);
+          area.select();
+          document.execCommand("copy");
+          area.remove();
+        }
+
+        document.querySelectorAll(`[data-style-copy-index="${index}"]`).forEach(el => {
+          el.textContent = "Bloco copiado";
+          el.classList.add("success");
+        });
+
+        setTimeout(() => {
+          document.querySelectorAll(`[data-style-copy-index="${index}"]`).forEach(el => {
+            el.textContent = el.classList.contains("admin-qf-copy-board") ? "Copiar tudo desta banca" : original;
+            el.classList.remove("success");
+          });
+        }, 1400);
+      } catch (error) {
+        console.warn("Falha ao copiar bloco da banca:", error);
+      }
+    });
+
     document.querySelectorAll(".admin-qf-copy").forEach(button => {
       button.addEventListener("click", () => copyAdminPrompt(button.dataset.copyTarget, button));
     });
