@@ -524,8 +524,8 @@
     drop-shadow(0 4px 7px rgba(0,0,0,.42));
 }
 @media(max-width:760px){
-  .studyrats-preview-large-stage{min-height:135px}
-  .studyrats-preview-composite{transform:scale(2)!important}
+  .studyrats-preview-large-stage{min-height:150px}
+  .studyrats-preview-composite{transform:scale(2.4)!important}
 }
 
 
