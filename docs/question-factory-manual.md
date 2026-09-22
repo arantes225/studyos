@@ -533,16 +533,60 @@ Toda questão final deve ter:
 - auditoria final do lote;
 - nenhuma pendência científica crítica.
 
-## 5F. Contrato técnico obrigatório do arquivo de saída
+## 5F. Contrato técnico obrigatório de troca de dados
 
 O bloco copiável de qualquer banca deve incluir este contrato para que uma IA consiga gerar um arquivo importável sem contexto adicional.
 
-### Formato preferencial
+### Formato canônico do pipeline
 
-- Excel `.xlsx` como arquivo principal para revisão/importação.
-- CSV UTF-8 equivalente à aba `Questoes` quando solicitado.
-- JSON válido com os mesmos nomes lógicos de campos quando a integração for direta.
-- Um bloco completo contém exatamente 200 questões.
+- **JSON estruturado é o formato oficial entre ChatGPT, Perplexity e backend/Supabase.**
+- O fluxo automatizado deve usar `batch + questions[]` na geração e `reviews[]` na auditoria.
+- Excel `.xlsx` é somente uma representação para revisão humana/exportação.
+- CSV UTF-8 é apenas formato auxiliar.
+- O banco definitivo é o Supabase/Postgres.
+
+Estrutura raiz de geração:
+
+```json
+{
+  "schema_version": "1.0",
+  "batch": {
+    "batch_number": 1,
+    "block_number": 1,
+    "exam_style": "ENARE",
+    "question_count": 200,
+    "profile_version": "string",
+    "reference_exam_years": ["2024","2025","2026"],
+    "generation_model": "string",
+    "generation_status": "generated"
+  },
+  "questions": []
+}
+```
+
+Estrutura raiz de auditoria:
+
+```json
+{
+  "schema_version": "1.0",
+  "review_stage": "block_review",
+  "batch_number": 1,
+  "block_number": 1,
+  "exam_style": "ENARE",
+  "auditor": "Perplexity",
+  "reviews": [],
+  "summary": {}
+}
+```
+
+### Excel para revisão humana
+
+Quando solicitado, gerar quatro abas a partir do JSON canônico:
+
+1. `Questoes`
+2. `Metadados_Lote`
+3. `Guia_Campos`
+4. `Auditoria`
 
 ### Abas obrigatórias
 
