@@ -9,17 +9,18 @@
   <title>Caderno · LURIA</title>
 
   <link rel="manifest" href="/manifest.webmanifest?v=4">
-  <link rel="apple-touch-icon" href="/assets/img/logo-icone-original.png?v=pwa4">
+  <link rel="apple-touch-icon" href="/assets/img/logos/logo-icone-original.png?v=pwa4">
   <meta name="theme-color" content="#0A2342">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="LURIA">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="icon" type="image/png" href="/assets/img/logo-icone-original.png?v=favicon2">
+  <link rel="icon" type="image/png" href="/assets/img/logos/logo-icone-original.png?v=favicon2">
   <link rel="stylesheet" href="assets/css/style.css?v=16.4">
   <link rel="stylesheet" href="assets/css/image-lightbox.css?v=1">
   <link rel="stylesheet" href="assets/css/caderno.css?v=18.6">
   <link rel="canonical" href="/caderno/">
+  <script>(function(){try{if(location.pathname.endsWith("/caderno.html"))history.replaceState(null,"","/caderno/"+location.search+location.hash);}catch(e){}})();</script>
 </head>
 
 <body data-page="caderno">
@@ -251,8 +252,12 @@
                     aria-expanded="false"
                     disabled
                   >
-                    <span class="notebook-tool-glyph">≡</span>
-                    Alinhar
+                    <span
+                      id="notebook-align-current-icon"
+                      class="notebook-tool-glyph notebook-align-current-icon"
+                      aria-hidden="true"
+                    >☰</span>
+                    <span class="sr-only">Alinhar</span>
                   </button>
 
                   <div
@@ -267,51 +272,90 @@
 
                     <button type="button" data-align="left">
                       <span class="notebook-align-glyph">☰</span>
-                      <span>Esquerda</span>
+                      <span>Alinhar à esquerda</span>
                     </button>
 
                     <button type="button" data-align="center">
                       <span class="notebook-align-glyph">≡</span>
-                      <span>Centralizado</span>
+                      <span>Centralizar</span>
                     </button>
 
                     <button type="button" data-align="right">
                       <span class="notebook-align-glyph">☷</span>
-                      <span>Direita</span>
+                      <span>Alinhar à direita</span>
                     </button>
 
                     <button type="button" data-align="justify">
                       <span class="notebook-align-glyph">▤</span>
-                      <span>Justificado</span>
+                      <span>Justificar</span>
                     </button>
                   </div>
                 </div>
 
-                <select
-                  id="notebook-line-spacing"
-                  class="notebook-style-select notebook-spacing-select"
-                  aria-label="Espaçamento entre linhas"
-                  title="Espaçamento entre linhas"
-                  disabled
-                >
-                  <option value="">Espaçamento</option>
-                  <option value="1">1,0</option>
-                  <option value="1.15">1,15</option>
-                  <option value="1.5">1,5</option>
-                  <option value="2">2,0</option>
-                </select>
+                <div class="notebook-tool-menu-wrap">
+                  <button
+                    id="notebook-line-spacing"
+                    class="notebook-tool-button notebook-tool-text notebook-premium-tool notebook-spacing-toggle"
+                    type="button"
+                    aria-label="Espaçamento entre linhas"
+                    title="Espaçamento entre linhas"
+                    aria-expanded="false"
+                    disabled
+                  >
+                    <span
+                      id="notebook-spacing-current"
+                      class="notebook-spacing-current"
+                      aria-hidden="true"
+                    >
+                      <span class="notebook-spacing-lines">☰</span>
+                      <span class="notebook-spacing-arrows">↕</span>
+                    </span>
+                    <span class="sr-only">Espaçamento entre linhas</span>
+                  </button>
+
+                  <div
+                    id="notebook-spacing-menu"
+                    class="notebook-tool-menu notebook-spacing-menu"
+                    hidden
+                  >
+                    <div class="notebook-tool-menu-head">
+                      <strong>Espaçamento entre linhas</strong>
+                      <small>Escolha o espaçamento do parágrafo.</small>
+                    </div>
+
+                    <button type="button" data-line-spacing="1">
+                      <span class="notebook-spacing-option">1,0</span>
+                      <span>Simples</span>
+                    </button>
+
+                    <button type="button" data-line-spacing="1.15">
+                      <span class="notebook-spacing-option">1,15</span>
+                      <span>1,15</span>
+                    </button>
+
+                    <button type="button" data-line-spacing="1.5">
+                      <span class="notebook-spacing-option">1,5</span>
+                      <span>1,5</span>
+                    </button>
+
+                    <button type="button" data-line-spacing="2">
+                      <span class="notebook-spacing-option">2,0</span>
+                      <span>Duplo</span>
+                    </button>
+                  </div>
+                </div>
 
                 <span class="notebook-toolbar-divider"></span>
 
-                <button id="notebook-bold" class="notebook-tool-button" type="button" title="Negrito" disabled>
+                <button id="notebook-bold" class="notebook-tool-button" type="button" title="Negrito" aria-pressed="false" disabled>
                   <strong>B</strong>
                 </button>
 
-                <button id="notebook-italic" class="notebook-tool-button" type="button" title="Itálico" disabled>
+                <button id="notebook-italic" class="notebook-tool-button" type="button" title="Itálico" aria-pressed="false" disabled>
                   <em>I</em>
                 </button>
 
-                <button id="notebook-underline" class="notebook-tool-button" type="button" title="Sublinhado" disabled>
+                <button id="notebook-underline" class="notebook-tool-button" type="button" title="Sublinhado" aria-pressed="false" disabled>
                   <u>U</u>
                 </button>
 
@@ -466,7 +510,7 @@
                     </button>
 
                     <button type="button" data-divider-style="arabesque">
-                      <span class="notebook-line-preview arabesque"><img src="../assets/img/logo-icone-original.png" alt="" aria-hidden="true"></span>
+                      <span class="notebook-line-preview arabesque"><img src="assets/img/logos/logo-icone-original.png" alt="" aria-hidden="true"></span>
                       <span>Arabescos</span>
                     </button>
                   </div>
@@ -1083,16 +1127,25 @@
 
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/pdf-branding.js?v=1"></script>
+  <script src="assets/js/app.js?v=17.0"></script>
   <script src="assets/js/sharing.js?v=4"></script>
-  <script src="assets/js/app.js?v=16.8"></script>
   <style>
     .notebook-pdf-export-host {
+      /*
+        Mantemos a folha dentro do viewport para o Safari/iOS conseguir
+        rasterizar o conteúdo. Ela fica atrás da aplicação, sem interferir
+        visualmente nem receber cliques.
+      */
       position: fixed;
-      left: -20000px;
+      left: 0;
       top: 0;
       width: 940px;
       pointer-events: none;
-      z-index: -1;
+      z-index: -2147483647;
+      overflow: visible;
+      visibility: visible;
+      opacity: 1;
+      background: #ffffff;
     }
 
     .notebook-pdf-export-host .notebook-paper {
@@ -1104,6 +1157,7 @@
 
     .notebook-pdf-export-host .notebook-editor {
       min-height: 0;
+      overflow: visible;
     }
 
     .notebook-pdf-export-host .notebook-document-head {
