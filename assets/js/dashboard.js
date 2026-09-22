@@ -11,6 +11,7 @@ const agendaState = {
   managerOpen: false,
   managerDateFrom: "",
   managerDateTo: "",
+  selectedManagedEventIds: new Set(),
   editingEventId: null
 };
 
@@ -2630,6 +2631,63 @@ function closeManagedEventMenus(
 }
 
 
+function updateManagedEventBulkState() {
+  const visibleIds =
+    filteredManagedEvents()
+      .map(
+        item =>
+          item.id
+      );
+
+  const selectedVisible =
+    visibleIds.filter(
+      id =>
+        agendaState
+          .selectedManagedEventIds
+          .has(
+            id
+          )
+    ).length;
+
+  const selectAll =
+    document.getElementById(
+      "agenda-manager-select-all"
+    );
+
+  const deleteButton =
+    document.getElementById(
+      "agenda-manager-delete-selected"
+    );
+
+  if (selectAll) {
+    selectAll.checked =
+      visibleIds.length > 0
+      && selectedVisible
+        === visibleIds.length;
+
+    selectAll.indeterminate =
+      selectedVisible > 0
+      && selectedVisible
+        < visibleIds.length;
+  }
+
+  if (deleteButton) {
+    const totalSelected =
+      agendaState
+        .selectedManagedEventIds
+        .size;
+
+    deleteButton.disabled =
+      totalSelected === 0;
+
+    deleteButton.textContent =
+      totalSelected
+        ? `Apagar selecionados (${totalSelected})`
+        : "Apagar selecionados";
+  }
+}
+
+
 function renderManagedEvents() {
   const list =
     document.getElementById(
@@ -2651,12 +2709,36 @@ function renderManagedEvents() {
   count.textContent =
     `${items.length} evento${items.length === 1 ? "" : "s"}`;
 
+  const validIds =
+    new Set(
+      agendaState
+        .managedEvents
+        .map(
+          item =>
+            item.id
+        )
+    );
+
+  for (
+    const id
+    of agendaState
+      .selectedManagedEventIds
+  ) {
+    if (!validIds.has(id)) {
+      agendaState
+        .selectedManagedEventIds
+        .delete(id);
+    }
+  }
+
   if (!items.length) {
     list.innerHTML = `
       <div class="agenda-manager-empty">
         Nenhum evento encontrado neste período.
       </div>
     `;
+
+    updateManagedEventBulkState();
     return;
   }
 
@@ -2674,6 +2756,19 @@ function renderManagedEvents() {
 
         return `
           <article class="agenda-manager-row">
+            <label
+              class="agenda-manager-row-select"
+              aria-label="Selecionar evento"
+            >
+              <input
+                type="checkbox"
+                data-managed-event-select="${escapeDashboardHtml(
+                  item.id
+                )}"
+                ${agendaState.selectedManagedEventIds.has(item.id) ? "checked" : ""}
+              >
+            </label>
+
             <div class="agenda-manager-copy">
               <strong>${escapeDashboardHtml(
                 item.title
@@ -2738,6 +2833,35 @@ function renderManagedEvents() {
         `;
       }
     ).join("");
+
+  list
+    .querySelectorAll(
+      "[data-managed-event-select]"
+    )
+    .forEach(
+      input => {
+        input.addEventListener(
+          "change",
+          () => {
+            const id =
+              input.dataset
+                .managedEventSelect;
+
+            if (input.checked) {
+              agendaState
+                .selectedManagedEventIds
+                .add(id);
+            } else {
+              agendaState
+                .selectedManagedEventIds
+                .delete(id);
+            }
+
+            updateManagedEventBulkState();
+          }
+        );
+      }
+    );
 
   list
     .querySelectorAll(
@@ -2833,6 +2957,8 @@ function renderManagedEvents() {
         );
       }
     );
+
+  updateManagedEventBulkState();
 }
 
 
@@ -2959,6 +3085,81 @@ async function deleteManagedEvent(
 
   setCalendarStatus(
     "Evento apagado.",
+    "success"
+  );
+
+  await Promise.all([
+    loadManagedEvents(),
+    loadAgenda()
+  ]);
+}
+
+
+async function deleteSelectedManagedEvents() {
+  const ids =
+    Array.from(
+      agendaState
+        .selectedManagedEventIds
+    );
+
+  if (!ids.length) {
+    return;
+  }
+
+  const confirmed =
+    await window.LuriaDialog.confirm(
+      `Apagar ${ids.length} evento${ids.length === 1 ? "" : "s"} selecionado${ids.length === 1 ? "" : "s"}?`
+    );
+
+  if (!confirmed) {
+    return;
+  }
+
+  const button =
+    document.getElementById(
+      "agenda-manager-delete-selected"
+    );
+
+  if (button) {
+    button.disabled =
+      true;
+  }
+
+  const {
+    error
+  } =
+    await dashboardSb
+      .from(
+        "schedule_events"
+      )
+      .delete()
+      .in(
+        "id",
+        ids
+      )
+      .eq(
+        "user_id",
+        window.docmapUser.id
+      );
+
+  if (error) {
+    console.error(error);
+
+    setCalendarStatus(
+      "Não foi possível apagar os eventos selecionados.",
+      "error"
+    );
+
+    updateManagedEventBulkState();
+    return;
+  }
+
+  agendaState
+    .selectedManagedEventIds
+    .clear();
+
+  setCalendarStatus(
+    "Eventos selecionados apagados.",
     "success"
   );
 
@@ -3145,6 +3346,51 @@ function wireDashboardControls() {
     ?.addEventListener(
       "click",
       toggleEventManager
+    );
+
+  document
+    .getElementById(
+      "agenda-manager-select-all"
+    )
+    ?.addEventListener(
+      "change",
+      event => {
+        const ids =
+          filteredManagedEvents()
+            .map(
+              item =>
+                item.id
+            );
+
+        if (
+          event.target.checked
+        ) {
+          ids.forEach(
+            id =>
+              agendaState
+                .selectedManagedEventIds
+                .add(id)
+          );
+        } else {
+          ids.forEach(
+            id =>
+              agendaState
+                .selectedManagedEventIds
+                .delete(id)
+          );
+        }
+
+        renderManagedEvents();
+      }
+    );
+
+  document
+    .getElementById(
+      "agenda-manager-delete-selected"
+    )
+    ?.addEventListener(
+      "click",
+      deleteSelectedManagedEvents
     );
 
   document
