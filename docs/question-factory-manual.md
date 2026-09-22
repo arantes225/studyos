@@ -1102,6 +1102,21 @@ Critério para considerar o perfil pronto para 200:
 
 Se esses critérios não forem atingidos, manter `NEEDS_ONE_MORE_CALIBRATION`.
 
+
+
+### Aprendizado específico PSU-MG após T5
+- Status atual: `NEEDS_MORE_PRIMARY_STYLE_DATA`.
+- O T5 foi clinicamente correto em geral, mas apresentou 93,3% de itens easy/very_easy, explicações genéricas, distratores fracos, fontes candidatas, sequência A-B-C-D repetida e distribuição de MBE potencialmente artificial.
+- O principal limite é falta de amostra primária oficial suficiente para caracterizar estilo PSU-MG.
+- Antes do próximo teste, buscar preferencialmente >=20 questões oficiais e idealmente 2–3 cadernos/edições recentes, quando disponíveis.
+- MBE/cálculo só deve ganhar peso editorial após validação empírica.
+- Gabarito não pode seguir padrão determinístico.
+- Fonte candidata/inespecífica: `answer_source_issue != null` e bloqueia aprovação, mas NÃO é hard fail automático.
+- Hard fail de fonte exige fonte inexistente, falsa, incorreta ou incapaz de sustentar o gabarito.
+- Fonte real porém ampla deve receber pontuação parcial proporcional, não automaticamente 0/15.
+- Próximo teste: 30 questões inéditas; fontes definitivas; explicações A–D específicas; dificuldade distribuída; gabarito sem padrão; corte >=97.
+- Só considerar READY_FOR_200 se `style_confidence >= medium-high` com evidência primária, >=90% das 30 >=97 após correção/reauditoria, 0 hard fails e 0 ambiguidades relevantes, seguido de nova revisão do usuário.
+
 ## 15. Terceira barreira independente — Gemini
 
 Depois que o lote de 1.000 passar pela revisão global do ChatGPT e do Perplexity:
