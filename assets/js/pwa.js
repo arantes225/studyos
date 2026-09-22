@@ -11,7 +11,17 @@
 
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("/service-worker.js", { scope: "/" })
+      .register(
+        "/service-worker.js",
+        {
+          scope: "/",
+          updateViaCache: "none"
+        }
+      )
+      .then(
+        (registration) =>
+          registration.update()
+      )
       .catch((error) => {
         console.warn("Não foi possível ativar o modo PWA do LURIA:", error);
       });
