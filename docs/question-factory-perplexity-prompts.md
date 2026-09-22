@@ -522,3 +522,15 @@ READY_FOR_PILOT | NEEDS_MORE_PRIMARY_STYLE_DATA | NEEDS_PROMPT_REFINEMENT.
 - Antes do segundo teste, exigir >=20 questões oficiais, idealmente de 2–3 edições.
 - O primeiro lote ficou homogêneo demais: 100% case-based, 80% management, 0% pure concept e 26,7% multistep.
 - Próximo lote deve quebrar blocos temáticos e variar tipo de raciocínio somente após observar a frequência real nas provas oficiais.
+
+
+### Ajuste pós-calibração inicial — UNIFESP
+- Decisão: `NEEDS_MORE_PRIMARY_STYLE_DATA`.
+- Métricas: média 87,5; mediana 88; 0/30 >=97; 0 hard fails; 0 ambiguidades; 30/30 single-best-answer.
+- Scientific e answer_key ficaram máximos em média; perdas principais em style, distractors, explanations, answer_source e difficulty.
+- Processo oficial UNIFESP/EPM/COREME e prova teórica foram confirmados, mas 0 questões médicas oficiais foram amostradas textualmente nesta execução.
+- Portanto, todos os campos de identidade fina permanecem `NOT_ENOUGH_PRIMARY_DATA`.
+- Não usar residência multiprofissional, USP-SP, SUS-SP, Santa Casa-SP ou outra prova paulista como proxy.
+- Os números do piloto (100% case-based, 53,3% management, 30% diagnostic, 30% concept, 26,7% multistep, 0% calculation) descrevem somente o lote gerado e NÃO devem virar regras UNIFESP.
+- AI_PATTERN_RISK do piloto = high; gabarito A=11, B=3, C=8, D=8.
+- Antes do próximo lote, exigir >=20 questões médicas oficiais, idealmente de 2–3 edições recentes.
