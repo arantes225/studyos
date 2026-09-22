@@ -16,7 +16,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/logos/favicon.png?v=luria7">
   <link rel="stylesheet" href="assets/css/style.css?v=16.2">
-  <link rel="stylesheet" href="assets/css/admin.css?v=2.5">
+  <link rel="stylesheet" href="assets/css/admin.css?v=2.6">
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=10">
   <link rel="canonical" href="/admin/">
   <script>(function(){try{if(location.pathname.endsWith("/admin.html"))history.replaceState(null,"","/admin/"+location.search+location.hash);}catch(e){}})();</script>
@@ -958,6 +958,30 @@ Prefira fonte primária/oficial atual.</pre>
     </div>
   </dialog>
 
+  <dialog id="admin-qf-review-import-dialog" class="admin-qf-dialog admin-qf-review-import-dialog">
+    <div class="admin-qf-dialog-shell">
+      <div class="admin-qf-dialog-head">
+        <div>
+          <span class="eyebrow">Perplexity → Supabase</span>
+          <h2>Importar auditoria do bloco</h2>
+          <p id="admin-qf-review-import-meta">Cole o JSON retornado pelo Perplexity.</p>
+        </div>
+        <button id="admin-qf-review-import-close" class="dialog-close" type="button" aria-label="Fechar">×</button>
+      </div>
+      <div class="admin-qf-review-import-body">
+        <label>
+          <span>JSON da auditoria</span>
+          <textarea id="admin-qf-review-import-json" spellcheck="false" placeholder='{"schema_version":"1.0","review_stage":"perplexity_initial","batch_number":1,"block_number":1,"reviews":[...]}'></textarea>
+        </label>
+        <div id="admin-qf-review-import-message" class="admin-qf-review-import-message"></div>
+        <div class="admin-qf-review-import-actions">
+          <button id="admin-qf-review-import-cancel" class="button secondary" type="button">Cancelar</button>
+          <button id="admin-qf-review-import-submit" class="button primary" type="button">Importar para o Supabase</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
   <dialog id="admin-qf-bad-dialog" class="admin-qf-dialog admin-qf-bad-dialog">
     <div class="admin-qf-dialog-shell">
       <div class="admin-qf-dialog-head">
@@ -1011,7 +1035,7 @@ Prefira fonte primária/oficial atual.</pre>
   <script src="/assets/vendor/supabase-2.110.6.js"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=17.0"></script>
-  <script src="assets/js/admin.js?v=2.6"></script>
+  <script src="assets/js/admin.js?v=2.7"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
