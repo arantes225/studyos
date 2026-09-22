@@ -46,6 +46,51 @@
       gap: 16px;
     }
 
+    .deck-header-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .deck-distribute-button {
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+      border-radius: 9px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font: inherit;
+      font-size: 10px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .deck-distribute-button:hover {
+      border-color: var(--accent);
+    }
+
+    .deck-distribute-button:disabled {
+      opacity: .55;
+      cursor: wait;
+    }
+
+    .deck-distribute-status {
+      min-height: 18px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .deck-distribute-status.success {
+      color: var(--success);
+    }
+
+    .deck-distribute-status.error {
+      color: var(--danger);
+    }
+
     .import-header h2,
     .planner-header h2,
     .deck-header h2 {
@@ -2577,8 +2622,24 @@
                 </p>
               </div>
 
-              <span id="deck-count" class="badge">0 temas</span>
+              <div class="deck-header-actions">
+                <button
+                  id="deck-distribute"
+                  class="deck-distribute-button"
+                  type="button"
+                >
+                  Distribuir
+                </button>
+
+                <span id="deck-count" class="badge">0 temas</span>
+              </div>
             </div>
+
+            <div
+              id="deck-distribute-status"
+              class="deck-distribute-status"
+              aria-live="polite"
+            ></div>
 
             <div id="deck-dropzone" class="deck-dropzone">
               <strong>Solte aqui para devolver uma aula ao deck</strong>
@@ -3038,7 +3099,7 @@
   <script src="assets/js/app.js?v=17.0"></script>
   <script src="assets/js/study-mode.js?v=12.1"></script>
   <script src="assets/js/cronograma-base-data.js?v=12.6"></script>
-  <script src="assets/js/cronograma.js?v=17.1"></script>
+  <script src="assets/js/cronograma.js?v=17.2"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
