@@ -2872,3 +2872,61 @@ body.admin-unlocked #admin-app {
   .admin-database-summary>span:last-child{grid-column:1/-1}
   .admin-database-row-head{flex-direction:column;gap:3px}
 }
+
+
+/* =========================================================
+   ADMIN VIEW MENU
+   ========================================================= */
+.admin-view-menu{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:5px;
+  width:min(520px,100%);
+  padding:4px;
+  margin:0 auto 2px;
+  border:1px solid var(--border);
+  border-radius:13px;
+  background:var(--surface-2);
+}
+.admin-view-tab{
+  min-height:40px;
+  padding:0 14px;
+  border:0;
+  border-radius:10px;
+  background:transparent;
+  color:var(--muted);
+  font:inherit;
+  font-size:10px;
+  font-weight:850;
+  cursor:pointer;
+  transition:background .16s ease,color .16s ease,box-shadow .16s ease;
+}
+.admin-view-tab:hover{
+  color:var(--text);
+  background:color-mix(in srgb,var(--surface) 70%,transparent);
+}
+.admin-view-tab.active{
+  background:var(--surface);
+  color:var(--accent);
+  box-shadow:0 3px 12px rgba(15,23,42,.08);
+}
+[data-admin-view][hidden]{
+  display:none!important;
+}
+.admin-range[hidden]{
+  display:none!important;
+}
+
+@media(max-width:760px){
+  .admin-view-menu{
+    width:100%;
+    gap:4px;
+    padding:3px;
+    border-radius:11px;
+  }
+  .admin-view-tab{
+    min-height:36px;
+    padding:0 8px;
+    font-size:9px;
+  }
+}
