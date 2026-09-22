@@ -67,8 +67,12 @@
     {page:"estatisticas", target:".topbar, .page-heading", title:"Estatísticas", text:"Esta área transforma sua atividade em indicadores de desempenho, retenção, volume e pontos de atenção.", top:true},
     {page:"estatisticas", target:".stats-tabs", title:"Visões por recurso", text:"Este menu fica no topo. Durante a apresentação o LURIA percorre Geral, Aulas, Flashcards, Caderno de Erros e Questões para você visualizar cada painel.", action:"stats-tabs", top:true},
 
-    {page:"editais", target:".exam-mode-tabs", title:"Editais e Provas", text:"Aqui você acompanha provas, inscrições, resultados e notas de corte. Vamos abrir Nova prova para mostrar cada campo.", action:"exam-new", top:true},
-    {page:"editais", target:"#exam-dialog, #exam-form", title:"Nova prova", text:"Cadastre instituição, banca, status, datas, taxa, sua nota e a última nota de corte. Nada desta demonstração será salvo.", action:"exam-dialog"},
+    {page:"editais", target:".editais-source-tabs, #editais-own-content", title:"Editais e Provas", text:"Começamos em Minhas provas. Aqui você acompanha as provas que adicionou, inscrições, resultados e notas de corte.", action:"exam-mine", top:true},
+    {page:"editais", target:"#editais-own-content .exam-mode-tabs, #editais-own-content", title:"Minhas provas", text:"Esta é a sua área pessoal de provas. Você pode consultar suas provas cadastradas e abrir o formulário para adicionar uma nova.", action:"exam-mine"},
+    {page:"editais", target:"#editais-catalog-content, .catalog-head", title:"Central de Editais", text:"Em Editais atuais, a Central de Editais reúne processos seletivos disponíveis, com instituição, banca, datas, taxas e link oficial quando publicado.", action:"exam-catalog"},
+    {page:"editais", target:"#catalog-list, #editais-catalog-content", title:"Editais atuais", text:"Os editais atuais aparecem aqui. Quando quiser acompanhar um deles, você pode adicioná-lo às suas provas sem precisar preencher tudo manualmente.", action:"exam-catalog"},
+    {page:"editais", target:".exam-mode-tabs", title:"Nova prova", text:"Voltando para Minhas provas, vamos abrir Nova prova para mostrar os campos do cadastro manual.", action:"exam-new", top:true},
+    {page:"editais", target:"#exam-dialog, #exam-form", title:"Cadastro da prova", text:"Cadastre instituição, banca, status, datas, taxa, sua nota e a última nota de corte. Nada desta demonstração será salvo.", action:"exam-dialog"},
     {page:"editais", target:"#exam-score, #exam-cutoff", title:"Cores da nota", text:"A comparação usa a nota de corte como referência: vermelho quando sua nota fica mais de 2 pontos abaixo; amarelo quando fica na faixa de ±2 pontos; verde quando fica mais de 2 pontos acima.", action:"exam-dialog", forceCardTop:true, scrollPageDown:true},
 
     {page:"amigos", target:".friends-card:first-of-type", title:"Amigos", text:"Cada usuário possui um ID LURIA. Adicione amigos pelo código e compartilhe materiais diretamente com eles.", top:true},
@@ -1274,6 +1278,39 @@
       const tabs=[...document.querySelectorAll(".stats-tab")];
       tabs.forEach((tab,i)=>setTimeout(()=>tab.click(),i*500));
       setTimeout(()=>tabs[0]?.click(),Math.max(0,tabs.length)*500);
+    }
+
+    if(step.action==="exam-mine"){
+      document.querySelector('[data-editais-source="mine"]')?.click();
+      document.querySelector('[data-exam-mode="list"]')?.click();
+
+      const own=document.getElementById("editais-own-content");
+      const catalog=document.getElementById("editais-catalog-content");
+      if(own) own.hidden=false;
+      if(catalog) catalog.hidden=true;
+    }
+
+    if(step.action==="exam-catalog"){
+      document.querySelector('[data-editais-source="catalog"]')?.click();
+
+      const own=document.getElementById("editais-own-content");
+      const catalog=document.getElementById("editais-catalog-content");
+      if(own) own.hidden=true;
+      if(catalog) catalog.hidden=false;
+
+      if(typeof window.loadLuriaExamCatalog==="function"){
+        window.loadLuriaExamCatalog().catch(()=>{});
+      }
+    }
+
+    if(step.action==="exam-new"){
+      document.querySelector('[data-editais-source="mine"]')?.click();
+      document.querySelector('[data-exam-mode="new"]')?.click();
+
+      const own=document.getElementById("editais-own-content");
+      const catalog=document.getElementById("editais-catalog-content");
+      if(own) own.hidden=false;
+      if(catalog) catalog.hidden=true;
     }
 
     if(step.action==="exam-new" || step.action==="exam-dialog"){
