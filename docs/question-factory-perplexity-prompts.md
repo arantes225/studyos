@@ -101,6 +101,18 @@ Verifique especialmente:
 
 No T5, ignorar qualquer recomendação de migrar A–D para A–E: A–D é regra fixa da plataforma.
 
+
+
+### Ajuste pós-T6 — SUS-SP
+- O T6 confirmou a identidade SUS-SP/VUNESP com boa generalização clínica.
+- Recalcular métricas globais a partir dos escores finais por item quando o relatório tiver corrigido divergências intermediárias.
+- Métricas T6 corrigidas: média 97,58; mediana 98; 41/50 >=97; 32/50 >=98; 0 com 100.
+- Itens abaixo de 97: 01, 03, 11, 14, 19, 27, 29, 34 e 43.
+- O item 49 tem score 97: não deve ser classificado como abaixo do corte.
+- Rejeitar valores fora da rubrica fixa, como difficulty>5.
+- No próximo lote, quebrar blocos temáticos perfeitamente regulares, misturar áreas/temas, reduzir respostas corretas mais longas e absolutos denunciadores e exigir fontes que sustentem a decisão exata.
+- AI_PATTERN_RISK deve cair de high antes de READY_FOR_200.
+
 ## SES-DF — prompt de auditoria
 
 Audite todas as questões SES-DF com a rubrica oficial e corte >=97.
