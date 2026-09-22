@@ -6,7 +6,7 @@
     ink: [18, 48, 85],
     muted: [100, 116, 139],
     line: [218, 230, 244],
-    logoSrc: "/assets/img/logo-icone-original.png?v=pdf-brand-1"
+    logoSrc: "/assets/img/logos/logo-icone-original.png?v=pdf-brand-1"
   };
 
   let assetsPromise = null;
