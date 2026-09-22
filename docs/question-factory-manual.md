@@ -782,6 +782,34 @@ O Admin deve registrar e comparar:
 
 Os dados devem servir para ajustar os prompts editoriais ao longo do tempo.
 
+
+## 5H. Adjudicação ChatGPT × Perplexity
+
+Quando o Perplexity reprovar ou atribuir menos de 95 a uma questão, ele deve obrigatoriamente propor uma mudança concreta, não apenas apontar o problema.
+
+A proposta deve informar:
+- quais campos precisam mudar;
+- qual é o problema atual;
+- texto substituto exato;
+- por que a mudança seria melhor;
+- fonte que sustenta a mudança;
+- nota estimada após a correção.
+
+Antes de aplicar qualquer mudança, o ChatGPT faz uma adjudicação independente:
+
+- `agree`: concorda com a crítica e com a solução;
+- `partially_agree`: concorda com o problema, mas propõe solução diferente;
+- `disagree`: considera a crítica ou mudança incorreta.
+
+Em caso de `disagree`, nenhuma alteração deve ser aplicada automaticamente. O ChatGPT deve gerar `rebuttal_to_perplexity`, contendo:
+1. question_id;
+2. ponto exato de discordância;
+3. justificativa técnica;
+4. fonte/diretriz que sustenta a discordância;
+5. pedido objetivo para o Perplexity reavaliar aquele ponto.
+
+O administrador pode então reenviar essa resposta ao Perplexity. Só após consenso ou nova decisão técnica a questão segue para correção.
+
 ## 6. Prompt mestre — geração de bloco de 200
 
 Você é o GERADOR EDITORIAL de questões médicas autorais do LURIA/StudyOS.
