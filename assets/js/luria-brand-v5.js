@@ -224,9 +224,13 @@
 
     favicon.type =
       "image/png";
+    favicon.rel =
+      "icon";
+    favicon.sizes =
+      "any";
 
     const source =
-      "assets/img/favicon.png?v=luria8";
+      "/assets/img/logo-icone-original.png?v=favicon1";
 
     if (
       favicon.getAttribute("href")
