@@ -383,8 +383,21 @@ DISTRIBUIÇÃO
 - evitar padrão artificial de gabaritos;
 - respeitar a incidência observada sem simplesmente reproduzir uma prova anterior.
 
-ARQUIVO DE SAÍDA
-Gerar Excel .xlsx com 4 abas:
+FORMATO DE SAÍDA CANÔNICO
+Para o fluxo automatizado, retornar JSON estruturado.
+JSON é o formato oficial entre ChatGPT, Perplexity e backend/Supabase.
+
+Estrutura raiz:
+{
+  "schema_version": "1.0",
+  "batch": {...},
+  "questions": [...]
+}
+
+Cada bloco deve conter exatamente 200 objetos em questions[].
+
+Excel .xlsx NÃO é o formato principal entre IAs.
+Excel só deve ser gerado quando solicitado para revisão humana/exportação, usando 4 abas:
 1. Questoes
 2. Metadados_Lote
 3. Guia_Campos
@@ -472,8 +485,11 @@ Entregue o arquivo pronto para auditoria independente.</pre>
 OBJETIVO
 Auditar cada questão individualmente antes que o bloco seja considerado aprovado.
 
-ARQUIVO DE ENTRADA
-A aba Questoes possui, entre outros:
+ENTRADA CANÔNICA
+Receba um JSON estruturado do bloco, com batch + questions[].
+Se o usuário fornecer Excel, trate-o apenas como representação humana do mesmo schema.
+
+Cada objeto de questions[] possui, entre outros:
 question_id
 exam_style
 area
@@ -565,8 +581,10 @@ needs_revision:
 rejected:
 - questão estruturalmente ruim ou não recuperável sem reconstrução extensa.
 
-SAÍDA
-Produza parecer estruturado por question_id e um resumo do bloco:
+SAÍDA CANÔNICA
+Retorne JSON válido, sem markdown e sem texto fora do objeto, contendo reviews[] por question_id e summary.
+
+Resumo obrigatório:
 total
 approved
 needs_revision
@@ -635,8 +653,8 @@ NÃO FAZER
 - não corrigir apenas a explicação se o enunciado/gabarito também estiver errado;
 - não manter fonte antiga se a correção mudou a recomendação.
 
-SAÍDA
-Devolver a linha completa da questão corrigida, mantendo o mesmo schema do arquivo.
+SAÍDA CANÔNICA
+Retornar JSON com questions[] contendo a questão completa corrigida no mesmo schema lógico da geração e changes[] descrevendo as alterações.
 status deve retornar para etapa de nova checagem.
 Nunca usar approved/published diretamente.
 
@@ -957,7 +975,7 @@ Prefira fonte primária/oficial atual.</pre>
   <script src="/assets/vendor/supabase-2.110.6.js"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=17.0"></script>
-  <script src="assets/js/admin.js?v=2.2"></script>
+  <script src="assets/js/admin.js?v=2.3"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
