@@ -511,3 +511,14 @@ Não tratar “prova do Paraná” como perfil genérico regional.
 
 Decisão:
 READY_FOR_PILOT | NEEDS_MORE_PRIMARY_STYLE_DATA | NEEDS_PROMPT_REFINEMENT.
+
+
+### Ajuste pós-calibração inicial — USP-SP
+- Decisão: `NEEDS_MORE_PRIMARY_STYLE_DATA`.
+- Métricas do lote USPSP_CAL_01–30: média 92,5; mediana 92; 0/30 >=97; 0 hard fails; 0 ambiguidades; 30/30 single-best-answer.
+- Scientific e answer_key foram fortes; perdas reais concentraram-se em answer_source, distractors, explanations, style e dificuldade.
+- O formato institucional FUVEST/FMUSP foi confirmado, mas a auditoria não amostrou textualmente questões oficiais suficientes.
+- Não inferir dificuldade alta, maior fisiopatologia, stems densos ou distratores complexos apenas por ser USP-SP.
+- Antes do segundo teste, exigir >=20 questões oficiais, idealmente de 2–3 edições.
+- O primeiro lote ficou homogêneo demais: 100% case-based, 80% management, 0% pure concept e 26,7% multistep.
+- Próximo lote deve quebrar blocos temáticos e variar tipo de raciocínio somente após observar a frequência real nas provas oficiais.
