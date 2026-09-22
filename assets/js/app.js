@@ -3575,7 +3575,7 @@ function carregarOnboardingGlobal() {
       "luria-onboarding-script";
 
     script.src =
-      "/assets/js/onboarding.js?v=2.6";
+      "/assets/js/onboarding.js?v=2.7";
 
     script.onload =
       () => resolve();
