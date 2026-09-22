@@ -2477,18 +2477,18 @@ input[type="file"]:focus-visible::file-selector-button {
    ========================================================= */
 
 :root {
-  --luria-pattern-image: url("../img/logo-icone-original.png?v=pattern3");
+  --luria-pattern-image: url("../img/logos/logo-icone-original.png?v=pattern4");
   --luria-pattern-size: 138px;
   --luria-pattern-opacity: 0.020;
 }
 
 :root[data-theme="dark"] {
-  --luria-pattern-image: url("../img/logo-icone-azul-claro.png?v=pattern3");
+  --luria-pattern-image: url("../img/logos/logo-icone-azul-claro.png?v=pattern4");
   --luria-pattern-opacity: 0.028;
 }
 
 :root[data-theme="leila-mood"] {
-  --luria-pattern-image: url("../img/logo-icone-rosa-escuro.png?v=pattern3");
+  --luria-pattern-image: url("../img/logos/logo-icone-rosa-escuro.png?v=pattern4");
   --luria-pattern-opacity: 0.024;
 }
 
