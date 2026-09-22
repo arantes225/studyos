@@ -534,3 +534,14 @@ READY_FOR_PILOT | NEEDS_MORE_PRIMARY_STYLE_DATA | NEEDS_PROMPT_REFINEMENT.
 - Os números do piloto (100% case-based, 53,3% management, 30% diagnostic, 30% concept, 26,7% multistep, 0% calculation) descrevem somente o lote gerado e NÃO devem virar regras UNIFESP.
 - AI_PATTERN_RISK do piloto = high; gabarito A=11, B=3, C=8, D=8.
 - Antes do próximo lote, exigir >=20 questões médicas oficiais, idealmente de 2–3 edições recentes.
+
+
+### Ajuste pós-calibração inicial — AMP-PR
+- Decisão: `NEEDS_MORE_PRIMARY_STYLE_DATA`.
+- Evidência formal forte: Prova Geral AMP com 100 questões e seis áreas básicas equilibradas.
+- Incorporar matriz, variedade de formatos, mistura de stems e distratores mais competitivos.
+- NÃO incorporar A–E: a regra LURIA permanece exatamente A–D.
+- É proibido penalizar style, difficulty ou quality porque a AMP oficial use cinco alternativas.
+- É proibido recomendar converter o LURIA para cinco alternativas.
+- O primeiro lote foi artificial: só Clínica/Cirurgia/Pediatria, blocos temáticos, sintaxe repetitiva, AI_PATTERN_RISK high e correta frequentemente mais completa.
+- Próximo lote AMP deve representar as seis áreas e manter A–D.
