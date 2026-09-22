@@ -2097,38 +2097,64 @@ function parseGenericPdfLines({
         group
       );
 
+    if (
+      shouldIgnorePdfLine(
+        text
+      )
+    ) {
+      continue;
+    }
+
     const dateMatch =
       text.match(
         /(?:^|\s)((?:\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})|(?:20\d{2}-\d{1,2}-\d{1,2}))(?:\s|$)/
       );
 
-
-    if (!dateMatch) {
-      continue;
-    }
-
-
     const date =
-      parseExcelDate(
-        dateMatch[1]
-      );
+      dateMatch
+        ? parseExcelDate(
+            dateMatch[1]
+          )
+        : null;
 
     const title =
       cleanText(
-        text.replace(
-          dateMatch[1],
-          ""
-        )
+        dateMatch
+          ? text.replace(
+              dateMatch[1],
+              ""
+            )
+          : text
       );
 
+    const normalizedTitle =
+      normalizeHeader(
+        title
+      );
+
+    const structuralLine =
+      !title
+      || title.length < 4
+      || /^\d+$/.test(
+        normalizedTitle
+      )
+      || /^pagina\s*\d*$/.test(
+        normalizedTitle
+      )
+      || /^(cronograma|extensivo|programado|acesso direto|r1 acesso direto)$/
+        .test(
+          normalizedTitle
+        )
+      || /^(bloco|semana|mes)\s*\d*$/i
+        .test(
+          normalizedTitle
+        );
 
     if (
-      !date
-      || !title
+      structuralLine
     ) {
       continue;
     }
-
 
     rows.push(
       makePdfRow({
@@ -2141,7 +2167,9 @@ function parseGenericPdfLines({
 
         pageNumber,
         confidence:
-          "medium"
+          date
+            ? "medium"
+            : "low"
       })
     );
   }
@@ -3022,6 +3050,7 @@ async function confirmImport() {
 
           status:
             mode === "dates"
+            && row.date
               ? "scheduled"
               : "deck"
         })
