@@ -2063,7 +2063,21 @@ function activateEditaisSource(
     source
     === "aristo"
   ) {
-    loadAristoFrame();
+    if (
+      typeof window.loadLuriaExamCatalog
+      === "function"
+    ) {
+      window
+        .loadLuriaExamCatalog()
+        .catch(
+          (error) => {
+            console.warn(
+              "Não foi possível carregar a central de editais:",
+              error
+            );
+          }
+        );
+    }
   }
 
 
