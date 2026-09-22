@@ -14,9 +14,10 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria7">
   <link rel="stylesheet" href="assets/css/style.css?v=16.2">
-  <link rel="stylesheet" href="assets/css/admin.css?v=1.5">
+  <link rel="stylesheet" href="assets/css/admin.css?v=1.8">
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=10">
   <link rel="canonical" href="/admin/">
+  <script>(function(){try{if(location.pathname.endsWith("/admin.html"))history.replaceState(null,"","/admin/"+location.search+location.hash);}catch(e){}})();</script>
 </head>
 
 <body data-page="admin" class="admin-pin-locked">
@@ -188,6 +189,57 @@
           </div>
         </section>
 
+        <section class="admin-section admin-question-factory" aria-labelledby="admin-question-factory-title">
+          <div class="admin-section-head">
+            <div>
+              <span class="eyebrow">Banco de questões</span>
+              <h2 id="admin-question-factory-title">Fábrica de questões</h2>
+            </div>
+            <span class="admin-factory-badge">200 → 1.000</span>
+          </div>
+
+          <div class="admin-factory-summary" aria-label="Resumo da fábrica de questões">
+            <article><span>Em produção</span><strong id="admin-qf-total">0</strong><small>Questões</small></article>
+            <article><span>Blocos</span><strong id="admin-qf-blocks">0</strong><small>200 questões cada</small></article>
+            <article><span>Perplexity</span><strong id="admin-qf-block-review">0</strong><small>Blocos em revisão</small></article>
+            <article><span>Lotes completos</span><strong id="admin-qf-lots-ready">0</strong><small>5 blocos aprovados</small></article>
+            <article><span>Prontas</span><strong id="admin-qf-ready">0</strong><small>Após revisão final</small></article>
+            <article><span>Publicadas</span><strong id="admin-qf-published">0</strong><small>Banco definitivo</small></article>
+          </div>
+
+          <div class="admin-factory-flow" aria-label="Fluxo da fábrica">
+            <article><strong>Bloco 1</strong><small>200 questões</small></article>
+            <article><strong>Bloco 2</strong><small>200 questões</small></article>
+            <article><strong>Bloco 3</strong><small>200 questões</small></article>
+            <article><strong>Bloco 4</strong><small>200 questões</small></article>
+            <article><strong>Bloco 5</strong><small>200 questões</small></article>
+            <div class="admin-factory-flow-arrow">→</div>
+            <article class="admin-factory-flow-review"><strong>Revisão final do lote</strong><small>ChatGPT, Perplexity ou dupla</small></article>
+            <div class="admin-factory-flow-arrow">→</div>
+            <article class="admin-factory-flow-ready"><strong>1.000 prontas</strong><small>Publicação + limpeza</small></article>
+          </div>
+
+          <div class="admin-factory-batches-head">
+            <div>
+              <strong>Lotes de 1.000</strong>
+              <small>Cada lote é formado por cinco blocos de 200. Cada bloco passa primeiro pelo Perplexity.</small>
+            </div>
+            <span id="admin-qf-batch-count">0 lotes</span>
+          </div>
+
+          <div id="admin-qf-batches" class="admin-factory-batches">
+            <div class="admin-factory-empty-wide">Nenhum lote criado ainda.</div>
+          </div>
+
+          <div class="admin-factory-cleanup">
+            <div>
+              <strong>Publicação com limpeza</strong>
+              <small>O rastro temporário só é apagado depois que o lote final for validado e as questões forem confirmadas no banco definitivo.</small>
+            </div>
+            <span>200 × 5 = 1.000</span>
+          </div>
+        </section>
+
         <section class="admin-section">
           <div class="admin-section-head admin-customer-head">
             <div>
@@ -278,6 +330,25 @@
     </main>
   </div>
 
+  <dialog id="admin-qf-dialog" class="admin-qf-dialog">
+    <div class="admin-qf-dialog-shell">
+      <div class="admin-qf-dialog-head">
+        <div>
+          <span class="eyebrow">Fábrica de questões</span>
+          <h2 id="admin-qf-dialog-title">Lote</h2>
+          <p id="admin-qf-dialog-meta"></p>
+        </div>
+        <button id="admin-qf-dialog-close" class="dialog-close" type="button" aria-label="Fechar">×</button>
+      </div>
+      <div id="admin-qf-question-list" class="admin-qf-question-list"></div>
+      <div class="admin-qf-pagination">
+        <button id="admin-qf-prev" class="button secondary" type="button">Anterior</button>
+        <span id="admin-qf-page-info">0–0 de 0</span>
+        <button id="admin-qf-next" class="button secondary" type="button">Próximas</button>
+      </div>
+    </div>
+  </dialog>
+
   <dialog id="admin-cost-editor" class="admin-cost-dialog">
     <form id="admin-cost-form" method="dialog">
       <div class="admin-cost-dialog-head">
@@ -309,8 +380,8 @@
 
   <script src="/assets/vendor/supabase-2.110.6.js"></script>
   <script src="assets/js/supabase.js"></script>
-  <script src="assets/js/app.js?v=15.5"></script>
-  <script src="assets/js/admin.js?v=1.5"></script>
+  <script src="assets/js/app.js?v=16.9"></script>
+  <script src="assets/js/admin.js?v=1.7"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
