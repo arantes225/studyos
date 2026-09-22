@@ -1179,6 +1179,19 @@ Se esses critérios não forem atingidos, manter `NEEDS_ONE_MORE_CALIBRATION`.
 - Próximo passo obrigatório: >=20 questões oficiais, idealmente 2–3 edições, antes do segundo lote.
 - Não usar reputação da instituição como proxy de dificuldade ou profundidade.
 
+
+
+### Aprendizado específico UNIFESP após calibração inicial
+- Status: `NEEDS_MORE_PRIMARY_STYLE_DATA`.
+- Média 87,5; mediana 88; nenhuma questão >=97.
+- 0 hard fails e 0 ambiguidades: ciência/gabarito não foram o problema principal.
+- Style médio = 2/10 por ausência de amostra textual primária comparável, não por incompatibilidade demonstrada.
+- Processo oficial UNIFESP/EPM/COREME, prova teórica e divulgação de cadernos/gabaritos estão confirmados.
+- Identidade fina permanece `NOT_ENOUGH_PRIMARY_DATA`.
+- O piloto não pode ser usado para inferir que UNIFESP é 100% caso clínico, predominantemente manejo ou dificuldade média.
+- Próximo passo obrigatório: >=20 questões médicas oficiais, idealmente de 2–3 edições.
+- Proibido usar multiprofissional ou outra banca paulista como proxy silencioso.
+
 ## 15. Terceira barreira independente — Gemini
 
 Depois que o lote de 1.000 passar pela revisão global do ChatGPT e do Perplexity:
