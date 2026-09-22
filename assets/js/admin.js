@@ -1350,7 +1350,8 @@
       loadQuestionFactory(),
       loadQuestionFactoryStyles(),
       loadBadQuestionFolder(0),
-      loadQuestionFactoryQuality()
+      loadQuestionFactoryQuality(),
+      window.LuriaAdminEditais?.load?.() || Promise.resolve()
     ]);
   }
 
@@ -1556,7 +1557,11 @@
   }
 
   function setAdminView(view) {
-    const next = view === "factory" ? "factory" : "metrics";
+    const next =
+      ["metrics", "factory", "editais"].includes(view)
+        ? view
+        : "metrics";
+
     document.body.dataset.adminView = next;
 
     document.querySelectorAll("[data-admin-view]").forEach(section => {
@@ -1570,7 +1575,19 @@
     });
 
     const range = document.querySelector(".admin-range");
-    if (range) range.hidden = next === "factory";
+    if (range) range.hidden = next !== "metrics";
+
+    if (
+      next === "editais"
+      && window.LuriaAdminEditais?.load
+    ) {
+      window.LuriaAdminEditais.load().catch(
+        error => console.warn(
+          "Não foi possível carregar os editais administrativos:",
+          error
+        )
+      );
+    }
 
     try {
       sessionStorage.setItem("luria-admin-view", next);
@@ -1587,7 +1604,9 @@
     let initial = "metrics";
     try {
       const saved = sessionStorage.getItem("luria-admin-view");
-      if (saved === "factory") initial = "factory";
+      if (["metrics", "factory", "editais"].includes(saved)) {
+        initial = saved;
+      }
     } catch (_) {}
 
     setAdminView(initial);
