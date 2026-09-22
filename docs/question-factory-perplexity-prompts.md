@@ -428,3 +428,19 @@ Focos do Gemini:
 - repetição excessiva de temas/estrutura;
 - conduta potencialmente desatualizada;
 - padrões sistêmicos invisíveis na revisão por item.
+
+
+### Ajuste pós-T6 — SES-DF
+- Decisão atual: `NEEDS_ONE_MORE_CALIBRATION`.
+- T6: média 98,08; mediana 98; 90% >=97; 84% >=98; 0 hard fails; 1 ambiguidade.
+- O T5 melhorou, mas não foi totalmente corrigido.
+- Rede artificial ainda ~32%; clínica pura ~42%.
+- A correta é a mais longa em ~82% dos itens.
+- AI_PATTERN_RISK permanece high.
+- Próximo lote deve remover contexto de rede ornamental e quebrar sintaxe repetitiva.
+- “Em serviço da rede do DF”, “considerando continuidade” e equivalentes devem ser removidos se não mudarem a decisão.
+- A alternativa correta não pode concentrar múltiplas cláusulas enquanto distratores permanecem curtos.
+- Substituir absolutos denunciadores por alternativas tecnicamente concorrentes.
+- Em vacinação e neonatologia, exigir seção/tabela/protocolo específico.
+- Questões protocolodependentes devem declarar o protocolo ou fornecer critério que produza uma única melhor resposta.
+- Só recomendar READY_FOR_200 quando network_artificial for residual, AI_PATTERN_RISK deixar de ser high e a correta não for previsível pelo comprimento.
