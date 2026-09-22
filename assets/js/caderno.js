@@ -5568,11 +5568,23 @@ async function addNotebookImages(
   const currentCount =
     notebookImageCount();
 
+  const maxImages =
+    Math.max(
+      0,
+      Number(
+        window.LuriaEntitlements
+          ?.limit(
+            "notebook_images",
+            2
+          )
+        ?? 2
+      )
+    );
 
   const remaining =
     Math.max(
       0,
-      2 - currentCount
+      maxImages - currentCount
     );
 
 
@@ -5580,7 +5592,7 @@ async function addNotebookImages(
     remaining <= 0
   ) {
     window.LuriaDialog.alert(
-      "Este caderno já possui o máximo de 2 imagens."
+      `Este caderno já possui o máximo de ${maxImages} imagem${maxImages === 1 ? "" : "s"}.`
     );
 
     return;
@@ -5620,7 +5632,7 @@ async function addNotebookImages(
     > remaining
   ) {
     window.LuriaDialog.alert(
-      `Você pode adicionar no máximo 2 imagens por caderno. Serão inseridas apenas ${remaining}.`
+      `Você pode adicionar no máximo ${maxImages} imagem${maxImages === 1 ? "" : "s"} por caderno. Serão inseridas apenas ${remaining}.`
     );
   }
 
@@ -17923,12 +17935,25 @@ function wireEvents() {
         button.addEventListener(
           "click",
           () => {
+            const maxImages =
+              Math.max(
+                0,
+                Number(
+                  window.LuriaEntitlements
+                    ?.limit(
+                      "notebook_images",
+                      2
+                    )
+                  ?? 2
+                )
+              );
+
             if (
               notebookImageCount()
-              >= 2
+              >= maxImages
             ) {
               window.LuriaDialog.alert(
-                "Este caderno já possui o máximo de 2 imagens."
+                `Este caderno já possui o máximo de ${maxImages} imagem${maxImages === 1 ? "" : "s"}.`
               );
 
               closeNotebookToolMenus();
