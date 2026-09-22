@@ -16,7 +16,7 @@
   ],
   "icons": [
     {
-      "src": "/assets/img/logo-icone-original.png?v=pwa4",
+      "src": "/assets/img/logos/logo-icone-original.png?v=pwa4",
       "sizes": "any",
       "type": "image/png",
       "purpose": "any"
