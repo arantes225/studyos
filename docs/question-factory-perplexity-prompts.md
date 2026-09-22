@@ -272,6 +272,26 @@ READY_FOR_200 | NEEDS_ONE_MORE_CALIBRATION | NOT_ENOUGH_PRIMARY_EVIDENCE.
 
 No estado atual pós-T5, a hipótese de trabalho é NEEDS_ONE_MORE_CALIBRATION até que uma nova rodada com fonte de estilo primária mostre generalização consistente.
 
+
+
+### Critério operacional do próximo teste PSU-GO
+Na próxima auditoria PSU-GO, NÃO reutilize o T5 como evidência de estilo. O T5 serve apenas como diagnóstico do gerador.
+
+Exija que o novo lote:
+- seja composto por 30 questões inéditas;
+- tenha sido gerado após análise primária oficial;
+- tenha fontes definitivas;
+- tenha explicações A–D específicas;
+- use distratores plausíveis;
+- não concentre easy/very_easy.
+
+Só recomendar `READY_FOR_200` se, após correção e reauditoria:
+- >=90% das 30 questões atingirem >=97;
+- 0 hard fails;
+- 0 ambiguidades relevantes;
+- style_confidence >= medium-high sustentado por fonte primária;
+- não houver padrão sistêmico de dificuldade baixa ou estilo genérico.
+
 ## PSU-MG — prompt de auditoria
 
 Audite todas as questões PSU-MG com a rubrica oficial.
