@@ -12,6 +12,7 @@
     storageBreakdown: null,
     databaseBreakdown: null,
     planPrices: [],
+    planFeatures: [],
     customers: [],
     pinConfigured: false,
     pinUnlocked: false,
@@ -117,6 +118,37 @@
     questoes: "Questões",
     ia: "IA"
   };
+
+  const PLAN_FEATURE_PLANS = [
+    { slug: "essential", label: "Essencial" },
+    { slug: "plus", label: "Plus" },
+    { slug: "pro", label: "Pro" },
+    { slug: "betatester", label: "Betatester" }
+  ];
+
+  const PLAN_FEATURE_CATALOG = [
+    { key: "dashboard", label: "Dashboard", description: "Acesso ao painel principal." },
+    { key: "agenda", label: "Agenda", description: "Agenda e gerenciamento de eventos." },
+    { key: "cronograma", label: "Cronograma", description: "Acesso ao módulo de cronograma." },
+    { key: "automatic_schedule", label: "Cronograma automático", description: "Importação e montagem automática do cronograma." },
+    { key: "ambientacao", label: "Ambientação", description: "Ambiente de estudo." },
+    { key: "caderno", label: "Caderno", description: "Acesso ao caderno de estudos." },
+    { key: "notebook_images", label: "Imagens no caderno", description: "Quantidade máxima de imagens por caderno.", limit: true, limitLabel: "imagens" },
+    { key: "error_notebook", label: "Caderno de erros", description: "Acesso ao Caderno de Erros." },
+    { key: "error_notebook_images", label: "Imagens no Caderno de Erros", description: "Quantidade máxima de imagens por item.", limit: true, limitLabel: "imagens" },
+    { key: "flashcards", label: "Flashcards", description: "Criação e revisão de flashcards." },
+    { key: "flashcard_images", label: "Imagens em flashcards", description: "Quantidade máxima de imagens por flashcard.", limit: true, limitLabel: "imagens" },
+    { key: "flashcard_import", label: "Importação de flashcards", description: "Excel, CSV e Anki." },
+    { key: "questions", label: "Questões", description: "Acesso ao módulo de questões." },
+    { key: "automatic_questions", label: "Questões automáticas", description: "Geração/importação automática de questões." },
+    { key: "question_import", label: "Importação de questões", description: "Importação em lote de questões." },
+    { key: "simulations", label: "Simulados", description: "Criação e realização de simulados." },
+    { key: "statistics_general", label: "Estatísticas gerais", description: "Resumo geral de desempenho." },
+    { key: "advanced_statistics", label: "Estatísticas detalhadas", description: "Análises aprofundadas por módulo." },
+    { key: "studyrats_accessories", label: "Acessórios dos ratinhos", description: "Libera uso de acessórios no StudyRats." },
+    { key: "studyrats_variants", label: "Outros ratos", description: "Libera variantes além do rato azul base." },
+    { key: "ai", label: "IA", description: "Recursos de inteligência artificial." }
+  ];
 
   function $(id) {
     return document.getElementById(id);
@@ -864,6 +896,203 @@
     renderCostEditor();
   }
 
+  function setPlanFeaturesStatus(text, type = "") {
+    const element = $("admin-plan-features-status");
+    if (!element) return;
+    element.textContent = text || "";
+    element.className =
+      `admin-plan-features-status ${type}`.trim();
+  }
+
+  function planFeatureValue(planSlug, featureKey) {
+    return state.planFeatures.find(
+      item =>
+        item.plan_slug === planSlug
+        && item.feature_key === featureKey
+    ) || {
+      plan_slug: planSlug,
+      feature_key: featureKey,
+      enabled: false,
+      limit_value: null
+    };
+  }
+
+  function renderPlanFeatures() {
+    const grid = $("admin-plan-features-grid");
+    if (!grid) return;
+
+    const heads = [
+      '<div class="admin-plan-feature-head">Funcionalidade</div>',
+      ...PLAN_FEATURE_PLANS.map(
+        plan =>
+          `<div class="admin-plan-feature-head">${esc(plan.label)}</div>`
+      )
+    ].join("");
+
+    const rows = PLAN_FEATURE_CATALOG.map(feature => {
+      const cells = PLAN_FEATURE_PLANS.map(plan => {
+        const value = planFeatureValue(plan.slug, feature.key);
+        const enabled = value.enabled === true;
+        const limitValue =
+          value.limit_value === null
+            || value.limit_value === undefined
+            ? ""
+            : Number(value.limit_value);
+
+        return `
+          <div
+            class="admin-plan-feature-cell"
+            data-plan-feature-cell
+            data-plan="${esc(plan.slug)}"
+            data-feature="${esc(feature.key)}"
+          >
+            <label class="admin-plan-feature-toggle">
+              <input
+                type="checkbox"
+                data-plan-feature-enabled
+                ${enabled ? "checked" : ""}
+              >
+              <span>${enabled ? "Liberado" : "Bloqueado"}</span>
+            </label>
+            ${feature.limit ? `
+              <span class="admin-plan-feature-limit-label">Limite</span>
+              <input
+                class="admin-plan-limit"
+                type="number"
+                min="0"
+                step="1"
+                inputmode="numeric"
+                data-plan-feature-limit
+                value="${esc(limitValue)}"
+                ${enabled ? "" : "disabled"}
+                aria-label="Limite de ${esc(feature.label)} no plano ${esc(plan.label)}"
+              >
+            ` : ""}
+          </div>
+        `;
+      }).join("");
+
+      return `
+        <div class="admin-plan-feature-label">
+          <strong>${esc(feature.label)}</strong>
+          <small>${esc(feature.description)}</small>
+        </div>
+        ${cells}
+      `;
+    }).join("");
+
+    grid.innerHTML = heads + rows;
+
+    grid.querySelectorAll("[data-plan-feature-enabled]")
+      .forEach(input => {
+        input.addEventListener("change", () => {
+          const cell = input.closest("[data-plan-feature-cell]");
+          const label = input.parentElement?.querySelector("span");
+          const limit = cell?.querySelector("[data-plan-feature-limit]");
+          if (label) {
+            label.textContent = input.checked ? "Liberado" : "Bloqueado";
+          }
+          if (limit) {
+            limit.disabled = !input.checked;
+            if (!input.checked) {
+              limit.value = "0";
+            }
+          }
+        });
+      });
+  }
+
+  async function loadPlanFeatures() {
+    setPlanFeaturesStatus("Carregando permissões...");
+
+    const { data, error } =
+      await sb.rpc("admin_plan_features_snapshot");
+
+    if (error) {
+      throw error;
+    }
+
+    state.planFeatures =
+      Array.isArray(data) ? data : [];
+
+    renderPlanFeatures();
+    setPlanFeaturesStatus("");
+  }
+
+  async function savePlanFeatures() {
+    const button = $("admin-save-plan-features");
+    const cells =
+      Array.from(
+        document.querySelectorAll("[data-plan-feature-cell]")
+      );
+
+    if (!cells.length) {
+      return;
+    }
+
+    const items = cells.map(cell => {
+      const enabled =
+        Boolean(
+          cell.querySelector("[data-plan-feature-enabled]")?.checked
+        );
+      const limitInput =
+        cell.querySelector("[data-plan-feature-limit]");
+
+      return {
+        plan_slug: cell.dataset.plan,
+        feature_key: cell.dataset.feature,
+        enabled,
+        limit_value:
+          limitInput
+            ? Math.max(
+                0,
+                Number(limitInput.value || 0)
+              )
+            : null
+      };
+    });
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Salvando...";
+    }
+
+    setPlanFeaturesStatus("Salvando permissões...");
+
+    try {
+      const { data, error } =
+        await sb.rpc(
+          "admin_save_plan_features",
+          { p_items: items }
+        );
+
+      if (error) {
+        throw error;
+      }
+
+      state.planFeatures =
+        Array.isArray(data) ? data : [];
+
+      renderPlanFeatures();
+      setPlanFeaturesStatus(
+        "Permissões salvas.",
+        "success"
+      );
+    } catch (error) {
+      console.error(error);
+      setPlanFeaturesStatus(
+        `Não foi possível salvar: ${error.message}`,
+        "error"
+      );
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Salvar permissões";
+      }
+    }
+  }
+
+
   function filteredCustomers() {
     const query =
       $("admin-customer-search")
@@ -1559,7 +1788,7 @@
 
   function setAdminView(view) {
     const next =
-      ["metrics", "factory", "editais"].includes(view)
+      ["metrics", "factory", "editais", "plans"].includes(view)
         ? view
         : "metrics";
 
@@ -1590,6 +1819,18 @@
       );
     }
 
+    if (next === "plans") {
+      loadPlanFeatures().catch(
+        error => {
+          console.error(error);
+          setPlanFeaturesStatus(
+            "Não foi possível carregar as permissões dos planos.",
+            "error"
+          );
+        }
+      );
+    }
+
     try {
       sessionStorage.setItem("luria-admin-view", next);
     } catch (_) {}
@@ -1605,7 +1846,7 @@
     let initial = "metrics";
     try {
       const saved = sessionStorage.getItem("luria-admin-view");
-      if (["metrics", "factory", "editais"].includes(saved)) {
+      if (["metrics", "factory", "editais", "plans"].includes(saved)) {
         initial = saved;
       }
     } catch (_) {}
@@ -3590,6 +3831,12 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
 
           renderCustomers();
         }
+      );
+
+    $("admin-save-plan-features")
+      ?.addEventListener(
+        "click",
+        savePlanFeatures
       );
 
     $("admin-save-plan-prices")?.addEventListener("click", async () => {
