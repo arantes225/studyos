@@ -16,7 +16,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/logos/favicon.png?v=luria7">
   <link rel="stylesheet" href="assets/css/style.css?v=16.6">
-  <link rel="stylesheet" href="assets/css/admin.css?v=3.0">
+  <link rel="stylesheet" href="assets/css/admin.css?v=3.0">\n  <link rel="stylesheet" href="assets/css/admin-editais.css?v=1">
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=14">
   <link rel="canonical" href="/admin/">
   <script>(function(){try{if(location.pathname.endsWith("/admin.html"))history.replaceState(null,"","/admin/"+location.search+location.hash);}catch(e){}})();</script>
@@ -115,7 +115,56 @@
           <button class="admin-view-tab" type="button" data-admin-view-tab="factory" aria-selected="false">
             Fábrica de questões
           </button>
+          <button class="admin-view-tab" type="button" data-admin-view-tab="editais" aria-selected="false">
+            Editais
+            <span id="admin-editais-pending-badge" class="admin-tab-badge" hidden>0</span>
+          </button>
         </nav>
+
+        <section class="admin-section admin-editais-section" data-admin-view="editais" hidden>
+          <div class="admin-section-head">
+            <div>
+              <span class="eyebrow">Central de editais</span>
+              <h2>Revisão e publicação</h2>
+              <p>Revise os editais detectados automaticamente e escolha manualmente o link que será exibido aos usuários.</p>
+            </div>
+          </div>
+
+          <div id="admin-editais-notice" class="admin-editais-notice" hidden>
+            <div>
+              <strong id="admin-editais-notice-text">Novos editais aguardam sua revisão.</strong>
+              <small>O PDF encontrado na Aristo fica visível apenas no Admin até você revisar e salvar.</small>
+            </div>
+          </div>
+
+          <div class="admin-editais-toolbar">
+            <label>
+              <span>Buscar</span>
+              <input id="admin-editais-search" type="search" placeholder="Instituição, banca ou UF...">
+            </label>
+
+            <label>
+              <span>Status</span>
+              <select id="admin-editais-filter">
+                <option value="">Todos</option>
+                <option value="pending">Pendentes</option>
+                <option value="reviewed">Revisados</option>
+              </select>
+            </label>
+
+            <div id="admin-editais-count" class="admin-editais-count">—</div>
+          </div>
+
+          <div id="admin-editais-status" class="admin-editais-status">
+            Carregando editais...
+          </div>
+
+          <div id="admin-editais-empty" class="admin-editais-empty" hidden>
+            Nenhum edital encontrado.
+          </div>
+
+          <div id="admin-editais-list" class="admin-editais-list"></div>
+        </section>
 
         <section class="admin-plan-grid" data-admin-view="metrics" aria-label="Clientes e planos">
           <article class="admin-plan-card">
@@ -1075,7 +1124,7 @@ Prefira fonte primária/oficial atual.</pre>
   <script src="/assets/vendor/supabase-2.110.6.js"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=17.0"></script>
-  <script src="assets/js/admin.js?v=3.2"></script>
+  <script src="assets/js/admin-editais.js?v=1"></script>\n  <script src="assets/js/admin.js?v=3.3"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
