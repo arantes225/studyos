@@ -8,13 +8,13 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Configurações · LURIA</title>
   <link rel="manifest" href="/manifest.webmanifest?v=4">
-  <link rel="apple-touch-icon" href="/assets/img/logo-icone-original.png?v=pwa4">
+  <link rel="apple-touch-icon" href="/assets/img/logos/logo-icone-original.png?v=pwa4">
   <meta name="theme-color" content="#0A2342">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="LURIA">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="icon" type="image/png" href="/assets/img/logo-icone-original.png?v=favicon2">
+  <link rel="icon" type="image/png" href="/assets/img/logos/logo-icone-original.png?v=favicon2">
   <link rel="stylesheet" href="assets/css/style.css?v=luria-pattern-14">
 
   <style>
@@ -516,8 +516,9 @@
     }
 </style>
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
-  <script defer src="assets/js/luria-brand-v5.js?v=8"></script>
+  <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
   <link rel="canonical" href="/configuracoes/">
+  <script>(function(){try{if(location.pathname.endsWith("/configuracoes.html"))history.replaceState(null,"","/configuracoes/"+location.search+location.hash);}catch(e){}})();</script>
 </head>
 
 <body data-page="configuracoes">
@@ -537,6 +538,23 @@
         </header>
 
         <section class="settings-section">
+
+          <article class="setting-row onboarding-settings-block">
+            <div>
+              <h2>Onboarding</h2>
+              <p>Refaça o passeio guiado do LURIA sempre que quiser rever as principais funções da plataforma.</p>
+            </div>
+
+            <div class="settings-actions">
+              <button
+                id="restart-luria-onboarding"
+                class="button primary"
+                type="button"
+              >
+                Refazer onboarding
+              </button>
+            </div>
+          </article>
 
           <article class="setting-row">
             <div>
@@ -1311,7 +1329,7 @@
 
   <script src="/assets/vendor/supabase-2.110.6.js"></script>
   <script src="assets/js/supabase.js"></script>
-  <script src="assets/js/app.js?v=16.8"></script>
+  <script src="assets/js/app.js?v=17.0"></script>
   <script src="assets/js/study-mode.js?v=12.1"></script>
   <script src="assets/js/configuracoes.js?v=12.8"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
