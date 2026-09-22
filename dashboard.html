@@ -1565,6 +1565,173 @@
 @media(max-width:620px){.event-date-time-grid{grid-template-columns:1fr}.calendar-actions{width:100%;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.calendar-actions .segmented-control,.calendar-actions .calendar-nav{width:100%;justify-content:space-evenly}.calendar-actions .segmented-control button,.calendar-actions .calendar-nav button{flex:1;padding-inline:6px}}
 
 
+.calendar-manage-events{
+  grid-column:1 / -1;
+  grid-row:3;
+  width:100%;
+  min-height:34px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--surface);
+  color:var(--text);
+  font:inherit;
+  font-size:10px;
+  font-weight:850;
+  cursor:pointer;
+}
+.calendar-manage-events:hover,
+.calendar-manage-events.active{
+  border-color:var(--accent);
+  color:var(--accent);
+  background:var(--accent-soft);
+}
+.agenda-manager{
+  margin:0 0 16px;
+  padding:14px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:var(--surface-2);
+}
+.agenda-manager[hidden]{display:none!important}
+.agenda-manager-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.agenda-manager-head h3{margin:0;font-size:14px}
+.agenda-manager-head span{color:var(--muted);font-size:10px}
+.agenda-manager-filters{
+  display:grid;
+  grid-template-columns:1fr 1fr auto;
+  gap:9px;
+  margin-top:12px;
+  align-items:end;
+}
+.agenda-manager-filter{
+  display:grid;
+  gap:5px;
+}
+.agenda-manager-filter span{
+  color:var(--muted);
+  font-size:9px;
+  font-weight:800;
+}
+.agenda-manager-filter input{
+  width:100%;
+  min-height:38px;
+  padding:0 10px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--surface);
+  color:var(--text);
+  font:inherit;
+  font-size:11px;
+}
+.agenda-manager-clear{
+  min-height:38px;
+  padding:0 12px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--surface);
+  color:var(--text);
+  font-size:10px;
+  font-weight:800;
+  cursor:pointer;
+}
+.agenda-manager-list{
+  display:grid;
+  gap:7px;
+  margin-top:12px;
+}
+.agenda-manager-empty{
+  padding:18px;
+  border:1px dashed var(--border);
+  border-radius:10px;
+  color:var(--muted);
+  font-size:11px;
+  text-align:center;
+}
+.agenda-manager-row{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  gap:12px;
+  align-items:center;
+  padding:10px 11px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--surface);
+}
+.agenda-manager-copy{min-width:0}
+.agenda-manager-copy strong{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:11px;
+}
+.agenda-manager-copy small{
+  display:block;
+  margin-top:3px;
+  color:var(--muted);
+  font-size:9px;
+}
+.agenda-manager-date{
+  color:var(--muted);
+  font-size:10px;
+  font-weight:750;
+  white-space:nowrap;
+}
+.agenda-manager-menu-wrap{position:relative}
+.agenda-manager-menu-toggle{
+  display:grid;
+  place-items:center;
+  width:32px;
+  height:32px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:var(--surface-2);
+  color:var(--text);
+  font-size:18px;
+  line-height:1;
+  cursor:pointer;
+}
+.agenda-manager-menu{
+  position:absolute;
+  z-index:80;
+  top:36px;
+  right:0;
+  min-width:130px;
+  padding:5px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--surface);
+  box-shadow:var(--shadow);
+}
+.agenda-manager-menu[hidden]{display:none!important}
+.agenda-manager-menu button{
+  width:100%;
+  min-height:34px;
+  border:0;
+  border-radius:7px;
+  padding:0 10px;
+  background:transparent;
+  color:var(--text);
+  text-align:left;
+  font-size:10px;
+  font-weight:750;
+  cursor:pointer;
+}
+.agenda-manager-menu button:hover{background:var(--surface-2)}
+.agenda-manager-menu button.danger{color:var(--danger)}
+@media(max-width:620px){
+  .agenda-manager-filters{grid-template-columns:1fr}
+  .agenda-manager-row{grid-template-columns:minmax(0,1fr) auto}
+  .agenda-manager-date{grid-column:1}
+  .agenda-manager-menu-wrap{grid-column:2;grid-row:1 / span 2}
+}
+
 /* Data e hora — visual LURIA */
 .event-dialog input[type="date"],
 .event-dialog input[type="time"]{
@@ -1818,8 +1985,38 @@
               </div>
 
               <button id="calendar-add-event" class="calendar-add-event" type="button">Adicionar evento</button>
+              <button id="calendar-manage-events" class="calendar-manage-events" type="button" aria-expanded="false">
+                Gerenciar eventos
+              </button>
             </div>
           </div>
+
+          <section id="agenda-manager" class="agenda-manager" hidden>
+            <div class="agenda-manager-head">
+              <div>
+                <h3>Gerenciar eventos</h3>
+                <span id="agenda-manager-count">0 eventos</span>
+              </div>
+            </div>
+
+            <div class="agenda-manager-filters">
+              <label class="agenda-manager-filter">
+                <span>De</span>
+                <input id="agenda-manager-date-from" type="date" aria-label="Data inicial dos eventos">
+              </label>
+
+              <label class="agenda-manager-filter">
+                <span>Até</span>
+                <input id="agenda-manager-date-to" type="date" aria-label="Data final dos eventos">
+              </label>
+
+              <button id="agenda-manager-clear" class="agenda-manager-clear" type="button">
+                Limpar filtro
+              </button>
+            </div>
+
+            <div id="agenda-manager-list" class="agenda-manager-list"></div>
+          </section>
 
           <div id="calendar-status" class="calendar-status" aria-live="polite"></div>
           <div id="calendar" class="calendar" aria-live="polite"></div>
@@ -1833,7 +2030,7 @@
       <div class="dialog-heading">
         <div>
           <span class="metric-label">Agenda pessoal</span>
-          <h2>Adicionar evento</h2>
+          <h2 id="event-dialog-title">Adicionar evento</h2>
         </div>
         <button id="event-close" class="dialog-close" type="button" aria-label="Fechar">×</button>
       </div>
@@ -1856,7 +2053,7 @@
 
       <div class="dialog-actions">
         <button id="event-cancel" class="button secondary" type="button">Cancelar</button>
-        <button class="button primary event-save-button" type="submit">Adicionar evento</button>
+        <button id="event-submit" class="button primary event-save-button" type="submit">Adicionar evento</button>
       </div>
     </form>
   </dialog>
@@ -1892,7 +2089,7 @@
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=17.0"></script>
   <script src="assets/js/study-mode.js?v=12.1"></script>
-  <script src="assets/js/dashboard.js?v=27.4"></script>
+  <script src="assets/js/dashboard.js?v=27.5"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
 </html>
