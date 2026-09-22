@@ -16,7 +16,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/logos/favicon.png?v=luria7">
   <link rel="stylesheet" href="assets/css/style.css?v=16.2">
-  <link rel="stylesheet" href="assets/css/admin.css?v=2.8">
+  <link rel="stylesheet" href="assets/css/admin.css?v=2.9">
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=10">
   <link rel="canonical" href="/admin/">
   <script>(function(){try{if(location.pathname.endsWith("/admin.html"))history.replaceState(null,"","/admin/"+location.search+location.hash);}catch(e){}})();</script>
@@ -163,6 +163,17 @@
             <div class="admin-logistics-head-meta"><span id="admin-logistics-plan" class="admin-infra-plan">Supabase —</span><small id="admin-logistics-updated"></small></div>
           </div>
           <div id="admin-infra-grid" class="admin-infra-grid"></div>
+          <div class="admin-database-breakdown">
+            <div class="admin-subsection-head">
+              <div>
+                <strong>Composição da Base de Dados</strong>
+                <small>Tamanho, registros e participação de cada tabela</small>
+              </div>
+              <strong id="admin-database-total">—</strong>
+            </div>
+            <div id="admin-database-summary" class="admin-database-summary"></div>
+            <div id="admin-database-breakdown-list" class="admin-database-breakdown-list"></div>
+          </div>
           <div class="admin-storage-breakdown">
             <div class="admin-subsection-head"><div><strong>Composição do Storage</strong><small>Espaço ocupado por tipo de arquivo</small></div><strong id="admin-storage-total">—</strong></div>
             <div id="admin-storage-breakdown-list" class="admin-storage-breakdown-list"></div>
@@ -1055,7 +1066,7 @@ Prefira fonte primária/oficial atual.</pre>
   <script src="/assets/vendor/supabase-2.110.6.js"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=17.0"></script>
-  <script src="assets/js/admin.js?v=2.9"></script>
+  <script src="assets/js/admin.js?v=3.0"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
