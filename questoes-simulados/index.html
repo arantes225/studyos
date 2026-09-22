@@ -10,17 +10,17 @@
   <title>Questões e Simulados · LURIA</title>
 
   <link rel="manifest" href="manifest.webmanifest?v=3">
-  <link rel="apple-touch-icon" sizes="180x180" href="assets/img/pwa-icon-180.png?v=3">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/img/logos/pwa-icon-180.png?v=3">
   <meta name="theme-color" content="#0A2342">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="LURIA">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria2">
+  <link rel="icon" type="image/png" href="assets/img/logos/favicon.png?v=luria2">
   <link rel="stylesheet" href="assets/css/style.css?v=16.3">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
 
-  <script defer src="assets/js/luria-brand-v5.js?v=9"></script>
+  <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
 
   <style>
     /* =====================================================
@@ -651,6 +651,14 @@
 
     #qs-delete-selected {
       margin-left: auto;
+      background: var(--danger) !important;
+      border-color: var(--danger) !important;
+      color: #fff !important;
+    }
+
+    #qs-delete-selected:hover {
+      background: color-mix(in srgb, var(--danger) 86%, #000) !important;
+      border-color: color-mix(in srgb, var(--danger) 86%, #000) !important;
     }
 
     /* =====================================================
@@ -1159,6 +1167,7 @@
     }
   </style>
   <link rel="canonical" href="/questoes-simulados/">
+  <script>(function(){try{if(location.pathname.endsWith("/questoes-simulados.html"))history.replaceState(null,"","/questoes-simulados/"+location.search+location.hash);}catch(e){}})();</script>
 </head>
 
 <body data-page="questoes">
@@ -1644,7 +1653,7 @@
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <script src="assets/js/supabase.js"></script>
-  <script src="assets/js/app.js?v=16.8"></script>
+  <script src="assets/js/app.js?v=17.0"></script>
   <script src="assets/js/study-mode.js?v=13.0"></script>
   <script src="assets/js/questoes-simulados.js?v=18.3"></script>
 
