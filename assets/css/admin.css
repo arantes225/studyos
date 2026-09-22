@@ -3175,3 +3175,43 @@ body.admin-unlocked #admin-app {
     grid-template-columns:1fr;
   }
 }
+
+
+/* Admin logistics — composição da base recolhível */
+.admin-database-breakdown-toggle{
+  overflow:hidden;
+}
+.admin-database-breakdown-summary{
+  cursor:pointer;
+  list-style:none;
+  user-select:none;
+}
+.admin-database-breakdown-summary::-webkit-details-marker{
+  display:none;
+}
+.admin-database-breakdown-summary-meta{
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+.admin-database-breakdown-chevron{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:24px;
+  height:24px;
+  border:1px solid var(--border);
+  border-radius:7px;
+  background:var(--surface-2);
+  color:var(--muted);
+  font-size:14px;
+  line-height:1;
+  transition:transform .18s ease;
+}
+.admin-database-breakdown-toggle[open] .admin-database-breakdown-chevron{
+  transform:rotate(180deg);
+}
+.admin-database-breakdown-content{
+  display:grid;
+  gap:10px;
+}
