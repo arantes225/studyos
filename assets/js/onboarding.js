@@ -1128,9 +1128,25 @@
     if(step.action==="error-library") activateTab('[data-error-tab="library"]');
 
     if(step.action==="questions-mine"){
-      document.querySelector('[data-qs-mode="mine"]')?.click();
-      setTimeout(addQuestionSetsDemo,150);
-      setTimeout(addQuestionSetsDemo,500);
+      const showQuestionHome=()=>{
+        try{
+          const mineTab=document.querySelector('[data-qs-mode="mine"]');
+          if(mineTab) mineTab.click();
+
+          document.querySelectorAll('[data-qs-section]').forEach(section=>{
+            section.classList.toggle("active",section.dataset.qsSection==="mine");
+          });
+
+          addQuestionSetsDemo();
+        }catch(error){
+          console.warn("Onboarding de Questões: não foi possível montar a demonstração ainda.",error);
+        }
+      };
+
+      showQuestionHome();
+      setTimeout(showQuestionHome,180);
+      setTimeout(showQuestionHome,600);
+      setTimeout(showQuestionHome,1200);
     }
 
     if(step.action==="questions-create"){
@@ -1425,8 +1441,22 @@
       return;
     }
     ensureStyles();
-    if(step.demo) addDemoData(step.demo);
-    runStepAction(step);
+
+    // A demonstração nunca deve impedir o card principal do onboarding.
+    // Se a página ainda estiver inicializando, seguimos com o tour e
+    // tentamos montar os elementos demonstrativos novamente em seguida.
+    try{
+      if(step.demo) addDemoData(step.demo);
+      runStepAction(step);
+    }catch(error){
+      console.warn("Não foi possível preparar a demonstração do onboarding neste instante.",error);
+      setTimeout(()=>{
+        try{
+          if(step.demo) addDemoData(step.demo);
+          runStepAction(step);
+        }catch{}
+      },500);
+    }
 
     const target=resolveTarget(step.target) || document.querySelector(".main") || document.body;
     if(step.scrollPageDown){
