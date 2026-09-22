@@ -284,14 +284,14 @@ const PAGE_FEATURES = {
   flashcards: "flashcards",
   erros: "error_notebook",
   questoes: "questions",
-  estatisticas: "advanced_statistics"
+  estatisticas: "statistics_general"
 };
 
 const PLUS_NAV_FEATURES = {
   "/flashcards/": "flashcards",
   "/questoes-simulados/": "questions",
   "/registrar-questoes/": "questions",
-  "/estatisticas/": "advanced_statistics"
+  "/estatisticas/": "statistics_general"
 };
 
 const page = document.body.dataset.page || "dashboard";
@@ -3238,6 +3238,61 @@ function temFeature(
       ?.enabled === true
   );
 }
+
+
+function limiteFeature(
+  entitlements,
+  featureKey,
+  fallback = null
+) {
+  if (
+    entitlements?.is_admin === true
+  ) {
+    return fallback;
+  }
+
+  const raw =
+    entitlements
+      ?.features
+      ?.[featureKey]
+      ?.limit;
+
+  if (
+    raw === null
+    || raw === undefined
+    || raw === ""
+  ) {
+    return fallback;
+  }
+
+  const value =
+    Number(raw);
+
+  return Number.isFinite(value)
+    ? Math.max(0, value)
+    : fallback;
+}
+
+
+window.LuriaEntitlements = {
+  enabled(featureKey) {
+    return temFeature(
+      window.docmapEntitlements,
+      featureKey
+    );
+  },
+
+  limit(
+    featureKey,
+    fallback = null
+  ) {
+    return limiteFeature(
+      window.docmapEntitlements,
+      featureKey,
+      fallback
+    );
+  }
+};
 
 
 function aplicarRestricoesDeImagem(
