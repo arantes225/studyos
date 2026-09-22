@@ -1741,7 +1741,7 @@
       if (value == null) return "Sem nota";
       const n = Number(value);
       if (n >= 98) return "Excelente";
-      if (n >= 95) return "Aprovado";
+      if (n >= 97) return "Aprovado";
       if (n >= 90) return "Quase lá · revisar";
       if (n >= 80) return "Bom · revisar";
       if (n >= 70) return "Atenção";
@@ -1952,7 +1952,7 @@ REGRAS GERAIS
 - Trabalhe sempre com question_id imutável.
 - O formato canônico entre IAs e backend é JSON.
 - Não use Excel como formato máquina-a-máquina.
-- Corte mínimo de qualidade: 95/100.
+- Corte mínimo de qualidade: 97/100.
 - Mesmo com nota >=90, hard fail impede aprovação.
 - Hard fails incluem: gabarito divergente, duas alternativas defensáveis, ambiguidade relevante, conduta potencialmente perigosa, dose/ponto de corte incorreto, fonte inexistente, fonte que não sustenta o gabarito, recomendação desatualizada ou questão reconhecível como cópia.
 - Toda questão precisa de fonte específica do gabarito.
@@ -2021,7 +2021,7 @@ Audite cientificamente TODAS as 200 questões de forma independente.
 Resolva cada item antes de olhar o gabarito original.
 Abra e confira as fontes.
 Atribua uma nota objetiva de 0–100 usando a rubrica abaixo.
-O corte mínimo real é 95/100.
+O corte mínimo real é 97/100.
 
 RUBRICA SISTEMÁTICA — 100 PONTOS
 
@@ -2074,7 +2074,7 @@ RUBRICA SISTEMÁTICA — 100 PONTOS
 0–1 = trivial ou artificialmente difícil.
 
 HARD FAILS — REPROVAÇÃO AUTOMÁTICA
-Mesmo que a soma seja >=95, marque needs_revision ou rejected se houver:
+Mesmo que a soma seja >=97, marque needs_revision ou rejected se houver:
 - gabarito incorreto;
 - duas ou mais respostas defensáveis;
 - ambiguidade clínica relevante;
@@ -2089,14 +2089,14 @@ Mesmo que a soma seja >=95, marque needs_revision ou rejected se houver:
 
 REGRAS DE STATUS
 approved:
-quality_score >=95
+quality_score >=97
 AND hard_fail=false
 AND ambiguity=false
 AND single_best_answer=true
 AND answer_source_issue=null.
 
 needs_revision:
-- quality_score <95;
+- quality_score <97;
 - qualquer hard fail recuperável;
 - ciência correta mas estilo insuficiente;
 - fonte insuficiente;
@@ -2115,7 +2115,7 @@ Não escreva apenas “pode melhorar”.
 Seja específico.
 
 OBRIGAÇÃO DE MELHORIA DETALHADA
-Para toda questão com quality_score <95, forneça uma seção estruturada de melhoria contendo:
+Para toda questão com quality_score <97, forneça uma seção estruturada de melhoria contendo:
 
 improvement_priority:
 - critical
@@ -2169,14 +2169,14 @@ how_to_improve_wording
 - Sugerir ajustes de redação que removam pistas, redundâncias ou ambiguidade.
 
 PROPOSTA DE MUDANÇA — OBRIGATÓRIA
-Para toda questão com quality_score <95, além de explicar o problema, proponha a correção EXATA.
+Para toda questão com quality_score <97, além de explicar o problema, proponha a correção EXATA.
 Não diga apenas "melhorar distratores".
 Informe quais campos mudariam e forneça o texto substituto completo em proposed_change.exact_replacement.
 Se o gabarito mudar, explique por que e cite a fonte que sustenta a mudança.
-Se a questão puder atingir 95+ sem mudar determinado campo, deixe esse campo null.
+Se a questão puder atingir 97+ sem mudar determinado campo, deixe esse campo null.
 A proposta será julgada independentemente pelo ChatGPT antes de qualquer alteração ser aplicada.
 
-PARA QUESTÕES >=95
+PARA QUESTÕES >=97
 Mesmo se approved, forneça:
 - strongest_point
 - remaining_minor_risk
@@ -2291,7 +2291,7 @@ SAÍDA JSON EXATA
     "rejected":0,
     "mean_quality_score":0,
     "median_quality_score":0,
-    "pct_95_plus":0,
+    "pct_97_plus":0,
     "pct_90_949":0,
     "pct_below_90":0,
     "most_common_quality_losses":[],
@@ -2311,7 +2311,7 @@ Em summary.top_5_systematic_problems, diga por exemplo:
 - curva de dificuldade inadequada;
 - pouca fidelidade à banca.
 
-Em summary.top_5_prompt_improvements, escreva mudanças concretas que deveriam ser incorporadas AO PROMPT MESTRE DA BANCA para aumentar a taxa de questões >=95 no próximo bloco.
+Em summary.top_5_prompt_improvements, escreva mudanças concretas que deveriam ser incorporadas AO PROMPT MESTRE DA BANCA para aumentar a taxa de questões >=97 no próximo bloco.
 
 Não inclua texto fora do JSON.`;
 
@@ -2468,9 +2468,9 @@ TAREFA
 Reaudite APENAS as questões corrigidas na versão mais recente.
 Ignore o parecer anterior como autoridade: resolva novamente.
 Confira novamente a fonte específica do gabarito.
-Use o mesmo corte >=95 e os mesmos hard fails.
+Use o mesmo corte >=97 e os mesmos hard fails.
 
-Se qualquer questão continuar abaixo de 95:
+Se qualquer questão continuar abaixo de 97:
 - explique exatamente onde perdeu pontos;
 - proponha nova mudança concreta;
 - informe os campos que mudariam;
@@ -2513,7 +2513,7 @@ SAÍDA JSON
   ]
 }
 
-O resultado será importado novamente no Supabase. Só depois que as 200 estiverem com quality_score >=95, sem hard fail e machine-approved o Admin deve liberar a aprovação humana do bloco.`;
+O resultado será importado novamente no Supabase. Só depois que as 200 estiverem com quality_score >=97, sem hard fail e machine-approved o Admin deve liberar a aprovação humana do bloco.`;
 
     if (stage === "lot_chatgpt_final") return `PROMPT DE SEGMENTO 6A — REVISÃO FINAL CHATGPT DO LOTE DE 1.000
 ${common}
