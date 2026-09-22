@@ -1,7 +1,7 @@
 let sharedStudyratsRows=[];
 let sharedStudyratsChannel=null;
 let sharedStudyratsTimer=null;
-let sharedStudyratsMyVariant='brown';
+let sharedStudyratsMyVariant='blue';
 let sharedStudyratsMyAccessory='none';
 let sharedStudyratsAccessoryOffsets={};
 let sharedStudyratsMyAccessoryX=0;
@@ -223,7 +223,19 @@ function sharedStudyratsApplyVariantSelection(){
 function sharedStudyratsRenderRatPicker(){
   const host=document.getElementById('studyrats-rat-picker-options');
   if(!host)return;
-  host.innerHTML=sharedStudyratVariants.map(function(item){
+
+  const variantsAllowed =
+    window.LuriaEntitlements?.enabled('studyrats_variants') === true;
+
+  const accessoriesAllowed =
+    window.LuriaEntitlements?.enabled('studyrats_accessories') === true;
+
+  const availableVariants =
+    variantsAllowed
+      ? sharedStudyratVariants
+      : sharedStudyratVariants.filter(function(item){return item.id==='blue';});
+
+  host.innerHTML=availableVariants.map(function(item){
     const selected=item.id===sharedStudyratsMyVariant;
     return '<button type="button" class="studyrats-rat-choice '+(selected?'is-selected':'')+'" data-studyrat-variant="'+item.id+'" aria-pressed="'+(selected?'true':'false')+'" title="'+item.label+'">'+
       sharedRatImg(item.id,'studyrats-rat-choice-img')+
@@ -240,7 +252,11 @@ function sharedStudyratsRenderRatPicker(){
 
   const accessoryHost=document.getElementById('studyrats-accessory-picker-options');
   if(accessoryHost){
-    accessoryHost.innerHTML=sharedStudyratAccessories.map(function(item){
+    const availableAccessories =
+      accessoriesAllowed
+        ? sharedStudyratAccessories
+        : sharedStudyratAccessories.filter(function(item){return item.id==='none';});
+    accessoryHost.innerHTML=availableAccessories.map(function(item){
       const selected=item.id===sharedStudyratsMyAccessory;
       const preview=item.id==='none'
         ? '<span class="studyrats-accessory-none">×</span>'
@@ -268,8 +284,24 @@ async function sharedStudyratsLoadMyVariant(){
     .maybeSingle();
 
   if(!result.error&&result.data){
-    if(result.data.studyrat_variant)sharedStudyratsMyVariant=sharedStudyratVariant(result.data.studyrat_variant).id;
-    if(result.data.studyrat_accessory)sharedStudyratsMyAccessory=sharedStudyratAccessory(result.data.studyrat_accessory).id;
+    const variantsAllowed =
+      window.LuriaEntitlements?.enabled('studyrats_variants') === true;
+    const accessoriesAllowed =
+      window.LuriaEntitlements?.enabled('studyrats_accessories') === true;
+
+    if(result.data.studyrat_variant){
+      sharedStudyratsMyVariant =
+        variantsAllowed
+          ? sharedStudyratVariant(result.data.studyrat_variant).id
+          : 'blue';
+    }
+
+    if(result.data.studyrat_accessory){
+      sharedStudyratsMyAccessory =
+        accessoriesAllowed
+          ? sharedStudyratAccessory(result.data.studyrat_accessory).id
+          : 'none';
+    }
     sharedStudyratsAccessoryOffsets=result.data.studyrat_accessory_offsets||{};
     const offset=sharedStudyratsCurrentAccessoryOffset(sharedStudyratsMyAccessory);
     sharedStudyratsMyAccessoryX=offset.x;
@@ -280,6 +312,14 @@ async function sharedStudyratsLoadMyVariant(){
 
 async function sharedStudyratsSaveVariant(variant){
   const next=sharedStudyratVariant(variant).id;
+
+  if(
+    next!=='blue'
+    && window.LuriaEntitlements?.enabled('studyrats_variants') !== true
+  ){
+    window.LuriaDialog?.alert('Seu plano libera apenas o ratinho azul.');
+    return;
+  }
   if(next===sharedStudyratsMyVariant)return;
 
   const previous=sharedStudyratsMyVariant;
@@ -307,6 +347,14 @@ async function sharedStudyratsSaveVariant(variant){
 
 async function sharedStudyratsSaveAccessory(accessory){
   const next=sharedStudyratAccessory(accessory).id;
+
+  if(
+    next!=='none'
+    && window.LuriaEntitlements?.enabled('studyrats_accessories') !== true
+  ){
+    window.LuriaDialog?.alert('Acessórios não estão disponíveis no seu plano.');
+    return;
+  }
   if(next===sharedStudyratsMyAccessory)return;
 
   const previous=sharedStudyratsMyAccessory;
