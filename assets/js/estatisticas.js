@@ -1543,19 +1543,107 @@
     );
 
     const out=[];
+
+    const areaPerformance =
+      Array.from(group(attempts, area).entries())
+        .map(([label, rows]) => {
+          const areaCorrect = rows.filter(x => x.result === "correct").length;
+          const areaWrong = rows.filter(x => x.result === "wrong").length;
+          return {
+            label,
+            n: rows.length,
+            correct: areaCorrect,
+            wrong: areaWrong,
+            accuracy: pct(areaCorrect, rows.length)
+          };
+        })
+        .filter(x => x.n >= 5);
+
+    const weakestArea =
+      areaPerformance
+        .slice()
+        .sort((a,b) => a.accuracy - b.accuracy || b.n - a.n)[0];
+
+    const strongestArea =
+      areaPerformance
+        .slice()
+        .sort((a,b) => b.accuracy - a.accuracy || b.n - a.n)[0];
+
+    const dailyPerformance =
+      Array.from(group(attempts, x => dateKey(x.answered_at)).entries())
+        .map(([date, rows]) => ({
+          date,
+          n: rows.length,
+          accuracy: pct(rows.filter(x => x.result === "correct").length, rows.length)
+        }))
+        .filter(x => x.n >= 5)
+        .sort((a,b) => a.date.localeCompare(b.date));
+
+    if(state.range!=="all" && prevAttempts.length) {
+      const delta = accuracy - prevAccuracy;
+      out.push({
+        title:"Tendência do período",
+        text: Math.abs(delta) < 0.05
+          ? `O aproveitamento ficou estável em ${percent(accuracy,1)} em relação ao período anterior.`
+          : `O aproveitamento ${delta > 0 ? "subiu" : "caiu"} ${num(Math.abs(delta),1)} p.p., passando de ${percent(prevAccuracy,1)} para ${percent(accuracy,1)}.`
+      });
+    }
+
+    if(weakestArea) {
+      out.push({
+        title:"Prioridade de revisão",
+        text:`${weakestArea.label} é a área com menor aproveitamento entre as áreas com pelo menos 5 questões: ${percent(weakestArea.accuracy,1)} em ${weakestArea.n} questões (${weakestArea.wrong} erros).`
+      });
+    }
+
+    if(strongestArea && (!weakestArea || strongestArea.label !== weakestArea.label)) {
+      out.push({
+        title:"Área mais consistente",
+        text:`${strongestArea.label} apresentou o melhor aproveitamento entre as áreas com pelo menos 5 questões: ${percent(strongestArea.accuracy,1)} em ${strongestArea.n} questões.`
+      });
+    }
+
+    if(wrongByArea.length && wrong) {
+      const topErrorArea = wrongByArea[0];
+      const share = pct(topErrorArea.errors, wrong);
+      out.push({
+        title:"Concentração dos erros",
+        text:`${topErrorArea.label} concentrou ${topErrorArea.errors} dos ${wrong} erros do período (${percent(share,1)}). ${topErrorArea.sent ? `${topErrorArea.sent} desses erros foram enviados ao Caderno.` : "Nenhum desses erros foi enviado ao Caderno."}`
+      });
+    }
+
     if(wrong) {
       out.push({
         title:"Transformação em revisão",
-        text:`${sent} de ${wrong} erros foram enviados ao Caderno de Erros (${percent(conversion,1)}).`
+        text:`${sent} de ${wrong} erros foram enviados ao Caderno de Erros (${percent(conversion,1)}). ${sent === 0 ? "Os erros ainda não estão virando revisão ativa." : conversion < 50 ? "Menos da metade dos erros está virando revisão ativa." : "A maior parte dos erros já está entrando no ciclo de revisão."}`
       });
     }
-    if(state.range!=="all"&&prevAttempts.length) {
+
+    if(dailyPerformance.length >= 2) {
+      const minDay = dailyPerformance.reduce((best,row) => row.accuracy < best.accuracy ? row : best);
+      const maxDay = dailyPerformance.reduce((best,row) => row.accuracy > best.accuracy ? row : best);
+      const amplitude = maxDay.accuracy - minDay.accuracy;
       out.push({
-        title:"Tendência",
-        text:`O aproveitamento ${accuracy>=prevAccuracy?"subiu":"caiu"} ${num(Math.abs(accuracy-prevAccuracy),1)} p.p. em relação ao período anterior.`
+        title:"Regularidade",
+        text:`Nos ${dailyPerformance.length} dias com pelo menos 5 questões, o aproveitamento variou de ${percent(minDay.accuracy,1)} a ${percent(maxDay.accuracy,1)} (amplitude de ${num(amplitude,1)} p.p.).`
       });
     }
-    insights("question-insights",out);
+
+    if(orderedSets.length >= 2) {
+      const latestSet = orderedSets[orderedSets.length - 1];
+      const previousSet = orderedSets[orderedSets.length - 2];
+      const latestAcc = Number(latestSet.accuracy_percent);
+      const previousAcc = Number(previousSet.accuracy_percent);
+      if(Number.isFinite(latestAcc) && Number.isFinite(previousAcc)) {
+        const delta = latestAcc - previousAcc;
+        out.push({
+          title:"Evolução nos simulados",
+          text:`O simulado mais recente (${latestSet.title || "Simulado"}) ficou em ${percent(latestAcc,1)}, ${Math.abs(delta) < 0.05 ? "praticamente igual ao anterior" : `${num(Math.abs(delta),1)} p.p. ${delta > 0 ? "acima" : "abaixo"} do anterior`}.`
+        });
+      }
+    }
+
+    insights("question-insights",out.slice(0,6));
 
     renderQuestionAreaWeekHeatmap("question-area-week-heatmap", attempts);
   }
