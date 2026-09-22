@@ -195,6 +195,126 @@ Exemplo:
 
 Assim, uma mesma competência clínica pode originar questões diferentes nos estilos ENAMED, SUS-SP ou SES-DF sem alterar a base científica.
 
+## 5B. Perfis de banca calibrados — lote piloto de 50 questões
+
+Calibração editorial baseada no lote piloto auditado em 22/09/2026. As notas abaixo representam fidelidade de ESTILO, não qualidade científica absoluta.
+
+### SUS-SP
+- Nota de estilo do piloto: 9/10.
+- Tamanho do enunciado: semelhante ao perfil recente.
+- Profundidade: semelhante.
+- Dificuldade: semelhante.
+- Contextualização: adequada.
+- Distratores: adequados e plausíveis.
+- Perfil operacional:
+  - casos clínicos predominantes;
+  - foco forte em conduta prática;
+  - presença relevante de urgência, APS e SUS;
+  - raciocínio em 2–3 etapas;
+  - enunciados médios, aproximadamente 3–7 linhas;
+  - alternativas curtas a médias;
+  - preferir decisões de diagnóstico, conduta imediata, encaminhamento e prevenção.
+- Ajustes para novas gerações:
+  - manter forte presença de casos clínicos;
+  - preservar 20–30% de APS/SUS/Medicina Preventiva;
+  - incluir pequena parcela de questões conceituais/fisiopatológicas;
+  - evitar excesso de detalhes secundários.
+- Pontos do piloto a aperfeiçoar:
+  - SUSSP_02: reduzir detalhes não essenciais;
+  - SUSSP_05: pode incluir 1–2 dados laboratoriais;
+  - SUSSP_06: transformar em decisão concreta de manejo quando possível.
+
+### ENARE
+- Nota de estilo do piloto: 8/10.
+- Tamanho do enunciado: ligeiramente menor que o perfil real.
+- Profundidade: semelhante.
+- Dificuldade: abaixo a semelhante.
+- Contextualização: adequada.
+- Perfil operacional:
+  - casos clínicos de extensão moderada;
+  - ampla cobertura das grandes áreas;
+  - forte uso de diretrizes brasileiras;
+  - equilíbrio entre diagnóstico, conduta, prevenção e SUS;
+  - linguagem uniforme e nacional;
+  - raciocínio em 2–3 etapas.
+- Ajustes para novas gerações:
+  - alongar parte dos casos;
+  - elevar discretamente a dificuldade média;
+  - aumentar raciocínio multi-etapas;
+  - incluir mais prevenção/epidemiologia de complexidade intermediária.
+- Observação importante:
+  - quando o banco LURIA estiver em formato padrão de 4 alternativas, manter 4 alternativas por compatibilidade interna, mesmo que provas históricas do ENARE usem outro número.
+
+### Santa Casa-SP
+- Nota de estilo do piloto: 8/10.
+- Tamanho do enunciado: semelhante.
+- Profundidade: semelhante.
+- Dificuldade: semelhante.
+- Contextualização: insuficiente a adequada.
+- Perfil operacional:
+  - mistura de casos curtos e questões conceituais;
+  - forte peso de clínica/cirurgia clássicas;
+  - fisiopatologia, critérios e associações;
+  - raciocínio frequentemente em 1–2 etapas;
+  - enunciados curtos a médios;
+  - distratores próximos e tecnicamente sutis;
+  - menor dependência de storytelling.
+- Ajustes para novas gerações:
+  - aumentar itens conceituais;
+  - usar ocasionalmente formatos EXCETO/INCORRETA/NÃO corresponde;
+  - explorar critérios diagnósticos e fisiopatologia;
+  - manter distratores muito próximos entre si.
+- Pontos do piloto a aperfeiçoar:
+  - coqueluche e genograma ficaram um pouco mais próximos de provas nacionais/APS do que do perfil técnico tradicional da Santa Casa.
+
+### SES-DF
+- Nota de estilo do piloto: 8,5/10.
+- Tamanho do enunciado: semelhante.
+- Profundidade: semelhante.
+- Dificuldade: semelhante.
+- Contextualização: adequada.
+- Perfil operacional:
+  - casos clínicos médios a longos;
+  - forte integração APS → rede especializada/hospitalar;
+  - foco em SUS, RAS e organização do cuidado;
+  - perguntas de conduta prioritária;
+  - cenários de UBS, UPA, hospitais e rede pública;
+  - raciocínio em 2–3 etapas;
+  - ênfase em classificação, encaminhamento e coordenação do cuidado.
+- Ajustes para novas gerações:
+  - aumentar alguns casos multi-etapas;
+  - ampliar discretamente Saúde Coletiva/APS;
+  - explorar linhas de cuidado e rede assistencial.
+
+### UERJ
+- Nota de estilo do piloto: 8,5/10.
+- Tamanho do enunciado: semelhante.
+- Profundidade: semelhante.
+- Dificuldade: semelhante, com margem para elevação.
+- Contextualização: adequada.
+- Perfil operacional:
+  - casos clínicos densos, mas objetivos;
+  - alta concentração de dados discriminativos;
+  - quatro alternativas;
+  - forte cobrança de diagnóstico, conduta, critérios formais e epidemiologia;
+  - distratores fortes;
+  - enunciados de extensão média;
+  - raciocínio em 2–3 etapas.
+- Ajustes para novas gerações:
+  - aumentar densidade de dados laboratoriais e achados discriminativos;
+  - reduzir itens excessivamente fáceis;
+  - usar critérios formais e detalhes que diferenciem alternativas próximas.
+
+### Regra de uso dos perfis
+
+Quando `exam_style` for informado:
+1. carregar o perfil editorial correspondente;
+2. aplicar comprimento, dificuldade, profundidade, tipo de distrator e padrão de contexto daquele estilo;
+3. manter a base científica independente do estilo;
+4. usar provas recentes somente como referência estatística/editorial;
+5. nunca copiar ou reconstruir questão reconhecível de prova anterior;
+6. recalibrar o perfil após novas provas relevantes ou novo lote piloto auditado.
+
 ## 6. Prompt mestre — geração de bloco de 200
 
 Você é o GERADOR EDITORIAL de questões médicas autorais do LURIA/StudyOS.
