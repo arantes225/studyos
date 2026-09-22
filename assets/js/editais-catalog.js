@@ -232,15 +232,11 @@
     loadingPromise = (async () => {
       try {
         const { data, error } = await sb
-          .from("exam_catalog")
-          .select("id,institution,uf,registration_text,registration_start,registration_end,exam_date,answer_key_date,fee_text,fee,board,edital_url,registration_url,status_text,last_seen_at")
-          .eq("active", true)
-          .order("exam_date", { ascending: true, nullsFirst: false })
-          .order("institution", { ascending: true });
+          .rpc("get_exam_catalog_public");
 
         if (error) throw error;
 
-        rows = data || [];
+        rows = Array.isArray(data) ? data : [];
         loaded = true;
         populateUfFilter();
         renderCatalog();
@@ -280,13 +276,13 @@
   $("catalog-search")?.addEventListener("input", renderCatalog);
   $("catalog-uf")?.addEventListener("change", renderCatalog);
 
-  document.querySelector('[data-editais-source="aristo"]')
+  document.querySelector('[data-editais-source="catalog"]')
     ?.addEventListener("click", () => {
       loadCatalog().catch(() => {});
     });
 
   function maybeLoadInitial() {
-    const section = $("editais-aristo-content");
+    const section = $("editais-catalog-content");
     if (section && !section.hidden) {
       loadCatalog().catch(() => {});
     }
