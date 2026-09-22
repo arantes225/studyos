@@ -14,7 +14,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria7">
   <link rel="stylesheet" href="assets/css/style.css?v=16.2">
-  <link rel="stylesheet" href="assets/css/admin.css?v=1.5">
+  <link rel="stylesheet" href="assets/css/admin.css?v=1.6">
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=10">
   <link rel="canonical" href="/admin/">
   <script>(function(){try{if(location.pathname.endsWith("/admin.html"))history.replaceState(null,"","/admin/"+location.search+location.hash);}catch(e){}})();</script>
@@ -186,6 +186,67 @@
           <div class="admin-finance-wrap">
             <div class="admin-cost-breakdown-head"><div><strong>Composição dos custos mensais</strong><small>Valores usados na projeção financeira</small></div><button id="admin-edit-costs" class="button secondary admin-edit-costs" type="button">Editar custos</button></div>
             <div id="admin-cost-breakdown" class="admin-cost-breakdown"></div>
+          </div>
+        </section>
+
+        <section class="admin-section admin-question-factory" aria-labelledby="admin-question-factory-title">
+          <div class="admin-section-head">
+            <div>
+              <span class="eyebrow">Banco de questões</span>
+              <h2 id="admin-question-factory-title">Fábrica de questões</h2>
+            </div>
+            <span class="admin-factory-badge">Fluxo editorial</span>
+          </div>
+
+          <div class="admin-factory-summary" aria-label="Resumo da fábrica de questões">
+            <article><span>Entrada</span><strong>—</strong><small>Lotes gerados</small></article>
+            <article><span>Em revisão</span><strong>—</strong><small>Auditoria por IA</small></article>
+            <article><span>Correção</span><strong>—</strong><small>Itens sinalizados</small></article>
+            <article><span>Aprovadas</span><strong>—</strong><small>Prontas para publicar</small></article>
+            <article><span>Publicadas</span><strong>—</strong><small>Banco definitivo</small></article>
+          </div>
+
+          <div class="admin-factory-board" aria-label="Etapas da produção de questões">
+            <article class="admin-factory-lane">
+              <header><span class="admin-factory-dot incoming"></span><div><strong>Entrada</strong><small>Storage · inbox</small></div></header>
+              <div class="admin-factory-empty"><b>JSON / JSONL</b><span>Lotes originais ficam preservados e somente leitura.</span></div>
+            </article>
+
+            <div class="admin-factory-arrow" aria-hidden="true">→</div>
+
+            <article class="admin-factory-lane">
+              <header><span class="admin-factory-dot reviewing"></span><div><strong>Revisão IA</strong><small>Perplexity / auditor</small></div></header>
+              <div class="admin-factory-empty"><b>Auditoria independente</b><span>Gabarito, ambiguidade, explicações e fonte.</span></div>
+            </article>
+
+            <div class="admin-factory-arrow" aria-hidden="true">→</div>
+
+            <article class="admin-factory-lane">
+              <header><span class="admin-factory-dot correction"></span><div><strong>Correção</strong><small>Needs revision</small></div></header>
+              <div class="admin-factory-empty"><b>Somente sinalizadas</b><span>Questões com divergência voltam para ajuste.</span></div>
+            </article>
+
+            <div class="admin-factory-arrow" aria-hidden="true">→</div>
+
+            <article class="admin-factory-lane">
+              <header><span class="admin-factory-dot approved"></span><div><strong>Questões OK</strong><small>Approved</small></div></header>
+              <div class="admin-factory-empty"><b>Prontas</b><span>Itens validados aguardam publicação final.</span></div>
+            </article>
+
+            <div class="admin-factory-arrow" aria-hidden="true">→</div>
+
+            <article class="admin-factory-lane">
+              <header><span class="admin-factory-dot published"></span><div><strong>Publicadas</strong><small>PostgreSQL enxuto</small></div></header>
+              <div class="admin-factory-empty"><b>Banco definitivo</b><span>Após confirmação, temporários podem ser eliminados.</span></div>
+            </article>
+          </div>
+
+          <div class="admin-factory-cleanup">
+            <div>
+              <strong>Publicação com limpeza</strong>
+              <small>Primeiro confirma a gravação da questão final. Só depois remove lote bruto, auditorias e arquivos temporários.</small>
+            </div>
+            <span>Storage temporário → PostgreSQL</span>
           </div>
         </section>
 
