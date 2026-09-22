@@ -2854,8 +2854,18 @@ function setEditorEnabled(
         if (
           element
         ) {
+          const imageRestricted =
+            id === "notebook-image-add"
+            && window.docmapEntitlements
+              ?.is_admin !== true
+            && window.docmapEntitlements
+              ?.features
+              ?.notebook_images
+              ?.enabled !== true;
+
           element.disabled =
-            !enabled;
+            !enabled
+            || imageRestricted;
         }
 
       }
