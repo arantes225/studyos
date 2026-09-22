@@ -1,4 +1,4 @@
-const CACHE_VERSION = "luria-pwa-v97";
+const CACHE_VERSION = "luria-pwa-v98";
 const STATIC_CACHE = CACHE_VERSION + "-static";
 const RUNTIME_CACHE = CACHE_VERSION + "-runtime";
 
@@ -53,43 +53,72 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Arquivos críticos de inicialização: sempre tenta a rede primeiro.
-  // Evita o app.js antigo ficar preso no cache e causar tela vazia/atraso entre páginas.
+  // Páginas e código do app: rede primeiro.
+  // Isso evita que um deploy novo fique preso em versões antigas do HTML/JS/CSS.
+  const isAppCode =
+    url.pathname.endsWith(".js")
+    || url.pathname.endsWith(".css")
+    || url.pathname.endsWith(".html")
+    || url.pathname.endsWith(".webmanifest");
+
   if (
-    url.pathname === "/assets/js/app.js" ||
-    url.pathname === "/assets/js/auth.js" ||
-    url.pathname === "/assets/js/supabase.js" ||
-    url.pathname === "/login/" ||
-    url.pathname === "/login.html"
+    request.mode === "navigate"
+    || isAppCode
   ) {
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: "no-store" })
         .then((response) => {
-          if (response && response.status === 200) {
-            const copy = response.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy));
-          }
-          return response;
-        })
-        .catch(() => caches.match(request))
-    );
-    return;
-  }
+          if (
+            response
+            && response.status === 200
+          ) {
+            const copy =
+              response.clone();
 
-  if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy));
+            caches.open(
+              RUNTIME_CACHE
+            ).then(
+              (cache) =>
+                cache.put(
+                  request,
+                  copy
+                )
+            );
+          }
+
           return response;
         })
         .catch(async () => {
-          return (await caches.match(request))
-            || (await caches.match("/dashboard/"))
-            || (await caches.match("/login/"));
+          const cached =
+            await caches.match(
+              request
+            );
+
+          if (cached) {
+            return cached;
+          }
+
+          if (
+            request.mode
+              === "navigate"
+          ) {
+            return (
+              await caches.match(
+                "/dashboard/"
+              )
+            ) || (
+              await caches.match(
+                "/login/"
+              )
+            );
+          }
+
+          throw new Error(
+            "Recurso indisponível offline."
+          );
         })
     );
+
     return;
   }
 
