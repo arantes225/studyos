@@ -1599,6 +1599,23 @@
   justify-content:space-between;
   gap:12px;
 }
+.agenda-manager-close{
+  width:32px;
+  height:32px;
+  display:grid;
+  place-items:center;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--surface);
+  color:var(--text);
+  font-size:20px;
+  line-height:1;
+  cursor:pointer;
+}
+.agenda-manager-close:hover{
+  border-color:var(--accent);
+  color:var(--accent);
+}
 .agenda-manager-head h3{margin:0;font-size:14px}
 .agenda-manager-head span{color:var(--muted);font-size:10px}
 .agenda-manager-filters{
@@ -2041,6 +2058,15 @@
                 <h3>Gerenciar eventos</h3>
                 <span id="agenda-manager-count">0 eventos</span>
               </div>
+
+              <button
+                id="agenda-manager-close"
+                class="agenda-manager-close"
+                type="button"
+                aria-label="Fechar gerenciador de eventos"
+              >
+                ×
+              </button>
             </div>
 
             <div class="agenda-manager-filters">
@@ -2149,7 +2175,7 @@
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=17.0"></script>
   <script src="assets/js/study-mode.js?v=12.1"></script>
-  <script src="assets/js/dashboard.js?v=27.6"></script>
+  <script src="assets/js/dashboard.js?v=27.7"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
 </html>
