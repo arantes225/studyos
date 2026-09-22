@@ -1,4 +1,4 @@
-const CACHE_VERSION = "luria-pwa-v90";
+const CACHE_VERSION = "luria-pwa-v91";
 const STATIC_CACHE = CACHE_VERSION + "-static";
 const RUNTIME_CACHE = CACHE_VERSION + "-runtime";
 
@@ -15,6 +15,7 @@ const APP_SHELL = [
   "/assets/css/landing.css",
   "/assets/css/pwa-mobile.css?v=13",
   "/assets/css/luria-brand-v5.css",
+  "/assets/js/luria-brand-v5.js?v=11",
   "/assets/js/app.js?v=16.9",
   "/assets/js/onboarding.js?v=2.4",
   "/assets/css/onboarding.css?v=1.9",
@@ -49,8 +50,7 @@ const APP_SHELL = [
   "/assets/img/studyrats/acessórios/costas/angel-wings.webp?v=16",
   "/assets/img/studyrats/acessórios/atras/atras/rocket-flame.webp?v=16",
   "/assets/img/studyrats/acessórios/atras/capacete-astronauta.png?v=16",
-    "/assets/img/favicon.png",
-  "/assets/img/logo-icone-original.png",
+  "/assets/img/logo-icone-original.png?v=favicon1",
   "/assets/img/logo-principal.png",
   "/assets/img/pwa-icon-180.png",
   "/assets/img/pwa-icon-192.png",
