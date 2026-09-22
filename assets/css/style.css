@@ -2517,7 +2517,7 @@ body::after {
   content: "";
   position: fixed;
   inset: -14%;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
   background-image: var(--luria-pattern-image);
   background-repeat: repeat;
@@ -2540,7 +2540,20 @@ body::after {
   opacity: var(--luria-pattern-opacity);
 }
 
-/* Mantém o conteúdo acima do pattern sem alterar o layout. */
+/* Mantém o conteúdo acima do pattern sem alterar o layout.
+   O pattern fica em z-index 0 dentro do stacking context do body.
+   Antes ele usava z-index -1 e podia ficar atrás do próprio fundo do body,
+   desaparecendo em Safari/PWA e após algumas alterações de layout. */
+body > .app-shell,
+body > .auth-card,
+body > .loading-card,
+body > main,
+body > header,
+body > footer {
+  position: relative;
+  z-index: 1;
+}
+
 .app-shell,
 .auth-card,
 .loading-card {
