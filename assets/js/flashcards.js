@@ -1894,6 +1894,36 @@ function wireCreate() {
           ).files[0]
           || null;
 
+        const maxImages =
+          Math.max(
+            0,
+            Number(
+              window.LuriaEntitlements
+                ?.limit(
+                  "flashcard_images",
+                  2
+                )
+              ?? 2
+            )
+          );
+
+        const selectedImageCount =
+          Number(Boolean(frontFile))
+          + Number(Boolean(backFile));
+
+        if (
+          selectedImageCount
+          > maxImages
+        ) {
+          setFlashStatus(
+            "create-status",
+            `Seu plano permite no máximo ${maxImages} imagem${maxImages === 1 ? "" : "s"} por flashcard.`,
+            "error"
+          );
+
+          return;
+        }
+
         if (!area) {
           setFlashStatus(
             "create-status",
