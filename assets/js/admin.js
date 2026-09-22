@@ -1686,7 +1686,52 @@
     renderQuestionFactoryBatch(data || {});
   }
 
+  async function copyAdminPrompt(targetId, button) {
+    const target = $(targetId);
+    if (!target) return;
+
+    const text = target.textContent || "";
+    const original = button?.textContent || "Copiar prompt";
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const area = document.createElement("textarea");
+        area.value = text;
+        area.setAttribute("readonly", "");
+        area.style.position = "absolute";
+        area.style.left = "-9999px";
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand("copy");
+        area.remove();
+      }
+
+      if (button) {
+        button.textContent = "Copiado";
+        button.classList.add("success");
+        setTimeout(() => {
+          button.textContent = original;
+          button.classList.remove("success");
+        }, 1200);
+      }
+    } catch (error) {
+      console.warn("Falha ao copiar prompt:", error);
+      if (button) {
+        button.textContent = "Selecione e copie";
+        setTimeout(() => {
+          button.textContent = original;
+        }, 1500);
+      }
+    }
+  }
+
   function wire() {
+    document.querySelectorAll(".admin-qf-copy").forEach(button => {
+      button.addEventListener("click", () => copyAdminPrompt(button.dataset.copyTarget, button));
+    });
+
     $("admin-qf-batches")?.addEventListener("click", event => {
       const button = event.target.closest("[data-qf-batch]");
       if (!button) return;
