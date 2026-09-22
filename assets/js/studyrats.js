@@ -62,7 +62,9 @@ function sharedStudyratAccessoryImg(value,className,offsetX,offsetY){
   if(item.id==='none'||!item.src)return '';
   const x=Number(offsetX)||0;
   const y=Number(offsetY)||0;
-  const style=(x||y)?' style="translate:'+x+'px '+y+'px"':'';
+  const style=(x||y)
+    ? ' style="--studyrat-accessory-x:'+x+';--studyrat-accessory-y:'+y+';"'
+    : '';
   return '<img class="'+(className||'studyrats-accessory-img')+' accessory-'+item.id+' accessory-kind-'+item.kind+'" src="'+item.src+'" alt="'+item.label+'" draggable="false" loading="eager" decoding="async"'+style+'>';
 }
 
@@ -86,9 +88,17 @@ function sharedRatImg(variant,className){
 
 function sharedStudyratsCurrentAccessoryOffset(accessory){
   const raw=sharedStudyratsAccessoryOffsets&&sharedStudyratsAccessoryOffsets[accessory];
+  if(!raw)return {x:0,y:0};
+  const version=Number(raw.v)||1;
+  if(version===2){
+    return {
+      x:Number(raw.x)||0,
+      y:Number(raw.y)||0
+    };
+  }
   return {
-    x:Number(raw&&raw.x)||0,
-    y:Number(raw&&raw.y)||0
+    x:(Number(raw.x)||0)/72,
+    y:(Number(raw.y)||0)/50
   };
 }
 
@@ -118,14 +128,15 @@ function sharedStudyratsBindAccessoryDrag(){
   accessory.addEventListener('pointermove',function(event){
     if(!dragging)return;
     event.preventDefault();
-    const visualWidth=composite.getBoundingClientRect().width||72;
-    const logicalWidth=composite.offsetWidth||72;
-    const scale=visualWidth/logicalWidth||1;
-    const x=Math.max(-60,Math.min(60,startX+(event.clientX-startPointerX)/scale));
-    const y=Math.max(-45,Math.min(45,startY+(event.clientY-startPointerY)/scale));
-    sharedStudyratsMyAccessoryX=Math.round(x*100)/100;
-    sharedStudyratsMyAccessoryY=Math.round(y*100)/100;
-    accessory.style.translate=sharedStudyratsMyAccessoryX+'px '+sharedStudyratsMyAccessoryY+'px';
+    const rect=composite.getBoundingClientRect();
+    const width=rect.width||72;
+    const height=rect.height||50;
+    const x=Math.max(-0.85,Math.min(0.85,startX+(event.clientX-startPointerX)/width));
+    const y=Math.max(-0.90,Math.min(0.90,startY+(event.clientY-startPointerY)/height));
+    sharedStudyratsMyAccessoryX=Math.round(x*10000)/10000;
+    sharedStudyratsMyAccessoryY=Math.round(y*10000)/10000;
+    accessory.style.setProperty('--studyrat-accessory-x',sharedStudyratsMyAccessoryX);
+    accessory.style.setProperty('--studyrat-accessory-y',sharedStudyratsMyAccessoryY);
   });
 
   async function finishDrag(event){
@@ -135,7 +146,8 @@ function sharedStudyratsBindAccessoryDrag(){
     try{accessory.releasePointerCapture?.(event.pointerId);}catch(_){}
     sharedStudyratsAccessoryOffsets[sharedStudyratsMyAccessory]={
       x:sharedStudyratsMyAccessoryX,
-      y:sharedStudyratsMyAccessoryY
+      y:sharedStudyratsMyAccessoryY,
+      v:2
     };
     const status=document.getElementById('studyrats-rat-picker-status');
     if(status)status.textContent='Salvando posição...';
