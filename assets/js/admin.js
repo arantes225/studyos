@@ -1616,6 +1616,7 @@
             <div class="admin-qf-block-mini-actions">
               <button class="button secondary" type="button" data-qf-view-block="${Number(batch.batch_number)}:${n}">${needs || rejected ? "Ver pendências" : "Ver bloco"}</button>
               <button class="button secondary" type="button" data-qf-import-review="${Number(batch.batch_number)}:${n}">Importar auditoria</button>
+              ${needs || rejected ? `<button class="button secondary admin-qf-correction-import" type="button" data-qf-import-correction="${Number(batch.batch_number)}:${n}">Importar correção ChatGPT</button>` : ""}
             </div>
 
             ${human === "pending" ? `
@@ -1800,7 +1801,9 @@
     if ($("admin-qf-review-import-meta")) {
       $("admin-qf-review-import-meta").textContent = mode === "lot"
         ? `Lote ${String(Number(batchNumber)).padStart(3,"0")} · cole o JSON da revisão final das 1.000.`
-        : `Lote ${String(Number(batchNumber)).padStart(3,"0")} · Bloco ${blockNumber} · cole o JSON da revisão.`;
+        : mode === "correction"
+          ? `Lote ${String(Number(batchNumber)).padStart(3,"0")} · Bloco ${blockNumber} · cole o JSON das correções do ChatGPT.`
+          : `Lote ${String(Number(batchNumber)).padStart(3,"0")} · Bloco ${blockNumber} · cole o JSON da revisão.`;
     }
     if ($("admin-qf-review-import-json")) $("admin-qf-review-import-json").value = "";
     if ($("admin-qf-review-import-message")) $("admin-qf-review-import-message").textContent = "";
@@ -1822,7 +1825,9 @@
 
     const rpcName = state.qfReviewImportMode === "lot"
       ? "admin_import_question_factory_lot_review"
-      : "admin_import_question_factory_review";
+      : state.qfReviewImportMode === "correction"
+        ? "admin_import_question_factory_corrections"
+        : "admin_import_question_factory_review";
 
     if (state.qfReviewImportMode !== "lot") {
       payload.block_number = state.qfReviewImportBlock;
@@ -1837,7 +1842,9 @@
     if (message) {
       message.textContent = state.qfReviewImportMode === "lot"
         ? (data?.ready ? "Revisão final importada. Lote marcado como pronto." : "Revisão final importada. O lote ainda possui etapa pendente.")
-        : `Importadas ${data?.imported || 0}: ${data?.approved || 0} aprovadas, ${data?.needs_revision || 0} a rever.`;
+        : state.qfReviewImportMode === "correction"
+          ? `Correções importadas: ${data?.corrected || 0}. Próxima etapa: reauditoria Perplexity.`
+          : `Importadas ${data?.imported || 0}: ${data?.approved || 0} aprovadas, ${data?.needs_revision || 0} a rever.`;
     }
 
     await Promise.all([loadQuestionFactory(),loadQuestionFactoryStyles(),loadQuestionFactoryQuality(),loadBadQuestionFolder(0)]);
@@ -2791,6 +2798,13 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
       const lotImportButton = event.target.closest("[data-qf-import-lot]");
       if (lotImportButton) {
         openReviewImportDialog(lotImportButton.dataset.qfImportLot,null,"lot");
+        return;
+      }
+
+      const correctionButton = event.target.closest("[data-qf-import-correction]");
+      if (correctionButton) {
+        const [batch,block] = correctionButton.dataset.qfImportCorrection.split(":");
+        openReviewImportDialog(batch,block,"correction");
         return;
       }
 
