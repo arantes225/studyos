@@ -986,3 +986,58 @@ Antes de iniciar um novo lote:
 - revisar catálogo de fontes;
 - usar sempre a versão mais recente disponível das diretrizes brasileiras;
 - registrar a data da atualização editorial.
+
+
+## 14. Regras permanentes após T5 — teste forte
+
+O T5 com 30 questões por banca revelou padrões que lotes de 10 itens não mostraram com clareza suficiente.
+
+### A–D é imutável
+- O LURIA usa exatamente 4 alternativas: A, B, C e D.
+- Auditor externo nunca pode reduzir style, board_fidelity, difficulty ou quality_score por a prova original usar 5 alternativas.
+- Sugestões para migrar a A–E devem ser rejeitadas na adjudicação.
+
+### Fonte já nasce definitiva
+- Questão de produção não pode sair com “fonte candidata”.
+- Gerar instituição, documento, ano, URL e seção/recomendação específica quando disponível.
+- Nunca inventar seção, página ou URL para preencher campo.
+- answer_source_issue diferente de null bloqueia aprovação.
+
+### Explicações individualizadas
+- Explicação genérica para alternativa incorreta não atende ao padrão LURIA.
+- A, B, C e D precisam de justificativa específica.
+- A explicação deve ensinar exatamente qual conceito torna a alternativa correta ou incorreta.
+
+### Distratores
+- Sempre que possível, pelo menos dois dos três distratores devem ser clinicamente plausíveis.
+- Preferir diagnósticos diferenciais, exames concorrentes, mecanismos próximos, condutas parcialmente corretas e erros frequentes.
+- Evitar opções meramente preenchitivas e termos absolutos usados para denunciar erro.
+
+### Redação e estilo
+- Writing perde ponto somente por problema real de escrita/clareza.
+- Style perde ponto somente por divergência editorial/cognitiva real da banca.
+- Fonte científica e estilo de banca continuam dimensões separadas.
+
+### Diversidade textual
+- Evitar lotes inteiros com a mesma sintaxe “Paciente X apresenta...”.
+- Variar a forma apenas dentro dos formatos realmente observados na banca.
+- Diversidade não pode criar formatos artificiais ausentes do material primário.
+
+### Aprendizado específico Santa Casa-SP
+- O T5 confirmou boa ciência e gabaritos, mas mostrou gargalos editoriais: fontes genéricas, explicações repetitivas e parte dos distratores pouco competitiva.
+- A recomendação externa de mudar para cinco alternativas foi rejeitada.
+- Antes de produção definitiva, a banca deve ser reavaliada após correção desses gargalos com a rubrica oficial 25/20/15/10/10/10/5/5.
+
+## 15. Terceira barreira independente — Gemini
+
+Depois que o lote de 1.000 passar pela revisão global do ChatGPT e do Perplexity:
+1. enviar o arquivo completo ao Gemini;
+2. Gemini atua como auditor adversarial de lote, não como editor;
+3. ele não modifica questão diretamente;
+4. achados voltam para adjudicação;
+5. somente mudanças tecnicamente aceitas são aplicadas;
+6. após correções necessárias, ocorre a aprovação humana final.
+
+O Gemini deve procurar principalmente duplicatas semânticas, gabaritos conflitantes, explicações incompatíveis, fontes fracas, padrões anormais de resposta, repetição temática/estrutural e recomendações possivelmente desatualizadas.
+
+Prompts permanentes do Perplexity: `docs/question-factory-perplexity-prompts.md`.
