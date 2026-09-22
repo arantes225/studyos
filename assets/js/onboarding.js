@@ -222,20 +222,138 @@
   }
 
   function addNotebookDemo(){
+    const pages=[
+      {
+        id:"onboarding-has",
+        title:"Hipertensão arterial sistêmica",
+        area:"Clínica Médica",
+        materia:"Cardiologia",
+        date:"18/09/2026",
+        html:`
+          <h2>Definição</h2>
+          <p>Condição multifatorial caracterizada por elevação persistente da pressão arterial, associada ao aumento do risco cardiovascular global.</p>
+          <h2>Fatores de risco</h2>
+          <ul>
+            <li>Idade, história familiar e obesidade.</li>
+            <li>Alto consumo de sódio, sedentarismo e álcool.</li>
+            <li>Diabetes mellitus, dislipidemia e doença renal crônica.</li>
+          </ul>
+          <h2>Diagnóstico</h2>
+          <p>Confirmar medidas adequadas em ocasiões distintas e, quando indicado, complementar com medidas fora do consultório.</p>
+          <div class="notebook-divider arabesque" contenteditable="false"><span class="notebook-divider-luria" aria-hidden="true"></span></div>
+          <h2>Tratamento</h2>
+          <p><strong>Medidas não farmacológicas:</strong> redução de sódio, atividade física, controle de peso e alimentação adequada.</p>
+          <p><strong>Farmacológico:</strong> individualizar conforme risco cardiovascular, comorbidades e níveis pressóricos.</p>
+          <h2>Clássico de prova</h2>
+          <p>Antes de intensificar tratamento, conferir adesão, técnica de medida e causas de pseudorresistência.</p>
+        `
+      },
+      {
+        id:"onboarding-pneumonia",
+        title:"Pneumonia adquirida na comunidade",
+        area:"Clínica Médica",
+        materia:"Pneumologia",
+        date:"16/09/2026",
+        html:`<h2>Quadro clínico</h2><p>Febre, tosse, expectoração, dor pleurítica e dispneia. Em idosos, o quadro pode ser pouco típico.</p><h2>Avaliação inicial</h2><p>Definir gravidade, necessidade de internação e presença de sinais de instabilidade.</p><h2>Conduta</h2><p>Antibioticoterapia deve considerar cenário clínico, comorbidades e gravidade.</p>`
+      },
+      {
+        id:"onboarding-apendicite",
+        title:"Apendicite aguda",
+        area:"Cirurgia Geral",
+        materia:"Abdome agudo",
+        date:"15/09/2026",
+        html:`<h2>Apresentação</h2><p>Dor inicialmente periumbilical com migração para fossa ilíaca direita, associada a anorexia, náuseas e febre baixa.</p><h2>Diagnóstico</h2><p>Predominantemente clínico, com imagem nos casos selecionados.</p><h2>Tratamento</h2><p>Apendicectomia permanece a conduta padrão na maior parte dos casos.</p>`
+      },
+      {
+        id:"onboarding-diabetes",
+        title:"Diabetes mellitus tipo 2",
+        area:"Clínica Médica",
+        materia:"Endocrinologia",
+        date:"12/09/2026",
+        html:`<h2>Diagnóstico</h2><p>Utilizar glicemia, HbA1c ou teste oral conforme o contexto e confirmar resultados quando necessário.</p><h2>Tratamento</h2><p>Combinar mudança de estilo de vida com tratamento farmacológico individualizado pelo perfil clínico.</p>`
+      },
+      {
+        id:"onboarding-trauma",
+        title:"Trauma abdominal fechado",
+        area:"Cirurgia Geral",
+        materia:"Trauma",
+        date:"10/09/2026",
+        html:`<h2>Abordagem inicial</h2><p>Priorizar ABCDE e identificar rapidamente instabilidade hemodinâmica.</p><h2>Imagem</h2><p>FAST é útil na avaliação inicial; tomografia é preferida no paciente estável quando indicada.</p>`
+      }
+    ];
+
     const list=document.querySelector("#notebook-topic-list, .notebook-topic-list");
-    if(list && !list.querySelector("[data-onboarding-demo]")){
+    const editor=document.querySelector("#notebook-editor");
+    const wrap=document.getElementById("notebook-document-wrap");
+    const hint=document.getElementById("notebook-editor-hint");
+    const title=document.getElementById("notebook-document-title");
+    const area=document.getElementById("notebook-document-area");
+    const date=document.getElementById("notebook-document-date");
+
+    const showPage=(page)=>{
+      if(!page) return;
+      if(editor) editor.innerHTML=page.html;
+      if(title) title.textContent=page.title;
+      if(area) area.textContent=page.area+" · "+page.materia;
+      if(date) date.textContent=page.date;
+      list?.querySelectorAll("[data-onboarding-notebook-page]").forEach(button=>{
+        button.classList.toggle("active",button.dataset.onboardingNotebookPage===page.id);
+      });
+    };
+
+    if(list && !list.querySelector("[data-onboarding-demo-notebooks]")){
       const box=document.createElement("div");
       box.dataset.onboardingDemo="1";
-      box.className="onboarding-demo-lessons";
-      box.innerHTML='<div class="onboarding-demo-label">SIMULAÇÃO</div><button type="button">Onboarding — Hipertensão arterial</button><button type="button">Onboarding — Pneumonia</button><button type="button">Onboarding — Apendicite</button><button type="button">Onboarding — Diabetes</button><button type="button">Onboarding — Trauma</button>';
+      box.dataset.onboardingDemoNotebooks="1";
+      box.className="onboarding-notebook-pages";
+      box.innerHTML=pages.map((page,index)=>`
+        <button
+          class="notebook-topic-item ${index===0 ? "active" : ""}"
+          type="button"
+          data-onboarding-notebook-page="${page.id}"
+        >
+          <strong>${page.title}</strong>
+          <small>${page.area} · ${page.materia} · ${page.date}</small>
+          <span class="notebook-topic-flags">
+            <span class="notebook-topic-flag has-note">com anotações</span>
+          </span>
+        </button>
+      `).join("");
       list.prepend(box);
+
+      box.querySelectorAll("[data-onboarding-notebook-page]").forEach(button=>{
+        button.onclick=()=>{
+          const page=pages.find(item=>item.id===button.dataset.onboardingNotebookPage);
+          showPage(page);
+        };
+      });
     }
-    const editor=document.querySelector("#notebook-editor");
+
     if(editor && !editor.dataset.onboardingTouched){
       editor.dataset.onboardingTouched="1";
       editor.dataset.onboardingOriginal=editor.innerHTML;
-      editor.innerHTML='<h2>Hipertensão arterial</h2><p><strong>Definição:</strong> condição clínica caracterizada por elevação sustentada da pressão arterial.</p><h3>Quadro clínico</h3><p>Exemplo de anotação organizada dentro do caderno da aula.</p><div class="notebook-divider arabesque" contenteditable="false"><span class="notebook-divider-luria" aria-hidden="true"></span></div><h3>Revisão</h3><p>Este conteúdo existe somente durante o onboarding.</p>';
     }
+
+    [
+      [wrap,"hidden"],
+      [hint,"hidden"]
+    ].forEach(([el,key])=>{
+      if(!el || el.dataset.onboardingOriginalHidden!==undefined) return;
+      el.dataset.onboardingOriginalHidden=el.hidden ? "1" : "0";
+    });
+
+    [
+      [title,"textContent"],
+      [area,"textContent"],
+      [date,"textContent"]
+    ].forEach(([el])=>{
+      if(!el || el.dataset.onboardingOriginalText!==undefined) return;
+      el.dataset.onboardingOriginalText=el.textContent || "";
+    });
+
+    if(wrap) wrap.hidden=false;
+    if(hint) hint.hidden=true;
+    showPage(pages[0]);
   }
 
   function addFlashDeckDemo(){
@@ -1169,6 +1287,22 @@
     document.querySelectorAll("#week-planner .empty-planner").forEach(el=>el.style.removeProperty("display"));
     const editor=document.querySelector("#notebook-editor[data-onboarding-touched]");
     if(editor){ editor.innerHTML=editor.dataset.onboardingOriginal||""; editor.removeAttribute("data-onboarding-original"); editor.removeAttribute("data-onboarding-touched"); }
+
+    ["notebook-document-wrap","notebook-editor-hint"].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el?.dataset.onboardingOriginalHidden!==undefined){
+        el.hidden=el.dataset.onboardingOriginalHidden==="1";
+        delete el.dataset.onboardingOriginalHidden;
+      }
+    });
+
+    ["notebook-document-title","notebook-document-area","notebook-document-date"].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el?.dataset.onboardingOriginalText!==undefined){
+        el.textContent=el.dataset.onboardingOriginalText;
+        delete el.dataset.onboardingOriginalText;
+      }
+    });
     const forcedAnswer=document.querySelector('[data-onboarding-forced-active="1"]');
     if(forcedAnswer){
       forcedAnswer.classList.remove("active");
