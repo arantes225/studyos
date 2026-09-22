@@ -747,12 +747,19 @@ function updateLofiControls(manager) {
 
   document.querySelectorAll("[data-lofi-title]").forEach((el) => {
     el.textContent =
-      manager.track?.title || "Lofi 1";
+      manager.track?.title || "Lo-fi";
   });
 
   document.querySelectorAll("[data-lofi-status]").forEach((el) => {
     if (manager.error) {
       el.textContent = "áudio indisponível";
+      return;
+    }
+
+    if (!manager.catalogLoaded) {
+      el.textContent = manager.loading
+        ? "carregando..."
+        : "toque para carregar";
       return;
     }
 
@@ -779,11 +786,18 @@ function updateLofiControls(manager) {
     );
 
     button.disabled =
-      !manager.track || Boolean(manager.error);
+      Boolean(manager.loading) || Boolean(manager.error);
   });
 
   document.querySelectorAll("[data-lofi-select]").forEach((select) => {
     const currentValue = select.value;
+
+    if (!manager.catalogLoaded) {
+      select.innerHTML =
+        '<option value="">Faixas carregam ao tocar</option>';
+      select.disabled = true;
+      return;
+    }
 
     select.innerHTML = manager.tracks.length
       ? manager.tracks.map((track) => `
@@ -839,7 +853,101 @@ function updateLofiControls(manager) {
 }
 
 
+async function carregarLofiSobDemanda(manager) {
+  if (manager.catalogLoaded) {
+    return Boolean(manager.track);
+  }
+
+  if (manager.loadingPromise) {
+    return manager.loadingPromise;
+  }
+
+  manager.loading = true;
+  manager.error = null;
+  updateLofiControls(manager);
+
+  manager.loadingPromise = (async () => {
+    try {
+      const [tracks, preferredFromDb] =
+        await Promise.all([
+          carregarAudioTracks(),
+          carregarAudioPreferido(manager.userId)
+        ]);
+
+      manager.tracks = tracks || [];
+      manager.catalogLoaded = true;
+
+      const saved =
+        readLofiState(manager.userId);
+
+      const preferredId =
+        saved.trackId
+        || preferredFromDb
+        || manager.tracks[0]?.id
+        || null;
+
+      manager.track =
+        manager.tracks.find(
+          (item) => item.id === preferredId
+        )
+        || manager.tracks[0]
+        || null;
+
+      if (!manager.track) {
+        manager.error =
+          "Nenhuma faixa configurada.";
+        return false;
+      }
+
+      manager.audio.loop =
+        manager.track.loop_enabled !== false;
+
+      writeLofiState(
+        manager.userId,
+        {
+          ...saved,
+          trackId: manager.track.id
+        }
+      );
+
+      const publicUrl =
+        sb.storage
+          .from(manager.track.storage_bucket)
+          .getPublicUrl(manager.track.storage_path)
+          .data
+          .publicUrl;
+
+      manager.audio.src = publicUrl;
+      manager.audio.load();
+
+      return true;
+    } catch (error) {
+      console.warn(
+        "Não foi possível carregar o player de lo-fi:",
+        error
+      );
+      manager.error =
+        "Não foi possível carregar o áudio.";
+      return false;
+    } finally {
+      manager.loading = false;
+      manager.loadingPromise = null;
+      updateLofiControls(manager);
+    }
+  })();
+
+  return manager.loadingPromise;
+}
+
+
 async function trocarFaixaLofi(manager, trackId) {
+  if (!manager.catalogLoaded) {
+    const loaded =
+      await carregarLofiSobDemanda(manager);
+
+    if (!loaded) return;
+  }
+
   const nextTrack =
     manager.tracks.find(
       (track) => track.id === trackId
@@ -898,6 +1006,7 @@ async function trocarFaixaLofi(manager, trackId) {
   }
 }
 
+
 function bindLofiControls(manager) {
   document.querySelectorAll("[data-lofi-select]").forEach((select) => {
     if (select.dataset.lofiBound === "1") return;
@@ -916,9 +1025,16 @@ function bindLofiControls(manager) {
     button.dataset.lofiBound = "1";
 
     button.addEventListener("click", async () => {
-      if (!manager.track || manager.error) return;
-
       try {
+        if (!manager.catalogLoaded) {
+          const loaded =
+            await carregarLofiSobDemanda(manager);
+
+          if (!loaded) return;
+        }
+
+        if (!manager.track || manager.error) return;
+
         if (manager.audio.paused) {
           await manager.audio.play();
         } else {
@@ -982,42 +1098,30 @@ function bindLofiControls(manager) {
   updateLofiControls(manager);
 }
 
-async function iniciarLofiGlobal(userId) {
-  const [tracks, preferredFromDb] =
-    await Promise.all([
-      carregarAudioTracks(),
-      carregarAudioPreferido(userId)
-    ]);
 
+async function iniciarLofiGlobal(userId) {
   const saved =
     readLofiState(userId);
 
-  const preferredId =
-    saved.trackId
-    || preferredFromDb
-    || tracks[0]?.id
-    || null;
-
-  const track =
-    tracks.find(
-      (item) => item.id === preferredId
-    )
-    || tracks[0]
-    || null;
-
   const manager = {
     userId,
-    tracks,
-    track,
+    tracks: [],
+    track: null,
     audio: new Audio(),
     ready: false,
     error: null,
+    loading: false,
+    loadingPromise: null,
+    catalogLoaded: false,
     lastSavedSecond: -1
   };
 
   window.docmapAudio = manager;
 
-  manager.audio.preload = "metadata";
+  // Não baixa metadados nem arquivo de música na inicialização.
+  // O player só consulta as faixas e define o src após ação do usuário.
+  manager.audio.preload = "none";
+
   manager.audio.volume =
     Number.isFinite(Number(saved.volume))
       ? Math.max(
@@ -1029,49 +1133,17 @@ async function iniciarLofiGlobal(userId) {
         )
       : 0.45;
 
-  manager.audio.loop =
-    track?.loop_enabled !== false;
-
-  if (!track) {
-    manager.error =
-      "Nenhuma faixa configurada.";
-    bindLofiControls(manager);
-
-    window.dispatchEvent(
-      new CustomEvent(
-        "docmap:audio-ready",
-        { detail: manager }
-      )
-    );
-
-    return manager;
-  }
-
-  writeLofiState(
-    userId,
-    {
-      ...saved,
-      trackId: track.id
-    }
-  );
-
-  const publicUrl =
-    sb.storage
-      .from(track.storage_bucket)
-      .getPublicUrl(track.storage_path)
-      .data
-      .publicUrl;
-
-  manager.audio.src = publicUrl;
-
   manager.audio.addEventListener(
     "loadedmetadata",
     () => {
       manager.ready = true;
 
+      const savedState =
+        readLofiState(userId);
+
       const savedTime =
-        saved.trackId === manager.track?.id
-          ? Number(saved.currentTime || 0)
+        savedState.trackId === manager.track?.id
+          ? Number(savedState.currentTime || 0)
           : 0;
 
       if (
@@ -1098,6 +1170,7 @@ async function iniciarLofiGlobal(userId) {
       writeLofiState(
         userId,
         {
+          ...readLofiState(userId),
           trackId: manager.track?.id || null,
           volume: manager.audio.volume,
           currentTime:
@@ -1126,6 +1199,8 @@ async function iniciarLofiGlobal(userId) {
         writeLofiState(
           userId,
           {
+            ...readLofiState(userId),
+            trackId: manager.track?.id || null,
             volume: manager.audio.volume,
             currentTime:
               manager.audio.currentTime || 0
@@ -1159,6 +1234,7 @@ async function iniciarLofiGlobal(userId) {
       writeLofiState(
         userId,
         {
+          ...readLofiState(userId),
           trackId: manager.track?.id || null,
           volume: manager.audio.volume,
           currentTime:
@@ -1179,6 +1255,7 @@ async function iniciarLofiGlobal(userId) {
 
   return manager;
 }
+
 
 async function registrarAcessoDiario() {
   const { data, error } = await sb.rpc("register_daily_access");
