@@ -6276,11 +6276,13 @@ async function loadTopics() {
     scheduleSb
       .from("study_topics")
       .select("*")
+      .eq("user_id", scheduleState.user.id)
       .order("created_at", { ascending: true }),
 
     scheduleSb
       .from("schedule_events")
       .select("*")
+      .eq("user_id", scheduleState.user.id)
       .order("event_date", { ascending: true })
       .order("created_at", { ascending: true })
   ]);
@@ -7109,7 +7111,10 @@ async function initCronograma() {
   wireOverdueOrganizer();
   wireBaseSchedule();
 
-  await loadSchedulePreferences();
+  const initialDataPromise = Promise.all([
+    loadSchedulePreferences(),
+    loadTopics()
+  ]);
 
   switchScheduleAddMode(
     "automatic"
@@ -7133,7 +7138,7 @@ async function initCronograma() {
     }
   );
 
-  await loadTopics();
+  await initialDataPromise;
 }
 
 if (window.docmapUser) {
