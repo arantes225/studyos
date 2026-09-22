@@ -287,6 +287,8 @@ async function sharedStudyratsSaveAccessory(accessory){
   if(next===sharedStudyratsMyAccessory)return;
 
   const previous=sharedStudyratsMyAccessory;
+  const previousX=sharedStudyratsMyAccessoryX;
+  const previousY=sharedStudyratsMyAccessoryY;
   sharedStudyratsMyAccessory=next;
   const offset=sharedStudyratsCurrentAccessoryOffset(next);
   sharedStudyratsMyAccessoryX=offset.x;
@@ -300,6 +302,8 @@ async function sharedStudyratsSaveAccessory(accessory){
   if(result.error){
     console.error(result.error);
     sharedStudyratsMyAccessory=previous;
+    sharedStudyratsMyAccessoryX=previousX;
+    sharedStudyratsMyAccessoryY=previousY;
     sharedStudyratsApplyAccessorySelection();
     if(status)status.textContent='Não foi possível salvar o acessório.';
     return;
