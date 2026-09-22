@@ -874,9 +874,11 @@ async function syncNotebookImageRefsFromHtml(
     );
 
   host.innerHTML =
-    String(
-      html
-      || ""
+    sanitizeHtml(
+      String(
+        html
+        || ""
+      )
     );
 
   const assetIds =
@@ -993,9 +995,11 @@ async function materializeNotebookImagesForShare(
     );
 
   host.innerHTML =
-    String(
-      note.content_html
-      || ""
+    sanitizeHtml(
+      String(
+        note.content_html
+        || ""
+      )
     );
 
   const images =
