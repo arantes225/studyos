@@ -26,7 +26,10 @@
     questionStyles: [],
     qfBadOffset: 0,
     qfBadPageSize: 50,
-    qfBadTotal: 0
+    qfBadTotal: 0,
+    qfReviewImportBatch: null,
+    qfReviewImportBlock: null,
+    qfQuality: null
   };
 
   const METRICS = [
@@ -1292,7 +1295,8 @@
       loadStorageExpansionGuide(),
       loadQuestionFactory(),
       loadQuestionFactoryStyles(),
-      loadBadQuestionFolder(0)
+      loadBadQuestionFolder(0),
+      loadQuestionFactoryQuality()
     ]);
   }
 
@@ -1575,12 +1579,54 @@
       const blockCards = [1,2,3,4,5].map(n => {
         const block = blocks.find(x => Number(x.block_number) === n);
         const count = Number(block?.question_count || 0);
+        const reviewed = Number(block?.reviewed_count || 0);
+        const needs = Number(block?.needs_revision_count || 0);
+        const rejected = Number(block?.rejected_count || 0);
+        const approved = Number(block?.approved_count || 0);
+        const human = block?.human_review_status || "";
         const status = block?.perplexity_review_status || block?.status || "building";
+        const qMetric = Array.isArray(state.qfQuality?.blocks)
+          ? state.qfQuality.blocks.find(x => Number(x.batch_number) === Number(batch.batch_number) && Number(x.block_number) === n)
+          : null;
+        const initialQ = qMetric?.initial_quality;
+        const postQ = qMetric?.post_correction_quality;
+        const finalQ = qMetric?.final_quality;
+
         return `
-          <div class="admin-qf-block-mini">
-            <div><strong>Bloco ${n}</strong><small>${count}/200</small></div>
-            <span class="admin-qf-block-state ${esc(status)}">${esc(qfStatusLabel(status))}</span>
-          </div>
+          <article class="admin-qf-block-mini admin-qf-block-workflow" data-block-status="${esc(status)}">
+            <div class="admin-qf-block-mini-head">
+              <div><strong>Bloco ${n}</strong><small>${count}/200 questões</small></div>
+              <span class="admin-qf-block-state ${esc(status)}">${esc(qfStatusLabel(status))}</span>
+            </div>
+
+            <div class="admin-qf-block-mini-counts">
+              <span><b>${reviewed}</b><small>auditadas</small></span>
+              <span class="${needs ? "warn" : ""}"><b>${needs}</b><small>a rever</small></span>
+              <span class="${rejected ? "danger" : ""}"><b>${rejected}</b><small>rejeitadas</small></span>
+              <span><b>${approved}</b><small>OK IA</small></span>
+            </div>
+
+            <div class="admin-qf-block-quality-mini">
+              <span>Inicial <b>${initialQ == null ? "—" : Number(initialQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
+              <span>Pós-correção <b>${postQ == null ? "—" : Number(postQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
+              <span>Final <b>${finalQ == null ? "—" : Number(finalQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
+            </div>
+
+            <div class="admin-qf-block-mini-actions">
+              <button class="button secondary" type="button" data-qf-view-block="${Number(batch.batch_number)}:${n}">${needs || rejected ? "Ver pendências" : "Ver bloco"}</button>
+              <button class="button secondary" type="button" data-qf-import-review="${Number(batch.batch_number)}:${n}">Importar auditoria</button>
+            </div>
+
+            ${human === "pending" ? `
+              <div class="admin-qf-human-gate">
+                <span>Sua validação</span>
+                <div>
+                  <button class="button primary" type="button" data-qf-human-review="${Number(batch.batch_number)}:${n}:approved">SIM · enviar ao lote</button>
+                  <button class="button secondary" type="button" data-qf-human-review="${Number(batch.batch_number)}:${n}:rejected">NÃO</button>
+                </div>
+              </div>
+            ` : human === "approved" ? '<div class="admin-qf-human-approved">✓ Aprovado por você · entrou no lote</div>' : ""}
+          </article>
         `;
       }).join("");
 
@@ -1622,6 +1668,176 @@
       return;
     }
     renderQuestionFactory(data || {});
+  }
+
+  function renderQuestionFactoryQuality(data) {
+    state.qfQuality = data || {};
+    const overall = data?.overall || {};
+    const pct = value => value == null ? "—" : Number(value).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%";
+
+    if ($("admin-qf-quality-initial")) $("admin-qf-quality-initial").textContent = pct(overall.avg_initial_quality);
+    if ($("admin-qf-quality-post")) $("admin-qf-quality-post").textContent = pct(overall.avg_post_correction_quality);
+    if ($("admin-qf-quality-final")) $("admin-qf-quality-final").textContent = pct(overall.avg_final_quality);
+    if ($("admin-qf-quality-first-pass")) $("admin-qf-quality-first-pass").textContent = pct(overall.first_pass_approval_rate);
+    if ($("admin-qf-quality-reaudit")) $("admin-qf-quality-reaudit").textContent = pct(overall.reaudit_approval_rate);
+
+    const wrap = $("admin-qf-quality-chart");
+    const blocks = Array.isArray(data?.blocks) ? data.blocks : [];
+    if (wrap) {
+      wrap.innerHTML = blocks.length ? blocks.map(b => {
+        const initial = Number(b.initial_quality || 0);
+        const post = Number(b.post_correction_quality || 0);
+        const final = Number(b.final_quality || 0);
+        const label = `L${String(Number(b.batch_number||0)).padStart(3,"0")} · Bloco ${Number(b.block_number||0)}`;
+        return `
+          <article class="admin-qf-quality-row">
+            <div class="admin-qf-quality-row-head">
+              <strong>${esc(label)}</strong>
+              <span>${b.final_quality == null ? "Sem nota final" : pct(b.final_quality)}</span>
+            </div>
+            <div class="admin-qf-quality-bars">
+              <div><small>Inicial</small><span><i style="width:${Math.max(0,Math.min(100,initial))}%"></i></span><b>${b.initial_quality == null ? "—" : pct(b.initial_quality)}</b></div>
+              <div><small>Pós-correção</small><span><i style="width:${Math.max(0,Math.min(100,post))}%"></i></span><b>${b.post_correction_quality == null ? "—" : pct(b.post_correction_quality)}</b></div>
+              <div><small>Final</small><span><i style="width:${Math.max(0,Math.min(100,final))}%"></i></span><b>${b.final_quality == null ? "—" : pct(b.final_quality)}</b></div>
+            </div>
+            <div class="admin-qf-quality-row-meta">
+              <span>${formatNumber(b.approved_count)} aprovadas</span>
+              <span>${formatNumber(b.needs_revision_count)} a rever</span>
+              <span>${formatNumber(b.rejected_count)} rejeitadas</span>
+            </div>
+          </article>
+        `;
+      }).join("") : '<div class="admin-factory-empty-wide">Ainda sem blocos auditados.</div>';
+    }
+
+    if (state.questionFactory) renderQuestionFactory(state.questionFactory);
+  }
+
+  async function loadQuestionFactoryQuality() {
+    const { data, error } = await sb.rpc("admin_question_factory_quality_snapshot");
+    if (error) {
+      console.warn("Não foi possível carregar qualidade dos blocos:", error);
+      return;
+    }
+    renderQuestionFactoryQuality(data || {});
+  }
+
+  async function openQuestionFactoryBlock(batchNumber, blockNumber, issuesOnly = false) {
+    const { data, error } = await sb.rpc("admin_question_factory_block", {
+      p_batch_number: Number(batchNumber),
+      p_block_number: Number(blockNumber),
+      p_only_issues: Boolean(issuesOnly)
+    });
+    const dialog = $("admin-qf-dialog");
+    const list = $("admin-qf-question-list");
+    if (dialog && !dialog.open) dialog.showModal();
+    if (error) {
+      if (list) list.innerHTML = '<div class="admin-factory-empty-wide">Não foi possível carregar este bloco.</div>';
+      return;
+    }
+
+    const questions = Array.isArray(data?.questions) ? data.questions : [];
+    if ($("admin-qf-dialog-title")) $("admin-qf-dialog-title").textContent = `Lote ${String(Number(batchNumber)).padStart(3,"0")} · Bloco ${blockNumber}`;
+    if ($("admin-qf-dialog-meta")) {
+      const c = data?.counts || {};
+      $("admin-qf-dialog-meta").textContent = `${formatNumber(c.total)} questões · ${formatNumber(c.needs_revision)} a rever · ${formatNumber(c.rejected)} rejeitadas`;
+    }
+    if ($("admin-qf-page-info")) $("admin-qf-page-info").textContent = issuesOnly ? `${questions.length} pendências` : `${questions.length} questões`;
+
+    if (list) {
+      list.innerHTML = questions.length ? questions.map(q => {
+        const review = q.latest_review || {};
+        const score = q.quality_score == null ? "—" : Number(q.quality_score).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%";
+        return `
+          <details class="admin-qf-question">
+            <summary>
+              <span class="admin-qf-question-code">${esc(q.question_code || q.question_id || "Questão")}</span>
+              <div class="admin-qf-question-title">
+                <strong>${esc(q.enunciado || "")}</strong>
+                <small>${esc(q.exam_style || "—")} · ${esc(q.area || "—")} · v${esc(q.version || 1)}</small>
+              </div>
+              <div class="admin-qf-review-pills">
+                <span class="admin-qf-review-pill ${esc(q.block_review_status || "")}">Qualidade: ${esc(score)}</span>
+                ${qfReviewPill("Status", q.block_review_status)}
+              </div>
+            </summary>
+            <div class="admin-qf-question-body">
+              <p>${esc(q.enunciado || "")}</p>
+              <div class="admin-qf-alternatives">
+                ${["A","B","C","D"].map(letter => {
+                  const val=q["alternativa_"+letter.toLowerCase()]||"";
+                  return '<div class="admin-qf-alt '+(q.gabarito===letter?"correct":"")+'"><strong>'+letter+'</strong> — '+esc(val)+'</div>';
+                }).join("")}
+              </div>
+              <div class="admin-qf-bad-reason">
+                <strong>Parecer mais recente</strong>
+                <span>${esc(review.suggested_correction || q.block_review_notes || "Sem observação registrada.")}</span>
+                ${review.style_issue ? `<small>Estilo: ${esc(review.style_issue)}</small>` : ""}
+                ${review.answer_source_issue ? `<small>Fonte do gabarito: ${esc(review.answer_source_issue)}</small>` : ""}
+              </div>
+              <div class="admin-qf-answer-source">
+                <strong>Fonte do gabarito</strong>
+                <span>${esc(q.answer_source_institution || "—")} · ${esc(q.answer_source_document || "—")} · ${esc(q.answer_source_year || "—")}</span>
+              </div>
+            </div>
+          </details>
+        `;
+      }).join("") : '<div class="admin-factory-empty-wide">Nenhuma questão neste filtro.</div>';
+    }
+    if ($("admin-qf-prev")) $("admin-qf-prev").disabled = true;
+    if ($("admin-qf-next")) $("admin-qf-next").disabled = true;
+  }
+
+  function openReviewImportDialog(batchNumber, blockNumber) {
+    state.qfReviewImportBatch = Number(batchNumber);
+    state.qfReviewImportBlock = Number(blockNumber);
+    if ($("admin-qf-review-import-meta")) $("admin-qf-review-import-meta").textContent =
+      `Lote ${String(Number(batchNumber)).padStart(3,"0")} · Bloco ${blockNumber} · cole o JSON retornado pelo Perplexity.`;
+    if ($("admin-qf-review-import-json")) $("admin-qf-review-import-json").value = "";
+    if ($("admin-qf-review-import-message")) $("admin-qf-review-import-message").textContent = "";
+    $("admin-qf-review-import-dialog")?.showModal();
+  }
+
+  async function submitReviewImport() {
+    const box = $("admin-qf-review-import-json");
+    const message = $("admin-qf-review-import-message");
+    let payload;
+    try {
+      payload = JSON.parse(box?.value || "");
+    } catch {
+      if (message) message.textContent = "JSON inválido.";
+      return;
+    }
+    payload.batch_number = state.qfReviewImportBatch;
+    payload.block_number = state.qfReviewImportBlock;
+
+    const { data, error } = await sb.rpc("admin_import_question_factory_review", { p_payload: payload });
+    if (error) {
+      if (message) message.textContent = error.message || "Não foi possível importar.";
+      return;
+    }
+    if (message) message.textContent = `Importadas ${data?.imported || 0}: ${data?.approved || 0} aprovadas, ${data?.needs_revision || 0} a rever.`;
+    await Promise.all([loadQuestionFactory(),loadQuestionFactoryStyles(),loadQuestionFactoryQuality(),loadBadQuestionFolder(0)]);
+  }
+
+  async function setHumanBlockReview(batchNumber, blockNumber, decision) {
+    const yes = decision === "approved";
+    const message = yes
+      ? "Confirmar que este bloco está bom e pode entrar no lote de 1.000?"
+      : "Marcar este bloco para nova correção?";
+    if (!window.confirm(message)) return;
+
+    const { error } = await sb.rpc("admin_set_question_factory_block_human_review", {
+      p_batch_number: Number(batchNumber),
+      p_block_number: Number(blockNumber),
+      p_decision: decision,
+      p_notes: null
+    });
+    if (error) {
+      window.alert(error.message || "Não foi possível registrar sua decisão.");
+      return;
+    }
+    await Promise.all([loadQuestionFactory(),loadQuestionFactoryStyles(),loadQuestionFactoryQuality()]);
   }
 
   function renderQuestionFactoryStyles(styles) {
@@ -2130,10 +2346,36 @@
     $("admin-qf-bad-next")?.addEventListener("click", () => loadBadQuestionFolder(state.qfBadOffset+state.qfBadPageSize));
 
     $("admin-qf-batches")?.addEventListener("click", event => {
+      const blockButton = event.target.closest("[data-qf-view-block]");
+      if (blockButton) {
+        const [batch,block] = blockButton.dataset.qfViewBlock.split(":");
+        const issuesOnly = /pendências/i.test(blockButton.textContent || "");
+        openQuestionFactoryBlock(batch,block,issuesOnly);
+        return;
+      }
+
+      const importButton = event.target.closest("[data-qf-import-review]");
+      if (importButton) {
+        const [batch,block] = importButton.dataset.qfImportReview.split(":");
+        openReviewImportDialog(batch,block);
+        return;
+      }
+
+      const humanButton = event.target.closest("[data-qf-human-review]");
+      if (humanButton) {
+        const [batch,block,decision] = humanButton.dataset.qfHumanReview.split(":");
+        setHumanBlockReview(batch,block,decision);
+        return;
+      }
+
       const button = event.target.closest("[data-qf-batch]");
       if (!button) return;
       openQuestionFactoryBatch(button.dataset.qfBatch, 0);
     });
+
+    $("admin-qf-review-import-close")?.addEventListener("click", () => $("admin-qf-review-import-dialog")?.close());
+    $("admin-qf-review-import-cancel")?.addEventListener("click", () => $("admin-qf-review-import-dialog")?.close());
+    $("admin-qf-review-import-submit")?.addEventListener("click", submitReviewImport);
 
     $("admin-qf-dialog-close")?.addEventListener("click", () => $("admin-qf-dialog")?.close());
     $("admin-qf-prev")?.addEventListener("click", () => {
