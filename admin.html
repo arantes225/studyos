@@ -14,7 +14,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/favicon.png?v=luria7">
   <link rel="stylesheet" href="assets/css/style.css?v=16.2">
-  <link rel="stylesheet" href="assets/css/admin.css?v=1.7">
+  <link rel="stylesheet" href="assets/css/admin.css?v=1.8">
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=10">
   <link rel="canonical" href="/admin/">
   <script>(function(){try{if(location.pathname.endsWith("/admin.html"))history.replaceState(null,"","/admin/"+location.search+location.hash);}catch(e){}})();</script>
@@ -195,45 +195,48 @@
               <span class="eyebrow">Banco de questões</span>
               <h2 id="admin-question-factory-title">Fábrica de questões</h2>
             </div>
-            <span class="admin-factory-badge">Lotes de 1.000</span>
+            <span class="admin-factory-badge">200 → 1.000</span>
           </div>
 
           <div class="admin-factory-summary" aria-label="Resumo da fábrica de questões">
-            <article><span>Total</span><strong id="admin-qf-total">0</strong><small>Questões em produção</small></article>
-            <article><span>Revisão 1</span><strong id="admin-qf-r1">0</strong><small>Primeira verificação</small></article>
-            <article><span>Revisão 2</span><strong id="admin-qf-r2">0</strong><small>Segunda verificação</small></article>
-            <article><span>Revisão 3</span><strong id="admin-qf-r3">0</strong><small>Terceira verificação</small></article>
-            <article><span>Prontas</span><strong id="admin-qf-ready">0</strong><small>Aguardando publicação</small></article>
+            <article><span>Em produção</span><strong id="admin-qf-total">0</strong><small>Questões</small></article>
+            <article><span>Blocos</span><strong id="admin-qf-blocks">0</strong><small>200 questões cada</small></article>
+            <article><span>Perplexity</span><strong id="admin-qf-block-review">0</strong><small>Blocos em revisão</small></article>
+            <article><span>Lotes completos</span><strong id="admin-qf-lots-ready">0</strong><small>5 blocos aprovados</small></article>
+            <article><span>Prontas</span><strong id="admin-qf-ready">0</strong><small>Após revisão final</small></article>
             <article><span>Publicadas</span><strong id="admin-qf-published">0</strong><small>Banco definitivo</small></article>
           </div>
 
-          <div class="admin-factory-board admin-factory-board-seven" aria-label="Etapas da produção de questões">
-            <article class="admin-factory-lane"><header><span class="admin-factory-dot incoming"></span><div><strong>Entrada</strong><small>Geradas</small></div></header></article>
-            <div class="admin-factory-arrow" aria-hidden="true">→</div>
-            <article class="admin-factory-lane"><header><span class="admin-factory-dot reviewing"></span><div><strong>Revisão 1</strong><small>Verificação inicial</small></div></header></article>
-            <div class="admin-factory-arrow" aria-hidden="true">→</div>
-            <article class="admin-factory-lane"><header><span class="admin-factory-dot reviewing"></span><div><strong>Revisão 2</strong><small>Auditoria independente</small></div></header></article>
-            <div class="admin-factory-arrow" aria-hidden="true">→</div>
-            <article class="admin-factory-lane"><header><span class="admin-factory-dot reviewing"></span><div><strong>Revisão 3</strong><small>Validação final</small></div></header></article>
-            <div class="admin-factory-arrow" aria-hidden="true">→</div>
-            <article class="admin-factory-lane"><header><span class="admin-factory-dot correction"></span><div><strong>Correção</strong><small>Divergências</small></div></header></article>
-            <div class="admin-factory-arrow" aria-hidden="true">→</div>
-            <article class="admin-factory-lane"><header><span class="admin-factory-dot approved"></span><div><strong>Prontas</strong><small>3 verificações OK</small></div></header></article>
-            <div class="admin-factory-arrow" aria-hidden="true">→</div>
-            <article class="admin-factory-lane"><header><span class="admin-factory-dot published"></span><div><strong>Publicadas</strong><small>Banco final</small></div></header></article>
+          <div class="admin-factory-flow" aria-label="Fluxo da fábrica">
+            <article><strong>Bloco 1</strong><small>200 questões</small></article>
+            <article><strong>Bloco 2</strong><small>200 questões</small></article>
+            <article><strong>Bloco 3</strong><small>200 questões</small></article>
+            <article><strong>Bloco 4</strong><small>200 questões</small></article>
+            <article><strong>Bloco 5</strong><small>200 questões</small></article>
+            <div class="admin-factory-flow-arrow">→</div>
+            <article class="admin-factory-flow-review"><strong>Revisão final do lote</strong><small>ChatGPT, Perplexity ou dupla</small></article>
+            <div class="admin-factory-flow-arrow">→</div>
+            <article class="admin-factory-flow-ready"><strong>1.000 prontas</strong><small>Publicação + limpeza</small></article>
           </div>
 
           <div class="admin-factory-batches-head">
-            <div><strong>Lotes</strong><small>Cada lote comporta exatamente 1.000 questões. Clique para visualizar as questões individualmente.</small></div>
+            <div>
+              <strong>Lotes de 1.000</strong>
+              <small>Cada lote é formado por cinco blocos de 200. Cada bloco passa primeiro pelo Perplexity.</small>
+            </div>
             <span id="admin-qf-batch-count">0 lotes</span>
           </div>
+
           <div id="admin-qf-batches" class="admin-factory-batches">
             <div class="admin-factory-empty-wide">Nenhum lote criado ainda.</div>
           </div>
 
           <div class="admin-factory-cleanup">
-            <div><strong>Publicação com limpeza</strong><small>Depois da terceira verificação e da gravação confirmada no banco definitivo, os artefatos temporários podem ser removidos.</small></div>
-            <span>1.000 por lote · 3 verificações</span>
+            <div>
+              <strong>Publicação com limpeza</strong>
+              <small>O rastro temporário só é apagado depois que o lote final for validado e as questões forem confirmadas no banco definitivo.</small>
+            </div>
+            <span>200 × 5 = 1.000</span>
           </div>
         </section>
 
@@ -378,7 +381,7 @@
   <script src="/assets/vendor/supabase-2.110.6.js"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=16.9"></script>
-  <script src="assets/js/admin.js?v=1.6"></script>
+  <script src="assets/js/admin.js?v=1.7"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
