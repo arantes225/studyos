@@ -1195,7 +1195,23 @@
                 </div>
               </td>
               <td>
-                <span class="admin-plan-pill">${esc(customer.plan || "free")}</span>
+                ${
+                  String(customer.plan || "").toLowerCase() === "admin"
+                    ? '<span class="admin-plan-pill">admin</span>'
+                    : `
+                      <select
+                        class="admin-customer-plan-select"
+                        data-customer-plan
+                        data-user-id="${esc(customer.user_id)}"
+                        aria-label="Plano de ${esc(customer.display_name || customer.email || "cliente")}"
+                      >
+                        <option value="essential" ${customer.plan === "essential" ? "selected" : ""}>Essencial</option>
+                        <option value="plus" ${customer.plan === "plus" ? "selected" : ""}>Plus</option>
+                        <option value="pro" ${customer.plan === "pro" ? "selected" : ""}>Pro</option>
+                        <option value="betatester" ${customer.plan === "betatester" ? "selected" : ""}>Betatester</option>
+                      </select>
+                    `
+                }
               </td>
               <td>${esc(formatSubscriptionTime(customer.subscription_days))}</td>
               <td>${esc(formatHours(customer.study_hours_month))}</td>
@@ -1220,6 +1236,44 @@
           `;
         })
         .join("");
+  }
+
+  async function updateCustomerPlan(select) {
+    const userId = select?.dataset?.userId;
+    const nextPlan = select?.value;
+    const customer = state.customers.find(item => item.user_id === userId);
+
+    if (!userId || !customer || !["essential","plus","pro","betatester"].includes(nextPlan)) return;
+
+    const previousPlan = customer.plan || "essential";
+    if (nextPlan === previousPlan) return;
+
+    select.disabled = true;
+    select.classList.add("is-saving");
+
+    try {
+      const { data, error } = await sb.rpc("admin_set_customer_plan", {
+        p_user_id: userId,
+        p_plan_slug: nextPlan
+      });
+
+      if (error) throw error;
+
+      customer.plan = data?.plan || nextPlan;
+      customer.status = data?.status || "complimentary";
+      select.classList.remove("is-error");
+      select.classList.add("is-saved");
+      setTimeout(() => select.classList.remove("is-saved"), 1200);
+    } catch (error) {
+      console.error(error);
+      customer.plan = previousPlan;
+      select.value = previousPlan;
+      select.classList.add("is-error");
+      window.LuriaDialog?.alert(`Não foi possível alterar o plano: ${error.message}`);
+    } finally {
+      select.disabled = false;
+      select.classList.remove("is-saving");
+    }
   }
 
   function render(snapshot) {
@@ -3776,6 +3830,16 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
       ?.addEventListener(
         "input",
         renderCustomers
+      );
+
+    $("admin-customer-body")
+      ?.addEventListener(
+        "change",
+        event => {
+          const select = event.target.closest("[data-customer-plan]");
+          if (!select) return;
+          updateCustomerPlan(select);
+        }
       );
 
     [
