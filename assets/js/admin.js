@@ -133,11 +133,11 @@
     { key: "automatic_schedule", label: "Cronograma automático", description: "Importação e montagem automática do cronograma." },
     { key: "ambientacao", label: "Ambientação", description: "Ambiente de estudo." },
     { key: "caderno", label: "Caderno", description: "Acesso ao caderno de estudos." },
-    { key: "notebook_images", label: "Imagens no caderno", description: "Quantidade máxima de imagens por caderno.", limit: true, limitLabel: "imagens" },
+    { key: "notebook_images", label: "Imagens no caderno", description: "Quantidade máxima de imagens por caderno.", limit: true, max: 2, limitLabel: "imagens" },
     { key: "error_notebook", label: "Caderno de erros", description: "Acesso ao Caderno de Erros." },
-    { key: "error_notebook_images", label: "Imagens no Caderno de Erros", description: "Quantidade máxima de imagens por item.", limit: true, limitLabel: "imagens" },
+    { key: "error_notebook_images", label: "Imagens no Caderno de Erros", description: "Quantidade máxima de imagens por item.", limit: true, max: 1, limitLabel: "imagens" },
     { key: "flashcards", label: "Flashcards", description: "Criação e revisão de flashcards." },
-    { key: "flashcard_images", label: "Imagens em flashcards", description: "Quantidade máxima de imagens por flashcard.", limit: true, limitLabel: "imagens" },
+    { key: "flashcard_images", label: "Imagens em flashcards", description: "Quantidade máxima de imagens por flashcard.", limit: true, max: 2, limitLabel: "imagens" },
     { key: "flashcard_import", label: "Importação de flashcards", description: "Excel, CSV e Anki." },
     { key: "questions", label: "Questões", description: "Acesso ao módulo de questões." },
     { key: "automatic_questions", label: "Questões automáticas", description: "Geração/importação automática de questões." },
@@ -960,6 +960,7 @@
                 class="admin-plan-limit"
                 type="number"
                 min="0"
+                max="${feature.max ?? 99}"
                 step="1"
                 inputmode="numeric"
                 data-plan-feature-limit
