@@ -6,7 +6,12 @@ const agendaState = {
   items: [],
   itemMap: new Map(),
   movingKey: null,
-  loading: false
+  loading: false,
+  managedEvents: [],
+  managerOpen: false,
+  managerDateFrom: "",
+  managerDateTo: "",
+  editingEventId: null
 };
 
 function startOfDay(date) {
@@ -2222,7 +2227,9 @@ async function loadDashboardMetrics() {
   await loadTodaySummary();
 }
 
-function openEventDialog() {
+function openEventDialog(
+  eventItem = null
+) {
   const dialog =
     document.getElementById(
       "event-dialog"
@@ -2243,16 +2250,58 @@ function openEventDialog() {
       "event-time"
     );
 
+  const title =
+    document.getElementById(
+      "event-dialog-title"
+    );
+
+  const submit =
+    document.getElementById(
+      "event-submit"
+    );
+
   if (!dialog) return;
 
-  if (nameInput) nameInput.value = "";
-  if (timeInput) timeInput.value = "";
+  agendaState.editingEventId =
+    eventItem?.id
+    || null;
+
+  if (nameInput) {
+    nameInput.value =
+      eventItem?.title
+      || "";
+  }
+
+  if (timeInput) {
+    timeInput.value =
+      eventItem?.event_time
+        ? String(
+            eventItem.event_time
+          ).slice(0, 5)
+        : "";
+  }
+
   if (dateInput) {
     dateInput.value =
-      toISODate(
+      eventItem?.event_date
+      || toISODate(
         agendaState.anchorDate
         || new Date()
       );
+  }
+
+  if (title) {
+    title.textContent =
+      eventItem
+        ? "Editar evento"
+        : "Adicionar evento";
+  }
+
+  if (submit) {
+    submit.textContent =
+      eventItem
+        ? "Salvar alterações"
+        : "Adicionar evento";
   }
 
   dialog.showModal();
@@ -2264,6 +2313,9 @@ function openEventDialog() {
 
 
 function closeEventDialog() {
+  agendaState.editingEventId =
+    null;
+
   document
     .getElementById(
       "event-dialog"
@@ -2335,49 +2387,102 @@ async function handleEventForm(
       "#event-form button[type='submit']"
     );
 
+  const wasEditing =
+    Boolean(
+      agendaState.editingEventId
+    );
+
   if (submit) {
     submit.disabled = true;
-    submit.textContent = "Adicionando...";
+    submit.textContent =
+      wasEditing
+        ? "Salvando..."
+        : "Adicionando...";
   }
 
-  const {
-    error
-  } =
-    await dashboardSb
-      .from(
-        "schedule_events"
-      )
-      .insert({
-        user_id:
-          window.docmapUser.id,
+  const editingId =
+    agendaState.editingEventId;
 
-        title:
-          name,
+  let error = null;
 
-        event_type:
-          "personal_event",
+  if (editingId) {
+    const result =
+      await dashboardSb
+        .from(
+          "schedule_events"
+        )
+        .update({
+          title:
+            name,
 
-        event_date:
-          date,
+          event_date:
+            date,
 
-        event_time:
-          time || null,
+          event_time:
+            time || null,
 
-        source:
-          "manual",
+          updated_at:
+            new Date()
+              .toISOString()
+        })
+        .eq(
+          "id",
+          editingId
+        )
+        .eq(
+          "user_id",
+          window.docmapUser.id
+        );
 
-        confidence:
-          "high",
+    error =
+      result.error;
 
-        metadata: {
-          created_from:
-            "agenda"
-        }
-      });
+  } else {
+    const result =
+      await dashboardSb
+        .from(
+          "schedule_events"
+        )
+        .insert({
+          user_id:
+            window.docmapUser.id,
+
+          title:
+            name,
+
+          event_type:
+            "other",
+
+          event_date:
+            date,
+
+          event_time:
+            time || null,
+
+          source:
+            "manual",
+
+          confidence:
+            "high",
+
+          metadata: {
+            created_from:
+              "agenda",
+            personal_event:
+              true
+          }
+        });
+
+    error =
+      result.error;
+  }
 
   if (submit) {
     submit.disabled = false;
-    submit.textContent = "Adicionar evento";
+    submit.textContent =
+      wasEditing
+        ? "Salvar alterações"
+        : "Adicionar evento";
   }
 
   if (error) {
@@ -2392,11 +2497,516 @@ async function handleEventForm(
   closeEventDialog();
 
   setCalendarStatus(
-    "Evento adicionado.",
+    wasEditing
+      ? "Evento atualizado."
+      : "Evento adicionado.",
     "success"
   );
 
   await loadAgenda();
+
+  if (
+    agendaState.managerOpen
+  ) {
+    await loadManagedEvents();
+  }
+}
+
+
+
+function formatManagedEventDate(
+  value
+) {
+  if (!value) {
+    return "Sem data";
+  }
+
+  const parts =
+    String(value)
+      .slice(0, 10)
+      .split("-")
+      .map(Number);
+
+  if (
+    parts.length !== 3
+    || parts.some(
+      value => !Number.isFinite(value)
+    )
+  ) {
+    return String(value);
+  }
+
+  return new Intl.DateTimeFormat(
+    "pt-BR",
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    }
+  ).format(
+    new Date(
+      parts[0],
+      parts[1] - 1,
+      parts[2]
+    )
+  );
+}
+
+
+function managedEventTypeLabel(
+  type
+) {
+  const labels = {
+    simulation:
+      "Simulado programado",
+    smart_simulation:
+      "Simulado inteligente",
+    full_exam:
+      "Prova na íntegra",
+    smart_review:
+      "Revisão inteligente",
+    external_review:
+      "Revisão teórica",
+    final_review:
+      "Reta final",
+    other:
+      "Outro evento"
+  };
+
+  return labels[type]
+    || "Evento";
+}
+
+
+function filteredManagedEvents() {
+  return agendaState
+    .managedEvents
+    .filter(
+      item => {
+        if (
+          agendaState.managerDateFrom
+          && item.event_date
+            < agendaState.managerDateFrom
+        ) {
+          return false;
+        }
+
+        if (
+          agendaState.managerDateTo
+          && item.event_date
+            > agendaState.managerDateTo
+        ) {
+          return false;
+        }
+
+        return true;
+      }
+    );
+}
+
+
+function closeManagedEventMenus(
+  exceptId = null
+) {
+  document
+    .querySelectorAll(
+      "[data-managed-event-menu]"
+    )
+    .forEach(
+      menu => {
+        if (
+          exceptId
+          && menu.dataset
+            .managedEventMenu
+            === exceptId
+        ) {
+          return;
+        }
+
+        menu.hidden =
+          true;
+      }
+    );
+}
+
+
+function renderManagedEvents() {
+  const list =
+    document.getElementById(
+      "agenda-manager-list"
+    );
+
+  const count =
+    document.getElementById(
+      "agenda-manager-count"
+    );
+
+  if (!list || !count) {
+    return;
+  }
+
+  const items =
+    filteredManagedEvents();
+
+  count.textContent =
+    `${items.length} evento${items.length === 1 ? "" : "s"}`;
+
+  if (!items.length) {
+    list.innerHTML = `
+      <div class="agenda-manager-empty">
+        Nenhum evento encontrado neste período.
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML =
+    items.map(
+      item => {
+        const time =
+          item.event_time
+            ? ` · ${escapeDashboardHtml(
+                String(
+                  item.event_time
+                ).slice(0, 5)
+              )}`
+            : "";
+
+        return `
+          <article class="agenda-manager-row">
+            <div class="agenda-manager-copy">
+              <strong>${escapeDashboardHtml(
+                item.title
+                || "Evento"
+              )}</strong>
+              <small>${escapeDashboardHtml(
+                managedEventTypeLabel(
+                  item.event_type
+                )
+              )}</small>
+            </div>
+
+            <div class="agenda-manager-date">
+              ${escapeDashboardHtml(
+                formatManagedEventDate(
+                  item.event_date
+                )
+              )}${time}
+            </div>
+
+            <div class="agenda-manager-menu-wrap">
+              <button
+                class="agenda-manager-menu-toggle"
+                type="button"
+                aria-label="Ações do evento"
+                aria-expanded="false"
+                data-managed-event-menu-toggle="${escapeDashboardHtml(
+                  item.id
+                )}"
+              >
+                ⋯
+              </button>
+
+              <div
+                class="agenda-manager-menu"
+                data-managed-event-menu="${escapeDashboardHtml(
+                  item.id
+                )}"
+                hidden
+              >
+                <button
+                  type="button"
+                  data-managed-event-edit="${escapeDashboardHtml(
+                    item.id
+                  )}"
+                >
+                  Editar
+                </button>
+
+                <button
+                  class="danger"
+                  type="button"
+                  data-managed-event-delete="${escapeDashboardHtml(
+                    item.id
+                  )}"
+                >
+                  Apagar
+                </button>
+              </div>
+            </div>
+          </article>
+        `;
+      }
+    ).join("");
+
+  list
+    .querySelectorAll(
+      "[data-managed-event-menu-toggle]"
+    )
+    .forEach(
+      button => {
+        button.addEventListener(
+          "click",
+          event => {
+            event.stopPropagation();
+
+            const id =
+              button.dataset
+                .managedEventMenuToggle;
+
+            const menu =
+              list.querySelector(
+                `[data-managed-event-menu="${CSS.escape(
+                  id
+                )}"]`
+              );
+
+            if (!menu) {
+              return;
+            }
+
+            const willOpen =
+              menu.hidden;
+
+            closeManagedEventMenus();
+
+            menu.hidden =
+              !willOpen;
+
+            button.setAttribute(
+              "aria-expanded",
+              willOpen
+                ? "true"
+                : "false"
+            );
+          }
+        );
+      }
+    );
+
+  list
+    .querySelectorAll(
+      "[data-managed-event-edit]"
+    )
+    .forEach(
+      button => {
+        button.addEventListener(
+          "click",
+          () => {
+            const item =
+              agendaState
+                .managedEvents
+                .find(
+                  event =>
+                    event.id
+                    === button.dataset
+                      .managedEventEdit
+                );
+
+            if (!item) {
+              return;
+            }
+
+            closeManagedEventMenus();
+            openEventDialog(
+              item
+            );
+          }
+        );
+      }
+    );
+
+  list
+    .querySelectorAll(
+      "[data-managed-event-delete]"
+    )
+    .forEach(
+      button => {
+        button.addEventListener(
+          "click",
+          async () => {
+            await deleteManagedEvent(
+              button.dataset
+                .managedEventDelete
+            );
+          }
+        );
+      }
+    );
+}
+
+
+async function loadManagedEvents() {
+  const list =
+    document.getElementById(
+      "agenda-manager-list"
+    );
+
+  if (list) {
+    list.innerHTML = `
+      <div class="agenda-manager-empty">
+        Carregando eventos...
+      </div>
+    `;
+  }
+
+  const {
+    data,
+    error
+  } =
+    await dashboardSb
+      .from(
+        "schedule_events"
+      )
+      .select(
+        "id,title,event_type,event_date,event_time,area,materia,source,metadata"
+      )
+      .eq(
+        "user_id",
+        window.docmapUser.id
+      )
+      .order(
+        "event_date",
+        {
+          ascending:
+            true
+        }
+      )
+      .order(
+        "event_time",
+        {
+          ascending:
+            true,
+          nullsFirst:
+            false
+        }
+      );
+
+  if (error) {
+    console.error(error);
+
+    if (list) {
+      list.innerHTML = `
+        <div class="agenda-manager-empty">
+          Não foi possível carregar os eventos.
+        </div>
+      `;
+    }
+
+    return;
+  }
+
+  agendaState.managedEvents =
+    data || [];
+
+  renderManagedEvents();
+}
+
+
+async function deleteManagedEvent(
+  eventId
+) {
+  const item =
+    agendaState.managedEvents
+      .find(
+        event =>
+          event.id
+          === eventId
+      );
+
+  if (!item) {
+    return;
+  }
+
+  closeManagedEventMenus();
+
+  const confirmed =
+    await window.LuriaDialog.confirm(
+      `Apagar "${item.title || "Evento"}" da agenda?`
+    );
+
+  if (!confirmed) {
+    return;
+  }
+
+  const {
+    error
+  } =
+    await dashboardSb
+      .from(
+        "schedule_events"
+      )
+      .delete()
+      .eq(
+        "id",
+        eventId
+      )
+      .eq(
+        "user_id",
+        window.docmapUser.id
+      );
+
+  if (error) {
+    console.error(error);
+
+    setCalendarStatus(
+      "Não foi possível apagar o evento.",
+      "error"
+    );
+
+    return;
+  }
+
+  setCalendarStatus(
+    "Evento apagado.",
+    "success"
+  );
+
+  await Promise.all([
+    loadManagedEvents(),
+    loadAgenda()
+  ]);
+}
+
+
+async function toggleEventManager() {
+  const panel =
+    document.getElementById(
+      "agenda-manager"
+    );
+
+  const button =
+    document.getElementById(
+      "calendar-manage-events"
+    );
+
+  if (!panel || !button) {
+    return;
+  }
+
+  agendaState.managerOpen =
+    panel.hidden;
+
+  panel.hidden =
+    !agendaState.managerOpen;
+
+  button.classList.toggle(
+    "active",
+    agendaState.managerOpen
+  );
+
+  button.setAttribute(
+    "aria-expanded",
+    agendaState.managerOpen
+      ? "true"
+      : "false"
+  );
+
+  if (
+    agendaState.managerOpen
+  ) {
+    await loadManagedEvents();
+  }
 }
 
 
@@ -2524,7 +3134,82 @@ function wireDashboardControls() {
     )
     ?.addEventListener(
       "click",
-      openEventDialog
+      () =>
+        openEventDialog()
+    );
+
+  document
+    .getElementById(
+      "calendar-manage-events"
+    )
+    ?.addEventListener(
+      "click",
+      toggleEventManager
+    );
+
+  document
+    .getElementById(
+      "agenda-manager-date-from"
+    )
+    ?.addEventListener(
+      "change",
+      event => {
+        agendaState.managerDateFrom =
+          event.target.value
+          || "";
+
+        renderManagedEvents();
+      }
+    );
+
+  document
+    .getElementById(
+      "agenda-manager-date-to"
+    )
+    ?.addEventListener(
+      "change",
+      event => {
+        agendaState.managerDateTo =
+          event.target.value
+          || "";
+
+        renderManagedEvents();
+      }
+    );
+
+  document
+    .getElementById(
+      "agenda-manager-clear"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+        agendaState.managerDateFrom =
+          "";
+
+        agendaState.managerDateTo =
+          "";
+
+        const from =
+          document.getElementById(
+            "agenda-manager-date-from"
+          );
+
+        const to =
+          document.getElementById(
+            "agenda-manager-date-to"
+          );
+
+        if (from) {
+          from.value = "";
+        }
+
+        if (to) {
+          to.value = "";
+        }
+
+        renderManagedEvents();
+      }
     );
 
   document
@@ -2597,6 +3282,12 @@ function wireDashboardControls() {
       "click",
       closeMoveDialog
     );
+
+  document.addEventListener(
+    "click",
+    () =>
+      closeManagedEventMenus()
+  );
 
   updateCalendarViewControls();
 }
