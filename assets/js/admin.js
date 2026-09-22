@@ -1612,6 +1612,11 @@
               <span>Pós-correção <b>${postQ == null ? "—" : Number(postQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
               <span>Final <b>${finalQ == null ? "—" : Number(finalQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
             </div>
+            <div class="admin-qf-block-pipeline">
+              ${qfReviewPill("ChatGPT", block?.chatgpt_review_status)}
+              ${qfReviewPill("Perplexity", block?.perplexity_review_status)}
+              ${human ? qfReviewPill("Você", human) : '<span class="admin-qf-review-pill">Você: aguardando</span>'}
+            </div>
 
             <div class="admin-qf-block-mini-actions">
               <button class="button secondary" type="button" data-qf-view-block="${Number(batch.batch_number)}:${n}">${needs || rejected ? "Ver pendências" : "Ver bloco"}</button>
@@ -1679,6 +1684,15 @@
     state.qfQuality = data || {};
     const overall = data?.overall || {};
     const pct = value => value == null ? "—" : Number(value).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%";
+    const qualityLabel = value => {
+      if (value == null) return "Sem nota";
+      const n = Number(value);
+      if (n >= 95) return "Excelente";
+      if (n >= 90) return "Aprovado";
+      if (n >= 80) return "Bom · revisar";
+      if (n >= 70) return "Atenção";
+      return "Crítico";
+    };
 
     if ($("admin-qf-quality-initial")) $("admin-qf-quality-initial").textContent = pct(overall.avg_initial_quality);
     if ($("admin-qf-quality-post")) $("admin-qf-quality-post").textContent = pct(overall.avg_post_correction_quality);
@@ -1698,7 +1712,7 @@
           <article class="admin-qf-quality-row">
             <div class="admin-qf-quality-row-head">
               <strong>${esc(label)}</strong>
-              <span>${b.final_quality == null ? "Sem nota final" : pct(b.final_quality)}</span>
+              <span>${b.final_quality == null ? "Sem nota final" : pct(b.final_quality)+" · "+qualityLabel(b.final_quality)}</span>
             </div>
             <div class="admin-qf-quality-bars">
               <div><small>Inicial</small><span><i style="width:${Math.max(0,Math.min(100,initial))}%"></i></span><b>${b.initial_quality == null ? "—" : pct(b.initial_quality)}</b></div>
