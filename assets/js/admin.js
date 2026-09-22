@@ -10,6 +10,7 @@
     logistics: null,
     costItems: [],
     storageBreakdown: null,
+    databaseBreakdown: null,
     planPrices: [],
     customers: [],
     pinConfigured: false,
@@ -555,6 +556,53 @@
   }
 
 
+  function renderDatabaseBreakdown(data) {
+    state.databaseBreakdown = data || {};
+    const total = Number(data?.total_bytes || 0);
+    const tables = Array.isArray(data?.tables) ? data.tables : [];
+
+    if ($("admin-database-total")) {
+      $("admin-database-total").textContent = formatBytes(total);
+    }
+
+    const summary = $("admin-database-summary");
+    if (summary) {
+      const totalRows = tables.reduce((sum,item) => sum + Number(item.rows || 0), 0);
+      summary.innerHTML = `
+        <span><small>Tabelas</small><strong>${esc(formatNumber(data?.table_count || tables.length))}</strong></span>
+        <span><small>Registros estimados</small><strong>${esc(formatNumber(totalRows))}</strong></span>
+        <span><small>Maior tabela</small><strong>${esc(tables[0]?.table || "—")}</strong></span>
+      `;
+    }
+
+    const list = $("admin-database-breakdown-list");
+    if (!list) return;
+
+    if (!tables.length) {
+      list.innerHTML = '<div class="admin-empty-mini">Nenhuma tabela encontrada.</div>';
+      return;
+    }
+
+    list.innerHTML = tables.map(item => {
+      const pct = Number(item.percent || 0);
+      return `
+        <div class="admin-database-row">
+          <div class="admin-database-row-head">
+            <div>
+              <strong>${esc(item.table)}</strong>
+              <small>${esc(item.category || "Sem categoria")}</small>
+            </div>
+            <span>${esc(formatBytes(item.bytes))} · ${esc(formatPercent(pct))}</span>
+          </div>
+          <div class="admin-database-type-track">
+            <span style="width:${Math.min(100,pct).toFixed(2)}%"></span>
+          </div>
+          <small>${esc(formatNumber(item.rows || 0))} registro${Number(item.rows)===1?"":"s"}</small>
+        </div>
+      `;
+    }).join("");
+  }
+
   function renderStorageBreakdown(data) {
     state.storageBreakdown = data || {};
     const total = Number(data?.total_bytes || 0);
@@ -995,6 +1043,7 @@
       costItemsResponse,
       storageUsageResponse,
       storageBreakdownResponse,
+      databaseBreakdownResponse,
       planPricesResponse
     ] =
       await Promise.all([
@@ -1015,6 +1064,7 @@
           "admin_customer_storage_usage"
         ),
         sb.rpc("admin_storage_breakdown"),
+        sb.rpc("admin_database_breakdown"),
         sb.rpc("admin_plan_prices_snapshot")
       ]);
 
@@ -1086,6 +1136,9 @@
 
     if (storageBreakdownResponse?.error) console.warn("Falha no detalhamento do Storage:", storageBreakdownResponse.error);
     renderStorageBreakdown(storageBreakdownResponse?.data || {});
+
+    if (databaseBreakdownResponse?.error) console.warn("Falha no detalhamento da base de dados:", databaseBreakdownResponse.error);
+    renderDatabaseBreakdown(databaseBreakdownResponse?.data || {});
 
     if (planPricesResponse?.error) console.warn("Falha ao carregar preços dos planos:", planPricesResponse.error);
     renderPlanPrices(planPricesResponse?.data || []);
