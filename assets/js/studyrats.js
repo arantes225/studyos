@@ -62,8 +62,10 @@ function sharedStudyratAccessoryImg(value,className,offsetX,offsetY){
   if(item.id==='none'||!item.src)return '';
   const x=Number(offsetX)||0;
   const y=Number(offsetY)||0;
+  const pxX=Math.round(x*72*100)/100;
+  const pxY=Math.round(y*50*100)/100;
   const style=(x||y)
-    ? ' style="--studyrat-accessory-x:'+x+';--studyrat-accessory-y:'+y+';"'
+    ? ' style="translate:'+pxX+'px '+pxY+'px"'
     : '';
   return '<img class="'+(className||'studyrats-accessory-img')+' accessory-'+item.id+' accessory-kind-'+item.kind+'" src="'+item.src+'" alt="'+item.label+'" draggable="false" loading="eager" decoding="async"'+style+'>';
 }
@@ -135,8 +137,7 @@ function sharedStudyratsBindAccessoryDrag(){
     const y=Math.max(-0.90,Math.min(0.90,startY+(event.clientY-startPointerY)/height));
     sharedStudyratsMyAccessoryX=Math.round(x*10000)/10000;
     sharedStudyratsMyAccessoryY=Math.round(y*10000)/10000;
-    accessory.style.setProperty('--studyrat-accessory-x',sharedStudyratsMyAccessoryX);
-    accessory.style.setProperty('--studyrat-accessory-y',sharedStudyratsMyAccessoryY);
+    accessory.style.translate=(sharedStudyratsMyAccessoryX*72)+'px '+(sharedStudyratsMyAccessoryY*50)+'px';
   });
 
   async function finishDrag(event){
