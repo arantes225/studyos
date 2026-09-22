@@ -3,9 +3,9 @@
   "use strict";
 
   const LOGOS = {
-    light: "assets/img/logo-icone-original.png?v=luria9",
-    dark: "assets/img/logo-icone-azul-claro.png?v=luria9",
-    "leila-mood": "assets/img/logo-icone-rosa-escuro.png?v=luria9"
+    light: "assets/img/logos/logo-icone-original.png?v=luria9",
+    dark: "assets/img/logos/logo-icone-azul-claro.png?v=luria9",
+    "leila-mood": "assets/img/logos/logo-icone-rosa-escuro.png?v=luria9"
   };
 
   function getTheme() {
@@ -230,7 +230,7 @@
       "any";
 
     const source =
-      "/assets/img/logo-icone-original.png?v=favicon1";
+      "/assets/img/logos/logo-icone-original.png?v=favicon1";
 
     if (
       favicon.getAttribute("href")
