@@ -553,7 +553,7 @@ function parseWorkbookRows(matrix, sheetName) {
       alreadyDone,
       studiedDate,
       confidence: "high",
-      include: true,
+      include: kind === "lesson",
       duplicate: false,
       errors
     });
@@ -788,6 +788,35 @@ function renderPreview() {
 
   summary.textContent =
     `${selected} selecionado${selected === 1 ? "" : "s"} · ${duplicate} já existente${duplicate === 1 ? "" : "s"} · ${invalid} com problema`;
+
+
+  const selectAllImport =
+    document.getElementById(
+      "preview-select-all"
+    );
+
+  if (selectAllImport) {
+    const eligible =
+      rows.filter(
+        (row) =>
+          !row.duplicate
+          && row.errors.length === 0
+      );
+
+    const selectedEligible =
+      eligible.filter(
+        (row) =>
+          row.include
+      ).length;
+
+    selectAllImport.checked =
+      eligible.length > 0
+      && selectedEligible === eligible.length;
+
+    selectAllImport.indeterminate =
+      selectedEligible > 0
+      && selectedEligible < eligible.length;
+  }
 
 
   body.innerHTML =
@@ -1450,7 +1479,12 @@ function makePdfRow({
       || "medium",
 
     include:
-      true,
+      (
+        kind
+        || classifyScheduleKind(
+          title
+        )
+      ) === "lesson",
 
     duplicate:
       false,
@@ -4613,8 +4647,18 @@ function populateAreaFilter() {
   const areas =
     Array.from(
       new Set(
-        getActiveTopicsForLibrary()
-          .map((topic) => topic.area?.trim())
+        [
+          ...getActiveTopicsForLibrary()
+            .map(
+              (topic) =>
+                topic.area?.trim()
+            ),
+          ...scheduleState.events
+            .map(
+              (event) =>
+                event.area?.trim()
+            )
+        ]
           .filter(Boolean)
       )
     ).sort((a, b) =>
@@ -5225,6 +5269,196 @@ function renderThemeLibrary() {
   if (!container || !count) return;
 
   populateAreaFilter();
+
+  const showingExternalEvents =
+    scheduleState.themeCompletionFilter
+      === "external_events";
+
+  if (showingExternalEvents) {
+    const search =
+      normalizeSearchText(
+        scheduleState.themeSearch
+      );
+
+    const areaFilter =
+      scheduleState.themeAreaFilter;
+
+    const dateFrom =
+      scheduleState.themeDateFrom;
+
+    const dateTo =
+      scheduleState.themeDateTo;
+
+    const events =
+      scheduleState.events
+        .filter(
+          (event) => {
+            if (
+              areaFilter
+              && event.area !== areaFilter
+            ) {
+              return false;
+            }
+
+            if (
+              dateFrom
+              && (
+                !event.event_date
+                || event.event_date < dateFrom
+              )
+            ) {
+              return false;
+            }
+
+            if (
+              dateTo
+              && (
+                !event.event_date
+                || event.event_date > dateTo
+              )
+            ) {
+              return false;
+            }
+
+            if (!search) {
+              return true;
+            }
+
+            const haystack =
+              normalizeSearchText(
+                [
+                  event.title,
+                  event.area,
+                  event.materia,
+                  scheduleKindLabel(
+                    event.event_type
+                  )
+                ]
+                  .filter(Boolean)
+                  .join(" ")
+              );
+
+            return haystack.includes(
+              search
+            );
+          }
+        )
+        .sort(
+          (a, b) =>
+            String(
+              a.event_date
+              || ""
+            ).localeCompare(
+              String(
+                b.event_date
+                || ""
+              )
+            )
+            || String(
+              a.title
+              || ""
+            ).localeCompare(
+              String(
+                b.title
+                || ""
+              ),
+              "pt-BR",
+              {
+                sensitivity:
+                  "base"
+              }
+            )
+        );
+
+    count.textContent =
+      `${events.length} evento${events.length === 1 ? "" : "s"} externo${events.length === 1 ? "" : "s"}`;
+
+    const bulk =
+      document.querySelector(
+        ".theme-library-bulk"
+      );
+
+    if (bulk) {
+      bulk.hidden =
+        true;
+    }
+
+    if (!events.length) {
+      container.innerHTML = `
+        <div class="theme-library-empty">
+          Nenhum evento externo encontrado com esse filtro.
+        </div>
+      `;
+
+      return;
+    }
+
+    container.innerHTML =
+      events.map(
+        (event) => `
+          <article class="theme-library-row">
+            <div class="theme-library-title">
+              <strong>${escapeScheduleHtml(event.title || "Evento")}</strong>
+              <small>
+                ${escapeScheduleHtml(scheduleKindLabel(event.event_type))}
+              </small>
+            </div>
+
+            <div class="theme-library-cell hide-medium">
+              ${escapeScheduleHtml(event.area || "Sem área")}
+            </div>
+
+            <div class="theme-library-cell hide-medium">
+              ${escapeScheduleHtml(event.materia || "—")}
+            </div>
+
+            <div class="theme-library-date">
+              ${escapeScheduleHtml(formatDateLabelSchedule(event.event_date))}
+            </div>
+
+            <div class="theme-library-actions">
+              <button
+                class="theme-library-action danger"
+                type="button"
+                data-library-delete-event="${escapeScheduleHtml(event.id)}"
+              >
+                Excluir
+              </button>
+            </div>
+          </article>
+        `
+      ).join("");
+
+    container
+      .querySelectorAll(
+        "[data-library-delete-event]"
+      )
+      .forEach(
+        (button) => {
+          button.addEventListener(
+            "click",
+            async () => {
+              await deleteScheduleEvent(
+                button.dataset
+                  .libraryDeleteEvent
+              );
+            }
+          );
+        }
+      );
+
+    return;
+  }
+
+  const bulk =
+    document.querySelector(
+      ".theme-library-bulk"
+    );
+
+  if (bulk) {
+    bulk.hidden =
+      false;
+  }
 
   const topics =
     filteredLibraryTopics();
@@ -7018,6 +7252,33 @@ function wireImportControls() {
   document
     .getElementById("confirm-import")
     .addEventListener("click", confirmImport);
+
+  document
+    .getElementById("preview-select-all")
+    ?.addEventListener(
+      "change",
+      (event) => {
+        const checked =
+          event.target.checked;
+
+        for (
+          const row
+          of scheduleState.parsedRows
+        ) {
+          if (
+            row.duplicate
+            || row.errors.length > 0
+          ) {
+            continue;
+          }
+
+          row.include =
+            checked;
+        }
+
+        renderPreview();
+      }
+    );
 }
 
 function wirePlannerNavigation() {
