@@ -99,14 +99,16 @@
 
     list.innerHTML = items.map((item) => {
       const pending = item.review_status === "pending";
+      const awaitingPublish = !pending && item.published !== true;
+      const published = item.published === true;
 
       return `
         <article class="admin-edital-card ${pending ? "pending" : ""}" data-admin-edital-card="${esc(item.id)}">
           <div class="admin-edital-card-head">
             <div>
               <div class="admin-edital-card-meta">
-                <span class="admin-edital-status ${pending ? "pending" : "reviewed"}">
-                  ${pending ? "Novo · revisar" : "Revisado"}
+                <span class="admin-edital-status ${pending || awaitingPublish ? "pending" : "reviewed"}">
+                  ${pending ? "Novo · revisar" : awaitingPublish ? "Revisado · aguardando publicação" : "Publicado"}
                 </span>
                 ${item.uf ? `<span>${esc(item.uf)}</span>` : ""}
               </div>
@@ -214,9 +216,24 @@
                 Só o link salvo por você em “Link oficial do edital” aparece no LURIA.
               </small>
 
-              <button class="button primary" type="submit">
-                ${pending ? "Salvar e marcar como revisado" : "Salvar alterações"}
-              </button>
+              <div class="admin-edital-publish-actions">
+                <button class="button secondary" type="submit">
+                  ${pending ? "Salvar e revisar" : "Salvar alterações"}
+                </button>
+
+                ${!published ? `
+                  <button
+                    class="button primary"
+                    type="button"
+                    data-publish-edital="${esc(item.id)}"
+                    ${pending || !item.edital_url ? "disabled" : ""}
+                  >
+                    Confirmar publicação
+                  </button>
+                ` : `
+                  <span class="admin-edital-published-note">Publicado</span>
+                `}
+              </div>
             </div>
 
             <div class="admin-edital-form-status" aria-live="polite"></div>
@@ -250,7 +267,7 @@
       if (status) {
         status.textContent =
           state.pendingCount > 0
-            ? "Há editais novos aguardando sua revisão."
+            ? "Há editais aguardando revisão ou confirmação de publicação."
             : "Nenhuma pendência de edital.";
       }
 
@@ -333,7 +350,56 @@
     saveForm(form);
   });
 
-  document.addEventListener("click", (event) => {
+  document.addEventListener("click", async (event) => {
+    const publishButton = event.target.closest?.("[data-publish-edital]");
+
+    if (publishButton) {
+      const id = publishButton.dataset.publishEdital;
+      const item = state.items.find((row) => row.id === id);
+
+      if (!item) return;
+
+      if (item.review_status !== "reviewed") {
+        window.LuriaDialog?.alert?.("Salve a revisão do edital antes de publicar.");
+        return;
+      }
+
+      if (!item.edital_url) {
+        window.LuriaDialog?.alert?.("Informe o link oficial do edital antes de publicar.");
+        return;
+      }
+
+      const confirmed = await window.LuriaDialog?.confirm?.(
+        `Publicar "${item.institution}" na Central de editais?`
+      );
+
+      if (confirmed === false) return;
+
+      publishButton.disabled = true;
+      const original = publishButton.textContent;
+      publishButton.textContent = "Publicando...";
+
+      try {
+        const { data, error } = await sb.rpc(
+          "admin_publish_exam_catalog",
+          { p_id: id }
+        );
+
+        if (error || data !== true) {
+          throw error || new Error("Não foi possível publicar.");
+        }
+
+        await load(true);
+      } catch (error) {
+        console.error(error);
+        publishButton.disabled = false;
+        publishButton.textContent = original;
+        window.LuriaDialog?.alert?.("Não foi possível publicar o edital.");
+      }
+
+      return;
+    }
+
     const button = event.target.closest?.("[data-use-source-edital]");
     if (!button) return;
 
