@@ -699,3 +699,169 @@
   font-weight:700;
   text-align:center;
 }
+
+
+/* Studyrats dashboard layout v25 */
+.studyrats-head{align-items:flex-start}
+.studyrats-home-grid{
+  display:grid;
+  grid-template-columns:minmax(220px,.8fr) minmax(0,1.45fr);
+  gap:14px;
+  align-items:stretch;
+}
+.studyrats-home-preview,
+.studyrats-home-ranking{
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:color-mix(in srgb,var(--accent-soft) 18%,var(--surface));
+}
+.studyrats-home-preview{
+  min-height:300px;
+  padding:18px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  text-align:center;
+}
+.studyrats-home-preview .studyrats-kicker{align-self:flex-start}
+.studyrats-home-preview-stage{
+  width:100%;
+  min-height:185px!important;
+  margin:0;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.studyrats-customize-button{
+  width:min(190px,100%);
+  min-height:42px;
+  font-weight:900;
+}
+.studyrats-home-ranking{
+  min-height:300px;
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.studyrats-home-ranking-head{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+}
+.studyrats-home-ranking-head strong{
+  display:block;
+  margin-top:3px;
+  font-size:15px;
+}
+.studyrats-home-ranking-head>small{
+  color:var(--muted);
+  font-size:8px;
+  font-weight:800;
+}
+.studyrats-recent-ranking{
+  flex:1;
+  display:grid;
+  align-content:start;
+  gap:7px;
+}
+.studyrats-recent-row{
+  min-height:46px;
+  display:grid;
+  grid-template-columns:24px minmax(110px,1fr) minmax(110px,.9fr) 76px;
+  align-items:center;
+  gap:9px;
+  padding:7px 9px;
+  border:1px solid var(--border);
+  border-radius:11px;
+  background:var(--surface);
+}
+.studyrats-recent-number{
+  width:24px;
+  height:24px;
+  display:grid;
+  place-items:center;
+  border-radius:8px;
+  background:var(--accent-soft);
+  color:var(--accent);
+  font-size:9px;
+  font-weight:1000;
+}
+.studyrats-recent-copy,
+.studyrats-recent-winner,
+.studyrats-recent-position{
+  min-width:0;
+}
+.studyrats-recent-row small{
+  display:block;
+  color:var(--muted);
+  font-size:7px;
+  line-height:1.2;
+  margin-bottom:2px;
+}
+.studyrats-recent-row strong{
+  display:block;
+  font-size:9px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.studyrats-recent-position{text-align:right}
+.studyrats-recent-position strong{
+  font-size:12px;
+  color:var(--accent);
+}
+.studyrats-recent-empty{
+  min-height:118px;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  border:1px dashed var(--border);
+  border-radius:12px;
+  color:var(--muted);
+  text-align:center;
+  font-size:9px;
+  line-height:1.45;
+}
+.studyrats-new-challenge-button{
+  width:100%;
+  min-height:44px;
+  font-size:10px;
+  font-weight:950;
+}
+.studyrats-rat-picker[hidden]{display:none!important}
+.studyrats-rat-picker{
+  grid-template-columns:minmax(160px,.55fr) minmax(0,1.8fr);
+  align-items:start;
+}
+.studyrats-rat-picker-controls{min-width:0}
+.studyrats-preview-drag-hint{grid-column:1/-1}
+
+@media (max-width:760px){
+  .studyrats-home-grid{grid-template-columns:1fr}
+  .studyrats-home-preview{min-height:245px}
+  .studyrats-home-preview-stage{min-height:150px!important}
+  .studyrats-home-ranking{min-height:0}
+  .studyrats-recent-row{
+    grid-template-columns:22px minmax(92px,1fr) minmax(86px,.85fr) 64px;
+    gap:6px;
+    padding:7px;
+  }
+  .studyrats-rat-picker{grid-template-columns:1fr}
+  .studyrats-rat-picker-controls{width:100%}
+}
+
+@media (max-width:480px){
+  .studyrats-card{padding:12px;gap:12px}
+  .studyrats-home-preview,.studyrats-home-ranking{padding:12px}
+  .studyrats-recent-row{
+    grid-template-columns:20px minmax(0,1fr) 58px;
+  }
+  .studyrats-recent-winner{grid-column:2/3}
+  .studyrats-recent-position{grid-column:3;grid-row:1}
+  .studyrats-recent-copy{grid-column:2}
+  .studyrats-recent-winner{margin-top:-2px}
+}
