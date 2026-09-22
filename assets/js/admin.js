@@ -132,6 +132,16 @@
     }).format(Number(value || 0));
   }
 
+  function formatDateTime(value) {
+    if (!value) return "—";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "—";
+    return new Intl.DateTimeFormat("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "short"
+    }).format(date);
+  }
+
   function formatPercent(value) {
     const number = Number(value);
     if (!Number.isFinite(number)) return "—";
