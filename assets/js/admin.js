@@ -1349,6 +1349,7 @@
       loadStorageExpansionGuide(),
       loadQuestionFactory(),
       loadQuestionFactoryStyles(),
+      loadQuestionFactoryBlockTracker(),
       loadBadQuestionFolder(0),
       loadQuestionFactoryQuality(),
       window.LuriaAdminEditais?.load?.() || Promise.resolve()
@@ -1965,6 +1966,20 @@
       return;
     }
 
+    if (
+      payload.style_score != null
+      || payload.style_confidence_score != null
+    ) {
+      const { error: calibrationError } = await sb.rpc(
+        "admin_update_question_factory_style_calibration",
+        { p_payload: payload }
+      );
+
+      if (calibrationError) {
+        console.warn("Auditoria importada, mas a calibração editorial ao vivo não pôde ser atualizada:", calibrationError);
+      }
+    }
+
     if (message) {
       message.textContent = state.qfReviewImportMode === "lot"
         ? (data?.ready ? "Revisão final importada. Lote marcado como pronto." : "Revisão final importada. O lote ainda possui etapa pendente.")
@@ -1973,7 +1988,7 @@
           : `Importadas ${data?.imported || 0}: ${data?.approved || 0} aprovadas, ${data?.needs_revision || 0} a rever.`;
     }
 
-    await Promise.all([loadQuestionFactory(),loadQuestionFactoryStyles(),loadQuestionFactoryQuality(),loadBadQuestionFolder(0)]);
+    await Promise.all([loadQuestionFactory(),loadQuestionFactoryStyles(),loadQuestionFactoryBlockTracker(),loadQuestionFactoryQuality(),loadBadQuestionFolder(0)]);
   }
 
   async function setHumanBlockReview(batchNumber, blockNumber, decision) {
@@ -1993,7 +2008,7 @@
       window.alert(error.message || "Não foi possível registrar sua decisão.");
       return;
     }
-    await Promise.all([loadQuestionFactory(),loadQuestionFactoryStyles(),loadQuestionFactoryQuality()]);
+    await Promise.all([loadQuestionFactory(),loadQuestionFactoryStyles(),loadQuestionFactoryBlockTracker(),loadQuestionFactoryQuality()]);
   }
 
   function buildBoardSegmentPrompt(item, stage) {
@@ -2241,6 +2256,13 @@ Mesmo se approved, forneça:
 - optional_polish
 Isso permite melhorar questões já boas sem obrigar correção.
 
+CALIBRAÇÃO AO VIVO DA BANCA
+Além das notas individuais, atribua no nível RAIZ do JSON:
+- style_score: nota editorial de 0 a 10 para a fidelidade global do bloco ao padrão real recente da banca;
+- style_confidence_score: confiança de 0 a 100 de que essa nota está bem sustentada por material primário/real da banca;
+- style_score_note: justificativa curta da nota e da confiança.
+Esses três campos serão importados pelo Admin e atualizarão automaticamente o callout da banca e a lista de blocos. Não reutilize uma nota anterior sem reavaliar o bloco atual.
+
 SAÍDA JSON EXATA
 {
   "schema_version":"1.1",
@@ -2249,6 +2271,9 @@ SAÍDA JSON EXATA
   "block_number":N,
   "exam_style":"${style}",
   "auditor":"Perplexity",
+  "style_score":0-10,
+  "style_confidence_score":0-100,
+  "style_score_note":"Justifique em 1–3 frases a nota editorial atribuída à fidelidade desta banca com base em provas públicas recentes.",
   "reviews":[
     {
       "question_id":"...",
@@ -2538,6 +2563,9 @@ Se qualquer questão continuar abaixo de 97:
 
 Essa nova proposta também deverá passar por julgamento independente do ChatGPT antes de nova correção.
 
+CALIBRAÇÃO AO VIVO
+Recalcule style_score (0–10) e style_confidence_score (0–100) para o bloco após as correções. A nota deve refletir fidelidade à banca observada em material real recente, não apenas o perfil interno.
+
 SAÍDA JSON
 {
   "schema_version":"1.0",
@@ -2546,6 +2574,9 @@ SAÍDA JSON
   "block_number":N,
   "exam_style":"${style}",
   "auditor":"Perplexity",
+  "style_score":0-10,
+  "style_confidence_score":0-100,
+  "style_score_note":"Recalcule a fidelidade editorial após as correções e explique brevemente.",
   "reviews":[
     {
       "question_id":"...",
@@ -2650,7 +2681,11 @@ SAÍDA JSON
   "schema_version":"1.0",
   "review_stage":"lot_perplexity_final",
   "batch_number":N,
+  "exam_style":"${style}",
   "reviewer":"Perplexity",
+  "style_score":0-10,
+  "style_confidence_score":0-100,
+  "style_score_note":"Nota editorial global do lote e confiança baseada em material real da banca.",
   "lote_status":"approved|needs_revision",
   "questions_flagged":[],
   "answer_key_disagreements":[],
@@ -2669,8 +2704,99 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
     return "";
   }
 
+
+  function questionFactoryStageMeta(stage) {
+    const map = {
+      generation: { label: "Geração", provider: "chatgpt" },
+      chatgpt_initial: { label: "Checagem ChatGPT", provider: "chatgpt" },
+      perplexity_initial: { label: "Auditoria Perplexity", provider: "perplexity" },
+      chatgpt_adjudication: { label: "Julgar parecer", provider: "chatgpt" },
+      chatgpt_correction: { label: "Correção ChatGPT", provider: "chatgpt" },
+      perplexity_reaudit: { label: "Reauditoria Perplexity", provider: "perplexity" },
+      human_review: { label: "Aprovação humana", provider: null },
+      block_complete: { label: "Bloco concluído", provider: null }
+    };
+    return map[stage] || { label: stage || "Pendente", provider: null };
+  }
+
+  function questionFactoryBlockPrompt(block) {
+    const style = state.questionStyles.find(x => x.exam_style === block.exam_style);
+    if (!style) return "";
+
+    if (block.next_stage === "generation") {
+      return style.full_generation_brief || style.generation_instructions || style.recommended_generation_rules || "";
+    }
+
+    if (["human_review","block_complete"].includes(block.next_stage)) {
+      return "";
+    }
+
+    return buildBoardSegmentPrompt(style, block.next_stage);
+  }
+
+  function renderQuestionFactoryBlockTracker(rows) {
+    state.qfBlockTracker = Array.isArray(rows) ? rows : [];
+    const wrap = $("admin-qf-block-tracker");
+    const count = $("admin-qf-block-tracker-count");
+    if (count) count.textContent = `${state.qfBlockTracker.length} bloco${state.qfBlockTracker.length === 1 ? "" : "s"}`;
+    if (!wrap) return;
+
+    if (!state.qfBlockTracker.length) {
+      wrap.innerHTML = '<div class="admin-factory-empty-wide">Nenhum bloco criado ainda.</div>';
+      return;
+    }
+
+    wrap.innerHTML = state.qfBlockTracker.map((block,index) => {
+      const meta = questionFactoryStageMeta(block.next_stage);
+      const prompt = questionFactoryBlockPrompt(block);
+      const pid = `qf-next-block-${Number(block.batch_number||0)}-${Number(block.block_number||0)}-${index}`;
+      const reliability = block.reliability_score == null
+        ? "—"
+        : `${Number(block.reliability_score).toLocaleString("pt-BR",{maximumFractionDigits:0})}%`;
+      const styleScore = block.style_score == null
+        ? "—"
+        : `${Number(block.style_score).toLocaleString("pt-BR",{maximumFractionDigits:1})}/10`;
+      const provider = block.next_provider || meta.provider;
+
+      return `
+        <article class="admin-qf-tracker-row">
+          <div class="admin-qf-tracker-main">
+            <strong>L${String(Number(block.batch_number||0)).padStart(3,"0")} · Bloco ${Number(block.block_number||0)}</strong>
+            <small>${Number(block.question_count||0)}/${Number(block.target_size||200)} questões</small>
+          </div>
+          <div><span>Banca</span><strong>${esc(block.exam_style || "—")}</strong></div>
+          <div><span>Fase</span><strong>${esc(block.phase || meta.label)}</strong></div>
+          <div><span>Fidelidade</span><strong>${esc(styleScore)}</strong></div>
+          <div><span>Confiabilidade</span><strong title="${esc(block.style_score_note || "")}">${esc(reliability)}</strong></div>
+          <div class="admin-qf-tracker-next">
+            <span>Próximo prompt</span>
+            ${prompt ? `
+              <div class="admin-qf-tracker-prompt-actions">
+                <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">${esc(meta.label)} · copiar</button>
+                ${provider ? `<button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${esc(provider)}">Abrir ${provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>` : ""}
+              </div>
+              <pre id="${esc(pid)}" class="admin-qf-prompt admin-qf-tracker-hidden-prompt">${esc(prompt)}</pre>
+            ` : '<strong class="admin-qf-tracker-no-prompt">Sem prompt automático nesta fase</strong>'}
+          </div>
+        </article>
+      `;
+    }).join("");
+  }
+
+  async function loadQuestionFactoryBlockTracker() {
+    const { data, error } = await sb.rpc("admin_question_factory_block_tracker");
+    if (error) {
+      console.warn("Não foi possível carregar o acompanhamento dos blocos:", error);
+      return;
+    }
+    renderQuestionFactoryBlockTracker(data || []);
+  }
+
   function renderQuestionFactoryStyles(styles) {
     state.questionStyles = Array.isArray(styles) ? styles : [];
+    if (Array.isArray(state.qfBlockTracker)) {
+      renderQuestionFactoryBlockTracker(state.qfBlockTracker);
+    }
 
     const dash = $("admin-qf-style-dashboard");
     const manual = $("admin-qf-style-manual");
@@ -2683,6 +2809,10 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
     if (dash) {
       dash.innerHTML = state.questionStyles.length ? state.questionStyles.map((item,index) => {
         const score = item.style_score == null ? "calibrando" : `${Number(item.style_score).toLocaleString("pt-BR",{maximumFractionDigits:1})}/10`;
+        const reliability = item.style_confidence_score == null ? null : Number(item.style_confidence_score);
+        const liveScore = item.style_score_updated_at
+          ? `${score}${reliability == null ? "" : ` · ${reliability.toLocaleString("pt-BR",{maximumFractionDigits:0})}% confiança`}`
+          : score;
         const slug = String(item.exam_style || `banca-${index+1}`).replace(/[^a-z0-9]/gi,"-").toLowerCase();
         const masterPromptId = `qf-dashboard-${slug}-master`;
         const promptStages = [
@@ -2702,7 +2832,7 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
                 <strong>${esc(item.exam_style)}</strong>
                 <small>${esc(item.organizing_body || "Perfil editorial")}</small>
               </div>
-              <span>${esc(score)}</span>
+              <span title="${esc(item.style_score_note || "")}">${esc(liveScore)}</span>
             </div>
             <div class="admin-qf-style-total">
               <strong>${formatNumber(item.total)}</strong>
@@ -3263,7 +3393,7 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
       });
     });
 
-    ["admin-qf-style-dashboard","admin-qf-style-manual"].forEach(containerId => {
+    ["admin-qf-style-dashboard","admin-qf-style-manual","admin-qf-block-tracker"].forEach(containerId => {
       $(containerId)?.addEventListener("click", async event => {
         const copy = event.target.closest("[data-inline-prompt].admin-qf-copy-inline");
         if (copy) {
