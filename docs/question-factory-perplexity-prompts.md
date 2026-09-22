@@ -18,7 +18,7 @@
 Total = 100.
 
 Aprovação somente quando:
-- quality_score >= 95
+- quality_score >= 97
 - hard_fail = false
 - ambiguity = false
 - single_best_answer = true
@@ -198,9 +198,9 @@ Retornar:
 - strongest_point
 - remaining_minor_risk
 - optional_polish
-- proposed_change quando <95
+- proposed_change quando <97
 
-Para toda questão <95, proposed_change deve conter substituição textual exata, não apenas “melhorar”.
+Para toda questão <97, proposed_change deve conter substituição textual exata, não apenas “melhorar”.
 
 ## Adjudicação ChatGPT após Perplexity
 
