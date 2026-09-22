@@ -114,13 +114,13 @@
   function ensureStyles(){
     let l=document.getElementById("luria-onboarding-css");
     if(l){
-      if(!String(l.href||"").includes("v=2.0")) l.href="/assets/css/onboarding.css?v=2.0";
+      if(!String(l.href||"").includes("v=2.0")) l.href="/assets/css/onboarding.css?v=2.1";
       return;
     }
     l=document.createElement("link");
     l.id="luria-onboarding-css";
     l.rel="stylesheet";
-    l.href="/assets/css/onboarding.css?v=2.0";
+    l.href="/assets/css/onboarding.css?v=2.1";
     document.head.appendChild(l);
   }
 
@@ -1561,11 +1561,27 @@
   }
   function addQuestionsHelpButton(){
     if(page!=="questoes"||document.getElementById("qs-onboarding-help")) return;
-    const host=document.querySelector(".qs-mode-tabs, .qs-tabs, .topbar");
+
+    const notificationCenter =
+      document.getElementById("luria-notifications");
+
+    const host =
+      notificationCenter
+      || document.querySelector(".topbar");
+
     if(!host) return;
+
     const b=document.createElement("button");
-    b.id="qs-onboarding-help"; b.type="button"; b.className="qs-onboarding-help"; b.textContent="Como funcionam os simulados?";
+    b.id="qs-onboarding-help";
+    b.type="button";
+    b.className="qs-onboarding-help";
+    b.textContent="Como funcionam os simulados?";
     b.onclick=()=>{questionsGuideIndex=0;renderQuestionsGuide();};
+
+    if(notificationCenter){
+      notificationCenter.classList.add("has-questions-help");
+    }
+
     host.appendChild(b);
   }
 
