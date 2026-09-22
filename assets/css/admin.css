@@ -2447,3 +2447,37 @@ body.admin-unlocked #admin-app {
     font-size:7.7px;
   }
 }
+
+
+/* Explicit answer-key source */
+.admin-qf-source,
+.admin-qf-answer-source{
+  display:grid;
+  gap:4px;
+  padding:9px 10px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--surface);
+}
+.admin-qf-source strong,
+.admin-qf-answer-source strong{
+  font-size:8px;
+}
+.admin-qf-source span,
+.admin-qf-answer-source span,
+.admin-qf-answer-source small{
+  color:var(--muted);
+  font-size:7.5px;
+  line-height:1.45;
+}
+.admin-qf-answer-source{
+  border-color:color-mix(in srgb,#22c55e 34%,var(--border));
+  background:color-mix(in srgb,#22c55e 3%,var(--surface));
+}
+.admin-qf-answer-source a{
+  justify-self:start;
+  color:var(--accent);
+  font-size:7.5px;
+  font-weight:800;
+  text-decoration:none;
+}
