@@ -33,7 +33,7 @@
     rel="stylesheet"
     href="assets/css/editais.css?v=12.9"
   >
-  <link rel="stylesheet" href="assets/css/editais-provas-v16.css?v=16.2">\n  <link rel="stylesheet" href="assets/css/editais-catalog.css?v=1">
+  <link rel="stylesheet" href="assets/css/editais-provas-v16.css?v=16.2">\n  <link rel="stylesheet" href="assets/css/editais-catalog.css?v=2">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
   <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
   <link rel="canonical" href="/editais/">
@@ -312,7 +312,88 @@
 
             
           </div>
-        </section>\n\n  <dialog
+        </section>\n\n    <dialog id="enamed-target-dialog" class="enamed-target-dialog">
+    <form id="enamed-target-form" method="dialog">
+      <div class="exam-dialog-head">
+        <div>
+          <span class="badge accent">ENAMED / ENARE</span>
+          <h2>Qual vaga você pretende?</h2>
+          <p class="enamed-target-copy">
+            Informe a especialidade e o hospital para carregar automaticamente
+            as notas de corte anteriores.
+          </p>
+        </div>
+
+        <button
+          id="enamed-target-close"
+          class="exam-dialog-close"
+          type="button"
+          aria-label="Fechar"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="enamed-target-grid">
+        <label class="exam-field">
+          <span>Especialidade pretendida *</span>
+          <input
+            id="enamed-target-specialty"
+            type="text"
+            list="enamed-specialty-options"
+            autocomplete="off"
+            placeholder="Ex.: Cirurgia Geral"
+            required
+          >
+          <datalist id="enamed-specialty-options"></datalist>
+        </label>
+
+        <label class="exam-field">
+          <span>Hospital / instituição *</span>
+          <input
+            id="enamed-target-hospital"
+            type="text"
+            list="enamed-hospital-options"
+            autocomplete="off"
+            placeholder="Ex.: Hospital Universitário..."
+            required
+          >
+          <datalist id="enamed-hospital-options"></datalist>
+        </label>
+      </div>
+
+      <div class="enamed-cutoff-info">
+        O LURIA localizará o histórico disponível e salvará as edições mais recentes
+        junto da sua prova.
+      </div>
+
+      <div class="exam-dialog-actions">
+        <button
+          id="enamed-target-cancel"
+          class="button secondary"
+          type="button"
+        >
+          Cancelar
+        </button>
+
+        <button
+          id="enamed-target-submit"
+          class="button primary"
+          type="submit"
+        >
+          Buscar notas e adicionar
+        </button>
+      </div>
+
+      <div
+        id="enamed-target-status"
+        class="enamed-target-status"
+        aria-live="polite"
+      ></div>
+    </form>
+  </dialog>
+
+<dialog
     id="exam-dialog"
     class="exam-dialog"
   >
@@ -548,7 +629,7 @@
   <script src="assets/js/app.js?v=17.0"></script>
   <script src="assets/js/study-mode.js?v=12.1"></script>
 
-  <script src="assets/js/editais-catalog.js?v=1"></script>\n  <script src="assets/js/editais.js?v=13.2"></script>
+  <script src="assets/js/editais-catalog.js?v=2"></script>\n  <script src="assets/js/editais.js?v=13.3"></script>
   <script src="assets/js/editais-provas-v16.js?v=16.3"></script>
 
   <script defer src="assets/js/pwa.js?v=3"></script>
