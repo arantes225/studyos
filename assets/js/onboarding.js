@@ -431,7 +431,6 @@
 
     if(stage){
       stage.hidden=false;
-      stage.dataset.onboardingDemo="1";
       stage.dataset.onboardingFlashcard="1";
 
       const area=document.getElementById("review-area");
@@ -1085,12 +1084,34 @@
   }
 
   function runStepAction(step){
-    if(step.action==="flash-review") activateTab('[data-flash-tab="review"]');
+    if(step.action==="flash-review"){
+      activateTab('[data-flash-tab="review"]');
+      addFlashDemo();
+      setTimeout(addFlashDemo,120);
+      setTimeout(addFlashDemo,420);
+    }
     if(step.action==="flash-answer"){
       activateTab('[data-flash-tab="review"]');
-      const answer=document.getElementById("review-answer"); if(answer) answer.hidden=false;
-      const ratings=document.getElementById("rating-actions"); if(ratings) ratings.hidden=false;
-      const show=document.getElementById("show-answer"); if(show) show.hidden=true;
+
+      const revealFlashAnswer=()=>{
+        addFlashDemo();
+
+        const answer=document.getElementById("review-answer");
+        const ratings=document.getElementById("rating-actions");
+        const show=document.getElementById("show-answer");
+        const stage=document.getElementById("review-stage");
+        const empty=document.getElementById("review-empty");
+
+        if(stage) stage.hidden=false;
+        if(empty) empty.hidden=true;
+        if(answer) answer.hidden=false;
+        if(ratings) ratings.hidden=false;
+        if(show) show.hidden=true;
+      };
+
+      revealFlashAnswer();
+      setTimeout(revealFlashAnswer,120);
+      setTimeout(revealFlashAnswer,420);
     }
     if(step.action==="flash-create") activateTab('[data-flash-tab="create"]');
     if(step.action==="flash-library"){
