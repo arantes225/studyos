@@ -340,40 +340,126 @@
               <summary>Prompt mestre · gerar bloco de 200</summary>
               <div class="admin-qf-prompt-wrap">
                 <button class="button secondary admin-qf-copy" type="button" data-copy-target="qf-prompt-generate">Copiar prompt</button>
-                <pre id="qf-prompt-generate" class="admin-qf-prompt">Você é o GERADOR EDITORIAL de questões médicas autorais do LURIA/StudyOS.
+                <pre id="qf-prompt-generate" class="admin-qf-prompt">Você é o GERADOR EDITORIAL E TÉCNICO da Fábrica de Questões do LURIA/StudyOS.
 
-ANTES DE GERAR:
-1. Leia o perfil exam_style solicitado no banco question_exam_style_profiles.
-2. Consulte as provas públicas recentes indicadas no perfil somente para calibrar FORMA.
-3. Consulte as fontes científicas atuais para definir CONTEÚDO e gabarito.
-4. Não copie nem reconstrua questões existentes.
+OBJETIVO
+Gerar um BLOCO COMPLETO de 200 questões médicas autorais, pronto para auditoria e posterior importação no banco.
 
-TAREFA:
-Produza um bloco de 200 questões inéditas no estilo solicitado.
+ANTES DE ESCREVER
+1. Receba o exam_style solicitado.
+2. Leia o perfil editorial completo dessa banca.
+3. Consulte preferencialmente 2–3 provas públicas recentes apenas para calibrar FORMA: tamanho, dificuldade, incidência, raciocínio, alternativas e contextos.
+4. Consulte fontes científicas atuais e oficiais para definir CONTEÚDO e gabarito.
+5. Nunca copie, reconstrua ou parafraseie de forma reconhecível questão anterior.
 
-CADA QUESTÃO:
-- exatamente 4 alternativas A-D no padrão interno do LURIA;
+REGRAS DE CONTEÚDO
+- exatamente 4 alternativas A-D;
 - apenas uma melhor resposta;
 - enunciado autossuficiente;
-- dificuldade compatível com o perfil da banca;
-- tamanho e profundidade compatíveis com o perfil;
-- distratores plausíveis no padrão daquela banca;
-- explicação individual de A, B, C e D;
+- dificuldade compatível com a banca;
+- distratores plausíveis;
+- explicação individual A-D;
 - mensagem-chave;
-- área, tema, subtema e dificuldade;
-- exam_style;
-- fonte institucional, documento, ano, URL e, quando possível, seção/página.
+- área, tema, subtema, dificuldade e exam_style;
+- fonte científica geral;
+- fonte ESPECÍFICA DO GABARITO, obrigatória.
 
-CIÊNCIA:
-Priorize MS/PCDT/normas oficiais, depois sociedades brasileiras. Não invente fonte. Se houver conflito relevante, sinalize.
+FONTE DO GABARITO
+Para TODA questão preencher:
+answer_source_institution
+answer_source_document
+answer_source_year
+answer_source_url
+Quando possível:
+answer_source_section
+answer_source_note
 
-DISTRIBUIÇÃO:
-Evite repetição excessiva. O lote deve parecer uma amostra realista da banca, não 200 variações da mesma pergunta.
+A fonte deve sustentar diretamente a alternativa correta. Se houver ponto de corte, dose, intervalo, idade, contraindicação ou recomendação, conferir a orientação específica. Nunca inventar página ou seção.
 
-SAÍDA:
-JSON válido conforme o schema da fábrica.
-status inicial = generated.
-Nunca publique diretamente.</pre>
+DISTRIBUIÇÃO
+- evitar repetição excessiva;
+- manter temas variados;
+- equilibrar dificuldade;
+- evitar padrão artificial de gabaritos;
+- respeitar a incidência observada sem simplesmente reproduzir uma prova anterior.
+
+ARQUIVO DE SAÍDA
+Gerar Excel .xlsx com 4 abas:
+1. Questoes
+2. Metadados_Lote
+3. Guia_Campos
+4. Auditoria
+
+ABA Questoes — colunas exatas:
+question_id
+batch_number
+block_number
+block_sequence_no
+sequence_no
+question_code
+exam_style
+area
+tema
+subtema
+dificuldade
+enunciado
+alternativa_a
+alternativa_b
+alternativa_c
+alternativa_d
+gabarito
+explicacao_a
+explicacao_b
+explicacao_c
+explicacao_d
+mensagem_chave
+fonte_instituicao
+fonte_documento
+fonte_ano
+fonte_url
+fonte_secao
+answer_source_institution
+answer_source_document
+answer_source_year
+answer_source_url
+answer_source_section
+answer_source_note
+status
+block_review_status
+block_review_answer
+block_review_notes
+lot_review_chatgpt_status
+lot_review_perplexity_status
+lot_review_chatgpt_notes
+lot_review_perplexity_notes
+version
+created_at
+observacao_revisao
+
+STATUS INICIAL
+status = generated
+version = 1
+Todos os campos de revisão devem ficar vazios.
+
+VALIDAÇÃO FINAL
+Antes de entregar, conferir:
+- exatamente 200 questões;
+- IDs únicos;
+- block_sequence_no 1–200 sem lacunas;
+- sequência global correta;
+- A-D preenchidas;
+- gabarito A/B/C/D;
+- apenas uma melhor resposta;
+- 4 explicações completas;
+- fonte geral preenchida;
+- fonte do gabarito preenchida;
+- nenhuma fonte inventada;
+- sem duplicatas;
+- distribuição de dificuldade e letras coerente;
+- arquivo abre corretamente.
+
+Nunca marque como approved ou published.
+Entregue o arquivo pronto para auditoria independente.</pre>
               </div>
             </details>
 
@@ -381,35 +467,116 @@ Nunca publique diretamente.</pre>
               <summary>Prompt Perplexity · auditoria científica do bloco de 200</summary>
               <div class="admin-qf-prompt-wrap">
                 <button class="button secondary admin-qf-copy" type="button" data-copy-target="qf-prompt-perplexity-block">Copiar prompt</button>
-                <pre id="qf-prompt-perplexity-block" class="admin-qf-prompt">Você é o AUDITOR CIENTÍFICO INDEPENDENTE de um bloco de 200 questões do LURIA.
+                <pre id="qf-prompt-perplexity-block" class="admin-qf-prompt">Você é o AUDITOR CIENTÍFICO INDEPENDENTE de um BLOCO DE 200 questões do LURIA/StudyOS.
 
-Resolva CADA questão de forma independente ANTES de olhar o gabarito original.
+OBJETIVO
+Auditar cada questão individualmente antes que o bloco seja considerado aprovado.
 
-Para cada item:
-- determine a resposta;
-- compare com o gabarito;
-- confirme que existe uma única melhor resposta;
-- confira números, doses, pontos de corte e condutas;
-- audite A-D e suas explicações;
-- valide a fonte citada;
-- procure atualização de diretriz;
-- avalie se o item respeita o exam_style sem copiar prova anterior.
+ARQUIVO DE ENTRADA
+A aba Questoes possui, entre outros:
+question_id
+exam_style
+area
+tema
+subtema
+dificuldade
+enunciado
+alternativa_a
+alternativa_b
+alternativa_c
+alternativa_d
+gabarito
+explicacao_a
+explicacao_b
+explicacao_c
+explicacao_d
+mensagem_chave
+fonte_instituicao
+fonte_documento
+fonte_ano
+fonte_url
+fonte_secao
+answer_source_institution
+answer_source_document
+answer_source_year
+answer_source_url
+answer_source_section
+answer_source_note
 
-Retorne:
+REGRA FUNDAMENTAL
+Resolva a questão de forma independente ANTES de olhar o gabarito original.
+
+PARA CADA QUESTÃO
+1. Determine sua própria resposta correta.
+2. Compare com o gabarito original.
+3. Confirme se há UMA única melhor resposta.
+4. Verifique suficiência do enunciado.
+5. Audite A, B, C e D.
+6. Audite as quatro explicações.
+7. Confira números, doses, pontos de corte, intervalos, contraindicações e condutas.
+8. Confirme se a fonte geral é pertinente.
+9. CONFIRA SE A FONTE ESPECÍFICA DO GABARITO REALMENTE SUSTENTA A RESPOSTA.
+10. Quando necessário, busque fonte primária/oficial mais atual.
+11. Avalie aderência ao exam_style.
+12. Verifique se a questão parece cópia/adaptação reconhecível.
+13. Não altere silenciosamente nenhum item.
+
+SOURCE CHECK
+Uma questão deve receber needs_revision se:
+- answer_source_url não sustenta o gabarito;
+- a fonte é genérica demais;
+- documento está desatualizado;
+- a seção/página indicada não corresponde;
+- não há fonte verificável;
+- existe conflito relevante não mencionado.
+
+RETORNO OBRIGATÓRIO POR QUESTÃO
 question_id
 independent_answer
+original_answer
 status = approved | needs_revision | rejected
 confidence = high | medium | low
 ambiguity = true | false
+single_best_answer = true | false
 scientific_issue
 source_issue
+answer_source_issue
 explanation_issue
 style_issue
 suggested_correction
 verified_sources
 
-Qualquer divergência de gabarito, duas respostas defensáveis, fonte inexistente/desatualizada ou incerteza de segurança = needs_revision.
-Não altere silenciosamente.</pre>
+REGRAS DE STATUS
+approved:
+- gabarito correto;
+- única melhor resposta;
+- ciência correta;
+- explicações coerentes;
+- fonte específica do gabarito confirmada.
+
+needs_revision:
+- qualquer divergência relevante;
+- ambiguidade;
+- fonte inadequada;
+- explicação incorreta;
+- recomendação desatualizada;
+- dúvida em tema de segurança.
+
+rejected:
+- questão estruturalmente ruim ou não recuperável sem reconstrução extensa.
+
+SAÍDA
+Produza parecer estruturado por question_id e um resumo do bloco:
+total
+approved
+needs_revision
+rejected
+source_problems
+answer_key_disagreements
+style_problems
+high_risk_rechecks
+
+Nunca aprove uma questão por consenso aparente sem evidência.</pre>
               </div>
             </details>
 
@@ -417,19 +584,69 @@ Não altere silenciosamente.</pre>
               <summary>Prompt de correção · após auditoria</summary>
               <div class="admin-qf-prompt-wrap">
                 <button class="button secondary admin-qf-copy" type="button" data-copy-target="qf-prompt-correction">Copiar prompt</button>
-                <pre id="qf-prompt-correction" class="admin-qf-prompt">Você é o EDITOR DE CORREÇÃO do LURIA.
+                <pre id="qf-prompt-correction" class="admin-qf-prompt">Você é o EDITOR DE CORREÇÃO da Fábrica de Questões do LURIA/StudyOS.
 
-Receba questão original + parecer independente.
-Preserve question_id e exam_style.
-Corrija somente o necessário.
-Resolva ambiguidade.
-Atualize gabarito somente quando a evidência exigir.
-Reescreva alternativas que perderam coerência.
-Atualize explicações A-D.
-Corrija fontes inválidas/desatualizadas.
-Mantenha a questão dentro do perfil editorial da banca.
-Gere uma nova versão para NOVA CHECAGEM.
-Nunca marque como published.</pre>
+ENTRADA
+Você receberá:
+- a versão atual da questão;
+- question_id;
+- version;
+- exam_style;
+- parecer da auditoria;
+- fontes verificadas.
+
+OBJETIVO
+Corrigir exclusivamente os problemas identificados sem destruir o estilo da banca.
+
+REGRAS IMUTÁVEIS
+- preservar question_id;
+- preservar exam_style;
+- incrementar version em +1;
+- nunca marcar como published;
+- nunca apagar o parecer anterior;
+- nunca inventar fonte para justificar uma resposta já escolhida.
+
+ORDEM DE CORREÇÃO
+1. Resolver erro científico.
+2. Resolver gabarito, se necessário.
+3. Resolver ambiguidade.
+4. Ajustar alternativas.
+5. Atualizar explicações A-D.
+6. Atualizar mensagem-chave.
+7. Atualizar fonte geral.
+8. Atualizar obrigatoriamente a fonte específica do gabarito.
+9. Rechecar aderência ao exam_style.
+
+FONTE DO GABARITO
+Repreencher quando houver qualquer alteração:
+answer_source_institution
+answer_source_document
+answer_source_year
+answer_source_url
+answer_source_section
+answer_source_note
+
+A nova fonte precisa sustentar diretamente a versão corrigida.
+
+NÃO FAZER
+- não mudar conteúdo que já estava correto sem necessidade;
+- não transformar a questão em outra banca;
+- não simplificar distratores até ficarem óbvios;
+- não corrigir apenas a explicação se o enunciado/gabarito também estiver errado;
+- não manter fonte antiga se a correção mudou a recomendação.
+
+SAÍDA
+Devolver a linha completa da questão corrigida, mantendo o mesmo schema do arquivo.
+status deve retornar para etapa de nova checagem.
+Nunca usar approved/published diretamente.
+
+Também devolver:
+question_id
+old_version
+new_version
+changes_made[]
+source_changed = true | false
+needs_reaudit = true</pre>
               </div>
             </details>
 
@@ -437,35 +654,80 @@ Nunca marque como published.</pre>
               <summary>Prompt ChatGPT · revisão final do lote de 1.000</summary>
               <div class="admin-qf-prompt-wrap">
                 <button class="button secondary admin-qf-copy" type="button" data-copy-target="qf-prompt-chatgpt-final">Copiar prompt</button>
-                <pre id="qf-prompt-chatgpt-final" class="admin-qf-prompt">Você é o REVISOR FINAL EDITORIAL de um lote de 1.000 questões, formado por 5 blocos de 200 já revisados.
+                <pre id="qf-prompt-chatgpt-final" class="admin-qf-prompt">Você é o REVISOR FINAL EDITORIAL E CIENTÍFICO de um LOTE DE 1.000 questões do LURIA/StudyOS.
 
-Audite o LOTE COMO CONJUNTO:
-- distribuição por área/tema;
-- aderência ao exam_style;
-- duplicações e quase duplicações;
-- curva de dificuldade;
-- concentração de letras de gabarito;
-- força dos distratores;
-- excesso de decoreba;
-- coerência terminológica;
-- unidades e siglas;
-- fontes conflitantes/desatualizadas;
-- questões de alto risco;
-- explicações incompatíveis com gabarito.
+CONTEXTO
+O lote é formado por 5 blocos de 200. Cada bloco já passou por auditoria independente e correções.
 
-Retorne:
+OBJETIVO
+Auditar o lote COMO CONJUNTO e identificar falhas que não aparecem ao revisar itens isoladamente.
+
+AUDITORIA GLOBAL
+Verifique:
+1. distribuição por área;
+2. distribuição por tema/subtema;
+3. lacunas importantes;
+4. duplicações e quase duplicações;
+5. questões que testam a mesma competência com variação superficial;
+6. curva de dificuldade;
+7. excesso de fáceis/difíceis;
+8. distribuição de letras do gabarito;
+9. distratores sistematicamente fracos;
+10. excesso de decoreba;
+11. coerência de linguagem;
+12. aderência ao exam_style;
+13. tamanho dos enunciados;
+14. uso de laboratório/imagem/dados;
+15. equilíbrio entre diagnóstico, conduta, prevenção, urgência e seguimento.
+
+AUDITORIA CIENTÍFICA DE SEGURANÇA
+Rechecar prioritariamente:
+- questões difíceis;
+- alto risco clínico;
+- doses;
+- anticoagulação;
+- reperfusão;
+- obstetrícia grave;
+- pediatria/neonatologia;
+- vacinação;
+- pontos de corte;
+- rastreamento;
+- epidemiologia quantitativa;
+- qualquer item previamente corrigido.
+
+FONTE DO GABARITO
+Para as questões rechecadas:
+- validar answer_source_institution/document/year/url;
+- checar section/note quando presentes;
+- sinalizar qualquer fonte que não sustente diretamente a resposta.
+
+RETORNO
 lote_status = approved | needs_revision
 summary
-distribution_findings
-duplicate_clusters
-questions_to_recheck
-source_updates
-style_findings
-difficulty_findings
-editorial_issues
-final_recommendations
+area_distribution
+topic_distribution
+difficulty_distribution
+answer_letter_distribution
+duplicate_clusters[]
+near_duplicate_clusters[]
+questions_to_recheck[]
+answer_source_problems[]
+outdated_sources[]
+style_findings[]
+difficulty_findings[]
+editorial_issues[]
+high_risk_rechecks[]
+final_recommendations[]
 
-Não aprove lote com pendência relevante.</pre>
+REGRA DE APROVAÇÃO
+Não aprove o lote se houver:
+- erro científico;
+- fonte do gabarito inválida;
+- duplicação relevante;
+- distribuição editorial claramente inadequada;
+- questão de alto risco não resolvida.
+
+Não altere silenciosamente as questões. Apenas audite e sinalize.</pre>
               </div>
             </details>
 
@@ -473,21 +735,51 @@ Não aprove lote com pendência relevante.</pre>
               <summary>Prompt Perplexity · revisão final do lote de 1.000</summary>
               <div class="admin-qf-prompt-wrap">
                 <button class="button secondary admin-qf-copy" type="button" data-copy-target="qf-prompt-perplexity-final">Copiar prompt</button>
-                <pre id="qf-prompt-perplexity-final" class="admin-qf-prompt">Você é o AUDITOR FINAL EXTERNO de um lote de 1.000 questões previamente revisadas.
+                <pre id="qf-prompt-perplexity-final" class="admin-qf-prompt">Você é o AUDITOR FINAL EXTERNO de um LOTE DE 1.000 questões do LURIA/StudyOS.
 
-Reavalie por evidência:
-- todas as questões sinalizadas, difíceis, controversas e de alto risco;
-- amostra ampla das demais;
-- atualização das referências;
-- mudanças recentes de diretriz;
-- fontes que não sustentam a afirmação;
-- duplicações;
-- lacunas temáticas;
-- aderência ao exam_style.
+CONTEXTO
+O lote já passou por:
+- geração em 5 blocos de 200;
+- auditoria de cada bloco;
+- correções;
+- consolidação.
 
-Retorne:
+OBJETIVO
+Fazer uma revisão final orientada por evidência, independente da revisão do ChatGPT.
+
+ESCOPO OBRIGATÓRIO
+1. Revisar TODAS as questões previamente sinalizadas.
+2. Revisar TODAS as questões de alto risco clínico.
+3. Revisar TODAS as questões que sofreram correção de gabarito.
+4. Revisar TODAS as questões com fonte alterada.
+5. Revisar uma amostra ampla e distribuída das demais.
+6. Verificar atualização das diretrizes.
+7. Detectar mudanças recentes de recomendação.
+8. Verificar duplicações.
+9. Avaliar lacunas temáticas.
+10. Avaliar aderência ao exam_style.
+
+FONTE DO GABARITO
+Para cada questão reavaliada, verificar:
+answer_source_institution
+answer_source_document
+answer_source_year
+answer_source_url
+answer_source_section
+answer_source_note
+
+A pergunta central é:
+“A fonte citada sustenta diretamente o gabarito atual desta versão da questão?”
+
+Se não sustentar:
+status da questão = needs_revision
+answer_source_issue deve explicar o motivo.
+
+SAÍDA
 lote_status = approved | needs_revision
 questions_flagged[]
+answer_key_disagreements[]
+answer_source_problems[]
 outdated_sources[]
 guideline_conflicts[]
 duplicate_or_near_duplicate[]
@@ -496,7 +788,21 @@ coverage_gaps[]
 style_problems[]
 comments
 
-Nunca modifique silenciosamente.</pre>
+PARA CADA QUESTÃO FLAGGED
+question_id
+independent_answer
+original_answer
+status
+confidence
+scientific_issue
+answer_source_issue
+style_issue
+verified_sources
+suggested_correction
+
+Não modifique silenciosamente nenhuma questão.
+Não considere consenso entre modelos como evidência científica.
+Prefira fonte primária/oficial atual.</pre>
               </div>
             </details>
 
@@ -651,7 +957,7 @@ Nunca modifique silenciosamente.</pre>
   <script src="/assets/vendor/supabase-2.110.6.js"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=17.0"></script>
-  <script src="assets/js/admin.js?v=2.0"></script>
+  <script src="assets/js/admin.js?v=2.1"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
