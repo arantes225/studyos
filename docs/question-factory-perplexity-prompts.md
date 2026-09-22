@@ -103,19 +103,57 @@ No T5, ignorar qualquer recomendação de migrar A–D para A–E: A–D é regr
 
 ## SES-DF — prompt de auditoria
 
-Audite todas as questões SES-DF com a rubrica oficial.
+Audite todas as questões SES-DF com a rubrica oficial e corte >=97.
 
-Verifique simultaneamente:
-1. correção da conduta médica;
-2. papel real da APS;
-3. continuidade/referência/contrarreferência;
-4. vigilância e notificação;
-5. RAPS/CAPS quando aplicável;
-6. se a rede aparece naturalmente, sem transformar o item em administração do SUS;
-7. se não há padrão previsível “alternativa da rede = correta”.
+REFERÊNCIA EDITORIAL PRIORITÁRIA
+- Use prioritariamente provas/documentos oficiais contemporâneos da RM-1/SES-DF organizados pelo IADES.
+- A edição oficial 2026 utiliza múltipla escolha com quatro alternativas A–D e uma única correta.
+- NÃO penalize A–D.
+- NÃO use o formato CERTO/ERRADO de processos históricos como referência dominante se ele conflitar com a edição contemporânea.
+- Material histórico é apenas complementar.
 
-Pergunta de controle:
-“O lote mede medicina inserida na rede do DF ou apenas reconhecimento de respostas socialmente desejáveis sobre APS/rede?”
+O QUE TESTAR EM CADA ITEM
+1. correção da conduta/diagnóstico;
+2. existência de única melhor resposta;
+3. se APS/RAS/regulação/vigilância/RAPS aparecem apenas quando realmente mudam a decisão;
+4. se uma questão estritamente clínica foi artificialmente “vestida de rede”;
+5. se a alternativa correta é previsível por ser a mais longa, completa, humanizada ou multiprofissional;
+6. se pelo menos dois dos três distratores são plausíveis quando o tema permite;
+7. se documento local é usado somente para organização local;
+8. se a fonte clínica sustenta diretamente o gabarito;
+9. se A, B, C e D têm explicações específicas;
+10. se o lote preserva medicina clínica real e não vira prova administrativa do SUS.
+
+REGRA DE REDE
+- NÃO exigir APS/RAS em toda questão.
+- Itens de diagnóstico, fisiopatologia, exames, urgência e terapêutica podem permanecer estritamente médicos.
+- A rede deve entrar quando alterar encaminhamento, continuidade, vigilância, regulação ou segurança.
+
+DISTRATORES
+- Evite “não fazer nada”, “internar todos”, “suspender tudo”, “não registrar” e equivalentes usados apenas para entregar o gabarito.
+- Prefira nível de atenção errado, momento inadequado do encaminhamento, conduta incompleta, exame concorrente, tratamento certo no contexto errado ou falha realista de continuidade.
+
+FONTE
+- Fonte clínica = conteúdo clínico.
+- Documento SES-DF = organização/fluxo local quando isso for objeto da questão.
+- Não usar portaria distrital para justificar farmacologia, diagnóstico ou tratamento se ela não disser isso diretamente.
+- answer_source_issue diferente de null impede aprovação.
+
+Perguntas de controle:
+1. “O candidato precisa saber medicina ou basta escolher a resposta mais humanizada?”
+2. “A rede realmente modifica esta decisão?”
+3. “O item parece SES-DF contemporânea ou apenas uma questão genérica de SUS?”
+4. “O perfil generalizou sem transformar APS/RAS em fórmula de gabarito?”
+
+Na análise global, quantifique:
+- proporção de itens estritamente clínicos;
+- proporção com componente de rede realmente necessário;
+- proporção com rede artificial;
+- frequência em que a correta é a alternativa mais longa/completa;
+- frequência de distratores caricatos;
+- AI_PATTERN_RISK.
+
+Uma boa questão SES-DF pode receber style=10 mesmo sem mencionar APS/RAS, se sua forma cognitiva/editorial for compatível com a prova contemporânea.
 
 ## UERJ — prompt de auditoria
 
