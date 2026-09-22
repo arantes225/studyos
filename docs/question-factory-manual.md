@@ -1042,6 +1042,20 @@ O T5 com 30 questões por banca revelou padrões que lotes de 10 itens não most
 - Explicações A–D devem ser específicas, nunca apenas frases genéricas.
 - Corte operacional atual: 97/100.
 
+
+
+### Aprendizado específico UERJ após T5
+- O T5 confirmou identidade analítica equilibrada: clínica + fisiologia + laboratório + cálculo minoritário.
+- Não transformar UERJ em prova quantitativa; cálculo só entra quando modifica interpretação ou decisão.
+- Como referência flexível, cerca de 10–20% de cálculo explícito mostrou-se aceitável no T5, condicionado à confirmação em provas oficiais recentes.
+- Distratores numéricos devem nascer de erros reais de cálculo/interpretação.
+- Explicações de itens quantitativos devem mostrar fórmula, resultado e significado clínico.
+- “Fonte candidata” e explicações genéricas continuam proibidas em produção.
+- Ambiguidade exige segunda resposta defensável ou dado realmente ausente; comentário incompleto, por si só, não torna o item ambíguo.
+- No T5_11, o enunciado já continha osmolaridade elevada; portanto a crítica de ausência desse dado foi rejeitada.
+- T5_12 e T5_22 permanecem conceitualmente unívocas, embora suas explicações/distratores possam ser melhorados.
+- Corte operacional: 97/100.
+
 ## 15. Terceira barreira independente — Gemini
 
 Depois que o lote de 1.000 passar pela revisão global do ChatGPT e do Perplexity:
