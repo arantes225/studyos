@@ -3350,6 +3350,46 @@ function wireDashboardControls() {
 
   document
     .getElementById(
+      "agenda-manager-close"
+    )
+    ?.addEventListener(
+      "click",
+      async () => {
+        const panel =
+          document.getElementById(
+            "agenda-manager"
+          );
+
+        const button =
+          document.getElementById(
+            "calendar-manage-events"
+          );
+
+        if (!panel) {
+          return;
+        }
+
+        agendaState.managerOpen =
+          false;
+
+        panel.hidden =
+          true;
+
+        button?.classList.remove(
+          "active"
+        );
+
+        button?.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+
+        button?.focus();
+      }
+    );
+
+  document
+    .getElementById(
       "agenda-manager-select-all"
     )
     ?.addEventListener(
