@@ -33,7 +33,7 @@
     rel="stylesheet"
     href="assets/css/editais.css?v=12.9"
   >
-  <link rel="stylesheet" href="assets/css/editais-provas-v16.css?v=16.2">
+  <link rel="stylesheet" href="assets/css/editais-provas-v16.css?v=16.2">\n  <link rel="stylesheet" href="assets/css/editais-catalog.css?v=1">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
   <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
   <link rel="canonical" href="/editais/">
@@ -265,28 +265,20 @@
         </div>
 
 
-        <section
+                <section
           id="editais-aristo-content"
           class="editais-aristo-content"
           hidden
         >
-
           <div class="aristo-embed-head">
-
             <div>
-              <span class="badge accent">
-                Aristo
-              </span>
-
-              <h2>
-                Central de editais
-              </h2>
-
+              <span class="badge accent">Atualização automática</span>
+              <h2>Central de editais</h2>
               <p>
-                Consulte os editais diretamente sem sair do LURIA.
+                Datas, taxas e links coletados periodicamente da Central de editais Aristo
+                e organizados no padrão do LURIA.
               </p>
             </div>
-
 
             <a
               class="button secondary"
@@ -294,49 +286,43 @@
               target="_blank"
               rel="noopener noreferrer"
             >
-              Abrir em nova aba
+              Ver fonte original
             </a>
-
           </div>
 
+          <div class="catalog-shell">
+            <div class="catalog-toolbar">
+              <label>
+                <span>Buscar</span>
+                <input id="catalog-search" type="search" placeholder="Instituição ou banca...">
+              </label>
 
-          <div class="aristo-frame-shell">
+              <label>
+                <span>Estado</span>
+                <select id="catalog-uf">
+                  <option value="">Todos os estados</option>
+                </select>
+              </label>
 
-            <div
-              id="aristo-frame-loading"
-              class="aristo-frame-loading"
-            >
-              Carregando Central de editais Aristo...
+              <div id="catalog-count" class="catalog-count">—</div>
             </div>
 
-            <iframe
-              id="aristo-editais-frame"
-              class="aristo-editais-frame"
-              title="Central de editais Aristo"
-              src="about:blank"
-              data-src="https://aristo.com.br/editais/"
-              loading="lazy"
-              referrerpolicy="strict-origin-when-cross-origin"
-            ></iframe>
+            <div id="catalog-loading" class="catalog-loading">
+              A central será carregada quando você abrir esta aba.
+            </div>
 
+            <div id="catalog-empty" class="catalog-empty" hidden>
+              Nenhum edital encontrado com esses filtros.
+            </div>
+
+            <div id="catalog-list" class="catalog-list"></div>
+
+            <p class="catalog-source-note">
+              Fonte factual: Central de editais Aristo. O LURIA reorganiza os dados para facilitar
+              o acompanhamento. Confirme sempre o PDF oficial antes de efetuar inscrição.
+            </p>
           </div>
-
-
-          <div class="aristo-frame-note">
-            Se o site externo impedir a exibição incorporada no navegador,
-            use “Abrir em nova aba”.
-          </div>
-
-        </section>
-
-      </div>
-
-    </main>
-
-  </div>
-
-
-  <dialog
+        </section>\n\n  <dialog
     id="exam-dialog"
     class="exam-dialog"
   >
@@ -572,7 +558,7 @@
   <script src="assets/js/app.js?v=17.0"></script>
   <script src="assets/js/study-mode.js?v=12.1"></script>
 
-  <script src="assets/js/editais.js?v=13.2"></script>
+  <script src="assets/js/editais-catalog.js?v=1"></script>\n  <script src="assets/js/editais.js?v=13.2"></script>
   <script src="assets/js/editais-provas-v16.js?v=16.3"></script>
 
   <script defer src="assets/js/pwa.js?v=3"></script>
