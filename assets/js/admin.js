@@ -29,6 +29,7 @@
     qfBadTotal: 0,
     qfReviewImportBatch: null,
     qfReviewImportBlock: null,
+    qfReviewImportMode: "block",
     qfQuality: null
   };
 
@@ -1655,7 +1656,10 @@
               ${batch.final_review_mode !== "chatgpt" ? qfReviewPill("Perplexity", batch.final_review_perplexity_status) : ""}
             </div>
           </div>
-          <button class="button secondary admin-qf-open-batch" type="button" data-qf-batch="${Number(batch.batch_number)}">Ver questões</button>
+          <div class="admin-qf-batch-actions">
+            <button class="button secondary admin-qf-open-batch" type="button" data-qf-batch="${Number(batch.batch_number)}">Ver questões</button>
+            <button class="button secondary" type="button" data-qf-import-lot="${Number(batch.batch_number)}">Importar revisão final</button>
+          </div>
         </article>
       `;
     }).join("");
@@ -1788,11 +1792,16 @@
     if ($("admin-qf-next")) $("admin-qf-next").disabled = true;
   }
 
-  function openReviewImportDialog(batchNumber, blockNumber) {
+  function openReviewImportDialog(batchNumber, blockNumber = null, mode = "block") {
     state.qfReviewImportBatch = Number(batchNumber);
-    state.qfReviewImportBlock = Number(blockNumber);
-    if ($("admin-qf-review-import-meta")) $("admin-qf-review-import-meta").textContent =
-      `Lote ${String(Number(batchNumber)).padStart(3,"0")} · Bloco ${blockNumber} · cole o JSON retornado pelo Perplexity.`;
+    state.qfReviewImportBlock = blockNumber == null ? null : Number(blockNumber);
+    state.qfReviewImportMode = mode;
+
+    if ($("admin-qf-review-import-meta")) {
+      $("admin-qf-review-import-meta").textContent = mode === "lot"
+        ? `Lote ${String(Number(batchNumber)).padStart(3,"0")} · cole o JSON da revisão final das 1.000.`
+        : `Lote ${String(Number(batchNumber)).padStart(3,"0")} · Bloco ${blockNumber} · cole o JSON da revisão.`;
+    }
     if ($("admin-qf-review-import-json")) $("admin-qf-review-import-json").value = "";
     if ($("admin-qf-review-import-message")) $("admin-qf-review-import-message").textContent = "";
     $("admin-qf-review-import-dialog")?.showModal();
@@ -1808,15 +1817,29 @@
       if (message) message.textContent = "JSON inválido.";
       return;
     }
-    payload.batch_number = state.qfReviewImportBatch;
-    payload.block_number = state.qfReviewImportBlock;
 
-    const { data, error } = await sb.rpc("admin_import_question_factory_review", { p_payload: payload });
+    payload.batch_number = state.qfReviewImportBatch;
+
+    const rpcName = state.qfReviewImportMode === "lot"
+      ? "admin_import_question_factory_lot_review"
+      : "admin_import_question_factory_review";
+
+    if (state.qfReviewImportMode !== "lot") {
+      payload.block_number = state.qfReviewImportBlock;
+    }
+
+    const { data, error } = await sb.rpc(rpcName, { p_payload: payload });
     if (error) {
       if (message) message.textContent = error.message || "Não foi possível importar.";
       return;
     }
-    if (message) message.textContent = `Importadas ${data?.imported || 0}: ${data?.approved || 0} aprovadas, ${data?.needs_revision || 0} a rever.`;
+
+    if (message) {
+      message.textContent = state.qfReviewImportMode === "lot"
+        ? (data?.ready ? "Revisão final importada. Lote marcado como pronto." : "Revisão final importada. O lote ainda possui etapa pendente.")
+        : `Importadas ${data?.imported || 0}: ${data?.approved || 0} aprovadas, ${data?.needs_revision || 0} a rever.`;
+    }
+
     await Promise.all([loadQuestionFactory(),loadQuestionFactoryStyles(),loadQuestionFactoryQuality(),loadBadQuestionFolder(0)]);
   }
 
@@ -2761,7 +2784,13 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
       const importButton = event.target.closest("[data-qf-import-review]");
       if (importButton) {
         const [batch,block] = importButton.dataset.qfImportReview.split(":");
-        openReviewImportDialog(batch,block);
+        openReviewImportDialog(batch,block,"block");
+        return;
+      }
+
+      const lotImportButton = event.target.closest("[data-qf-import-lot]");
+      if (lotImportButton) {
+        openReviewImportDialog(lotImportButton.dataset.qfImportLot,null,"lot");
         return;
       }
 
