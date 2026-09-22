@@ -1077,7 +1077,7 @@ async function materializeNotebookImagesForShare(
       );
 
     const storagePath =
-      `notebook-assets/${hash}.${extension}`;
+      `notebook-assets/${notebookState.user.id}/${hash}.${extension}`;
 
     const uploadResult =
       await notebookSb
@@ -1114,18 +1114,6 @@ async function materializeNotebookImagesForShare(
       throw uploadResult.error;
     }
 
-    const publicUrl =
-      notebookSb
-        .storage
-        .from(
-          "docmap-assets"
-        )
-        .getPublicUrl(
-          storagePath
-        )
-        .data
-        .publicUrl;
-
     const {
       data:
         assetId,
@@ -1153,9 +1141,36 @@ async function materializeNotebookImagesForShare(
       throw assetError;
     }
 
+    const {
+      data:
+        signedData,
+      error:
+        signedError
+    } =
+      await notebookSb
+        .storage
+        .from(
+          "docmap-assets"
+        )
+        .createSignedUrl(
+          storagePath,
+          315360000
+        );
+
+    if (
+      signedError
+      ||
+      !signedData?.signedUrl
+    ) {
+      throw signedError
+        || new Error(
+          "Não foi possível proteger a URL da imagem."
+        );
+    }
+
     image.setAttribute(
       "src",
-      publicUrl
+      signedData.signedUrl
     );
 
     image.setAttribute(
@@ -1996,7 +2011,7 @@ function sanitizeHtml(
             );
 
         const validSharedImage =
-          /^https:\/\/[^/]+\/storage\/v1\/object\/public\/docmap-assets\/notebook-assets\//i
+          /^https:\/\/[^/]+\/storage\/v1\/object\/(?:sign|public)\/docmap-assets\/notebook-assets\//i
             .test(
               src
             );
