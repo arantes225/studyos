@@ -129,7 +129,7 @@
 
             ${row.edital_url ? `
               <a
-                class="button secondary"
+                class="button secondary catalog-open-edital"
                 href="${escapeHtml(row.edital_url)}"
                 target="_blank"
                 rel="noopener noreferrer"
