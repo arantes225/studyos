@@ -19,6 +19,12 @@ const scheduleState = {
   themeDateFrom: "",
   themeDateTo: "",
   themeCompletionFilter: "all",
+  libraryTab: "lessons",
+  eventSearch: "",
+  eventTypeFilter: "all",
+  eventDateFrom: "",
+  eventDateTo: "",
+  editingEventId: null,
 
   studyMode:
     "medicine",
@@ -5912,6 +5918,607 @@ async function deleteSelectedThemes() {
 }
 
 
+
+function isSimulationEventType(type) {
+  return [
+    "simulation",
+    "smart_simulation",
+    "full_exam"
+  ].includes(
+    String(type || "")
+  );
+}
+
+function filteredLibraryEvents() {
+  const search =
+    normalizeSearchText(
+      scheduleState.eventSearch
+    );
+
+  return scheduleState.events
+    .filter((event) => {
+      if (
+        scheduleState.eventTypeFilter === "simulations"
+        && !isSimulationEventType(
+          event.event_type
+        )
+      ) {
+        return false;
+      }
+
+      if (
+        scheduleState.eventTypeFilter === "other"
+        && isSimulationEventType(
+          event.event_type
+        )
+      ) {
+        return false;
+      }
+
+      if (
+        scheduleState.eventDateFrom
+        && (
+          !event.event_date
+          || event.event_date < scheduleState.eventDateFrom
+        )
+      ) {
+        return false;
+      }
+
+      if (
+        scheduleState.eventDateTo
+        && (
+          !event.event_date
+          || event.event_date > scheduleState.eventDateTo
+        )
+      ) {
+        return false;
+      }
+
+      if (!search) {
+        return true;
+      }
+
+      const haystack =
+        normalizeSearchText(
+          [
+            event.title,
+            event.area,
+            event.materia,
+            scheduleKindLabel(
+              event.event_type
+            )
+          ]
+            .filter(Boolean)
+            .join(" ")
+        );
+
+      return haystack.includes(
+        search
+      );
+    })
+    .sort(
+      (a, b) =>
+        String(
+          a.event_date || ""
+        ).localeCompare(
+          String(
+            b.event_date || ""
+          )
+        )
+        || String(
+          a.title || ""
+        ).localeCompare(
+          String(
+            b.title || ""
+          ),
+          "pt-BR",
+          {
+            sensitivity: "base"
+          }
+        )
+    );
+}
+
+function renderEventLibrary() {
+  const container =
+    document.getElementById(
+      "event-library-list"
+    );
+
+  const count =
+    document.getElementById(
+      "event-list-count"
+    );
+
+  if (!container || !count) {
+    return;
+  }
+
+  const events =
+    filteredLibraryEvents();
+
+  count.textContent =
+    `${events.length} evento${events.length === 1 ? "" : "s"}`;
+
+  if (!events.length) {
+    container.innerHTML = `
+      <div class="theme-library-empty">
+        Nenhum evento encontrado com esses filtros.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML =
+    events.map(
+      (event) => `
+        <article class="theme-library-row event-library-row">
+          <div class="theme-library-title">
+            <strong>${escapeScheduleHtml(
+              event.title || "Evento"
+            )}</strong>
+            <small>
+              ${escapeScheduleHtml(
+                scheduleKindLabel(
+                  event.event_type
+                )
+              )}
+            </small>
+          </div>
+
+          <div class="theme-library-cell hide-medium">
+            ${escapeScheduleHtml(
+              event.area || "Sem área"
+            )}
+          </div>
+
+          <div class="theme-library-cell hide-medium">
+            ${escapeScheduleHtml(
+              event.materia || "—"
+            )}
+          </div>
+
+          <div class="theme-library-date">
+            ${escapeScheduleHtml(
+              formatDateLabelSchedule(
+                event.event_date
+              )
+            )}
+            ${event.event_time
+              ? ` · ${escapeScheduleHtml(
+                  String(
+                    event.event_time
+                  ).slice(0, 5)
+                )}`
+              : ""}
+          </div>
+
+          <div class="theme-library-actions">
+            <button
+              class="theme-library-action"
+              type="button"
+              data-library-edit-event="${escapeScheduleHtml(
+                event.id
+              )}"
+            >
+              Editar
+            </button>
+
+            <button
+              class="theme-library-action danger"
+              type="button"
+              data-library-delete-event="${escapeScheduleHtml(
+                event.id
+              )}"
+            >
+              Apagar
+            </button>
+          </div>
+        </article>
+      `
+    ).join("");
+
+  container
+    .querySelectorAll(
+      "[data-library-edit-event]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            openEventEditDialog(
+              button.dataset
+                .libraryEditEvent
+            );
+          }
+        );
+      }
+    );
+
+  container
+    .querySelectorAll(
+      "[data-library-delete-event]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          async () => {
+            await deleteScheduleEvent(
+              button.dataset
+                .libraryDeleteEvent
+            );
+          }
+        );
+      }
+    );
+}
+
+function switchScheduleLibraryTab(tab) {
+  const normalized =
+    tab === "events"
+      ? "events"
+      : "lessons";
+
+  scheduleState.libraryTab =
+    normalized;
+
+  document
+    .querySelectorAll(
+      "[data-schedule-library-tab]"
+    )
+    .forEach(
+      (button) => {
+        const active =
+          button.dataset
+            .scheduleLibraryTab
+          === normalized;
+
+        button.classList.toggle(
+          "active",
+          active
+        );
+
+        button.setAttribute(
+          "aria-selected",
+          active
+            ? "true"
+            : "false"
+        );
+      }
+    );
+
+  const lessonPanel =
+    document.getElementById(
+      "theme-library-content"
+    );
+
+  const eventPanel =
+    document.getElementById(
+      "event-library-panel"
+    );
+
+  if (lessonPanel) {
+    lessonPanel.hidden =
+      normalized !== "lessons";
+  }
+
+  if (eventPanel) {
+    eventPanel.hidden =
+      normalized !== "events";
+  }
+
+  if (normalized === "events") {
+    renderEventLibrary();
+  } else {
+    renderThemeLibrary();
+  }
+}
+
+function openEventEditDialog(
+  eventId
+) {
+  const item =
+    scheduleState.events
+      .find(
+        (event) =>
+          event.id === eventId
+      );
+
+  if (!item) {
+    return;
+  }
+
+  scheduleState.editingEventId =
+    eventId;
+
+  document.getElementById(
+    "event-edit-title"
+  ).value =
+    item.title || "";
+
+  document.getElementById(
+    "event-edit-type"
+  ).value =
+    item.event_type || "other";
+
+  document.getElementById(
+    "event-edit-date"
+  ).value =
+    item.event_date || "";
+
+  document.getElementById(
+    "event-edit-time"
+  ).value =
+    item.event_time
+      ? String(
+          item.event_time
+        ).slice(0, 5)
+      : "";
+
+  document.getElementById(
+    "event-edit-area"
+  ).value =
+    item.area || "";
+
+  document.getElementById(
+    "event-edit-materia"
+  ).value =
+    item.materia || "";
+
+  const dialog =
+    document.getElementById(
+      "event-edit-dialog"
+    );
+
+  if (
+    typeof dialog?.showModal
+      === "function"
+  ) {
+    dialog.showModal();
+  } else {
+    dialog?.setAttribute(
+      "open",
+      ""
+    );
+  }
+}
+
+function closeEventEditDialog() {
+  scheduleState.editingEventId =
+    null;
+
+  const dialog =
+    document.getElementById(
+      "event-edit-dialog"
+    );
+
+  if (
+    typeof dialog?.close
+      === "function"
+  ) {
+    dialog.close();
+  } else {
+    dialog?.removeAttribute(
+      "open"
+    );
+  }
+}
+
+async function saveEditedScheduleEvent(
+  event
+) {
+  event.preventDefault();
+
+  const eventId =
+    scheduleState.editingEventId;
+
+  if (!eventId) {
+    return;
+  }
+
+  const title =
+    cleanText(
+      document.getElementById(
+        "event-edit-title"
+      )?.value
+    );
+
+  const eventType =
+    document.getElementById(
+      "event-edit-type"
+    )?.value
+    || "other";
+
+  const eventDate =
+    document.getElementById(
+      "event-edit-date"
+    )?.value
+    || "";
+
+  if (!title || !eventDate) {
+    window.LuriaDialog.alert(
+      "Preencha o título e a data do evento."
+    );
+    return;
+  }
+
+  const saveButton =
+    document.getElementById(
+      "event-edit-save"
+    );
+
+  if (saveButton) {
+    saveButton.disabled =
+      true;
+  }
+
+  const {
+    error
+  } =
+    await scheduleSb
+      .from(
+        "schedule_events"
+      )
+      .update({
+        title,
+        event_type:
+          eventType,
+        event_date:
+          eventDate,
+        event_time:
+          document.getElementById(
+            "event-edit-time"
+          )?.value
+          || null,
+        area:
+          cleanText(
+            document.getElementById(
+              "event-edit-area"
+            )?.value
+          )
+          || null,
+        materia:
+          cleanText(
+            document.getElementById(
+              "event-edit-materia"
+            )?.value
+          )
+          || null,
+        updated_at:
+          new Date().toISOString()
+      })
+      .eq(
+        "id",
+        eventId
+      )
+      .eq(
+        "user_id",
+        scheduleState.user.id
+      );
+
+  if (saveButton) {
+    saveButton.disabled =
+      false;
+  }
+
+  if (error) {
+    console.error(error);
+
+    window.LuriaDialog.alert(
+      `Não foi possível salvar o evento: ${error.message}`
+    );
+    return;
+  }
+
+  closeEventEditDialog();
+  await loadTopics();
+  switchScheduleLibraryTab(
+    "events"
+  );
+}
+
+function wireEventLibrary() {
+  document
+    .querySelectorAll(
+      "[data-schedule-library-tab]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            switchScheduleLibraryTab(
+              button.dataset
+                .scheduleLibraryTab
+            );
+          }
+        );
+      }
+    );
+
+  document
+    .getElementById(
+      "event-library-search"
+    )
+    ?.addEventListener(
+      "input",
+      (event) => {
+        scheduleState.eventSearch =
+          event.target.value || "";
+
+        renderEventLibrary();
+      }
+    );
+
+  document
+    .getElementById(
+      "event-library-type"
+    )
+    ?.addEventListener(
+      "change",
+      (event) => {
+        scheduleState.eventTypeFilter =
+          event.target.value || "all";
+
+        renderEventLibrary();
+      }
+    );
+
+  document
+    .getElementById(
+      "event-library-date-from"
+    )
+    ?.addEventListener(
+      "change",
+      (event) => {
+        scheduleState.eventDateFrom =
+          event.target.value || "";
+
+        renderEventLibrary();
+      }
+    );
+
+  document
+    .getElementById(
+      "event-library-date-to"
+    )
+    ?.addEventListener(
+      "change",
+      (event) => {
+        scheduleState.eventDateTo =
+          event.target.value || "";
+
+        renderEventLibrary();
+      }
+    );
+
+  document
+    .getElementById(
+      "event-edit-form"
+    )
+    ?.addEventListener(
+      "submit",
+      saveEditedScheduleEvent
+    );
+
+  [
+    "event-edit-close",
+    "event-edit-cancel"
+  ].forEach(
+    (id) => {
+      document
+        .getElementById(id)
+        ?.addEventListener(
+          "click",
+          closeEventEditDialog
+        );
+    }
+  );
+}
+
 function renderThemeLibrary() {
   const container =
     document.getElementById("theme-library-list");
@@ -5923,110 +6530,7 @@ function renderThemeLibrary() {
 
   populateAreaFilter();
 
-  const showingExternalEvents =
-    scheduleState.themeCompletionFilter
-      === "external_events";
-
-  if (showingExternalEvents) {
-    const search =
-      normalizeSearchText(
-        scheduleState.themeSearch
-      );
-
-    const areaFilter =
-      scheduleState.themeAreaFilter;
-
-    const dateFrom =
-      scheduleState.themeDateFrom;
-
-    const dateTo =
-      scheduleState.themeDateTo;
-
-    const events =
-      scheduleState.events
-        .filter(
-          (event) => {
-            if (
-              areaFilter
-              && event.area !== areaFilter
-            ) {
-              return false;
-            }
-
-            if (
-              dateFrom
-              && (
-                !event.event_date
-                || event.event_date < dateFrom
-              )
-            ) {
-              return false;
-            }
-
-            if (
-              dateTo
-              && (
-                !event.event_date
-                || event.event_date > dateTo
-              )
-            ) {
-              return false;
-            }
-
-            if (!search) {
-              return true;
-            }
-
-            const haystack =
-              normalizeSearchText(
-                [
-                  event.title,
-                  event.area,
-                  event.materia,
-                  scheduleKindLabel(
-                    event.event_type
-                  )
-                ]
-                  .filter(Boolean)
-                  .join(" ")
-              );
-
-            return haystack.includes(
-              search
-            );
-          }
-        )
-        .sort(
-          (a, b) =>
-            String(
-              a.event_date
-              || ""
-            ).localeCompare(
-              String(
-                b.event_date
-                || ""
-              )
-            )
-            || String(
-              a.title
-              || ""
-            ).localeCompare(
-              String(
-                b.title
-                || ""
-              ),
-              "pt-BR",
-              {
-                sensitivity:
-                  "base"
-              }
-            )
-        );
-
-    count.textContent =
-      `${events.length} evento${events.length === 1 ? "" : "s"} externo${events.length === 1 ? "" : "s"}`;
-
-    const bulk =
+  const bulk =
       document.querySelector(
         ".theme-library-bulk"
       );
@@ -6904,6 +7408,7 @@ function renderSchedule() {
   renderPlanner();
   renderDeck();
   renderThemeLibrary();
+  renderEventLibrary();
   wireDynamicInteractions();
 }
 
@@ -7405,6 +7910,15 @@ async function deleteScheduleEvent(
 
 
   await loadTopics();
+
+  if (
+    scheduleState.libraryTab
+      === "events"
+  ) {
+    switchScheduleLibraryTab(
+      "events"
+    );
+  }
 }
 
 
@@ -8022,6 +8536,7 @@ async function initCronograma() {
   wireScheduleAddMode();
   wireThemeLibraryFilters();
   wireThemeLibraryBulkActions();
+  wireEventLibrary();
   wireOverdueOrganizer();
   wireBaseSchedule();
 
