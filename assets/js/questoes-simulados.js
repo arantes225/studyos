@@ -202,6 +202,19 @@ function switchQsMode(
 function switchQsAddMode(
   mode
 ) {
+  const automaticAllowed =
+    window.LuriaEntitlements?.enabled(
+      "automatic_questions"
+    ) === true;
+
+  if (
+    mode === "automatic"
+    && !automaticAllowed
+  ) {
+    mode =
+      "manual";
+  }
+
   if (
     ![
       "automatic",
@@ -211,7 +224,9 @@ function switchQsAddMode(
     )
   ) {
     mode =
-      "automatic";
+      automaticAllowed
+        ? "automatic"
+        : "manual";
   }
 
 
@@ -15767,8 +15782,28 @@ async function initQuestionSets() {
     "mine"
   );
 
+  const automaticAllowed =
+    window.LuriaEntitlements?.enabled(
+      "automatic_questions"
+    ) === true;
+
+  const automaticButton =
+    document.querySelector(
+      '[data-qs-add-mode="automatic"]'
+    );
+
+  if (
+    automaticButton
+    && !automaticAllowed
+  ) {
+    automaticButton.hidden =
+      true;
+  }
+
   switchQsAddMode(
-    "automatic"
+    automaticAllowed
+      ? "automatic"
+      : "manual"
   );
 }
 
