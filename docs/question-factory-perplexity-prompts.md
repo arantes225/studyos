@@ -218,21 +218,59 @@ Pergunta de controle:
 
 ## PSU-GO — prompt de auditoria
 
-Audite todas as questões PSU-GO com rigor máximo de fidelidade.
+Audite todas as questões PSU-GO com rigor máximo e corte >=97.
 
-Esta banca permanece sensível a circularidade de calibração.
+STATUS ATUAL
+- PSU-GO permanece em calibração.
+- O T5 confirmou ciência e gabaritos razoáveis, mas não demonstrou identidade editorial própria com evidência primária suficiente.
+- Não use PSU-MG como proxy silencioso apenas porque há apoio/organização da AREMG.
 
-Exigir:
-- material primário específico da seleção;
-- anos e provas efetivamente observadas;
-- declaração explícita de proxy, quando usado;
-- diferenciação entre “boa questão de residência” e “questão realmente PSU-GO”.
+EVIDÊNCIA PRIMÁRIA
+Antes de afirmar fidelidade forte:
+- localizar questões oficiais PSU-GO;
+- registrar years_available;
+- registrar number_of_questions_sampled;
+- registrar primary_sources_found;
+- registrar organizing_body;
+- registrar confidence_in_style_profile.
+Preferência operacional: >=20 questões oficiais distribuídas em 2–3 edições recentes, quando disponíveis.
 
-Classificar a força da identidade:
-strong | moderate | weak.
+Se a amostra primária não existir ou for insuficiente:
+- reduza style_confidence;
+- não invente assinatura de banca;
+- não transforme estrutura de edital em evidência de estilo interno.
 
-Decisão final:
+DIFICULDADE
+Compare dificuldade declarada com dificuldade real.
+Meta global de geração do LURIA:
+- ~20% fácil;
+- ~55–60% média;
+- ~20–25% difícil.
+Não é quota rígida, mas easy+very_easy não deve dominar.
+Tema raro não significa difícil.
+
+DISTRATORES
+- Sempre que possível, pelo menos dois dos três distratores devem ser plausíveis.
+- Evite opções caricatas como “nenhum exame”, “alta imediata”, “antibiótico sempre”, “internar todos”.
+- Se o item puder ser resolvido eliminando três absurdos, reduza distractors e difficulty.
+
+FONTES E EXPLICAÇÕES
+- “Fonte candidata” bloqueia aprovação.
+- Exigir fonte definitiva com documento/ano/URL/seção quando confirmável.
+- A, B, C e D devem ter explicações específicas.
+- É proibido usar apenas “não corresponde à melhor interpretação”.
+
+IDENTIDADE
+Pergunta principal:
+“Esta questão parece PSU-GO por evidência externa ou apenas uma boa questão genérica de residência?”
+
+Não atribua style=10 sem confronto real com itens oficiais.
+Não classifique como “distintiva PSU-GO” com falsa precisão quando não houver amostra primária suficiente.
+
+DECISÃO FINAL
 READY_FOR_200 | NEEDS_ONE_MORE_CALIBRATION | NOT_ENOUGH_PRIMARY_EVIDENCE.
+
+No estado atual pós-T5, a hipótese de trabalho é NEEDS_ONE_MORE_CALIBRATION até que uma nova rodada com fonte de estilo primária mostre generalização consistente.
 
 ## PSU-MG — prompt de auditoria
 
