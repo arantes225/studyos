@@ -2361,3 +2361,89 @@ body.admin-unlocked #admin-app {
   .admin-qf-board-manual>summary{align-items:flex-start}
   .admin-qf-board-score{white-space:nowrap}
 }
+
+
+/* Question factory 2.1 — full copyable board briefs */
+.admin-qf-board-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:7px;
+  flex-wrap:wrap;
+}
+.admin-qf-board-actions .button{
+  min-height:34px;
+  padding:0 10px;
+  font-size:8px;
+  text-decoration:none;
+}
+.admin-qf-copy-board{
+  font-weight:850;
+}
+.admin-qf-board-master{
+  display:grid;
+  gap:10px;
+  padding:11px;
+  border:1px solid color-mix(in srgb,var(--accent) 34%,var(--border));
+  border-radius:12px;
+  background:color-mix(in srgb,var(--accent) 3%,var(--surface-2));
+}
+.admin-qf-board-master-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+}
+.admin-qf-board-master-head strong,
+.admin-qf-board-master-head small{display:block}
+.admin-qf-board-master-head strong{
+  margin-top:4px;
+  font-size:10px;
+}
+.admin-qf-board-master-head small{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:7.5px;
+  line-height:1.4;
+}
+.admin-qf-board-master-head .button{
+  flex:0 0 auto;
+  min-height:34px;
+  padding:0 10px;
+  font-size:8px;
+}
+.admin-qf-board-master-text{
+  max-height:560px;
+  margin:0;
+  overflow:auto;
+  padding:13px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--surface);
+  color:var(--text);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+  font-size:8px;
+  line-height:1.6;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+.admin-qf-copy-board.success{
+  opacity:.85;
+}
+@media(max-width:620px){
+  .admin-qf-board-actions,
+  .admin-qf-board-master-head{
+    width:100%;
+    flex-direction:column;
+    align-items:stretch;
+  }
+  .admin-qf-board-actions .button,
+  .admin-qf-board-master-head .button{
+    width:100%;
+    justify-content:center;
+  }
+  .admin-qf-board-master-text{
+    max-height:440px;
+    font-size:7.7px;
+  }
+}
