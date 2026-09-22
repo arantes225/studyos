@@ -3240,6 +3240,109 @@ function temFeature(
 }
 
 
+function aplicarRestricoesDeImagem(
+  entitlements
+) {
+  const canUse =
+    (featureKey) =>
+      temFeature(
+        entitlements,
+        featureKey
+      );
+
+  const lockElements =
+    (
+      selectors,
+      message
+    ) => {
+      selectors.forEach(
+        selector => {
+          document
+            .querySelectorAll(
+              selector
+            )
+            .forEach(
+              element => {
+                element.disabled =
+                  true;
+
+                element.setAttribute(
+                  "aria-disabled",
+                  "true"
+                );
+
+                element.title =
+                  message;
+
+                if (
+                  element.matches(
+                    'input[type="file"]'
+                  )
+                ) {
+                  element.value =
+                    "";
+                }
+              }
+            );
+        }
+      );
+    };
+
+  if (
+    !canUse(
+      "notebook_images"
+    )
+  ) {
+    lockElements(
+      [
+        "#notebook-image-add",
+        "#notebook-image-camera-input",
+        "#notebook-image-gallery-input",
+        "#notebook-image-file-input",
+        "#notebook-image-menu [data-image-source]"
+      ],
+      "Imagens no caderno não estão disponíveis para este tipo de conta."
+    );
+
+    document
+      .getElementById(
+        "notebook-image-menu"
+      )
+      ?.setAttribute(
+        "hidden",
+        ""
+      );
+  }
+
+  if (
+    !canUse(
+      "error_notebook_images"
+    )
+  ) {
+    lockElements(
+      [
+        "#new-error-image"
+      ],
+      "Imagens no Caderno de Erros não estão disponíveis para este tipo de conta."
+    );
+  }
+
+  if (
+    !canUse(
+      "flashcard_images"
+    )
+  ) {
+    lockElements(
+      [
+        "#create-front-image",
+        "#create-back-image"
+      ],
+      "Imagens em flashcards não estão disponíveis para este tipo de conta."
+    );
+  }
+}
+
+
 function aplicarEntitlementsNaNavegacao(
   entitlements
 ) {
@@ -3572,6 +3675,10 @@ async function iniciarApp() {
     || "essential";
   window.docmapIsAdmin =
     acessoAdmin === true;
+
+  aplicarRestricoesDeImagem(
+    entitlements
+  );
 
   window.dispatchEvent(
     new CustomEvent(
