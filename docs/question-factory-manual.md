@@ -1056,6 +1056,20 @@ O T5 com 30 questões por banca revelou padrões que lotes de 10 itens não most
 - T5_12 e T5_22 permanecem conceitualmente unívocas, embora suas explicações/distratores possam ser melhorados.
 - Corte operacional: 97/100.
 
+
+
+### Aprendizado específico PSU-GO após T5
+- Decisão atual: NEEDS_ONE_MORE_CALIBRATION.
+- Ciência e gabaritos ficaram globalmente sólidos, mas o lote teve dificuldade real baixa, distratores fracos, fontes candidatas e explicações genéricas.
+- O achado mais importante é epistemológico: sem amostra de questões oficiais, a identidade PSU-GO não pode ser considerada demonstrada.
+- Editais e apresentações oficiais comprovam a estrutura do processo, não a sintaxe, densidade nem arquitetura interna dos itens.
+- O fato de AREMG apoiar/operacionalizar PSU-GO e PSU-MG não autoriza tratar os dois estilos como equivalentes.
+- Antes de liberar 200, exigir preferencialmente >=20 questões oficiais de 2–3 edições recentes, se disponíveis, e registrar a amostra.
+- Meta global de dificuldade do LURIA: ~20% fácil, 55–60% média, 20–25% difícil, com flexibilidade conforme a banca real.
+- Evitar lotes em que >40% sejam easy/very_easy sem evidência de que isso reflete a banca.
+- Pelo menos dois distratores plausíveis quando possível; explicações A–D específicas; fonte definitiva na geração.
+- Corte operacional: 97/100.
+
 ## 15. Terceira barreira independente — Gemini
 
 Depois que o lote de 1.000 passar pela revisão global do ChatGPT e do Perplexity:
