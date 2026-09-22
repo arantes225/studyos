@@ -1167,6 +1167,18 @@ Se esses critérios não forem atingidos, manter `NEEDS_ONE_MORE_CALIBRATION`.
 - Status: CALIBRACAO_INICIAL.
 - Calibrar exclusivamente a prova geral para acesso direto antes de gerar lotes LURIA.
 
+
+
+### Aprendizado específico USP-SP após calibração inicial
+- Status: `NEEDS_MORE_PRIMARY_STYLE_DATA`.
+- Média 92,5; mediana 92; nenhuma das 30 questões chegou a 97.
+- 0 hard fails e 0 ambiguidades: o problema não foi gabarito científico, e sim fidelidade editorial, distratores, especificidade de fonte e calibração de dificuldade.
+- Evidência formal confirmada: FUVEST/FMUSP usa prova objetiva de múltipla escolha com quatro alternativas e uma correta; a FUVEST publica provas e gabaritos oficiais. 
+- Ainda não há base suficiente para afirmar assinatura USP-SP fina porque a auditoria não amostrou questões oficiais textualmente.
+- O primeiro lote foi 100% case-based, 80% manejo, 0% conceito puro e só 26,7% multistep; isso não deve ser congelado como identidade.
+- Próximo passo obrigatório: >=20 questões oficiais, idealmente 2–3 edições, antes do segundo lote.
+- Não usar reputação da instituição como proxy de dificuldade ou profundidade.
+
 ## 15. Terceira barreira independente — Gemini
 
 Depois que o lote de 1.000 passar pela revisão global do ChatGPT e do Perplexity:
