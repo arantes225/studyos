@@ -1143,6 +1143,30 @@ Se esses critérios não forem atingidos, manter `NEEDS_ONE_MORE_CALIBRATION`.
 - Próxima calibração deve: remover rede ornamental, equilibrar extensão das alternativas, substituir absolutos/caricaturas, variar sintaxe e usar fonte diretamente verificável.
 - Gate para 200: >=90% >=97 após correção/reauditoria, 0 ambiguidades, 0 hard fails, answer_source_issue=null em todos, network_artificial residual e AI_PATTERN_RISK abaixo de high.
 
+
+
+### Novos perfis adicionados — USP-SP, UNIFESP e AMP-PR
+
+#### USP-SP
+- Organizador confirmado: FUVEST / COREME-FMUSP.
+- Edital COREME/FM nº 02/2026: prova objetiva com 4 alternativas e uma correta.
+- Status: CALIBRACAO_INICIAL.
+- Antes de produção, amostrar preferencialmente >=20 questões oficiais de 2–3 edições.
+- Não inferir dificuldade pelo prestígio da instituição.
+
+#### UNIFESP
+- Status: NEEDS_PRIMARY_STYLE_DATA.
+- Não usar residência multiprofissional como proxy.
+- Não usar outra banca paulista como substituta.
+- Só consolidar perfil após localizar e analisar prova médica oficial recente.
+
+#### AMP-PR
+- Organizador: AMP / UCAMP.
+- 25ª edição em 2026; prova geral e prova específica.
+- A AMP disponibiliza material oficial com questões 2023–2025.
+- Status: CALIBRACAO_INICIAL.
+- Calibrar exclusivamente a prova geral para acesso direto antes de gerar lotes LURIA.
+
 ## 15. Terceira barreira independente — Gemini
 
 Depois que o lote de 1.000 passar pela revisão global do ChatGPT e do Perplexity:
