@@ -453,6 +453,27 @@ function cleanText(value) {
   return String(value ?? "").trim();
 }
 
+function isOnboardingScheduleContent(value) {
+  return normalizeHeader(
+    value
+  ).includes(
+    "onboarding"
+  );
+}
+
+function rowIsOnboarding(row) {
+  return [
+    row?.theme,
+    row?.area,
+    row?.materia,
+    row?.bloco,
+    row?.sourceLabel,
+    row?.sourceBlock
+  ].some(
+    isOnboardingScheduleContent
+  );
+}
+
 function parseWorkbookRows(matrix, sheetName) {
   if (!matrix.length) {
     throw new Error("A planilha está vazia.");
@@ -519,6 +540,20 @@ function parseWorkbookRows(matrix, sheetName) {
       !cleanText(rawStudiedDate);
 
     if (fullyBlank) continue;
+
+    if (
+      [
+        theme,
+        area,
+        materia,
+        bloco,
+        cleanText(rawType)
+      ].some(
+        isOnboardingScheduleContent
+      )
+    ) {
+      continue;
+    }
 
     const errors = [];
 
@@ -1575,6 +1610,15 @@ function dedupeParsedRows(
   )
     .filter(
       (row) => {
+        if (
+          !row
+          || rowIsOnboarding(
+            row
+          )
+        ) {
+          return false;
+        }
+
         const key =
           [
             row.date
