@@ -2168,6 +2168,14 @@ how_to_improve_difficulty
 how_to_improve_wording
 - Sugerir ajustes de redação que removam pistas, redundâncias ou ambiguidade.
 
+PROPOSTA DE MUDANÇA — OBRIGATÓRIA
+Para toda questão com quality_score <95, além de explicar o problema, proponha a correção EXATA.
+Não diga apenas "melhorar distratores".
+Informe quais campos mudariam e forneça o texto substituto completo em proposed_change.exact_replacement.
+Se o gabarito mudar, explique por que e cite a fonte que sustenta a mudança.
+Se a questão puder atingir 95+ sem mudar determinado campo, deixe esse campo null.
+A proposta será julgada independentemente pelo ChatGPT antes de qualquer alteração ser aplicada.
+
 PARA QUESTÕES >=95
 Mesmo se approved, forneça:
 - strongest_point
@@ -2227,6 +2235,32 @@ SAÍDA JSON EXATA
         "style_risk":"",
         "estimated_score_after_fix":0
       },
+      "proposed_change":{
+        "change_required":true,
+        "fields_to_change":["enunciado","alternativa_b"],
+        "current_problem":"",
+        "exact_replacement":{
+          "enunciado":null,
+          "alternativa_a":null,
+          "alternativa_b":null,
+          "alternativa_c":null,
+          "alternativa_d":null,
+          "gabarito":null,
+          "explicacao_a":null,
+          "explicacao_b":null,
+          "explicacao_c":null,
+          "explicacao_d":null,
+          "mensagem_chave":null,
+          "answer_source_institution":null,
+          "answer_source_document":null,
+          "answer_source_year":null,
+          "answer_source_url":null,
+          "answer_source_section":null,
+          "answer_source_note":null
+        },
+        "why_this_change_is_better":"",
+        "expected_quality_score_after_change":0
+      },
       "how_to_improve_science":null,
       "how_to_improve_answer_key":null,
       "how_to_improve_source":null,
@@ -2281,11 +2315,109 @@ Em summary.top_5_prompt_improvements, escreva mudanças concretas que deveriam s
 
 Não inclua texto fora do JSON.`;
 
+    if (stage === "chatgpt_adjudication") return `PROMPT DE SEGMENTO 3 — JULGAMENTO DO PARECER DO PERPLEXITY
+${common}
+
+TAREFA
+Leia, para cada questão sinalizada, o parecer do Perplexity salvo no Supabase, incluindo:
+- quality_score e component_scores;
+- points_lost;
+- hard_fail e razões;
+- verified_sources;
+- improvement_plan;
+- proposed_change;
+- suggested_correction.
+
+NÃO CORRIJA A QUESTÃO AINDA.
+
+Faça uma avaliação independente da crítica e da mudança proposta pelo Perplexity.
+Para cada proposta, classifique:
+
+agree
+- a crítica está correta;
+- a mudança proposta melhora a questão;
+- a evidência citada sustenta a alteração.
+
+partially_agree
+- o problema apontado existe, mas a solução proposta não é a melhor ou precisa de ajuste.
+
+disagree
+- a crítica é tecnicamente incorreta;
+- a fonte foi interpretada de forma errada;
+- a mudança criaria erro, ambiguidade ou descaracterizaria a banca;
+- ou a versão original está mais adequada.
+
+REGRAS
+1. Resolva a questão independentemente.
+2. Abra/compare as fontes relevantes quando houver divergência científica.
+3. Não concorde apenas porque o Perplexity atribuiu nota baixa.
+4. Não discorde apenas para preservar a versão original.
+5. Dê prioridade à evidência e ao objetivo editorial da banca.
+6. Se houver dúvida real, marque partially_agree e explique o que precisa ser confirmado.
+
+SE CONCORDAR
+Explique de forma curta por que concorda e indique quais alterações devem ser aplicadas na etapa seguinte.
+
+SE CONCORDAR PARCIALMENTE
+Diga:
+- com qual parte concorda;
+- com qual parte discorda;
+- qual mudança alternativa recomenda.
+
+SE DISCORDAR
+Produza uma justificativa técnica detalhada E um texto pronto para o administrador reenviar ao Perplexity.
+
+O texto de rebuttal_to_perplexity deve:
+- identificar question_id;
+- citar o ponto exato da discordância;
+- explicar tecnicamente por que a proposta não deve ser aplicada;
+- mencionar a fonte/diretriz que sustenta sua posição;
+- pedir ao Perplexity que reavalie aquele ponto específico;
+- ser respeitoso e objetivo.
+
+SAÍDA JSON
+{
+  "schema_version":"1.0",
+  "review_stage":"chatgpt_adjudication",
+  "batch_number":N,
+  "block_number":N,
+  "exam_style":"${style}",
+  "decisions":[
+    {
+      "question_id":"...",
+      "agreement_status":"agree|partially_agree|disagree",
+      "agreement_reason":"",
+      "independent_answer":"A|B|C|D",
+      "perplexity_proposal_is_safe":true,
+      "changes_authorized":[],
+      "alternative_change":null,
+      "rebuttal_to_perplexity":null,
+      "sources_checked":[]
+    }
+  ],
+  "summary":{
+    "agree":0,
+    "partially_agree":0,
+    "disagree":0,
+    "questions_requiring_return_to_perplexity":[]
+  }
+}
+
+Não altere a questão nesta etapa.`;
+
     if (stage === "chatgpt_correction") return `PROMPT DE SEGMENTO 3 — CORREÇÃO CHATGPT A PARTIR DO SUPABASE
 ${common}
 
 TAREFA
-Consulte/receba somente as questões do bloco cujo latest review esteja needs_revision ou rejected/recuperável.
+Consulte/receba somente as questões do bloco cujo latest review esteja needs_revision ou rejected/recuperável E cuja proposta já tenha passado pelo julgamento ChatGPT.
+
+Antes de alterar qualquer campo:
+- leia chatgpt_agreement_status;
+- se agree: aplique a mudança aprovada;
+- se partially_agree: aplique somente os pontos autorizados e use alternative_change quando existir;
+- se disagree: NÃO ALTERE a questão; ela deve voltar ao Perplexity com rebuttal_to_perplexity.
+
+Consulte as questões do bloco e seus pareceres estruturados.
 Para cada questão, leia o parecer mais recente salvo no Supabase:
 - quality_score
 - hard_fail e razões
@@ -2635,8 +2767,9 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
                 ${[
                   ["01","ChatGPT · checagem inicial","chatgpt_initial","chatgpt"],
                   ["02","Perplexity · auditoria","perplexity_initial","perplexity"],
-                  ["03","ChatGPT · correção","chatgpt_correction","chatgpt"],
-                  ["04","Perplexity · reauditoria","perplexity_reaudit","perplexity"]
+                  ["03","ChatGPT · julgar parecer","chatgpt_adjudication","chatgpt"],
+                  ["04","ChatGPT · corrigir consenso","chatgpt_correction","chatgpt"],
+                  ["05","Perplexity · reauditoria","perplexity_reaudit","perplexity"]
                 ].map(([num,label,stage,provider]) => {
                   const pid=`qf-${String(item.exam_style||"style").replace(/[^a-z0-9]/gi,"-").toLowerCase()}-${stage}`;
                   return `
@@ -2653,16 +2786,16 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
                   `;
                 }).join("")}
                 <div class="admin-qf-segment-human">
-                  <span>05</span>
+                  <span>06</span>
                   <div><strong>Sua aprovação</strong><small>Quando as 200 estiverem aprovadas na reauditoria, o Admin libera SIM/NÃO. SIM envia o bloco ao lote de 1.000.</small></div>
                 </div>
                 <div class="admin-qf-segment-human final">
-                  <span>06</span>
+                  <span>07</span>
                   <div><strong>Revisão final das 1.000</strong><small>Somente depois dos cinco blocos aprovados por você. A revisão é global e olha o lote como conjunto.</small></div>
                 </div>
                 ${[
-                  ["06A","ChatGPT · revisão global das 1.000","lot_chatgpt_final","chatgpt"],
-                  ["06B","Perplexity · auditoria final das 1.000","lot_perplexity_final","perplexity"]
+                  ["07A","ChatGPT · revisão global das 1.000","lot_chatgpt_final","chatgpt"],
+                  ["07B","Perplexity · auditoria final das 1.000","lot_perplexity_final","perplexity"]
                 ].map(([num,label,stage,provider]) => {
                   const pid=`qf-${String(item.exam_style||"style").replace(/[^a-z0-9]/gi,"-").toLowerCase()}-${stage}`;
                   return `
