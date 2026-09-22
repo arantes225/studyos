@@ -2006,10 +2006,10 @@ function wireExams() {
 
 
 /* =========================================================
-   CENTRAL DE EDITAIS ARISTO
+   CENTRAL DE EDITAIS
    ========================================================= */
 
-let aristoFrameLoaded =
+let catalogLegacyFrameLoaded =
   false;
 
 
@@ -2022,9 +2022,9 @@ function activateEditaisSource(
     );
 
 
-  const aristo =
+  const catalog =
     document.getElementById(
-      "editais-aristo-content"
+      "editais-catalog-content"
     );
 
 
@@ -2090,65 +2090,6 @@ function activateEditaisSource(
 }
 
 
-function loadAristoFrame() {
-  if (
-    aristoFrameLoaded
-  ) {
-    return;
-  }
-
-
-  const frame =
-    document.getElementById(
-      "aristo-editais-frame"
-    );
-
-
-  const loading =
-    document.getElementById(
-      "aristo-frame-loading"
-    );
-
-
-  if (!frame) {
-    return;
-  }
-
-
-  const src =
-    frame.dataset.src;
-
-
-  if (!src) {
-    return;
-  }
-
-
-  frame.addEventListener(
-    "load",
-    () => {
-      aristoFrameLoaded =
-        true;
-
-
-      loading
-        ?.classList
-        .add(
-          "hidden"
-        );
-    },
-    {
-      once:
-        true
-    }
-  );
-
-
-  frame.src =
-    src;
-}
-
-
 function wireEditaisSources() {
   document
     .querySelectorAll(
@@ -2182,7 +2123,7 @@ function wireEditaisSources() {
 
 
     if (
-      saved === "aristo"
+      saved === "catalog"
       || saved === "mine"
     ) {
       initial =
