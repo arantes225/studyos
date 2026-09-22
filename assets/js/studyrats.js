@@ -6,6 +6,7 @@ let sharedStudyratsMyAccessory='none';
 let sharedStudyratsAccessoryOffsets={};
 let sharedStudyratsMyAccessoryX=0;
 let sharedStudyratsMyAccessoryY=0;
+let sharedStudyratsCustomizerLoaded=false;
 
 const sharedStudyratLaneColors=['#2f80ed','#36a96c','#f2994a','#8b5cf6','#eb5757','#24a0b5'];
 const sharedStudyratVariants=[
@@ -184,7 +185,8 @@ function sharedStudyratsUpdateLargePreview(){
     sharedStudyratsMyAccessoryY
   );
   sharedStudyratsBindImageFallbacks(host);
-  sharedStudyratsBindAccessoryDrag();
+  const customizer=document.getElementById('studyrats-customizer');
+  if(customizer&&!customizer.hidden)sharedStudyratsBindAccessoryDrag();
 }
 
 function sharedStudyratsApplyAccessorySelection(){
@@ -264,7 +266,6 @@ async function sharedStudyratsLoadMyVariant(){
     sharedStudyratsMyAccessoryX=offset.x;
     sharedStudyratsMyAccessoryY=offset.y;
   }
-  sharedStudyratsRenderRatPicker();
   sharedStudyratsUpdateLargePreview();
 }
 
@@ -359,6 +360,41 @@ function sharedStudyratsGroup(rows){
   return Array.from(map.values());
 }
 
+function sharedStudyratsRenderRecentRanking(){
+  const host=document.getElementById('studyrats-recent-ranking');
+  if(!host)return;
+
+  const userId=window.docmapUser&&window.docmapUser.id;
+  const challenges=sharedStudyratsGroup(sharedStudyratsRows).slice().sort(function(a,b){
+    const da=new Date(a.deadline||a.created_at||0).getTime()||0;
+    const db=new Date(b.deadline||b.created_at||0).getTime()||0;
+    return db-da;
+  });
+  const finished=challenges.filter(function(ch){return ch.status==='finished';});
+  const recent=(finished.length?finished:challenges).slice(0,5);
+
+  if(!recent.length){
+    host.innerHTML='<div class="studyrats-recent-empty">Seus resultados vão aparecer aqui depois dos primeiros desafios.</div>';
+    return;
+  }
+
+  host.innerHTML=recent.map(function(ch,index){
+    const ordered=(ch.participants||[]).slice().sort(function(a,b){return Number(b.value||0)-Number(a.value||0);});
+    const winner=ordered[0];
+    const myIndex=ordered.findIndex(function(p){return p.id===userId;});
+    const myPosition=myIndex>=0?(myIndex+1)+'º':'—';
+    const type=studyratsTypeLabels[ch.type]||studyratsTypeLabels.flashcards;
+    const winnerName=winner?winner.name:'—';
+    const date=ch.deadline?formatStudyratsDate(ch.deadline):'';
+    return '<div class="studyrats-recent-row">'+
+      '<span class="studyrats-recent-number">'+(index+1)+'</span>'+
+      '<span class="studyrats-recent-copy"><strong>'+fEsc(type.title)+'</strong><small>'+fEsc(date)+'</small></span>'+
+      '<span class="studyrats-recent-winner"><small>'+(ch.status==='finished'?'Vencedor':'Líder')+'</small><strong>'+fEsc(winnerName)+'</strong></span>'+
+      '<span class="studyrats-recent-position"><small>Minha posição</small><strong>'+myPosition+'</strong></span>'+
+    '</div>';
+  }).join('');
+}
+
 function sharedStudyratsTimeFraction(createdAt,deadline){
   const start=new Date(createdAt).getTime();
   const end=new Date(String(deadline).slice(0,10)+'T23:59:59').getTime();
@@ -388,6 +424,7 @@ async function sharedStudyratsLoad(){
     return;
   }
   sharedStudyratsRows=result.data||[];
+  sharedStudyratsRenderRecentRanking();
   sharedStudyratsRender();
 }
 
@@ -519,12 +556,34 @@ window.initSharedStudyrats=function(){
   const deadline=document.getElementById('studyrats-deadline');
   if(deadline&&!deadline.value)deadline.value=defaultDeadline();
 
-  document.getElementById('studyrats-toggle-create')?.addEventListener('click',function(){create.hidden=!create.hidden;});
+  document.getElementById('studyrats-toggle-create')?.addEventListener('click',function(){
+    create.hidden=!create.hidden;
+    if(!create.hidden)create.scrollIntoView({behavior:'smooth',block:'nearest'});
+  });
   document.getElementById('studyrats-cancel')?.addEventListener('click',function(){create.hidden=true;});
   document.getElementById('studyrats-start')?.addEventListener('click',sharedStudyratsStart);
 
+  const customizer=document.getElementById('studyrats-customizer');
+  const customizeButton=document.getElementById('studyrats-toggle-customize');
+  customizeButton?.addEventListener('click',function(){
+    if(!customizer)return;
+    const opening=customizer.hidden;
+    customizer.hidden=!opening;
+    customizeButton.textContent=opening?'Fechar personalização':'Personalizar';
+    if(opening){
+      if(!sharedStudyratsCustomizerLoaded){
+        sharedStudyratsCustomizerLoaded=true;
+        sharedStudyratsRenderRatPicker();
+      }else{
+        sharedStudyratsUpdateLargePreview();
+      }
+      customizer.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }else{
+      sharedStudyratsUpdateLargePreview();
+    }
+  });
+
   renderStudyratsFriendOptions();
-  sharedStudyratsRenderRatPicker();
   sharedStudyratsLoadMyVariant();
   sharedStudyratsLoad();
 
