@@ -1117,6 +1117,19 @@ Se esses critérios não forem atingidos, manter `NEEDS_ONE_MORE_CALIBRATION`.
 - Próximo teste: 30 questões inéditas; fontes definitivas; explicações A–D específicas; dificuldade distribuída; gabarito sem padrão; corte >=97.
 - Só considerar READY_FOR_200 se `style_confidence >= medium-high` com evidência primária, >=90% das 30 >=97 após correção/reauditoria, 0 hard fails e 0 ambiguidades relevantes, seguido de nova revisão do usuário.
 
+
+
+### Aprendizado específico SUS-SP após T6
+- Decisão atual: `NEEDS_MINOR_PROMPT_REFINEMENT`.
+- O relatório do Perplexity teve uma inconsistência interna: começou com 5 divergências de gabarito e depois corrigiu para 50/50 concordantes, mas não recalculou as métricas globais.
+- Recalculando os 50 escores finais por item: média 97,58; mediana 98; 41/50 (82%) >=97; 32/50 (64%) >=98; 0 questões =100.
+- Itens abaixo do corte: 01, 03, 11, 14, 19, 27, 29, 34 e 43.
+- Item 49 =97, portanto está no corte e pode receber apenas polish.
+- Qualquer componente acima do teto da rubrica é inválido; exemplo: difficulty=6 em rubrica 0–5.
+- Identidade SUS-SP foi confirmada como forte: casos curtos, decisão prática, pouca narrativa excessiva e boa mistura de emergência/ambulatório/APS.
+- Principal gargalo agora é gerativo: blocos de 5 temas, sintaxe repetida, resposta correta frequentemente mais longa e uso de absolutos denunciadores.
+- Antes de READY_FOR_200, corrigir os 9 itens <97, reauditar e reduzir AI_PATTERN_RISK de high.
+
 ## 15. Terceira barreira independente — Gemini
 
 Depois que o lote de 1.000 passar pela revisão global do ChatGPT e do Perplexity:
