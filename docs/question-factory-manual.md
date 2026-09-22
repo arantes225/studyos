@@ -1130,6 +1130,19 @@ Se esses critérios não forem atingidos, manter `NEEDS_ONE_MORE_CALIBRATION`.
 - Principal gargalo agora é gerativo: blocos de 5 temas, sintaxe repetida, resposta correta frequentemente mais longa e uso de absolutos denunciadores.
 - Antes de READY_FOR_200, corrigir os 9 itens <97, reauditar e reduzir AI_PATTERN_RISK de high.
 
+
+
+### Aprendizado específico SES-DF após T6
+- Status: `NEEDS_ONE_MORE_CALIBRATION`.
+- Métricas: média 98,08; mediana 98; 90% >=97; 84% >=98.
+- A média alta não supera gates eliminatórios: 1 ambiguidade, fontes insuficientemente específicas e padrão gerativo forte.
+- Rede artificial permaneceu em ~32%; clínica pura em ~42%.
+- Correta mais longa em ~82% — principal risco psicométrico residual.
+- AI_PATTERN_RISK = high.
+- Itens prioritários: 034, 041, 042, 045, 011, 026 e 043.
+- Próxima calibração deve: remover rede ornamental, equilibrar extensão das alternativas, substituir absolutos/caricaturas, variar sintaxe e usar fonte diretamente verificável.
+- Gate para 200: >=90% >=97 após correção/reauditoria, 0 ambiguidades, 0 hard fails, answer_source_issue=null em todos, network_artificial residual e AI_PATTERN_RISK abaixo de high.
+
 ## 15. Terceira barreira independente — Gemini
 
 Depois que o lote de 1.000 passar pela revisão global do ChatGPT e do Perplexity:
