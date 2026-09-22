@@ -8,6 +8,8 @@ const APP_SHELL = [
   "/assets/css/image-lightbox.css?v=1",
   "/",
   "/index.html",
+  "/manifest.webmanifest?v=4",
+  "/assets/img/logo-icone-original.png?v=pwa4",
   "/login/",
   "/dashboard/",
   "/amigos/",
@@ -50,11 +52,7 @@ const APP_SHELL = [
   "/assets/img/studyrats/acessórios/costas/angel-wings.webp?v=16",
   "/assets/img/studyrats/acessórios/atras/atras/rocket-flame.webp?v=16",
   "/assets/img/studyrats/acessórios/atras/capacete-astronauta.png?v=16",
-  "/assets/img/logo-icone-original.png?v=favicon1",
   "/assets/img/logo-principal.png",
-  "/assets/img/pwa-icon-180.png",
-  "/assets/img/pwa-icon-192.png",
-  "/assets/img/pwa-icon-512.png"
 ];
 
 self.addEventListener("install", (event) => {
