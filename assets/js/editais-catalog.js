@@ -138,14 +138,7 @@
               </a>
             ` : ""}
 
-            <a
-              class="catalog-source-link"
-              href="${escapeHtml(row.source_url || "https://aristo.com.br/editais/")}"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Fonte Aristo
-            </a>
+            
           </div>
         </article>
       `;
@@ -184,7 +177,7 @@
               exam_date: row.exam_date || null,
               registration_deadline: row.registration_end || null,
               fee: row.fee ?? null,
-              notes: "Importado automaticamente da Central de editais Aristo.",
+              notes: "Importado automaticamente da Central de editais.",
               status: "planned",
               edital_url: row.edital_url || null,
               registration_url: row.registration_url || null
@@ -240,7 +233,7 @@
       try {
         const { data, error } = await sb
           .from("exam_catalog")
-          .select("id,institution,uf,registration_text,registration_start,registration_end,exam_date,answer_key_date,fee_text,fee,board,edital_url,registration_url,source_url,status_text,last_seen_at")
+          .select("id,institution,uf,registration_text,registration_start,registration_end,exam_date,answer_key_date,fee_text,fee,board,edital_url,registration_url,status_text,last_seen_at")
           .eq("active", true)
           .order("exam_date", { ascending: true, nullsFirst: false })
           .order("institution", { ascending: true });
