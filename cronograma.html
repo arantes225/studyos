@@ -807,6 +807,127 @@
       }
     }
 
+    .schedule-library-tabs {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-2);
+    }
+
+    .schedule-library-tab {
+      min-height: 38px;
+      border: 0;
+      border-radius: 9px;
+      padding: 0 14px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .schedule-library-tab.active {
+      background: var(--surface);
+      color: var(--accent);
+      box-shadow: 0 1px 4px rgba(15, 35, 65, .10);
+    }
+
+    .event-library-panel[hidden],
+    .theme-library-content[hidden] {
+      display: none !important;
+    }
+
+    .event-library-controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 190px auto;
+      gap: 10px;
+      margin-top: 16px;
+      align-items: center;
+    }
+
+    .event-library-controls input,
+    .event-library-controls select {
+      min-height: 42px;
+      padding: 0 11px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+    }
+
+    .event-date-filter {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .event-library-row .theme-library-actions {
+      justify-content: flex-end;
+    }
+
+    .event-edit-dialog {
+      width: min(calc(100% - 32px), 560px);
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow);
+    }
+
+    .event-edit-dialog::backdrop {
+      background: rgba(0,0,0,.45);
+    }
+
+    .event-edit-form {
+      display: grid;
+      gap: 14px;
+      padding: 22px;
+    }
+
+    .event-edit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .event-edit-field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .event-edit-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .event-edit-field span {
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .event-edit-field input,
+    .event-edit-field select {
+      width: 100%;
+      min-height: 42px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    @media (max-width: 700px) {
+      .event-library-controls,
+      .event-date-filter,
+      .event-edit-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .manual-panel,
     .theme-library-panel {
       padding: 20px;
@@ -2466,9 +2587,34 @@
 
 
           <section class="theme-library-panel">
+            <div class="schedule-library-tabs" role="tablist" aria-label="Listas do cronograma">
+              <button
+                id="schedule-library-tab-lessons"
+                class="schedule-library-tab active"
+                type="button"
+                role="tab"
+                aria-selected="true"
+                data-schedule-library-tab="lessons"
+              >
+                Aulas
+              </button>
+
+              <button
+                id="schedule-library-tab-events"
+                class="schedule-library-tab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                data-schedule-library-tab="events"
+              >
+                Outros eventos
+              </button>
+            </div>
+
+            <div id="theme-library-content" class="theme-library-content">
             <div class="theme-library-head">
               <div>
-                <h2>Lista de temas</h2>
+                <h2>Lista de aulas</h2>
                 <p>
                   Pesquise qualquer aula do cronograma, inclusive as que estão em semanas mais distantes.
                 </p>
@@ -2579,9 +2725,6 @@
                         Feitos
                       </option>
 
-                      <option value="external_events">
-                        Eventos externos
-                      </option>
                     </select>
 
                   </label>
@@ -2732,7 +2875,111 @@
             </div>
 
             <div id="theme-library-list" class="theme-library-list"></div>
+            </div>
+
+            <div id="event-library-panel" class="event-library-panel" hidden>
+              <div class="theme-library-head">
+                <div>
+                  <h2>Outros eventos</h2>
+                  <p>
+                    Consulte, edite ou apague simulados, provas, revisões e outros eventos do cronograma.
+                  </p>
+                </div>
+              </div>
+
+              <div class="event-library-controls">
+                <input
+                  id="event-library-search"
+                  type="search"
+                  placeholder="Pesquisar evento..."
+                  autocomplete="off"
+                >
+
+                <select id="event-library-type" aria-label="Filtrar tipo de evento">
+                  <option value="all">Todos os eventos</option>
+                  <option value="simulations">Simulados</option>
+                  <option value="other">Outros eventos</option>
+                </select>
+
+                <div class="event-date-filter">
+                  <input id="event-library-date-from" type="date" aria-label="Data inicial">
+                  <input id="event-library-date-to" type="date" aria-label="Data final">
+                </div>
+              </div>
+
+              <div class="theme-library-meta">
+                <span id="event-list-count">0 eventos</span>
+                <span>Filtre por tipo ou período</span>
+              </div>
+
+              <div id="event-library-list" class="theme-library-list"></div>
+            </div>
           </section>
+
+          <dialog id="event-edit-dialog" class="event-edit-dialog">
+            <form id="event-edit-form" class="event-edit-form" method="dialog">
+              <div class="schedule-dialog-head">
+                <div>
+                  <span class="badge accent">Cronograma</span>
+                  <h2>Editar evento</h2>
+                </div>
+
+                <button
+                  id="event-edit-close"
+                  class="schedule-dialog-close"
+                  type="button"
+                  aria-label="Fechar"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div class="event-edit-grid">
+                <label class="event-edit-field full">
+                  <span>Título *</span>
+                  <input id="event-edit-title" type="text" maxlength="180" required>
+                </label>
+
+                <label class="event-edit-field">
+                  <span>Tipo *</span>
+                  <select id="event-edit-type" required>
+                    <option value="simulation">Simulado programado</option>
+                    <option value="smart_simulation">Simulado inteligente</option>
+                    <option value="full_exam">Prova na íntegra</option>
+                    <option value="smart_review">Revisão inteligente</option>
+                    <option value="external_review">Revisão teórica</option>
+                    <option value="final_review">Reta final</option>
+                    <option value="other">Outro evento</option>
+                  </select>
+                </label>
+
+                <label class="event-edit-field">
+                  <span>Data *</span>
+                  <input id="event-edit-date" type="date" required>
+                </label>
+
+                <label class="event-edit-field">
+                  <span>Horário</span>
+                  <input id="event-edit-time" type="time">
+                </label>
+
+                <label class="event-edit-field">
+                  <span>Área</span>
+                  <input id="event-edit-area" type="text" maxlength="100" placeholder="Opcional">
+                </label>
+
+                <label class="event-edit-field full">
+                  <span>Matéria</span>
+                  <input id="event-edit-materia" type="text" maxlength="120" placeholder="Opcional">
+                </label>
+              </div>
+
+              <div class="schedule-dialog-actions">
+                <button id="event-edit-save" class="button primary" type="submit">Salvar</button>
+                <button id="event-edit-cancel" class="button secondary" type="button">Cancelar</button>
+              </div>
+            </form>
+          </dialog>
 
 
         </div>
@@ -2774,7 +3021,7 @@
   <script src="assets/js/app.js?v=17.0"></script>
   <script src="assets/js/study-mode.js?v=12.1"></script>
   <script src="assets/js/cronograma-base-data.js?v=12.6"></script>
-  <script src="assets/js/cronograma.js?v=16.7"></script>
+  <script src="assets/js/cronograma.js?v=16.8"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
