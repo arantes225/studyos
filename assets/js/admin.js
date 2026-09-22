@@ -1652,13 +1652,39 @@
               <span>questões</span>
             </div>
             <div class="admin-qf-style-stages">
-              <span><b>${formatNumber(item.generated)}</b><small>Geradas</small></span>
-              <span><b>${formatNumber(item.block_review)}</b><small>Perplexity</small></span>
-              <span><b>${formatNumber(item.needs_revision)}</b><small>Correção</small></span>
-              <span><b>${formatNumber(item.block_approved)}</b><small>Bloco OK</small></span>
-              <span><b>${formatNumber(item.final_review)}</b><small>Revisão final</small></span>
-              <span><b>${formatNumber(item.ready)}</b><small>Prontas</small></span>
-              <span><b>${formatNumber(item.published)}</b><small>Publicadas</small></span>
+              <span class="admin-qf-style-stage">
+                <b>${formatNumber(item.generated)}</b>
+                <small>Geradas</small>
+              </span>
+              <span class="admin-qf-style-stage">
+                <b>${formatNumber(item.perplexity_seen)}</b>
+                <small>Vistas pelo Perplexity</small>
+              </span>
+              <span class="admin-qf-style-stage correction">
+                <b>${formatNumber(item.in_correction)}</b>
+                <small>Em correção</small>
+                ${Array.isArray(item.correction_blocks) && item.correction_blocks.length ? `
+                  <em class="admin-qf-correction-blocks">
+                    ${item.correction_blocks
+                      .slice()
+                      .sort((a,b)=>(Number(a.batch_number||0)-Number(b.batch_number||0)) || (Number(a.block_number||0)-Number(b.block_number||0)))
+                      .map(x => `<i>L${String(Number(x.batch_number||0)).padStart(3,"0")} · B${Number(x.block_number||0)} <strong>${formatNumber(x.count)}</strong></i>`)
+                      .join("")}
+                  </em>
+                ` : ""}
+              </span>
+              <span class="admin-qf-style-stage">
+                <b>${formatNumber(item.blocks_ok)}</b>
+                <small>Blocos OK</small>
+              </span>
+              <span class="admin-qf-style-stage">
+                <b>${formatNumber(item.lots_in_final_review)}</b>
+                <small>Lotes em revisão final</small>
+              </span>
+              <span class="admin-qf-style-stage ready">
+                <b>${formatNumber(item.ready)}</b>
+                <small>Prontas</small>
+              </span>
             </div>
           </article>
         `;
