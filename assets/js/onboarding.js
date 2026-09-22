@@ -1517,29 +1517,30 @@
   }
 
   const QUESTIONS_GUIDE = [
-    {target:".qs-mode-tabs, .page-heading",title:"Visão geral",text:"Aqui você alterna entre o painel, adicionar simulado, seus simulados e a biblioteca."},
-    {target:".qs-add-mode-tabs",title:"Automático ou manual",text:"Automático usa um PDF. Manual cria apenas a estrutura do simulado e o gabarito, sem precisar extrair questões."},
-    {target:"#qs-extraction-mode",title:"Tipo de extração",text:"Rápida é mais ágil. Detalhada usa mais estratégias e é a indicada quando o PDF tem imagens, colunas ou diagramação complexa."},
-    {target:"#qs-source-profile",title:"Origem do material",text:"Escolha o cursinho para adaptar o extrator ao padrão visual mais provável do PDF."},
-    {target:"#qs-import",title:"Extrair questões",text:"Inicia a leitura do PDF. Depois confira a separação das questões antes de trabalhar com o gabarito."},
-    {target:"#qs-open-answer-import",title:"Print do gabarito",text:"Use um print para o LURIA tentar identificar acertos, erros e anuladas automaticamente."},
-    {target:"#qs-save-key",title:"Salvar gabarito",text:"Confirme as marcações. O que não estiver marcado como erro será considerado correto."},
-    {target:"#qs-send-errors",title:"Caderno de Erros",text:"Envie somente os erros que você quer revisar. Antes do envio, você pode ajustar Área, Matéria, Tema e CCQ."}
+    {target:".qs-mode-tabs, .page-heading",title:"Visão geral",text:"Aqui você alterna entre o painel, adicionar simulado, seus simulados e a biblioteca.",action:"questions-mine"},
+    {target:".qs-add-mode-tabs",title:"Automático ou manual",text:"Agora entramos em Adicionar simulado. Automático usa um PDF; Manual cria apenas a estrutura do simulado e o gabarito.",action:"questions-create"},
+    {target:"label[for='qs-file']",title:"Selecionar PDF",text:"No modo automático, escolha o PDF do simulado. Para este guia, o LURIA carrega o mesmo PDF de demonstração usado no onboarding.",action:"questions-file"},
+    {target:"#qs-onboarding-pdf-preview",title:"Visualizar o PDF",text:"O PDF-guia aparece aqui para você conferir o material antes da extração. Esta demonstração não grava nenhum arquivo novo na sua conta.",action:"questions-pdf"},
+    {target:"#qs-extraction-mode",title:"Tipo de extração",text:"Rápida é mais ágil. Detalhada usa mais estratégias e é indicada quando o PDF tem imagens, colunas ou diagramação complexa.",action:"questions-create"},
+    {target:"#qs-source-profile",title:"Origem do material",text:"Escolha a origem do material para adaptar o extrator ao padrão visual mais provável do PDF.",action:"questions-create"},
+    {target:"#qs-import",title:"Extrair questões",text:"Aqui o LURIA extrai as questões do PDF de demonstração. No guia, usamos a mesma simulação segura do onboarding.",action:"questions-extract"},
+    {target:"#qs-question-list",title:"Questões extraídas",text:"Depois da extração, as questões aparecem separadas e prontas para receber o resultado do gabarito.",action:"questions-answer"},
+    {target:"#qs-open-answer-import",title:"Adicionar gabarito",text:"Agora abrimos o leitor de gabarito. O guia carrega o gabarito de demonstração que já existe no site, igual ao onboarding.",action:"questions-reader"},
+    {target:"#qs-answer-import-dialog",title:"Gabarito de demonstração",text:"A imagem do gabarito já está carregada. A próxima etapa simula a leitura automática das marcações.",action:"questions-reader"},
+    {target:"#qs-onboarding-answer-key",title:"Extrair gabarito",text:"O LURIA extrai o gabarito da imagem e reconhece as questões corretas e erradas. Nesta demonstração: 8 acertos e 2 erros.",action:"questions-answerkey"},
+    {target:"#qs-apply-answer-import",title:"Aplicar gabarito",text:"Depois de conferir o reconhecimento, aplique o gabarito ao simulado para preencher os resultados das questões.",action:"questions-applykey"},
+    {target:"#qs-question-list",title:"Gabarito aplicado",text:"Pronto. O resultado fica aplicado às questões e os erros podem ser enviados ao Caderno de Erros.",action:"questions-applied"},
+    {target:"#qs-send-errors",title:"Caderno de Erros",text:"Envie somente os erros que você quer revisar. Antes do envio, você pode ajustar Área, Matéria, Tema e CCQ.",action:"questions-applied"}
   ];
   let questionsGuideIndex=0;
   function renderQuestionsGuide(){
     clearOverlay(); ensureStyles();
     const step=QUESTIONS_GUIDE[questionsGuideIndex];
 
-    // A partir de "Automático ou manual", o guia deve acontecer dentro
-    // da própria tela "Adicionar simulado", para que os controles
-    // destacados estejam visíveis e no contexto correto.
-    if(step.title==="Automático ou manual"){
-      const addTab=document.querySelector('[data-qs-mode="add"]');
-      if(addTab && !addTab.classList.contains("active")){
-        addTab.click();
-      }
-    }
+    // O guia reutiliza o mesmo fluxo demonstrativo do onboarding principal:
+    // abre "Adicionar simulado", carrega o PDF-guia, simula a extração,
+    // abre o gabarito salvo de demonstração e aplica o resultado.
+    runStepAction(step);
 
     const target=resolveTarget(step.target)||document.querySelector(".main")||document.body;
     target.scrollIntoView({behavior:"smooth",block:"center"});
