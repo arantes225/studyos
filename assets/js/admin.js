@@ -22,7 +22,8 @@
     qfBatchNumber: null,
     qfOffset: 0,
     qfPageSize: 100,
-    qfTotal: 0
+    qfTotal: 0,
+    questionStyles: []
   };
 
   const METRICS = [
@@ -1276,7 +1277,8 @@
     await Promise.all([
       load(),
       loadStorageExpansionGuide(),
-      loadQuestionFactory()
+      loadQuestionFactory(),
+      loadQuestionFactoryStyles()
     ]);
   }
 
@@ -1606,6 +1608,131 @@
       return;
     }
     renderQuestionFactory(data || {});
+  }
+
+  function renderQuestionFactoryStyles(styles) {
+    state.questionStyles = Array.isArray(styles) ? styles : [];
+
+    const dash = $("admin-qf-style-dashboard");
+    const manual = $("admin-qf-style-manual");
+    const count = $("admin-qf-style-count");
+
+    if (count) {
+      count.textContent = `${state.questionStyles.length} banca${state.questionStyles.length === 1 ? "" : "s"}`;
+    }
+
+    if (dash) {
+      dash.innerHTML = state.questionStyles.length ? state.questionStyles.map(item => {
+        const score = item.style_score == null ? "calibrando" : `${Number(item.style_score).toLocaleString("pt-BR",{maximumFractionDigits:1})}/10`;
+        return `
+          <article class="admin-qf-style-card">
+            <div class="admin-qf-style-card-head">
+              <div>
+                <strong>${esc(item.exam_style)}</strong>
+                <small>${esc(item.organizing_body || "Perfil editorial")}</small>
+              </div>
+              <span>${esc(score)}</span>
+            </div>
+            <div class="admin-qf-style-total">
+              <strong>${formatNumber(item.total)}</strong>
+              <span>questões</span>
+            </div>
+            <div class="admin-qf-style-stages">
+              <span><b>${formatNumber(item.generated)}</b><small>Geradas</small></span>
+              <span><b>${formatNumber(item.block_review)}</b><small>Perplexity</small></span>
+              <span><b>${formatNumber(item.needs_revision)}</b><small>Correção</small></span>
+              <span><b>${formatNumber(item.block_approved)}</b><small>Bloco OK</small></span>
+              <span><b>${formatNumber(item.final_review)}</b><small>Revisão final</small></span>
+              <span><b>${formatNumber(item.ready)}</b><small>Prontas</small></span>
+              <span><b>${formatNumber(item.published)}</b><small>Publicadas</small></span>
+            </div>
+          </article>
+        `;
+      }).join("") : '<div class="admin-factory-empty-wide">Nenhum perfil de banca configurado.</div>';
+    }
+
+    if (manual) {
+      manual.innerHTML = state.questionStyles.length ? state.questionStyles.map((item,index) => {
+        const score = item.style_score == null ? "Em calibração" : `Fidelidade atual: ${Number(item.style_score).toLocaleString("pt-BR",{maximumFractionDigits:1})}/10`;
+        const url = String(item.style_reference_url || "").startsWith("https://") ? item.style_reference_url : "";
+        return `
+          <details class="admin-qf-board-manual" ${index === 0 ? "open" : ""}>
+            <summary>
+              <div>
+                <span class="admin-qf-board-index">${String(index+1).padStart(2,"0")}</span>
+                <div>
+                  <strong>${esc(item.exam_style)}</strong>
+                  <small>${esc(item.organizing_body || "")}</small>
+                </div>
+              </div>
+              <span class="admin-qf-board-score">${esc(score)}</span>
+            </summary>
+            <div class="admin-qf-board-content">
+              <section class="admin-qf-board-origin">
+                <div>
+                  <span class="eyebrow">De onde aprender o estilo</span>
+                  <p>${esc(item.calibration_source_note || "Usar provas públicas recentes e edital vigente.")}</p>
+                  <small>Anos de referência: ${esc(item.reference_years || "atualizar antes da geração")}</small>
+                </div>
+                ${url ? `<a class="button secondary" href="${esc(url)}" target="_blank" rel="noopener">Fonte oficial</a>` : ""}
+              </section>
+
+              <div class="admin-qf-board-specs">
+                <article><span>Enunciado</span><strong>${esc(item.average_stem_length || "—")}</strong></article>
+                <article><span>Casos clínicos</span><strong>${esc(item.case_based_question_rate || "—")}</strong></article>
+                <article><span>Dificuldade</span><strong>${esc(item.average_difficulty || "—")}</strong></article>
+                <article><span>Raciocínio</span><strong>${esc(item.clinical_reasoning_depth || "—")}</strong></article>
+                <article><span>Alternativas</span><strong>${esc(item.typical_alternative_length || "—")}</strong></article>
+                <article><span>Redação</span><strong>${esc(item.writing_style || "—")}</strong></article>
+              </div>
+
+              <div class="admin-qf-board-columns">
+                <article>
+                  <span class="eyebrow">O que essa banca costuma cobrar</span>
+                  <p><b>Tipos:</b> ${esc(item.common_question_types || "—")}</p>
+                  <p><b>Contextos:</b> ${esc(item.frequent_contexts || "—")}</p>
+                  <p><b>Temas frequentes:</b> ${esc(item.frequent_topics || "—")}</p>
+                </article>
+                <article>
+                  <span class="eyebrow">Como construir os distratores</span>
+                  <p>${esc(item.distractor_style || "Usar alternativas plausíveis e apenas uma melhor resposta.")}</p>
+                  <p><b>Regra:</b> nenhum distrator deve ser absurdo só para facilitar a questão.</p>
+                </article>
+              </div>
+
+              <section class="admin-qf-board-instruction">
+                <span class="eyebrow">Instrução para a IA gerar a questão</span>
+                <p>${esc(item.generation_instructions || item.recommended_generation_rules || "—")}</p>
+              </section>
+
+              <section class="admin-qf-board-science">
+                <span class="eyebrow">De onde tirar a resposta correta</span>
+                <p>${esc(item.scientific_source_strategy || "Usar fontes científicas brasileiras atuais.")}</p>
+              </section>
+
+              <section class="admin-qf-board-avoid">
+                <span class="eyebrow">O que evitar</span>
+                <p>${esc(item.what_to_avoid || "Não copiar questões anteriores nem inventar referências.")}</p>
+              </section>
+
+              <section class="admin-qf-board-calibration">
+                <span class="eyebrow">Estado da calibração</span>
+                <p>${esc(item.calibration_notes || "Perfil ainda sem nota de calibração.")}</p>
+              </section>
+            </div>
+          </details>
+        `;
+      }).join("") : '<div class="admin-factory-empty-wide">Nenhum perfil editorial disponível.</div>';
+    }
+  }
+
+  async function loadQuestionFactoryStyles() {
+    const { data, error } = await sb.rpc("admin_question_factory_style_snapshot");
+    if (error) {
+      console.warn("Não foi possível carregar os perfis de banca:", error);
+      return;
+    }
+    renderQuestionFactoryStyles(data || []);
   }
 
   function renderQuestionFactoryBatch(data) {
