@@ -333,6 +333,15 @@ function sharedStudyratsInitials(name){
   return String(name||'L').trim().split(/\s+/).slice(0,2).map(function(part){return part.charAt(0).toUpperCase();}).join('')||'L';
 }
 
+function sharedStudyratsFineLineIcon(){
+  return '<svg class="studyrats-fine-rat" viewBox="0 0 48 48" aria-hidden="true" focusable="false">'+
+    '<path d="M9.5 28.5c0-7.1 5.8-12.8 13-12.8 7.8 0 14 5.3 14 12.1 0 6.2-5.2 10.7-12.5 10.7-8.1 0-14.5-3.7-14.5-10Z"/>'+
+    '<path d="M18.2 16.6c-1.9-4.2.2-7.8 3.6-7.8 3 0 4.8 2.5 4.4 6.4M31 17.4c1.5-3.6 4.2-5.2 6.6-3.5 2.2 1.6 1.7 4.8-.8 7.2"/>'+
+    '<circle cx="30.9" cy="25.1" r="1.1"/>'+
+    '<path d="M36.5 29.1c3.9.3 6.1 2 6 4.2-.1 2.5-3.1 4.1-6.9 3.2M39.2 26.3l5.2-1.3M39.5 29.2l5.5.7M13 24.8c-4.8-1.5-8.1.1-8.8 3.1-.8 3.5 2.7 6.2 7.3 5.5"/>'+
+  '</svg>';
+}
+
 function sharedStudyratsGroup(rows){
   const map=new Map();
   (rows||[]).forEach(function(row){
@@ -340,6 +349,7 @@ function sharedStudyratsGroup(rows){
       map.set(row.challenge_id,{
         id:row.challenge_id,
         creator_user_id:row.creator_user_id,
+        title:row.challenge_title||'Desafio Studyrats',
         type:row.challenge_type,
         deadline:row.deadline,
         created_at:row.created_at,
@@ -388,7 +398,7 @@ function sharedStudyratsRenderRecentRanking(){
     const date=ch.deadline?formatStudyratsDate(ch.deadline):'';
     return '<div class="studyrats-recent-row">'+
       '<span class="studyrats-recent-number">'+(index+1)+'</span>'+
-      '<span class="studyrats-recent-copy"><strong>'+fEsc(type.title)+'</strong><small>'+fEsc(date)+'</small></span>'+
+      '<span class="studyrats-recent-copy"><strong>'+fEsc(ch.title||type.title)+'</strong><small>'+fEsc(date)+'</small></span>'+
       '<span class="studyrats-recent-winner"><small>'+(ch.status==='finished'?'Vencedor':'Líder')+'</small><strong>'+fEsc(winnerName)+'</strong></span>'+
       '<span class="studyrats-recent-position"><small>Minha posição</small><strong>'+myPosition+'</strong></span>'+
     '</div>';
@@ -417,7 +427,7 @@ function sharedStudyratsDeadlineText(date){
 async function sharedStudyratsLoad(){
   const host=document.getElementById('studyrats-list');
   if(!host||!window.supabaseClient)return;
-  const result=await window.supabaseClient.rpc('my_studyrats_challenges_v2');
+  const result=await window.supabaseClient.rpc('my_studyrats_challenges_v3');
   if(result.error){
     console.error(result.error);
     host.innerHTML='<div class="studyrats-empty"><div><strong>Não foi possível carregar os desafios</strong><span>Tente atualizar a página.</span></div></div>';
@@ -477,8 +487,8 @@ function sharedStudyratsRender(){
     return '<article class="studyrats-challenge">'+
       '<div class="studyrats-challenge-head">'+
         '<div class="studyrats-challenge-title">'+
-          '<span class="studyrats-race-badge">'+sharedStudyratComposite(sharedStudyratsMyVariant,sharedStudyratsMyAccessory,'studyrats-badge-composite',sharedStudyratsMyAccessoryX,sharedStudyratsMyAccessoryY)+'</span>'+
-          '<span><strong>'+fEsc(type.title)+'</strong><small>'+(finished?'Desafio encerrado':'Quem estiver na frente na data limite vence.')+'</small></span>'+
+          '<span class="studyrats-race-badge">'+sharedStudyratsFineLineIcon()+'</span>'+
+          '<span><strong>'+fEsc(ch.title||type.title)+'</strong><small>'+(finished?'Desafio encerrado':fEsc(type.title))+'</small></span>'+
         '</div>'+
         (canDelete?'<button class="studyrats-delete" type="button" aria-label="Apagar desafio" data-delete-studyrat="'+fEsc(ch.id)+'">×</button>':'')+
       '</div>'+
@@ -520,11 +530,22 @@ function sharedStudyratsRender(){
 }
 
 async function sharedStudyratsStart(){
+  const title=(document.getElementById('studyrats-challenge-title')?.value||'').trim();
   const type=document.getElementById('studyrats-type')?.value||'flashcards';
   const deadline=document.getElementById('studyrats-deadline')?.value||defaultDeadline();
   const selected=Array.from(document.querySelectorAll('#studyrats-friends input:checked')).map(function(el){return el.value;});
   const button=document.getElementById('studyrats-start');
 
+  if(!title){
+    setFriendsStatus('Digite um título para o desafio.','error');
+    document.getElementById('studyrats-challenge-title')?.focus();
+    return;
+  }
+  if(title.length>80){
+    setFriendsStatus('O título pode ter no máximo 80 caracteres.','error');
+    document.getElementById('studyrats-challenge-title')?.focus();
+    return;
+  }
   if(!selected.length){
     setFriendsStatus('Selecione pelo menos um amigo para a corrida.','error');
     return;
@@ -532,7 +553,8 @@ async function sharedStudyratsStart(){
 
   if(button)button.disabled=true;
   try{
-    const result=await window.supabaseClient.rpc('create_studyrats_challenge',{
+    const result=await window.supabaseClient.rpc('create_studyrats_challenge_v2',{
+      p_title:title,
       p_challenge_type:type,
       p_goal:1,
       p_deadline:deadline,
@@ -540,6 +562,8 @@ async function sharedStudyratsStart(){
     });
     if(result.error)throw result.error;
     document.getElementById('studyrats-create').hidden=true;
+    const titleInput=document.getElementById('studyrats-challenge-title');
+    if(titleInput)titleInput.value='';
     document.querySelectorAll('#studyrats-friends input:checked').forEach(function(el){el.checked=false;});
     await sharedStudyratsLoad();
     setFriendsStatus('Desafio Studyrats criado.','success');
