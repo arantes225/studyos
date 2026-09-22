@@ -1261,12 +1261,87 @@
     chart("chart-flash-area","bar",areaReview.map(x=>x.label),[{label:"Revisões",data:areaReview.map(x=>x.value)}]);
 
     const out=[];
-    if(state.range!=="all") out.push({title:"Volume",text:m.prevReviews.length?`Foram ${num(Math.abs((m.reviews.length-m.prevReviews.length)/m.prevReviews.length*100))}% ${m.reviews.length>=m.prevReviews.length?"mais":"menos"} revisões que no período anterior.`:`${m.reviews.length} revisões foram registradas no período.`});
-    if(m.weakArea) out.push({title:"Área mais frágil",text:`${m.weakArea.label} tem retenção estimada de ${percent(m.weakArea.value,1)} em ${m.weakArea.evidence} cards.`});
-    if(m.overdue) out.push({title:"Carga vencida",text:`${m.overdue} cards estão atrasados (${percent(pct(m.overdue,m.active.length))} dos ativos).`});
-    if(m.low) out.push({title:"Memória",text:`${m.low} cards têm recuperabilidade estimada abaixo de 70%.`});
-    if(m.growth.length) out.push({title:"Estabilidade",text:`A estabilidade cresceu em média ${num(mean(m.growth),1)}% nas revisões com dados antes/depois.`});
-    insights("flash-insights",out);
+
+    const reviewedShare = pct(m.unique, m.active.length);
+    const hardShare = pct(m.hard, m.reviews.length);
+    const neverShare = pct(m.never, m.active.length);
+
+    if(state.range!=="all") {
+      if(m.prevReviews.length) {
+        const volumeDelta = (m.reviews.length - m.prevReviews.length) / m.prevReviews.length * 100;
+        out.push({
+          title:"Ritmo de revisão",
+          text:`Foram ${num(Math.abs(volumeDelta),1)}% ${volumeDelta >= 0 ? "mais" : "menos"} revisões que no período anterior (${num(m.reviews.length)} vs. ${num(m.prevReviews.length)}).`
+        });
+      } else if(m.reviews.length) {
+        out.push({
+          title:"Ritmo de revisão",
+          text:`${num(m.reviews.length)} revisões foram registradas no período atual.`
+        });
+      }
+    }
+
+    if(m.reviews.length && m.prevReviews.length) {
+      const accDelta = m.accuracy - m.prevAccuracy;
+      out.push({
+        title:"Qualidade das respostas",
+        text:Math.abs(accDelta) < 0.05
+          ? `A taxa de acerto ficou estável em ${percent(m.accuracy,1)}.`
+          : `A taxa de acerto ${accDelta > 0 ? "subiu" : "caiu"} ${num(Math.abs(accDelta),1)} p.p., de ${percent(m.prevAccuracy,1)} para ${percent(m.accuracy,1)}.`
+      });
+    }
+
+    if(m.weakArea) {
+      out.push({
+        title:"Prioridade de memória",
+        text:`${m.weakArea.label} tem a menor retenção estimada entre as áreas com dados suficientes: ${percent(m.weakArea.value,1)} em ${m.weakArea.evidence} cards.`
+      });
+    }
+
+    if(m.weakSubject) {
+      out.push({
+        title:"Matéria mais frágil",
+        text:`${m.weakSubject.label} apresenta retenção estimada de ${percent(m.weakSubject.value,1)} em ${m.weakSubject.evidence} cards revisados.`
+      });
+    }
+
+    if(m.overdue || m.dueToday || m.next7) {
+      out.push({
+        title:"Carga de revisão",
+        text:`${num(m.overdue)} atrasados, ${num(m.dueToday)} para hoje e ${num(m.next7)} previstos nos próximos 7 dias. ${m.overdue ? `Os atrasados representam ${percent(pct(m.overdue,m.active.length),1)} dos cards ativos.` : "Não há carga vencida no momento."}`
+      });
+    }
+
+    if(m.active.length) {
+      out.push({
+        title:"Cobertura do baralho",
+        text:`${percent(reviewedShare,1)} dos cards ativos foram revisados no período. ${m.never ? `${num(m.never)} cards (${percent(neverShare,1)}) nunca passaram por revisão.` : "Todos os cards ativos já passaram por pelo menos uma revisão."}`
+      });
+    }
+
+    if(m.low || m.high) {
+      out.push({
+        title:"Estado da memória",
+        text:`${num(m.low)} cards estão abaixo de 70% de recuperabilidade estimada e ${num(m.high)} estão em 95% ou mais.`
+      });
+    }
+
+    if(m.reviews.length && m.hard) {
+      out.push({
+        title:"Dificuldade percebida",
+        text:`${num(m.hard)} revisões foram marcadas como difíceis (${percent(hardShare,1)} das revisões do período).`
+      });
+    }
+
+    if(m.growth.length) {
+      const avgGrowth = mean(m.growth);
+      out.push({
+        title:"Ganho de estabilidade",
+        text:`A estabilidade ${avgGrowth >= 0 ? "cresceu" : "caiu"} em média ${num(Math.abs(avgGrowth),1)}% nas revisões com dados antes/depois.`
+      });
+    }
+
+    insights("flash-insights",out.slice(0,6));
   }
 
   // =========================================================
@@ -1397,12 +1472,89 @@
     ]);
 
     const out=[];
-    if(m.areaGroups[0]) out.push({title:"Concentração",text:`${m.areaGroups[0].label} concentra ${m.areaGroups[0].count} CCQs ativos (${percent(pct(m.areaGroups[0].count,m.active.length))}).`});
-    if(m.overdue) out.push({title:"Revisões vencidas",text:`${m.overdue} CCQs estão atrasados (${percent(pct(m.overdue,m.active.length))} dos ativos).`});
-    if(m.byArea[0]) out.push({title:"Memória",text:`${m.byArea[0].label} apresenta a menor retenção estimada entre áreas com pelo menos 2 CCQs revisados: ${percent(m.byArea[0].value,1)}.`});
-    if(m.threePlus) out.push({title:"Profundidade",text:`${m.threePlus} CCQs já passaram por pelo menos 3 revisões.`});
-    if(m.originated) out.push({title:"Questões → Caderno",text:`${m.originated} erros de questões foram enviados ao Caderno no período.`});
-    insights("error-insights",out);
+
+    const activeCount = m.active.length;
+    const reviewedCoverage = pct(m.unique, activeCount);
+    const neverShare = pct(m.never, activeCount);
+    const overdueShare = pct(m.overdue, activeCount);
+    const deepShare = pct(m.threePlus, activeCount);
+    const weakestArea = m.byArea[0];
+    const weakestSubject = m.bySubject[0];
+
+    if(state.range!=="all") {
+      if(m.prevReviews.length) {
+        const reviewDelta = (m.reviews.length - m.prevReviews.length) / m.prevReviews.length * 100;
+        out.push({
+          title:"Ritmo de revisão",
+          text:`Foram ${num(Math.abs(reviewDelta),1)}% ${reviewDelta >= 0 ? "mais" : "menos"} revisões que no período anterior (${num(m.reviews.length)} vs. ${num(m.prevReviews.length)}).`
+        });
+      } else if(m.reviews.length) {
+        out.push({
+          title:"Ritmo de revisão",
+          text:`${num(m.reviews.length)} revisões foram registradas no período atual.`
+        });
+      }
+    }
+
+    if(m.areaGroups[0]) {
+      const top = m.areaGroups[0];
+      out.push({
+        title:"Concentração do caderno",
+        text:`${top.label} concentra ${num(top.count)} CCQs ativos (${percent(pct(top.count,activeCount),1)} do total ativo).`
+      });
+    }
+
+    if(weakestArea) {
+      out.push({
+        title:"Prioridade de revisão",
+        text:`${weakestArea.label} apresenta a menor retenção estimada entre áreas com pelo menos 2 CCQs revisados: ${percent(weakestArea.value,1)} em ${weakestArea.evidence} CCQs.`
+      });
+    }
+
+    if(weakestSubject) {
+      out.push({
+        title:"Matéria mais frágil",
+        text:`${weakestSubject.label} tem retenção estimada de ${percent(weakestSubject.value,1)} em ${weakestSubject.evidence} CCQs revisados.`
+      });
+    }
+
+    if(activeCount) {
+      out.push({
+        title:"Cobertura das revisões",
+        text:`${percent(reviewedCoverage,1)} dos CCQs ativos foram revisados no período. ${m.never ? `${num(m.never)} (${percent(neverShare,1)}) nunca foram revisados.` : "Todos os CCQs ativos já tiveram ao menos uma revisão."}`
+      });
+    }
+
+    if(m.overdue || m.dueToday || m.next7) {
+      out.push({
+        title:"Carga pendente",
+        text:`${num(m.overdue)} atrasados, ${num(m.dueToday)} para hoje e ${num(m.next7)} previstos nos próximos 7 dias. ${m.overdue ? `A carga vencida equivale a ${percent(overdueShare,1)} do caderno ativo.` : "Não há revisões vencidas no momento."}`
+      });
+    }
+
+    if(m.threePlus) {
+      out.push({
+        title:"Erros persistentes",
+        text:`${num(m.threePlus)} CCQs já precisaram de 3 ou mais revisões (${percent(deepShare,1)} dos ativos), indicando conteúdos que merecem atenção recorrente.`
+      });
+    }
+
+    if(m.created.length || m.reviews.length) {
+      const balance = m.reviews.length - m.created.length;
+      out.push({
+        title:"Entrada × revisão",
+        text:`No período, foram criados ${num(m.created.length)} CCQs e realizadas ${num(m.reviews.length)} revisões. ${balance >= 0 ? `As revisões superaram as novas entradas em ${num(balance)}.` : `Entraram ${num(Math.abs(balance))} CCQs a mais do que o número de revisões realizadas.`}`
+      });
+    }
+
+    if(m.originated) {
+      out.push({
+        title:"Questões → Caderno",
+        text:`${num(m.originated)} erros de questões foram transformados em CCQs no período, conectando prática de questões ao ciclo de revisão.`
+      });
+    }
+
+    insights("error-insights",out.slice(0,6));
   }
 
   function renderQuestions() {
