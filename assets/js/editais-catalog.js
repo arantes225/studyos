@@ -95,12 +95,29 @@
     button.textContent = "Adicionando...";
 
     try {
-      const { data: existing, error: lookupError } = await sb
+      let existingQuery = sb
         .from("exams")
         .select("id")
-        .eq("institution", row.institution)
-        .limit(1)
-        .maybeSingle();
+        .eq("institution", row.institution);
+
+      if (extra.target_specialty) {
+        existingQuery = existingQuery.eq(
+          "target_specialty",
+          extra.target_specialty
+        );
+      }
+
+      if (extra.target_hospital) {
+        existingQuery = existingQuery.eq(
+          "target_hospital",
+          extra.target_hospital
+        );
+      }
+
+      const { data: existing, error: lookupError } =
+        await existingQuery
+          .limit(1)
+          .maybeSingle();
 
       if (lookupError) throw lookupError;
 
