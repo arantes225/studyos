@@ -294,21 +294,60 @@ Só recomendar `READY_FOR_200` se, após correção e reauditoria:
 
 ## PSU-MG — prompt de auditoria
 
-Audite todas as questões PSU-MG com a rubrica oficial.
+Audite todas as questões PSU-MG com a rubrica oficial e corte >=97.
 
-Não tratar PSU-MG como “prova mineira genérica”.
+STATUS ATUAL
+- NEEDS_MORE_PRIMARY_STYLE_DATA.
+- Não trate PSU-MG como “prova mineira genérica”.
+- Não inferir identidade por temas comuns de residência.
+- A–D é regra fixa LURIA e não deve ser penalizada.
 
-Testar externamente a hipótese de perfil:
-- técnico + aplicado;
-- MBE contextualizada;
-- cálculos simples com significado;
-- casos objetivos;
-- menos narrativa que ENAMED.
+EVIDÊNCIA PRIMÁRIA
+Antes de atribuir fidelidade forte:
+- localizar material oficial verificável;
+- registrar years_available;
+- organizing_body;
+- primary_sources_found;
+- number_of_questions_sampled;
+- confidence_in_style_profile.
+Preferência operacional: >=20 questões oficiais e idealmente 2–3 cadernos/edições recentes quando disponíveis.
 
-Comparar proporção real de MBE/cálculos com provas oficiais.
+Sem amostra primária:
+- style_confidence=low;
+- não afirmar assinatura editorial;
+- não recomendar READY_FOR_200.
 
-Retornar generalization_score_0_10 e:
+FONTES — REGRA CORRIGIDA
+- “Fonte candidata” ou fonte ampla bloqueia aprovação via answer_source_issue.
+- Isso NÃO gera hard_fail automaticamente.
+- Hard fail de fonte somente se a referência for inexistente, falsa, errada ou não sustentar o gabarito.
+- Fonte real porém pouco específica NÃO deve receber automaticamente 0/15; pontuar proporcionalmente à rastreabilidade.
+
+DIFICULDADE
+- Classificar dificuldade real.
+- Meta global aproximada do LURIA: ~20% fácil, 55–60% média, 20–25% difícil.
+- Se easy+very_easy dominar sem evidência da banca, marcar falha sistêmica.
+
+MBE
+- Não assumir que MBE/cálculo é marca PSU-MG.
+- Comparar frequência com prova oficial.
+- Evitar checklist artificial de NNT, OR, sensibilidade, especificidade e rastreamento.
+
+DISTRATORES E EXPLICAÇÕES
+- Sempre que possível, pelo menos dois dos três distratores devem ser tecnicamente competitivos.
+- Explicações A–D específicas.
+- Proibido usar apenas “não corresponde à melhor interpretação”.
+
+PADRÕES DE IA
+- Detectar sequência previsível de gabarito, especialmente A-B-C-D repetido.
+- Detectar dificuldade uniforme.
+- Detectar sintaxe repetida.
+- Penalizar padrões sistêmicos de geração artificial.
+
+DECISÃO
 READY_FOR_200 | NEEDS_PROMPT_REFINEMENT | NEEDS_MORE_PRIMARY_STYLE_DATA.
+
+No estado atual, só alterar para READY_FOR_200 após evidência primária suficiente + novo lote inédito + correção/reauditoria com corte 97.
 
 ## Estrutura mínima por questão
 
