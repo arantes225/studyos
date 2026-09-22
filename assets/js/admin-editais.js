@@ -210,7 +210,7 @@
 
             <div class="admin-edital-footer">
               <small>
-                O PDF capturado da Aristo serve apenas como referência no Admin.
+                O PDF capturado automaticamente serve apenas como referência no Admin.
                 Só o link salvo por você em “Link oficial do edital” aparece no LURIA.
               </small>
 
