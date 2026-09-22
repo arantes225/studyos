@@ -2900,3 +2900,225 @@
     align-content:center !important;
   }
 }
+
+
+/* =========================================================
+   PWA MOBILE v14 — Admin layout stabilization
+   Regra final para impedir que blocos novos/desktop estourem ou
+   sejam miniaturizados no app instalado.
+   ========================================================= */
+@media (max-width:760px){
+  .pwa-standalone body[data-page="admin"] .main{
+    width:100%!important;
+    min-width:0!important;
+    padding:
+      max(12px,env(safe-area-inset-top))
+      10px
+      calc(24px + env(safe-area-inset-bottom))
+      10px!important;
+    overflow-x:hidden!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .page,
+  .pwa-standalone body[data-page="admin"] .admin-page{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    margin:0 auto!important;
+    gap:10px!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-topbar{
+    width:100%!important;
+    min-width:0!important;
+    display:grid!important;
+    grid-template-columns:auto minmax(0,1fr) auto!important;
+    align-items:center!important;
+    gap:8px!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-range{
+    position:static!important;
+    transform:none!important;
+    justify-self:end!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-range select{
+    min-width:94px!important;
+    min-height:34px!important;
+    padding:0 8px!important;
+    font-size:9px!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-grid,
+  .pwa-standalone body[data-page="admin"] .admin-metrics-grid,
+  .pwa-standalone body[data-page="admin"] .admin-feature-grid,
+  .pwa-standalone body[data-page="admin"] .admin-infra-grid,
+  .pwa-standalone body[data-page="admin"] .admin-finance-grid{
+    width:100%!important;
+    min-width:0!important;
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:7px!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-finance-card:last-child{
+    grid-column:1/-1!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-card,
+  .pwa-standalone body[data-page="admin"] .admin-metric-card,
+  .pwa-standalone body[data-page="admin"] .admin-feature-card,
+  .pwa-standalone body[data-page="admin"] .admin-infra-card,
+  .pwa-standalone body[data-page="admin"] .admin-finance-card{
+    min-width:0!important;
+    min-height:84px!important;
+    padding:9px!important;
+    border-radius:11px!important;
+    overflow:hidden!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-section{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    padding:10px!important;
+    border-radius:12px!important;
+    overflow:hidden!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-section-head{
+    width:100%!important;
+    min-width:0!important;
+    display:flex!important;
+    align-items:flex-start!important;
+    justify-content:space-between!important;
+    gap:8px!important;
+    margin-bottom:9px!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-section-head>div{
+    min-width:0!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-section-head h2{
+    font-size:15px!important;
+    line-height:1.2!important;
+    overflow-wrap:anywhere!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-database-breakdown,
+  .pwa-standalone body[data-page="admin"] .admin-storage-breakdown,
+  .pwa-standalone body[data-page="admin"] .admin-plan-pricing,
+  .pwa-standalone body[data-page="admin"] .admin-finance-wrap{
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    padding:10px!important;
+    border-radius:11px!important;
+    overflow:hidden!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-database-summary{
+    width:100%!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:6px!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-database-summary>span:last-child{
+    grid-column:1/-1!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-database-row,
+  .pwa-standalone body[data-page="admin"] .admin-storage-row{
+    min-width:0!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-database-row-head,
+  .pwa-standalone body[data-page="admin"] .admin-storage-row-head{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:start!important;
+    gap:6px!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-database-row-head>span,
+  .pwa-standalone body[data-page="admin"] .admin-storage-row-head>span{
+    white-space:nowrap!important;
+    font-size:7.5px!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-database-row-head strong,
+  .pwa-standalone body[data-page="admin"] .admin-storage-row-head strong{
+    font-size:9px!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-database-row-head small,
+  .pwa-standalone body[data-page="admin"] .admin-database-row>small,
+  .pwa-standalone body[data-page="admin"] .admin-storage-row>small{
+    font-size:7px!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-price-grid{
+    width:100%!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:6px!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-plan-price-card{
+    min-width:0!important;
+    padding:8px!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-cost-items{
+    width:100%!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:6px!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-question-factory,
+  .pwa-standalone body[data-page="admin"] .admin-qf-manual{
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-factory-summary{
+    width:100%!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:6px!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-factory-summary article:last-child{
+    grid-column:auto!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-factory-flow,
+  .pwa-standalone body[data-page="admin"] .admin-factory-board,
+  .pwa-standalone body[data-page="admin"] .admin-factory-board-seven,
+  .pwa-standalone body[data-page="admin"] .admin-table-wrap{
+    max-width:100%!important;
+    overflow-x:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-customer-table{
+    min-width:760px!important;
+  }
+}
+
+@media (max-width:380px){
+  .pwa-standalone body[data-page="admin"] .admin-plan-grid,
+  .pwa-standalone body[data-page="admin"] .admin-metrics-grid,
+  .pwa-standalone body[data-page="admin"] .admin-feature-grid,
+  .pwa-standalone body[data-page="admin"] .admin-infra-grid,
+  .pwa-standalone body[data-page="admin"] .admin-finance-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-section{
+    padding:9px!important;
+  }
+}
