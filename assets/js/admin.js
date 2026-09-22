@@ -1555,6 +1555,45 @@
     }
   }
 
+  function setAdminView(view) {
+    const next = view === "factory" ? "factory" : "metrics";
+    document.body.dataset.adminView = next;
+
+    document.querySelectorAll("[data-admin-view]").forEach(section => {
+      section.hidden = section.dataset.adminView !== next;
+    });
+
+    document.querySelectorAll("[data-admin-view-tab]").forEach(button => {
+      const active = button.dataset.adminViewTab === next;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", active ? "true" : "false");
+    });
+
+    const range = document.querySelector(".admin-range");
+    if (range) range.hidden = next === "factory";
+
+    try {
+      sessionStorage.setItem("luria-admin-view", next);
+    } catch (_) {}
+  }
+
+  function wireAdminViewMenu() {
+    document.querySelectorAll("[data-admin-view-tab]").forEach(button => {
+      button.addEventListener("click", () => {
+        setAdminView(button.dataset.adminViewTab);
+      });
+    });
+
+    let initial = "metrics";
+    try {
+      const saved = sessionStorage.getItem("luria-admin-view");
+      if (saved === "factory") initial = "factory";
+    } catch (_) {}
+
+    setAdminView(initial);
+  }
+
+
   function wirePinGate() {
     [
       "admin-pin",
@@ -3104,6 +3143,7 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
   }
 
   function wire() {
+    wireAdminViewMenu();
     $("admin-qf-style-manual")?.addEventListener("click", async event => {
       const aiButton = event.target.closest("[data-style-ai-index]");
       if (aiButton) {
