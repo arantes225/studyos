@@ -2223,6 +2223,9 @@ function parsePdfCourseArea(
       " "
     );
 
+  let hadPriority =
+    false;
+
   if (
     parts.length
     && PDF_COURSE_PRIORITY_WORDS.has(
@@ -2231,6 +2234,9 @@ function parsePdfCourseArea(
       ]
     )
   ) {
+    hadPriority =
+      true;
+
     parts.pop();
 
     normalized =
@@ -2240,55 +2246,85 @@ function parsePdfCourseArea(
   }
 
   if (
-    /^clinica medica\b/
-      .test(
-        normalized
+    normalized ===
+      "clinica medica"
+    || (
+      hadPriority
+      && normalized.startsWith(
+        "clinica medica "
       )
+    )
   ) {
     return "Clínica Médica";
   }
 
   if (
-    /^(?:g\.?\s*o\.?|go|ginecologia(?: e obstetricia)?)\b/
+    /^(?:g\.?\s*o\.?|go|ginecologia(?: e obstetricia)?)$/
       .test(
         normalized
       )
+    || (
+      hadPriority
+      && /^(?:g\.?\s*o\.?|go|ginecologia(?: e obstetricia)?)\b/
+        .test(
+          normalized
+        )
+    )
   ) {
     return "Ginecologia e Obstetrícia";
   }
 
   if (
-    /^pediatria\b/
-      .test(
-        normalized
+    normalized ===
+      "pediatria"
+    || (
+      hadPriority
+      && normalized.startsWith(
+        "pediatria "
       )
+    )
   ) {
     return "Pediatria";
   }
 
   if (
-    /^preventiva\b/
-      .test(
-        normalized
+    normalized ===
+      "preventiva"
+    || (
+      hadPriority
+      && normalized.startsWith(
+        "preventiva "
       )
+    )
   ) {
     return "Preventiva";
   }
 
   if (
-    /^cirurgia\b/
-      .test(
-        normalized
+    normalized ===
+      "cirurgia"
+    || (
+      hadPriority
+      && normalized.startsWith(
+        "cirurgia "
       )
+    )
   ) {
     return "Cirurgia Geral";
   }
 
   if (
-    /^(?:1\.)?onboarding\b/
+    /^(?:1\.)?onboarding$/
       .test(
         normalized
       )
+    || (
+      hadPriority
+      && /^(?:1\.)?onboarding\b/
+        .test(
+          normalized
+        )
+    )
   ) {
     return "Onboarding";
   }
@@ -2328,8 +2364,6 @@ function isPdfCourseNoiseLine(
     )
     || normalized ===
       "alta media baixa bonus diamante"
-    || normalized ===
-      "estatisticas"
     || normalized.startsWith(
       "https://aulas.medcof.com.br/cronograma"
     )
@@ -2387,7 +2421,7 @@ function pdfCourseTitleFromSegment(
     // Linhas do professor neste layout quase sempre carregam 0/2, 1/2 etc.
     // Não devem virar tema quando uma página começa no meio de um card.
     if (
-      /\b\d+\s*\/\s*\d+\b/
+      /\b\d{1,2}\s*\/\s*\d{1,2}\b/
         .test(
           text
         )
