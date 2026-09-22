@@ -16,7 +16,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/logos/favicon.png?v=luria7">
   <link rel="stylesheet" href="assets/css/style.css?v=16.2">
-  <link rel="stylesheet" href="assets/css/admin.css?v=2.5">
+  <link rel="stylesheet" href="assets/css/admin.css?v=2.7">
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=10">
   <link rel="canonical" href="/admin/">
   <script>(function(){try{if(location.pathname.endsWith("/admin.html"))history.replaceState(null,"","/admin/"+location.search+location.hash);}catch(e){}})();</script>
@@ -220,6 +220,26 @@
             <div class="admin-factory-flow-arrow">→</div>
             <article class="admin-factory-flow-ready"><strong>1.000 prontas</strong><small>Publicação + limpeza</small></article>
           </div>
+
+          <section class="admin-qf-quality-panel" aria-labelledby="admin-qf-quality-title">
+            <div class="admin-qf-quality-head">
+              <div>
+                <span class="eyebrow">Controle de qualidade</span>
+                <strong id="admin-qf-quality-title">Qualidade dos blocos</strong>
+                <small>Compare a primeira passagem, o resultado pós-correção e a qualidade final de cada bloco.</small>
+              </div>
+            </div>
+            <div class="admin-qf-quality-summary">
+              <article><span>Média inicial</span><strong id="admin-qf-quality-initial">—</strong><small>1ª auditoria</small></article>
+              <article><span>Pós-correção</span><strong id="admin-qf-quality-post">—</strong><small>Após reauditoria</small></article>
+              <article><span>Qualidade final</span><strong id="admin-qf-quality-final">—</strong><small>Última avaliação</small></article>
+              <article><span>Aprovação 1ª passagem</span><strong id="admin-qf-quality-first-pass">—</strong><small>≥ 90 e sem hard fail</small></article>
+              <article><span>Aprovação na reauditoria</span><strong id="admin-qf-quality-reaudit">—</strong><small>Após correções</small></article>
+            </div>
+            <div id="admin-qf-quality-chart" class="admin-qf-quality-chart">
+              <div class="admin-factory-empty-wide">Ainda sem blocos auditados.</div>
+            </div>
+          </section>
 
           <div class="admin-qf-bank-dashboard">
             <div class="admin-qf-bank-dashboard-head">
@@ -958,6 +978,30 @@ Prefira fonte primária/oficial atual.</pre>
     </div>
   </dialog>
 
+  <dialog id="admin-qf-review-import-dialog" class="admin-qf-dialog admin-qf-review-import-dialog">
+    <div class="admin-qf-dialog-shell">
+      <div class="admin-qf-dialog-head">
+        <div>
+          <span class="eyebrow">Perplexity → Supabase</span>
+          <h2>Importar auditoria do bloco</h2>
+          <p id="admin-qf-review-import-meta">Cole o JSON retornado pelo Perplexity.</p>
+        </div>
+        <button id="admin-qf-review-import-close" class="dialog-close" type="button" aria-label="Fechar">×</button>
+      </div>
+      <div class="admin-qf-review-import-body">
+        <label>
+          <span>JSON da auditoria</span>
+          <textarea id="admin-qf-review-import-json" spellcheck="false" placeholder='{"schema_version":"1.0","review_stage":"perplexity_initial","batch_number":1,"block_number":1,"reviews":[...]}'></textarea>
+        </label>
+        <div id="admin-qf-review-import-message" class="admin-qf-review-import-message"></div>
+        <div class="admin-qf-review-import-actions">
+          <button id="admin-qf-review-import-cancel" class="button secondary" type="button">Cancelar</button>
+          <button id="admin-qf-review-import-submit" class="button primary" type="button">Importar para o Supabase</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
   <dialog id="admin-qf-bad-dialog" class="admin-qf-dialog admin-qf-bad-dialog">
     <div class="admin-qf-dialog-shell">
       <div class="admin-qf-dialog-head">
@@ -1011,7 +1055,7 @@ Prefira fonte primária/oficial atual.</pre>
   <script src="/assets/vendor/supabase-2.110.6.js"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=17.0"></script>
-  <script src="assets/js/admin.js?v=2.6"></script>
+  <script src="assets/js/admin.js?v=2.8"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
