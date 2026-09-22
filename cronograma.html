@@ -2649,30 +2649,6 @@
 
 
           <section class="theme-library-panel">
-            <div class="schedule-library-tabs" role="tablist" aria-label="Listas do cronograma">
-              <button
-                id="schedule-library-tab-lessons"
-                class="schedule-library-tab active"
-                type="button"
-                role="tab"
-                aria-selected="true"
-                data-schedule-library-tab="lessons"
-              >
-                Aulas
-              </button>
-
-              <button
-                id="schedule-library-tab-events"
-                class="schedule-library-tab"
-                type="button"
-                role="tab"
-                aria-selected="false"
-                data-schedule-library-tab="events"
-              >
-                Outros eventos
-              </button>
-            </div>
-
             <div id="theme-library-content" class="theme-library-content">
             <div class="theme-library-head">
               <div>
@@ -2954,110 +2930,7 @@
 
             <div id="theme-library-list" class="theme-library-list"></div>
             </div>
-
-            <div id="event-library-panel" class="event-library-panel" hidden>
-              <div class="theme-library-head">
-                <div>
-                  <h2>Outros eventos</h2>
-                  <p>
-                    Consulte, edite ou apague simulados, provas, revisões e outros eventos do cronograma.
-                  </p>
-                </div>
-              </div>
-
-              <div class="event-library-controls">
-                <input
-                  id="event-library-search"
-                  type="search"
-                  placeholder="Pesquisar evento..."
-                  autocomplete="off"
-                >
-
-                <select id="event-library-type" aria-label="Filtrar tipo de evento">
-                  <option value="all">Todos os eventos</option>
-                  <option value="simulations">Simulados</option>
-                  <option value="other">Outros eventos</option>
-                </select>
-
-                <div class="event-date-filter">
-                  <input id="event-library-date-from" type="date" aria-label="Data inicial">
-                  <input id="event-library-date-to" type="date" aria-label="Data final">
-                </div>
-              </div>
-
-              <div class="theme-library-meta">
-                <span id="event-list-count">0 eventos</span>
-                <span>Filtre por tipo ou período</span>
-              </div>
-
-              <div id="event-library-list" class="theme-library-list"></div>
-            </div>
           </section>
-
-          <dialog id="event-edit-dialog" class="event-edit-dialog">
-            <form id="event-edit-form" class="event-edit-form" method="dialog">
-              <div class="schedule-dialog-head">
-                <div>
-                  <span class="badge accent">Cronograma</span>
-                  <h2>Editar evento</h2>
-                </div>
-
-                <button
-                  id="event-edit-close"
-                  class="schedule-dialog-close"
-                  type="button"
-                  aria-label="Fechar"
-                >
-                  ×
-                </button>
-              </div>
-
-              <div class="event-edit-grid">
-                <label class="event-edit-field full">
-                  <span>Título *</span>
-                  <input id="event-edit-title" type="text" maxlength="180" required>
-                </label>
-
-                <label class="event-edit-field">
-                  <span>Tipo *</span>
-                  <select id="event-edit-type" required>
-                    <option value="simulation">Simulado programado</option>
-                    <option value="smart_simulation">Simulado inteligente</option>
-                    <option value="full_exam">Prova na íntegra</option>
-                    <option value="smart_review">Revisão inteligente</option>
-                    <option value="external_review">Revisão teórica</option>
-                    <option value="final_review">Reta final</option>
-                    <option value="other">Outro evento</option>
-                  </select>
-                </label>
-
-                <label class="event-edit-field">
-                  <span>Data *</span>
-                  <input id="event-edit-date" type="date" required>
-                </label>
-
-                <label class="event-edit-field">
-                  <span>Horário</span>
-                  <input id="event-edit-time" type="time">
-                </label>
-
-                <label class="event-edit-field">
-                  <span>Área</span>
-                  <input id="event-edit-area" type="text" maxlength="100" placeholder="Opcional">
-                </label>
-
-                <label class="event-edit-field full">
-                  <span>Matéria</span>
-                  <input id="event-edit-materia" type="text" maxlength="120" placeholder="Opcional">
-                </label>
-              </div>
-
-              <div class="schedule-dialog-actions">
-                <button id="event-edit-save" class="button primary" type="submit">Salvar</button>
-                <button id="event-edit-cancel" class="button secondary" type="button">Cancelar</button>
-              </div>
-            </form>
-          </dialog>
 
 
         </div>
@@ -3099,7 +2972,7 @@
   <script src="assets/js/app.js?v=17.3"></script>
   <script src="assets/js/study-mode.js?v=12.1"></script>
   <script src="assets/js/cronograma-base-data.js?v=12.6"></script>
-  <script src="assets/js/cronograma.js?v=17.3"></script>
+  <script src="assets/js/cronograma.js?v=17.4"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
