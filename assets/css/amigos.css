@@ -497,7 +497,7 @@
 .studyrats-race-fitted{
   width:72px!important;
   height:50px!important;
-  transform:scale(calc(var(--runner-scale,1.25) * 1.6667))!important;
+  transform:scale(var(--runner-scale,1.25)) scale(1.6667)!important;
   transform-origin:center center!important;
   position:relative!important;
   display:block!important;
