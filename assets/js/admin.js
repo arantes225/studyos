@@ -1840,6 +1840,249 @@
     await Promise.all([loadQuestionFactory(),loadQuestionFactoryStyles(),loadQuestionFactoryQuality()]);
   }
 
+  function buildBoardSegmentPrompt(item, stage) {
+    const style = item?.exam_style || "BANCA";
+    const brief = item?.full_generation_brief || item?.generation_instructions || "";
+
+    const common = `
+BANCA / EXAM_STYLE: ${style}
+
+CONTEXTO EDITORIAL DA BANCA
+${brief}
+
+REGRAS GERAIS
+- Trabalhe sempre com question_id imutável.
+- O formato canônico entre IAs e backend é JSON.
+- Não use Excel como formato máquina-a-máquina.
+- Corte mínimo de qualidade: 90/100.
+- Mesmo com nota >=90, hard fail impede aprovação.
+- Hard fails incluem: gabarito divergente, duas alternativas defensáveis, ambiguidade relevante, conduta potencialmente perigosa, dose/ponto de corte incorreto, fonte inexistente, fonte que não sustenta o gabarito, recomendação desatualizada ou questão reconhecível como cópia.
+- Toda questão precisa de fonte específica do gabarito.
+`;
+
+    if (stage === "chatgpt_initial") return `PROMPT DE SEGMENTO 1 — CHECAGEM CHATGPT DO BLOCO DE 200
+${common}
+
+TAREFA
+Receba o bloco recém-gerado e faça uma verificação estrutural/editorial antes de enviá-lo ao Perplexity.
+
+Verifique:
+1. exatamente 200 questões;
+2. IDs únicos e sequências corretas;
+3. quatro alternativas A-D;
+4. apenas uma melhor resposta aparente;
+5. explicações A-D completas;
+6. fonte geral e fonte específica do gabarito preenchidas;
+7. distribuição de dificuldade;
+8. repetição ou quase duplicação;
+9. aderência ao perfil ${style};
+10. problemas óbvios de ciência, gabarito ou segurança.
+
+Não substitua a auditoria independente do Perplexity.
+
+SAÍDA JSON
+{
+  "schema_version":"1.0",
+  "review_stage":"chatgpt_initial",
+  "batch_number":N,
+  "block_number":N,
+  "exam_style":"${style}",
+  "reviewer":"ChatGPT",
+  "reviews":[
+    {
+      "question_id":"...",
+      "quality_score":0-100,
+      "component_scores":{},
+      "independent_answer":"A|B|C|D",
+      "original_answer":"A|B|C|D",
+      "status":"approved|needs_revision|rejected",
+      "confidence":"high|medium|low",
+      "ambiguity":false,
+      "single_best_answer":true,
+      "hard_fail":false,
+      "hard_fail_reasons":[],
+      "scientific_issue":null,
+      "source_issue":null,
+      "answer_source_issue":null,
+      "explanation_issue":null,
+      "distractor_issue":null,
+      "style_issue":null,
+      "suggested_correction":null,
+      "verified_sources":[]
+    }
+  ]
+}
+
+Não publique. Não altere silenciosamente as questões.`;
+
+    if (stage === "perplexity_initial") return `PROMPT DE SEGMENTO 2 — AUDITORIA INDEPENDENTE PERPLEXITY
+${common}
+
+TAREFA
+Audite cientificamente TODAS as 200 questões de forma independente.
+Resolva antes de olhar o gabarito.
+Abra e confira as fontes.
+Dê quality_score 0–100 para cada item.
+
+PESOS RECOMENDADOS
+- correção científica: 30
+- gabarito + única melhor resposta: 20
+- fonte específica do gabarito: 15
+- distratores: 10
+- explicações A-D: 10
+- fidelidade ao estilo: 10
+- clareza/redação: 5
+
+APROVAÇÃO
+approved somente se:
+quality_score >= 90
+AND hard_fail=false
+AND ambiguity=false
+AND single_best_answer=true
+AND answer_source_issue=null.
+
+Abaixo de 90 = needs_revision.
+Erro estrutural grave/irrecuperável = rejected.
+
+SAÍDA JSON EXATA
+{
+  "schema_version":"1.0",
+  "review_stage":"perplexity_initial",
+  "batch_number":N,
+  "block_number":N,
+  "exam_style":"${style}",
+  "auditor":"Perplexity",
+  "reviews":[
+    {
+      "question_id":"...",
+      "quality_score":0-100,
+      "component_scores":{
+        "scientific":0-30,
+        "answer":0-20,
+        "answer_source":0-15,
+        "distractors":0-10,
+        "explanations":0-10,
+        "style":0-10,
+        "writing":0-5
+      },
+      "independent_answer":"A|B|C|D",
+      "original_answer":"A|B|C|D",
+      "status":"approved|needs_revision|rejected",
+      "confidence":"high|medium|low",
+      "ambiguity":false,
+      "single_best_answer":true,
+      "hard_fail":false,
+      "hard_fail_reasons":[],
+      "scientific_issue":null,
+      "source_issue":null,
+      "answer_source_issue":null,
+      "explanation_issue":null,
+      "distractor_issue":null,
+      "style_issue":null,
+      "suggested_correction":null,
+      "verified_sources":[{"institution":"","document":"","year":"","url":"","section":null}]
+    }
+  ],
+  "summary":{"total":200,"approved":0,"needs_revision":0,"rejected":0}
+}
+
+O JSON será importado no Supabase e vinculado ao question_id + bloco. Não inclua texto fora do JSON.`;
+
+    if (stage === "chatgpt_correction") return `PROMPT DE SEGMENTO 3 — CORREÇÃO CHATGPT A PARTIR DO SUPABASE
+${common}
+
+TAREFA
+Consulte/receba somente as questões do bloco cujo latest review esteja needs_revision ou rejected/recuperável.
+Para cada questão, leia o parecer mais recente salvo no Supabase:
+- quality_score
+- hard_fail e razões
+- scientific_issue
+- source_issue
+- answer_source_issue
+- explanation_issue
+- distractor_issue
+- style_issue
+- suggested_correction
+- verified_sources.
+
+Corrija exatamente os problemas apontados.
+Preserve question_id e exam_style.
+Incremente version em +1.
+Atualize a fonte do gabarito quando a correção alterar o fundamento científico.
+Não mexa desnecessariamente em questão já aprovada.
+Toda questão corrigida precisa voltar para reauditoria.
+
+SAÍDA JSON
+{
+  "schema_version":"1.0",
+  "review_stage":"chatgpt_correction_review",
+  "batch_number":N,
+  "block_number":N,
+  "exam_style":"${style}",
+  "questions":[
+    { "question_id":"...", "...questão completa corrigida...":"" }
+  ],
+  "changes":[
+    {
+      "question_id":"...",
+      "old_version":1,
+      "new_version":2,
+      "changes_made":[],
+      "source_changed":false,
+      "needs_reaudit":true
+    }
+  ]
+}
+
+Ao terminar, informe quantas foram corrigidas e quais continuam inseguras. Não marque como approved por conta própria.`;
+
+    if (stage === "perplexity_reaudit") return `PROMPT DE SEGMENTO 4 — REAUDITORIA PERPLEXITY APÓS CORREÇÃO
+${common}
+
+TAREFA
+Reaudite APENAS as questões corrigidas na versão mais recente.
+Ignore o parecer anterior como autoridade: resolva novamente.
+Confira novamente a fonte específica do gabarito.
+Use o mesmo corte >=90 e os mesmos hard fails.
+
+SAÍDA JSON
+{
+  "schema_version":"1.0",
+  "review_stage":"perplexity_reaudit",
+  "batch_number":N,
+  "block_number":N,
+  "exam_style":"${style}",
+  "auditor":"Perplexity",
+  "reviews":[
+    {
+      "question_id":"...",
+      "quality_score":0-100,
+      "component_scores":{},
+      "independent_answer":"A|B|C|D",
+      "original_answer":"A|B|C|D",
+      "status":"approved|needs_revision|rejected",
+      "confidence":"high|medium|low",
+      "ambiguity":false,
+      "single_best_answer":true,
+      "hard_fail":false,
+      "hard_fail_reasons":[],
+      "scientific_issue":null,
+      "source_issue":null,
+      "answer_source_issue":null,
+      "explanation_issue":null,
+      "distractor_issue":null,
+      "style_issue":null,
+      "suggested_correction":null,
+      "verified_sources":[]
+    }
+  ]
+}
+
+O resultado será importado novamente no Supabase. Só depois que as 200 estiverem machine-approved o Admin deve liberar a aprovação humana do bloco.`;
+
+    return "";
+  }
+
   function renderQuestionFactoryStyles(styles) {
     state.questionStyles = Array.isArray(styles) ? styles : [];
 
@@ -1995,6 +2238,42 @@
                   </div>
                 </div>
                 <pre class="admin-qf-board-master-text">${esc(item.full_generation_brief || item.generation_instructions || "")}</pre>
+              </section>
+
+              <section class="admin-qf-segment-sequence">
+                <div class="admin-qf-segment-sequence-head">
+                  <span class="eyebrow">Prompts de segmento · ordem operacional</span>
+                  <strong>Fluxo do bloco de 200</strong>
+                  <small>Use nesta ordem. Cada retorno JSON pode ser importado e vinculado ao bloco no Supabase.</small>
+                </div>
+                ${[
+                  ["01","ChatGPT · checagem inicial","chatgpt_initial","chatgpt"],
+                  ["02","Perplexity · auditoria","perplexity_initial","perplexity"],
+                  ["03","ChatGPT · correção","chatgpt_correction","chatgpt"],
+                  ["04","Perplexity · reauditoria","perplexity_reaudit","perplexity"]
+                ].map(([num,label,stage,provider]) => {
+                  const pid=`qf-${String(item.exam_style||"style").replace(/[^a-z0-9]/gi,"-").toLowerCase()}-${stage}`;
+                  return `
+                    <details class="admin-qf-segment-card">
+                      <summary><span>${num}</span><strong>${esc(label)}</strong></summary>
+                      <div class="admin-qf-segment-card-body">
+                        <div class="admin-qf-segment-actions">
+                          <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Copiar</button>
+                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>
+                        </div>
+                        <pre id="${esc(pid)}" class="admin-qf-prompt">${esc(buildBoardSegmentPrompt(item,stage))}</pre>
+                      </div>
+                    </details>
+                  `;
+                }).join("")}
+                <div class="admin-qf-segment-human">
+                  <span>05</span>
+                  <div><strong>Sua aprovação</strong><small>Quando as 200 estiverem aprovadas na reauditoria, o Admin libera SIM/NÃO. SIM envia o bloco ao lote de 1.000.</small></div>
+                </div>
+                <div class="admin-qf-segment-human final">
+                  <span>06</span>
+                  <div><strong>Revisão final das 1.000</strong><small>Somente depois dos cinco blocos aprovados por você: revisão global ChatGPT + Perplexity do lote inteiro.</small></div>
+                </div>
               </section>
             </div>
           </details>
@@ -2335,6 +2614,20 @@
         if (!target) return;
         await copyAndOpenAI(target.textContent || "", button.dataset.aiProvider, button);
       });
+    });
+
+    $("admin-qf-style-manual")?.addEventListener("click", async event => {
+      const copy = event.target.closest("[data-inline-prompt].admin-qf-copy-inline");
+      if (copy) {
+        const target = $(copy.dataset.inlinePrompt);
+        if (target) await copyAdminPrompt(copy.dataset.inlinePrompt, copy);
+        return;
+      }
+      const ai = event.target.closest("[data-inline-prompt].admin-qf-ai-inline");
+      if (ai) {
+        const target = $(ai.dataset.inlinePrompt);
+        if (target) await copyAndOpenAI(target.textContent || "", ai.dataset.aiProvider, ai);
+      }
     });
 
     $("admin-qf-bad-open")?.addEventListener("click", async () => {
