@@ -33,6 +33,9 @@ const scheduleState = {
   theoryStudyWeekdays:
     [1, 3, 5],
 
+  maxLessonsPerDay:
+    1,
+
   addMode:
     "automatic",
 
@@ -4698,17 +4701,415 @@ function renderPlanner() {
   }).join("");
 }
 
-function renderDeck() {
-  const deck = scheduleState.topics
+function setDeckDistributeStatus(
+  text,
+  type = ""
+) {
+  const element =
+    document.getElementById(
+      "deck-distribute-status"
+    );
+
+  if (!element) {
+    return;
+  }
+
+  element.textContent =
+    text || "";
+
+  element.className =
+    `deck-distribute-status ${type}`.trim();
+}
+
+
+function deckTopicsInImportOrder() {
+  return scheduleState.topics
     .filter(
-      (topic) =>
-        topic.status === "deck" &&
-        !topic.completed_at
+      topic =>
+        topic.status === "deck"
+        && !topic.completed_at
     )
     .sort(
-      (a, b) =>
-        (a.deck_order ?? 999999) - (b.deck_order ?? 999999)
+      (a, b) => {
+        const createdCompare =
+          String(
+            a.created_at
+            || ""
+          ).localeCompare(
+            String(
+              b.created_at
+              || ""
+            )
+          );
+
+        if (
+          createdCompare !== 0
+        ) {
+          return createdCompare;
+        }
+
+        const deckCompare =
+          Number(
+            a.deck_order
+            ?? 999999
+          )
+          - Number(
+              b.deck_order
+              ?? 999999
+            );
+
+        if (
+          deckCompare !== 0
+        ) {
+          return deckCompare;
+        }
+
+        return String(
+          a.id
+        ).localeCompare(
+          String(
+            b.id
+          )
+        );
+      }
     );
+}
+
+
+function deckConfiguredStudyDays() {
+  const days =
+    Array.from(
+      new Set(
+        (
+          scheduleState
+            .theoryStudyWeekdays
+          || []
+        )
+          .map(Number)
+          .filter(
+            day =>
+              day >= 1
+              && day <= 7
+          )
+      )
+    )
+      .sort(
+        (a, b) =>
+          a - b
+      );
+
+  return days.length
+    ? days
+    : [1, 3, 5];
+}
+
+
+function buildDeckDistributionPlan(
+  deck
+) {
+  const allowedDays =
+    new Set(
+      deckConfiguredStudyDays()
+    );
+
+  const maxPerDay =
+    Math.max(
+      1,
+      Number(
+        scheduleState
+          .maxLessonsPerDay
+        || 1
+      )
+    );
+
+  const counts =
+    new Map();
+
+  scheduleState.topics
+    .filter(
+      topic =>
+        topic.status === "scheduled"
+        && !topic.completed_at
+        && topic.scheduled_date
+    )
+    .forEach(
+      topic => {
+        counts.set(
+          topic.scheduled_date,
+          (
+            counts.get(
+              topic.scheduled_date
+            )
+            || 0
+          ) + 1
+        );
+      }
+    );
+
+  const assignments =
+    [];
+
+  let cursor =
+    startOfDaySchedule(
+      new Date()
+    );
+
+  let guard =
+    0;
+
+  for (
+    const topic
+    of deck
+  ) {
+    let assigned =
+      false;
+
+    while (
+      !assigned
+      && guard < 5000
+    ) {
+      guard += 1;
+
+      const isoWeekday =
+        isoWeekdayForBase(
+          cursor
+        );
+
+      const isoDate =
+        toISODateSchedule(
+          cursor
+        );
+
+      const occupied =
+        counts.get(
+          isoDate
+        )
+        || 0;
+
+      if (
+        allowedDays.has(
+          isoWeekday
+        )
+        && occupied
+          < maxPerDay
+      ) {
+        assignments.push({
+          topic,
+          date:
+            isoDate
+        });
+
+        counts.set(
+          isoDate,
+          occupied + 1
+        );
+
+        assigned =
+          true;
+
+        if (
+          occupied + 1
+          >= maxPerDay
+        ) {
+          cursor =
+            addDaysSchedule(
+              cursor,
+              1
+            );
+        }
+      } else {
+        cursor =
+          addDaysSchedule(
+            cursor,
+            1
+          );
+      }
+    }
+
+    if (!assigned) {
+      throw new Error(
+        "Não foi possível encontrar datas suficientes para distribuir o Deck."
+      );
+    }
+  }
+
+  return assignments;
+}
+
+
+async function distributeDeckTopics() {
+  const deck =
+    deckTopicsInImportOrder();
+
+  if (!deck.length) {
+    setDeckDistributeStatus(
+      "O Deck está vazio.",
+      "success"
+    );
+
+    return;
+  }
+
+  await loadSchedulePreferences();
+
+  const days =
+    deckConfiguredStudyDays();
+
+  const maxPerDay =
+    Math.max(
+      1,
+      Number(
+        scheduleState
+          .maxLessonsPerDay
+        || 1
+      )
+    );
+
+  const dayLabels =
+    days
+      .map(
+        day =>
+          BASE_WEEKDAY_LABELS[
+            day
+          ]
+          || String(day)
+      )
+      .join(" · ");
+
+  const confirmed =
+    await window.LuriaDialog.confirm(
+      `Distribuir ${deck.length} aula${deck.length === 1 ? "" : "s"} do Deck no planejador, em ordem de importação? Dias: ${dayLabels}. Limite: ${maxPerDay} aula${maxPerDay === 1 ? "" : "s"} por dia.`
+    );
+
+  if (!confirmed) {
+    return;
+  }
+
+  const button =
+    document.getElementById(
+      "deck-distribute"
+    );
+
+  if (button) {
+    button.disabled =
+      true;
+
+    button.textContent =
+      "Distribuindo...";
+  }
+
+  setDeckDistributeStatus(
+    "Distribuindo aulas..."
+  );
+
+  try {
+    const plan =
+      buildDeckDistributionPlan(
+        deck
+      );
+
+    const groups =
+      new Map();
+
+    for (
+      const assignment
+      of plan
+    ) {
+      if (
+        !groups.has(
+          assignment.date
+        )
+      ) {
+        groups.set(
+          assignment.date,
+          []
+        );
+      }
+
+      groups.get(
+        assignment.date
+      ).push(
+        assignment.topic.id
+      );
+    }
+
+    for (
+      const [
+        date,
+        ids
+      ]
+      of groups
+    ) {
+      const {
+        error
+      } =
+        await scheduleSb
+          .from(
+            "study_topics"
+          )
+          .update({
+            scheduled_date:
+              date,
+            status:
+              "scheduled",
+            updated_at:
+              new Date()
+                .toISOString()
+          })
+          .in(
+            "id",
+            ids
+          )
+          .eq(
+            "user_id",
+            scheduleState.user.id
+          );
+
+      if (error) {
+        throw error;
+      }
+    }
+
+    const lastDate =
+      plan[
+        plan.length - 1
+      ]?.date
+      || null;
+
+    setDeckDistributeStatus(
+      lastDate
+        ? `${deck.length} aula${deck.length === 1 ? "" : "s"} distribuída${deck.length === 1 ? "" : "s"} até ${formatDateLabelSchedule(lastDate)}.`
+        : "Deck distribuído.",
+      "success"
+    );
+
+    await loadTopics();
+
+  } catch (error) {
+    console.error(
+      error
+    );
+
+    setDeckDistributeStatus(
+      `Não foi possível distribuir o Deck: ${error.message}`,
+      "error"
+    );
+
+  } finally {
+    if (button) {
+      button.disabled =
+        false;
+
+      button.textContent =
+        "Distribuir";
+    }
+  }
+}
+
+
+function renderDeck() {
+  const deck =
+    deckTopicsInImportOrder();
 
   const panel = document.getElementById("deck-panel");
   const count = document.getElementById("deck-count");
@@ -4831,7 +5232,7 @@ function setBaseScheduleStatus(text, type = "") {
 async function loadSchedulePreferences() {
   const { data, error } = await scheduleSb
     .from("user_settings")
-    .select("study_mode,theory_study_weekdays")
+    .select("study_mode,theory_study_weekdays,max_lessons_per_day")
     .eq("user_id", scheduleState.user.id)
     .maybeSingle();
 
@@ -4842,7 +5243,27 @@ async function loadSchedulePreferences() {
     ? data.theory_study_weekdays.map(Number).filter((day) => day >= 1 && day <= 7)
     : [];
 
-  scheduleState.theoryStudyWeekdays = (configuredDays.length ? configuredDays : [1,3,5]).slice(0,3);
+  scheduleState.theoryStudyWeekdays =
+    configuredDays.length
+      ? Array.from(
+          new Set(
+            configuredDays
+          )
+        ).sort(
+          (a, b) =>
+            a - b
+        )
+      : [1, 3, 5];
+
+  scheduleState.maxLessonsPerDay =
+    Math.max(
+      1,
+      Number(
+        data?.max_lessons_per_day
+        || 1
+      )
+    );
+
   window.LuriaStudyMode?.apply(scheduleState.studyMode);
   renderBaseSchedulePreview();
 }
@@ -8637,6 +9058,16 @@ async function initCronograma() {
   wireImportControls();
   wirePlannerNavigation();
   wireDeckDropzone();
+
+  document
+    .getElementById(
+      "deck-distribute"
+    )
+    ?.addEventListener(
+      "click",
+      distributeDeckTopics
+    );
+
   wireAlreadyDoneDialog();
   wireManualTopicForm();
   wireScheduleAddMode();
