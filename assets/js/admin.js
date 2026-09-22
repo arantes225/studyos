@@ -1794,7 +1794,17 @@
                 <article><strong>Revisão final · ChatGPT</strong><small>${esc(q.lot_review_chatgpt_notes || "Ainda sem parecer.")}</small></article>
                 <article><strong>Revisão final · Perplexity</strong><small>${esc(q.lot_review_perplexity_notes || "Ainda sem parecer.")}</small></article>
               </div>
-              <div class="admin-qf-source">Fonte: ${esc(q.fonte_instituicao || "—")} · ${esc(q.fonte_documento || "—")} · ${esc(q.fonte_ano || "—")}</div>
+              <div class="admin-qf-source">
+                <strong>Fonte geral</strong>
+                <span>${esc(q.fonte_instituicao || "—")} · ${esc(q.fonte_documento || "—")} · ${esc(q.fonte_ano || "—")}</span>
+              </div>
+              <div class="admin-qf-answer-source">
+                <strong>Fonte do gabarito</strong>
+                <span>${esc(q.answer_source_institution || q.fonte_instituicao || "—")} · ${esc(q.answer_source_document || q.fonte_documento || "—")} · ${esc(q.answer_source_year || q.fonte_ano || "—")}</span>
+                ${q.answer_source_section ? `<small>Seção: ${esc(q.answer_source_section)}</small>` : ""}
+                ${q.answer_source_note ? `<small>${esc(q.answer_source_note)}</small>` : ""}
+                ${String(q.answer_source_url || q.fonte_url || "").startsWith("https://") ? `<a href="${esc(q.answer_source_url || q.fonte_url)}" target="_blank" rel="noopener">Abrir fonte do gabarito</a>` : ""}
+              </div>
             </div>
           </details>
         `;
@@ -1899,13 +1909,14 @@
         }
 
         document.querySelectorAll(`[data-style-copy-index="${index}"]`).forEach(el => {
+          if (!el.dataset.originalLabel) el.dataset.originalLabel = el.textContent || "Copiar";
           el.textContent = "Bloco copiado";
           el.classList.add("success");
         });
 
         setTimeout(() => {
           document.querySelectorAll(`[data-style-copy-index="${index}"]`).forEach(el => {
-            el.textContent = el.classList.contains("admin-qf-copy-board") ? "Copiar tudo desta banca" : original;
+            el.textContent = el.dataset.originalLabel || original;
             el.classList.remove("success");
           });
         }, 1400);
