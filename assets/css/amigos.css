@@ -881,3 +881,29 @@
 :root[data-theme="dark"] .studyrats-fine-rat{
   filter:drop-shadow(0 0 5px color-mix(in srgb,var(--accent) 45%,transparent));
 }
+
+
+/* Studyrats PWA/mobile accessory coordinate fix v26
+   Mantém exatamente o mesmo sistema 72x50 e a mesma escala do preview web. */
+@media (max-width:760px){
+  .studyrats-preview-composite{
+    width:72px!important;
+    height:50px!important;
+    transform:scale(2.25)!important;
+    transform-origin:center center!important;
+  }
+  .studyrats-preview-composite>.studyrats-accessory-img{
+    position:absolute!important;
+    box-sizing:border-box!important;
+  }
+}
+.pwa-standalone body[data-page="amigos"] .studyrats-preview-composite{
+  width:72px!important;
+  height:50px!important;
+  transform:scale(2.25)!important;
+  transform-origin:center center!important;
+}
+.pwa-standalone body[data-page="amigos"] .studyrats-preview-composite>.studyrats-accessory-img{
+  position:absolute!important;
+  box-sizing:border-box!important;
+}
