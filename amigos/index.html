@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" href="assets/img/favicon.png">
   <link rel="stylesheet" href="assets/css/style.css?v=16.2">
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=13">
-  <link rel="stylesheet" href="assets/css/amigos.css?v=33">
+  <link rel="stylesheet" href="assets/css/amigos.css?v=34">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=10">
   <script defer src="assets/js/luria-brand-v5.js?v=10"></script>
   <link rel="canonical" href="/amigos/">
@@ -61,35 +61,49 @@
             <div>
               <span class="studyrats-kicker">DESAFIOS ENTRE AMIGOS</span>
               <h2 id="studyrats-title">Studyrats</h2>
-              <p>Crie uma corrida de estudo e veja quem chega mais longe até a data limite.</p>
+              <p>Seu corredor, seus últimos resultados e um novo desafio no mesmo lugar.</p>
             </div>
-            <button id="studyrats-toggle-create" class="button primary" type="button">Novo desafio</button>
           </div>
 
-        <section class="studyrats-rat-picker" aria-labelledby="studyrats-rat-picker-title">
-          <div class="studyrats-rat-picker-copy">
-            <span class="studyrats-kicker">SEU CORREDOR</span>
-            <strong id="studyrats-rat-picker-title">Personalize seu ratinho</strong>
-            <small>Escolha a cor e um acessório. O visual aparece para todos nas corridas.</small>
+          <div class="studyrats-home-grid">
+            <section class="studyrats-home-preview" aria-label="Seu Studyrat">
+              <span class="studyrats-kicker">SEU CORREDOR</span>
+              <div id="studyrats-preview-large-stage" class="studyrats-preview-large-stage studyrats-home-preview-stage"></div>
+              <button id="studyrats-toggle-customize" class="button secondary studyrats-customize-button" type="button">Personalizar</button>
+            </section>
 
-            <div class="studyrats-preview-large" aria-label="Preview do seu ratinho">
-              <span class="studyrats-preview-large-label">PREVIEW</span>
-              <div id="studyrats-preview-large-stage" class="studyrats-preview-large-stage"></div>
-  <small class="studyrats-preview-drag-hint">Arraste o acessório no preview para ajustar a posição.</small>
-            </div>
+            <section class="studyrats-home-ranking" aria-labelledby="studyrats-recent-title">
+              <div class="studyrats-home-ranking-head">
+                <div>
+                  <span class="studyrats-kicker">HISTÓRICO</span>
+                  <strong id="studyrats-recent-title">Últimos desafios</strong>
+                </div>
+                <small>5 mais recentes</small>
+              </div>
+              <div id="studyrats-recent-ranking" class="studyrats-recent-ranking"></div>
+              <button id="studyrats-toggle-create" class="button primary studyrats-new-challenge-button" type="button">Novo desafio</button>
+            </section>
           </div>
-          <div class="studyrats-rat-picker-controls">
-            <div class="studyrats-picker-group">
-              <span class="studyrats-picker-label">Ratinho</span>
-              <div id="studyrats-rat-picker-options" class="studyrats-rat-picker-options" role="group" aria-label="Escolher ratinho"></div>
+
+          <section id="studyrats-customizer" class="studyrats-rat-picker" aria-labelledby="studyrats-rat-picker-title" hidden>
+            <div class="studyrats-rat-picker-copy">
+              <span class="studyrats-kicker">PERSONALIZAÇÃO</span>
+              <strong id="studyrats-rat-picker-title">Personalize seu ratinho</strong>
+              <small>As opções e imagens só são carregadas quando você abre esta área.</small>
             </div>
-            <div class="studyrats-picker-group">
-              <span class="studyrats-picker-label">Acessório</span>
-              <div id="studyrats-accessory-picker-options" class="studyrats-accessory-picker-options" role="group" aria-label="Escolher acessório"></div>
+            <div class="studyrats-rat-picker-controls">
+              <div class="studyrats-picker-group">
+                <span class="studyrats-picker-label">Ratinho</span>
+                <div id="studyrats-rat-picker-options" class="studyrats-rat-picker-options" role="group" aria-label="Escolher ratinho"></div>
+              </div>
+              <div class="studyrats-picker-group">
+                <span class="studyrats-picker-label">Acessório</span>
+                <div id="studyrats-accessory-picker-options" class="studyrats-accessory-picker-options" role="group" aria-label="Escolher acessório"></div>
+              </div>
             </div>
-          </div>
-          <small id="studyrats-rat-picker-status" class="studyrats-rat-picker-status" aria-live="polite"></small>
-        </section>
+            <small class="studyrats-preview-drag-hint">Arraste o acessório no preview acima para ajustar a posição.</small>
+            <small id="studyrats-rat-picker-status" class="studyrats-rat-picker-status" aria-live="polite"></small>
+          </section>
 
           <div id="studyrats-create" class="studyrats-create" hidden>
             <div class="studyrats-fields">
