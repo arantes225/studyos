@@ -1028,6 +1028,20 @@ O T5 com 30 questões por banca revelou padrões que lotes de 10 itens não most
 - A recomendação externa de mudar para cinco alternativas foi rejeitada.
 - Antes de produção definitiva, a banca deve ser reavaliada após correção desses gargalos com a rubrica oficial 25/20/15/10/10/10/5/5.
 
+
+
+### Aprendizado específico SES-DF após T5
+- Priorizar como referência de forma a RM-1/SES-DF contemporânea organizada pelo IADES; a edição 2026 usa múltipla escolha A–D com uma única correta.
+- Não usar o padrão CERTO/ERRADO histórico como referência dominante contra o formato atual.
+- O T5 mostrou superuso de APS/RAS: rede não deve ser obrigatória em toda questão.
+- Questões estritamente clínicas podem permanecer estritamente clínicas.
+- APS, RAS, vigilância, regulação, RAPS, atenção domiciliar e transição entram quando realmente mudam a decisão.
+- A resposta correta não pode ser sistematicamente a mais longa, completa, multiprofissional ou “humanizada”.
+- Evitar distratores caricatos; sempre que possível, pelo menos dois dos três devem representar erros assistenciais plausíveis.
+- Fonte clínica sustenta conteúdo clínico; documento distrital sustenta apenas fluxo/organização local quando pertinente.
+- Explicações A–D devem ser específicas, nunca apenas frases genéricas.
+- Corte operacional atual: 97/100.
+
 ## 15. Terceira barreira independente — Gemini
 
 Depois que o lote de 1.000 passar pela revisão global do ChatGPT e do Perplexity:
