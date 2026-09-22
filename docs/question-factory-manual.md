@@ -526,11 +526,175 @@ Toda questão final deve ter:
 - mensagem-chave;
 - área, tema, subtema e dificuldade;
 - `exam_style`;
-- fonte institucional/documento/ano/URL;
+- fonte científica geral institucional/documento/ano/URL;
+- fonte específica do gabarito: instituição, documento, ano, URL e, quando possível, seção/página/recomendação;
 - versão;
 - auditoria do bloco;
 - auditoria final do lote;
 - nenhuma pendência científica crítica.
+
+## 5F. Contrato técnico obrigatório do arquivo de saída
+
+O bloco copiável de qualquer banca deve incluir este contrato para que uma IA consiga gerar um arquivo importável sem contexto adicional.
+
+### Formato preferencial
+
+- Excel `.xlsx` como arquivo principal para revisão/importação.
+- CSV UTF-8 equivalente à aba `Questoes` quando solicitado.
+- JSON válido com os mesmos nomes lógicos de campos quando a integração for direta.
+- Um bloco completo contém exatamente 200 questões.
+
+### Abas obrigatórias
+
+1. `Questoes`
+2. `Metadados_Lote`
+3. `Guia_Campos`
+4. `Auditoria`
+
+### Aba `Questoes` — ordem exata A–AR
+
+A `question_id`  
+B `batch_number`  
+C `block_number`  
+D `block_sequence_no`  
+E `sequence_no`  
+F `question_code`  
+G `exam_style`  
+H `area`  
+I `tema`  
+J `subtema`  
+K `dificuldade`  
+L `enunciado`  
+M `alternativa_a`  
+N `alternativa_b`  
+O `alternativa_c`  
+P `alternativa_d`  
+Q `gabarito`  
+R `explicacao_a`  
+S `explicacao_b`  
+T `explicacao_c`  
+U `explicacao_d`  
+V `mensagem_chave`  
+W `fonte_instituicao`  
+X `fonte_documento`  
+Y `fonte_ano`  
+Z `fonte_url`  
+AA `fonte_secao`  
+AB `answer_source_institution`  
+AC `answer_source_document`  
+AD `answer_source_year`  
+AE `answer_source_url`  
+AF `answer_source_section`  
+AG `answer_source_note`  
+AH `status`  
+AI `block_review_status`  
+AJ `block_review_answer`  
+AK `block_review_notes`  
+AL `lot_review_chatgpt_status`  
+AM `lot_review_perplexity_status`  
+AN `lot_review_chatgpt_notes`  
+AO `lot_review_perplexity_notes`  
+AP `version`  
+AQ `created_at`  
+AR `observacao_revisao`
+
+### Regras críticas dos campos
+
+- `question_id` e `question_code` são únicos.
+- `block_number`: 1–5.
+- `block_sequence_no`: 1–200 sem lacunas.
+- `sequence_no`: posição global no lote de 1.000.
+- `exam_style`: usar nome cadastrado exato.
+- `dificuldade`: Fácil, Médio ou Difícil.
+- `gabarito`: somente A/B/C/D.
+- `status`: `generated` na geração inicial.
+- campos de auditoria ficam vazios.
+- `version`: 1 na primeira geração.
+- `created_at`: preferir deixar para o banco salvo pedido em contrário.
+
+### Fonte específica do gabarito
+
+Toda questão deve informar de onde vem a informação que torna o gabarito correto.
+
+Obrigatórios:
+- `answer_source_institution`
+- `answer_source_document`
+- `answer_source_year`
+- `answer_source_url`
+
+Quando possível:
+- `answer_source_section`
+- `answer_source_note`
+
+A fonte deve sustentar DIRETAMENTE o gabarito. Referência genérica sobre o tema não é suficiente. Se a resposta depende de dose, ponto de corte, idade, intervalo, contraindicação ou recomendação, localizar a recomendação correspondente. Nunca inventar página ou seção. Questão sem fonte verificável do gabarito não pode ser aprovada.
+
+### Metadados_Lote
+
+Estrutura `campo | valor` com:
+- exam_style
+- batch_number
+- block_number
+- question_count = 200
+- generation_date
+- generation_model
+- profile_version
+- reference_exam_years
+- scientific_reference_policy
+- difficulty_target
+- generation_status = generated
+- notes
+
+### Guia_Campos
+
+Colunas:
+- campo
+- tipo
+- obrigatorio
+- valores_permitidos
+- descricao
+
+Documentar todos os campos A–AR.
+
+### Auditoria
+
+Cabeçalho inicial:
+- question_id
+- auditor
+- auditor_model
+- review_stage
+- independent_answer
+- status
+- confidence
+- ambiguity
+- scientific_issue
+- source_issue
+- answer_source_issue
+- explanation_issue
+- style_issue
+- suggested_correction
+- verified_sources
+- reviewed_at
+
+Não pré-preencher aprovação.
+
+### Validações obrigatórias
+
+Antes de entregar:
+1. exatamente 200 questões;
+2. IDs únicos;
+3. sequências corretas;
+4. quatro alternativas em todas;
+5. um único gabarito A-D;
+6. explicações A-D completas;
+7. mensagem-chave completa;
+8. fonte geral presente;
+9. fonte específica do gabarito presente e coerente;
+10. campos de auditoria vazios;
+11. versão inicial = 1;
+12. sem duplicatas/quase duplicatas;
+13. dificuldade compatível com perfil;
+14. temas razoavelmente distribuídos;
+15. arquivo abre sem erro e o cabeçalho é exatamente A–AR.
 
 ## 6. Prompt mestre — geração de bloco de 200
 
