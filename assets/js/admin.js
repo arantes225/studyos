@@ -2470,6 +2470,16 @@ Ignore o parecer anterior como autoridade: resolva novamente.
 Confira novamente a fonte específica do gabarito.
 Use o mesmo corte >=95 e os mesmos hard fails.
 
+Se qualquer questão continuar abaixo de 95:
+- explique exatamente onde perdeu pontos;
+- proponha nova mudança concreta;
+- informe os campos que mudariam;
+- forneça texto substituto completo;
+- estime a nota após a mudança;
+- não repita genericamente a recomendação anterior se ela já falhou.
+
+Essa nova proposta também deverá passar por julgamento independente do ChatGPT antes de nova correção.
+
 SAÍDA JSON
 {
   "schema_version":"1.0",
