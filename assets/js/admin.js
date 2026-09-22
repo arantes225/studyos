@@ -23,7 +23,10 @@
     qfOffset: 0,
     qfPageSize: 100,
     qfTotal: 0,
-    questionStyles: []
+    questionStyles: [],
+    qfBadOffset: 0,
+    qfBadPageSize: 50,
+    qfBadTotal: 0
   };
 
   const METRICS = [
@@ -1278,7 +1281,8 @@
       load(),
       loadStorageExpansionGuide(),
       loadQuestionFactory(),
-      loadQuestionFactoryStyles()
+      loadQuestionFactoryStyles(),
+      loadBadQuestionFolder(0)
     ]);
   }
 
@@ -1676,6 +1680,8 @@
                 </div>
                 <div class="admin-qf-board-actions">
                   <button class="button primary admin-qf-copy-board" type="button" data-style-copy-index="${index}">Copiar tudo desta banca</button>
+                  <button class="button secondary admin-qf-ai-open" type="button" data-style-ai-index="${index}" data-ai-provider="chatgpt">Abrir ChatGPT</button>
+                  <button class="button secondary admin-qf-ai-open" type="button" data-style-ai-index="${index}" data-ai-provider="perplexity">Abrir Perplexity</button>
                   ${url ? `<a class="button secondary" href="${esc(url)}" target="_blank" rel="noopener">Fonte oficial</a>` : ""}
                 </div>
               </section>
@@ -1730,7 +1736,11 @@
                     <strong>Prompt completo — ${esc(item.exam_style)}</strong>
                     <small>Este texto é autocontido: pode ser colado em uma nova conversa sem contexto anterior.</small>
                   </div>
-                  <button class="button primary admin-qf-copy-board" type="button" data-style-copy-index="${index}">Copiar bloco inteiro</button>
+                  <div class="admin-qf-master-actions">
+                    <button class="button primary admin-qf-copy-board" type="button" data-style-copy-index="${index}">Copiar bloco inteiro</button>
+                    <button class="button secondary admin-qf-ai-open" type="button" data-style-ai-index="${index}" data-ai-provider="chatgpt">ChatGPT</button>
+                    <button class="button secondary admin-qf-ai-open" type="button" data-style-ai-index="${index}" data-ai-provider="perplexity">Perplexity</button>
+                  </div>
                 </div>
                 <pre class="admin-qf-board-master-text">${esc(item.full_generation_brief || item.generation_instructions || "")}</pre>
               </section>
@@ -1838,6 +1848,154 @@
     renderQuestionFactoryBatch(data || {});
   }
 
+  async function writePromptClipboard(text) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    area.style.pointerEvents = "none";
+    document.body.appendChild(area);
+    area.select();
+    const ok = document.execCommand("copy");
+    area.remove();
+    return ok;
+  }
+
+  function openAIProvider(provider) {
+    const url = provider === "perplexity"
+      ? "https://www.perplexity.ai/"
+      : "https://chatgpt.com/";
+    return window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  async function copyAndOpenAI(text, provider, button) {
+    const popup = openAIProvider(provider);
+    const original = button?.textContent || (provider === "perplexity" ? "Abrir Perplexity" : "Abrir ChatGPT");
+
+    try {
+      await writePromptClipboard(text);
+      if (button) {
+        button.textContent = "Copiado — cole";
+        button.classList.add("success");
+        setTimeout(() => {
+          button.textContent = original;
+          button.classList.remove("success");
+        }, 1800);
+      }
+    } catch (error) {
+      console.warn("Falha ao copiar prompt:", error);
+      if (button) {
+        button.textContent = "Aberto — copie manualmente";
+        setTimeout(() => button.textContent = original, 1800);
+      }
+    }
+
+    if (!popup) {
+      window.location.href = provider === "perplexity"
+        ? "https://www.perplexity.ai/"
+        : "https://chatgpt.com/";
+    }
+  }
+
+  function enhancePromptLaunchButtons() {
+    document.querySelectorAll(".admin-qf-prompt-wrap").forEach(wrap => {
+      if (wrap.querySelector(".admin-qf-ai-actions")) return;
+      const prompt = wrap.querySelector(".admin-qf-prompt");
+      if (!prompt?.id) return;
+
+      const actions = document.createElement("div");
+      actions.className = "admin-qf-ai-actions";
+      actions.innerHTML = `
+        <button class="button secondary admin-qf-ai-prompt" type="button" data-ai-provider="chatgpt" data-ai-target="${esc(prompt.id)}">ChatGPT</button>
+        <button class="button secondary admin-qf-ai-prompt" type="button" data-ai-provider="perplexity" data-ai-target="${esc(prompt.id)}">Perplexity</button>
+      `;
+      wrap.appendChild(actions);
+    });
+  }
+
+  function renderBadQuestionFolder(data) {
+    const total = Number(data?.total || 0);
+    state.qfBadTotal = total;
+    const items = Array.isArray(data?.items) ? data.items : [];
+    const byStyle = Array.isArray(data?.by_style) ? data.by_style : [];
+    const start = total ? state.qfBadOffset + 1 : 0;
+    const end = Math.min(state.qfBadOffset + items.length, total);
+
+    if ($("admin-qf-bad-count")) $("admin-qf-bad-count").textContent = formatNumber(total);
+    if ($("admin-qf-bad-meta")) $("admin-qf-bad-meta").textContent = `${formatNumber(total)} questões arquivadas`;
+    if ($("admin-qf-bad-page-info")) $("admin-qf-bad-page-info").textContent = `${start}–${end} de ${total}`;
+
+    const styleBox = $("admin-qf-bad-by-style");
+    if (styleBox) {
+      styleBox.innerHTML = byStyle.length
+        ? byStyle.map(x => `<span><b>${esc(x.exam_style)}</b> ${formatNumber(x.count)}</span>`).join("")
+        : '<span class="admin-qf-bad-empty-chip">Nenhuma rejeitada ainda</span>';
+    }
+
+    const list = $("admin-qf-bad-list");
+    if (list) {
+      list.innerHTML = items.length ? items.map(item => {
+        const q = item.question_snapshot || {};
+        const code = item.question_code || item.question_id || "Questão";
+        const stage = qfStatusLabel(item.failure_stage);
+        return `
+          <details class="admin-qf-question admin-qf-bad-question">
+            <summary>
+              <span class="admin-qf-question-code">${esc(code)}</span>
+              <div class="admin-qf-question-title">
+                <strong>${esc(q.enunciado || "Questão sem enunciado no snapshot")}</strong>
+                <small>${esc(item.exam_style || "Sem banca")} · Lote ${esc(item.batch_number || "—")} · Bloco ${esc(item.block_number || "—")} · v${esc(item.item_version || 1)}</small>
+              </div>
+              <span class="admin-qf-review-pill rejected">Rejeitada</span>
+            </summary>
+            <div class="admin-qf-question-body">
+              <div class="admin-qf-bad-reason">
+                <strong>Por que foi para a pasta</strong>
+                <span>${esc(item.failure_reason || "Rejeitada pela auditoria sem motivo textual registrado.")}</span>
+                <small>Etapa: ${esc(item.failure_stage || stage)} · Arquivada em ${esc(formatDateTime(item.archived_at))}</small>
+              </div>
+              <p>${esc(q.enunciado || "")}</p>
+              <div class="admin-qf-alternatives">
+                ${["A","B","C","D"].map(letter => {
+                  const val = q["alternativa_"+letter.toLowerCase()] || "";
+                  return '<div class="admin-qf-alt '+(q.gabarito === letter ? "correct" : "")+'"><strong>'+letter+'</strong> — '+esc(val)+'</div>';
+                }).join("")}
+              </div>
+              <div class="admin-qf-answer-source">
+                <strong>Fonte do gabarito da versão rejeitada</strong>
+                <span>${esc(q.answer_source_institution || q.fonte_instituicao || "—")} · ${esc(q.answer_source_document || q.fonte_documento || "—")} · ${esc(q.answer_source_year || q.fonte_ano || "—")}</span>
+                ${q.answer_source_note ? `<small>${esc(q.answer_source_note)}</small>` : ""}
+              </div>
+            </div>
+          </details>
+        `;
+      }).join("") : '<div class="admin-factory-empty-wide">Nenhuma questão ruim arquivada.</div>';
+    }
+
+    if ($("admin-qf-bad-prev")) $("admin-qf-bad-prev").disabled = state.qfBadOffset <= 0;
+    if ($("admin-qf-bad-next")) $("admin-qf-bad-next").disabled = state.qfBadOffset + state.qfBadPageSize >= total;
+  }
+
+  async function loadBadQuestionFolder(offset = 0) {
+    state.qfBadOffset = Math.max(0, Number(offset || 0));
+    const { data, error } = await sb.rpc("admin_question_factory_bad_items", {
+      p_limit: state.qfBadPageSize,
+      p_offset: state.qfBadOffset
+    });
+
+    if (error) {
+      console.warn("Não foi possível carregar a pasta de questões ruins:", error);
+      return;
+    }
+    renderBadQuestionFolder(data || {});
+  }
+
   async function copyAdminPrompt(targetId, button) {
     const target = $(targetId);
     if (!target) return;
@@ -1846,19 +2004,7 @@
     const original = button?.textContent || "Copiar prompt";
 
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text);
-      } else {
-        const area = document.createElement("textarea");
-        area.value = text;
-        area.setAttribute("readonly", "");
-        area.style.position = "absolute";
-        area.style.left = "-9999px";
-        document.body.appendChild(area);
-        area.select();
-        document.execCommand("copy");
-        area.remove();
-      }
+      await writePromptClipboard(text);
 
       if (button) {
         button.textContent = "Copiado";
@@ -1881,6 +2027,18 @@
 
   function wire() {
     $("admin-qf-style-manual")?.addEventListener("click", async event => {
+      const aiButton = event.target.closest("[data-style-ai-index]");
+      if (aiButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        const index = Number(aiButton.dataset.styleAiIndex);
+        const item = state.questionStyles[index];
+        if (!item) return;
+        const text = item.full_generation_brief || item.generation_instructions || "";
+        await copyAndOpenAI(text, aiButton.dataset.aiProvider, aiButton);
+        return;
+      }
+
       const button = event.target.closest("[data-style-copy-index]");
       if (!button) return;
       event.preventDefault();
@@ -1894,19 +2052,7 @@
       const original = button.textContent || "Copiar tudo desta banca";
 
       try {
-        if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(text);
-        } else {
-          const area = document.createElement("textarea");
-          area.value = text;
-          area.setAttribute("readonly", "");
-          area.style.position = "absolute";
-          area.style.left = "-9999px";
-          document.body.appendChild(area);
-          area.select();
-          document.execCommand("copy");
-          area.remove();
-        }
+        await writePromptClipboard(text);
 
         document.querySelectorAll(`[data-style-copy-index="${index}"]`).forEach(el => {
           if (!el.dataset.originalLabel) el.dataset.originalLabel = el.textContent || "Copiar";
@@ -1925,9 +2071,27 @@
       }
     });
 
+    enhancePromptLaunchButtons();
+
     document.querySelectorAll(".admin-qf-copy").forEach(button => {
       button.addEventListener("click", () => copyAdminPrompt(button.dataset.copyTarget, button));
     });
+
+    document.querySelectorAll(".admin-qf-ai-prompt").forEach(button => {
+      button.addEventListener("click", async () => {
+        const target = $(button.dataset.aiTarget);
+        if (!target) return;
+        await copyAndOpenAI(target.textContent || "", button.dataset.aiProvider, button);
+      });
+    });
+
+    $("admin-qf-bad-open")?.addEventListener("click", async () => {
+      await loadBadQuestionFolder(0);
+      $("admin-qf-bad-dialog")?.showModal();
+    });
+    $("admin-qf-bad-close")?.addEventListener("click", () => $("admin-qf-bad-dialog")?.close());
+    $("admin-qf-bad-prev")?.addEventListener("click", () => loadBadQuestionFolder(Math.max(0,state.qfBadOffset-state.qfBadPageSize)));
+    $("admin-qf-bad-next")?.addEventListener("click", () => loadBadQuestionFolder(state.qfBadOffset+state.qfBadPageSize));
 
     $("admin-qf-batches")?.addEventListener("click", event => {
       const button = event.target.closest("[data-qf-batch]");
