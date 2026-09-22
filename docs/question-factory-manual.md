@@ -1070,6 +1070,38 @@ O T5 com 30 questões por banca revelou padrões que lotes de 10 itens não most
 - Pelo menos dois distratores plausíveis quando possível; explicações A–D específicas; fonte definitiva na geração.
 - Corte operacional: 97/100.
 
+
+
+### Protocolo do próximo teste PSU-GO
+Status atual: `NEEDS_ONE_MORE_CALIBRATION`.
+
+Antes da próxima geração:
+1. localizar material primário oficial PSU-GO;
+2. registrar preferencialmente >=20 questões oficiais, idealmente distribuídas em 2–3 edições recentes, quando disponíveis;
+3. documentar anos, fonte, organizadora e tamanho da amostra;
+4. usar PSU-MG apenas como proxy declarado e secundário, nunca como identidade substituta.
+
+Próximo lote de teste:
+- 30 questões totalmente inéditas;
+- não reciclar temas/estruturas do T5;
+- aproximadamente 20% fáceis, 55–60% médias e 20–25% difíceis;
+- easy + very_easy não deve ultrapassar 40% sem evidência empírica da banca;
+- pelo menos dois distratores plausíveis sempre que possível;
+- explicações A–D específicas;
+- fonte definitiva já na geração;
+- nenhuma “Fonte candidata”.
+
+Critério para considerar o perfil pronto para 200:
+- evidência primária suficiente para `style_confidence >= medium-high`;
+- após correção e reauditoria, >=90% das 30 questões com quality_score >=97;
+- 0 hard fails;
+- 0 ambiguidades relevantes;
+- nenhuma falha sistêmica de dificuldade baixa;
+- ausência de dependência de proxy para caracterizar estilo;
+- revisão do usuário repetida após a reauditoria.
+
+Se esses critérios não forem atingidos, manter `NEEDS_ONE_MORE_CALIBRATION`.
+
 ## 15. Terceira barreira independente — Gemini
 
 Depois que o lote de 1.000 passar pela revisão global do ChatGPT e do Perplexity:
