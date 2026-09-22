@@ -2930,3 +2930,107 @@ body.admin-unlocked #admin-app {
     font-size:9px;
   }
 }
+
+
+/* Question factory 3.0 — prompts dentro dos callouts de Questões por banca */
+.admin-qf-style-prompts{
+  margin-top:9px;
+  border-top:1px solid var(--border);
+  padding-top:8px;
+}
+.admin-qf-style-prompts>summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  min-height:34px;
+  padding:7px 9px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--surface-2);
+  cursor:pointer;
+  list-style:none;
+}
+.admin-qf-style-prompts>summary::-webkit-details-marker{display:none}
+.admin-qf-style-prompts>summary span{
+  font-size:8px;
+  font-weight:900;
+  color:var(--text);
+}
+.admin-qf-style-prompts>summary small{
+  color:var(--muted);
+  font-size:6.5px;
+  text-align:right;
+}
+.admin-qf-style-prompts[open]>summary{
+  border-color:color-mix(in srgb,var(--accent) 34%,var(--border));
+  background:var(--accent-soft);
+}
+.admin-qf-style-prompts-body{
+  display:grid;
+  gap:6px;
+  padding-top:7px;
+}
+.admin-qf-style-prompt-item{
+  overflow:hidden;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:var(--surface);
+}
+.admin-qf-style-prompt-item>summary{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:8px;
+  cursor:pointer;
+  list-style:none;
+}
+.admin-qf-style-prompt-item>summary::-webkit-details-marker{display:none}
+.admin-qf-style-prompt-item>summary b{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:24px;
+  height:24px;
+  padding:0 5px;
+  border-radius:7px;
+  background:var(--accent-soft);
+  color:var(--accent);
+  font-size:6.5px;
+}
+.admin-qf-style-prompt-item>summary span{
+  font-size:7.5px;
+  font-weight:850;
+}
+.admin-qf-style-prompt-item>div{
+  padding:0 8px 8px;
+}
+.admin-qf-style-prompt-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:5px;
+  margin-bottom:6px;
+}
+.admin-qf-style-prompt-actions .button{
+  min-height:28px;
+  padding:0 7px;
+  font-size:6.5px;
+}
+.admin-qf-style-prompt-item .admin-qf-prompt{
+  max-height:300px;
+  margin:0;
+  padding:9px;
+  font-size:7px;
+  line-height:1.45;
+}
+@media(max-width:620px){
+  .admin-qf-style-prompts>summary{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .admin-qf-style-prompts>summary small{text-align:left}
+  .admin-qf-style-prompt-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+}
