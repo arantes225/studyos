@@ -16,7 +16,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/logos/favicon.png?v=luria7">
   <link rel="stylesheet" href="assets/css/style.css?v=16.2">
-  <link rel="stylesheet" href="assets/css/admin.css?v=2.9">
+  <link rel="stylesheet" href="assets/css/admin.css?v=3.0">
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=14">
   <link rel="canonical" href="/admin/">
   <script>(function(){try{if(location.pathname.endsWith("/admin.html"))history.replaceState(null,"","/admin/"+location.search+location.hash);}catch(e){}})();</script>
@@ -108,7 +108,16 @@
 
         <div id="admin-status" class="admin-status">Carregando painel administrativo...</div>
 
-        <section class="admin-plan-grid" aria-label="Clientes e planos">
+        <nav class="admin-view-menu" aria-label="Seções do Admin">
+          <button class="admin-view-tab active" type="button" data-admin-view-tab="metrics" aria-selected="true">
+            Métricas
+          </button>
+          <button class="admin-view-tab" type="button" data-admin-view-tab="factory" aria-selected="false">
+            Fábrica de questões
+          </button>
+        </nav>
+
+        <section class="admin-plan-grid" data-admin-view="metrics" aria-label="Clientes e planos">
           <article class="admin-plan-card">
             <span>Clientes total</span>
             <strong id="admin-total-clients">—</strong>
@@ -134,7 +143,7 @@
           </article>
         </section>
 
-        <section class="admin-section">
+        <section class="admin-section" data-admin-view="metrics">
           <div class="admin-section-head">
             <div>
               <span class="eyebrow">Produto e negócio</span>
@@ -146,7 +155,7 @@
           <div id="admin-metrics-grid" class="admin-metrics-grid"></div>
         </section>
 
-        <section class="admin-section">
+        <section class="admin-section" data-admin-view="metrics">
           <div class="admin-section-head">
             <div>
               <span class="eyebrow">Uso por recurso</span>
@@ -157,7 +166,7 @@
           <div id="admin-feature-grid" class="admin-feature-grid"></div>
         </section>
 
-        <section class="admin-section admin-logistics-section">
+        <section class="admin-section admin-logistics-section" data-admin-view="metrics">
           <div class="admin-section-head">
             <div><span class="eyebrow">Logística</span><h2>Base de dados, Storage e tráfego</h2></div>
             <div class="admin-logistics-head-meta"><span id="admin-logistics-plan" class="admin-infra-plan">Supabase —</span><small id="admin-logistics-updated"></small></div>
@@ -185,7 +194,7 @@
           <div class="admin-logistics-note"><span>ℹ</span><p>Base, Storage e cache são medidos pelo projeto. Egress e cached egress dependem dos dados de uso/observabilidade da plataforma; enquanto não houver uma fonte automática disponível no painel, o LURIA os identifica como não mensurados em vez de estimar números falsos.</p></div>
         </section>
 
-        <section class="admin-section admin-financial-section">
+        <section class="admin-section admin-financial-section" data-admin-view="metrics">
           <div class="admin-section-head"><div><span class="eyebrow">Financeiro</span><h2>Receita, custos e planos</h2></div></div>
           <div class="admin-finance-grid">
             <article class="admin-finance-card income"><span>Entradas projetadas</span><strong id="admin-projected-revenue">—</strong><small>Receita mensal estimada</small></article>
@@ -202,7 +211,7 @@
           </div>
         </section>
 
-        <section class="admin-section admin-question-factory" aria-labelledby="admin-question-factory-title">
+        <section class="admin-section admin-question-factory" data-admin-view="factory" aria-labelledby="admin-question-factory-title">
           <div class="admin-section-head">
             <div>
               <span class="eyebrow">Banco de questões</span>
@@ -302,7 +311,7 @@
           </div>
         </section>
 
-        <section class="admin-section admin-qf-manual admin-qf-manual-pro" aria-labelledby="admin-qf-manual-title">
+        <section class="admin-section admin-qf-manual admin-qf-manual-pro" data-admin-view="factory" aria-labelledby="admin-qf-manual-title">
           <div class="admin-section-head admin-qf-manual-hero">
             <div>
               <span class="eyebrow">Manual editorial permanente</span>
@@ -880,7 +889,7 @@ Prefira fonte primária/oficial atual.</pre>
           </div>
         </section>
 
-        <section class="admin-section">
+        <section class="admin-section" data-admin-view="metrics">
           <div class="admin-section-head admin-customer-head">
             <div>
               <span class="eyebrow">Clientes</span>
@@ -1066,7 +1075,7 @@ Prefira fonte primária/oficial atual.</pre>
   <script src="/assets/vendor/supabase-2.110.6.js"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=17.0"></script>
-  <script src="assets/js/admin.js?v=3.1"></script>
+  <script src="assets/js/admin.js?v=3.2"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
