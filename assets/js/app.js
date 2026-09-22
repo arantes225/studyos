@@ -440,7 +440,7 @@ function sidebarMarkup(user, profile = null) {
 
       <a class="nav-link ${page === "configuracoes" ? "active" : ""}" href="/configuracoes/">
         <span class="nav-icon nav-icon-settings" aria-hidden="true">
-          <img src="/assets/img/logos/config-icon.png?v=1" alt="">
+          <img src="/assets/img/logos/pwa-icon-192.png?v=3" alt="">
         </span><span>Configurações</span>
       </a>
 
