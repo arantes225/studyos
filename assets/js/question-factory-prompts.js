@@ -55,18 +55,26 @@ Antes de gerar: registrar edição, URL oficial, IDs/páginas dos itens analisad
 TAREFA: gerar bloco administrativo de 200 questões. Pode executar em partes de 20, preservando IDs, sequência, cobertura planejada e conferência final das 200. Não fingir entrega completa quando houver parte pendente.
 Antes da produção, exigir relatório de calibração bruta FINAL_PROMPT_SCORE >=84 e corpus documentado. Se ausente, realizar calibração ou informar exatamente o que falta; não substituir por nota de questão corrigida.
 Definir matriz de cobertura a partir da prova-alvo; não impor sete áreas ENAMED nem quotas universais a outras bancas. Frequências observadas orientam o conjunto, sem criar sequência temática artificial.
-MÉTODO DE CONSTRUÇÃO OBRIGATÓRIO:
-1. Definir primeiro duas decisões clínicas concorrentes e plausíveis do mesmo eixo, sem letras.
-2. Definir o dado discriminativo mínimo que faz uma delas superar a outra.
-3. Construir a vinheta em torno dessa disputa, garantindo que o dado discriminativo seja funcional.
-4. Só então criar os outros dois distratores, ainda no mesmo eixo e clinicamente plausíveis.
-5. Rodar teste contrafactual: uma pequena mudança clinicamente plausível deve tornar o melhor distrator correto ou claramente mais defensável.
-6. Rodar teste adversarial sem vinheta; se a chave for previsível por forma, reescrever alternativas antes da saída.
+MÉTODO DE CONSTRUÇÃO ADAPTATIVO:
+1. Primeiro definir a operação cognitiva e a dificuldade pretendida conforme o perfil da banca.
+2. Item fácil/direto pode cobrar conhecimento técnico legítimo sem fabricar disputa artificial; ainda assim, alternativas devem ser homogêneas e não caricatas.
+3. Item médio/difícil deve conter uma disputa real entre pelo menos duas alternativas plausíveis do mesmo eixo.
+4. Nos itens médios/difíceis, definir 2–3 dados funcionalmente necessários que façam a correta superar o melhor distrator; evitar um único marcador praticamente determinístico.
+5. Criar os demais distratores no mesmo eixo, baseados em erros médicos reais.
+6. Rodar teste contrafactual do melhor distrator nos itens médios/difíceis.
+7. Rodar teste adversarial sem vinheta; se a chave for previsível por forma, reescrever alternativas antes da saída.
+8. Classificar a dificuldade somente depois do item completo, pela integração exigida e pela competição entre alternativas.
 Gerar então problema completo, alternativas e explicações A-D. Incluir mensagem-chave, área, tema, subtema e dificuldade justificada. Fonte geral e fonte específica do gabarito: instituição, documento, ano, URL real, seção quando disponível e nota de suporte.
 Identificar duplicatas por decisão/conceito e cenário, além de similaridade lexical; não apenas trocar idade ou nomes.
 Gerar cada questão de forma independente. Não reutilizar caso-base, esqueleto semântico, conjunto de alternativas ou transformação mecânica entre bancas ou dentro do lote.
 Antes de entregar cada item, o GERADOR executa apenas uma pré-checagem. A aprovação depende de REVISÃO ADVERSARIAL INDEPENDENTE: o revisor não recebe a justificativa interna do gerador como autoridade e testa formal cueing, assimetria lexical, melhor distrator, contrafactual, dependência da vinheta, single-best-answer e dificuldade observada. Qualquer HARD REJECT impede entrada no lote. A versão rejeitada não pode ser exportada para auditoria externa. Regenerar o conjunto de alternativas e, se necessário, a vinheta; a nova versão volta a uma nova revisão adversarial. Só entra no lote quando surface_guess não acerta a chave com confiança média/alta, lexical_asymmetry=PASS, contrafactual=PASS e vignette_dependency=PASS (para médio/difícil), além de single-best-answer=PASS.
-Após fechar o conteúdo, embaralhar a posição da alternativa correta sem alterar seu texto; no fechamento da parte/lote, detectar concentração anormal de letras e reembaralhar apenas a apresentação, sem padrão determinístico.
+Após fechar o conteúdo, embaralhar a posição da alternativa correta sem alterar seu texto.
+PRÉ-FLIGHT DE LOTE antes da saída:
+- recalcular automaticamente a distribuição real das letras a partir dos gabaritos, nunca confiar em contagem manual;
+- se alguma letra não aparecer ou houver concentração extrema/longa sequência visualmente previsível, reembaralhar SOMENTE a posição das alternativas, preservando conteúdo e gabarito semântico;
+- verificar se o lote contém variedade real de dificuldade compatível com o perfil; se a banca prevê parte intermediária-alta e todos os itens forem fáceis/baixa-média, o lote FALHA;
+- verificar se itens médios/difíceis têm pelo menos um concorrente forte e 2–3 dados funcionais; se não, regenerar esses itens;
+- em MBE quantitativa, quando o perfil exigir aplicação, preferir cálculo + interpretação de magnitude/implicação, não mera aritmética.
 SAÍDA (preencher os dados reais; null em lote/bloco exige identificação antes de importar):
 ${stringify({schema_version:VERSION,batch:{...context(item,ctx),question_count:200,part_number:1,part_count:10,profile_version:VERSION,reference_exam_years:[],generation_status:'generated'},primary_style_evidence:[],coverage_plan:[],questions:[sample],coverage:{expected:200,delivered:0,complete:false}})}
 Validar quantidade, IDs, sequências 1–200 e posição global, A-D, campos obrigatórios, fontes, coerência e duplicatas. Nunca preencher status approved/published. Excel apenas quando solicitado para revisão humana.`;
