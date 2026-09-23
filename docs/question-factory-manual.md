@@ -1194,14 +1194,35 @@ Se esses critérios não forem atingidos, manter `NEEDS_ONE_MORE_CALIBRATION`.
 
 
 
-### Aprendizado específico AMP-PR após calibração inicial
-- Status: `NEEDS_MORE_PRIMARY_STYLE_DATA`.
-- A auditoria encontrou média 81,3 e mediana 81, mas parte da perda de style decorreu de penalização inválida pelo formato de quatro alternativas.
-- O LURIA mantém exatamente A–D, independentemente de a AMP oficial usar A–E.
-- Estrutura AMP confirmada: Prova Geral de 100 questões, seis áreas básicas equilibradas e uma única correta.
-- Para fidelidade, reproduzir matriz, comandos, nível de raciocínio, stem e distratores — não o número de alternativas.
-- O lote piloto não representa a matriz AMP: só Clínica Médica, Cirurgia Geral e Pediatria.
-- Próxima calibração deve incluir Obstetrícia, Ginecologia e Medicina Preventiva e Social, quebrar blocos temáticos e reduzir AI_PATTERN_RISK.
+### Aprendizado específico AMP-PR — Validação editorial V3
+- **FINAL_PROMPT_SCORE: 61/100**.
+- **Status: `PROMPT_REQUER_AJUSTE`**. O corte desta etapa é **94/100**; 97 permanece reservado à questão final após checagens e reescritas.
+- Auditoria independente baseada principalmente no caderno oficial AMP 2025 e no edital oficial. A evidência é suficiente para detectar desvios editoriais importantes, mas apenas um caderno completo foi recuperado nesta rodada; não assumir invariância histórica.
+- Estrutura confirmada para a prova geral auditada: cinco alternativas, uma única correta e distribuição equilibrada entre as áreas básicas.
+- Lote V3: 30/30 gabaritos corretos, 0 falhas científicas, 0 ambiguidades e 0 falhas de single-best-answer; o problema é editorial, não médico.
+- Style: média 53,4/100; mediana 53,5; DP 4,8; 0% >=94.
+- Difficulty match: 23,3%.
+- Distratores: 0/30 STRONG, 4/30 ACCEPTABLE, 26/30 WEAK.
+- Falha central: o gerador produziu arquitetura excessivamente homogênea — caso breve + pergunta de conduta + resposta-protocolo — enquanto o material oficial auditado mistura casos densos, questões diretas/conceituais, múltiplas afirmações, relações de causa/efeito, alternativas combinatórias e interpretação de exames/dados.
+- Proibir distratores-clichê reutilizados e alternativas obviamente incompatíveis. Pelo menos três alternativas devem ser clinicamente plausíveis sempre que o conteúdo permitir e competir por timing, dose, indicação, contraindicação, exame confirmatório, prioridade ou necessidade de intervenção.
+- Inserir checagem de pistas formais: correta mais longa, mais técnica, única com conduta completa, absolutos denunciadores e distratores caricatos.
+- Questões difíceis devem conter dados que realmente mudem a decisão: tempo, gravidade, exames, imagem, resposta inicial, comorbidades ou contraindicações. Tema clássico isolado não deve ser rotulado como difícil.
+- Variar o alvo cognitivo entre diagnóstico, investigação, tratamento, prognóstico, prevenção, epidemiologia, ética, rastreamento, complicações e seguimento; não permitir lote dominado por “conduta inicial”.
+- Para novo lote de 30, usar como alvo editorial aproximado (não quota histórica rígida): 8–10 casos clínicos densos; 8–10 itens com três afirmativas; 3–5 afirmação/justificativa; 5–7 diretas/conceituais; 2–4 interpretação de exames/escores/dados quantitativos. Recalibrar essas faixas quando houver mais cadernos oficiais.
+- Extrair do corpus oficial comprimento mediano, distribuição de formatos, frequência de assertivas, proporção de diretas, padrão de alternativas e nível de especificidade; não calibrar apenas por tema.
+- As explicações internas A–E devem ser individualizadas; remover a frase genérica repetida “A alternativa não representa a melhor interpretação ou conduta para o cenário apresentado.”
+- Próximo passo: ajustar o prompt, gerar lote novo independente e repetir auditoria cega. Só congelar o prompt AMP-PR quando **FINAL_PROMPT_SCORE >=94**.
+
+#### Regras de geração AMP-PR após V3
+1. Cinco alternativas A–E e uma única melhor resposta para a validação AMP-PR.
+2. Diversidade estrutural obrigatória no lote; não repetir uma única moldura cognitiva.
+3. Alternativas de comprimento e densidade semelhantes; a correta não pode ser identificável por forma.
+4. Distratores devem representar erros médicos realistas e próximos.
+5. Dificuldade é definida pela decisão exigida e competitividade das alternativas, não pela raridade do tema.
+6. O prompt deve separar explicitamente **validade científica** de **fidelidade editorial**.
+7. Antes de liberar o lote, executar detector de repetição lexical/estrutural e detector de pistas formais.
+8. Usar cadernos oficiais apenas para aprender forma/estrutura; conteúdo clínico permanece autoral e sustentado por fontes científicas independentes.
+
 
 ## 15. Terceira barreira independente — Gemini
 
