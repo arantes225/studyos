@@ -27,9 +27,6 @@ const scheduleState = {
   eventDateTo: "",
   editingEventId: null,
 
-  studyMode:
-    "medicine",
-
   theoryStudyWeekdays:
     [1, 3, 5],
 
@@ -5232,13 +5229,11 @@ function setBaseScheduleStatus(text, type = "") {
 async function loadSchedulePreferences() {
   const { data, error } = await scheduleSb
     .from("user_settings")
-    .select("study_mode,theory_study_weekdays,max_lessons_per_day")
+    .select("theory_study_weekdays,max_lessons_per_day")
     .eq("user_id", scheduleState.user.id)
     .maybeSingle();
 
   if (error) console.warn("Não foi possível carregar preferências do cronograma:", error.message);
-
-  scheduleState.studyMode = data?.study_mode === "dentistry" ? "dentistry" : "medicine";
   const configuredDays = Array.isArray(data?.theory_study_weekdays)
     ? data.theory_study_weekdays.map(Number).filter((day) => day >= 1 && day <= 7)
     : [];
@@ -5264,13 +5259,13 @@ async function loadSchedulePreferences() {
       )
     );
 
-  window.LuriaStudyMode?.apply(scheduleState.studyMode);
+  window.LuriaStudyMode?.apply("medicine");
   renderBaseSchedulePreview();
 }
 
 function currentBaseScheduleRows() {
   const data = window.LURIA_BASE_SCHEDULES || {};
-  return data[scheduleState.studyMode] || data.medicine || [];
+  return data.medicine || [];
 }
 
 function currentBaseStudyDays() {
@@ -5584,10 +5579,7 @@ async function applyBaseSchedule() {
 
 
   const modeLabel =
-    scheduleState.studyMode
-    === "dentistry"
-      ? "Odontologia"
-      : "Medicina";
+    "Medicina";
 
 
   const studyDaysLabel =
@@ -5781,20 +5773,6 @@ function wireBaseSchedule() {
         );
     }
   }
-
-
-  window.addEventListener(
-    "luria:study-mode",
-    (event) => {
-      scheduleState.studyMode =
-        event.detail?.mode
-        === "dentistry"
-          ? "dentistry"
-          : "medicine";
-
-      renderBaseSchedulePreview();
-    }
-  );
 }
 
 function getActiveTopicsForLibrary() {
