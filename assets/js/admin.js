@@ -2321,10 +2321,14 @@ REGRAS GERAIS
 - Trabalhe sempre com question_id imutável.
 - O formato canônico entre IAs e backend é JSON.
 - Não use Excel como formato máquina-a-máquina.
-- Corte mínimo de qualidade: 97/100.
-- Mesmo com nota >=90, hard fail impede aprovação.
+- Corte mínimo de qualidade: 97/100 e fidelidade editorial: 97/100.
+- Mesmo com nota alta, hard fail impede aprovação.
+- Gates universais: hard_fail=false; ambiguity=false; single_best_answer=true; answer_source_status=PASS; distractor_quality>=GOOD; alternative_granularity=PASS; difficulty_alignment=PASS.
 - Hard fails incluem: gabarito divergente, duas alternativas defensáveis, ambiguidade relevante, conduta potencialmente perigosa, dose/ponto de corte incorreto, fonte inexistente, fonte que não sustenta o gabarito, recomendação desatualizada ou questão reconhecível como cópia.
-- Toda questão precisa de fonte específica do gabarito.
+- Fonte não verificada por limitação operacional deve ser classificada como SOURCE_VERIFICATION_PENDING, e não como hard fail científico, até haver verificação.
+- Toda questão precisa de fonte específica do gabarito: documento, ano e seção/recomendação quando verificável.
+- Regra global LURIA: exatamente quatro alternativas A-D em todas as bancas. Se a banca real usar cinco alternativas, isso NÃO pode reduzir style_score/quality_score e não se avalia ausência de E.
+- Distrator ideal: correto em outro cenário próximo, porém inadequado neste caso. Evitar espantalhos, absolutos denunciadores e alternativas de categorias/granularidades diferentes.
 `;
 
     if (stage === "chatgpt_initial") return `PROMPT DE SEGMENTO 1 — CHECAGEM CHATGPT DO BLOCO DE 200
@@ -2459,10 +2463,16 @@ Mesmo que a soma seja >=97, marque needs_revision ou rejected se houver:
 REGRAS DE STATUS
 approved:
 quality_score >=97
+AND style/component fidelity compatível com o gate editorial da banca
 AND hard_fail=false
 AND ambiguity=false
 AND single_best_answer=true
-AND answer_source_issue=null.
+AND answer_source_issue=null
+AND distractor_quality>=GOOD
+AND alternative_granularity=PASS
+AND difficulty_alignment=PASS.
+
+Para AMP-PR e qualquer banca oficial com 5 opções: ignore deliberadamente a divergência estrutural A-D do LURIA; não aplique five_option_quality, não teste ausência de E e não desconte pontos por isso.
 
 needs_revision:
 - quality_score <97;
