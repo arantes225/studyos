@@ -381,50 +381,6 @@ async function saveFlashcardIntervals() {
 }
 
 
-function setStudyModeStatus(text, type = "") {
-  const element = document.getElementById("study-mode-status");
-  if (!element) return;
-  element.textContent = text;
-  element.className = `settings-save-status ${type}`.trim();
-}
-
-async function loadStudyModeSetting() {
-  const { data, error } = await settingsSb
-    .from("user_settings")
-    .select("study_mode")
-    .eq("user_id", settingsUser.id)
-    .maybeSingle();
-
-  if (error) console.warn(error);
-
-  const mode = data?.study_mode === "dentistry" ? "dentistry" : "medicine";
-  const radio = document.querySelector(`input[name="study-mode"][value="${mode}"]`);
-  if (radio) radio.checked = true;
-  window.LuriaStudyMode?.apply(mode);
-}
-
-async function saveStudyModeSetting() {
-  const mode = document.querySelector('input[name="study-mode"]:checked')?.value || "medicine";
-  const button = document.getElementById("save-study-mode");
-  if (button) button.disabled = true;
-  setStudyModeStatus("Salvando...");
-
-  const { error } = await settingsSb
-    .from("user_settings")
-    .upsert({ user_id: settingsUser.id, study_mode: mode }, { onConflict: "user_id" });
-
-  if (button) button.disabled = false;
-
-  if (error) {
-    console.error(error);
-    setStudyModeStatus(`Não foi possível salvar: ${error.message}`, "error");
-    return;
-  }
-
-  window.LuriaStudyMode?.apply(mode);
-  setStudyModeStatus(mode === "dentistry" ? "Modo Odontologia salvo." : "Modo Medicina salvo.", "success");
-}
-
 function setStudyDaysStatus(text, type = "") {
   const el = document.getElementById("study-days-status");
   el.textContent = text;
@@ -1253,10 +1209,6 @@ async function initStudySettings() {
     .addEventListener("click", saveStudySettings);
 
   document
-    .getElementById("save-study-mode")
-    ?.addEventListener("click", saveStudyModeSetting);
-
-  document
     .getElementById("save-flashcard-intervals")
     ?.addEventListener(
       "click",
@@ -1301,8 +1253,7 @@ async function initStudySettings() {
 
   await Promise.all([
     loadProfileSettings(),
-    loadStudySettings(),
-    loadStudyModeSetting()
+    loadStudySettings()
   ]);
 }
 
