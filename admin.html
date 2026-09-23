@@ -308,17 +308,63 @@
             <article><span>Publicadas</span><strong id="admin-qf-published">0</strong><small>Banco definitivo</small></article>
           </div>
 
-          <div class="admin-factory-flow" aria-label="Fluxo da fábrica">
-            <article><strong>Bloco 1</strong><small>200 questões</small></article>
-            <article><strong>Bloco 2</strong><small>200 questões</small></article>
-            <article><strong>Bloco 3</strong><small>200 questões</small></article>
-            <article><strong>Bloco 4</strong><small>200 questões</small></article>
-            <article><strong>Bloco 5</strong><small>200 questões</small></article>
-            <div class="admin-factory-flow-arrow">→</div>
-            <article class="admin-factory-flow-review"><strong>Revisão global dupla</strong><small>ChatGPT + Perplexity independentes</small></article><div class="admin-factory-flow-arrow">→</div><article class="admin-factory-flow-review"><strong>Gemini adversarial</strong><small>3ª barreira · sinaliza, não altera</small></article>
-            <div class="admin-factory-flow-arrow">→</div>
-            <article class="admin-factory-flow-ready"><strong>1.000 prontas</strong><small>Publicação + limpeza</small></article>
-          </div>
+          <section class="admin-factory-flow-panel" aria-labelledby="admin-factory-flow-title">
+            <div class="admin-factory-flow-head">
+              <div>
+                <span class="eyebrow">Fluxo operacional</span>
+                <strong id="admin-factory-flow-title">Da geração à publicação</strong>
+                <small>Cada lote passa por cinco blocos, revisão independente e barreira final antes de entrar no banco definitivo.</small>
+              </div>
+              <span class="admin-factory-flow-goal">1 lote = 1.000 questões</span>
+            </div>
+
+            <div class="admin-factory-flow">
+              <div class="admin-factory-flow-stage admin-factory-flow-stage-blocks">
+                <span class="admin-factory-flow-index">01</span>
+                <div>
+                  <strong>Produção dos blocos</strong>
+                  <small>5 blocos independentes de 200 questões</small>
+                </div>
+                <div class="admin-factory-flow-blocks">
+                  <span>B1 <b>200</b></span>
+                  <span>B2 <b>200</b></span>
+                  <span>B3 <b>200</b></span>
+                  <span>B4 <b>200</b></span>
+                  <span>B5 <b>200</b></span>
+                </div>
+              </div>
+
+              <div class="admin-factory-flow-connector" aria-hidden="true"><span>→</span></div>
+
+              <div class="admin-factory-flow-stage admin-factory-flow-stage-review">
+                <span class="admin-factory-flow-index">02</span>
+                <div>
+                  <strong>Revisão global dupla</strong>
+                  <small>ChatGPT + Perplexity revisam o lote completo de forma independente</small>
+                </div>
+              </div>
+
+              <div class="admin-factory-flow-connector" aria-hidden="true"><span>→</span></div>
+
+              <div class="admin-factory-flow-stage admin-factory-flow-stage-adversarial">
+                <span class="admin-factory-flow-index">03</span>
+                <div>
+                  <strong>Gemini adversarial</strong>
+                  <small>Terceira barreira: sinaliza riscos e inconsistências, sem alterar questões</small>
+                </div>
+              </div>
+
+              <div class="admin-factory-flow-connector" aria-hidden="true"><span>→</span></div>
+
+              <div class="admin-factory-flow-stage admin-factory-flow-stage-ready">
+                <span class="admin-factory-flow-index">04</span>
+                <div>
+                  <strong>Banco definitivo</strong>
+                  <small>1.000 questões prontas para publicação e limpeza dos temporários</small>
+                </div>
+              </div>
+            </div>
+          </section>
 
           <section class="admin-qf-quality-panel" aria-labelledby="admin-qf-quality-title">
             <div class="admin-qf-quality-head">
