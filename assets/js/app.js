@@ -1776,6 +1776,16 @@ function ensureNotificationCenter() {
       ></span>
     </button>
 
+    ${page === "questoes" ? `
+      <button
+        id="qs-simulations-help"
+        class="qs-simulations-help"
+        type="button"
+      >
+        Como funcionam os simulados
+      </button>
+    ` : ""}
+
     <section
       id="luria-notification-panel"
       class="luria-notification-panel"
@@ -1820,6 +1830,21 @@ function ensureNotificationCenter() {
   topbar.appendChild(
     center
   );
+
+  if (page === "questoes") {
+    document
+      .getElementById(
+        "qs-simulations-help"
+      )
+      ?.addEventListener(
+        "click",
+        () => {
+          window.LuriaDialog?.alert?.(
+            "Você pode adicionar simulados automaticamente por PDF ou criar um simulado manual informando o número de questões. Depois, abra o simulado e registre o gabarito ou marque as questões erradas para acompanhar seu desempenho."
+          );
+        }
+      );
+  }
 }
 
 
