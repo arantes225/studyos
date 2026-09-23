@@ -2307,65 +2307,56 @@
     await Promise.all([loadQuestionFactory(),loadQuestionFactoryStyles(),loadQuestionFactoryBlockTracker(),loadQuestionFactoryQuality()]);
   }
 
-  const QF_EDITORIAL_CALIBRATION_V4 = {
-    "USP-SP": { score:82, status:"requires_adjustment", alternatives:4, notes:"Distratores clinicamente próximos; equilibrar comprimento; evitar conduta óbvia; aumentar discriminação e calibrar dificuldade." },
-    "UNIFESP": { score:72, status:"requires_adjustment", alternatives:4, notes:"Aumentar densidade e integração; alternativas no mesmo domínio; remover fórmulas repetitivas; evitar reconhecimento simples." },
-    "AMP-PR": { score:61, status:"requires_adjustment", alternatives:5, notes:"Método individual; diversidade de formatos, incluindo casos densos, assertivas e interpretação; cinco alternativas; eliminar distratores-clichê." },
-    "SUS-SP": { score:76, status:"requires_adjustment", alternatives:5, notes:"Cinco alternativas; variedade de casos e conceitos; distratores próximos; remover frase repetitiva; maior integração e timing." },
-    "SES-DF": { score:42, status:"target_revalidation_required", alternatives:null, notes:"NÃO gerar como calibrado até confirmar processo/edição-alvo. Evidência histórica Cebraspe encontrada em CERTO/ERRADO; reconstruir corpus primário específico antes de definir formato." },
-    "PSU-MG": { score:78, status:"requires_adjustment", alternatives:4, notes:"Maior densidade clínica; quatro alternativas; distratores próximos; decisões intermediárias; dificuldade por raciocínio." },
-    "Santa Casa-SP": { score:72, status:"requires_adjustment", alternatives:5, notes:"Cinco alternativas; maior densidade; variedade cognitiva; alternativas equivalentes e plausíveis; ampliar corpus primário." },
-    "UERJ": { score:48, status:"target_revalidation_required", alternatives:null, notes:"NÃO usar auditoria do vestibular como perfil de residência. Revalidar especificamente Residência Médica UERJ/acesso direto com corpus próprio antes de gerar." },
-    "PSU-GO": { score:82, status:"requires_adjustment", alternatives:5, notes:"Cinco alternativas A-E; corpus CEREM-GO; reduzir conduta óbvia; APS contextualizada; interpretação e evolução clínica." },
-    "ENAMED": { score:58, status:"requires_adjustment", alternatives:4, notes:"Basear no corpus oficial INEP/ENAMED; situações-problema contextualizadas; integrar SUS/APS, determinantes sociais, segurança, longitudinalidade e fontes brasileiras primárias." }
+  const QF_BOARD_FORMAT = {
+    "USP-SP": 4,
+    "UNIFESP": 4,
+    "AMP-PR": 5,
+    "SUS-SP": 5,
+    "PSU-MG": 4,
+    "Santa Casa-SP": 5,
+    "PSU-GO": 5,
+    "ENAMED": 4
   };
 
-  function qfBoardCalibration(style) {
-    return QF_EDITORIAL_CALIBRATION_V4[style] || null;
+  function qfBoardAlternativeCount(item, style) {
+    return Number(item?.alternative_count || QF_BOARD_FORMAT[style] || 4);
   }
 
   function buildBoardSegmentPrompt(item, stage) {
     const style = item?.exam_style || "BANCA";
     const brief = item?.full_generation_brief || item?.generation_instructions || "";
-    const calibration = qfBoardCalibration(style);
-    const alternativeCount = Number(calibration?.alternatives || item?.alternative_count || 4);
+    const alternativeCount = qfBoardAlternativeCount(item, style);
     const alternativeLetters = alternativeCount === 5 ? "A-E" : "A-D";
-    const calibrationContext = calibration
-      ? `AUDITORIA EDITORIAL MAIS RECENTE
-- score de calibração do prompt: ${calibration.score}/100
-- status: ${calibration.status}
-- ajustes obrigatórios: ${calibration.notes}
-`
-      : "";
 
     const common = `
 BANCA / EXAM_STYLE: ${style}
 
-CONTEXTO EDITORIAL DA BANCA
+CONTEXTO EDITORIAL CANÔNICO DA BANCA
 ${brief}
 
-${calibrationContext}
-REGRAS GERAIS
+PRINCÍPIO DE SEPARAÇÃO
+- O contexto editorial acima é a identidade da banca. Não o reescreva a partir de notas de auditoria de lotes anteriores.
+- Feedback de auditoria serve para diagnosticar questões e o pipeline; não vira automaticamente regra do prompt mestre.
+- Só altere a identidade editorial da banca quando houver evidência primária específica do processo-alvo.
+- Não use score histórico de calibração como instrução de geração.
+- Gere e avalie cada banca pelo seu próprio perfil e corpus. Não transplante moldes, casos-base, quotas ou arquitetura cognitiva de outra banca.
+
+REGRAS UNIVERSAIS DE QUALIDADE
 - Trabalhe sempre com question_id imutável.
 - O formato canônico entre IAs e backend é JSON.
 - Não use Excel como formato máquina-a-máquina.
-- Corte mínimo de qualidade final da questão: 97/100.
-- Corte de formação/calibração do prompt da banca: style_score >=9,4/10.
-- Corte de fidelidade editorial para aprovação final da questão/bloco: style_score >=9,7/10.
+- Corte de formação/calibração do prompt: style_score >=9,4/10.
+- Corte mínimo da questão final após checagens e reescritas: quality_score >=97/100 e fidelidade editorial >=9,7/10.
 - Mesmo com nota alta, hard fail impede aprovação.
-- Gates universais: hard_fail=false; ambiguity=false; single_best_answer=true; answer_source_status=PASS; distractor_quality>=GOOD; alternative_granularity=PASS; difficulty_alignment=PASS.
-- Hard fails incluem: gabarito divergente, duas alternativas defensáveis, ambiguidade relevante, conduta potencialmente perigosa, dose/ponto de corte incorreto, fonte inexistente, fonte que não sustenta o gabarito, recomendação desatualizada ou questão reconhecível como cópia.
-- Fonte não verificada por limitação operacional deve ser classificada como SOURCE_VERIFICATION_PENDING, e não como hard fail científico, até haver verificação.
-- Toda questão precisa de fonte específica do gabarito: documento, ano e seção/recomendação quando verificável.
-- O formato de alternativas deve seguir a banca/processo-alvo validado: para ${style}, usar ${alternativeCount} alternativas (${alternativeLetters}). Nunca forçar A-D quando o processo real validado usa A-E.
-- SES-DF e UERJ ficam bloqueadas como perfis calibrados enquanto o processo-alvo não for revalidado em corpus primário específico; não inferir formato a partir de outra seleção da mesma instituição.
-- Cada banca deve ser gerada por MÉTODO INDIVIDUAL e corpus próprio. É proibido reutilizar caso-base, molde de enunciado, conjunto de distratores ou arquitetura cognitiva comum entre bancas na rodada de calibração.
-- Distrator ideal: plausível à primeira leitura e defensável em cenário próximo, porém eliminável por um dado discriminativo do caso. Evitar espantalhos, absolutos denunciadores e alternativas de categorias/granularidades diferentes.
-- Não exigir literalmente múltiplas respostas defensáveis: deve existir UMA única melhor resposta; a proximidade dos distratores não pode criar ambiguidade.
-- A alternativa correta não pode ser denunciada por ser sistematicamente mais longa, mais técnica ou a única completa.
-- Variar operações cognitivas: diagnóstico, investigação, interpretação, manejo, contraindicação, timing, complicação, prognóstico, prevenção e seguimento conforme o corpus da banca.
-- Dificuldade é definida pelo raciocínio exigido, não pela gravidade do tema.
-- Explicações devem justificar especificamente por que cada alternativa está certa ou errada; é proibida justificativa genérica repetida.
+- Hard fails incluem gabarito divergente, múltiplas respostas defensáveis, ambiguidade relevante, conduta perigosa, dose/ponto de corte incorreto, fonte inexistente ou incompatível, recomendação desatualizada e cópia reconhecível.
+- Fonte não verificável por limitação operacional deve ser SOURCE_VERIFICATION_PENDING até verificação; não invente fonte.
+- Toda questão final precisa de fonte específica que sustente o gabarito.
+- Para ${style}, use ${alternativeCount} alternativas (${alternativeLetters}) quando esse formato estiver validado para o processo-alvo.
+- Deve existir uma única melhor resposta.
+- Distratores devem ser clinicamente plausíveis, homogêneos em categoria e elimináveis pelos dados do item; evite espantalhos, absolutos denunciadores e pistas de comprimento.
+- Dificuldade deve vir do raciocínio e da discriminação entre alternativas, não da raridade ou gravidade isolada do tema.
+- Explicações devem justificar especificamente cada alternativa.
+- Repetição, quase duplicação, pistas formais e incoerência idade/contexto são defeitos do lote e devem ser detectados pelos validadores, não impostos como fórmulas de escrita.
 `;
 
     if (stage === "chatgpt_initial") return `PROMPT DE SEGMENTO 1 — CHECAGEM CHATGPT DO BLOCO DE 200
