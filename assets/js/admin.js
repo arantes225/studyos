@@ -2430,7 +2430,7 @@
         const reliability = item.style_confidence_score == null ? null : Number(item.style_confidence_score);
         const scoreValue = item.style_score == null ? "—" : Number(item.style_score).toLocaleString("pt-BR",{maximumFractionDigits:1});
         const confidenceValue = reliability == null ? "—" : `${reliability.toLocaleString("pt-BR",{maximumFractionDigits:0})}%`;
-        const calibrationStatus = item.final_prompt_score == null ? "Calibração do prompt pendente" : Number(item.final_prompt_score) >= 91 ? "Prompt calibrado · " + item.final_prompt_score + "/100" : "Prompt a revisar · " + item.final_prompt_score + "/100";
+        const calibrationStatus = item.final_prompt_score == null ? "Calibração do prompt pendente" : Number(item.final_prompt_score) >= 84 ? "Prompt calibrado · " + item.final_prompt_score + "/100" : "Prompt a revisar · " + item.final_prompt_score + "/100";
         const slug = String(item.exam_style || `banca-${index+1}`).replace(/[^a-z0-9]/gi,"-").toLowerCase();
         const masterPromptId = `qf-dashboard-${slug}-master`;
         const promptStages = [
