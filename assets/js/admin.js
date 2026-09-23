@@ -2028,7 +2028,9 @@
 
             <div class="admin-qf-block-mini-actions">
               <button class="button secondary" type="button" data-qf-view-block="${Number(batch.batch_number)}:${n}">${needs || rejected ? "Ver pendências" : "Ver bloco"}</button>
-              <button class="button secondary" type="button" data-qf-import-review="${Number(batch.batch_number)}:${n}">Importar auditoria</button>
+              <button class="button secondary" type="button" data-qf-export="${Number(batch.batch_number)}:${n}:blind">Exportar prova cega</button>
+              <button class="button secondary" type="button" data-qf-export="${Number(batch.batch_number)}:${n}:audit">Exportar auditoria e pareceres</button>
+              <button class="button secondary" type="button" data-qf-import-review="${Number(batch.batch_number)}:${n}">Importar resolução, auditoria ou julgamento</button>
               ${needs || rejected ? `<button class="button secondary admin-qf-correction-import" type="button" data-qf-import-correction="${Number(batch.batch_number)}:${n}">Importar correção ChatGPT</button>` : ""}
             </div>
 
@@ -2045,12 +2047,6 @@
         `;
       }).join("");
 
-      const finalMode = batch.final_review_mode === "chatgpt"
-        ? "ChatGPT"
-        : batch.final_review_mode === "perplexity"
-          ? "Perplexity"
-          : "ChatGPT + Perplexity";
-
       return `
         <article class="admin-qf-batch-card">
           <div class="admin-qf-batch-card-head">
@@ -2064,14 +2060,18 @@
           <div class="admin-qf-block-grid">${blockCards}</div>
           <div class="admin-qf-final-review">
             <span>Revisão final</span>
-            <strong>${esc(finalMode)}</strong>
+            <strong>ChatGPT + Perplexity + Gemini</strong>
             <div>
-              ${batch.final_review_mode !== "perplexity" ? qfReviewPill("ChatGPT", batch.final_review_chatgpt_status) : ""}
-              ${batch.final_review_mode !== "chatgpt" ? qfReviewPill("Perplexity", batch.final_review_perplexity_status) : ""}
+              ${qfReviewPill("ChatGPT", batch.final_review_chatgpt_status)}
+              ${qfReviewPill("Perplexity", batch.final_review_perplexity_status)}
+              ${qfReviewPill("Gemini", batch.final_review_gemini_status)}
+              ${qfReviewPill("Você", batch.final_human_review_status)}
             </div>
           </div>
           <div class="admin-qf-batch-actions">
             <button class="button secondary admin-qf-open-batch" type="button" data-qf-batch="${Number(batch.batch_number)}">Ver questões</button>
+            <button class="button secondary" type="button" data-qf-export="${Number(batch.batch_number)}:0:audit">Exportar lote completo</button>
+            ${batch.final_review_chatgpt_status === "approved" && batch.final_review_perplexity_status === "approved" && batch.final_review_gemini_status === "approved" && batch.final_human_review_status !== "approved" ? `<button class="button primary" type="button" data-qf-final-approve="${Number(batch.batch_number)}">Aprovar lote final</button>` : ""}
             <button class="button secondary" type="button" data-qf-import-lot="${Number(batch.batch_number)}">Importar revisão final</button>
           </div>
         </article>
@@ -2222,7 +2222,7 @@
     state.qfReviewImportMode = mode;
 
     if ($("admin-qf-review-import-meta")) {
-      $("admin-qf-review-import-meta").textContent = mode === "lot"
+      $("admin-qf-review-import-meta").textContent = mode === "calibration" ? "Cole a auditoria bruta do prompt com FINAL_PROMPT_SCORE, componentes e evidências primárias." : mode === "lot"
         ? `Lote ${String(Number(batchNumber)).padStart(3,"0")} · cole o JSON da revisão final das 1.000.`
         : mode === "correction"
           ? `Lote ${String(Number(batchNumber)).padStart(3,"0")} · Bloco ${blockNumber} · cole o JSON das correções do ChatGPT.`
@@ -2244,17 +2244,24 @@
       return;
     }
 
-    payload.batch_number = state.qfReviewImportBatch;
-
-    const rpcName = state.qfReviewImportMode === "lot"
-      ? "admin_import_question_factory_lot_review"
-      : state.qfReviewImportMode === "correction"
-        ? "admin_import_question_factory_corrections"
-        : "admin_import_question_factory_review";
-
-    if (state.qfReviewImportMode !== "lot") {
-      payload.block_number = state.qfReviewImportBlock;
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      if (message) message.textContent = "Informe um objeto JSON.";
+      return;
     }
+    if (payload.review_stage !== "prompt_calibration" && (Number(payload.batch_number) !== state.qfReviewImportBatch || (state.qfReviewImportMode !== "lot" && Number(payload.block_number) !== state.qfReviewImportBlock))) {
+      if (message) message.textContent = "O lote/bloco do JSON não corresponde ao selecionado. Confira o arquivo; os IDs não serão substituídos.";
+      return;
+    }
+
+    const rpcName = payload.review_stage === "prompt_calibration"
+      ? "admin_import_question_factory_calibration"
+      : payload.review_stage === "chatgpt_adjudication"
+        ? "admin_import_question_factory_adjudication"
+        : state.qfReviewImportMode === "lot"
+          ? "admin_import_question_factory_lot_review"
+          : state.qfReviewImportMode === "correction"
+            ? "admin_import_question_factory_corrections"
+            : "admin_import_question_factory_review";
 
     const { data, error } = await sb.rpc(rpcName, { p_payload: payload });
     if (error) {
@@ -2277,10 +2284,10 @@
     }
 
     if (message) {
-      message.textContent = state.qfReviewImportMode === "lot"
+      message.textContent = payload.review_stage === "prompt_calibration" ? "Calibração registrada." : payload.review_stage === "chatgpt_adjudication" ? `Julgamentos importados: ${data?.decisions_imported || 0}.` : state.qfReviewImportMode === "lot"
         ? (data?.ready ? "Revisão final importada. Lote marcado como pronto." : "Revisão final importada. O lote ainda possui etapa pendente.")
         : state.qfReviewImportMode === "correction"
-          ? `Correções importadas: ${data?.corrected || 0}. Próxima etapa: reauditoria Perplexity.`
+          ? `Correções importadas: ${data?.corrected || 0}. Próxima etapa: nova resolução cega e reauditoria Perplexity.`
           : `Importadas ${data?.imported || 0}: ${data?.approved || 0} aprovadas, ${data?.needs_revision || 0} a rever.`;
     }
 
@@ -2307,733 +2314,18 @@
     await Promise.all([loadQuestionFactory(),loadQuestionFactoryStyles(),loadQuestionFactoryBlockTracker(),loadQuestionFactoryQuality()]);
   }
 
-  // Regra fixa do LURIA: todas as bancas usam exatamente 4 alternativas (A-D).
-  // O número de alternativas da prova oficial não altera o contrato do produto
-  // e não deve ser usado para penalizar a fidelidade editorial.
-  function qfBoardAlternativeCount() {
-    return 4;
+  function buildBoardGenerationPrompt(item, context = {}) {
+    return window.LuriaQuestionPrompts.generation(item, context);
   }
 
-  function buildBoardSegmentPrompt(item, stage) {
-    const style = item?.exam_style || "BANCA";
-    const brief = item?.full_generation_brief || item?.generation_instructions || "";
-    const alternativeCount = qfBoardAlternativeCount(item, style);
-    const alternativeLetters = alternativeCount === 5 ? "A-E" : "A-D";
-
-    const common = `
-BANCA / EXAM_STYLE: ${style}
-
-CONTEXTO EDITORIAL CANÔNICO DA BANCA
-${brief}
-
-PRINCÍPIO DE SEPARAÇÃO
-- O contexto editorial acima é a identidade da banca. Não o reescreva a partir de notas de auditoria de lotes anteriores.
-- Feedback de auditoria serve para diagnosticar questões e o pipeline; não vira automaticamente regra do prompt mestre.
-- Só altere a identidade editorial da banca quando houver evidência primária específica do processo-alvo.
-- Não use score histórico de calibração como instrução de geração.
-- Gere e avalie cada banca pelo seu próprio perfil e corpus. Não transplante moldes, casos-base, quotas ou arquitetura cognitiva de outra banca.
-
-REGRAS UNIVERSAIS DE QUALIDADE
-- Trabalhe sempre com question_id imutável.
-- O formato canônico entre IAs e backend é JSON.
-- Não use Excel como formato máquina-a-máquina.
-- Corte de formação/calibração do prompt: style_score >=9,4/10.
-- Corte mínimo da questão final após checagens e reescritas: quality_score >=97/100 e fidelidade editorial >=9,7/10.
-- Mesmo com nota alta, hard fail impede aprovação.
-- Hard fails incluem gabarito divergente, múltiplas respostas defensáveis, ambiguidade relevante, conduta perigosa, dose/ponto de corte incorreto, fonte inexistente ou incompatível, recomendação desatualizada e cópia reconhecível.
-- Fonte não verificável por limitação operacional deve ser SOURCE_VERIFICATION_PENDING até verificação; não invente fonte.
-- Toda questão final precisa de fonte específica que sustente o gabarito.
-- REGRA IMUTÁVEL LURIA: toda questão usa exatamente 4 alternativas (A-D), independentemente do número de alternativas da prova oficial. Não penalize fidelidade editorial por essa adaptação de formato.
-- Deve existir uma única melhor resposta.
-- Distratores devem ser clinicamente plausíveis, homogêneos em categoria e elimináveis pelos dados do item; evite espantalhos, absolutos denunciadores e pistas de comprimento.
-- Dificuldade deve vir do raciocínio e da discriminação entre alternativas, não da raridade ou gravidade isolada do tema.
-- Explicações devem justificar especificamente cada alternativa.
-- Repetição, quase duplicação, pistas formais e incoerência idade/contexto são defeitos do lote e devem ser detectados pelos validadores, não impostos como fórmulas de escrita.
-`;
-
-    if (stage === "chatgpt_initial") return `PROMPT DE SEGMENTO 1 — CHECAGEM CHATGPT DO BLOCO DE 200
-${common}
-
-TAREFA
-Receba o bloco recém-gerado e faça uma verificação estrutural/editorial antes de enviá-lo ao Perplexity.
-
-Verifique:
-1. exatamente 200 questões;
-2. IDs únicos e sequências corretas;
-3. número de alternativas conforme a banca: ${alternativeCount} (${alternativeLetters});
-4. apenas uma melhor resposta aparente;
-5. explicações A-D completas;
-6. fonte geral e fonte específica do gabarito preenchidas;
-7. distribuição de dificuldade;
-8. repetição ou quase duplicação;
-9. aderência ao perfil ${style};
-10. problemas óbvios de ciência, gabarito ou segurança.
-
-Não substitua a auditoria independente do Perplexity.
-
-SAÍDA JSON
-{
-  "schema_version":"1.0",
-  "review_stage":"chatgpt_initial",
-  "batch_number":N,
-  "block_number":N,
-  "exam_style":"${style}",
-  "reviewer":"ChatGPT",
-  "reviews":[
-    {
-      "question_id":"...",
-      "quality_score":0-100,
-      "component_scores":{},
-      "independent_answer":"${alternativeCount === 5 ? "A|B|C|D|E" : "A|B|C|D"}",
-      "original_answer":"${alternativeCount === 5 ? "A|B|C|D|E" : "A|B|C|D"}",
-      "status":"approved|needs_revision|rejected",
-      "confidence":"high|medium|low",
-      "ambiguity":false,
-      "single_best_answer":true,
-      "hard_fail":false,
-      "hard_fail_reasons":[],
-      "scientific_issue":null,
-      "source_issue":null,
-      "answer_source_issue":null,
-      "explanation_issue":null,
-      "distractor_issue":null,
-      "style_issue":null,
-      "suggested_correction":null,
-      "verified_sources":[]
-    }
-  ]
-}
-
-Não publique. Não altere silenciosamente as questões.`;
-
-    if (stage === "perplexity_initial") return `PROMPT DE SEGMENTO 2 — AUDITORIA INDEPENDENTE PERPLEXITY
-${common}
-
-TAREFA
-Audite cientificamente TODAS as 200 questões de forma independente.
-Resolva cada item antes de olhar o gabarito original.
-Abra e confira as fontes.
-Atribua uma nota objetiva de 0–100 usando a rubrica abaixo.
-O corte mínimo final de qualidade é 97/100. Para formação/calibração do prompt da banca, considerar style_score >=9,4/10 como perfil suficientemente formado para avançar; a aprovação final de questões/blocos continua exigindo fidelidade >=9,7/10.
-
-RUBRICA SISTEMÁTICA — 100 PONTOS
-
-1. CORREÇÃO CIENTÍFICA — 25 pontos
-25 = plenamente correta, atual e sem ressalvas relevantes.
-20–24 = correta, mas com pequena imprecisão ou nuance ausente.
-10–19 = parcialmente correta ou dependente de contexto não explicitado.
-0–9 = erro científico relevante ou conduta insegura.
-
-2. GABARITO + ÚNICA MELHOR RESPOSTA — 20 pontos
-20 = apenas uma alternativa é claramente a melhor.
-15–19 = correta, mas outra alternativa pode gerar dúvida razoável.
-5–14 = ambiguidade importante ou formulação deficiente.
-0 = gabarito errado ou múltiplas respostas defensáveis.
-
-3. FONTE ESPECÍFICA DO GABARITO — 15 pontos
-15 = fonte primária/oficial atual sustenta diretamente o gabarito.
-12–14 = fonte adequada, mas seção/trecho poderia ser melhor especificado.
-5–11 = fonte genérica, indireta ou secundária.
-0–4 = fonte inexistente, incorreta, desatualizada ou que não sustenta a resposta.
-
-4. QUALIDADE DOS DISTRATORES — 10 pontos
-10 = todos plausíveis, discriminativos e baseados em erros reais.
-8–9 = bons, com um distrator um pouco fraco.
-5–7 = vários previsíveis ou pouco plausíveis.
-0–4 = distratores caricatos, absurdos ou entregando a resposta.
-
-5. EXPLICAÇÕES A–D — 10 pontos
-10 = todas corretas, específicas e didáticas.
-8–9 = corretas, mas pouco aprofundadas em um item.
-5–7 = genéricas ou incompletas.
-0–4 = explicações erradas, contraditórias ou ausentes.
-
-6. FIDELIDADE À BANCA — 10 pontos
-10 = muito semelhante ao padrão real recente da banca.
-8–9 = boa aderência com pequenas diferenças.
-5–7 = parcialmente semelhante / estilo genérico.
-0–4 = não se parece com a banca ou parece outra banca.
-
-7. CLAREZA E QUALIDADE DA REDAÇÃO — 5 pontos
-5 = clara, precisa, sem pistas artificiais.
-4 = pequena melhoria possível.
-2–3 = redação confusa ou redundante.
-0–1 = compreensão comprometida.
-
-8. NÍVEL DE DIFICULDADE E PODER DISCRIMINATIVO — 5 pontos
-5 = dificuldade adequada ao perfil e exige raciocínio compatível.
-4 = ligeiramente fácil/difícil demais.
-2–3 = pouco discriminativa.
-0–1 = trivial ou artificialmente difícil.
-
-HARD FAILS — REPROVAÇÃO AUTOMÁTICA
-Mesmo que a soma seja >=97, marque needs_revision ou rejected se houver:
-- gabarito incorreto;
-- duas ou mais respostas defensáveis;
-- ambiguidade clínica relevante;
-- conduta potencialmente perigosa;
-- dose, intervalo, idade, ponto de corte ou contraindicação incorretos;
-- fonte inexistente/falsa;
-- fonte que não sustenta o gabarito;
-- recomendação claramente desatualizada;
-- questão reconhecível como cópia/paráfrase próxima de prova anterior;
-- informação essencial ausente no enunciado;
-- conflito sério entre gabarito e explicação.
-
-REGRAS DE STATUS
-approved:
-quality_score >=97
-AND style/component fidelity compatível com o gate editorial da banca
-AND hard_fail=false
-AND ambiguity=false
-AND single_best_answer=true
-AND answer_source_issue=null
-AND distractor_quality>=GOOD
-AND alternative_granularity=PASS
-AND difficulty_alignment=PASS.
-
-Para AMP-PR e qualquer banca oficial com 5 opções: ignore deliberadamente a divergência estrutural A-D do LURIA; não aplique five_option_quality, não teste ausência de E e não desconte pontos por isso.
-
-needs_revision:
-- quality_score <97;
-- qualquer hard fail recuperável;
-- ciência correta mas estilo insuficiente;
-- fonte insuficiente;
-- distratores/exposição/explicação abaixo do padrão.
-
-rejected:
-- questão estruturalmente ruim;
-- ciência comprometida;
-- cópia problemática;
-- necessidade de reconstrução extensa;
-- risco clínico grave não corrigível por ajuste simples.
-
-OBRIGAÇÃO DE DIAGNÓSTICO
-Para TODA questão com nota abaixo de 100, diga exatamente onde os pontos foram perdidos.
-Não escreva apenas “pode melhorar”.
-Seja específico.
-
-OBRIGAÇÃO DE MELHORIA DETALHADA
-Para toda questão com quality_score <97, forneça uma seção estruturada de melhoria contendo:
-
-improvement_priority:
-- critical
-- high
-- medium
-- low
-
-improvement_plan:
-1. O que está ruim
-2. Por que isso reduz a qualidade
-3. Como corrigir
-4. Exemplo concreto de correção
-5. O que preservar da versão atual
-6. Risco de descaracterizar a banca ao corrigir
-7. Qual seria a nota estimada após a correção
-
-Também preencher:
-
-how_to_improve_science
-- Dizer exatamente que conteúdo científico precisa ser alterado, se houver.
-- Citar fonte melhor quando necessário.
-
-how_to_improve_answer_key
-- Explicar se o gabarito precisa mudar ou se apenas precisa ficar mais inequívoco.
-
-how_to_improve_source
-- Informar qual fonte seria melhor.
-- Preferir MS/PCDT/sociedade brasileira/diretriz internacional primária.
-- Informar documento e URL verificável quando possível.
-
-how_to_improve_distractors
-- Dizer quais alternativas estão fracas.
-- Explicar por quê.
-- Propor distratores mais plausíveis sem criar segunda resposta correta.
-
-how_to_improve_explanations
-- Dizer qual explicação está vaga/incorreta.
-- Propor a lógica que deveria constar.
-
-how_to_improve_style
-- Comparar com provas recentes da MESMA banca.
-- Dizer exatamente o que falta: tamanho, densidade, tipo de caso, linguagem, cálculo, RAS, critérios formais, etc.
-- Não validar estilo apenas contra o perfil interno fornecido.
-- Se não houver material primário suficiente, usar style_confidence="low".
-
-how_to_improve_difficulty
-- Dizer se está fácil/difícil demais.
-- Sugerir qual dado, etapa cognitiva ou aproximação de distratores melhoraria a discriminação.
-
-how_to_improve_wording
-- Sugerir ajustes de redação que removam pistas, redundâncias ou ambiguidade.
-
-PROPOSTA DE MUDANÇA — OBRIGATÓRIA
-Para toda questão com quality_score <97, além de explicar o problema, proponha a correção EXATA.
-Não diga apenas "melhorar distratores".
-Informe quais campos mudariam e forneça o texto substituto completo em proposed_change.exact_replacement.
-Se o gabarito mudar, explique por que e cite a fonte que sustenta a mudança.
-Se a questão puder atingir 97+ sem mudar determinado campo, deixe esse campo null.
-A proposta será julgada independentemente pelo ChatGPT antes de qualquer alteração ser aplicada.
-
-PARA QUESTÕES >=97
-Mesmo se approved, forneça:
-- strongest_point
-- remaining_minor_risk
-- optional_polish
-Isso permite melhorar questões já boas sem obrigar correção.
-
-CALIBRAÇÃO AO VIVO DA BANCA
-Além das notas individuais, atribua no nível RAIZ do JSON:
-- style_score: nota editorial de 0 a 10 para a fidelidade global do bloco ao padrão real recente da banca;
-- style_confidence_score: confiança de 0 a 100 de que essa nota está bem sustentada por material primário/real da banca;
-- style_score_note: justificativa curta da nota e da confiança.
-Esses três campos serão importados pelo Admin e atualizarão automaticamente o callout da banca e a lista de blocos. Não reutilize uma nota anterior sem reavaliar o bloco atual.
-
-SAÍDA JSON EXATA
-{
-  "schema_version":"1.1",
-  "review_stage":"perplexity_initial",
-  "batch_number":N,
-  "block_number":N,
-  "exam_style":"${style}",
-  "auditor":"Perplexity",
-  "style_score":0-10,
-  "style_confidence_score":0-100,
-  "style_score_note":"Justifique em 1–3 frases a nota editorial atribuída à fidelidade desta banca com base em provas públicas recentes.",
-  "reviews":[
-    {
-      "question_id":"...",
-      "quality_score":0,
-      "component_scores":{
-        "scientific":0,
-        "answer_key":0,
-        "answer_source":0,
-        "distractors":0,
-        "explanations":0,
-        "style":0,
-        "writing":0,
-        "difficulty":0
-      },
-      "independent_answer":"A|B|C|D",
-      "original_answer":"A|B|C|D",
-      "status":"approved|needs_revision|rejected",
-      "confidence":"high|medium|low",
-      "style_confidence":"high|medium|low",
-      "ambiguity":false,
-      "single_best_answer":true,
-      "hard_fail":false,
-      "hard_fail_reasons":[],
-      "points_lost":[
-        {"criterion":"distractors","points_lost":2,"reason":"..."}
-      ],
-      "scientific_issue":null,
-      "source_issue":null,
-      "answer_source_issue":null,
-      "explanation_issue":null,
-      "distractor_issue":null,
-      "style_issue":null,
-      "difficulty_issue":null,
-      "wording_issue":null,
-      "improvement_priority":"low|medium|high|critical",
-      "improvement_plan":{
-        "what_is_wrong":"",
-        "why_it_matters":"",
-        "how_to_fix":"",
-        "concrete_example":"",
-        "what_to_preserve":"",
-        "style_risk":"",
-        "estimated_score_after_fix":0
-      },
-      "proposed_change":{
-        "change_required":true,
-        "fields_to_change":["enunciado","alternativa_b"],
-        "current_problem":"",
-        "exact_replacement":{
-          "enunciado":null,
-          "alternativa_a":null,
-          "alternativa_b":null,
-          "alternativa_c":null,
-          "alternativa_d":null,
-          "gabarito":null,
-          "explicacao_a":null,
-          "explicacao_b":null,
-          "explicacao_c":null,
-          "explicacao_d":null,
-          "mensagem_chave":null,
-          "answer_source_institution":null,
-          "answer_source_document":null,
-          "answer_source_year":null,
-          "answer_source_url":null,
-          "answer_source_section":null,
-          "answer_source_note":null
-        },
-        "why_this_change_is_better":"",
-        "expected_quality_score_after_change":0
-      },
-      "how_to_improve_science":null,
-      "how_to_improve_answer_key":null,
-      "how_to_improve_source":null,
-      "how_to_improve_distractors":null,
-      "how_to_improve_explanations":null,
-      "how_to_improve_style":null,
-      "how_to_improve_difficulty":null,
-      "how_to_improve_wording":null,
-      "strongest_point":null,
-      "remaining_minor_risk":null,
-      "optional_polish":null,
-      "suggested_correction":null,
-      "verified_sources":[
-        {
-          "institution":"",
-          "document":"",
-          "year":"",
-          "url":"",
-          "section":null
-        }
-      ]
-    }
-  ],
-  "summary":{
-    "total":200,
-    "approved":0,
-    "needs_revision":0,
-    "rejected":0,
-    "mean_quality_score":0,
-    "median_quality_score":0,
-    "pct_97_plus":0,
-    "pct_90_949":0,
-    "pct_below_90":0,
-    "most_common_quality_losses":[],
-    "top_5_systematic_problems":[],
-    "top_5_prompt_improvements":[]
+  function buildBoardSegmentPrompt(item, stage, context = {}) {
+    return window.LuriaQuestionPrompts.segment(item, stage, context);
   }
-}
-
-ANÁLISE SISTÊMICA DO BLOCO
-Além de revisar questões individualmente, identifique padrões de erro recorrentes do GERADOR.
-Em summary.top_5_systematic_problems, diga por exemplo:
-- distratores fáceis demais;
-- stems curtos demais;
-- baixa densidade de dados;
-- fonte genérica;
-- explicações superficiais;
-- curva de dificuldade inadequada;
-- pouca fidelidade à banca.
-
-Em summary.top_5_prompt_improvements, escreva mudanças concretas que deveriam ser incorporadas AO PROMPT MESTRE DA BANCA para levar a fidelidade global do perfil a >=9,4/10 e aumentar a taxa de questões finais >=97 no próximo bloco.
-
-Não inclua texto fora do JSON.`;
-
-    if (stage === "chatgpt_adjudication") return `PROMPT DE SEGMENTO 3 — JULGAMENTO DO PARECER DO PERPLEXITY
-${common}
-
-TAREFA
-Leia, para cada questão sinalizada, o parecer do Perplexity salvo no Supabase, incluindo:
-- quality_score e component_scores;
-- points_lost;
-- hard_fail e razões;
-- verified_sources;
-- improvement_plan;
-- proposed_change;
-- suggested_correction.
-
-NÃO CORRIJA A QUESTÃO AINDA.
-
-Faça uma avaliação independente da crítica e da mudança proposta pelo Perplexity.
-Para cada proposta, classifique:
-
-agree
-- a crítica está correta;
-- a mudança proposta melhora a questão;
-- a evidência citada sustenta a alteração.
-
-partially_agree
-- o problema apontado existe, mas a solução proposta não é a melhor ou precisa de ajuste.
-
-disagree
-- a crítica é tecnicamente incorreta;
-- a fonte foi interpretada de forma errada;
-- a mudança criaria erro, ambiguidade ou descaracterizaria a banca;
-- ou a versão original está mais adequada.
-
-REGRAS
-1. Resolva a questão independentemente.
-2. Abra/compare as fontes relevantes quando houver divergência científica.
-3. Não concorde apenas porque o Perplexity atribuiu nota baixa.
-4. Não discorde apenas para preservar a versão original.
-5. Dê prioridade à evidência e ao objetivo editorial da banca.
-6. Se houver dúvida real, marque partially_agree e explique o que precisa ser confirmado.
-
-SE CONCORDAR
-Explique de forma curta por que concorda e indique quais alterações devem ser aplicadas na etapa seguinte.
-
-SE CONCORDAR PARCIALMENTE
-Diga:
-- com qual parte concorda;
-- com qual parte discorda;
-- qual mudança alternativa recomenda.
-
-SE DISCORDAR
-Produza uma justificativa técnica detalhada E um texto pronto para o administrador reenviar ao Perplexity.
-
-O texto de rebuttal_to_perplexity deve:
-- identificar question_id;
-- citar o ponto exato da discordância;
-- explicar tecnicamente por que a proposta não deve ser aplicada;
-- mencionar a fonte/diretriz que sustenta sua posição;
-- pedir ao Perplexity que reavalie aquele ponto específico;
-- ser respeitoso e objetivo.
-
-SAÍDA JSON
-{
-  "schema_version":"1.0",
-  "review_stage":"chatgpt_adjudication",
-  "batch_number":N,
-  "block_number":N,
-  "exam_style":"${style}",
-  "decisions":[
-    {
-      "question_id":"...",
-      "agreement_status":"agree|partially_agree|disagree",
-      "agreement_reason":"",
-      "independent_answer":"A|B|C|D",
-      "perplexity_proposal_is_safe":true,
-      "changes_authorized":[],
-      "alternative_change":null,
-      "rebuttal_to_perplexity":null,
-      "sources_checked":[]
-    }
-  ],
-  "summary":{
-    "agree":0,
-    "partially_agree":0,
-    "disagree":0,
-    "questions_requiring_return_to_perplexity":[]
-  }
-}
-
-Não altere a questão nesta etapa.`;
-
-    if (stage === "chatgpt_correction") return `PROMPT DE SEGMENTO 3 — CORREÇÃO CHATGPT A PARTIR DO SUPABASE
-${common}
-
-TAREFA
-Consulte/receba somente as questões do bloco cujo latest review esteja needs_revision ou rejected/recuperável E cuja proposta já tenha passado pelo julgamento ChatGPT.
-
-Antes de alterar qualquer campo:
-- leia chatgpt_agreement_status;
-- se agree: aplique a mudança aprovada;
-- se partially_agree: aplique somente os pontos autorizados e use alternative_change quando existir;
-- se disagree: NÃO ALTERE a questão; ela deve voltar ao Perplexity com rebuttal_to_perplexity.
-
-Consulte as questões do bloco e seus pareceres estruturados.
-Para cada questão, leia o parecer mais recente salvo no Supabase:
-- quality_score
-- hard_fail e razões
-- scientific_issue
-- source_issue
-- answer_source_issue
-- explanation_issue
-- distractor_issue
-- style_issue
-- suggested_correction
-- verified_sources.
-
-Corrija exatamente os problemas apontados.
-Preserve question_id e exam_style.
-Incremente version em +1.
-Atualize a fonte do gabarito quando a correção alterar o fundamento científico.
-Não mexa desnecessariamente em questão já aprovada.
-Toda questão corrigida precisa voltar para reauditoria.
-
-SAÍDA JSON
-{
-  "schema_version":"1.0",
-  "review_stage":"chatgpt_correction_review",
-  "batch_number":N,
-  "block_number":N,
-  "exam_style":"${style}",
-  "questions":[
-    { "question_id":"...", "...questão completa corrigida...":"" }
-  ],
-  "changes":[
-    {
-      "question_id":"...",
-      "old_version":1,
-      "new_version":2,
-      "changes_made":[],
-      "source_changed":false,
-      "needs_reaudit":true
-    }
-  ]
-}
-
-Ao terminar, informe quantas foram corrigidas e quais continuam inseguras. Não marque como approved por conta própria.`;
-
-    if (stage === "perplexity_reaudit") return `PROMPT DE SEGMENTO 4 — REAUDITORIA PERPLEXITY APÓS CORREÇÃO
-${common}
-
-TAREFA
-Reaudite APENAS as questões corrigidas na versão mais recente.
-Ignore o parecer anterior como autoridade: resolva novamente.
-Confira novamente a fonte específica do gabarito.
-Use o mesmo corte >=97 e os mesmos hard fails.
-
-Se qualquer questão continuar abaixo de 97:
-- explique exatamente onde perdeu pontos;
-- proponha nova mudança concreta;
-- informe os campos que mudariam;
-- forneça texto substituto completo;
-- estime a nota após a mudança;
-- não repita genericamente a recomendação anterior se ela já falhou.
-
-Essa nova proposta também deverá passar por julgamento independente do ChatGPT antes de nova correção.
-
-CALIBRAÇÃO AO VIVO
-Recalcule style_score (0–10) e style_confidence_score (0–100) para o bloco após as correções. A nota deve refletir fidelidade à banca observada em material real recente, não apenas o perfil interno.
-
-SAÍDA JSON
-{
-  "schema_version":"1.0",
-  "review_stage":"perplexity_reaudit",
-  "batch_number":N,
-  "block_number":N,
-  "exam_style":"${style}",
-  "auditor":"Perplexity",
-  "style_score":0-10,
-  "style_confidence_score":0-100,
-  "style_score_note":"Recalcule a fidelidade editorial após as correções e explique brevemente.",
-  "reviews":[
-    {
-      "question_id":"...",
-      "quality_score":0-100,
-      "component_scores":{},
-      "independent_answer":"A|B|C|D",
-      "original_answer":"A|B|C|D",
-      "status":"approved|needs_revision|rejected",
-      "confidence":"high|medium|low",
-      "ambiguity":false,
-      "single_best_answer":true,
-      "hard_fail":false,
-      "hard_fail_reasons":[],
-      "scientific_issue":null,
-      "source_issue":null,
-      "answer_source_issue":null,
-      "explanation_issue":null,
-      "distractor_issue":null,
-      "style_issue":null,
-      "suggested_correction":null,
-      "verified_sources":[]
-    }
-  ]
-}
-
-O resultado será importado novamente no Supabase. Só depois que as 200 estiverem com quality_score >=97, sem hard fail e machine-approved o Admin deve liberar a aprovação humana do bloco.`;
-
-    if (stage === "lot_chatgpt_final") return `PROMPT DE SEGMENTO 6A — REVISÃO FINAL CHATGPT DO LOTE DE 1.000
-${common}
-
-CONTEXTO
-Os cinco blocos de 200 já passaram por:
-- geração;
-- checagem ChatGPT;
-- auditoria independente Perplexity;
-- correção das questões abaixo de 90 ou com hard fail;
-- reauditoria Perplexity;
-- aprovação humana bloco a bloco.
-
-TAREFA
-Audite o LOTE INTEIRO de 1.000 como conjunto.
-Verifique:
-- duplicatas e quase duplicatas;
-- concentração temática;
-- curva de dificuldade;
-- distribuição de letras;
-- aderência global ao estilo ${style};
-- cobertura das áreas;
-- questões excessivamente semelhantes entre blocos;
-- consistência das fontes;
-- itens de alto risco;
-- questões corrigidas em versões >1;
-- equilíbrio entre diagnóstico, conduta, prevenção, seguimento, urgência e epidemiologia.
-
-Não reescreva silenciosamente.
-Sinalize tudo que precisar voltar.
-
-SAÍDA JSON
-{
-  "schema_version":"1.0",
-  "review_stage":"lot_chatgpt_final",
-  "batch_number":N,
-  "reviewer":"ChatGPT",
-  "lote_status":"approved|needs_revision",
-  "questions_flagged":[],
-  "duplicate_clusters":[],
-  "answer_source_problems":[],
-  "outdated_sources":[],
-  "guideline_conflicts":[],
-  "coverage_gaps":[],
-  "style_problems":[],
-  "difficulty_findings":[],
-  "answer_letter_distribution":{},
-  "comments":[]
-}
-
-O lote só pode seguir se não houver pendência relevante.`;
-
-    if (stage === "lot_perplexity_final") return `PROMPT DE SEGMENTO 6B — REVISÃO FINAL PERPLEXITY DO LOTE DE 1.000
-${common}
-
-CONTEXTO
-Este lote de 1.000 já foi aprovado bloco a bloco e passou pela revisão final do ChatGPT.
-
-TAREFA
-Faça auditoria final independente, orientada por evidência.
-Priorize:
-1. todas as questões sinalizadas anteriormente;
-2. todas com version >1;
-3. todas de alto risco clínico;
-4. todas com alteração de fonte/gabarito;
-5. uma amostra ampla e distribuída das demais;
-6. atualização recente de diretrizes;
-7. conflitos de guideline;
-8. duplicações;
-9. problemas de fidelidade editorial do conjunto.
-
-Confirme novamente se a fonte específica do gabarito sustenta a resposta.
-
-SAÍDA JSON
-{
-  "schema_version":"1.0",
-  "review_stage":"lot_perplexity_final",
-  "batch_number":N,
-  "exam_style":"${style}",
-  "reviewer":"Perplexity",
-  "style_score":0-10,
-  "style_confidence_score":0-100,
-  "style_score_note":"Nota editorial global do lote e confiança baseada em material real da banca.",
-  "lote_status":"approved|needs_revision",
-  "questions_flagged":[],
-  "answer_key_disagreements":[],
-  "answer_source_problems":[],
-  "outdated_sources":[],
-  "guideline_conflicts":[],
-  "duplicate_or_near_duplicate":[],
-  "high_risk_rechecks":[],
-  "coverage_gaps":[],
-  "style_problems":[],
-  "comments":[]
-}
-
-Não considere consenso entre modelos como evidência. Prefira fonte primária/oficial atual.`;
-
-    return "";
-  }
-
 
   function questionFactoryStageMeta(stage) {
     const map = {
       generation: { label: "Geração", provider: "chatgpt" },
+      blind_resolution: { label: "Resolução cega", provider: "perplexity" },
       chatgpt_initial: { label: "Checagem ChatGPT", provider: "chatgpt" },
       perplexity_initial: { label: "Auditoria Perplexity", provider: "perplexity" },
       chatgpt_adjudication: { label: "Julgar parecer", provider: "chatgpt" },
@@ -3050,14 +2342,14 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
     if (!style) return "";
 
     if (block.next_stage === "generation") {
-      return style.full_generation_brief || style.generation_instructions || style.recommended_generation_rules || "";
+      return buildBoardGenerationPrompt(style, block);
     }
 
     if (["human_review","block_complete"].includes(block.next_stage)) {
       return "";
     }
 
-    return buildBoardSegmentPrompt(style, block.next_stage);
+    return buildBoardSegmentPrompt(style, block.next_stage, block);
   }
 
   function renderQuestionFactoryBlockTracker(rows) {
@@ -3099,7 +2391,7 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
             ${prompt ? `
               <div class="admin-qf-tracker-prompt-actions">
                 <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">${esc(meta.label)} · copiar</button>
-                ${provider ? `<button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${esc(provider)}">Abrir ${provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>` : ""}
+                ${provider ? `<button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${esc(provider)}">Abrir ${provider === "gemini" ? "Gemini" : provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>` : ""}
               </div>
               <pre id="${esc(pid)}" class="admin-qf-prompt admin-qf-tracker-hidden-prompt">${esc(prompt)}</pre>
             ` : '<strong class="admin-qf-tracker-no-prompt">Sem prompt automático nesta fase</strong>'}
@@ -3138,24 +2430,21 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
         const reliability = item.style_confidence_score == null ? null : Number(item.style_confidence_score);
         const scoreValue = item.style_score == null ? "—" : Number(item.style_score).toLocaleString("pt-BR",{maximumFractionDigits:1});
         const confidenceValue = reliability == null ? "—" : `${reliability.toLocaleString("pt-BR",{maximumFractionDigits:0})}%`;
-        const calibrationStatus = item.style_score == null
-          ? "Em calibração"
-          : Number(item.style_score) >= 9.7
-            ? "Aprovação final"
-            : Number(item.style_score) >= 9.4
-              ? "Prompt formado"
-              : "Em calibração";
+        const calibrationStatus = item.final_prompt_score == null ? "Calibração do prompt pendente" : Number(item.final_prompt_score) >= 94 ? "Prompt calibrado · " + item.final_prompt_score + "/100" : "Prompt a revisar · " + item.final_prompt_score + "/100";
         const slug = String(item.exam_style || `banca-${index+1}`).replace(/[^a-z0-9]/gi,"-").toLowerCase();
         const masterPromptId = `qf-dashboard-${slug}-master`;
         const promptStages = [
+          ["00","Calibrar prompt editorial","prompt_calibration","perplexity"],
           ["01","Prompt mestre · geração",null,"chatgpt"],
+          ["02A","Perplexity · resolução cega","blind_resolution","perplexity"],
           ["02","ChatGPT · checagem inicial","chatgpt_initial","chatgpt"],
           ["03","Perplexity · auditoria","perplexity_initial","perplexity"],
           ["04","ChatGPT · julgar parecer","chatgpt_adjudication","chatgpt"],
           ["05","ChatGPT · corrigir consenso","chatgpt_correction","chatgpt"],
           ["06","Perplexity · reauditoria","perplexity_reaudit","perplexity"],
           ["07A","ChatGPT · revisão global das 1.000","lot_chatgpt_final","chatgpt"],
-          ["07B","Perplexity · auditoria final das 1.000","lot_perplexity_final","perplexity"]
+          ["07B","Perplexity · auditoria final das 1.000","lot_perplexity_final","perplexity"],
+                  ["07C","Gemini · auditoria adversarial","lot_gemini_final","gemini"]
         ];
         return `
           <article class="admin-qf-style-card">
@@ -3228,14 +2517,14 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
                     : masterPromptId;
                   const promptText = stage
                     ? buildBoardSegmentPrompt(item,stage)
-                    : (item.full_generation_brief || item.generation_instructions || item.recommended_generation_rules || "");
+                    : buildBoardGenerationPrompt(item);
                   return `
                     <details class="admin-qf-style-prompt-item">
                       <summary><b>${esc(num)}</b><span>${esc(label)}</span></summary>
                       <div>
                         <div class="admin-qf-style-prompt-actions">
                           <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Copiar</button>
-                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>
+                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "gemini" ? "Gemini" : provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>
                         </div>
                         <pre id="${esc(pid)}" class="admin-qf-prompt">${esc(promptText)}</pre>
                       </div>
@@ -3336,7 +2625,7 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
                     <button class="button secondary admin-qf-ai-open" type="button" data-style-ai-index="${index}" data-ai-provider="perplexity">Perplexity</button>
                   </div>
                 </div>
-                <pre class="admin-qf-board-master-text">${esc(item.full_generation_brief || item.generation_instructions || "")}</pre>
+                <pre class="admin-qf-board-master-text">${esc(buildBoardGenerationPrompt(item))}</pre>
               </section>
 
               <section class="admin-qf-segment-sequence">
@@ -3347,6 +2636,7 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
                 </div>
                 ${[
                   ["01","ChatGPT · checagem inicial","chatgpt_initial","chatgpt"],
+                  ["01B","Perplexity · resolução cega","blind_resolution","perplexity"],
                   ["02","Perplexity · auditoria","perplexity_initial","perplexity"],
                   ["03","ChatGPT · julgar parecer","chatgpt_adjudication","chatgpt"],
                   ["04","ChatGPT · corrigir consenso","chatgpt_correction","chatgpt"],
@@ -3359,7 +2649,7 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
                       <div class="admin-qf-segment-card-body">
                         <div class="admin-qf-segment-actions">
                           <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Copiar</button>
-                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>
+                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "gemini" ? "Gemini" : provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>
                         </div>
                         <pre id="${esc(pid)}" class="admin-qf-prompt">${esc(buildBoardSegmentPrompt(item,stage))}</pre>
                       </div>
@@ -3376,7 +2666,8 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
                 </div>
                 ${[
                   ["07A","ChatGPT · revisão global das 1.000","lot_chatgpt_final","chatgpt"],
-                  ["07B","Perplexity · auditoria final das 1.000","lot_perplexity_final","perplexity"]
+                  ["07B","Perplexity · auditoria final das 1.000","lot_perplexity_final","perplexity"],
+                  ["07C","Gemini · auditoria adversarial","lot_gemini_final","gemini"]
                 ].map(([num,label,stage,provider]) => {
                   const pid=`qf-${String(item.exam_style||"style").replace(/[^a-z0-9]/gi,"-").toLowerCase()}-${stage}`;
                   return `
@@ -3385,7 +2676,7 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
                       <div class="admin-qf-segment-card-body">
                         <div class="admin-qf-segment-actions">
                           <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Copiar</button>
-                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>
+                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "gemini" ? "Gemini" : provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>
                         </div>
                         <pre id="${esc(pid)}" class="admin-qf-prompt">${esc(buildBoardSegmentPrompt(item,stage))}</pre>
                       </div>
@@ -3517,7 +2808,7 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
   }
 
   function openAIProvider(provider) {
-    const url = provider === "perplexity"
+    const url = provider === "gemini" ? "https://gemini.google.com/app" : provider === "perplexity"
       ? "https://www.perplexity.ai/"
       : "https://chatgpt.com/";
     return window.open(url, "_blank", "noopener,noreferrer");
@@ -3546,7 +2837,7 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
     }
 
     if (!popup) {
-      window.location.href = provider === "perplexity"
+      window.location.href = provider === "gemini" ? "https://gemini.google.com/app" : provider === "perplexity"
         ? "https://www.perplexity.ai/"
         : "https://chatgpt.com/";
     }
@@ -3684,7 +2975,7 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
         const index = Number(aiButton.dataset.styleAiIndex);
         const item = state.questionStyles[index];
         if (!item) return;
-        const text = item.full_generation_brief || item.generation_instructions || "";
+        const text = buildBoardGenerationPrompt(item);
         await copyAndOpenAI(text, aiButton.dataset.aiProvider, aiButton);
         return;
       }
@@ -3698,7 +2989,7 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
       const item = state.questionStyles[index];
       if (!item) return;
 
-      const text = item.full_generation_brief || item.generation_instructions || "";
+      const text = buildBoardGenerationPrompt(item);
       const original = button.textContent || "Copiar tudo desta banca";
 
       try {
@@ -3759,7 +3050,26 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
     $("admin-qf-bad-prev")?.addEventListener("click", () => loadBadQuestionFolder(Math.max(0,state.qfBadOffset-state.qfBadPageSize)));
     $("admin-qf-bad-next")?.addEventListener("click", () => loadBadQuestionFolder(state.qfBadOffset+state.qfBadPageSize));
 
-    $("admin-qf-batches")?.addEventListener("click", event => {
+    $("admin-qf-import-calibration")?.addEventListener("click", () => openReviewImportDialog(null, null, "calibration"));
+    $("admin-qf-batches")?.addEventListener("click", async event => {
+      const exportButton = event.target.closest("[data-qf-export]");
+      if (exportButton) {
+        const [batch, block, mode] = exportButton.dataset.qfExport.split(":");
+        const { data, error } = await sb.rpc("admin_export_question_factory", {p_batch_number:Number(batch),p_block_number:Number(block)||null,p_blind:mode==="blind"});
+        if (error) { window.alert(error.message); return; }
+        const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+        const url = URL.createObjectURL(blob); const link = document.createElement("a");
+        link.href=url; link.download=`luria-lote-${batch}-bloco-${block}-${mode}.json`;
+        document.body.appendChild(link); link.click(); link.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+        return;
+      }
+      const finalButton = event.target.closest("[data-qf-final-approve]");
+      if (finalButton) {
+        if (!window.confirm("Confirmar aprovação humana final deste lote, após ChatGPT, Perplexity e Gemini?")) return;
+        const {error} = await sb.rpc("admin_approve_question_factory_lot",{p_batch_number:Number(finalButton.dataset.qfFinalApprove)});
+        if(error)window.alert(error.message); else await loadQuestionFactory();
+        return;
+      }
       const blockButton = event.target.closest("[data-qf-view-block]");
       if (blockButton) {
         const [batch,block] = blockButton.dataset.qfViewBlock.split(":");
