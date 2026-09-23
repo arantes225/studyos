@@ -3717,3 +3717,84 @@ body.admin-unlocked #admin-app {
   [data-admin-view="factory"] .admin-qf-style-prompts>summary span{font-size:13px!important}
   [data-admin-view="factory"] .admin-qf-style-prompt-item>summary span{font-size:11px!important}
 }
+
+
+/* Fábrica — painel separado para lotes de 1.000 */
+.admin-qf-lots-panel{
+  display:grid;
+  gap:14px;
+  padding:17px;
+  margin-top:2px;
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:var(--surface);
+}
+.admin-qf-lots-panel .admin-factory-batches-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  margin:0;
+}
+.admin-qf-lots-panel .admin-factory-batches-head>div{
+  display:grid;
+  gap:4px;
+}
+.admin-qf-lots-panel .admin-factory-batches-head strong{
+  font-size:20px!important;
+  line-height:1.15;
+}
+.admin-qf-lots-panel .admin-factory-batches-head small{
+  max-width:760px;
+  font-size:11px!important;
+  line-height:1.45;
+  color:var(--muted);
+}
+.admin-qf-lots-panel #admin-qf-batch-count{
+  display:inline-flex;
+  align-items:center;
+  min-height:32px;
+  padding:0 11px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:var(--surface-2);
+  font-size:11px!important;
+  font-weight:900;
+}
+.admin-qf-lots-panel .admin-qf-batch-card-head strong{
+  font-size:15px!important;
+}
+.admin-qf-lots-panel .admin-qf-batch-card-head small{
+  font-size:10px!important;
+}
+.admin-qf-lots-panel .admin-qf-batch-stats b{
+  font-size:13px!important;
+}
+.admin-qf-lots-panel .admin-qf-batch-stats small{
+  font-size:9px!important;
+}
+.admin-qf-lots-panel .admin-qf-final-review>span,
+.admin-qf-lots-panel .admin-qf-final-review>strong{
+  font-size:11px!important;
+}
+.admin-qf-lots-panel .admin-qf-review-pill{
+  font-size:9px!important;
+}
+.admin-qf-lots-panel .admin-qf-batch-actions .button{
+  min-height:36px;
+  font-size:10px!important;
+}
+.admin-qf-lots-panel .admin-factory-cleanup strong{
+  font-size:13px!important;
+}
+.admin-qf-lots-panel .admin-factory-cleanup small{
+  font-size:10px!important;
+}
+.admin-qf-lots-panel .admin-factory-cleanup>span{
+  font-size:11px!important;
+}
+@media(max-width:700px){
+  .admin-qf-lots-panel{padding:13px}
+  .admin-qf-lots-panel .admin-factory-batches-head{flex-direction:column}
+  .admin-qf-lots-panel .admin-factory-batches-head strong{font-size:18px!important}
+}
