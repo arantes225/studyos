@@ -2307,9 +2307,36 @@
     await Promise.all([loadQuestionFactory(),loadQuestionFactoryStyles(),loadQuestionFactoryBlockTracker(),loadQuestionFactoryQuality()]);
   }
 
+  const QF_EDITORIAL_CALIBRATION_V4 = {
+    "USP-SP": { score:82, status:"requires_adjustment", alternatives:4, notes:"Distratores clinicamente próximos; equilibrar comprimento; evitar conduta óbvia; aumentar discriminação e calibrar dificuldade." },
+    "UNIFESP": { score:72, status:"requires_adjustment", alternatives:4, notes:"Aumentar densidade e integração; alternativas no mesmo domínio; remover fórmulas repetitivas; evitar reconhecimento simples." },
+    "AMP-PR": { score:61, status:"requires_adjustment", alternatives:5, notes:"Método individual; diversidade de formatos, incluindo casos densos, assertivas e interpretação; cinco alternativas; eliminar distratores-clichê." },
+    "SUS-SP": { score:76, status:"requires_adjustment", alternatives:5, notes:"Cinco alternativas; variedade de casos e conceitos; distratores próximos; remover frase repetitiva; maior integração e timing." },
+    "SES-DF": { score:42, status:"target_revalidation_required", alternatives:null, notes:"NÃO gerar como calibrado até confirmar processo/edição-alvo. Evidência histórica Cebraspe encontrada em CERTO/ERRADO; reconstruir corpus primário específico antes de definir formato." },
+    "PSU-MG": { score:78, status:"requires_adjustment", alternatives:4, notes:"Maior densidade clínica; quatro alternativas; distratores próximos; decisões intermediárias; dificuldade por raciocínio." },
+    "Santa Casa-SP": { score:72, status:"requires_adjustment", alternatives:5, notes:"Cinco alternativas; maior densidade; variedade cognitiva; alternativas equivalentes e plausíveis; ampliar corpus primário." },
+    "UERJ": { score:48, status:"target_revalidation_required", alternatives:null, notes:"NÃO usar auditoria do vestibular como perfil de residência. Revalidar especificamente Residência Médica UERJ/acesso direto com corpus próprio antes de gerar." },
+    "PSU-GO": { score:82, status:"requires_adjustment", alternatives:5, notes:"Cinco alternativas A-E; corpus CEREM-GO; reduzir conduta óbvia; APS contextualizada; interpretação e evolução clínica." },
+    "ENAMED": { score:58, status:"requires_adjustment", alternatives:4, notes:"Basear no corpus oficial INEP/ENAMED; situações-problema contextualizadas; integrar SUS/APS, determinantes sociais, segurança, longitudinalidade e fontes brasileiras primárias." }
+  };
+
+  function qfBoardCalibration(style) {
+    return QF_EDITORIAL_CALIBRATION_V4[style] || null;
+  }
+
   function buildBoardSegmentPrompt(item, stage) {
     const style = item?.exam_style || "BANCA";
     const brief = item?.full_generation_brief || item?.generation_instructions || "";
+    const calibration = qfBoardCalibration(style);
+    const alternativeCount = Number(calibration?.alternatives || item?.alternative_count || 4);
+    const alternativeLetters = alternativeCount === 5 ? "A-E" : "A-D";
+    const calibrationContext = calibration
+      ? `AUDITORIA EDITORIAL MAIS RECENTE
+- score de calibração do prompt: ${calibration.score}/100
+- status: ${calibration.status}
+- ajustes obrigatórios: ${calibration.notes}
+`
+      : "";
 
     const common = `
 BANCA / EXAM_STYLE: ${style}
@@ -2317,6 +2344,7 @@ BANCA / EXAM_STYLE: ${style}
 CONTEXTO EDITORIAL DA BANCA
 ${brief}
 
+${calibrationContext}
 REGRAS GERAIS
 - Trabalhe sempre com question_id imutável.
 - O formato canônico entre IAs e backend é JSON.
@@ -2329,8 +2357,15 @@ REGRAS GERAIS
 - Hard fails incluem: gabarito divergente, duas alternativas defensáveis, ambiguidade relevante, conduta potencialmente perigosa, dose/ponto de corte incorreto, fonte inexistente, fonte que não sustenta o gabarito, recomendação desatualizada ou questão reconhecível como cópia.
 - Fonte não verificada por limitação operacional deve ser classificada como SOURCE_VERIFICATION_PENDING, e não como hard fail científico, até haver verificação.
 - Toda questão precisa de fonte específica do gabarito: documento, ano e seção/recomendação quando verificável.
-- Regra global LURIA: exatamente quatro alternativas A-D em todas as bancas. Se a banca real usar cinco alternativas, isso NÃO pode reduzir style_score/quality_score e não se avalia ausência de E.
-- Distrator ideal: correto em outro cenário próximo, porém inadequado neste caso. Evitar espantalhos, absolutos denunciadores e alternativas de categorias/granularidades diferentes.
+- O formato de alternativas deve seguir a banca/processo-alvo validado: para ${style}, usar ${alternativeCount} alternativas (${alternativeLetters}). Nunca forçar A-D quando o processo real validado usa A-E.
+- SES-DF e UERJ ficam bloqueadas como perfis calibrados enquanto o processo-alvo não for revalidado em corpus primário específico; não inferir formato a partir de outra seleção da mesma instituição.
+- Cada banca deve ser gerada por MÉTODO INDIVIDUAL e corpus próprio. É proibido reutilizar caso-base, molde de enunciado, conjunto de distratores ou arquitetura cognitiva comum entre bancas na rodada de calibração.
+- Distrator ideal: plausível à primeira leitura e defensável em cenário próximo, porém eliminável por um dado discriminativo do caso. Evitar espantalhos, absolutos denunciadores e alternativas de categorias/granularidades diferentes.
+- Não exigir literalmente múltiplas respostas defensáveis: deve existir UMA única melhor resposta; a proximidade dos distratores não pode criar ambiguidade.
+- A alternativa correta não pode ser denunciada por ser sistematicamente mais longa, mais técnica ou a única completa.
+- Variar operações cognitivas: diagnóstico, investigação, interpretação, manejo, contraindicação, timing, complicação, prognóstico, prevenção e seguimento conforme o corpus da banca.
+- Dificuldade é definida pelo raciocínio exigido, não pela gravidade do tema.
+- Explicações devem justificar especificamente por que cada alternativa está certa ou errada; é proibida justificativa genérica repetida.
 `;
 
     if (stage === "chatgpt_initial") return `PROMPT DE SEGMENTO 1 — CHECAGEM CHATGPT DO BLOCO DE 200
@@ -2342,7 +2377,7 @@ Receba o bloco recém-gerado e faça uma verificação estrutural/editorial ante
 Verifique:
 1. exatamente 200 questões;
 2. IDs únicos e sequências corretas;
-3. quatro alternativas A-D;
+3. número de alternativas conforme a banca: ${alternativeCount} (${alternativeLetters});
 4. apenas uma melhor resposta aparente;
 5. explicações A-D completas;
 6. fonte geral e fonte específica do gabarito preenchidas;
@@ -2366,8 +2401,8 @@ SAÍDA JSON
       "question_id":"...",
       "quality_score":0-100,
       "component_scores":{},
-      "independent_answer":"A|B|C|D",
-      "original_answer":"A|B|C|D",
+      "independent_answer":"${alternativeCount === 5 ? "A|B|C|D|E" : "A|B|C|D"}",
+      "original_answer":"${alternativeCount === 5 ? "A|B|C|D|E" : "A|B|C|D"}",
       "status":"approved|needs_revision|rejected",
       "confidence":"high|medium|low",
       "ambiguity":false,
