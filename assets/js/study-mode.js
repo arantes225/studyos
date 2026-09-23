@@ -58,30 +58,6 @@
       "Urologia"
     ],
 
-    dentistry: [
-      "Dentística",
-      "Endodontia",
-      "Periodontia",
-      "Cirurgia e Traumatologia Bucomaxilofacial",
-      "Prótese Dentária",
-      "Ortodontia",
-      "Odontopediatria",
-      "Estomatologia",
-      "Patologia Oral e Maxilofacial",
-      "Radiologia e Imaginologia Odontológica",
-      "Implantodontia",
-      "Disfunção Temporomandibular e Dor Orofacial",
-      "Odontogeriatria",
-      "Odontologia para Pacientes com Necessidades Especiais",
-      "Odontologia Hospitalar",
-      "Saúde Coletiva / Saúde Bucal Coletiva",
-      "Odontologia Legal",
-      "Anestesiologia e Farmacologia",
-      "Urgências e Emergências em Odontologia",
-      "Anatomia, Fisiologia e Ciências Básicas Aplicadas à Odontologia",
-      "Cariologia e Odontologia Preventiva",
-      "Materiais Dentários"
-    ]
   };
 
   const GENERAL_AREAS = {
@@ -93,21 +69,14 @@
       "Preventiva"
     ],
 
-    dentistry: [
-      ...AREAS.dentistry
-    ]
   };
 
-  function normalizeMode(value) {
-    return value === "dentistry"
-      ? "dentistry"
-      : "medicine";
+  function normalizeMode() {
+    return "medicine";
   }
 
-  function modeLabel(mode) {
-    return normalizeMode(mode) === "dentistry"
-      ? "Odontologia"
-      : "Medicina";
+  function modeLabel() {
+    return "Medicina";
   }
 
   function areasFor(mode) {
@@ -263,9 +232,7 @@
   }
 
   function updateAreaPlaceholders(mode) {
-    const dentistry =
-      normalizeMode(mode)
-      === "dentistry";
+    const dentistry = false;
 
     document
       .querySelectorAll(
@@ -274,9 +241,7 @@
       .forEach(
         (input) => {
           input.placeholder =
-            dentistry
-              ? "Ex.: Dentística"
-              : "Ex.: Clínica Médica";
+            "Ex.: Clínica Médica";
         }
       );
   }
@@ -389,8 +354,7 @@
       }
 
       return apply(
-        data?.study_mode
-        || "medicine"
+        "medicine"
       );
 
     } catch (error) {
