@@ -2321,7 +2321,9 @@ REGRAS GERAIS
 - Trabalhe sempre com question_id imutável.
 - O formato canônico entre IAs e backend é JSON.
 - Não use Excel como formato máquina-a-máquina.
-- Corte mínimo de qualidade: 97/100 e fidelidade editorial: 97/100.
+- Corte mínimo de qualidade final da questão: 97/100.
+- Corte de formação/calibração do prompt da banca: style_score >=9,4/10.
+- Corte de fidelidade editorial para aprovação final da questão/bloco: style_score >=9,7/10.
 - Mesmo com nota alta, hard fail impede aprovação.
 - Gates universais: hard_fail=false; ambiguity=false; single_best_answer=true; answer_source_status=PASS; distractor_quality>=GOOD; alternative_granularity=PASS; difficulty_alignment=PASS.
 - Hard fails incluem: gabarito divergente, duas alternativas defensáveis, ambiguidade relevante, conduta potencialmente perigosa, dose/ponto de corte incorreto, fonte inexistente, fonte que não sustenta o gabarito, recomendação desatualizada ou questão reconhecível como cópia.
@@ -2394,7 +2396,7 @@ Audite cientificamente TODAS as 200 questões de forma independente.
 Resolva cada item antes de olhar o gabarito original.
 Abra e confira as fontes.
 Atribua uma nota objetiva de 0–100 usando a rubrica abaixo.
-O corte mínimo real é 97/100.
+O corte mínimo final de qualidade é 97/100. Para formação/calibração do prompt da banca, considerar style_score >=9,4/10 como perfil suficientemente formado para avançar; a aprovação final de questões/blocos continua exigindo fidelidade >=9,7/10.
 
 RUBRICA SISTEMÁTICA — 100 PONTOS
 
@@ -2700,7 +2702,7 @@ Em summary.top_5_systematic_problems, diga por exemplo:
 - curva de dificuldade inadequada;
 - pouca fidelidade à banca.
 
-Em summary.top_5_prompt_improvements, escreva mudanças concretas que deveriam ser incorporadas AO PROMPT MESTRE DA BANCA para aumentar a taxa de questões >=97 no próximo bloco.
+Em summary.top_5_prompt_improvements, escreva mudanças concretas que deveriam ser incorporadas AO PROMPT MESTRE DA BANCA para levar a fidelidade global do perfil a >=9,4/10 e aumentar a taxa de questões finais >=97 no próximo bloco.
 
 Não inclua texto fora do JSON.`;
 
