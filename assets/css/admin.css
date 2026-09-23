@@ -3871,3 +3871,44 @@ body.admin-unlocked #admin-app {
   [data-admin-view="factory"] .admin-qf-style-prompt-item>summary span{font-size:13px!important}
   [data-admin-view="factory"] .admin-qf-block-tracker-head strong{font-size:17px!important}
 }
+
+
+/* Fábrica de questões — Arquivo editorial em bloco independente */
+.admin-question-factory .admin-qf-bad-folder {
+  margin: 22px 0;
+  padding: 20px 22px;
+  border: 1px solid color-mix(in srgb, var(--danger) 34%, var(--border));
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .05);
+}
+.admin-question-factory .admin-qf-bad-folder-head strong {
+  margin-top: 5px;
+  font-size: 18px;
+  line-height: 1.2;
+}
+.admin-question-factory .admin-qf-bad-folder-head small {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.admin-question-factory .admin-qf-bad-folder-head .eyebrow {
+  color: var(--danger);
+}
+.admin-question-factory .admin-qf-bad-folder-actions > span {
+  font-size: 10px;
+}
+.admin-question-factory .admin-qf-bad-folder-actions > span b {
+  font-size: 15px;
+}
+.admin-question-factory .admin-qf-bad-folder-actions .button {
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 10px;
+}
+@media (max-width: 760px) {
+  .admin-question-factory .admin-qf-bad-folder-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
