@@ -55,10 +55,17 @@ Antes de gerar: registrar edição, URL oficial, IDs/páginas dos itens analisad
 TAREFA: gerar bloco administrativo de 200 questões. Pode executar em partes de 20, preservando IDs, sequência, cobertura planejada e conferência final das 200. Não fingir entrega completa quando houver parte pendente.
 Antes da produção, exigir relatório de calibração bruta FINAL_PROMPT_SCORE >=84 e corpus documentado. Se ausente, realizar calibração ou informar exatamente o que falta; não substituir por nota de questão corrigida.
 Definir matriz de cobertura a partir da prova-alvo; não impor sete áreas ENAMED nem quotas universais a outras bancas. Frequências observadas orientam o conjunto, sem criar sequência temática artificial.
-Gerar problema completo, alternativas e explicações A-D. Incluir mensagem-chave, área, tema, subtema e dificuldade justificada. Fonte geral e fonte específica do gabarito: instituição, documento, ano, URL real, seção quando disponível e nota de suporte.
+MÉTODO DE CONSTRUÇÃO OBRIGATÓRIO:
+1. Definir primeiro duas decisões clínicas concorrentes e plausíveis do mesmo eixo, sem letras.
+2. Definir o dado discriminativo mínimo que faz uma delas superar a outra.
+3. Construir a vinheta em torno dessa disputa, garantindo que o dado discriminativo seja funcional.
+4. Só então criar os outros dois distratores, ainda no mesmo eixo e clinicamente plausíveis.
+5. Rodar teste contrafactual: uma pequena mudança clinicamente plausível deve tornar o melhor distrator correto ou claramente mais defensável.
+6. Rodar teste adversarial sem vinheta; se a chave for previsível por forma, reescrever alternativas antes da saída.
+Gerar então problema completo, alternativas e explicações A-D. Incluir mensagem-chave, área, tema, subtema e dificuldade justificada. Fonte geral e fonte específica do gabarito: instituição, documento, ano, URL real, seção quando disponível e nota de suporte.
 Identificar duplicatas por decisão/conceito e cenário, além de similaridade lexical; não apenas trocar idade ou nomes.
 Gerar cada questão de forma independente. Não reutilizar caso-base, esqueleto semântico, conjunto de alternativas ou transformação mecânica entre bancas ou dentro do lote.
-Antes de entregar cada item, o GERADOR executa apenas uma pré-checagem. A aprovação depende de REVISÃO ADVERSARIAL INDEPENDENTE: o revisor não recebe a justificativa interna do gerador como autoridade e testa formal cueing, assimetria lexical, melhor distrator, contrafactual, dependência da vinheta, single-best-answer e dificuldade observada. Qualquer falha relevante exige reescrita e nova revisão.
+Antes de entregar cada item, o GERADOR executa apenas uma pré-checagem. A aprovação depende de REVISÃO ADVERSARIAL INDEPENDENTE: o revisor não recebe a justificativa interna do gerador como autoridade e testa formal cueing, assimetria lexical, melhor distrator, contrafactual, dependência da vinheta, single-best-answer e dificuldade observada. Qualquer falha relevante exige REWRITE obrigatório; a nova versão deve voltar a uma nova revisão adversarial e só pode seguir após PASS explícito.
 Após fechar o conteúdo, embaralhar a posição da alternativa correta sem alterar seu texto; no fechamento da parte/lote, detectar concentração anormal de letras e reembaralhar apenas a apresentação, sem padrão determinístico.
 SAÍDA (preencher os dados reais; null em lote/bloco exige identificação antes de importar):
 ${stringify({schema_version:VERSION,batch:{...context(item,ctx),question_count:200,part_number:1,part_count:10,profile_version:VERSION,reference_exam_years:[],generation_status:'generated'},primary_style_evidence:[],coverage_plan:[],questions:[sample],coverage:{expected:200,delivered:0,complete:false}})}
