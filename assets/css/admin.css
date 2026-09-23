@@ -3612,3 +3612,108 @@ body.admin-unlocked #admin-app {
   .admin-factory-flow-goal{align-self:flex-start}
   .admin-factory-flow-blocks{grid-template-columns:repeat(5,minmax(44px,1fr))}
 }
+
+
+/* Fábrica — prompts da banca e blocos com leitura ampliada */
+[data-admin-view="factory"] .admin-qf-style-prompts>summary{
+  min-height:44px;
+  padding:10px 12px;
+}
+[data-admin-view="factory"] .admin-qf-style-prompts>summary span{
+  font-size:14px!important;
+}
+[data-admin-view="factory"] .admin-qf-style-prompts>summary small{
+  font-size:10px!important;
+}
+[data-admin-view="factory"] .admin-qf-style-prompts-body{
+  gap:8px;
+  padding-top:9px;
+}
+[data-admin-view="factory"] .admin-qf-style-prompt-item>summary{
+  min-height:42px;
+  padding:10px 11px;
+  gap:9px;
+}
+[data-admin-view="factory"] .admin-qf-style-prompt-item>summary b{
+  min-width:30px;
+  height:30px;
+  font-size:10px!important;
+}
+[data-admin-view="factory"] .admin-qf-style-prompt-item>summary span{
+  font-size:12px!important;
+  line-height:1.3;
+}
+[data-admin-view="factory"] .admin-qf-style-prompt-actions .button{
+  min-height:34px;
+  font-size:10px!important;
+}
+[data-admin-view="factory"] .admin-qf-style-prompt-item .admin-qf-prompt{
+  font-size:11px!important;
+  line-height:1.55!important;
+  max-height:380px;
+  padding:12px;
+}
+
+[data-admin-view="factory"] .admin-qf-block-mini{
+  padding:12px;
+}
+[data-admin-view="factory"] .admin-qf-block-mini-head strong{
+  font-size:13px!important;
+}
+[data-admin-view="factory"] .admin-qf-block-mini-head small{
+  font-size:10px!important;
+}
+[data-admin-view="factory"] .admin-qf-block-state{
+  font-size:10px!important;
+}
+[data-admin-view="factory"] .admin-qf-block-mini-counts b{
+  font-size:12px!important;
+}
+[data-admin-view="factory"] .admin-qf-block-mini-counts small{
+  font-size:9px!important;
+}
+[data-admin-view="factory"] .admin-qf-block-quality-mini span{
+  font-size:9px!important;
+}
+[data-admin-view="factory"] .admin-qf-block-quality-mini b{
+  font-size:11px!important;
+}
+[data-admin-view="factory"] .admin-qf-block-mini-actions .button{
+  min-height:34px;
+  font-size:10px!important;
+}
+[data-admin-view="factory"] .admin-qf-human-gate>span{
+  font-size:9px!important;
+}
+
+[data-admin-view="factory"] .admin-qf-tracker-row{
+  padding:10px;
+  gap:9px;
+}
+[data-admin-view="factory"] .admin-qf-tracker-row>div{
+  gap:5px;
+  padding:9px 10px;
+}
+[data-admin-view="factory"] .admin-qf-tracker-row>div>span{
+  font-size:9px!important;
+}
+[data-admin-view="factory"] .admin-qf-tracker-row>div>strong{
+  font-size:11px!important;
+}
+[data-admin-view="factory"] .admin-qf-tracker-main strong{
+  font-size:13px!important;
+}
+[data-admin-view="factory"] .admin-qf-tracker-main small{
+  font-size:10px!important;
+}
+[data-admin-view="factory"] .admin-qf-tracker-prompt-actions .button{
+  min-height:34px;
+  font-size:10px!important;
+}
+[data-admin-view="factory"] .admin-qf-tracker-no-prompt{
+  font-size:10px!important;
+}
+@media(max-width:700px){
+  [data-admin-view="factory"] .admin-qf-style-prompts>summary span{font-size:13px!important}
+  [data-admin-view="factory"] .admin-qf-style-prompt-item>summary span{font-size:11px!important}
+}
