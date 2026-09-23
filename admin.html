@@ -415,25 +415,28 @@
             <div id="admin-qf-bad-by-style" class="admin-qf-bad-by-style"></div>
           </section>
 
-          <div class="admin-factory-batches-head">
-            <div>
-              <strong>Lotes de 1.000</strong>
-              <small>Cada lote é formado por cinco blocos de 200. Cada bloco passa primeiro pelo Perplexity.</small>
+          <section class="admin-qf-lots-panel" aria-labelledby="admin-qf-lots-title">
+            <div class="admin-factory-batches-head">
+              <div>
+                <span class="eyebrow">Produção em escala</span>
+                <strong id="admin-qf-lots-title">Lotes de 1.000</strong>
+                <small>Cada lote é formado por cinco blocos de 200. Após a revisão bloco a bloco, o lote segue para a revisão final.</small>
+              </div>
+              <span id="admin-qf-batch-count">0 lotes</span>
             </div>
-            <span id="admin-qf-batch-count">0 lotes</span>
-          </div>
 
-          <div id="admin-qf-batches" class="admin-factory-batches">
-            <div class="admin-factory-empty-wide">Nenhum lote criado ainda.</div>
-          </div>
-
-          <div class="admin-factory-cleanup">
-            <div>
-              <strong>Publicação com limpeza</strong>
-              <small>O rastro temporário só é apagado depois que o lote final for validado e as questões forem confirmadas no banco definitivo.</small>
+            <div id="admin-qf-batches" class="admin-factory-batches">
+              <div class="admin-factory-empty-wide">Nenhum lote criado ainda.</div>
             </div>
-            <span>200 × 5 = 1.000</span>
-          </div>
+
+            <div class="admin-factory-cleanup">
+              <div>
+                <strong>Publicação com limpeza</strong>
+                <small>O rastro temporário só é apagado depois que o lote final for validado e as questões forem confirmadas no banco definitivo.</small>
+              </div>
+              <span>200 × 5 = 1.000</span>
+            </div>
+          </section>
         </section>
 
         <section class="admin-section admin-qf-block-tracker-section" data-admin-view="factory" aria-labelledby="admin-qf-block-tracker-title">
