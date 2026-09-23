@@ -2187,12 +2187,13 @@ body.admin-unlocked #admin-app {
 .admin-qf-bank-dashboard-head{
   display:flex;align-items:flex-end;justify-content:space-between;gap:16px
 }
+.admin-qf-bank-dashboard-head .eyebrow{font-size:9px;letter-spacing:.08em}
 .admin-qf-bank-dashboard-head strong,
 .admin-qf-bank-dashboard-head small{display:block}
-.admin-qf-bank-dashboard-head strong{font-size:12px;margin-top:3px}
-.admin-qf-bank-dashboard-head small{font-size:8px;color:var(--muted);margin-top:3px}
+.admin-qf-bank-dashboard-head strong{font-size:14px;margin-top:3px}
+.admin-qf-bank-dashboard-head small{font-size:9.5px;color:var(--muted);margin-top:3px}
 .admin-qf-bank-dashboard-head>span{
-  color:var(--muted);font-size:8px;font-weight:850;white-space:nowrap
+  color:var(--muted);font-size:9.5px;font-weight:850;white-space:nowrap
 }
 .admin-qf-style-dashboard{
   display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px
@@ -2206,15 +2207,15 @@ body.admin-unlocked #admin-app {
 }
 .admin-qf-style-card-head strong,
 .admin-qf-style-card-head small{display:block}
-.admin-qf-style-card-head strong{font-size:12px}
-.admin-qf-style-card-head small{margin-top:3px;color:var(--muted);font-size:7.5px}
+.admin-qf-style-card-head strong{font-size:14px}
+.admin-qf-style-card-head small{margin-top:3px;color:var(--muted);font-size:9px}
 .admin-qf-style-card-head>span{
   display:inline-flex;align-items:center;min-height:24px;padding:0 8px;border:1px solid var(--border);
-  border-radius:999px;background:var(--surface-2);color:var(--muted);font-size:7px;font-weight:850
+  border-radius:999px;background:var(--surface-2);color:var(--muted);font-size:8.5px;font-weight:850
 }
 .admin-qf-style-total{display:flex;align-items:baseline;gap:5px}
-.admin-qf-style-total strong{font-size:24px;line-height:1}
-.admin-qf-style-total span{color:var(--muted);font-size:8px}
+.admin-qf-style-total strong{font-size:28px;line-height:1}
+.admin-qf-style-total span{color:var(--muted);font-size:9.5px}
 .admin-qf-style-stages{
   display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px
 }
@@ -2222,8 +2223,8 @@ body.admin-unlocked #admin-app {
   display:grid;gap:2px;min-width:0;padding:7px 6px;border:1px solid var(--border);
   border-radius:9px;background:var(--surface-2)
 }
-.admin-qf-style-stages b{font-size:10px}
-.admin-qf-style-stages small{font-size:6.5px;color:var(--muted);line-height:1.15}
+.admin-qf-style-stages b{font-size:12px}
+.admin-qf-style-stages small{font-size:8px;color:var(--muted);line-height:1.2}
 
 .admin-qf-manual-pro{gap:18px}
 .admin-qf-manual-hero{align-items:flex-start}
