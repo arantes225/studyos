@@ -1838,10 +1838,16 @@ function ensureNotificationCenter() {
       )
       ?.addEventListener(
         "click",
-        () => {
-          window.LuriaDialog?.alert?.(
+        async () => {
+          await window.LuriaDialog?.alert?.(
             "Você pode adicionar simulados automaticamente por PDF ou criar um simulado manual informando o número de questões. Depois, abra o simulado e registre o gabarito ou marque as questões erradas para acompanhar seu desempenho."
           );
+
+          document
+            .querySelector(
+              '[data-qs-mode="mine"]'
+            )
+            ?.click();
         }
       );
   }
