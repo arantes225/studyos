@@ -3118,9 +3118,15 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
       dash.innerHTML = state.questionStyles.length ? state.questionStyles.map((item,index) => {
         const score = item.style_score == null ? "calibrando" : `${Number(item.style_score).toLocaleString("pt-BR",{maximumFractionDigits:1})}/10`;
         const reliability = item.style_confidence_score == null ? null : Number(item.style_confidence_score);
-        const liveScore = item.style_score_updated_at
-          ? `${score}${reliability == null ? "" : ` · ${reliability.toLocaleString("pt-BR",{maximumFractionDigits:0})}% confiança`}`
-          : score;
+        const scoreValue = item.style_score == null ? "—" : Number(item.style_score).toLocaleString("pt-BR",{maximumFractionDigits:1});
+        const confidenceValue = reliability == null ? "—" : `${reliability.toLocaleString("pt-BR",{maximumFractionDigits:0})}%`;
+        const calibrationStatus = item.style_score == null
+          ? "Em calibração"
+          : Number(item.style_score) >= 9.7
+            ? "Aprovação final"
+            : Number(item.style_score) >= 9.4
+              ? "Prompt formado"
+              : "Em calibração";
         const slug = String(item.exam_style || `banca-${index+1}`).replace(/[^a-z0-9]/gi,"-").toLowerCase();
         const masterPromptId = `qf-dashboard-${slug}-master`;
         const promptStages = [
@@ -3140,7 +3146,17 @@ Não considere consenso entre modelos como evidência. Prefira fonte primária/o
                 <strong>${esc(item.exam_style)}</strong>
                 <small>${esc(item.organizing_body || "Perfil editorial")}</small>
               </div>
-              <span title="${esc(item.style_score_note || "")}">${esc(liveScore)}</span>
+              <div class="admin-qf-style-score-panel" title="${esc(item.style_score_note || "")}">
+                <span class="admin-qf-style-score">
+                  <small>Fidelidade editorial</small>
+                  <strong>${esc(scoreValue)}<em>/10</em></strong>
+                </span>
+                <span class="admin-qf-style-score">
+                  <small>Confiança da calibração</small>
+                  <strong>${esc(confidenceValue)}</strong>
+                </span>
+                <span class="admin-qf-style-score-status">${esc(calibrationStatus)}</span>
+              </div>
             </div>
             <div class="admin-qf-style-total">
               <strong>${formatNumber(item.total)}</strong>
