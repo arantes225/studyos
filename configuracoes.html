@@ -455,15 +455,6 @@
       font-size: 10px;
       font-weight: 500;
     }
-  
-    .study-mode-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-    .study-mode-option { position:relative; }
-    .study-mode-option input { position:absolute; opacity:0; pointer-events:none; }
-    .study-mode-option span { min-height:82px; display:grid; align-content:center; gap:4px; padding:14px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2); cursor:pointer; }
-    .study-mode-option strong { font-size:14px; }
-    .study-mode-option small { color:var(--muted); font-size:10px; line-height:1.4; }
-    .study-mode-option input:checked + span { border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 12%,transparent); }
-    @media (max-width:680px) { .study-mode-options { grid-template-columns:1fr; } }
 
   
     .error-review-interval-row {
@@ -704,40 +695,6 @@
             </form>
 
             <div id="theme-status" class="inline-status"></div>
-          </article>
-
-
-          <article class="setting-row study-mode-setting">
-            <div>
-              <h2>Modo de estudo</h2>
-              <p>
-                Define as áreas sugeridas pelo LURIA e qual Cronograma Base
-                será oferecido na aba Cronograma.
-              </p>
-            </div>
-
-            <div class="study-mode-options">
-              <label class="study-mode-option">
-                <input type="radio" name="study-mode" value="medicine">
-                <span>
-                  <strong>Medicina</strong>
-                  <small>ENARE · 180 aulas no Cronograma Base</small>
-                </span>
-              </label>
-
-              <label class="study-mode-option">
-                <input type="radio" name="study-mode" value="dentistry">
-                <span>
-                  <strong>Odontologia</strong>
-                  <small>ENARE · 108 aulas no Cronograma Base</small>
-                </span>
-              </label>
-            </div>
-
-            <div class="settings-actions">
-              <button id="save-study-mode" class="button primary" type="button">Salvar modo</button>
-              <span id="study-mode-status" class="settings-save-status" aria-live="polite"></span>
-            </div>
           </article>
 
           <article class="setting-row">
@@ -1330,7 +1287,7 @@
   <script src="/assets/vendor/supabase-2.110.6.js"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=17.0"></script>
-  <script src="assets/js/study-mode.js?v=12.1"></script>
+  <script src="assets/js/study-mode.js?v=14.0"></script>
   <script src="assets/js/configuracoes.js?v=12.8"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
