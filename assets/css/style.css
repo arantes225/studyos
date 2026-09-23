@@ -874,8 +874,7 @@ body.app-ready .app-shell .main { opacity: 1; }
 
 
 
-.sidebar-lofi-select,
-.lofi-track-picker select {
+.sidebar-lofi-select {
   width: 100%;
   min-height: 34px;
   border: 1px solid var(--border);
@@ -885,6 +884,38 @@ body.app-ready .app-shell .main { opacity: 1; }
   color: var(--text);
   outline: none;
   font: inherit;
+}
+
+.lofi-track-picker {
+  position: relative;
+}
+
+.lofi-track-picker select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0 38px 0 12px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.lofi-track-picker::after {
+  content: "⌄";
+  position: absolute;
+  right: 13px;
+  bottom: 11px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  pointer-events: none;
 }
 
 .sidebar-lofi-select {
