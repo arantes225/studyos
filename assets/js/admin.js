@@ -2307,19 +2307,11 @@
     await Promise.all([loadQuestionFactory(),loadQuestionFactoryStyles(),loadQuestionFactoryBlockTracker(),loadQuestionFactoryQuality()]);
   }
 
-  const QF_BOARD_FORMAT = {
-    "USP-SP": 4,
-    "UNIFESP": 4,
-    "AMP-PR": 5,
-    "SUS-SP": 5,
-    "PSU-MG": 4,
-    "Santa Casa-SP": 5,
-    "PSU-GO": 5,
-    "ENAMED": 4
-  };
-
-  function qfBoardAlternativeCount(item, style) {
-    return Number(item?.alternative_count || QF_BOARD_FORMAT[style] || 4);
+  // Regra fixa do LURIA: todas as bancas usam exatamente 4 alternativas (A-D).
+  // O número de alternativas da prova oficial não altera o contrato do produto
+  // e não deve ser usado para penalizar a fidelidade editorial.
+  function qfBoardAlternativeCount() {
+    return 4;
   }
 
   function buildBoardSegmentPrompt(item, stage) {
@@ -2351,7 +2343,7 @@ REGRAS UNIVERSAIS DE QUALIDADE
 - Hard fails incluem gabarito divergente, múltiplas respostas defensáveis, ambiguidade relevante, conduta perigosa, dose/ponto de corte incorreto, fonte inexistente ou incompatível, recomendação desatualizada e cópia reconhecível.
 - Fonte não verificável por limitação operacional deve ser SOURCE_VERIFICATION_PENDING até verificação; não invente fonte.
 - Toda questão final precisa de fonte específica que sustente o gabarito.
-- Para ${style}, use ${alternativeCount} alternativas (${alternativeLetters}) quando esse formato estiver validado para o processo-alvo.
+- REGRA IMUTÁVEL LURIA: toda questão usa exatamente 4 alternativas (A-D), independentemente do número de alternativas da prova oficial. Não penalize fidelidade editorial por essa adaptação de formato.
 - Deve existir uma única melhor resposta.
 - Distratores devem ser clinicamente plausíveis, homogêneos em categoria e elimináveis pelos dados do item; evite espantalhos, absolutos denunciadores e pistas de comprimento.
 - Dificuldade deve vir do raciocínio e da discriminação entre alternativas, não da raridade ou gravidade isolada do tema.
