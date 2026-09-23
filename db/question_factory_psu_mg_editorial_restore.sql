@@ -1,0 +1,20 @@
+-- PSU-MG editorial restoration/refinement
+-- Restores strong elements from the initial profile without changing scientific sourcing.
+
+-- Recovered editorial strengths:
+-- * objective, technical cases;
+-- * short-to-medium stems;
+-- * classic knowledge + clinical application;
+-- * real clinical density;
+-- * natural mix of direct and multi-step items;
+-- * criteria, epidemiology and MBE when pertinent;
+-- * intermediate-to-high difficulty in part of the paper;
+-- * technically discriminative distractors.
+--
+-- Additional clarification from calibration:
+-- * medium/hard items should integrate 2-3 functional data points rather than hinge on one prototypical clue;
+-- * MBE calculations should preferably require interpretation, not only arithmetic;
+-- * no rigid quotas for difficulty, calculation, or multi-step structure;
+-- * avoid correct option being the only sophisticated/plausible answer.
+--
+-- Scientific source strategy remains unchanged in Supabase.
