@@ -3329,3 +3329,79 @@ body.admin-unlocked #admin-app {
 }
 
 .admin-tab-badge{font-size:10px!important;min-width:20px;min-height:20px;line-height:20px}
+
+
+/* Admin Métricas — tipografia ampliada */
+[data-admin-view="metrics"]{
+  font-size:15px;
+}
+[data-admin-view="metrics"] .eyebrow{
+  font-size:11px!important;
+}
+[data-admin-view="metrics"] h2{
+  font-size:24px!important;
+  line-height:1.15;
+}
+[data-admin-view="metrics"] h3{
+  font-size:18px!important;
+  line-height:1.2;
+}
+[data-admin-view="metrics"] p{
+  font-size:12px!important;
+  line-height:1.5;
+}
+[data-admin-view="metrics"] small{
+  font-size:11px!important;
+  line-height:1.45;
+}
+[data-admin-view="metrics"] .admin-metric-card span{
+  font-size:12px!important;
+}
+[data-admin-view="metrics"] .admin-metric-card strong{
+  font-size:32px!important;
+  line-height:1.05;
+}
+[data-admin-view="metrics"] .admin-metric-card small{
+  font-size:11px!important;
+}
+[data-admin-view="metrics"] .admin-metric-card .admin-metric-secondary{
+  font-size:11px!important;
+}
+[data-admin-view="metrics"] .admin-section-head h2{
+  font-size:24px!important;
+}
+[data-admin-view="metrics"] .admin-section-head>small{
+  font-size:11px!important;
+}
+[data-admin-view="metrics"] .admin-feature-card span{
+  font-size:11px!important;
+}
+[data-admin-view="metrics"] .admin-feature-card strong{
+  font-size:28px!important;
+}
+[data-admin-view="metrics"] .admin-feature-card small{
+  font-size:11px!important;
+}
+[data-admin-view="metrics"] .admin-customer-tools span{
+  font-size:11px!important;
+}
+[data-admin-view="metrics"] .admin-customer-table th{
+  font-size:10px!important;
+}
+[data-admin-view="metrics"] .admin-customer-table td{
+  font-size:12px!important;
+}
+[data-admin-view="metrics"] .admin-customer-main small{
+  font-size:10px!important;
+}
+[data-admin-view="metrics"] .admin-plan-pill{
+  font-size:10px!important;
+}
+[data-admin-view="metrics"] .admin-table-empty{
+  font-size:12px!important;
+}
+@media(max-width:720px){
+  [data-admin-view="metrics"] h2{font-size:21px!important}
+  [data-admin-view="metrics"] .admin-metric-card strong{font-size:29px!important}
+  [data-admin-view="metrics"] .admin-metric-card span{font-size:11px!important}
+}
