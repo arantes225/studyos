@@ -2666,6 +2666,28 @@ body > footer {
   transform: scale(.96);
 }
 
+.qs-simulations-help {
+  display: block;
+  width: 124px;
+  margin-top: 7px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+}
+
+.qs-simulations-help:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
 .luria-notification-toggle svg {
   width: 19px;
   height: 19px;
