@@ -2326,7 +2326,7 @@
     const map = {
       generation: { label: "Geração", provider: "chatgpt" },
       blind_resolution: { label: "Resolução cega", provider: "perplexity" },
-      chatgpt_initial: { label: "Checagem ChatGPT", provider: "chatgpt" },
+      chatgpt_initial: { label: "Revisão adversarial", provider: "chatgpt" },
       perplexity_initial: { label: "Auditoria Perplexity", provider: "perplexity" },
       chatgpt_adjudication: { label: "Julgar parecer", provider: "chatgpt" },
       chatgpt_correction: { label: "Correção ChatGPT", provider: "chatgpt" },
@@ -2437,7 +2437,7 @@
           ["00","Calibrar prompt editorial","prompt_calibration","perplexity"],
           ["01","Prompt mestre · geração",null,"chatgpt"],
           ["02A","Perplexity · resolução cega","blind_resolution","perplexity"],
-          ["02","ChatGPT · checagem inicial","chatgpt_initial","chatgpt"],
+          ["02","ChatGPT · revisão adversarial","chatgpt_initial","chatgpt"],
           ["03","Perplexity · auditoria","perplexity_initial","perplexity"],
           ["04","ChatGPT · julgar parecer","chatgpt_adjudication","chatgpt"],
           ["05","ChatGPT · corrigir consenso","chatgpt_correction","chatgpt"],
