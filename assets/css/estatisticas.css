@@ -11,7 +11,7 @@
 [data-stats-panel][hidden]{display:none!important}
 .stats-summary-box,.stats-block{padding:16px}.stats-summary-box{display:grid;gap:13px}
 .stats-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.stats-section-head h3{margin:0;font-size:15px}.stats-section-head p{margin:5px 0 0;color:var(--muted);font-size:10px;line-height:1.45}.stats-kicker{display:block;margin-bottom:5px;color:var(--muted);font-size:9px;font-weight:850;letter-spacing:.06em;text-transform:uppercase}
+.stats-section-head h3{margin:0;font-size:18px}.stats-section-head p{margin:6px 0 0;color:var(--muted);font-size:12px;line-height:1.5}.stats-kicker{display:block;margin-bottom:6px;color:var(--muted);font-size:10px;font-weight:850;letter-spacing:.06em;text-transform:uppercase}
 .stats-summary-grid{
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
