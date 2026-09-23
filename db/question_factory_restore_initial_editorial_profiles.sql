@@ -1,0 +1,32 @@
+-- Restore initial editorial identities from the pre-audit Question Factory manual.
+-- Scientific source strategies are intentionally untouched.
+-- Global safety/quality gates remain separate in the generation/review contract.
+
+-- Live restoration applied to:
+-- SUS-SP, Santa Casa-SP, SES-DF, UERJ, PSU-GO, PSU-MG,
+-- USP-SP, UNIFESP, AMP-PR and ENAMED.
+--
+-- Source of truth for the restored editorial direction:
+-- docs/question-factory-manual.md as it existed at commit
+-- 340f57da465bce2c57671eb58e74b04ff4964448.
+--
+-- Key principle restored:
+-- exam_style controls FORM; scientific references control CONTENT.
+--
+-- Santa Casa-SP restored to:
+-- * traditional, technical, academic style;
+-- * short clinical cases + pure conceptual items;
+-- * short-to-medium stems;
+-- * frequent 1–2 step reasoning;
+-- * physiology, criteria, associations and classic concepts;
+-- * occasional EXCETO/INCORRETA/NÃO corresponde;
+-- * close, technically subtle distractors;
+-- * less storytelling.
+--
+-- The live values are stored in public.question_exam_style_profiles:
+-- full_generation_brief
+-- generation_instructions
+-- recommended_generation_rules
+-- what_to_avoid
+--
+-- scientific_source_strategy was not modified.
