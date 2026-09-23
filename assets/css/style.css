@@ -3407,3 +3407,45 @@ dialog[open]{
   opacity:1!important;
   pointer-events:none!important;
 }
+
+
+/* LOGIN — pattern de logos reforçado */
+body.auth-page{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  background:var(--bg);
+  --luria-pattern-size:112px;
+  --luria-pattern-opacity:.045;
+}
+body.auth-page::before,
+body.auth-page::after{
+  content:"";
+  position:fixed;
+  inset:-14%;
+  z-index:0;
+  pointer-events:none;
+  background-image:var(--luria-pattern-image);
+  background-repeat:repeat;
+  background-size:var(--luria-pattern-size) var(--luria-pattern-size);
+  transform:rotate(-8deg) scale(1.08);
+  transform-origin:center;
+}
+body.auth-page::before{
+  background-position:0 0;
+  opacity:var(--luria-pattern-opacity);
+}
+body.auth-page::after{
+  background-position:calc(var(--luria-pattern-size)/2) calc(var(--luria-pattern-size)/2);
+  opacity:var(--luria-pattern-opacity);
+}
+body.auth-page>.auth-card{
+  position:relative;
+  z-index:1;
+}
+:root[data-theme="dark"] body.auth-page{
+  --luria-pattern-opacity:.055;
+}
+:root[data-theme="leila-mood"] body.auth-page{
+  --luria-pattern-opacity:.048;
+}
