@@ -1198,6 +1198,41 @@ async function saveStudySettings() {
   );
 }
 
+
+const STUDY_DEFAULTS = Object.freeze({
+  pomodoro: { focus: 25, pause: 5 },
+  flashcards: {
+    hard: [1, 3, 7],
+    medium: [7, 21, 45],
+    easy: [15, 45, 70]
+  },
+  errorReviews: [7, 21, 21, 21, 21, 21],
+  subjectReviews: [7, 14, 30]
+});
+
+function restorePomodoroDefaults() {
+  document.getElementById("pomodoro-focus-minutes").value = STUDY_DEFAULTS.pomodoro.focus;
+  document.getElementById("pomodoro-break-minutes").value = STUDY_DEFAULTS.pomodoro.pause;
+  setPomodoroSettingsStatus("Padrão restaurado. Clique em Salvar Pomodoro para confirmar.", "success");
+}
+
+function restoreFlashcardDefaults() {
+  setIntervalInputs("flashcard_intervals_hard", STUDY_DEFAULTS.flashcards.hard);
+  setIntervalInputs("flashcard_intervals_medium", STUDY_DEFAULTS.flashcards.medium);
+  setIntervalInputs("flashcard_intervals_easy", STUDY_DEFAULTS.flashcards.easy);
+  setFlashcardIntervalsStatus("Padrão restaurado. Clique em Salvar intervalos para confirmar.", "success");
+}
+
+function restoreErrorReviewDefaults() {
+  setIntervalInputs("error_review_intervals", STUDY_DEFAULTS.errorReviews);
+  setErrorReviewSettingsStatus("Padrão restaurado. Clique em Salvar Caderno de Erros para confirmar.", "success");
+}
+
+function restoreSubjectReviewDefaults() {
+  setIntervalInputs("subject_review_intervals", STUDY_DEFAULTS.subjectReviews);
+  setSubjectReviewSettingsStatus("Padrão restaurado. Clique em Salvar revisões teóricas para confirmar.", "success");
+}
+
 async function initStudySettings() {
   settingsUser = window.docmapUser;
 
@@ -1207,6 +1242,15 @@ async function initStudySettings() {
   document
     .getElementById("save-study-days")
     .addEventListener("click", saveStudySettings);
+
+  document.getElementById("restore-pomodoro-settings")
+    ?.addEventListener("click", restorePomodoroDefaults);
+  document.getElementById("restore-flashcard-intervals")
+    ?.addEventListener("click", restoreFlashcardDefaults);
+  document.getElementById("restore-error-review-settings")
+    ?.addEventListener("click", restoreErrorReviewDefaults);
+  document.getElementById("restore-subject-review-settings")
+    ?.addEventListener("click", restoreSubjectReviewDefaults);
 
   document
     .getElementById("save-flashcard-intervals")
