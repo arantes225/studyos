@@ -747,7 +747,7 @@ function updateLofiControls(manager) {
 
   document.querySelectorAll("[data-lofi-title]").forEach((el) => {
     el.textContent =
-      manager.track?.title || "Lo-fi";
+      manager.track?.title || "Som ambiente";
   });
 
   document.querySelectorAll("[data-lofi-status]").forEach((el) => {
@@ -781,8 +781,8 @@ function updateLofiControls(manager) {
     button.setAttribute(
       "aria-label",
       audio.paused
-        ? "Tocar lo-fi"
-        : "Pausar lo-fi"
+        ? "Tocar som ambiente"
+        : "Pausar som ambiente"
     );
 
     button.disabled =
