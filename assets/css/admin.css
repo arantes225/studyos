@@ -2897,7 +2897,7 @@ body.admin-unlocked #admin-app {
   background:transparent;
   color:var(--muted);
   font:inherit;
-  font-size:10px;
+  font-size:13px;
   font-weight:850;
   cursor:pointer;
   transition:background .16s ease,color .16s ease,box-shadow .16s ease;
@@ -2928,7 +2928,7 @@ body.admin-unlocked #admin-app {
   .admin-view-tab{
     min-height:36px;
     padding:0 8px;
-    font-size:9px;
+    font-size:12px;
   }
 }
 
@@ -3327,3 +3327,5 @@ body.admin-unlocked #admin-app {
   [data-admin-view="factory"] h2{font-size:21px!important}
   [data-admin-view="factory"] .admin-qf-style-card-head{flex-direction:column}
 }
+
+.admin-tab-badge{font-size:10px!important;min-width:20px;min-height:20px;line-height:20px}
