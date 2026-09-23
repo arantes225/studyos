@@ -1,19 +1,26 @@
 /* Contrato único da fábrica. Não inserir resultados históricos como identidade editorial. */
 (function (root) {
   'use strict';
-  const VERSION = '2.0';
+  const VERSION = '2.1';
   const rubric = { scientific:25, answer_key:20, answer_source:15, distractors:10, explanations:10, style:10, writing:5, difficulty:5 };
   const editable = ['enunciado','alternativa_a','alternativa_b','alternativa_c','alternativa_d','gabarito','explicacao_a','explicacao_b','explicacao_c','explicacao_d','mensagem_chave','area','tema','subtema','dificuldade','fonte_instituicao','fonte_documento','fonte_ano','fonte_url','answer_source_institution','answer_source_document','answer_source_year','answer_source_url','answer_source_section','answer_source_note'];
   const stringify = value => JSON.stringify(value, null, 2);
   const rules = `CONTRATO LURIA ${VERSION}
 Exatamente quatro alternativas A-D em TODAS as bancas; nunca penalizar essa adaptação.
 Uma única melhor resposta; dados suficientes; contexto coerente; conteúdo autoral.
-Todas as explicações A-D devem justificar especificamente a opção. Distratores do mesmo eixo, baseados em erros plausíveis e elimináveis pelos dados.
-Dificuldade depende do raciocínio exigido e da competição entre alternativas. Evitar pistas de comprimento, absolutos denunciadores, repetição de moldes e rotação mecânica de gabarito.
+Todas as explicações A-D devem justificar especificamente a opção. Distratores devem permanecer no mesmo eixo decisório e representar erros médicos reais, próximos e plausíveis; não fabricar uma resposta madura contra três caricaturas.
+GATE DE DISTRATORES: antes de aceitar o item, verificar se pelo menos dois incorretos poderiam ser considerados por candidato parcialmente preparado e só caem por dado, indicação, timing, prioridade, contraindicação, sequência ou nuance técnica. Se 2–3 opções caem por absurdo, negligência, categoria incompatível ou linguagem denunciadora, REESCREVER.
+GATE DE ELIMINAÇÃO SUPERFICIAL: ocultar mentalmente a vinheta e testar as alternativas. Se a correta puder ser inferida principalmente por ser mais prudente, completa, longa, específica ou 'mais médica', REESCREVER.
+GATE DE ESPECIFICIDADE: quando os dados permitem decisão concreta, não aceitar chave protetora/genérica como 'tratamento adequado', 'reversão apropriada', 'avaliar e tratar conforme gravidade' ou 'escalonar conforme controle'. Cobrar a decisão discriminativa.
+GATE DE RELEVÂNCIA: cada dado clínico/laboratorial destacado deve alterar diagnóstico, exclusão, cálculo, classificação ou decisão. Remover pseudo-contextualização e dados decorativos.
+GATE DE PADRÃO CLÁSSICO: item moderado/difícil não pode se resumir a achado clássico → resposta clássica contra três absurdos. A dificuldade deve emergir de alternativas concorrentes e contexto, não do nome do tema.
+GATE DE VARIEDADE: detectar repetição semântica/estrutural no lote; não repetir em série 'vinheta curta + qual conduta + boa prática abrangente + três erros grosseiros'. Variar apenas conforme o corpus real da banca, sem quotas universais.
+GATE DE POSIÇÃO: a letra correta é atributo de apresentação, não identidade editorial. Embaralhar A-D após fechar o conteúdo e detectar concentração anormal de letras no lote, sem criar rotação ou sequência previsível.
+Dificuldade depende do raciocínio exigido e da competição entre alternativas, e deve ser atribuída/revalidada somente após o item completo. Não usar tema, gravidade, quantidade de dados ou contagem rígida de 'etapas cognitivas' como proxy. Evitar pistas de comprimento, absolutos denunciadores, repetição de moldes e rotação mecânica de gabarito.
 Estilo vem de cadernos oficiais do processo-alvo; ciência vem de fontes científicas independentes. Edital sozinho não demonstra arquitetura dos itens.
 Não inventar documento, edição, URL, seção, dados de corpus ou característica de banca. Falta de acesso = SOURCE_VERIFICATION_PENDING; falta de corpus = NEEDS_MORE_PRIMARY_STYLE_DATA; ambas impedem declarar aprovação correspondente.
 Usar fonte atual aplicável à pergunta e ao cenário brasileiro. Fonte internacional adequada não perde pontos por nacionalidade. Conflitos entre recomendações exigem contexto explícito que assegure resposta única.
-CALIBRAÇÃO DO PROMPT: FINAL_PROMPT_SCORE >=94/100 na saída bruta inédita, antes de correções; não confundir com style_score.
+CALIBRAÇÃO DO PROMPT: FINAL_PROMPT_SCORE >=91/100 na saída bruta inédita, antes de correções; não confundir com style_score.
 QUESTÃO FINAL: quality_score >=97/100, style >=9.7/10, rubrica completa, fontes verificadas, sem hard fail, sem ambiguidade e com única melhor resposta. Nota alta não compensa falha eliminatória.
 Feedback sobre distratores, clareza e segurança pode melhorar regras gerais; só alterar a identidade da banca com evidência primária documentada.
 JSON válido é o contrato máquina-a-máquina. Não preencher aprovações, fontes verificadas ou notas sem executar a avaliação. IDs são imutáveis; toda revisão informa item_version e toda correção informa expected_version.`;
@@ -43,10 +50,13 @@ Antes de gerar: registrar edição, URL oficial, IDs/páginas dos itens analisad
     Object.assign(sample,{question_id:'ID_IMUTAVEL',question_code:'CODIGO_UNICO',exam_style:item.exam_style||null,block_sequence_no:1,sequence_no:1,dificuldade:'Médio',gabarito:'A',version:1,status:'generated'});
     return `${rules}\n\n${profile(item)}
 TAREFA: gerar bloco administrativo de 200 questões. Pode executar em partes de 20, preservando IDs, sequência, cobertura planejada e conferência final das 200. Não fingir entrega completa quando houver parte pendente.
-Antes da produção, exigir relatório de calibração bruta FINAL_PROMPT_SCORE >=94 e corpus documentado. Se ausente, realizar calibração ou informar exatamente o que falta; não substituir por nota de questão corrigida.
+Antes da produção, exigir relatório de calibração bruta FINAL_PROMPT_SCORE >=91 e corpus documentado. Se ausente, realizar calibração ou informar exatamente o que falta; não substituir por nota de questão corrigida.
 Definir matriz de cobertura a partir da prova-alvo; não impor sete áreas ENAMED nem quotas universais a outras bancas. Frequências observadas orientam o conjunto, sem criar sequência temática artificial.
 Gerar problema completo, alternativas e explicações A-D. Incluir mensagem-chave, área, tema, subtema e dificuldade justificada. Fonte geral e fonte específica do gabarito: instituição, documento, ano, URL real, seção quando disponível e nota de suporte.
 Identificar duplicatas por decisão/conceito e cenário, além de similaridade lexical; não apenas trocar idade ou nomes.
+Gerar cada questão de forma independente. Não reutilizar caso-base, esqueleto semântico, conjunto de alternativas ou transformação mecânica entre bancas ou dentro do lote.
+Antes de entregar cada item, executar silenciosamente os gates de distratores, eliminação superficial, especificidade, relevância, padrão clássico e dificuldade. Reescrever o item que falhar antes da saída.
+Após fechar o conteúdo, embaralhar a posição da alternativa correta sem alterar seu texto; no fechamento da parte/lote, detectar concentração anormal de letras e reembaralhar apenas a apresentação, sem padrão determinístico.
 SAÍDA (preencher os dados reais; null em lote/bloco exige identificação antes de importar):
 ${stringify({schema_version:VERSION,batch:{...context(item,ctx),question_count:200,part_number:1,part_count:10,profile_version:VERSION,reference_exam_years:[],generation_status:'generated'},primary_style_evidence:[],coverage_plan:[],questions:[sample],coverage:{expected:200,delivered:0,complete:false}})}
 Validar quantidade, IDs, sequências 1–200 e posição global, A-D, campos obrigatórios, fontes, coerência e duplicatas. Nunca preencher status approved/published. Excel apenas quando solicitado para revisão humana.`;
@@ -59,7 +69,7 @@ Validar quantidade, IDs, sequências 1–200 e posição global, A-D, campos obr
     if(stage==='generation')return generation(item,ctx);
     if(stage==='prompt_calibration')return `${common}
 AUDITORIA DO PROMPT EDITORIAL: avaliar saída BRUTA inédita, antes de correções. Receber registro da resolução cega; depois conferir gabaritos/fontes. Comparar com corpus primário e registrar evidências por item. Distinguir falha científica pontual, falha do gerador, falha de validador e desvio de identidade.
-FINAL_PROMPT_SCORE usa rubrica própria: fidelidade 40, distratores 20, dificuldade 15, diversidade/ausência de pistas 15, clareza/completude 10. Somar componentes; corte 94. Informar ciência e gabarito em flags separados; hard fail impede avanço. Sem corpus suficiente, nota=null e NEEDS_MORE_PRIMARY_STYLE_DATA. Amostra sentinela não substitui teste de generalização; testar ao menos 30 itens novos em áreas variadas e informar limites amostrais. Não usar correções para elevar esta nota.
+FINAL_PROMPT_SCORE usa rubrica própria: fidelidade 40, distratores 20, dificuldade 15, diversidade/ausência de pistas 15, clareza/completude 10. Somar componentes; corte 91. Informar ciência e gabarito em flags separados; hard fail impede avanço. Sem corpus suficiente, nota=null e NEEDS_MORE_PRIMARY_STYLE_DATA. Amostra sentinela não substitui teste de generalização; testar ao menos 30 itens novos em áreas variadas e informar limites amostrais. Não usar correções para elevar esta nota.
 ${stringify({schema_version:VERSION,review_stage:'prompt_calibration',exam_style:item.exam_style||null,profile_version:VERSION,FINAL_PROMPT_SCORE:null,prompt_component_scores:{fidelity:null,distractors:null,difficulty:null,diversity:null,clarity:null},hard_fail_count:0,sample_size:0,primary_style_evidence:[],decision:'NEEDS_MORE_PRIMARY_STYLE_DATA',findings:[]})}`;
     if(stage==='blind_resolution')return `${rules}
 RESOLUÇÃO CEGA. Abrir SOMENTE prova-cega.json, sem gabaritos, explicações, fontes da resposta ou pareceres prévios. Se esses dados foram expostos na conversa, iniciar nova conversa limpa. Resolver todos os IDs recebidos; não inventar uma letra quando não houver resposta única. Importar este registro antes de abrir o pacote completo.
