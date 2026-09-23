@@ -3405,3 +3405,62 @@ body.admin-unlocked #admin-app {
   [data-admin-view="metrics"] .admin-metric-card strong{font-size:29px!important}
   [data-admin-view="metrics"] .admin-metric-card span{font-size:11px!important}
 }
+
+
+/* Admin Planos — tipografia ampliada */
+[data-admin-view="plans"]{
+  font-size:15px;
+}
+[data-admin-view="plans"] .eyebrow{
+  font-size:11px!important;
+}
+[data-admin-view="plans"] h2{
+  font-size:24px!important;
+  line-height:1.15;
+}
+[data-admin-view="plans"] h3{
+  font-size:18px!important;
+  line-height:1.2;
+}
+[data-admin-view="plans"] p{
+  font-size:12px!important;
+  line-height:1.5;
+}
+[data-admin-view="plans"] small{
+  font-size:11px!important;
+  line-height:1.45;
+}
+[data-admin-view="plans"] .admin-section-head h2{
+  font-size:24px!important;
+}
+[data-admin-view="plans"] .admin-section-head p{
+  font-size:12px!important;
+}
+[data-admin-view="plans"] .button{
+  font-size:11px!important;
+}
+[data-admin-view="plans"] .admin-plan-features-grid{
+  font-size:12px!important;
+}
+[data-admin-view="plans"] .admin-plan-features-grid strong{
+  font-size:14px!important;
+}
+[data-admin-view="plans"] .admin-plan-features-grid span,
+[data-admin-view="plans"] .admin-plan-features-grid label,
+[data-admin-view="plans"] .admin-plan-features-grid small{
+  font-size:11px!important;
+}
+[data-admin-view="plans"] input,
+[data-admin-view="plans"] select,
+[data-admin-view="plans"] textarea{
+  font-size:12px!important;
+}
+[data-admin-view="plans"] .admin-plan-features-status{
+  font-size:11px!important;
+}
+[data-admin-view="plans"] .admin-plan-features-loading{
+  font-size:11px!important;
+}
+@media(max-width:720px){
+  [data-admin-view="plans"] h2{font-size:21px!important}
+}
