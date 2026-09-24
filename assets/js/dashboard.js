@@ -1644,13 +1644,15 @@ function fitDashboardCcqText(element) {
   if (!element) return;
 
   const maxSize = 24;
-  const minSize = 11;
+  const minSize = 7;
   const stage = element.closest(".dashboard-passive-ccq-stage");
 
   element.style.fontSize = maxSize + "px";
+  element.style.lineHeight = "1.28";
   element.style.webkitLineClamp = "unset";
   element.style.display = "block";
-  element.style.overflow = "visible";
+  element.style.overflow = "hidden";
+  element.style.maxHeight = "none";
 
   if (!stage) return;
 
@@ -1674,6 +1676,14 @@ function fitDashboardCcqText(element) {
     size -= 0.5;
     element.style.fontSize = size + "px";
   }
+
+  element.style.maxHeight = availableHeight + "px";
+}
+
+function refitDashboardCcqText() {
+  const text = document.getElementById("dashboard-passive-ccq-text");
+  if (!text || text.closest(".dashboard-passive-ccq-stage")?.hidden) return;
+  fitDashboardCcqText(text);
 }
 
 function showDashboardCcq() {
@@ -1714,6 +1724,14 @@ function showDashboardCcq() {
 
   resetCcqProgress();
 }
+
+window.addEventListener("resize", () => {
+  window.clearTimeout(window.__luriaDashboardCcqResizeTimer);
+  window.__luriaDashboardCcqResizeTimer = window.setTimeout(
+    refitDashboardCcqText,
+    90
+  );
+});
 
 function startDashboardCcqRotation() {
   if (dashboardCcqState.timerId) {
