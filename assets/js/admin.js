@@ -2162,6 +2162,7 @@
             </div>
 
             <button class="button secondary admin-qf-view-block-wide" type="button" data-qf-view-block="${Number(batch.batch_number)}:${n}">${needs || rejected ? "Ver pendências" : "Ver bloco"}</button>
+            <button class="button secondary admin-qf-import-stage-wide" type="button" data-qf-import-stage="${Number(batch.batch_number)}:${n}">Importar etapa</button>
 
             ${!lotInFinalReview && blockAction.provider ? `
               <div class="admin-qf-block-ai-action">
@@ -2401,10 +2402,8 @@
       $("admin-qf-review-import-meta").textContent = mode === "metrics"
         ? "Cole qualquer JSON da fábrica que contenha stage_metrics. Esta opção atualiza apenas a telemetria operacional."
         : mode === "calibration" ? "Cole a auditoria bruta do prompt com FINAL_PROMPT_SCORE, componentes e evidências primárias." : mode === "lot"
-        ? `Lote ${String(Number(batchNumber)).padStart(3,"0")} · cole o JSON da revisão final das 1.000.`
-        : mode === "correction"
-          ? `Lote ${String(Number(batchNumber)).padStart(3,"0")} · Bloco ${blockNumber} · cole o JSON das correções do ChatGPT.`
-          : `Lote ${String(Number(batchNumber)).padStart(3,"0")} · Bloco ${blockNumber} · cole o JSON da revisão.`;
+        ? `Lote ${String(Number(batchNumber)).padStart(3,"0")} · cole o JSON da etapa final. O sistema identifica ChatGPT ou Perplexity automaticamente.`
+        : `Lote ${String(Number(batchNumber)).padStart(3,"0")} · Bloco ${blockNumber} · cole o JSON da etapa atual (geração, resolução cega, revisão, adjudicação, correção ou reauditoria).`;
     }
     if ($("admin-qf-review-import-json")) $("admin-qf-review-import-json").value = "";
     if ($("admin-qf-review-import-message")) $("admin-qf-review-import-message").textContent = "";
@@ -2448,41 +2447,34 @@
       return;
     }
 
-    if (payload.review_stage !== "prompt_calibration" && (Number(payload.batch_number) !== state.qfReviewImportBatch || (state.qfReviewImportMode !== "lot" && Number(payload.block_number) !== state.qfReviewImportBlock))) {
-      if (message) message.textContent = "O lote/bloco do JSON não corresponde ao selecionado. Confira o arquivo; os IDs não serão substituídos.";
+    const inferredStage = payload.review_stage
+      || payload.stage_metrics?.stage
+      || (payload.questions && payload.batch ? "generation" : null);
+    const payloadBatch = Number(payload.batch_number ?? payload.batch?.batch_number);
+    const payloadBlock = Number(payload.block_number ?? payload.batch?.block_number);
+    const isCalibration = inferredStage === "prompt_calibration";
+    const isLotStage = ["lot_chatgpt_final","lot_perplexity_final"].includes(inferredStage);
+
+    if (!isCalibration && state.qfReviewImportBatch != null && payloadBatch !== state.qfReviewImportBatch) {
+      if (message) message.textContent = "O lote do JSON não corresponde ao selecionado. Nenhum dado foi alterado.";
+      return;
+    }
+    if (!isCalibration && !isLotStage && state.qfReviewImportBlock != null && payloadBlock !== state.qfReviewImportBlock) {
+      if (message) message.textContent = "O bloco do JSON não corresponde ao selecionado. Nenhum dado foi alterado.";
       return;
     }
 
-    const rpcName = payload.review_stage === "prompt_calibration"
-      ? "admin_import_question_factory_calibration"
-      : payload.review_stage === "chatgpt_adjudication"
-        ? "admin_import_question_factory_adjudication"
-        : payload.review_stage === "chatgpt_initial" && Array.isArray(payload.initial_reviews)
-          ? "admin_import_question_factory_chatgpt_autocorrection"
-          : state.qfReviewImportMode === "lot"
-            ? "admin_import_question_factory_lot_review"
-            : state.qfReviewImportMode === "correction"
-              ? "admin_import_question_factory_corrections"
-              : "admin_import_question_factory_review";
-
-    const { data, error } = await sb.rpc(rpcName, { p_payload: payload });
+    const { data: routedData, error } = await sb.rpc(
+      "admin_import_question_factory_stage",
+      { p_payload: payload }
+    );
     if (error) {
-      if (message) message.textContent = error.message || "Não foi possível importar.";
+      if (message) message.textContent = error.message || "Não foi possível importar esta etapa.";
       return;
     }
 
-    let telemetryStored = false;
-    if (payload.stage_metrics && typeof payload.stage_metrics === "object") {
-      const { data: telemetryData, error: telemetryError } = await sb.rpc(
-        "admin_import_question_factory_stage_metrics",
-        { p_payload: payload }
-      );
-      if (telemetryError) {
-        console.warn("Etapa importada, mas a telemetria não pôde ser registrada:", telemetryError);
-      } else {
-        telemetryStored = Boolean(telemetryData?.stored);
-      }
-    }
+    const data = routedData?.result || {};
+    const telemetryStored = routedData?.stage_metrics?.stored === true;
 
     if (
       payload.style_score != null
@@ -2499,15 +2491,24 @@
     }
 
     if (message) {
-      const baseMessage = payload.review_stage === "prompt_calibration" ? "Calibração registrada." : payload.review_stage === "chatgpt_adjudication" ? `Julgamentos importados: ${data?.decisions_imported || 0}.` : state.qfReviewImportMode === "lot"
-        ? (data?.ready ? "Revisão final importada. Lote marcado como pronto." : "Revisão final importada. O lote ainda possui etapa pendente.")
-        : state.qfReviewImportMode === "correction"
-          ? `Correções importadas: ${data?.corrected || 0}. Próxima etapa: nova resolução cega e reauditoria Perplexity.`
-          : payload.review_stage === "chatgpt_initial" && Array.isArray(payload.initial_reviews)
-            ? `Revisão adversarial importada: ${data?.imported || 0} analisadas · ${data?.corrected || 0} autocorrigidas · ${data?.final_reaudited || 0} reavaliadas. ${data?.ready_for_blind_resolution ? "Bloco liberado para resolução cega." : "Ainda há itens que precisam de nova correção pelo ChatGPT."}`
-            : `Importadas ${data?.imported || 0}: ${data?.approved || 0} aprovadas, ${data?.needs_revision || 0} a rever.`;
+      let baseMessage = "Etapa importada.";
+      if (inferredStage === "generation") {
+        baseMessage = `Geração importada: ${data?.inserted || 0} novas · ${data?.idempotent_skipped || 0} já existentes · bloco ${data?.block_total || 0}/200. Próxima etapa: ${data?.next_stage || "generation"}.`;
+      } else if (inferredStage === "prompt_calibration") {
+        baseMessage = "Calibração registrada.";
+      } else if (inferredStage === "chatgpt_adjudication") {
+        baseMessage = `Julgamentos importados: ${data?.decisions_imported || 0}.`;
+      } else if (["chatgpt_correction","chatgpt_correction_review"].includes(inferredStage)) {
+        baseMessage = `Correções importadas: ${data?.corrected || 0}. Próxima etapa: nova resolução cega e reauditoria.`;
+      } else if (inferredStage === "chatgpt_initial" && Array.isArray(payload.initial_reviews)) {
+        baseMessage = `Revisão adversarial importada: ${data?.imported || 0} analisadas · ${data?.corrected || 0} autocorrigidas · ${data?.final_reaudited || 0} reavaliadas. ${data?.ready_for_blind_resolution ? "Bloco liberado para resolução cega." : "Ainda há itens pendentes."}`;
+      } else if (isLotStage) {
+        baseMessage = data?.ready ? "Revisão final importada. Lote pronto para a próxima validação." : "Revisão final importada. O lote ainda possui etapa pendente.";
+      } else {
+        baseMessage = `Importadas ${data?.imported || 0}: ${data?.approved || 0} aprovadas, ${data?.needs_revision || 0} a rever, ${data?.rejected || 0} rejeitadas.`;
+      }
       message.textContent = telemetryStored
-        ? `${baseMessage} Métricas da etapa atualizadas no dashboard.`
+        ? `${baseMessage} Métricas registradas.`
         : baseMessage;
     }
 
@@ -3678,6 +3679,13 @@
         const [batch,block] = blockButton.dataset.qfViewBlock.split(":");
         const issuesOnly = /pendências/i.test(blockButton.textContent || "");
         openQuestionFactoryBlock(batch,block,issuesOnly);
+        return;
+      }
+
+      const stageImportButton = event.target.closest("[data-qf-import-stage]");
+      if (stageImportButton) {
+        const [batch,block] = stageImportButton.dataset.qfImportStage.split(":");
+        openReviewImportDialog(batch,block,"stage");
         return;
       }
 
