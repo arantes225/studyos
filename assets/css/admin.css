@@ -4245,3 +4245,45 @@ body.admin-unlocked #admin-app {
 .admin-qf-maintenance-note {
   margin: 0 0 8px;
 }
+
+
+/* Fábrica — lote de 1.000 como unidade operacional */
+.admin-qf-lot-start{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.admin-qf-lot-start select{
+  min-width:160px;
+  min-height:38px;
+  padding:0 10px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--surface);
+  color:var(--text);
+  font:inherit;
+}
+.admin-qf-start-lot-status{
+  width:100%;
+  text-align:right;
+  color:var(--muted);
+  font-size:10px;
+}
+.admin-qf-batch-actions [data-qf-continue-batch]{
+  font-weight:700;
+}
+@media(max-width:700px){
+  .admin-qf-lot-start{
+    width:100%;
+    justify-content:stretch;
+  }
+  .admin-qf-lot-start select,
+  .admin-qf-lot-start .button{
+    width:100%;
+  }
+  .admin-qf-start-lot-status{
+    text-align:left;
+  }
+}
