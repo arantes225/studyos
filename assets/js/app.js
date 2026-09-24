@@ -1799,6 +1799,23 @@ async function iniciarLofiGlobal(userId) {
     async () => {
       if (
         manager.playMode
+        === "repeat"
+      ) {
+        try {
+          manager.audio.currentTime = 0;
+          await manager.audio.play();
+        } catch (error) {
+          console.warn(
+            "Não foi possível reiniciar a faixa em repetição:",
+            error
+          );
+        }
+
+        return;
+      }
+
+      if (
+        manager.playMode
         === "sequence"
       ) {
         await tocarProximaFaixaLofi(
