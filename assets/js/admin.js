@@ -1983,6 +1983,17 @@
       );
     }
 
+    if (next === "factory") {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          document.querySelector(".admin-qf-lots-section")?.scrollIntoView({
+            behavior: "auto",
+            block: "start"
+          });
+        });
+      });
+    }
+
     try {
       sessionStorage.setItem("luria-admin-view", next);
     } catch (_) {}
