@@ -889,7 +889,7 @@
       { label:"Aproveitamento em questões", value:percent(m.accuracyQ,1), helper:comparePP(m.accuracyQ,m.prevAccuracyQ), progress:m.accuracyQ },
       { label:"Revisões de flashcards", value:num(m.flashReviews.length), helper:compare(m.flashReviews.length,m.prevFlashReviews.length), progress:Math.min(100,m.flashReviews.length/1500*100) },
       { label:"Retenção dos flashcards", value:percent(m.retention,1), helper:`${m.reviewedCards.length} cards estimados`, progress:m.retention },
-      { label:"CCQs ativos", value:num(m.err.length), helper:`${m.overdueErr} atrasados`, progress:pct(m.err.length,Math.max(1,state.static.errors.length)) },
+      { label:"Pulos do Gato ativos", value:num(m.err.length), helper:`${m.overdueErr} atrasados`, progress:pct(m.err.length,Math.max(1,state.static.errors.length)) },
       { label:"Ofensiva", value:`${currentStreak()} d`, helper:`recorde ${longestStreak()} dias`, progress:pct(currentStreak(),Math.max(1,longestStreak())) }
     ]);
 
@@ -943,7 +943,7 @@
       "general-area-table",
       [
         {label:"Área"},{label:"Progresso aulas"},{label:"Questões",num:true},{label:"Acerto",num:true},
-        {label:"Retenção FC",num:true},{label:"CCQs ativos",num:true},{label:"Tempo",num:true}
+        {label:"Retenção FC",num:true},{label:"Pulos do Gato ativos",num:true},{label:"Tempo",num:true}
       ],
       rows.map(x=>[
         `<strong>${esc(x.a)}</strong>`,
@@ -981,7 +981,7 @@
     const late = state.static.topics.filter(x=>!completedTopic(x)&&x.scheduled_date&&parseDate(x.scheduled_date)<startDay(new Date())).length;
     if (late) out.push({title:"Cronograma",text:`${late} ${late===1?"aula está atrasada":"aulas estão atrasadas"} neste momento.`});
 
-    if (m.overdueErr) out.push({title:"Caderno de Erros",text:`${m.overdueErr} CCQs estão vencidos (${percent(pct(m.overdueErr,m.err.length))} do caderno ativo).`});
+    if (m.overdueErr) out.push({title:"Caderno de Erros",text:`${m.overdueErr} Pulos do Gato estão vencidos (${percent(pct(m.overdueErr,m.err.length))} do caderno ativo).`});
 
     insights("general-insights",out);
   }
@@ -1392,15 +1392,15 @@
     const m=errorData();
 
     renderSummary("error-summary", [
-      {label:"CCQs ativos",value:num(m.active.length),helper:`${m.all.length} registrados`,progress:pct(m.active.length,m.all.length)},
+      {label:"Pulos do Gato ativos",value:num(m.active.length),helper:`${m.all.length} registrados`,progress:pct(m.active.length,m.all.length)},
       {label:"Revisões realizadas",value:num(m.reviews.length),helper:compare(m.reviews.length,m.prevReviews.length),progress:Math.min(100,m.reviews.length/500*100)},
-      {label:"Retenção atual",value:percent(m.ret,1),helper:`${m.reviewed.length} CCQs estimados`,progress:m.ret},
+      {label:"Retenção atual",value:percent(m.ret,1),helper:`${m.reviewed.length} Pulos do Gato estimados`,progress:m.ret},
       {label:"Atrasados",value:num(m.overdue),helper:`${percent(pct(m.overdue,m.active.length))} dos ativos`,progress:pct(m.overdue,m.active.length)},
-      {label:"CCQs criados",value:num(m.created.length),helper:"novos registros",progress:Math.min(100,m.created.length/100*100)},
+      {label:"Pulos do Gato criados",value:num(m.created.length),helper:"novos registros",progress:Math.min(100,m.created.length/100*100)},
       {label:"Únicos revisados",value:num(m.unique),helper:`${percent(pct(m.unique,m.active.length))} dos ativos`,progress:pct(m.unique,m.active.length)},
       {label:"Nunca revisados",value:num(m.never),helper:`${percent(pct(m.never,m.active.length))} dos ativos`,progress:pct(m.never,m.active.length)},
       {label:"Estabilidade média",value:days(mean(m.stability),1),helper:`mediana ${days(median(m.stability),1)}`,progress:Math.min(100,mean(m.stability)/90*100)},
-      {label:"Área com mais CCQs",value:m.areaGroups[0]?.label||"—",helper:m.areaGroups[0]?`${m.areaGroups[0].count} ativos`:"sem dados",progress:pct(m.areaGroups[0]?.count||0,m.active.length)}
+      {label:"Área com mais Pulos do Gato",value:m.areaGroups[0]?.label||"—",helper:m.areaGroups[0]?`${m.areaGroups[0].count} ativos`:"sem dados",progress:pct(m.areaGroups[0]?.count||0,m.active.length)}
     ]);
 
     renderMetricStrip("error-volume-metrics",[]);
@@ -1416,7 +1416,7 @@
     ]);
 
     chart("chart-error-area","doughnut",m.areaGroups.slice(0,8).map(x=>x.label),[
-      {label:"CCQs",data:m.areaGroups.slice(0,8).map(x=>x.count)}
+      {label:"Pulos do Gato",data:m.areaGroups.slice(0,8).map(x=>x.count)}
     ],{extra:{cutout:"64%"}});
 
     const workload=[];
@@ -1427,10 +1427,10 @@
         value:m.active.filter(x=>dateKey(x.due_date)===key).length
       });
     }
-    chart("chart-error-workload","bar",workload.map(x=>x.label),[{label:"CCQs",data:workload.map(x=>x.value)}]);
+    chart("chart-error-workload","bar",workload.map(x=>x.label),[{label:"Pulos do Gato",data:workload.map(x=>x.value)}]);
 
     progressList("error-area-retention",m.byArea.slice(0,12).map(x=>({
-      label:x.label,value:x.value,helper:`${x.evidence} CCQs`
+      label:x.label,value:x.value,helper:`${x.evidence} Pulos do Gato`
     })));
 
     const depth=[
@@ -1441,7 +1441,7 @@
       ["4x",m.active.filter(x=>x.review_count===4).length],
       ["5+x",m.active.filter(x=>x.review_count>=5).length]
     ];
-    chart("chart-error-depth","bar",depth.map(x=>x[0]),[{label:"CCQs",data:depth.map(x=>x[1])}]);
+    chart("chart-error-depth","bar",depth.map(x=>x[0]),[{label:"Pulos do Gato",data:depth.map(x=>x[1])}]);
 
     const subjRows=Array.from(group(m.active,subject).entries()).map(([label,items])=>{
       const reviewed=items.filter(x=>x.review_count>0&&x.last_reviewed_at);
@@ -1454,7 +1454,7 @@
     }).sort((a,b)=>b.active-a.active).slice(0,50);
 
     table("error-subject-table",
-      [{label:"Matéria"},{label:"CCQs ativos",num:true},{label:"Revisões",num:true},{label:"Retenção",num:true},{label:"Estabilidade",num:true},{label:"Intervalo",num:true},{label:"Atrasados",num:true}],
+      [{label:"Matéria"},{label:"Pulos do Gato ativos",num:true},{label:"Revisões",num:true},{label:"Retenção",num:true},{label:"Estabilidade",num:true},{label:"Intervalo",num:true},{label:"Atrasados",num:true}],
       subjRows.map(x=>[
         `<strong>${esc(x.label)}</strong>`,num(x.active),num(x.reviews),x.ret?percent(x.ret,1):"—",
         x.stability?days(x.stability,1):"—",x.interval?days(x.interval,1):"—",num(x.late)
@@ -1462,13 +1462,13 @@
     );
 
     const persistent=m.active.slice().sort((a,b)=>b.review_count-a.review_count).slice(0,10).map(x=>({
-      label:(x.ccq||x.theme||"CCQ").slice(0,78),value:x.review_count,
+      label:(x.ccq||x.theme||"Pulo do Gato").slice(0,78),value:x.review_count,
       helper:`${subject(x)} · ${x.last_reviewed_at?`última ${fmtDate(x.last_reviewed_at)}`:"nunca revisado"}`
     }));
     progressList("error-most-reviewed",persistent,v=>`${num(v)}×`,Math.max(1,...persistent.map(x=>x.value)));
 
     chart("chart-error-subject","bar",m.subjectGroups.slice(0,10).map(x=>x.label),[
-      {label:"CCQs ativos",data:m.subjectGroups.slice(0,10).map(x=>x.count)}
+      {label:"Pulos do Gato ativos",data:m.subjectGroups.slice(0,10).map(x=>x.count)}
     ]);
 
     const out=[];
@@ -1500,28 +1500,28 @@
       const top = m.areaGroups[0];
       out.push({
         title:"Concentração do caderno",
-        text:`${top.label} concentra ${num(top.count)} CCQs ativos (${percent(pct(top.count,activeCount),1)} do total ativo).`
+        text:`${top.label} concentra ${num(top.count)} Pulos do Gato ativos (${percent(pct(top.count,activeCount),1)} do total ativo).`
       });
     }
 
     if(weakestArea) {
       out.push({
         title:"Prioridade de revisão",
-        text:`${weakestArea.label} apresenta a menor retenção estimada entre áreas com pelo menos 2 CCQs revisados: ${percent(weakestArea.value,1)} em ${weakestArea.evidence} CCQs.`
+        text:`${weakestArea.label} apresenta a menor retenção estimada entre áreas com pelo menos 2 Pulos do Gato revisados: ${percent(weakestArea.value,1)} em ${weakestArea.evidence} Pulos do Gato.`
       });
     }
 
     if(weakestSubject) {
       out.push({
         title:"Matéria mais frágil",
-        text:`${weakestSubject.label} tem retenção estimada de ${percent(weakestSubject.value,1)} em ${weakestSubject.evidence} CCQs revisados.`
+        text:`${weakestSubject.label} tem retenção estimada de ${percent(weakestSubject.value,1)} em ${weakestSubject.evidence} Pulos do Gato revisados.`
       });
     }
 
     if(activeCount) {
       out.push({
         title:"Cobertura das revisões",
-        text:`${percent(reviewedCoverage,1)} dos CCQs ativos foram revisados no período. ${m.never ? `${num(m.never)} (${percent(neverShare,1)}) nunca foram revisados.` : "Todos os CCQs ativos já tiveram ao menos uma revisão."}`
+        text:`${percent(reviewedCoverage,1)} dos Pulos do Gato ativos foram revisados no período. ${m.never ? `${num(m.never)} (${percent(neverShare,1)}) nunca foram revisados.` : "Todos os Pulos do Gato ativos já tiveram ao menos uma revisão."}`
       });
     }
 
@@ -1535,7 +1535,7 @@
     if(m.threePlus) {
       out.push({
         title:"Erros persistentes",
-        text:`${num(m.threePlus)} CCQs já precisaram de 3 ou mais revisões (${percent(deepShare,1)} dos ativos), indicando conteúdos que merecem atenção recorrente.`
+        text:`${num(m.threePlus)} Pulos do Gato já precisaram de 3 ou mais revisões (${percent(deepShare,1)} dos ativos), indicando conteúdos que merecem atenção recorrente.`
       });
     }
 
@@ -1543,14 +1543,14 @@
       const balance = m.reviews.length - m.created.length;
       out.push({
         title:"Entrada × revisão",
-        text:`No período, foram criados ${num(m.created.length)} CCQs e realizadas ${num(m.reviews.length)} revisões. ${balance >= 0 ? `As revisões superaram as novas entradas em ${num(balance)}.` : `Entraram ${num(Math.abs(balance))} CCQs a mais do que o número de revisões realizadas.`}`
+        text:`No período, foram criados ${num(m.created.length)} Pulos do Gato e realizadas ${num(m.reviews.length)} revisões. ${balance >= 0 ? `As revisões superaram as novas entradas em ${num(balance)}.` : `Entraram ${num(Math.abs(balance))} Pulos do Gato a mais do que o número de revisões realizadas.`}`
       });
     }
 
     if(m.originated) {
       out.push({
         title:"Questões → Caderno",
-        text:`${num(m.originated)} erros de questões foram transformados em CCQs no período, conectando prática de questões ao ciclo de revisão.`
+        text:`${num(m.originated)} erros de questões foram transformados em Pulos do Gato no período, conectando prática de questões ao ciclo de revisão.`
       });
     }
 
