@@ -4403,3 +4403,11 @@ body.admin-unlocked #admin-app {
     text-align:left;
   }
 }
+
+
+.admin-qf-phase-prompt{
+  font-weight:800;
+}
+.admin-qf-batch-head-actions .admin-qf-phase-prompt{
+  white-space:nowrap;
+}
