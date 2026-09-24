@@ -1587,3 +1587,57 @@
 .error-detail-block .error-image-load + .error-image {
   margin-top: 10px;
 }
+
+
+/* Pulo do Gato brand on error review card */
+.error-pulo-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 82px;
+  margin: 0 auto 16px;
+  text-align: center;
+}
+
+.error-pulo-brand img {
+  display: none;
+  width: auto;
+  height: 82px;
+  max-width: min(320px, 100%);
+  object-fit: contain;
+  margin: 0 auto;
+}
+
+.error-pulo-brand .error-pulo-brand-light {
+  display: block;
+}
+
+:root[data-theme="dark"] .error-pulo-brand .error-pulo-brand-light,
+:root[data-theme="dark"] .error-pulo-brand .error-pulo-brand-pink {
+  display: none;
+}
+
+:root[data-theme="dark"] .error-pulo-brand .error-pulo-brand-dark {
+  display: block;
+}
+
+:root[data-theme="leila-mood"] .error-pulo-brand .error-pulo-brand-light,
+:root[data-theme="leila-mood"] .error-pulo-brand .error-pulo-brand-dark {
+  display: none;
+}
+
+:root[data-theme="leila-mood"] .error-pulo-brand .error-pulo-brand-pink {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .error-pulo-brand .error-pulo-brand-light,
+  :root:not([data-theme]) .error-pulo-brand .error-pulo-brand-pink {
+    display: none;
+  }
+
+  :root:not([data-theme]) .error-pulo-brand .error-pulo-brand-dark {
+    display: block;
+  }
+}
