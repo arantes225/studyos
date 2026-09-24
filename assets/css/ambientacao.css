@@ -726,3 +726,79 @@
     flex-direction: column;
   }
 }
+
+
+/* Compact ambient audio player */
+.lofi-player {
+  gap: 9px;
+}
+
+.lofi-player-main-compact {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.lofi-player-main-compact .lofi-playback-mode-actions {
+  display: inline-grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 4px;
+  padding: 3px;
+  border-radius: 10px;
+}
+
+.lofi-player-main-compact .lofi-mode-button {
+  min-height: 30px;
+  padding: 0 8px;
+  font-size: 9px;
+  border-radius: 7px;
+}
+
+.lofi-track-list-wrap {
+  gap: 5px;
+}
+
+.lofi-track-list-head {
+  min-height: 18px;
+}
+
+.lofi-track-list {
+  gap: 5px;
+  max-height: 132px;
+}
+
+.lofi-track-item {
+  min-height: 40px;
+  grid-template-columns: 26px minmax(0,1fr) 24px;
+  gap: 8px;
+  padding: 6px 9px;
+}
+
+.lofi-track-item-copy {
+  gap: 0;
+}
+
+.lofi-track-item-copy strong {
+  font-size: 10px;
+}
+
+.lofi-track-item-copy small {
+  font-size: 8px;
+}
+
+.lofi-note-row {
+  margin-top: 0;
+}
+
+@media (max-width: 720px) {
+  .lofi-player-main-compact {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .lofi-player-main-compact .lofi-playback-mode-actions {
+    grid-column: 1 / -1;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+  }
+}
