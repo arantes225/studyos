@@ -3025,6 +3025,207 @@ function setNotebookEditMode(
 }
 
 
+
+const NOTEBOOK_LAZY_IMAGE_PLACEHOLDER =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdj+P///38ACfsD/QeGmOQAAAAASUVORK5CYII=";
+
+
+function prepareNotebookLazyImageHtml(
+  html
+) {
+  const safeHtml =
+    sanitizeHtml(
+      html
+      || ""
+    );
+
+  const template =
+    document.createElement(
+      "template"
+    );
+
+  template.innerHTML =
+    safeHtml;
+
+  template.content
+    .querySelectorAll(
+      "img"
+    )
+    .forEach(
+      image => {
+        const src =
+          String(
+            image.getAttribute(
+              "src"
+            )
+            || ""
+          )
+            .trim();
+
+        if (
+          !/^https:\/\//i.test(
+            src
+          )
+        ) {
+          return;
+        }
+
+        image.setAttribute(
+          "data-luria-lazy-src",
+          src
+        );
+
+        image.setAttribute(
+          "src",
+          NOTEBOOK_LAZY_IMAGE_PLACEHOLDER
+        );
+
+        image.setAttribute(
+          "title",
+          "Clique para carregar a imagem"
+        );
+
+        image.setAttribute(
+          "aria-label",
+          "Clique para carregar a imagem"
+        );
+
+        image.classList.add(
+          "notebook-lazy-image"
+        );
+      }
+    );
+
+  return template.innerHTML;
+}
+
+
+function notebookHtmlForSave(
+  editor
+) {
+  if (!editor) {
+    return "";
+  }
+
+  const clone =
+    editor.cloneNode(
+      true
+    );
+
+  clone
+    .querySelectorAll(
+      "img[data-luria-lazy-src]"
+    )
+    .forEach(
+      image => {
+        const source =
+          image.getAttribute(
+            "data-luria-lazy-src"
+          );
+
+        if (source) {
+          image.setAttribute(
+            "src",
+            source
+          );
+        }
+
+        image.removeAttribute(
+          "data-luria-lazy-src"
+        );
+
+        image.classList.remove(
+          "notebook-lazy-image"
+        );
+
+        image.removeAttribute(
+          "title"
+        );
+
+        image.removeAttribute(
+          "aria-label"
+        );
+      }
+    );
+
+  return sanitizeHtml(
+    clone.innerHTML
+  );
+}
+
+
+function loadNotebookImageOnDemand(
+  image
+) {
+  if (
+    !image
+    || image.tagName !== "IMG"
+  ) {
+    return;
+  }
+
+  const source =
+    image.getAttribute(
+      "data-luria-lazy-src"
+    );
+
+  if (
+    !source
+    || image.dataset
+      .luriaLoaded === "1"
+  ) {
+    return;
+  }
+
+  image.dataset.luriaLoaded =
+    "1";
+
+  image.classList.add(
+    "is-loading"
+  );
+
+  image.onload =
+    () => {
+      image.classList.remove(
+        "is-loading"
+      );
+
+      image.classList.add(
+        "is-loaded"
+      );
+
+      image.removeAttribute(
+        "title"
+      );
+    };
+
+  image.onerror =
+    () => {
+      image.dataset.luriaLoaded =
+        "0";
+
+      image.classList.remove(
+        "is-loading"
+      );
+
+      image.setAttribute(
+        "src",
+        NOTEBOOK_LAZY_IMAGE_PLACEHOLDER
+      );
+
+      image.setAttribute(
+        "title",
+        "Não foi possível carregar. Clique para tentar novamente."
+      );
+    };
+
+  image.setAttribute(
+    "src",
+    source
+  );
+}
+
+
 function renderDocument() {
 
   const current =
@@ -3232,7 +3433,7 @@ function renderDocument() {
   ) {
 
     editor.innerHTML =
-      sanitizeHtml(
+      prepareNotebookLazyImageHtml(
         effectiveContent
         || ""
       );
@@ -3744,8 +3945,8 @@ async function saveCurrentNotebook(
 
 
   const contentHtml =
-    sanitizeHtml(
-      editor.innerHTML
+    notebookHtmlForSave(
+      editor
     );
 
 
@@ -17047,6 +17248,37 @@ function wireEvents() {
 
   editor
     ?.addEventListener(
+      "click",
+      (event) => {
+        const image =
+          event.target
+            ?.closest
+            ?.( "img[data-luria-lazy-src]" );
+
+        if (
+          !image
+          || !editor.contains(
+            image
+          )
+        ) {
+          return;
+        }
+
+        if (
+          image.dataset
+            .luriaLoaded !== "1"
+        ) {
+          event.preventDefault();
+          loadNotebookImageOnDemand(
+            image
+          );
+        }
+      }
+    );
+
+
+  editor
+    ?.addEventListener(
       "paste",
       (event) => {
 
@@ -18804,7 +19036,7 @@ function applyNotebookRealtimeUpdate(
 
   if (editor) {
     const remoteHtml =
-      sanitizeHtml(
+      prepareNotebookLazyImageHtml(
         updated.content_html
         || ""
       );
