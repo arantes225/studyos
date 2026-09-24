@@ -418,6 +418,13 @@ async function loadErrorAreas() {
    IMAGEM — VISUALIZAÇÃO
    ========================================================= */
 
+const ERROR_IMAGE_SIGNED_URL_CACHE_MS =
+  45 * 60 * 1000;
+
+const errorImageSignedUrlCache =
+  new Map();
+
+
 async function signedErrorImage(
   path
 ) {
@@ -430,23 +437,132 @@ async function signedErrorImage(
     return null;
   }
 
+  const key =
+    path.trim();
+
+  const cached =
+    errorImageSignedUrlCache.get(
+      key
+    );
+
+  if (
+    cached
+    && cached.expiresAt
+      > Date.now()
+  ) {
+    return cached.url;
+  }
 
   const {
     data,
     error
   } =
-    await window.LuriaStorage.createSignedUrl("error_images", path, 3600);
+    await window.LuriaStorage.createSignedUrl(
+      "error_images",
+      key,
+      3600
+    );
 
-
-  if (error) {
+  if (
+    error
+    || !data?.signedUrl
+  ) {
     return null;
   }
 
-
-  return (
-    data?.signedUrl
-    || null
+  errorImageSignedUrlCache.set(
+    key,
+    {
+      url:
+        data.signedUrl,
+      expiresAt:
+        Date.now()
+        + ERROR_IMAGE_SIGNED_URL_CACHE_MS
+    }
   );
+
+  return data.signedUrl;
+}
+
+
+function prepareErrorImage(
+  path
+) {
+  const image =
+    document.getElementById(
+      "error-question-image"
+    );
+
+  const button =
+    document.getElementById(
+      "error-question-image-load"
+    );
+
+  if (image) {
+    image.hidden =
+      true;
+
+    image.style.display =
+      "none";
+
+    image.removeAttribute(
+      "src"
+    );
+
+    image.onload =
+      null;
+
+    image.onerror =
+      null;
+  }
+
+  if (!button) {
+    return;
+  }
+
+  const hasImage =
+    Boolean(
+      path
+      && typeof path
+        === "string"
+      && path.trim()
+    );
+
+  button.hidden =
+    !hasImage;
+
+  button.disabled =
+    false;
+
+  button.textContent =
+    "Ver imagem";
+
+  button.onclick =
+    hasImage
+      ? async () => {
+          button.disabled =
+            true;
+
+          button.textContent =
+            "Carregando...";
+
+          const loaded =
+            await showErrorImage(
+              path
+            );
+
+          if (loaded) {
+            button.hidden =
+              true;
+          } else {
+            button.disabled =
+              false;
+
+            button.textContent =
+              "Tentar novamente";
+          }
+        }
+      : null;
 }
 
 
@@ -458,28 +574,9 @@ async function showErrorImage(
       "error-question-image"
     );
 
-
   if (!image) {
-    return;
+    return false;
   }
-
-
-  image.hidden =
-    true;
-
-  image.style.display =
-    "none";
-
-  image.removeAttribute(
-    "src"
-  );
-
-  image.onload =
-    null;
-
-  image.onerror =
-    null;
-
 
   if (
     !path
@@ -487,47 +584,60 @@ async function showErrorImage(
       !== "string"
     || !path.trim()
   ) {
-    return;
+    return false;
   }
-
 
   const url =
     await signedErrorImage(
       path
     );
 
-
   if (!url) {
-    return;
+    return false;
   }
 
-
-  image.onload =
-    () => {
-      image.hidden =
-        false;
-
-      image.style.display =
-        "block";
-    };
-
-
-  image.onerror =
-    () => {
+  return new Promise(
+    resolve => {
       image.hidden =
         true;
 
       image.style.display =
         "none";
 
-      image.removeAttribute(
-        "src"
-      );
-    };
+      image.onload =
+        () => {
+          image.hidden =
+            false;
 
+          image.style.display =
+            "block";
 
-  image.src =
-    url;
+          resolve(
+            true
+          );
+        };
+
+      image.onerror =
+        () => {
+          image.hidden =
+            true;
+
+          image.style.display =
+            "none";
+
+          image.removeAttribute(
+            "src"
+          );
+
+          resolve(
+            false
+          );
+        };
+
+      image.src =
+        url;
+    }
+  );
 }
 
 
@@ -2512,7 +2622,7 @@ async function renderCurrentError() {
   );
 
 
-  await showErrorImage(
+  prepareErrorImage(
     item.question_image_path
   );
 }
