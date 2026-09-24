@@ -2815,13 +2815,11 @@
           ? window.LuriaQuestionPrompts.globalContract()
           : "";
         const promptStages = [
-          ["01","Prompt mestre · geração",null,"chatgpt"],
+          ["01","Gerar 200 questões",null,"chatgpt"],
           ["02","ChatGPT · revisão adversarial + autocorreção","chatgpt_initial","chatgpt"],
-          ["03","Perplexity · resolução cega","blind_resolution","perplexity"],
-          ["04","Perplexity · auditoria","perplexity_initial","perplexity"],
-          ["05","ChatGPT · julgar parecer","chatgpt_adjudication","chatgpt"],
-          ["06","ChatGPT · corrigir consenso","chatgpt_correction","chatgpt"],
-          ["07","Perplexity · reauditoria","perplexity_reaudit","perplexity"]
+          ["03","Perplexity · resolução cega + auditoria","perplexity_cycle","perplexity"],
+          ["04","ChatGPT · julgar + corrigir","chatgpt_correction_cycle","chatgpt"],
+          ["05","Perplexity · confirmar correções","perplexity_reaudit","perplexity"]
         ];
         const finalLotStages = [
           ["09A","ChatGPT · revisão global das 1.000","lot_chatgpt_final","chatgpt"],
