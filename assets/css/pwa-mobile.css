@@ -1618,7 +1618,7 @@
     gap: 9px !important;
     padding: 0 9px !important;
     border-radius: 9px !important;
-    font-size: 12px !important;
+    font-size: 14px !important;
   }
 
   .pwa-standalone .nav-icon {
@@ -1639,7 +1639,7 @@
     min-height: 32px !important;
     padding: 0 8px !important;
     border-radius: 8px !important;
-    font-size: 10.5px !important;
+    font-size: 12.5px !important;
   }
 
   .pwa-standalone .nav-group-chevron {
