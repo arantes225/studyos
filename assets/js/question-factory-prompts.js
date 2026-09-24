@@ -192,7 +192,8 @@ Após as três aprovações da versão atual, aguardar aprovação humana final 
     const fields=['question_id','version','enunciado','alternativa_a','alternativa_b','alternativa_c','alternativa_d'];
     return questions.map(q=>Object.fromEntries(fields.map(k=>[k,q[k]])));
   }
-  const api={VERSION,rubric,editable,generation,segment,blind};
+  const globalContract=()=>rules;
+  const api={VERSION,rubric,editable,generation,segment,blind,globalContract};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   root.LuriaQuestionPrompts=api;
 })(typeof window!=='undefined'?window:globalThis);
