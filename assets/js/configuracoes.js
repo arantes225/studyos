@@ -988,6 +988,150 @@ function loadAccountSecurity() {
 }
 
 
+function setPasskeyStatus(text, type = "") {
+  const element = document.getElementById("passkey-status");
+  if (!element) return;
+  element.textContent = text;
+  element.className = `settings-save-status ${type}`.trim();
+}
+
+function passkeySupported() {
+  return Boolean(
+    window.PublicKeyCredential
+    && settingsSb?.auth?.registerPasskey
+    && settingsSb?.auth?.passkey
+  );
+}
+
+async function loadPasskeys() {
+  const list = document.getElementById("passkey-list");
+  const button = document.getElementById("register-passkey");
+  if (!list || !button) return;
+
+  if (!passkeySupported()) {
+    button.disabled = true;
+    list.textContent = "Passkeys não são compatíveis com este navegador/dispositivo.";
+    return;
+  }
+
+  const { data, error } = await settingsSb.auth.passkey.list();
+
+  if (error) {
+    const message = String(error.message || error);
+    if (message.toLowerCase().includes("passkey_disabled")) {
+      list.textContent = "O servidor ainda não está aceitando Passkeys.";
+    } else {
+      list.textContent = "Não foi possível carregar as Passkeys cadastradas.";
+    }
+    return;
+  }
+
+  const passkeys = Array.isArray(data) ? data : [];
+  if (!passkeys.length) {
+    list.textContent = "Nenhuma Passkey cadastrada nesta conta.";
+    return;
+  }
+
+  list.innerHTML = "";
+  passkeys.forEach((passkey) => {
+    const row = document.createElement("div");
+    row.style.display = "flex";
+    row.style.alignItems = "center";
+    row.style.justifyContent = "space-between";
+    row.style.gap = "10px";
+    row.style.padding = "8px 0";
+    row.style.borderBottom = "1px solid var(--border)";
+
+    const label = document.createElement("span");
+    label.textContent = passkey.friendly_name || "Passkey cadastrada";
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "button secondary";
+    remove.textContent = "Remover";
+    remove.addEventListener("click", async () => {
+      remove.disabled = true;
+      setPasskeyStatus("Removendo Passkey...");
+      const { error: deleteError } = await settingsSb.auth.passkey.delete({
+        passkeyId: passkey.id
+      });
+
+      if (deleteError) {
+        remove.disabled = false;
+        setPasskeyStatus(
+          `Não foi possível remover: ${deleteError.message}`,
+          "error"
+        );
+        return;
+      }
+
+      setPasskeyStatus("Passkey removida.", "success");
+      await loadPasskeys();
+    });
+
+    row.append(label, remove);
+    list.appendChild(row);
+  });
+}
+
+async function registerPasskey() {
+  const button = document.getElementById("register-passkey");
+  if (!button) return;
+
+  if (!passkeySupported()) {
+    setPasskeyStatus(
+      "Este navegador ou dispositivo não oferece suporte a Passkeys.",
+      "error"
+    );
+    return;
+  }
+
+  button.disabled = true;
+  setPasskeyStatus("Confirme sua identidade no dispositivo...");
+
+  try {
+    const { data, error } = await settingsSb.auth.registerPasskey();
+
+    if (error) {
+      const message = String(error.message || error);
+      setPasskeyStatus(
+        message.toLowerCase().includes("passkey_disabled")
+          ? "Passkeys ainda não estão habilitadas no servidor."
+          : message,
+        "error"
+      );
+      return;
+    }
+
+    setPasskeyStatus(
+      `Passkey ativada${data?.friendly_name ? `: ${data.friendly_name}` : ""}.`,
+      "success"
+    );
+    await loadPasskeys();
+  } catch (error) {
+    setPasskeyStatus(
+      String(error?.name || "") === "NotAllowedError"
+        ? "Cadastro cancelado ou não autorizado no dispositivo."
+        : "Não foi possível cadastrar a Passkey.",
+      "error"
+    );
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function wirePasskeySettings() {
+  const button = document.getElementById("register-passkey");
+  if (!button) return;
+
+  if (!passkeySupported()) {
+    button.disabled = true;
+    return;
+  }
+
+  button.addEventListener("click", registerPasskey);
+}
+
 async function savePassword() {
   const currentPassword =
     document
@@ -1410,10 +1554,12 @@ async function initStudySettings() {
     );
 
   loadAccountSecurity();
+  wirePasskeySettings();
 
   await Promise.all([
     loadProfileSettings(),
-    loadStudySettings()
+    loadStudySettings(),
+    loadPasskeys()
   ]);
 }
 
