@@ -283,7 +283,70 @@ ${stringify({schema_version:SCHEMA_VERSION,batch:{...context(item,ctx),question_
 Validar quantidade, IDs, sequências 1–200 e posição global, A-D, campos obrigatórios, fontes, coerência e duplicatas. Nunca preencher status approved/published. Excel apenas quando solicitado para revisão humana.`;
   }
   function reviewExample(item,stage,ctx) {
-    return {...context(item,ctx),review_stage:stage,reviewer:stage==='chatgpt_initial'?'ChatGPT':'Perplexity',reviews:[{question_id:'ID_IMUTAVEL',item_version:1,quality_score:null,component_scores:{...rubric,style:null},independent_answer:'A',original_answer:'A',status:'rejected',confidence:'high',ambiguity:false,single_best_answer:true,hard_fail:false,hard_fail_reasons:[],answer_source_issue:null,source_verification_status:'SOURCE_VERIFICATION_PENDING',style_evidence_status:'NEEDS_MORE_PRIMARY_STYLE_DATA',distractor_quality:'GOOD',alternative_granularity:'PASS',difficulty_alignment:'PASS',surface_guess_without_vignette:null,surface_guess_confidence:null,lexical_asymmetry:'PASS',best_distractor:null,best_distractor_rationale:null,counterfactual_change:null,vignette_dependency:'PASS',points_lost:[],scientific_issue:null,style_issue:null,explanation_issue:null,suggested_correction:null,verified_sources:[],proposed_change:{change_required:false,exact_replacement:{},reason:''}}],coverage:{reviewed_ids:[],pending_ids:[],complete:false},stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage,provider:stage==='chatgpt_initial'?'ChatGPT':'Perplexity',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}};
+    return {...context(item,ctx),review_stage:stage,reviewer:stage==='chatgpt_initial'?'ChatGPT':'Perplexity',reviews:[{
+      question_id:'ID_IMUTAVEL',
+      item_version:1,
+      quality_score:null,
+      component_scores:{...rubric,style:null},
+      independent_answer:'A',
+      original_answer:'A',
+      answer_agreement:'agree',
+      status:'rejected',
+      confidence:'high',
+      ambiguity:false,
+      single_best_answer:true,
+      hard_fail:false,
+      hard_fail_reasons:[],
+      source_verification_status:'SOURCE_VERIFICATION_PENDING',
+      style_evidence_status:'NEEDS_MORE_PRIMARY_STYLE_DATA',
+      verified_sources:[],
+      source_checks:[{
+        institution:'INSTITUICAO_A_VERIFICAR',
+        document:'DOCUMENTO_A_VERIFICAR',
+        year:'2026',
+        url:'https://example.org/a-verificar',
+        section:'',
+        verification_status:'PENDING',
+        url_reachable:false,
+        title_match:false,
+        year_match:false,
+        section_found:false,
+        supports_answer:false,
+        note:'Substituir por fonte real aberta e verificada.'
+      }],
+      surface_guess_without_vignette:null,
+      surface_guess_confidence:'low',
+      lexical_asymmetry:'PASS',
+      best_distractor:'B',
+      best_distractor_rationale:'Explicar por que este é o concorrente mais plausível.',
+      counterfactual_change:'Descrever pequena mudança clínica que tornaria o distrator defensável.',
+      functional_killer_1_option:'B',
+      functional_killer_1:'Dado concreto da vinheta que elimina B.',
+      functional_killer_2_option:'C',
+      functional_killer_2:'Dado concreto da vinheta que elimina C.',
+      vignette_dependency:'PASS',
+      distractor_quality:'GOOD',
+      alternative_granularity:'PASS',
+      difficulty_alignment:'PASS',
+      explanation_checks:{
+        A:{status:'PASS',reason:'Justificativa específica da alternativa A.'},
+        B:{status:'PASS',reason:'Justificativa específica da alternativa B.'},
+        C:{status:'PASS',reason:'Justificativa específica da alternativa C.'},
+        D:{status:'PASS',reason:'Justificativa específica da alternativa D.'}
+      },
+      message_key_check:{status:'PASS',reason:'É específica e discriminativa.',decisive_feature:'Dado decisivo da questão.'},
+      points_lost:[],
+      scientific_issue:null,
+      source_issue:'Fonte ainda não verificada.',
+      answer_source_issue:'Fonte ainda não verificada.',
+      explanation_issue:null,
+      distractor_issue:null,
+      style_issue:null,
+      wording_issue:null,
+      difficulty_issue:null,
+      suggested_correction:null,
+      proposed_change:{change_required:false,exact_replacement:{},reason:''}
+    }],coverage:{reviewed_ids:[],pending_ids:[],complete:false},stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage,provider:stage==='chatgpt_initial'?'ChatGPT':'Perplexity',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}};
   }
   function segment(item={},stage,ctx={}) {
     if(stage==='perplexity_cycle') return perplexityCycle(item,ctx,false);
