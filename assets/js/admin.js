@@ -2126,14 +2126,17 @@
         const rejected = Number(block?.rejected_count || 0);
         const approved = Number(block?.approved_count || 0);
         const human = block?.human_review_status || "";
-        const status = block?.perplexity_review_status || block?.status || "building";
+        const blockAction = questionFactoryBlockAction(batch.batch_number, n);
+        const machineFlowComplete = ["human_review","block_complete"].includes(String(blockAction?.next?.next_stage || ""));
+        const status = machineFlowComplete
+          ? (block?.perplexity_review_status || block?.status || "building")
+          : (block?.status || "building");
         const qMetric = Array.isArray(state.qfQuality?.blocks)
           ? state.qfQuality.blocks.find(x => Number(x.batch_number) === Number(batch.batch_number) && Number(x.block_number) === n)
           : null;
         const initialQ = qMetric?.initial_quality;
         const postQ = qMetric?.post_correction_quality;
         const finalQ = qMetric?.final_quality;
-        const blockAction = questionFactoryBlockAction(batch.batch_number, n);
 
         return `
           <article class="admin-qf-block-mini admin-qf-block-workflow" data-block-status="${esc(status)}">
@@ -2151,8 +2154,8 @@
 
             <div class="admin-qf-block-quality-mini">
               <span>Step 1 · Auditoria própria <b>${initialQ == null ? "—" : Number(initialQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
-              <span>Step 3 · Perplexity após correções <b>${postQ == null ? "—" : Number(postQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
               <span>Step 2 · Perplexity <b>${finalQ == null ? "—" : Number(finalQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
+              <span>Step 3 · Perplexity após correções <b>${postQ == null ? "—" : Number(postQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
             </div>
 
             <div class="admin-qf-block-quality-spark" aria-label="Evolução da qualidade do bloco">
@@ -2171,7 +2174,7 @@
               </div>
             ` : ""}
 
-            ${human === "pending" ? `
+            ${human === "pending" && blockAction?.next?.next_stage === "human_review" ? `
               <div class="admin-qf-human-gate">
                 <span>Sua validação</span>
                 <div>
