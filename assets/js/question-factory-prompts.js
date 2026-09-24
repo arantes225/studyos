@@ -284,6 +284,8 @@ Validar quantidade, IDs, sequências 1–200 e posição global, A-D, campos obr
     return {...context(item,ctx),review_stage:stage,reviewer:stage==='chatgpt_initial'?'ChatGPT':'Perplexity',reviews:[{question_id:'ID_IMUTAVEL',item_version:1,quality_score:null,component_scores:{...rubric,style:null},independent_answer:'A',original_answer:'A',status:'rejected',confidence:'high',ambiguity:false,single_best_answer:true,hard_fail:false,hard_fail_reasons:[],answer_source_issue:null,source_verification_status:'SOURCE_VERIFICATION_PENDING',style_evidence_status:'NEEDS_MORE_PRIMARY_STYLE_DATA',distractor_quality:'GOOD',alternative_granularity:'PASS',difficulty_alignment:'PASS',surface_guess_without_vignette:null,surface_guess_confidence:null,lexical_asymmetry:'PASS',best_distractor:null,best_distractor_rationale:null,counterfactual_change:null,vignette_dependency:'PASS',points_lost:[],scientific_issue:null,style_issue:null,explanation_issue:null,suggested_correction:null,verified_sources:[],proposed_change:{change_required:false,exact_replacement:{},reason:''}}],coverage:{reviewed_ids:[],pending_ids:[],complete:false},stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage,provider:stage==='chatgpt_initial'?'ChatGPT':'Perplexity',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}};
   }
   function segment(item={},stage,ctx={}) {
+    if(stage==='perplexity_cycle') return perplexityCycle(item,ctx,false);
+    if(stage==='chatgpt_correction_cycle') return chatgptCorrectionCycle(item,ctx);
     const common=`${rules}\n\n${profile(item)}\n${operationalAccess(ctx,stage)}\n`;
     if(stage==='generation')return generation(item,ctx);
     if(stage==='prompt_calibration')return `${common}
@@ -372,12 +374,76 @@ ${stringify({...context(item,ctx),review_stage:stage,reviewer:stage==='lot_chatg
 Após as três aprovações da versão atual, aguardar aprovação humana final no admin. Não publicar.`;
     throw new Error('Etapa desconhecida: '+stage);
   }
+  function perplexityCycle(item={},ctx={},isReaudit=false) {
+    if (isReaudit) {
+      return `FLUXO OPERACIONAL ÚNICO — PERPLEXITY · CONFIRMAÇÃO APÓS CORREÇÕES
+Execute integralmente a etapa abaixo no MESMO bloco. Não pule para aprovação humana enquanto existir qualquer needs_revision/rejected.
+
+${segment(item,'perplexity_reaudit',ctx)}
+
+REGRA DE SAÍDA:
+- Se TODAS as versões atuais auditadas estiverem aprovadas e o bloco estiver sem pendências, encerrar esta rodada e liberar a aprovação humana.
+- Se existir qualquer achado, persistir o parecer e encerrar a rodada com retorno obrigatório ao ChatGPT para julgamento/correção. Não aprovar o bloco.`;
+    }
+
+    return `FLUXO OPERACIONAL ÚNICO — PERPLEXITY · RESOLUÇÃO CEGA + AUDITORIA
+Este é UM envio operacional. Execute as duas subetapas em sequência, no MESMO bloco e sobre as MESMAS versões atuais.
+
+SUBETAPA 3A — RESOLUÇÃO CEGA
+1. Trabalhe sem consultar gabarito, explicações, fontes da resposta ou pareceres prévios.
+2. Resolva cada questão de forma independente.
+3. Persista integralmente o resultado como blind_resolution.
+4. Confirme a gravação antes de prosseguir.
+
+${segment(item,'blind_resolution',ctx)}
+
+SUBETAPA 3B — AUDITORIA PERPLEXITY
+Somente depois de a subetapa 3A estar persistida:
+1. Reabra o mesmo bloco e as mesmas versões.
+2. Faça a auditoria científica/editorial independente completa.
+3. Use exclusivamente a resposta cega já registrada para confrontar o gabarito.
+4. Persista o parecer como perplexity_initial.
+5. Não modifique a questão principal.
+
+${segment(item,'perplexity_initial',ctx)}
+
+REGRA DE SAÍDA:
+- Se não houver achados, o próximo passo é a validação do fluxo para aprovação humana.
+- Se houver needs_revision/rejected, o próximo passo obrigatório é ChatGPT · julgar + corrigir.`;
+  }
+
+  function chatgptCorrectionCycle(item={},ctx={}) {
+    return `FLUXO OPERACIONAL ÚNICO — CHATGPT · JULGAR PARECER + CORRIGIR
+Este é UM envio operacional. Execute adjudicação e correção em sequência no MESMO bloco. Não obrigue o usuário a abrir dois prompts separados.
+
+SUBETAPA 4A — JULGAR O PARECER DO PERPLEXITY
+1. Leia a questão atual e o parecer Perplexity mais recente da MESMA question_id + item_version.
+2. Classifique agree | partially_agree | disagree com justificativa.
+3. Persista a adjudicação antes de qualquer alteração.
+
+${segment(item,'chatgpt_adjudication',ctx)}
+
+SUBETAPA 4B — APLICAR AS CORREÇÕES AUTORIZADAS
+Somente após a adjudicação estar persistida:
+1. Para agree/partially_agree, aplique exatamente o approved_patch autorizado.
+2. Para disagree, não altere a questão.
+3. Preserve question_id, gere nova versão pelo backend e invalide aprovações antigas conforme o fluxo.
+4. Persista as correções como chatgpt_correction_review.
+
+${segment(item,'chatgpt_correction',ctx)}
+
+REGRA DE SAÍDA:
+- Depois de qualquer correção, o próximo passo obrigatório é Perplexity · confirmar correções.
+- Se o Perplexity ainda apontar erro, este MESMO ciclo deve ser executado novamente apenas nas pendências atuais.
+- Nunca liberar aprovação humana enquanto houver questão pendente.`;
+  }
+
   function blind(questions) {
     const fields=['question_id','version','enunciado','alternativa_a','alternativa_b','alternativa_c','alternativa_d'];
     return questions.map(q=>Object.fromEntries(fields.map(k=>[k,q[k]])));
   }
   const globalContract=()=>rules;
-  const api={VERSION,rubric,editable,generation,segment,blind,globalContract};
+  const api={VERSION,rubric,editable,generation,segment,perplexityCycle,chatgptCorrectionCycle,blind,globalContract};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   root.LuriaQuestionPrompts=api;
 })(typeof window!=='undefined'?window:globalThis);
