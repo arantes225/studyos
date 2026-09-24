@@ -2563,9 +2563,11 @@ async function renderCurrentError() {
     stage.hidden =
       true;
 
+    const selectedArea =
+      currentAreaFilter();
 
     empty.hidden =
-      false;
+      !selectedArea;
 
 
     document
