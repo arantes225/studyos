@@ -2039,7 +2039,7 @@ async function saveNewError() {
 
   if (!ccq) {
     setNewErrorStatus(
-      "Preencha o CCQ.",
+      "Preencha o Pulo do Gato.",
       "error"
     );
 
@@ -2424,7 +2424,7 @@ async function renderCurrentError() {
     )
     .textContent =
       item.ccq
-      || "Sem CCQ";
+      || "Sem Pulo do Gato";
 
 
   renderErrorMeta(
@@ -2532,10 +2532,10 @@ async function loadErrorQueue() {
 
   /*
     Pela Agenda:
-    1. busca todos os CCQs da data;
+    1. busca todos os Pulos do Gato da data;
     2. filtra a área no JavaScript de forma normalizada.
        Isso evita o caso "Sem área" / null / espaços / acentos
-       fazer a fila ficar vazia mesmo com CCQs na data.
+       fazer a fila ficar vazia mesmo com Pulos do Gato na data.
   */
   if (
     errorAgendaDate
@@ -2602,7 +2602,7 @@ async function loadErrorQueue() {
       anteriores, quando a agenda podia mudar visualmente sem
       atualizar corretamente due_date.
 
-      Se a fila exata estiver vazia, mostramos os CCQs vencidos
+      Se a fila exata estiver vazia, mostramos os Pulos do Gato vencidos
       da mesma área. Isso evita abrir a Ambientação em branco.
     */
     if (
@@ -3448,7 +3448,7 @@ async function saveEditedError() {
 
   if (!ccq) {
     setErrorEditStatus(
-      "O CCQ é obrigatório.",
+      "O Pulo do Gato é obrigatório.",
       "error"
     );
 
@@ -4185,7 +4185,7 @@ async function exportSelectedErrorsPdf() {
       state =
         errorPdfAddWrappedText(
           doc,
-          "CCQ",
+          "Pulo do Gato",
           item.ccq,
           state
         );
@@ -5007,7 +5007,7 @@ function renderErrorLibrary() {
                             <div class="error-library-card-ccq">
                               ${errorLibraryEscape(
                                 item.ccq
-                                || "Sem CCQ"
+                                || "Sem Pulo do Gato"
                               )}
                             </div>
 
@@ -5691,7 +5691,7 @@ function wireErrorLibrary() {
             !importedErrorRows.length
           ) {
             throw new Error(
-              "Nenhuma linha com CCQ foi encontrada."
+              "Nenhuma linha com Pulo do Gato foi encontrada."
             );
           }
 
