@@ -34,7 +34,9 @@
     qfReviewImportMode: "block",
     qfQuality: null,
     qfBlockFlow: [],
-    qfPromptContexts: []
+    qfPromptContexts: [],
+    qfAutoRefreshTimer: null,
+    qfAutoRefreshBusy: false
   };
 
   const METRICS = [
@@ -1723,6 +1725,8 @@
         true;
     }
 
+    startQuestionFactoryAutoRefresh();
+
     await Promise.all([
       load(),
       loadStorageExpansionGuide(),
@@ -2307,6 +2311,33 @@
         </details>
       `;
     }).join("");
+  }
+
+
+  async function refreshQuestionFactoryLive() {
+    if (state.qfAutoRefreshBusy) return;
+    if (document.hidden) return;
+    if (document.body.dataset.adminView !== "factory") return;
+
+    state.qfAutoRefreshBusy = true;
+    try {
+      await Promise.all([
+        loadQuestionFactory(),
+        loadQuestionFactoryBlockTracker(),
+        loadQuestionFactoryQuality()
+      ]);
+    } catch (error) {
+      console.warn("Falha na atualização automática da fábrica:", error);
+    } finally {
+      state.qfAutoRefreshBusy = false;
+    }
+  }
+
+  function startQuestionFactoryAutoRefresh() {
+    if (state.qfAutoRefreshTimer) {
+      clearInterval(state.qfAutoRefreshTimer);
+    }
+    state.qfAutoRefreshTimer = setInterval(refreshQuestionFactoryLive, 5000);
   }
 
   async function loadQuestionFactory() {
