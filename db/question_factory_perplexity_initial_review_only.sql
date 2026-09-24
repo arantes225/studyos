@@ -1,0 +1,13 @@
+-- LURIA 3.4 — Perplexity initial review-only persistence
+-- Applied to Studyos on 2026-09-24.
+--
+-- Guarantees:
+-- 1) perplexity_initial writes only question_factory_reviews;
+-- 2) question_factory_items is not mutated by this stage;
+-- 3) current-version coverage drives block state;
+-- 4) partial coverage never marks the block complete.
+--
+-- Live migration name:
+-- question_factory_perplexity_initial_review_only
+--
+-- See docs/question-factory-perplexity-auto-audit.md for the executor flow.
