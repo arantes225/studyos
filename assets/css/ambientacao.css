@@ -397,6 +397,153 @@
 }
 
 
+
+/* =========================================================
+   SOM AMBIENTE — LISTA + MODOS DE REPRODUÇÃO
+   ========================================================= */
+
+.lofi-playback-mode,
+.lofi-track-list-wrap {
+  display: grid;
+  gap: 9px;
+}
+
+.lofi-playback-mode > span,
+.lofi-track-list-head > span {
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.lofi-playback-mode-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.lofi-mode-button {
+  min-height: 38px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lofi-mode-button.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.lofi-mode-button:focus-visible,
+.lofi-track-item:focus-visible {
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+
+.lofi-track-list-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lofi-track-list-head small {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.lofi-track-list {
+  display: grid;
+  gap: 6px;
+}
+
+.lofi-track-list-empty {
+  padding: 14px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+.lofi-track-item {
+  width: 100%;
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 28px;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lofi-track-item.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.lofi-track-item.playing .lofi-track-play {
+  color: var(--accent);
+}
+
+.lofi-track-number {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.lofi-track-item-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.lofi-track-item-copy strong {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lofi-track-item-copy small {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.lofi-track-play {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+@media (max-width: 520px) {
+  .lofi-playback-mode-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .lofi-track-list-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+}
+
 /* =========================================================
    FASE 12.9 — CRONÔMETRO SIMPLES + POMODORO
    ========================================================= */
