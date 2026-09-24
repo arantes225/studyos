@@ -44,6 +44,8 @@ Usar fonte atual aplicável à pergunta e ao cenário brasileiro. Fonte internac
 CALIBRAÇÃO DO PROMPT: FINAL_PROMPT_SCORE >=84/100 na saída bruta inédita, antes de correções; não confundir com style_score.
 QUESTÃO FINAL: quality_score >=97/100, style >=9.7/10, rubrica completa, fontes verificadas, sem hard fail, sem ambiguidade e com única melhor resposta. Nota alta não compensa falha eliminatória.
 Feedback sobre distratores, clareza e segurança pode melhorar regras gerais; só alterar a identidade da banca com evidência primária documentada.
+PERSISTÊNCIA INDIVIDUAL OBRIGATÓRIA — ETAPAS PERPLEXITY: uma etapa blind_resolution, perplexity_initial ou perplexity_reaudit SÓ é considerada concluída quando houver um registro individual persistido em question_factory_reviews para CADA question_id + item_version processado da versão atual. stage_metrics, totais agregados, notas globais, relatórios textuais ou supabase_write de telemetria NÃO substituem a importação oficial dos reviews[]. Para bloco de 200 questões, complete=true exige 200 registros individuais da etapa na versão atual. Se a persistência individual falhar, retornar coverage.complete=false, listar pending_ids, NÃO marcar o bloco como concluído, NÃO liberar a próxima fase e NÃO declarar sucesso. A gravação oficial deve ocorrer pelo importador controlado da etapa (preferencialmente public.admin_import_question_factory_stage(...) roteando para blind_resolution/perplexity_initial/perplexity_reaudit), nunca por INSERT/UPDATE direto nas tabelas.
+CONFIRMAÇÃO APÓS GRAVAÇÃO: depois de importar a etapa, reconsultar o bloco e conferir que a contagem de revisões individuais da etapa para item_version atual corresponde exatamente ao total processado. Só então informar que a etapa foi persistida e permitir transição de fluxo.
 TELEMETRIA OBRIGATÓRIA POR ETAPA: toda saída JSON deve incluir um objeto top-level stage_metrics. Ele é lido pelo Admin e persistido no Supabase para atualizar o dashboard automaticamente. Preencher com dados REAIS da etapa; nunca estimar contagens. Estrutura obrigatória:
 stage_metrics = {
   exam_style: banca atual,
@@ -390,8 +392,9 @@ SUBETAPA 5B — REAUDITORIA PERPLEXITY
 Somente depois da nova resolução cega estar persistida:
 1. Reabra a MESMA versão atual.
 2. Confira a correção contra ciência, fontes, estilo, single-best-answer, Pulo do Gato e explicações A-D.
-3. Persista como perplexity_reaudit.
-4. Não altere diretamente a questão.
+3. Persista como perplexity_reaudit POR QUESTÃO usando o importador oficial; stage_metrics sozinho NÃO conclui esta fase.
+4. Reconsulte o bloco e confirme que todas as versões atuais processadas têm review individual perplexity_reaudit. Se qualquer uma faltar, coverage.complete=false e não libere a próxima fase.
+5. Não altere diretamente a questão.
 
 ${segment(item,'perplexity_reaudit',ctx)}
 
@@ -406,8 +409,9 @@ Este é UM envio operacional. Execute as duas subetapas em sequência, no MESMO 
 SUBETAPA 3A — RESOLUÇÃO CEGA
 1. Trabalhe sem consultar gabarito, explicações, fontes da resposta ou pareceres prévios.
 2. Resolva cada questão de forma independente.
-3. Persista integralmente o resultado como blind_resolution.
-4. Confirme a gravação antes de prosseguir.
+3. Persista integralmente o resultado como blind_resolution POR QUESTÃO usando o importador oficial da etapa; telemetria não substitui reviews individuais.
+4. Reconsulte o bloco e confirme a existência de um review blind_resolution para cada question_id + item_version atual processada. Em bloco completo de 200, exija 200/200 antes de prosseguir.
+5. Se houver qualquer falha ou contagem menor, coverage.complete=false, liste pending_ids e NÃO avance para a auditoria.
 
 ${segment(item,'blind_resolution',ctx)}
 
@@ -416,8 +420,9 @@ Somente depois de a subetapa 3A estar persistida:
 1. Reabra o mesmo bloco e as mesmas versões.
 2. Faça a auditoria científica/editorial independente completa.
 3. Use exclusivamente a resposta cega já registrada para confrontar o gabarito.
-4. Persista o parecer como perplexity_initial.
-5. Não modifique a questão principal.
+4. Persista o parecer como perplexity_initial POR QUESTÃO, usando o importador oficial da etapa; stage_metrics sozinho NÃO conclui esta fase.
+5. Reconsulte o bloco e confirme que existem reviews individuais perplexity_initial para 100% das question_id + item_version atuais processadas; em bloco completo de 200, devem ser 200/200. Se houver menos, coverage.complete=false e a próxima fase fica bloqueada.
+6. Não modifique a questão principal.
 
 ${segment(item,'perplexity_initial',ctx)}
 
