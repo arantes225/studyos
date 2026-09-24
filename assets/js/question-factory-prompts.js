@@ -74,8 +74,10 @@ CUIDADOS\n${item.what_to_avoid || ''}
 FONTES CIENTÍFICAS\n${item.scientific_source_strategy || 'Documento primário atual que sustente a decisão exata, incluindo seção quando verificável.'}
 PONTO DE PARTIDA PARA CORPUS (não equivale a prova analisada): ${item.style_reference_url || 'a localizar'}
 CORPUS VERIFICADO: ${stringify(item.primary_style_evidence || [])}
-Não incorporar calibration_notes, style_score_note ou resultados de lotes anteriores à identidade. Campos históricos de extensão, incidência e dificuldade só viram regras após conferência no corpus.
-Antes de gerar: registrar edição, URL oficial, IDs/páginas dos itens analisados, n amostrado, comprimento em palavras, formatos, operações cognitivas, alternativas e limites da amostra. Preferir >=20 itens e 2–3 edições quando disponíveis; não inventar edições inexistentes. Se insuficiente, retornar pendência de calibração, sem prometer fidelidade.`;
+ESTADO DE CALIBRAÇÃO: ${stringify(item.prompt_calibration || {})}
+Não incorporar calibration_notes, style_score_note ou resultados de lotes anteriores à identidade.
+Se prompt_calibration.status == "CALIBRATED_FROZEN" OU prompt_calibration.identity_status == "FROZEN" OU (prompt_calibration.decision == "PROMPT_APPROVED" e final_prompt_score >=84), o perfil já é canônico para produção: NÃO reabrir calibração, NÃO exigir novo corpus antes de gerar e NÃO alterar identidade editorial por resultados do lote em produção. O corpus pode ser enriquecido depois sem bloquear produção.
+Somente perfis ainda não aprovados devem registrar edição, URL oficial, IDs/páginas, n amostrado, formatos e limites da amostra antes de declarar fidelidade. Preferir >=20 itens e 2–3 edições quando disponíveis; não inventar edições inexistentes.`;
   }
   function context(item, ctx={}) {
     return { schema_version:VERSION, batch_number:ctx.batch_number ?? null, block_number:ctx.block_number ?? null, exam_style:item?.exam_style || null };
@@ -85,7 +87,7 @@ Antes de gerar: registrar edição, URL oficial, IDs/páginas dos itens analisad
     Object.assign(sample,{question_id:'ID_IMUTAVEL',question_code:'CODIGO_UNICO',exam_style:item.exam_style||null,block_sequence_no:1,sequence_no:1,dificuldade:'Médio',gabarito:'A',version:1,status:'generated'});
     return `${rules}\n\n${profile(item)}
 TAREFA: gerar bloco administrativo de 200 questões. Pode executar em partes de 20, preservando IDs, sequência, cobertura planejada e conferência final das 200. Não fingir entrega completa quando houver parte pendente.
-Antes da produção, exigir relatório de calibração bruta FINAL_PROMPT_SCORE >=84 e corpus documentado. Se ausente, realizar calibração ou informar exatamente o que falta; não substituir por nota de questão corrigida.
+Antes da produção, verificar o estado do perfil. Se estiver CALIBRATED_FROZEN/PROMPT_APPROVED com FINAL_PROMPT_SCORE >=84, usar o perfil congelado e iniciar produção sem reabrir calibração. Só exigir nova calibração/corpus quando a banca ainda não estiver aprovada.
 Definir matriz de cobertura a partir da prova-alvo; não impor sete áreas ENAMED nem quotas universais a outras bancas. Frequências observadas orientam o conjunto, sem criar sequência temática artificial.
 MÉTODO DE CONSTRUÇÃO ADAPTATIVO:
 1. Primeiro definir a operação cognitiva e a dificuldade pretendida conforme o perfil da banca.
@@ -108,7 +110,7 @@ PRÉ-FLIGHT DE LOTE antes da saída:
 - verificar se itens médios/difíceis têm pelo menos um concorrente forte e 2–3 dados funcionais; se não, regenerar esses itens;
 - em MBE quantitativa, quando o perfil exigir aplicação, preferir cálculo + interpretação de magnitude/implicação, não mera aritmética.
 SAÍDA (preencher os dados reais; null em lote/bloco exige identificação antes de importar):
-${stringify({schema_version:VERSION,batch:{...context(item,ctx),question_count:200,part_number:1,part_count:10,profile_version:VERSION,reference_exam_years:[],generation_status:'generated'},primary_style_evidence:[],coverage_plan:[],questions:[sample],coverage:{expected:200,delivered:0,complete:false}})}
+${stringify({schema_version:VERSION,batch:{...context(item,ctx),question_count:200,part_number:1,part_count:10,profile_version:VERSION,reference_exam_years:[],generation_status:'generated'},primary_style_evidence:[],coverage_plan:[],questions:[sample],coverage:{expected:200,delivered:0,complete:false},stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage:'generation',provider:'ChatGPT',run_label:'parte-1',total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'generated_partial',metrics:{part_number:1,part_count:10},notes:''}})}
 Validar quantidade, IDs, sequências 1–200 e posição global, A-D, campos obrigatórios, fontes, coerência e duplicatas. Nunca preencher status approved/published. Excel apenas quando solicitado para revisão humana.`;
   }
   function reviewExample(item,stage,ctx) {
@@ -123,7 +125,7 @@ FINAL_PROMPT_SCORE usa rubrica própria: fidelidade 40, distratores 20, dificuld
 ${stringify({schema_version:VERSION,review_stage:'prompt_calibration',exam_style:item.exam_style||null,profile_version:VERSION,FINAL_PROMPT_SCORE:null,prompt_component_scores:{fidelity:null,distractors:null,difficulty:null,diversity:null,clarity:null},hard_fail_count:0,sample_size:0,primary_style_evidence:[],decision:'NEEDS_MORE_PRIMARY_STYLE_DATA',findings:[]})}`;
     if(stage==='blind_resolution')return `${rules}
 RESOLUÇÃO CEGA. Abrir SOMENTE prova-cega.json, sem gabaritos, explicações, fontes da resposta ou pareceres prévios. Se esses dados foram expostos na conversa, iniciar nova conversa limpa. Resolver todos os IDs recebidos; não inventar uma letra quando não houver resposta única. Importar este registro antes de abrir o pacote completo.
-${stringify({...context(item,ctx),review_stage:'blind_resolution',reviewer:'Perplexity',reviews:[{question_id:'ID_IMUTAVEL',item_version:1,independent_answer:null,ambiguity:false,single_best_answer:false,reason:'Registrar raciocínio e dado decisivo; null se irresolúvel.'}]})}`;
+${stringify({...context(item,ctx),review_stage:'blind_resolution',reviewer:'Perplexity',reviews:[{question_id:'ID_IMUTAVEL',item_version:1,independent_answer:null,ambiguity:false,single_best_answer:false,reason:'Registrar raciocínio e dado decisivo; null se irresolúvel.'}],stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage:'blind_resolution',provider:'Perplexity',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}})}`;
     if(['chatgpt_initial','perplexity_initial','perplexity_reaudit'].includes(stage))return `${common}
 ${rubricText}
 TAREFA: ${stage==='chatgpt_initial'?'REVISÃO ADVERSARIAL INDEPENDENTE do bloco. Não aceite autoavaliação do gerador. Primeiro faça um passe formal ignorando os dados clínicos da vinheta: tente prever a chave por comando + alternativas e registre surface_guess_without_vignette e confiança. Depois leia a vinheta, identifique o melhor distrator, explique por que é plausível e forneça uma mudança contrafactual concreta que o tornaria correto/mais defensável. Avalie assimetria lexical, dependência real da vinheta, single-best-answer e dificuldade observada. Falha relevante em qualquer gate = needs_revision.':'Auditoria científica e editorial independente de TODOS os itens recebidos. Usar a resposta cega já registrada para a MESMA versão. Não alterá-la para coincidir com o gabarito.'}
