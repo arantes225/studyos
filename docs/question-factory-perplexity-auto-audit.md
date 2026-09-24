@@ -6,20 +6,20 @@ Executar a auditoria clínica/editorial LURIA 3.4 de forma retomável e idempote
 ## Fluxo
 1. O Admin divide o bloco em faixas Q001–Q050, Q051–Q100, Q101–Q150 e Q151–Q200.
 2. Para cada questão, a Edge Function `question-factory-perplexity-audit` busca a versão atual.
-3. Se ainda não houver resolução cega da versão, envia somente enunciado e alternativas ao Perplexity e persiste `blind_resolution`.
-4. Na chamada seguinte, usa a resposta cega imutável para executar a auditoria completa com pesquisa web e verificação de fontes.
+3. Para cada questão, executa uma resolução cega em memória com apenas enunciado + alternativas, sem gabarito, explicações ou fonte.
+4. Ainda na mesma execução, usa essa resposta independente para a auditoria completa com pesquisa web e verificação de fontes.
 5. O JSON é normalizado e validado pelo banco.
-6. O parecer é persistido somente por `admin_import_question_factory_stage`; não há escrita direta na tabela de reviews pelo cliente.
+6. Somente o parecer final `perplexity_initial` é persistido, diretamente por `admin_import_question_factory_perplexity_initial`; a resolução cega intermediária não cria linha no banco.
 7. A cobertura é relida por `admin_question_factory_review_coverage`.
 8. Métricas cumulativas são registradas por `admin_import_question_factory_stage_metrics`.
-9. A faixa só é concluída quando todos os itens elegíveis da versão atual possuem review persistido.
+9. A faixa só é concluída quando todos os itens da versão atual possuem review persistido.
 
 ## Idempotência
 A chave lógica das etapas Perplexity é:
 
 `item_id + item_version + review_stage + reviewer`
 
-O índice parcial `question_factory_reviews_perplexity_logical_uq` impede duplicação de `blind_resolution`, `perplexity_initial` e `perplexity_reaudit`.
+O índice parcial `question_factory_reviews_perplexity_logical_uq` impede duplicação lógica de `perplexity_initial` e `perplexity_reaudit` para a mesma versão; reviews históricos de `blind_resolution`, quando existirem, permanecem apenas como legado.
 
 ## Validação LURIA 3.4
 O validador `private.qf_assert_perplexity_review_v34` exige, entre outros:
@@ -47,7 +47,7 @@ A Edge Function não aceita apenas a URL declarada pela questão/modelo como pro
 Se isso não puder ser confirmado, o parecer recebe `SOURCE_VERIFICATION_PENDING` ou `SOURCE_VERIFICATION_FAILED` e não pode ser aprovado.
 
 ## Reauditoria
-Quando o ChatGPT corrige uma questão e incrementa a versão, a nova versão precisa de uma nova resolução cega antes de `perplexity_reaudit`. A cobertura de reauditoria conta apenas versões efetivamente corrigidas/eligíveis, e não exige 50 pareceres quando somente um subconjunto da faixa mudou.
+Quando o ChatGPT corrige uma questão e incrementa a versão, a reauditoria faz uma nova resolução cega em memória antes de `perplexity_reaudit`. A cobertura de reauditoria conta apenas versões efetivamente corrigidas/eligíveis, e não exige 50 pareceres quando somente um subconjunto da faixa mudou.
 
 ## Segredo do provedor
 A Edge Function espera `PERPLEXITY_API_KEY` nos Secrets das Edge Functions do Supabase. A chave nunca deve ser colocada no JavaScript do cliente, em payload de review ou commitada no GitHub.
