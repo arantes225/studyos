@@ -5,6 +5,7 @@ const emailInput = document.getElementById("email");
 const senhaInput = document.getElementById("senha");
 const entrarButton = document.getElementById("entrar");
 const criarButton = document.getElementById("criar-conta");
+const passkeyButton = document.getElementById("passkey-login");
 const mensagem = document.getElementById("mensagem");
 
 const AUTH_STORAGE_KEY = "sb-sxdsfklllilhdyuamvvg-auth-token";
@@ -17,6 +18,7 @@ function mostrarMensagem(texto, tipo = "") {
 function setCarregando(ativo) {
   entrarButton.disabled = ativo;
   criarButton.disabled = ativo;
+  if (passkeyButton) passkeyButton.disabled = ativo;
 }
 
 function isNetworkError(error) {
@@ -79,6 +81,48 @@ async function entrar(event) {
   }
 
   window.location.replace("/dashboard/");
+}
+
+async function entrarComPasskey() {
+  if (!passkeyButton || !window.PublicKeyCredential || !sb?.auth?.signInWithPasskey) {
+    mostrarMensagem("Este dispositivo ou navegador não oferece suporte a Passkeys.", "error");
+    return;
+  }
+
+  setCarregando(true);
+  mostrarMensagem("Confirme sua identidade no dispositivo...");
+
+  try {
+    const { data, error } = await sb.auth.signInWithPasskey();
+
+    if (error) {
+      const msg = String(error.message || error);
+      mostrarMensagem(
+        msg.toLowerCase().includes("passkey_disabled")
+          ? "A entrada por Passkey ainda não está habilitada no servidor."
+          : msg,
+        "error"
+      );
+      return;
+    }
+
+    if (data?.session) {
+      window.location.replace("/dashboard/");
+      return;
+    }
+
+    mostrarMensagem("Não foi possível concluir a autenticação por Passkey.", "error");
+  } catch (error) {
+    const name = String(error?.name || "");
+    mostrarMensagem(
+      name === "NotAllowedError"
+        ? "Autenticação cancelada ou não autorizada no dispositivo."
+        : "Não foi possível usar a Passkey neste dispositivo.",
+      "error"
+    );
+  } finally {
+    setCarregando(false);
+  }
 }
 
 async function criarConta() {
@@ -157,3 +201,11 @@ async function criarConta() {
 
 form.addEventListener("submit", entrar);
 criarButton.addEventListener("click", criarConta);
+
+if (passkeyButton) {
+  const supported = Boolean(window.PublicKeyCredential && sb?.auth?.signInWithPasskey);
+  passkeyButton.hidden = !supported;
+  if (supported) {
+    passkeyButton.addEventListener("click", entrarComPasskey);
+  }
+}
