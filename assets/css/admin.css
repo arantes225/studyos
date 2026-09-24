@@ -4512,3 +4512,8 @@ body.admin-unlocked #admin-app {
   color:var(--muted);
   font-size:9px;
 }
+
+
+.admin-qf-lots-section{
+  scroll-margin-top:16px;
+}
