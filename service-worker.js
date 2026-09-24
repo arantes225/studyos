@@ -1,4 +1,4 @@
-const CACHE_VERSION = "luria-pwa-v100";
+const CACHE_VERSION = "luria-pwa-v101";
 const STATIC_CACHE = CACHE_VERSION + "-static";
 const RUNTIME_CACHE = CACHE_VERSION + "-runtime";
 
@@ -8,8 +8,9 @@ const APP_SHELL = [
   "/assets/css/image-lightbox.css?v=1",
   "/",
   "/index.html",
-  "/manifest.webmanifest?v=4",
-  "/assets/img/logos/logo-icone-original.png?v=pwa4",
+  "/manifest.webmanifest?v=5",
+  "/assets/img/logos/pwa-icon-180.png?v=pwa5",
+  "/assets/img/logos/pwa-icon-512.png?v=pwa5",
   "/login/",
   "/dashboard/",
   "/assets/css/style.css?v=16.6",
@@ -17,7 +18,7 @@ const APP_SHELL = [
   "/assets/css/pwa-mobile.css?v=14",
   "/assets/css/luria-brand-v5.css",
   "/assets/js/luria-brand-v5.js?v=12",
-  "/assets/js/app.js?v=17.0",
+  "/assets/js/app.js",
   "/assets/js/onboarding.js?v=2.4",
   "/assets/css/onboarding.css?v=1.9",
   "/assets/js/storage-router.js?v=1.0.0",
