@@ -1899,6 +1899,29 @@
   cursor: default;
 }
 
+.notebook-editor img.notebook-lazy-image:not(.is-loaded) {
+  width: min(100%, 360px);
+  height: 120px;
+  min-height: 120px;
+  border: 1px dashed var(--border);
+  background:
+    linear-gradient(
+      135deg,
+      var(--surface),
+      var(--surface-soft, var(--surface))
+    );
+  cursor: pointer;
+  opacity: .78;
+}
+
+.notebook-editor.is-editing img.notebook-lazy-image:not(.is-loaded) {
+  cursor: pointer;
+}
+
+.notebook-editor img.notebook-lazy-image.is-loading {
+  opacity: .48;
+}
+
 @media (max-width: 760px) {
   .notebook-editor img {
     max-width: 100%;
