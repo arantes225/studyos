@@ -4132,3 +4132,50 @@ body.admin-unlocked #admin-app {
   }
   [data-admin-view="factory"] .admin-qf-process-map article{min-width:0}
 }
+
+
+/* Fábrica de questões — pastas de lote */
+.admin-qf-batch-folder {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.admin-qf-batch-folder + .admin-qf-batch-folder {
+  margin-top: 14px;
+}
+
+.admin-qf-batch-folder-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-qf-batch-folder-summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-qf-batch-folder-summary > div {
+  display: grid;
+  gap: 3px;
+}
+
+.admin-qf-batch-folder-summary strong {
+  font-size: 14px;
+}
+
+.admin-qf-batch-folder-summary small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.admin-qf-batch-folder > .admin-qf-batch-card {
+  border: 0;
+  border-radius: 0;
+}
