@@ -4411,3 +4411,31 @@ body.admin-unlocked #admin-app {
 .admin-qf-batch-head-actions .admin-qf-phase-prompt{
   white-space:nowrap;
 }
+
+
+/* Fábrica — ação de IA por bloco */
+.admin-qf-block-ai-action{
+  display:grid;
+  gap:6px;
+  padding:8px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--surface);
+}
+.admin-qf-block-ai-action small{
+  color:var(--muted);
+  font-size:8px!important;
+  line-height:1.3;
+}
+.admin-qf-block-ai-action .button{
+  width:100%;
+  min-height:34px;
+  font-size:9px!important;
+  font-weight:850;
+}
+.admin-qf-final-review.active{
+  border-width:2px;
+}
+.admin-qf-final-review.active>span{
+  font-weight:900;
+}
