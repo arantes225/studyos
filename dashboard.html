@@ -963,6 +963,64 @@
 
 
 /* =========================================================
+   DASHBOARD — TIPOGRAFIA AMPLIADA + PULO DO GATO FIXO
+   ========================================================= */
+
+/* Cards gerais: tipografia maior. O Pulo do Gato fica fora destes aumentos. */
+.dashboard-summary-card:not(.dashboard-summary-ccq) > span:first-child,
+.dashboard-detail-card:not(.dashboard-detail-ccq) .dashboard-detail-label {
+  font-size: 11px;
+}
+
+.dashboard-summary-card:not(.dashboard-summary-ccq) > strong {
+  font-size: 27px;
+}
+
+.dashboard-summary-card:not(.dashboard-summary-ccq) > small {
+  font-size: 11px;
+}
+
+.dashboard-detail-card:not(.dashboard-detail-ccq) .dashboard-detail-value {
+  font-size: 33px;
+}
+
+.dashboard-detail-card:not(.dashboard-detail-ccq) .dashboard-detail-helper {
+  font-size: 12px;
+}
+
+.dashboard-detail-card:not(.dashboard-detail-ccq) .metric-ring-center strong {
+  font-size: 20px;
+}
+
+.dashboard-detail-card:not(.dashboard-detail-ccq) .metric-ring-center span {
+  font-size: 9.5px;
+}
+
+/* O card do Pulo do Gato não cresce nem encolhe conforme o texto. */
+.dashboard-detail-ccq {
+  height: 250px;
+  min-height: 250px;
+  max-height: 250px;
+}
+
+.dashboard-detail-ccq .dashboard-passive-ccq-stage {
+  overflow: hidden;
+}
+
+.dashboard-detail-ccq .dashboard-passive-ccq-text {
+  max-height: 100%;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  hyphens: auto;
+}
+
+/* O resumo do Pulo também não recebe o aumento geral. */
+.dashboard-summary-ccq > strong {
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
    OFENSIVA — CHAMA PROGRESSIVA
    ========================================================= */
 
