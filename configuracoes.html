@@ -1381,6 +1381,32 @@
             </div>
 
             <div class="security-grid">
+              <div class="security-field full">
+                <span>Face ID / Passkey</span>
+                <div class="security-email" style="display:block;padding:12px;line-height:1.5;">
+                  Use uma Passkey para entrar no PWA com a autenticação do iPhone. No iPhone, o iOS pode usar Face ID para confirmar sua identidade.
+                </div>
+                <div class="settings-actions" style="margin-top:10px;">
+                  <button
+                    id="register-passkey"
+                    class="button primary"
+                    type="button"
+                  >
+                    Ativar Face ID / Passkey
+                  </button>
+                </div>
+                <div
+                  id="passkey-list"
+                  class="settings-note"
+                  style="margin-top:10px;"
+                ></div>
+                <span
+                  id="passkey-status"
+                  class="settings-save-status"
+                  aria-live="polite"
+                ></span>
+              </div>
+
               <label class="security-field full">
                 <span>E-mail da conta</span>
                 <div
@@ -1450,10 +1476,10 @@
   </div>
 
   <script src="/assets/vendor/supabase-2.110.6.js"></script>
-  <script src="assets/js/supabase.js"></script>
+  <script src="assets/js/supabase.js?v=passkey1"></script>
   <script src="assets/js/app.js?v=17.0"></script>
   <script src="assets/js/study-mode.js?v=14.0"></script>
-  <script src="assets/js/configuracoes.js?v=13.0"></script>
+  <script src="assets/js/configuracoes.js?v=14.0"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
 </html>
