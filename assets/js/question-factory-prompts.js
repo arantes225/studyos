@@ -52,7 +52,7 @@ stage_metrics = {
   block_number: bloco atual ou null,
   block_code: ID humano do bloco no formato L001-B01 quando houver bloco,
   stage: nome exato da etapa,
-  provider: ChatGPT | Perplexity | Gemini | Human,
+  provider: ChatGPT | Perplexity | Human,
   run_label: identificador curto opcional da rodada/parte,
   total_count: quantidade realmente processada nesta resposta,
   approved_count: quantidade aprovada nesta etapa,
@@ -221,13 +221,13 @@ ${stringify({...context(item,ctx),review_stage:stage,decisions:[{question_id:'ID
 Aplicar somente approved_patch da adjudicação da MESMA versão e review_id. agree/partially_agree autorizam apenas os valores explícitos. disagree ou ausência de adjudicação impedem alteração. Não modificar itens publicados.
 Preservar ID/banca; expected_version deve corresponder à versão recebida. O backend incrementa versão, limpa aprovações e exige nova resolução cega e reauditoria. Não aumentar versão manualmente. Campos não alterados não entram no patch.
 ${stringify({...context(item,ctx),review_stage:'chatgpt_correction_review',questions:[{question_id:'ID_IMUTAVEL',expected_version:1,review_id:'UUID_DO_PARECER_EXPORTADO',patch:{}}],stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage:'chatgpt_correction',provider:'ChatGPT',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}})}`;
-    if(['lot_chatgpt_final','lot_perplexity_final','lot_gemini_final'].includes(stage))return `${common}
+    if(['lot_chatgpt_final','lot_perplexity_final'].includes(stage))return `${common}
 AUDITORIA GLOBAL DAS 1.000. Revisar todas para duplicação semântica, padrão de letras, concentração temática, pistas formais, cobertura da prova-alvo e consistência editorial. Não presumir sete áreas universais.
 Rechecagem científica: todos os itens com version>1, todas as questões antes sinalizadas, todas as doses/cutoffs/alto risco e uma amostra adicional de pelo menos 20% das restantes, estratificada por bloco, área e dificuldade, com semente/método registrados. Se não houver classificação de risco confiável, reexaminar todos. Registrar IDs rechecados e cobertura; nunca apresentar amostragem como revisão científica integral.
-${stage==='lot_gemini_final'?'Gemini é auditor adversarial após ChatGPT e Perplexity. Apenas sinaliza; não modifica.':'Revisão independente: não receber conclusão dos outros revisores como autoridade.'}
+Revisão independente: não receber conclusão do outro revisor como autoridade.
 Copiar integralmente version_manifest do pacote. Se qualquer versão mudar, todas as revisões finais e aprovação humana precisam ser renovadas. Cada questão sinalizada deve identificar ID/versão e motivo; mudanças seguem adjudicação, correção e reauditoria. Arrays de achados não podem coexistir com approved.
 Além dos agregados, produzir relatório humano questão por questão para TODOS os itens efetivamente revisados, no formato “ID — APROVADA/REVISAR/REJEITADA — motivo: ...”. Nenhum item revisado pode desaparecer no resumo.
-${stringify({...context(item,ctx),review_stage:stage,reviewer:stage==='lot_gemini_final'?'Gemini':stage==='lot_chatgpt_final'?'ChatGPT':'Perplexity',lote_status:'needs_revision',version_manifest:[],coverage:{global_reviewed_ids:[],scientific_rechecked_ids:[],sampling_method:'',all_high_risk_rechecked:false},questions_flagged:[],duplicate_clusters:[],answer_source_problems:[],coverage_gaps:[],comments:[],stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:null,stage,provider:stage==='lot_gemini_final'?'Gemini':stage==='lot_chatgpt_final'?'ChatGPT':'Perplexity',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}})}
+${stringify({...context(item,ctx),review_stage:stage,reviewer:stage==='lot_chatgpt_final'?'ChatGPT':'Perplexity',lote_status:'needs_revision',version_manifest:[],coverage:{global_reviewed_ids:[],scientific_rechecked_ids:[],sampling_method:'',all_high_risk_rechecked:false},questions_flagged:[],duplicate_clusters:[],answer_source_problems:[],coverage_gaps:[],comments:[],stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:null,stage,provider:stage==='lot_chatgpt_final'?'ChatGPT':'Perplexity',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}})}
 Após as três aprovações da versão atual, aguardar aprovação humana final no admin. Não publicar.`;
     throw new Error('Etapa desconhecida: '+stage);
   }
