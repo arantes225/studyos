@@ -487,6 +487,14 @@
             <span class="admin-qf-rule-chip">GLOBAL → BANCA → ETAPA</span>
           </div>
 
+          <div class="admin-qf-manual-note admin-qf-manual-rule">
+            <div>
+              <strong>Atualização automática do Supabase</strong>
+              <span>Quando a IA tiver um conector Supabase autorizado, ela deve registrar o <b>stage_metrics</b> diretamente pela função controlada <code>private.qf_record_stage_metrics(...)</code>. Essa função aceita somente a telemetria da etapa, valida os números e impede escrita arbitrária em outras tabelas. Se o conector não estiver disponível ou a gravação falhar, a IA devolve o mesmo JSON para importação manual.</span>
+            </div>
+            <span class="admin-qf-rule-chip">IA → FUNÇÃO CONTROLADA → DASHBOARD</span>
+          </div>
+
           <div class="admin-qf-process-map">
             <article><span>01</span><strong>Escolher a banca</strong><small>exam_style define o perfil editorial.</small></article>
             <div>→</div>
@@ -1136,7 +1144,7 @@ Após as três aprovações da versão atual, aguardar aprovação humana final 
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=17.3"></script>
   <script src="assets/js/admin-editais.js?v=3"></script>
-  <script src="assets/js/question-factory-prompts.js?v=2.5"></script>
+  <script src="assets/js/question-factory-prompts.js?v=2.6"></script>
   <script src="assets/js/admin.js?v=4.3"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
