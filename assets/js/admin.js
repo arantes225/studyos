@@ -2150,9 +2150,9 @@
             </div>
 
             <div class="admin-qf-block-quality-mini">
-              <span>Inicial <b>${initialQ == null ? "—" : Number(initialQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
-              <span>Pós-correção <b>${postQ == null ? "—" : Number(postQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
-              <span>Final <b>${finalQ == null ? "—" : Number(finalQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
+              <span>Step 1 · Auditoria própria <b>${initialQ == null ? "—" : Number(initialQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
+              <span>Step 3 · Perplexity após correções <b>${postQ == null ? "—" : Number(postQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
+              <span>Step 2 · Perplexity <b>${finalQ == null ? "—" : Number(finalQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
             </div>
 
             <div class="admin-qf-block-quality-spark" aria-label="Evolução da qualidade do bloco">
@@ -2301,9 +2301,9 @@
               <span>${b.final_quality == null ? "Sem nota final" : pct(b.final_quality)+" · "+qualityLabel(b.final_quality)}</span>
             </div>
             <div class="admin-qf-quality-bars">
-              <div><small>Inicial</small><span><i style="width:${Math.max(0,Math.min(100,initial))}%"></i></span><b>${b.initial_quality == null ? "—" : pct(b.initial_quality)}</b></div>
-              <div><small>Pós-correção</small><span><i style="width:${Math.max(0,Math.min(100,post))}%"></i></span><b>${b.post_correction_quality == null ? "—" : pct(b.post_correction_quality)}</b></div>
-              <div><small>Final</small><span><i style="width:${Math.max(0,Math.min(100,final))}%"></i></span><b>${b.final_quality == null ? "—" : pct(b.final_quality)}</b></div>
+              <div><small>Step 1 · Auditoria própria</small><span><i style="width:${Math.max(0,Math.min(100,initial))}%"></i></span><b>${b.initial_quality == null ? "—" : pct(b.initial_quality)}</b></div>
+              <div><small>Step 3 · Perplexity após correções</small><span><i style="width:${Math.max(0,Math.min(100,post))}%"></i></span><b>${b.post_correction_quality == null ? "—" : pct(b.post_correction_quality)}</b></div>
+              <div><small>Step 2 · Perplexity</small><span><i style="width:${Math.max(0,Math.min(100,final))}%"></i></span><b>${b.final_quality == null ? "—" : pct(b.final_quality)}</b></div>
             </div>
             <div class="admin-qf-quality-row-meta">
               <span>${formatNumber(b.approved_count)} aprovadas</span>
