@@ -31,7 +31,7 @@
 
   <link
     rel="stylesheet"
-    href="assets/css/caderno-erros.css?v=14.2"
+    href="assets/css/caderno-erros.css?v=14.3"
   >
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
   <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
@@ -387,18 +387,43 @@
 
             <div class="error-review-tools">
 
-              <label
+              <div
                 id="error-area-filter-wrap"
                 class="error-area-filter"
               >
                 <span>Revisar por área</span>
 
-                <select id="error-area-filter" data-luria-general-area-select data-blank-label="Todas as áreas">
-                  <option value="">
-                    Todas as áreas
-                  </option>
-                </select>
-              </label>
+                <div class="error-area-picker">
+                  <button
+                    id="error-area-filter-toggle"
+                    class="error-area-filter-toggle"
+                    type="button"
+                    aria-haspopup="listbox"
+                    aria-expanded="false"
+                  >
+                    <span id="error-area-filter-label">Todas as áreas</span>
+                    <span class="error-area-filter-chevron" aria-hidden="true">⌄</span>
+                  </button>
+
+                  <div
+                    id="error-area-filter-menu"
+                    class="error-area-filter-menu"
+                    role="listbox"
+                    hidden
+                  ></div>
+
+                  <select
+                    id="error-area-filter"
+                    class="error-area-filter-native"
+                    data-luria-general-area-select
+                    data-blank-label="Todas as áreas"
+                    tabindex="-1"
+                    aria-hidden="true"
+                  >
+                    <option value="">Todas as áreas</option>
+                  </select>
+                </div>
+              </div>
 
 
               <div class="error-progress">
