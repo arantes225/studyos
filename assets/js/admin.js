@@ -222,6 +222,61 @@
     }).format(size)} ${units[unit]}`;
   }
 
+  function formatCustomerMemory(bytes) {
+    const value =
+      Math.max(
+        0,
+        Number(bytes || 0)
+      );
+
+    if (!Number.isFinite(value)) {
+      return "—";
+    }
+
+    if (value === 0) {
+      return "0 B";
+    }
+
+    const units = [
+      "B",
+      "KB",
+      "MB",
+      "GB",
+      "TB"
+    ];
+
+    const unitIndex =
+      Math.min(
+        units.length - 1,
+        Math.floor(
+          Math.log(value)
+          / Math.log(1024)
+        )
+      );
+
+    const size =
+      value
+      / Math.pow(
+        1024,
+        unitIndex
+      );
+
+    return `${new Intl.NumberFormat(
+      "pt-BR",
+      {
+        maximumFractionDigits:
+          size < 10
+            ? 2
+            : size < 100
+              ? 1
+              : 0,
+        minimumFractionDigits:
+          0
+      }
+    ).format(size)} ${units[unitIndex]}`;
+  }
+
+
   function usagePercent(used, quota) {
     const current = Number(used);
     const limit = Number(quota);
@@ -1228,7 +1283,7 @@
               </td>
               <td>
                 <span class="admin-storage-usage" title="${esc(formatNumber(customer.storage_bytes || 0))} bytes">
-                  ${esc(formatBytes(customer.storage_bytes || 0))}
+                  ${esc(formatCustomerMemory(customer.storage_bytes || 0))}
                 </span>
               </td>
               <td>${esc(formatDate(customer.last_access))}</td>
