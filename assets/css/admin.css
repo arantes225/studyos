@@ -4491,3 +4491,24 @@ body.admin-unlocked #admin-app {
     grid-template-columns:1fr;
   }
 }
+
+
+.admin-qf-inline-quality-head{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+  margin-top:2px;
+}
+.admin-qf-inline-quality-head strong,
+.admin-qf-inline-quality-head small{
+  display:block;
+}
+.admin-qf-inline-quality-head strong{
+  font-size:12px;
+}
+.admin-qf-inline-quality-head small{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:9px;
+}
