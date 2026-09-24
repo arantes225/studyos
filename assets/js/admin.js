@@ -32,7 +32,8 @@
     qfReviewImportBatch: null,
     qfReviewImportBlock: null,
     qfReviewImportMode: "block",
-    qfQuality: null
+    qfQuality: null,
+    qfPromptContexts: []
   };
 
   const METRICS = [
@@ -1727,6 +1728,7 @@
       loadQuestionFactory(),
       loadQuestionFactoryStyles(),
       loadQuestionFactoryBlockTracker(),
+      loadQuestionFactoryPromptContexts(),
       loadBadQuestionFolder(0),
       loadQuestionFactoryQuality(),
       window.LuriaAdminEditais?.load?.() || Promise.resolve()
@@ -2174,6 +2176,31 @@
               ${qfReviewPill("Você", batch.final_human_review_status)}
             </div>
           </div>
+          <details class="admin-qf-route-editor">
+            <summary>
+              <strong>Rota dos prompts</strong>
+              <small>Editar onde ChatGPT/Perplexity devem buscar as questões e onde devolver o resultado.</small>
+            </summary>
+            <div class="admin-qf-route-editor-body" data-qf-route-root="${Number(batch.batch_number)}">
+              <label>
+                <span>Workspace / site</span>
+                <input type="url" data-qf-route-workspace value="${esc(questionFactoryLotPromptContext(batch.batch_number).prompt_workspace_url)}" placeholder="https://.../admin.html">
+              </label>
+              <label>
+                <span>Onde buscar / ler</span>
+                <textarea data-qf-route-source rows="4">${esc(questionFactoryLotPromptContext(batch.batch_number).prompt_source_instruction)}</textarea>
+              </label>
+              <label>
+                <span>Onde devolver</span>
+                <textarea data-qf-route-return rows="4">${esc(questionFactoryLotPromptContext(batch.batch_number).prompt_return_instruction)}</textarea>
+              </label>
+              <div class="admin-qf-route-editor-actions">
+                <button class="button secondary" type="button" data-qf-save-route="${Number(batch.batch_number)}">Salvar rota dos prompts</button>
+                <small data-qf-route-status></small>
+              </div>
+            </div>
+          </details>
+
           <div class="admin-qf-batch-actions">
             ${batch.status !== "published" ? `<button class="button primary" type="button" data-qf-continue-batch="${Number(batch.batch_number)}">${esc(questionFactoryNextAction(batch.batch_number).label)}</button>` : ""}
             <button class="button secondary admin-qf-open-batch" type="button" data-qf-batch="${Number(batch.batch_number)}">Ver questões</button>
@@ -2489,19 +2516,73 @@
     return map[stage] || { label: stage || "Pendente", provider: null };
   }
 
+  function defaultQuestionFactoryWorkspaceUrl() {
+    try {
+      return window.location.href.split("#")[0].split("?")[0];
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function questionFactoryLotPromptContext(batchNumber) {
+    const batch = Number(batchNumber);
+    const saved = (state.qfPromptContexts || []).find(x => Number(x.batch_number) === batch) || {};
+    const batchCode = saved.batch_code || ("L"+String(batch).padStart(3,"0"));
+    return {
+      prompt_workspace_url: saved.workspace_url || defaultQuestionFactoryWorkspaceUrl(),
+      prompt_source_instruction: saved.source_instruction || `Entre no Admin da LURIA/Resibulando → Fábrica de questões → Produção em tempo real → lote ${batchCode}. Abra o bloco indicado no prompt e leia diretamente todas as questões e versões atuais necessárias para a etapa.`,
+      prompt_return_instruction: saved.return_instruction || `Devolva o resultado estruturado no mesmo lote ${batchCode}, associado ao bloco e à etapa indicados no prompt. Se houver acesso autorizado de escrita/importação, use o mecanismo específico da etapa; caso contrário, devolva o JSON completo no chat para importação pelo Admin.`
+    };
+  }
+
+  async function loadQuestionFactoryPromptContexts() {
+    const { data, error } = await sb.rpc("admin_question_factory_prompt_context_snapshot");
+    if (error) {
+      console.warn("Não foi possível carregar as rotas operacionais dos lotes:", error);
+      return;
+    }
+    state.qfPromptContexts = Array.isArray(data) ? data : [];
+    if (state.questionFactory) renderQuestionFactory(state.questionFactory);
+  }
+
+  async function saveQuestionFactoryPromptContext(batchNumber, root) {
+    const batch = Number(batchNumber);
+    const status = root?.querySelector("[data-qf-route-status]");
+    const workspace = root?.querySelector("[data-qf-route-workspace]")?.value || "";
+    const source = root?.querySelector("[data-qf-route-source]")?.value || "";
+    const destination = root?.querySelector("[data-qf-route-return]")?.value || "";
+
+    if (status) status.textContent = "Salvando...";
+    const { data, error } = await sb.rpc("admin_update_question_factory_prompt_context", {
+      p_batch_number: batch,
+      p_workspace_url: workspace,
+      p_source_instruction: source,
+      p_return_instruction: destination
+    });
+    if (error) {
+      if (status) status.textContent = error.message || "Não foi possível salvar.";
+      return;
+    }
+    if (status) status.textContent = data?.saved ? "Rota salva. Os próximos prompts já usarão estas instruções." : "Nenhuma alteração salva.";
+    await loadQuestionFactoryPromptContexts();
+  }
+
   function questionFactoryBlockPrompt(block) {
     const style = state.questionStyles.find(x => x.exam_style === block.exam_style);
     if (!style) return "";
 
+    const route = questionFactoryLotPromptContext(block.batch_number);
+    const ctx = { ...block, ...route };
+
     if (block.next_stage === "generation") {
-      return buildBoardGenerationPrompt(style, block);
+      return buildBoardGenerationPrompt(style, ctx);
     }
 
     if (["human_review","block_complete"].includes(block.next_stage)) {
       return "";
     }
 
-    return buildBoardSegmentPrompt(style, block.next_stage, block);
+    return buildBoardSegmentPrompt(style, block.next_stage, ctx);
   }
 
   function renderQuestionFactoryBlockTracker(rows) {
@@ -3013,6 +3094,7 @@
     await Promise.all([
       loadQuestionFactory(),
       loadQuestionFactoryBlockTracker(),
+      loadQuestionFactoryPromptContexts(),
       loadQuestionFactoryQuality()
     ]);
   }
@@ -3407,6 +3489,13 @@
     $("admin-qf-import-stage-metrics")?.addEventListener("click", () => openReviewImportDialog(null, null, "metrics"));
     $("admin-qf-start-lot")?.addEventListener("click", startQuestionFactoryLot);
     $("admin-qf-batches")?.addEventListener("click", async event => {
+      const routeButton = event.target.closest("[data-qf-save-route]");
+      if (routeButton) {
+        const root = routeButton.closest("[data-qf-route-root]");
+        await saveQuestionFactoryPromptContext(routeButton.dataset.qfSaveRoute, root);
+        return;
+      }
+
       const continueButton = event.target.closest("[data-qf-continue-batch]");
       if (continueButton) {
         await continueQuestionFactoryLot(continueButton.dataset.qfContinueBatch, continueButton);
