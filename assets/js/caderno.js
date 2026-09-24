@@ -17252,8 +17252,9 @@ function wireEvents() {
       (event) => {
         const image =
           event.target
-            ?.closest
-            ?.( "img[data-luria-lazy-src]" );
+            ?.closest?.(
+              "img[data-luria-lazy-src]"
+            );
 
         if (
           !image
