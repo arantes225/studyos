@@ -2720,7 +2720,7 @@
             <small>${esc(block.batch_code || ('L'+String(Number(block.batch_number||0)).padStart(3,'0')))} · Bloco ${Number(block.block_number||0)} · ${Number(block.question_count||0)}/${Number(block.target_size||200)} questões</small>
           </div>
           <div><span>Banca</span><strong>${esc(block.exam_style || "—")}</strong></div>
-          <div><span>Fase</span><strong>${esc(block.phase || meta.label)}</strong></div>
+          <div><span>Fase</span><strong>${esc(meta.label || block.phase)}</strong></div>
           <div><span>Fidelidade</span><strong>${esc(styleScore)}</strong></div>
           <div><span>Confiabilidade</span><strong title="${esc(block.style_score_note || "")}">${esc(reliability)}</strong></div>
           <div class="admin-qf-tracker-next">
