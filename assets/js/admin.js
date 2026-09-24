@@ -2162,6 +2162,7 @@
             </div>
             <div class="admin-qf-batch-head-actions">
               <span class="admin-factory-badge">${esc(qfStatusLabel(batch.status))}</span>
+              ${batch.status !== "published" ? `<button class="button secondary admin-qf-phase-prompt" type="button" data-qf-copy-phase="${Number(batch.batch_number)}">Prompt da fase</button>` : ""}
               ${batch.status !== "published" ? `<button class="button primary" type="button" data-qf-continue-batch="${Number(batch.batch_number)}">${esc(questionFactoryNextAction(batch.batch_number).label)}</button>` : ""}
             </div>
           </div>
@@ -2202,6 +2203,7 @@
           </details>
 
           <div class="admin-qf-batch-actions">
+            ${batch.status !== "published" ? `<button class="button secondary admin-qf-phase-prompt" type="button" data-qf-copy-phase="${Number(batch.batch_number)}">Prompt da fase</button>` : ""}
             ${batch.status !== "published" ? `<button class="button primary" type="button" data-qf-continue-batch="${Number(batch.batch_number)}">${esc(questionFactoryNextAction(batch.batch_number).label)}</button>` : ""}
             <button class="button secondary admin-qf-open-batch" type="button" data-qf-batch="${Number(batch.batch_number)}">Ver questões</button>
             <button class="button secondary" type="button" data-qf-export="${Number(batch.batch_number)}:0:audit">Exportar lote completo</button>
@@ -3112,6 +3114,47 @@
     return { next, provider, label:`Copiar prompt + abrir ${providerLabel}` };
   }
 
+  async function copyQuestionFactoryPhasePrompt(batchNumber, button) {
+    const batch = Number(batchNumber);
+    const action = questionFactoryNextAction(batch);
+    const next = action.next;
+
+    if (!next) {
+      window.alert("Os cinco blocos já concluíram o fluxo individual. O próximo passo é a revisão final do lote.");
+      return;
+    }
+
+    if (next.next_stage === "human_review") {
+      window.alert(`${next.block_code || "Bloco"} aguarda sua aprovação humana. Não há prompt de IA nesta etapa.`);
+      return;
+    }
+
+    const prompt = questionFactoryBlockPrompt(next);
+    if (!prompt) {
+      window.alert("Não foi possível montar o prompt da fase atual.");
+      return;
+    }
+
+    const original = button?.textContent || "Prompt da fase";
+    try {
+      await writePromptClipboard(prompt);
+      if (button) {
+        button.textContent = "Prompt copiado";
+        button.classList.add("success");
+        setTimeout(() => {
+          button.textContent = original;
+          button.classList.remove("success");
+        }, 1600);
+      }
+    } catch (error) {
+      console.warn("Falha ao copiar prompt da fase:", error);
+      if (button) {
+        button.textContent = "Falha ao copiar";
+        setTimeout(() => button.textContent = original, 1600);
+      }
+    }
+  }
+
   async function continueQuestionFactoryLot(batchNumber, button) {
     const batch = Number(batchNumber);
     const action = questionFactoryNextAction(batch);
@@ -3489,6 +3532,12 @@
     $("admin-qf-import-stage-metrics")?.addEventListener("click", () => openReviewImportDialog(null, null, "metrics"));
     $("admin-qf-start-lot")?.addEventListener("click", startQuestionFactoryLot);
     $("admin-qf-batches")?.addEventListener("click", async event => {
+      const phasePromptButton = event.target.closest("[data-qf-copy-phase]");
+      if (phasePromptButton) {
+        await copyQuestionFactoryPhasePrompt(phasePromptButton.dataset.qfCopyPhase, phasePromptButton);
+        return;
+      }
+
       const routeButton = event.target.closest("[data-qf-save-route]");
       if (routeButton) {
         const root = routeButton.closest("[data-qf-route-root]");
