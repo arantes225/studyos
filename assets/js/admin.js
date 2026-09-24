@@ -1534,6 +1534,39 @@
     );
   }
 
+  const ADMIN_PIN_GRACE_MS = 30 * 60 * 1000;
+  const ADMIN_PIN_GRACE_KEY = "luria-admin-pin-unlocked-until";
+
+  function adminPinGraceStorageKey() {
+    const userId = String(window.docmapUser?.id || "admin");
+    return `${ADMIN_PIN_GRACE_KEY}:${userId}`;
+  }
+
+  function rememberAdminPinUnlock() {
+    try {
+      localStorage.setItem(
+        adminPinGraceStorageKey(),
+        String(Date.now() + ADMIN_PIN_GRACE_MS)
+      );
+    } catch (_) {}
+  }
+
+  function hasRecentAdminPinUnlock() {
+    try {
+      const key = adminPinGraceStorageKey();
+      const expiresAt = Number(localStorage.getItem(key) || 0);
+
+      if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+        localStorage.removeItem(key);
+        return false;
+      }
+
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   function normalizePin(value) {
     return String(value || "")
       .replace(/\D/g, "")
@@ -1644,9 +1677,14 @@
       throw error;
     }
 
+    const hasPin =
+      data?.has_pin === true;
+
     setPinGateMode(
-      data?.has_pin === true
+      hasPin
     );
+
+    return hasPin;
   }
 
   async function unlockAdminPage() {
@@ -1791,6 +1829,7 @@
           "success"
         );
 
+        rememberAdminPinUnlock();
         await unlockAdminPage();
         return;
       }
@@ -1817,6 +1856,7 @@
           "success"
         );
 
+        rememberAdminPinUnlock();
         await unlockAdminPage();
         return;
       }
@@ -3865,7 +3905,16 @@
     wirePinGate();
 
     try {
-      await loadPinStatus();
+      const hasPin =
+        await loadPinStatus();
+
+      if (
+        hasPin
+        &&
+        hasRecentAdminPinUnlock()
+      ) {
+        await unlockAdminPage();
+      }
 
     } catch (error) {
       console.error(
