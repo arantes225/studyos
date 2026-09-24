@@ -2346,11 +2346,13 @@
       ? "admin_import_question_factory_calibration"
       : payload.review_stage === "chatgpt_adjudication"
         ? "admin_import_question_factory_adjudication"
-        : state.qfReviewImportMode === "lot"
-          ? "admin_import_question_factory_lot_review"
-          : state.qfReviewImportMode === "correction"
-            ? "admin_import_question_factory_corrections"
-            : "admin_import_question_factory_review";
+        : payload.review_stage === "chatgpt_initial" && Array.isArray(payload.initial_reviews)
+          ? "admin_import_question_factory_chatgpt_autocorrection"
+          : state.qfReviewImportMode === "lot"
+            ? "admin_import_question_factory_lot_review"
+            : state.qfReviewImportMode === "correction"
+              ? "admin_import_question_factory_corrections"
+              : "admin_import_question_factory_review";
 
     const { data, error } = await sb.rpc(rpcName, { p_payload: payload });
     if (error) {
@@ -2390,7 +2392,9 @@
         ? (data?.ready ? "Revisão final importada. Lote marcado como pronto." : "Revisão final importada. O lote ainda possui etapa pendente.")
         : state.qfReviewImportMode === "correction"
           ? `Correções importadas: ${data?.corrected || 0}. Próxima etapa: nova resolução cega e reauditoria Perplexity.`
-          : `Importadas ${data?.imported || 0}: ${data?.approved || 0} aprovadas, ${data?.needs_revision || 0} a rever.`;
+          : payload.review_stage === "chatgpt_initial" && Array.isArray(payload.initial_reviews)
+            ? `Revisão adversarial importada: ${data?.imported || 0} analisadas · ${data?.corrected || 0} autocorrigidas · ${data?.final_reaudited || 0} reavaliadas. ${data?.ready_for_blind_resolution ? "Bloco liberado para resolução cega." : "Ainda há itens que precisam de nova correção pelo ChatGPT."}`
+            : `Importadas ${data?.imported || 0}: ${data?.approved || 0} aprovadas, ${data?.needs_revision || 0} a rever.`;
       message.textContent = telemetryStored
         ? `${baseMessage} Métricas da etapa atualizadas no dashboard.`
         : baseMessage;
@@ -2431,7 +2435,7 @@
     const map = {
       generation: { label: "Geração", provider: "chatgpt" },
       blind_resolution: { label: "Resolução cega", provider: "perplexity" },
-      chatgpt_initial: { label: "Revisão adversarial", provider: "chatgpt" },
+      chatgpt_initial: { label: "Revisão adversarial + autocorreção", provider: "chatgpt" },
       perplexity_initial: { label: "Auditoria Perplexity", provider: "perplexity" },
       chatgpt_adjudication: { label: "Julgar parecer", provider: "chatgpt" },
       chatgpt_correction: { label: "Correção ChatGPT", provider: "chatgpt" },
@@ -2577,7 +2581,7 @@
           : "";
         const promptStages = [
           ["01","Prompt mestre · geração",null,"chatgpt"],
-          ["02","ChatGPT · revisão adversarial","chatgpt_initial","chatgpt"],
+          ["02","ChatGPT · revisão adversarial + autocorreção","chatgpt_initial","chatgpt"],
           ["03","Perplexity · resolução cega","blind_resolution","perplexity"],
           ["04","Perplexity · auditoria","perplexity_initial","perplexity"],
           ["05","ChatGPT · julgar parecer","chatgpt_adjudication","chatgpt"],
