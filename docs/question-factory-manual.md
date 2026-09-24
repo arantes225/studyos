@@ -101,6 +101,16 @@ A revisão final contém `version_manifest` integral copiado da exportação, `g
 
 Aprovação humana final só fica disponível após as três revisões aprovadas da mesma versão e cinco blocos aprovados. `ready` não significa publicação automática. Nunca apagar fontes/histórico necessário para rastrear decisões antes de confirmar persistência final.
 
+## Telemetria operacional por etapa
+
+Toda saída de IA da fábrica deve incluir o objeto top-level `stage_metrics`. O Admin persiste esse bloco em `public.question_factory_stage_metrics` por meio de `admin_import_question_factory_stage_metrics`.
+
+Campos mínimos: banca, lote/bloco quando aplicável, etapa, provedor, total processado, aprovadas, a revisar, rejeitadas, hard rejects, concordâncias independentes, score agregado quando existir, status, métricas extras e nota curta.
+
+As revisões importadas gravam `stage_metrics` automaticamente. Para geração ou qualquer resposta que não passe pelo importador formal de revisão, usar o botão **Atualizar dados da etapa** no dashboard da Fábrica. O Supabase é a fonte de verdade; planilhas/CSV são apenas exportações do histórico.
+
+O card de cada banca mostra a última etapa registrada. Não declarar que uma IA escreveu diretamente no banco: ela devolve o JSON e o Admin executa a persistência autenticada.
+
 ## Operação e manutenção
 
 Endpoints exigem administrador e sessão PIN válida; acesso anônimo é revogado. Exports e imports conferem lote/bloco sem reatribuir IDs silenciosamente. Não aceitar JSON de versão antiga como aprovação 2.0.
