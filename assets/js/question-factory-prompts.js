@@ -407,24 +407,36 @@ REGRA DE SAÍDA:
 Este é UM envio operacional. Execute as duas subetapas em sequência, no MESMO bloco e sobre as MESMAS versões atuais.
 
 SUBETAPA 3A — RESOLUÇÃO CEGA
-1. Trabalhe sem consultar gabarito, explicações, fontes da resposta ou pareceres prévios.
-2. Resolva cada questão de forma independente.
-3. Persista integralmente o resultado como blind_resolution POR QUESTÃO usando o importador oficial da etapa; telemetria não substitui reviews individuais.
-4. Reconsulte o bloco e confirme a existência de um review blind_resolution para cada question_id + item_version atual processada. Em bloco completo de 200, exija 200/200 antes de prosseguir.
-5. Se houver qualquer falha ou contagem menor, coverage.complete=false, liste pending_ids e NÃO avance para a auditoria.
+1. Trabalhe EXCLUSIVAMENTE no bloco operacional recebido; não misture outro lote/bloco.
+2. Trabalhe sem consultar gabarito, explicações, fontes da resposta ou pareceres prévios.
+3. Resolva TODAS as 200 questões da versão atual de forma independente.
+4. Persista CADA resposta como blind_resolution por question_id + item_version usando o importador oficial da etapa. Telemetria, resumo, nota global ou relatório textual NÃO substituem reviews individuais.
+5. Depois da gravação, RECONSULTE o bloco e confirme 200/200 blind_resolution na versão atual. Se houver 199/200 ou menos, a etapa FALHOU: coverage.complete=false, liste pending_ids e NÃO avance.
+6. PROIBIDO estimar, extrapolar por amostra ou declarar etapa concluída sem 200 registros individuais válidos.
 
 ${segment(item,'blind_resolution',ctx)}
 
 SUBETAPA 3B — AUDITORIA PERPLEXITY
-Somente depois de a subetapa 3A estar persistida:
-1. Reabra o mesmo bloco e as mesmas versões.
-2. Faça a auditoria científica/editorial independente completa.
-3. Use exclusivamente a resposta cega já registrada para confrontar o gabarito.
-4. Persista o parecer como perplexity_initial POR QUESTÃO, usando o importador oficial da etapa; stage_metrics sozinho NÃO conclui esta fase.
-5. Reconsulte o bloco e confirme que existem reviews individuais perplexity_initial para 100% das question_id + item_version atuais processadas; em bloco completo de 200, devem ser 200/200. Se houver menos, coverage.complete=false e a próxima fase fica bloqueada.
-6. Não modifique a questão principal.
+Somente depois de confirmar 200/200 blind_resolution:
+1. Reabra EXATAMENTE o mesmo bloco e as mesmas item_version atuais.
+2. Audite TODAS as 200 questões individualmente. NÃO usar amostra, NÃO estimar taxa de aprovação e NÃO preencher 170/200, 190/200 etc. sem que existam exatamente esses status em reviews individuais.
+3. Para CADA questão, registrar status real: approved | needs_revision | rejected, quality_score real, hard_fail e razões, ambiguidade, single_best_answer, fontes verificadas, problemas de distratores/estilo/explicações e proposed_change.exact_replacement quando houver correção sugerida.
+4. Se uma questão precisar correção, ela NÃO pode ser gravada como approved apenas para completar o bloco. Persistir o status real e o motivo específico.
+5. Persista o parecer como perplexity_initial POR QUESTÃO pelo importador oficial. stage_metrics é apenas consequência agregada dos reviews reais; nunca fonte de verdade.
+6. Depois da gravação, RECONSULTE question_factory_reviews para a versão atual e confirme exatamente 200/200 reviews perplexity_initial.
+7. Recalcule approved_count, needs_revision_count, rejected_count e hard_reject_count A PARTIR DOS 200 REVIEWS PERSISTIDOS. Esses totais devem fechar exatamente 200 e coincidir com o relatório questão por questão.
+8. Se qualquer contagem divergir, se faltar um ID, ou se stage_metrics não bater com os reviews individuais: status operacional = PERSISTENCE_MISMATCH, coverage.complete=false, NÃO liberar a etapa 4 e corrigir a persistência antes de encerrar.
+9. Não modifique a questão principal nesta etapa.
 
 ${segment(item,'perplexity_initial',ctx)}
+
+REGRA ANTI-FALSO-SUCESSO — PERPLEXITY:
+- É proibido registrar uma auditoria agregada que contradiga os reviews individuais.
+- É proibido marcar 200/200 approved quando houver qualquer sinalização de needs_revision/rejected no relatório humano, métricas, notas ou findings.
+- É proibido usar amostra para inferir status das questões não auditadas.
+- A única fonte de verdade para avanço é question_factory_reviews da versão atual, um registro por questão.
+- Antes de devolver sucesso, compare: total de reviews individuais = 200; approved + needs_revision + rejected = 200; IDs do relatório humano = IDs persistidos; stage_metrics = agregação exata desses 200 registros.
+- Havendo divergência, NÃO avance e NÃO escreva status de conclusão.
 
 REGRA DE SAÍDA:
 - Se não houver achados, o próximo passo é a validação do fluxo para aprovação humana.
