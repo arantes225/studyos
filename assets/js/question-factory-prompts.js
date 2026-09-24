@@ -102,6 +102,7 @@ Somente perfis ainda não aprovados devem registrar edição, URL oficial, IDs/p
       batch_code:batchCode,
       block_number:blockNumber,
       block_code:blockCode,
+      operational_address:blockCode || batchCode || null,
       exam_style:item?.exam_style || null
     };
   }
@@ -111,13 +112,18 @@ Somente perfis ainda não aprovados devem registrar edição, URL oficial, IDs/p
     const blockNumber = ctx.block_number ?? null;
     const batchCode = ctx.batch_code || (batchNumber == null ? null : 'L'+String(Number(batchNumber)).padStart(3,'0'));
     const blockCode = ctx.block_code || (batchCode && blockNumber != null ? batchCode+'-B'+String(Number(blockNumber)).padStart(2,'0') : null);
-    if (!batchCode && !ctx.prompt_workspace_url && !ctx.workspace_url) return '';
-
-    const workspace = ctx.prompt_workspace_url || ctx.workspace_url || 'URL do Admin informada no contexto do lote';
-    const source = ctx.prompt_source_instruction || ctx.source_instruction ||
-      `Entre no Admin da LURIA/Resibulando → Fábrica de questões → Produção em tempo real → lote ${batchCode || 'ATUAL'}${blockCode ? ` → bloco ${blockCode}` : ''}. Leia diretamente as versões atuais das questões deste escopo. Não peça que o usuário cole novamente as questões se o ambiente tiver acesso autenticado ao site, browser ou conector.`;
-    const destination = ctx.prompt_return_instruction || ctx.return_instruction ||
-      `Grave AUTOMATICAMENTE o resultado da etapa ${stage || 'atual'} no lote ${batchCode || 'ATUAL'}${blockCode ? ` e bloco ${blockCode}` : ''}, usando o acesso autorizado já disponível ao site/Supabase e o mecanismo de importação/escrita correspondente à etapa. Após gravar, confirme a persistência lendo novamente o lote/bloco e verificando IDs, versões, contagens e status. Só devolva JSON para importação manual se a gravação automática falhar de verdade, informando o erro real. Nunca pare apenas no relatório se a escrita estiver disponível e nunca invente que gravou algo.`;
+    const operationalAddress = blockCode || batchCode || null;
+    const workspace = ctx.prompt_workspace_url || ctx.workspace_url || 'https://www.resibulando.online/admin/';
+    const source = ctx.prompt_source_instruction || (blockCode
+      ? `Entre no Admin da LURIA/Resibulando → Fábrica de questões → Produção em tempo real → lote ${batchCode} → bloco ${blockCode}. Leia exclusivamente as questões e versões atuais desse bloco.`
+      : batchCode
+        ? `Entre no Admin da LURIA/Resibulando → Fábrica de questões → Produção em tempo real → lote ${batchCode}. Trabalhe exclusivamente nesse lote.`
+        : 'Este é um prompt-modelo sem lote/bloco vinculado. NÃO executar nem persistir até receber um endereço operacional concreto.');
+    const destination = ctx.prompt_return_instruction || (blockCode
+      ? `Grave o resultado exclusivamente no lote ${batchCode}, bloco ${blockCode}, na etapa indicada. Nunca escrever em outro bloco.`
+      : batchCode
+        ? `Grave o resultado exclusivamente no lote ${batchCode}, na etapa indicada. Nunca escrever em outro lote.`
+        : 'Sem destino operacional: não gravar nada.');
 
     const stagePersistence = {
       blind_resolution: `PERSISTÊNCIA DESTA ETAPA — PERPLEXITY / RESOLUÇÃO CEGA:
@@ -144,7 +150,7 @@ Somente perfis ainda não aprovados devem registrar edição, URL oficial, IDs/p
 - Decidir item por item: agree | partially_agree | disagree.
 - Gravar a DECISÃO DE ADJUDICAÇÃO separadamente, sempre preservando o review_id do parecer julgado.
 - Nesta etapa, PROIBIDO alterar a questão principal.
-- agree/partially_agree podem autorizar approved_patch; disagree deve manter approved_patch={} e registrar rebuttal_to_perplexity.`,
+- agree/partially_agree podem autorizar approved_patch; disagree deve manter approved_patch={} e registrar rebuttal_to_reviewer.`,
       chatgpt_correction: `PERSISTÊNCIA DESTA ETAPA — CHATGPT / CORREÇÃO:
 - Aplicar na QUESTÃO PRINCIPAL somente approved_patch previamente autorizado na adjudicação da MESMA item_version e review_id.
 - Se a adjudicação for disagree, não alterar a questão.
@@ -158,11 +164,20 @@ Somente perfis ainda não aprovados devem registrar edição, URL oficial, IDs/p
 - Persistir no destino próprio da etapa sem misturar parecer independente com conteúdo canônico.
 - Pareceres externos não podem sobrescrever a questão principal sem adjudicação explícita do ChatGPT.`;
 
-    return `CONTEXTO OPERACIONAL DO LOTE — OBRIGATÓRIO
+    return `ENDEREÇO OPERACIONAL — OBRIGATÓRIO E IMUTÁVEL
 Workspace/site: ${workspace}
-Lote: ${batchCode || 'NÃO INFORMADO'}
+Endereço operacional: ${operationalAddress || 'NÃO VINCULADO — PROMPT MODELO; NÃO EXECUTAR'}
+Lote: ${batchCode || 'NÃO VINCULADO'}
 Bloco: ${blockCode || 'NÃO APLICÁVEL'}
 Etapa: ${stage || 'NÃO INFORMADA'}
+
+TRAVA DE ESCOPO:
+- Você está autorizado a atuar EXCLUSIVAMENTE no endereço operacional acima.
+- Antes de ler, resolver, revisar, corrigir ou gravar qualquer item, confira no sistema que batch_code=${batchCode || 'NÃO VINCULADO'}${blockCode ? ` e block_code=${blockCode}` : ''}.
+- Se o endereço aberto no sistema não coincidir exatamente, PARE e retorne ADDRESS_MISMATCH; não use nem grave dados.
+- Nunca inferir outro lote/bloco pelo histórico da conversa, pelo último item acessado ou por exemplos do prompt.
+- Toda saída estruturada desta execução deve repetir batch_number, batch_code, block_number, block_code e operational_address.
+- Se este prompt estiver sem batch_code/endereço operacional concreto, ele é apenas MODELO e não pode executar nem persistir nenhuma etapa.
 
 ONDE BUSCAR / LER:
 ${source}
@@ -173,15 +188,15 @@ ${destination}
 ${stagePersistence}
 
 REGRA DE ACESSO E PERSISTÊNCIA:
-- Use o browser/conector/site autenticado disponível para abrir o local acima e trabalhar sobre as questões REAIS e versões ATUAIS do lote/bloco.
-- ChatGPT e Perplexity neste fluxo devem assumir que possuem acesso autorizado ao projeto; portanto, ao concluir a etapa, DEVEM persistir automaticamente o resultado no mesmo lote/bloco usando a ação/RPC/controle de importação correspondente.
-- Após a escrita, releia o lote/bloco e confirme que a versão persistida corresponde exatamente ao resultado produzido.
-- Atualize também o estado operacional da etapa quando o mecanismo correspondente fizer isso como parte da importação.
+- Use o browser/conector/site autenticado disponível para abrir o endereço operacional acima e trabalhar sobre as questões REAIS e versões ATUAIS desse lote/bloco.
+- ChatGPT e Perplexity neste fluxo devem persistir automaticamente o resultado SOMENTE nesse mesmo endereço operacional, usando a ação/RPC/controle de importação correspondente.
+- Após a escrita, releia o MESMO endereço operacional e confirme batch_code, block_code, IDs, versões, contagens e status.
 - Não use questões de outro lote, bloco, arquivo antigo ou contexto de conversa como substituto silencioso.
 - Se o acesso ou a gravação falhar de verdade, responda ACCESS_REQUIRED ou WRITE_FAILED, com o erro concreto e o ponto exato em que falhou; nesse caso, devolva também o JSON completo para contingência manual.
 - Nunca alegue que leu, alterou, importou ou gravou questões se isso não aconteceu.
 - IDs, batch_code, block_code e versões lidos no sistema prevalecem sobre qualquer exemplo do prompt.`;
   }
+
   function generation(item={},ctx={}) {
     const sample = Object.fromEntries(editable.map(k=>[k,'']));
     Object.assign(sample,{question_id:'ID_IMUTAVEL',question_code:'CODIGO_UNICO',exam_style:item.exam_style||null,block_sequence_no:1,sequence_no:1,dificuldade:'Médio',gabarito:'A',version:1,status:'generated'});
