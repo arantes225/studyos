@@ -3629,3 +3629,49 @@
     font-size:18px!important;
   }
 }
+
+/* PWA ADMIN FACTORY — callouts grid v18 */
+@media (max-width:760px){
+  .pwa-standalone body[data-page="admin"] [data-admin-view="factory"] .admin-factory-summary{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] [data-admin-view="factory"] .admin-factory-summary>article{
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    min-height:98px!important;
+    padding:9px!important;
+    box-sizing:border-box!important;
+    overflow:hidden!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] [data-admin-view="factory"] .admin-qf-style-stages,
+  .pwa-standalone body[data-page="admin"] [data-admin-view="factory"] .admin-qf-batch-stats,
+  .pwa-standalone body[data-page="admin"] [data-admin-view="factory"] .admin-qf-board-specs,
+  .pwa-standalone body[data-page="admin"] [data-admin-view="factory"] .admin-qf-review-notes{
+    grid-template-columns:1fr!important;
+    gap:7px!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] [data-admin-view="factory"] .admin-qf-manual-note{
+    grid-template-columns:1fr!important;
+    align-items:start!important;
+    gap:8px!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] [data-admin-view="factory"] .admin-qf-rule-chip{
+    justify-self:start!important;
+    width:auto!important;
+    max-width:100%!important;
+    text-align:left!important;
+  }
+}
+
+@media (max-width:350px){
+  .pwa-standalone body[data-page="admin"] [data-admin-view="factory"] .admin-factory-summary{
+    grid-template-columns:1fr!important;
+  }
+}
+
