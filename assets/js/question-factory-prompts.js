@@ -309,7 +309,7 @@ Antes de aprovar cada item, validar também:
 3. as três explicações restantes dizem individualmente por que cada alternativa está errada naquele caso.
 Falha em qualquer um desses quatro componentes = needs_revision; ausência, genericidade ou explicação vazia = HARD REJECT 10.
 ${stage==='chatgpt_initial'
-? `Na etapa ChatGPT inicial, MODIFICAR imediatamente itens needs_revision/rejected: devolver patch completo apenas dos campos necessários, aplicar mentalmente a nova versão e reavaliá-la antes da saída. Campos permitidos: ${editable.join(', ')}. O JSON deve trazer initial_reviews, autocorrections e final_reviews. Cada autocorrection deve conter question_id, expected_version, new_version=expected_version+1, original_status, reason e patch. final_reviews deve avaliar a versão NOVA já corrigida. Se não houver correção segura possível, manter final_status rejected/needs_revision e explicar por quê.`
+? `Na etapa ChatGPT inicial, MODIFICAR imediatamente itens needs_revision/rejected com CORREÇÃO RÍGIDA: não fazer remendo cosmético, não suavizar achado do revisor e não aprovar por aproximação. Corrigir a causa-raiz de cada falha apontada, inclusive reescrevendo completamente enunciado, alternativas, explicações ou Pulo do Gato quando necessário. Depois da correção, submeter a nova versão a TODOS os hard rejects e gates como se fosse uma questão inédita. Se qualquer falha permanecer, corrigir novamente antes de marcar approved. Devolver patch completo apenas dos campos necessários, aplicar mentalmente a nova versão e reavaliá-la antes da saída. Campos permitidos: ${editable.join(', ')}. O JSON deve trazer initial_reviews, autocorrections e final_reviews. Cada autocorrection deve conter question_id, expected_version, new_version=expected_version+1, original_status, reason e patch. final_reviews deve avaliar a versão NOVA já corrigida. Se não houver correção segura possível, manter final_status rejected/needs_revision e explicar por quê.`
 : `Não modificar itens. Para todo needs_revision/rejected, propor substituições completas APENAS de campos necessários em proposed_change.exact_replacement; não inventar correção quando faltarem evidências. Campos permitidos: ${editable.join(', ')}. IMPORTANTE: proposed_change é parecer, não patch executável nesta etapa. Persistir o parecer em registro separado; nunca escrever essas propostas na questão principal.`}
 Informar cobertura; trabalhar em partes identificadas se necessário, sem marcar bloco completo até revisar todos os IDs. Recalcular soma/estatísticas por código quando disponível. Números no exemplo são tetos, não notas pré-atribuídas.
 Ao final, emitir obrigatoriamente “RELATÓRIO QUESTÃO POR QUESTÃO”, preservando a ordem dos IDs recebidos. Exemplo:
@@ -445,9 +445,12 @@ ${segment(item,'chatgpt_adjudication',ctx)}
 SUBETAPA 4B — APLICAR AS CORREÇÕES AUTORIZADAS
 Somente após a adjudicação estar persistida:
 1. Para agree/partially_agree, aplique exatamente o approved_patch autorizado.
-2. Para disagree, não altere a questão.
-3. Preserve question_id, gere nova versão pelo backend e invalide aprovações antigas conforme o fluxo.
-4. Persista as correções como chatgpt_correction_review.
+2. CORREÇÃO RÍGIDA OBRIGATÓRIA: não faça alteração mínima apenas para “passar”. Corrija integralmente a causa-raiz do parecer. Se o problema for estrutural, reescreva por completo os campos necessários; se for distrator fraco, regenere o conjunto necessário; se houver ambiguidade, feche o cenário; se Pulo do Gato ou explicações estiverem genéricos, reescreva-os de forma específica para a vinheta.
+3. Após aplicar a correção, reavalie a NOVA versão contra todos os hard rejects, SBA, dependência da vinheta, assimetria, concorrência dos distratores, fontes, explicações A-D e Pulo do Gato. Qualquer falha remanescente impede aprovação.
+4. Se a primeira correção não passar integralmente, faça nova correção antes de encerrar a etapa; não devolver item parcialmente corrigido como aprovado.
+5. Para disagree, não altere a questão.
+6. Preserve question_id, gere nova versão pelo backend e invalide aprovações antigas conforme o fluxo.
+7. Persista as correções como chatgpt_correction_review.
 
 ${segment(item,'chatgpt_correction',ctx)}
 
