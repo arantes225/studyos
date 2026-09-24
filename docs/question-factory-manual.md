@@ -93,7 +93,7 @@ Sem corpus suficiente, style=null/quality_score=null e needs_revision, sem inven
 
 ## Revisão global e publicação
 
-ChatGPT e Perplexity revisam independentemente o lote atual. Gemini faz a terceira auditoria adversarial após os dois aprovarem. Revisores sinalizam problemas; não editam silenciosamente.
+ChatGPT e Perplexity revisam independentemente o lote atual. Os revisores sinalizam problemas; não editam silenciosamente.
 
 Todos conferem o conjunto quanto a duplicatas, cobertura, pistas e consistência. O contrato descreve rechecagem de todos os itens de risco/corrigidos e amostra estratificada de pelo menos 20% dos demais. Enquanto não existir classificação estruturada confiável de risco no banco, a implementação exige rechecagem científica das 1.000 questões, explicitamente registrada em coverage.
 
@@ -107,7 +107,7 @@ Toda saída de IA da fábrica deve incluir o objeto top-level `stage_metrics`. E
 
 ### Persistência automática
 
-Quando ChatGPT, Perplexity ou Gemini estiverem rodando em um ambiente com conector Supabase autorizado e execução SQL disponível, a própria IA deve persistir `stage_metrics` ao terminar a etapa usando **somente**:
+Quando ChatGPT ou Perplexity estiverem rodando em um ambiente com conector Supabase autorizado e execução SQL disponível, a própria IA deve persistir `stage_metrics` ao terminar a etapa usando **somente**:
 
 `select private.qf_record_stage_metrics('<STAGE_METRICS_JSON>'::jsonb);`
 
