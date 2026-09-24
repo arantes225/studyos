@@ -3537,3 +3537,95 @@
     font-size: 11px !important;
   }
 }
+
+
+/* PWA ADMIN FACTORY — callout containment v17 */
+@media (max-width:760px){
+  .pwa-standalone body[data-page="admin"] .admin-question-factory,
+  .pwa-standalone body[data-page="admin"] .admin-qf-lots-section,
+  .pwa-standalone body[data-page="admin"] .admin-qf-bad-section,
+  .pwa-standalone body[data-page="admin"] .admin-qf-manual,
+  .pwa-standalone body[data-page="admin"] .admin-factory-summary,
+  .pwa-standalone body[data-page="admin"] .admin-factory-batches,
+  .pwa-standalone body[data-page="admin"] .admin-qf-bank-dashboard,
+  .pwa-standalone body[data-page="admin"] .admin-qf-style-dashboard,
+  .pwa-standalone body[data-page="admin"] .admin-qf-style-card,
+  .pwa-standalone body[data-page="admin"] .admin-qf-style-stages,
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-stats,
+  .pwa-standalone body[data-page="admin"] .admin-qf-board-specs,
+  .pwa-standalone body[data-page="admin"] .admin-qf-review-notes{
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-factory-summary > article,
+  .pwa-standalone body[data-page="admin"] .admin-qf-style-card,
+  .pwa-standalone body[data-page="admin"] .admin-qf-style-stages > span,
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-stats > span,
+  .pwa-standalone body[data-page="admin"] .admin-qf-board-specs > article,
+  .pwa-standalone body[data-page="admin"] .admin-qf-review-notes > article{
+    width:auto!important;
+    min-width:0!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+    overflow:hidden!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-factory-summary span,
+  .pwa-standalone body[data-page="admin"] .admin-factory-summary strong,
+  .pwa-standalone body[data-page="admin"] .admin-factory-summary small,
+  .pwa-standalone body[data-page="admin"] .admin-qf-style-card strong,
+  .pwa-standalone body[data-page="admin"] .admin-qf-style-card small,
+  .pwa-standalone body[data-page="admin"] .admin-qf-style-stages b,
+  .pwa-standalone body[data-page="admin"] .admin-qf-style-stages small,
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-stats b,
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-stats small,
+  .pwa-standalone body[data-page="admin"] .admin-qf-board-specs span,
+  .pwa-standalone body[data-page="admin"] .admin-qf-board-specs strong{
+    min-width:0!important;
+    max-width:100%!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere!important;
+    word-break:break-word!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-factory-badge,
+  .pwa-standalone body[data-page="admin"] .admin-qf-style-card-head > span,
+  .pwa-standalone body[data-page="admin"] .admin-qf-bank-dashboard-head > span,
+  .pwa-standalone body[data-page="admin"] .admin-qf-rule-chip,
+  .pwa-standalone body[data-page="admin"] .admin-qf-block-state{
+    max-width:100%!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere!important;
+    text-align:center!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-style-card-head,
+  .pwa-standalone body[data-page="admin"] .admin-qf-bank-dashboard-head{
+    min-width:0!important;
+    max-width:100%!important;
+    flex-wrap:wrap!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-style-card-head > div,
+  .pwa-standalone body[data-page="admin"] .admin-qf-bank-dashboard-head > div{
+    min-width:0!important;
+    max-width:100%!important;
+  }
+}
+
+@media (max-width:390px){
+  .pwa-standalone body[data-page="admin"] .admin-factory-summary{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-factory-summary > article{
+    padding:8px!important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-factory-summary strong{
+    font-size:18px!important;
+  }
+}
