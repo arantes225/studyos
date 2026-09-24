@@ -505,6 +505,94 @@
       .settings-section .setting-row small,
       .settings-section .settings-note{font-size:10.5px}
     }
+
+    .profile-picker {
+      position: relative;
+      width: 100%;
+    }
+
+    .profile-native-select {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .profile-picker-toggle {
+      width: 100%;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 720;
+      text-align: left;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .profile-picker-toggle:hover,
+    .profile-picker-toggle[aria-expanded="true"] {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .profile-picker-chevron {
+      color: var(--muted);
+      font-size: 12px;
+      flex: 0 0 auto;
+    }
+
+    .profile-picker-menu {
+      position: absolute;
+      z-index: 60;
+      top: calc(100% + 6px);
+      right: 0;
+      left: 0;
+      max-height: 250px;
+      overflow-y: auto;
+      padding: 6px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .profile-picker-menu[hidden] {
+      display: none !important;
+    }
+
+    .profile-picker-option {
+      width: 100%;
+      min-height: 38px;
+      padding: 8px 10px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .profile-picker-option:hover {
+      background: var(--surface-2);
+      color: var(--accent);
+    }
+
+    .profile-specialty-menu {
+      max-height: 300px;
+    }
 </style>
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
   <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
