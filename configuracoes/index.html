@@ -576,26 +576,71 @@
                 >
               </label>
 
-              <label class="profile-field">
+              <div class="profile-field">
                 <span>Sexo</span>
-                <select id="profile-gender">
-                  <option value="">Selecione</option>
-                  <option value="male">Masculino</option>
-                  <option value="female">Feminino</option>
-                  <option value="other">Outro</option>
-                  <option value="prefer_not_to_say">Prefiro não informar</option>
-                </select>
-              </label>
 
-              <label class="profile-field">
+                <div class="profile-picker">
+                  <button
+                    id="profile-gender-toggle"
+                    class="profile-picker-toggle"
+                    type="button"
+                    aria-haspopup="listbox"
+                    aria-expanded="false"
+                  >
+                    <span id="profile-gender-label">Selecione</span>
+                    <span class="profile-picker-chevron" aria-hidden="true">⌄</span>
+                  </button>
+
+                  <div
+                    id="profile-gender-menu"
+                    class="profile-picker-menu"
+                    role="listbox"
+                    hidden
+                  ></div>
+
+                  <select id="profile-gender" class="profile-native-select" tabindex="-1" aria-hidden="true">
+                    <option value="">Selecione</option>
+                    <option value="male">Masculino</option>
+                    <option value="female">Feminino</option>
+                    <option value="other">Outro</option>
+                    <option value="prefer_not_to_say">Prefiro não informar</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="profile-field">
                 <span>Especialidade</span>
-                <input
-                  id="profile-specialty"
-                  type="text"
-                  maxlength="100"
-                  list="specialty-options"
-                  placeholder="Ex.: Cirurgia Geral"
-                >
+
+                <div class="profile-picker">
+                  <button
+                    id="profile-specialty-toggle"
+                    class="profile-picker-toggle"
+                    type="button"
+                    aria-haspopup="listbox"
+                    aria-expanded="false"
+                  >
+                    <span id="profile-specialty-label">Selecione</span>
+                    <span class="profile-picker-chevron" aria-hidden="true">⌄</span>
+                  </button>
+
+                  <div
+                    id="profile-specialty-menu"
+                    class="profile-picker-menu profile-specialty-menu"
+                    role="listbox"
+                    hidden
+                  ></div>
+
+                  <input
+                    id="profile-specialty"
+                    class="profile-native-select"
+                    type="text"
+                    maxlength="100"
+                    list="specialty-options"
+                    placeholder="Ex.: Cirurgia Geral"
+                    tabindex="-1"
+                    aria-hidden="true"
+                  >
+                </div>
 
                 <datalist id="specialty-options" data-luria-area-list>
                   <option value="Alergia e Imunologia">
@@ -652,7 +697,7 @@
                   <option value="Reumatologia">
                   <option value="Urologia">
                 </datalist>
-              </label>
+              </div>
             </div>
 
             <div class="profile-preview">
