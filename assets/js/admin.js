@@ -2038,6 +2038,7 @@
     }
 
     wrap.innerHTML = batches.map(batch => {
+      const batchCode = batch.batch_code || ('L'+String(Number(batch.batch_number || 0)).padStart(3,'0'));
       const blocks = Array.isArray(batch.blocks) ? batch.blocks : [];
       const progress = Math.min(100, (Number(batch.question_count || 0) / 1000) * 100);
       const blockCards = [1,2,3,4,5].map(n => {
@@ -2059,7 +2060,7 @@
         return `
           <article class="admin-qf-block-mini admin-qf-block-workflow" data-block-status="${esc(status)}">
             <div class="admin-qf-block-mini-head">
-              <div><strong>Bloco ${n}</strong><small>${count}/200 questões</small></div>
+              <div><strong>${esc(block?.block_code || ('L'+String(Number(batch.batch_number||0)).padStart(3,'0')+'-B'+String(n).padStart(2,'0')))}</strong><small>Bloco ${n} · ${count}/200 questões</small></div>
               <span class="admin-qf-block-state ${esc(status)}">${esc(qfStatusLabel(status))}</span>
             </div>
 
@@ -2103,10 +2104,18 @@
       }).join("");
 
       return `
+        <details class="admin-qf-batch-folder" open>
+          <summary class="admin-qf-batch-folder-summary">
+            <div>
+              <strong>📁 ${esc(batchCode)}</strong>
+              <small>Pasta do lote · 1.000 questões · 5 blocos rastreáveis</small>
+            </div>
+            <span class="admin-factory-badge">${esc(qfStatusLabel(batch.status))}</span>
+          </summary>
         <article class="admin-qf-batch-card">
           <div class="admin-qf-batch-card-head">
             <div>
-              <strong>Lote ${String(Number(batch.batch_number || 0)).padStart(3,"0")}</strong>
+              <strong>${esc(batchCode)} · Lote ${String(Number(batch.batch_number || 0)).padStart(3,"0")}</strong>
               <small>${formatNumber(batch.question_count)} de 1.000 questões</small>
             </div>
             <span class="admin-factory-badge">${esc(qfStatusLabel(batch.status))}</span>
@@ -2130,6 +2139,7 @@
             <button class="button secondary" type="button" data-qf-import-lot="${Number(batch.batch_number)}">Importar revisão final</button>
           </div>
         </article>
+        </details>
       `;
     }).join("");
   }
@@ -2220,7 +2230,7 @@
     }
 
     const questions = Array.isArray(data?.questions) ? data.questions : [];
-    if ($("admin-qf-dialog-title")) $("admin-qf-dialog-title").textContent = `Lote ${String(Number(batchNumber)).padStart(3,"0")} · Bloco ${blockNumber}`;
+    if ($("admin-qf-dialog-title")) $("admin-qf-dialog-title").textContent = `L${String(Number(batchNumber)).padStart(3,"0")}-B${String(Number(blockNumber)).padStart(2,"0")} · Bloco ${blockNumber}`;
     if ($("admin-qf-dialog-meta")) {
       const c = data?.counts || {};
       $("admin-qf-dialog-meta").textContent = `${formatNumber(c.total)} questões · ${formatNumber(c.needs_revision)} a rever · ${formatNumber(c.rejected)} rejeitadas`;
@@ -2474,8 +2484,8 @@
       return `
         <article class="admin-qf-tracker-row">
           <div class="admin-qf-tracker-main">
-            <strong>L${String(Number(block.batch_number||0)).padStart(3,"0")} · Bloco ${Number(block.block_number||0)}</strong>
-            <small>${Number(block.question_count||0)}/${Number(block.target_size||200)} questões</small>
+            <strong>${esc(block.block_code || ('L'+String(Number(block.batch_number||0)).padStart(3,'0')+'-B'+String(Number(block.block_number||0)).padStart(2,'0')))}</strong>
+            <small>${esc(block.batch_code || ('L'+String(Number(block.batch_number||0)).padStart(3,'0')))} · Bloco ${Number(block.block_number||0)} · ${Number(block.question_count||0)}/${Number(block.target_size||200)} questões</small>
           </div>
           <div><span>Banca</span><strong>${esc(block.exam_style || "—")}</strong></div>
           <div><span>Fase</span><strong>${esc(block.phase || meta.label)}</strong></div>
