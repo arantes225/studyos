@@ -113,7 +113,7 @@
   const FEATURE_LABELS = {
     cronograma: "Cronograma",
     caderno: "Caderno",
-    ccq: "CCQ",
+    ccq: "Pulo do Gato",
     flashcards: "Flashcards",
     questoes: "Questões",
     ia: "IA"
