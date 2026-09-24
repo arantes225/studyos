@@ -798,6 +798,47 @@
   }
 }
 
+/* Símbolo temático do Pulo do Gato */
+.dashboard-cat-symbol {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  line-height: 1;
+}
+.dashboard-cat-symbol img {
+  display: none;
+  width: auto;
+  height: 24px;
+  max-width: 92px;
+  object-fit: contain;
+}
+.dashboard-cat-symbol .cat-symbol-light {
+  display: block;
+}
+:root[data-theme="dark"] .dashboard-cat-symbol .cat-symbol-light,
+:root[data-theme="dark"] .dashboard-cat-symbol .cat-symbol-pink {
+  display: none;
+}
+:root[data-theme="dark"] .dashboard-cat-symbol .cat-symbol-dark {
+  display: block;
+}
+:root[data-theme="leila-mood"] .dashboard-cat-symbol .cat-symbol-light,
+:root[data-theme="leila-mood"] .dashboard-cat-symbol .cat-symbol-dark {
+  display: none;
+}
+:root[data-theme="leila-mood"] .dashboard-cat-symbol .cat-symbol-pink {
+  display: block;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .dashboard-cat-symbol .cat-symbol-light,
+  :root:not([data-theme]) .dashboard-cat-symbol .cat-symbol-pink {
+    display: none;
+  }
+  :root:not([data-theme]) .dashboard-cat-symbol .cat-symbol-dark {
+    display: block;
+  }
+}
+
 /* Pulo do Gato fixo no Dashboard */
 .dashboard-passive-ccq-card {
   position: relative;
@@ -1903,7 +1944,11 @@
           </article>
 
           <article class="dashboard-summary-card dashboard-summary-ccq">
-            <span>Pulo do Gato</span>
+            <span class="dashboard-cat-symbol" role="img" aria-label="Pulo do Gato">
+              <img class="cat-symbol-light" src="assets/img/pulo%20do%20gato/gato-tema-claro.png" alt="">
+              <img class="cat-symbol-dark" src="assets/img/pulo%20do%20gato/gato-tema-escuro.png" alt="">
+              <img class="cat-symbol-pink" src="assets/img/pulo%20do%20gato/gato-tema-rosa.png" alt="">
+            </span>
             <strong id="summary-ccq-text">Carregando...</strong>
           </article>
         </section>
@@ -1991,7 +2036,11 @@
 
           <article class="dashboard-detail-card dashboard-detail-ccq">
             <div class="dashboard-ccq-head">
-              <span class="dashboard-detail-label">Pulo do Gato do dia</span>
+              <span class="dashboard-detail-label dashboard-cat-symbol" role="img" aria-label="Pulo do Gato do dia">
+                <img class="cat-symbol-light" src="assets/img/pulo%20do%20gato/gato-tema-claro.png" alt="">
+                <img class="cat-symbol-dark" src="assets/img/pulo%20do%20gato/gato-tema-escuro.png" alt="">
+                <img class="cat-symbol-pink" src="assets/img/pulo%20do%20gato/gato-tema-rosa.png" alt="">
+              </span>
               <span class="dashboard-ccq-auto">15s</span>
             </div>
 
