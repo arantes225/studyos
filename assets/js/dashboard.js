@@ -248,7 +248,7 @@ function renderActivityCard(item) {
     const quantityLabel =
       item.kind === "flashcards_batch"
         ? `${count} flashcard${count === 1 ? "" : "s"}`
-        : `${count} CCQ${count === 1 ? "" : "s"}`;
+        : `${count} Pulo${count === 1 ? "" : "s"} do Gato`;
 
     const areaLabel =
       item.area
@@ -914,7 +914,7 @@ async function moveAgendaReviewSource(
     throw new Error(
       isFlashcards
         ? "Não encontrei os flashcards dessa atividade na data original."
-        : "Não encontrei os CCQs dessa atividade na data original."
+        : "Não encontrei os Pulos do Gato dessa atividade na data original."
     );
   }
 
@@ -974,7 +974,7 @@ async function moveAgendaReviewSource(
     throw new Error(
       isFlashcards
         ? "A nova data não foi aplicada a todos os flashcards."
-        : "A nova data não foi aplicada a todos os CCQs."
+        : "A nova data não foi aplicada a todos os Pulos do Gato."
     );
   }
 
@@ -1392,12 +1392,12 @@ async function loadErrorMetrics() {
 
   setDashboardText(
     "metric-errors",
-    `${active} CCQ${active === 1 ? "" : "s"} ativo${active === 1 ? "" : "s"}`
+    `${active} Pulo${active === 1 ? "" : "s"} do Gato ativo${active === 1 ? "" : "s"}`
   );
 
   setDashboardText(
     "summary-errors",
-    `${active} CCQ${active === 1 ? "" : "s"}`
+    `${active} Pulo${active === 1 ? "" : "s"} do Gato`
   );
 
   setDashboardText(
@@ -1558,7 +1558,7 @@ async function loadSimulationMetrics() {
 
 
 /* =========================================================
-   CCQ — REVISÃO PASSIVA
+   PULO DO GATO — REVISÃO PASSIVA
    ========================================================= */
 
 const DASHBOARD_CCQ_ROTATION_MS = 15000;
@@ -1728,7 +1728,7 @@ async function loadDashboardPassiveCcq() {
 
   if (error) {
     console.warn(error);
-    empty.textContent = "Sem CCQs disponíveis.";
+    empty.textContent = "Sem Pulos do Gato disponíveis.";
     empty.hidden = false;
     stage.hidden = true;
 
@@ -1741,7 +1741,7 @@ async function loadDashboardPassiveCcq() {
       summaryText
     ) {
       summaryText.textContent =
-        "Sem CCQs disponíveis";
+        "Sem Pulos do Gato disponíveis";
     }
 
     return;
@@ -1752,7 +1752,7 @@ async function loadDashboardPassiveCcq() {
   );
 
   if (!dashboardCcqState.items.length) {
-    empty.textContent = "Nenhum CCQ ativo no Caderno de Erros.";
+    empty.textContent = "Nenhum Pulo do Gato ativo no Caderno de Erros.";
     empty.hidden = false;
     stage.hidden = true;
 
@@ -1765,7 +1765,7 @@ async function loadDashboardPassiveCcq() {
       summaryText
     ) {
       summaryText.textContent =
-        "Nenhum CCQ ativo";
+        "Nenhum Pulo do Gato ativo";
     }
 
     return;
@@ -2042,20 +2042,13 @@ function updateDashboardSummaryFromDetails() {
   ) {
     const match =
       errorValue.match(
-        /(\d+)\s+CCQ/i
+        /(\d+)\s+(?:CCQs?|Pulos? do Gato)/i
       );
 
     summaryErrors.textContent =
       match
         ? match[1]
-          + " CCQ"
-          + (
-            Number(
-              match[1]
-            ) === 1
-              ? ""
-              : "s"
-          )
+          + " Pulo" + (Number(match[1]) === 1 ? "" : "s") + " do Gato"
         : (
             errorValue
             || "—"
