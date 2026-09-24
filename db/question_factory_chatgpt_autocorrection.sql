@@ -1,0 +1,23 @@
+-- Etapa 02: revisão adversarial + autocorreção imediata do ChatGPT.
+-- Registra a revisão da versão original, aplica somente campos permitidos,
+-- incrementa a versão e registra a segunda revisão da versão corrigida.
+-- A função viva no Supabase é public.admin_import_question_factory_chatgpt_autocorrection(jsonb).
+-- Contrato de entrada:
+-- schema_version = '2.0'
+-- review_stage = 'chatgpt_initial'
+-- reviewer = 'ChatGPT'
+-- initial_reviews[] = revisão da versão recebida
+-- autocorrections[] = {question_id, expected_version, new_version, original_status, reason, patch}
+-- final_reviews[] = segunda revisão apenas das versões autocorrigidas
+--
+-- O banco valida:
+-- * admin session;
+-- * lote/bloco e versão;
+-- * patch apenas em campos editáveis;
+-- * gabarito A-D;
+-- * autocorreção somente após needs_revision/rejected;
+-- * new_version = expected_version + 1;
+-- * uma final_review para cada autocorreção;
+-- * só libera blind_resolution quando as 200 versões atuais têm chatgpt_initial aprovado.
+--
+-- A definição completa foi aplicada diretamente no Supabase em 2026-09-24.
