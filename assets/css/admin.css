@@ -4330,3 +4330,76 @@ body.admin-unlocked #admin-app {
 .admin-qf-lots-section .admin-factory-batches-head{
   align-items:flex-start;
 }
+
+
+/* Fábrica — rota operacional editável dos prompts */
+.admin-qf-route-editor{
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface-2);
+  overflow:hidden;
+}
+.admin-qf-route-editor>summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:11px 12px;
+  cursor:pointer;
+  list-style:none;
+}
+.admin-qf-route-editor>summary::-webkit-details-marker{display:none}
+.admin-qf-route-editor>summary strong{
+  font-size:11px;
+}
+.admin-qf-route-editor>summary small{
+  color:var(--muted);
+  font-size:9px;
+  text-align:right;
+}
+.admin-qf-route-editor-body{
+  display:grid;
+  gap:10px;
+  padding:0 12px 12px;
+}
+.admin-qf-route-editor-body label{
+  display:grid;
+  gap:5px;
+}
+.admin-qf-route-editor-body label>span{
+  color:var(--muted);
+  font-size:9px;
+  font-weight:800;
+}
+.admin-qf-route-editor-body input,
+.admin-qf-route-editor-body textarea{
+  width:100%;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--surface);
+  color:var(--text);
+  padding:9px 10px;
+  font:inherit;
+  font-size:10px;
+  line-height:1.45;
+  resize:vertical;
+}
+.admin-qf-route-editor-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.admin-qf-route-editor-actions small{
+  color:var(--muted);
+  font-size:9px;
+}
+@media(max-width:700px){
+  .admin-qf-route-editor>summary{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .admin-qf-route-editor>summary small{
+    text-align:left;
+  }
+}
