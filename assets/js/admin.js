@@ -2116,7 +2116,7 @@
           <div class="admin-qf-batch-card-head">
             <div>
               <strong>${esc(batchCode)} · Lote ${String(Number(batch.batch_number || 0)).padStart(3,"0")}</strong>
-              <small>${formatNumber(batch.question_count)} de 1.000 questões</small>
+              <small>${esc(batch.exam_style || "Banca não identificada")} · ${batch.automation_mode === "guided_1000" ? "fluxo guiado de 1.000" : "fluxo manual"} · ${formatNumber(batch.question_count)} de 1.000 questões</small>
             </div>
             <span class="admin-factory-badge">${esc(qfStatusLabel(batch.status))}</span>
           </div>
@@ -2132,6 +2132,7 @@
             </div>
           </div>
           <div class="admin-qf-batch-actions">
+            ${batch.status !== "published" ? `<button class="button primary" type="button" data-qf-continue-batch="${Number(batch.batch_number)}">Continuar lote</button>` : ""}
             <button class="button secondary admin-qf-open-batch" type="button" data-qf-batch="${Number(batch.batch_number)}">Ver questões</button>
             <button class="button secondary" type="button" data-qf-export="${Number(batch.batch_number)}:0:audit">Exportar lote completo</button>
             ${batch.final_review_chatgpt_status === "approved" && batch.final_review_perplexity_status === "approved" && batch.final_human_review_status !== "approved" ? `<button class="button primary" type="button" data-qf-final-approve="${Number(batch.batch_number)}">Aprovar lote final</button>` : ""}
@@ -2909,6 +2910,20 @@
     }
   }
 
+  function populateQuestionFactoryLotStyles() {
+    const select = $("admin-qf-start-lot-style");
+    if (!select) return;
+    const current = select.value;
+    const styles = (state.questionStyles || [])
+      .map(item => String(item.exam_style || "").trim())
+      .filter(Boolean)
+      .sort((a,b) => a.localeCompare(b,"pt-BR"));
+    select.innerHTML = '<option value="">Escolher banca</option>' + styles
+      .map(style => `<option value="${esc(style)}">${esc(style)}</option>`)
+      .join("");
+    if (styles.includes(current)) select.value = current;
+  }
+
   async function loadQuestionFactoryStyles() {
     const { data, error } = await sb.rpc("admin_question_factory_style_snapshot");
     if (error) {
@@ -2916,6 +2931,73 @@
       return;
     }
     renderQuestionFactoryStyles(data || []);
+    populateQuestionFactoryLotStyles();
+  }
+
+  async function startQuestionFactoryLot() {
+    const select = $("admin-qf-start-lot-style");
+    const button = $("admin-qf-start-lot");
+    const status = $("admin-qf-start-lot-status");
+    const examStyle = String(select?.value || "").trim();
+    if (!examStyle) {
+      if (status) status.textContent = "Escolha a banca.";
+      return;
+    }
+    if (!window.confirm(`Iniciar um novo lote de 1.000 questões de ${examStyle}? Os 5 blocos de 200 serão criados agora.`)) return;
+
+    const original = button?.textContent || "Iniciar lote de 1.000";
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Criando Lote...";
+    }
+    if (status) status.textContent = "Criando os 5 blocos...";
+
+    const { data, error } = await sb.rpc("admin_start_question_factory_lot", {
+      p_exam_style: examStyle,
+      p_automation_mode: "guided_1000"
+    });
+
+    if (button) {
+      button.disabled = false;
+      button.textContent = original;
+    }
+    if (error) {
+      if (status) status.textContent = error.message || "Não foi possível iniciar o lote.";
+      return;
+    }
+
+    if (status) status.textContent = `${data?.batch_code || "Lote"} criado: 5 blocos de 200. Use “Continuar lote”.`;
+    await Promise.all([
+      loadQuestionFactory(),
+      loadQuestionFactoryBlockTracker(),
+      loadQuestionFactoryQuality()
+    ]);
+  }
+
+  async function continueQuestionFactoryLot(batchNumber, button) {
+    const batch = Number(batchNumber);
+    const rows = (state.qfBlockTracker || [])
+      .filter(row => Number(row.batch_number) === batch)
+      .sort((a,b) => Number(a.block_number) - Number(b.block_number));
+
+    const next = rows.find(row => !["block_complete"].includes(row.next_stage));
+    if (!next) {
+      window.alert("Os cinco blocos já concluíram o fluxo individual. O lote está pronto para a revisão final.");
+      return;
+    }
+
+    if (next.next_stage === "human_review") {
+      window.alert(`${next.block_code || "Bloco"} aguarda sua aprovação humana no card do bloco.`);
+      return;
+    }
+
+    const prompt = questionFactoryBlockPrompt(next);
+    if (!prompt) {
+      window.alert("Não há prompt automático disponível para a próxima etapa.");
+      return;
+    }
+
+    await copyAndOpenAI(prompt, next.next_provider || "chatgpt", button);
   }
 
   function renderQuestionFactoryBatch(data) {
@@ -3270,7 +3352,14 @@
 
     $("admin-qf-import-calibration")?.addEventListener("click", () => openReviewImportDialog(null, null, "calibration"));
     $("admin-qf-import-stage-metrics")?.addEventListener("click", () => openReviewImportDialog(null, null, "metrics"));
+    $("admin-qf-start-lot")?.addEventListener("click", startQuestionFactoryLot);
     $("admin-qf-batches")?.addEventListener("click", async event => {
+      const continueButton = event.target.closest("[data-qf-continue-batch]");
+      if (continueButton) {
+        await continueQuestionFactoryLot(continueButton.dataset.qfContinueBatch, continueButton);
+        return;
+      }
+
       const exportButton = event.target.closest("[data-qf-export]");
       if (exportButton) {
         const [batch, block, mode] = exportButton.dataset.qfExport.split(":");
