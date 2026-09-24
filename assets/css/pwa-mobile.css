@@ -3122,3 +3122,301 @@
     padding:9px!important;
   }
 }
+
+
+/* =========================================================
+   PWA ADMIN — FÁBRICA DE QUESTÕES / LOTES MOBILE
+   ========================================================= */
+@media (max-width: 760px) {
+  .pwa-standalone body[data-page="admin"] .admin-qf-lots-section,
+  .pwa-standalone body[data-page="admin"] .admin-qf-lots-panel,
+  .pwa-standalone body[data-page="admin"] .admin-factory-batches,
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-card,
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-folder {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-factory-batches-head {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-factory-batches-head > div:first-child {
+    min-width: 0 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-factory-batches-head strong {
+    font-size: 15px !important;
+    line-height: 1.25 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-factory-batches-head small {
+    font-size: 11px !important;
+    line-height: 1.45 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-lot-start {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-lot-start select,
+  .pwa-standalone body[data-page="admin"] .admin-qf-lot-start .button {
+    width: 100% !important;
+    min-height: 46px !important;
+    font-size: 13px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-start-lot-status,
+  .pwa-standalone body[data-page="admin"] #admin-qf-batch-count {
+    width: 100% !important;
+    text-align: left !important;
+    white-space: normal !important;
+    font-size: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-factory-batches {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-card {
+    gap: 12px !important;
+    padding: 12px !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-card-head {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-card-head strong {
+    font-size: 14px !important;
+    line-height: 1.3 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-card-head small {
+    font-size: 10px !important;
+    line-height: 1.4 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-head-actions,
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-actions,
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-actions-clean {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-head-actions .button,
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-actions .button,
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-actions-clean .button,
+  .pwa-standalone body[data-page="admin"] .admin-qf-open-batch,
+  .pwa-standalone body[data-page="admin"] .admin-qf-open-batch-wide,
+  .pwa-standalone body[data-page="admin"] .admin-qf-view-block-wide {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+    font-size: 12px !important;
+    justify-content: center !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-stats span {
+    min-width: 0 !important;
+    padding: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-stats b {
+    font-size: 12px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-stats small {
+    font-size: 9px !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-block-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-block-mini,
+  .pwa-standalone body[data-page="admin"] .admin-qf-block-mini:last-child {
+    grid-column: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-block-mini > div strong {
+    font-size: 12px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-block-mini > div small {
+    font-size: 9px !important;
+    line-height: 1.4 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-block-mini-actions,
+  .pwa-standalone body[data-page="admin"] .admin-qf-block-mini-actions:has(.admin-qf-correction-import) {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-block-mini-actions .button,
+  .pwa-standalone body[data-page="admin"] .admin-qf-block-ai-action .button {
+    width: 100% !important;
+    min-height: 42px !important;
+    font-size: 11px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-final-review {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-final-review > div {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 7px !important;
+    justify-content: stretch !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-final-review .button {
+    width: 100% !important;
+    min-height: 42px !important;
+    font-size: 11px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-dialog {
+    width: calc(100vw - 12px) !important;
+    max-width: calc(100vw - 12px) !important;
+    max-height: calc(100dvh - 12px) !important;
+    margin: auto !important;
+    border-radius: 14px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-dialog-shell {
+    max-height: calc(100dvh - 12px) !important;
+    padding: 12px !important;
+    gap: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-dialog-head {
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    gap: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-dialog-head h2 {
+    font-size: 17px !important;
+    line-height: 1.25 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-dialog-head p {
+    font-size: 10px !important;
+    line-height: 1.4 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-question-list {
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-question summary {
+    grid-template-columns: 1fr !important;
+    gap: 7px !important;
+    padding: 11px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-question-code {
+    justify-self: start !important;
+    min-height: 28px !important;
+    font-size: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-question-title strong {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-question-title small {
+    font-size: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-review-pills {
+    grid-column: auto !important;
+    justify-content: flex-start !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-review-pill {
+    min-height: 26px !important;
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-question-body {
+    padding: 0 10px 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-question-body > p,
+  .pwa-standalone body[data-page="admin"] .admin-qf-alt {
+    font-size: 11px !important;
+    line-height: 1.55 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-pagination {
+    display: grid !important;
+    grid-template-columns: 1fr auto 1fr !important;
+    width: 100% !important;
+    gap: 6px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-pagination .button {
+    min-height: 42px !important;
+    width: 100% !important;
+    font-size: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-pagination span {
+    min-width: 0 !important;
+    font-size: 9px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-factory-cleanup {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-route-editor > summary {
+    min-height: 44px !important;
+    padding: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-route-editor-body input,
+  .pwa-standalone body[data-page="admin"] .admin-qf-route-editor-body textarea {
+    font-size: 12px !important;
+  }
+}
