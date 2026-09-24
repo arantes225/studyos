@@ -2110,7 +2110,9 @@
 
   function renderQuestionFactoryOperationalFlow(batchNumber, blockNumber, flow, blockAction, humanStatus) {
     const currentStage = String(blockAction?.next?.next_stage || "");
-    const currentStep = questionFactoryOperationalStep(currentStage);
+    const afterCorrectionBlind = currentStage === "blind_resolution"
+      && String(blockAction?.next?.latest_review_stage || "") === "chatgpt_correction_review";
+    const currentStep = afterCorrectionBlind ? 5 : questionFactoryOperationalStep(currentStage);
     const f = flow || {};
     const generated = Number(f.generated_count || 0);
     const initialAudited = Number(f.initial_audited_count || 0);
@@ -2672,7 +2674,8 @@
     }
 
     if (block.next_stage === "blind_resolution" && window.LuriaQuestionPrompts.perplexityCycle) {
-      return window.LuriaQuestionPrompts.perplexityCycle(style, ctx, false);
+      const afterCorrection = String(block.latest_review_stage || "") === "chatgpt_correction_review";
+      return window.LuriaQuestionPrompts.perplexityCycle(style, ctx, afterCorrection);
     }
 
     if (block.next_stage === "chatgpt_adjudication" && window.LuriaQuestionPrompts.chatgptCorrectionCycle) {
@@ -3229,14 +3232,15 @@
 
     const provider = next.next_provider || "chatgpt";
     const providerLabel = provider === "perplexity" ? "Perplexity" : provider === "gemini" ? "Gemini" : "ChatGPT";
+    const afterCorrection = next.next_stage === "blind_resolution" && String(next.latest_review_stage || "") === "chatgpt_correction_review";
     const phaseLabels = {
-      generation:"Gerar 200 questões",
-      chatgpt_initial:"Revisão adversarial + autocorreção",
-      blind_resolution:"Resolução cega",
-      perplexity_initial:"Auditoria",
-      chatgpt_adjudication:"Julgar parecer",
-      chatgpt_correction:"Corrigir consenso",
-      perplexity_reaudit:"Reauditoria"
+      generation:"1 · Gerar 200 questões",
+      chatgpt_initial:"2 · ChatGPT · revisão adversarial + autocorreção",
+      blind_resolution:afterCorrection ? "5 · Perplexity · confirmar correções" : "3 · Perplexity · resolução cega + auditoria",
+      perplexity_initial:"3 · Perplexity · concluir auditoria",
+      chatgpt_adjudication:"4 · ChatGPT · julgar + corrigir",
+      chatgpt_correction:"4 · ChatGPT · aplicar correções",
+      perplexity_reaudit:"5 · Perplexity · confirmar correções"
     };
     const phase = phaseLabels[next.next_stage] || next.phase || "Próxima fase";
     return { next, provider, providerLabel, phase, label:`${phase} · abrir ${providerLabel}` };
