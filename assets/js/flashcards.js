@@ -1243,14 +1243,240 @@ function wireReview() {
     });
 }
 
+const FLASHCARD_IMAGE_TARGET_BYTES =
+  120 * 1024;
+
+const FLASHCARD_IMAGE_MAX_DIMENSION =
+  1100;
+
+
+async function compressFlashcardImage(
+  file
+) {
+  if (
+    !file
+    || !file.type
+      ?.startsWith(
+        "image/"
+      )
+  ) {
+    return file;
+  }
+
+  if (
+    file.size
+    <= FLASHCARD_IMAGE_TARGET_BYTES
+  ) {
+    return file;
+  }
+
+  try {
+    const bitmap =
+      await createImageBitmap(
+        file
+      );
+
+    try {
+      const dimensionSteps = [
+        1100,
+        1000,
+        900,
+        820,
+        740,
+        660,
+        580
+      ];
+
+      const qualitySteps = [
+        0.84,
+        0.78,
+        0.72,
+        0.66,
+        0.60,
+        0.54,
+        0.48
+      ];
+
+      let smallest =
+        null;
+
+      for (
+        const maxDimension
+        of dimensionSteps
+      ) {
+        const scale =
+          Math.min(
+            1,
+            maxDimension
+              / Math.max(
+                bitmap.width,
+                bitmap.height
+              )
+          );
+
+        const width =
+          Math.max(
+            1,
+            Math.round(
+              bitmap.width
+              * scale
+            )
+          );
+
+        const height =
+          Math.max(
+            1,
+            Math.round(
+              bitmap.height
+              * scale
+            )
+          );
+
+        const canvas =
+          document.createElement(
+            "canvas"
+          );
+
+        canvas.width =
+          width;
+
+        canvas.height =
+          height;
+
+        const context =
+          canvas.getContext(
+            "2d",
+            {
+              alpha: false
+            }
+          );
+
+        context.fillStyle =
+          "#ffffff";
+
+        context.fillRect(
+          0,
+          0,
+          width,
+          height
+        );
+
+        context.imageSmoothingEnabled =
+          true;
+
+        context.imageSmoothingQuality =
+          "high";
+
+        context.drawImage(
+          bitmap,
+          0,
+          0,
+          width,
+          height
+        );
+
+        for (
+          const quality
+          of qualitySteps
+        ) {
+          const candidate =
+            await new Promise(
+              resolve =>
+                canvas.toBlob(
+                  resolve,
+                  "image/webp",
+                  quality
+                )
+            );
+
+          if (!candidate) {
+            continue;
+          }
+
+          if (
+            !smallest
+            || candidate.size
+              < smallest.size
+          ) {
+            smallest =
+              candidate;
+          }
+
+          if (
+            candidate.size
+            <= FLASHCARD_IMAGE_TARGET_BYTES
+          ) {
+            return new File(
+              [
+                candidate
+              ],
+              `${String(file.name || "flashcard")
+                .replace(/\.[^.]+$/, "")}.webp`,
+              {
+                type:
+                  "image/webp",
+                lastModified:
+                  Date.now()
+              }
+            );
+          }
+        }
+      }
+
+      if (
+        smallest
+        && smallest.size
+          < file.size
+      ) {
+        return new File(
+          [
+            smallest
+          ],
+          `${String(file.name || "flashcard")
+            .replace(/\.[^.]+$/, "")}.webp`,
+          {
+            type:
+              "image/webp",
+            lastModified:
+              Date.now()
+          }
+        );
+      }
+
+      return file;
+
+    } finally {
+      bitmap.close?.();
+    }
+
+  } catch (error) {
+    console.warn(
+      "Não foi possível otimizar a imagem do flashcard:",
+      error
+    );
+
+    return file;
+  }
+}
+
+
 async function uploadFlashImage(
   file,
   side
 ) {
   if (!file) return null;
 
+  const optimizedFile =
+    await compressFlashcardImage(
+      file
+    );
+
   const safeName =
-    String(file.name)
+    String(
+      optimizedFile.name
+      || file.name
+      || "flashcard.webp"
+    )
       .replace(
         /[^a-zA-Z0-9._-]+/g,
         "-"
@@ -1261,13 +1487,13 @@ async function uploadFlashImage(
 
   const { error, reference } = await window.LuriaStorage.upload("flashcard_images",
       path,
-      file,
+      optimizedFile,
       {
         cacheControl: "3600",
         upsert: false,
         contentType:
-          file.type
-          || undefined
+          optimizedFile.type
+          || "image/webp"
       }
     );
 
