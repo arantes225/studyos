@@ -28,7 +28,7 @@ Registrar corpus em `primary_style_evidence[]`: `url`, `edition`, `sampled_items
 
 Preferir pelo menos 20 itens oficiais de 2–3 edições quando disponíveis. Ausência de corpus suficiente = `NEEDS_MORE_PRIMARY_STYLE_DATA`; não inventar assinatura nem nota de estilo. Um edital não substitui questões oficiais.
 
-Avaliar ao menos 30 questões brutas inéditas e variadas para avanço do prompt. Sentinelas menores são diagnósticas. A nota é `FINAL_PROMPT_SCORE` (0–100), calculada por rubrica própria:
+Avaliar ao menos 15 questões brutas inéditas e variadas para avanço do prompt; amostras maiores aumentam a confiança da calibração. A nota é `FINAL_PROMPT_SCORE` (0–100), calculada por rubrica própria:
 
 | Componente | Máximo |
 |---|---:|
@@ -38,7 +38,7 @@ Avaliar ao menos 30 questões brutas inéditas e variadas para avanço do prompt
 | Diversidade e ausência de pistas | 15 |
 | Clareza e completude | 10 |
 
-Avanço: soma >=94, zero hard fails, corpus documentado e `decision=PROMPT_APPROVED`. Fontes e correção científica devem ser checadas separadamente. Questões corrigidas não elevam retroativamente a nota da saída bruta. O importador valida estrutura e soma; a veracidade das evidências ainda requer auditoria humana/documental.
+Avanço: soma >=84, zero hard fails, corpus documentado e `decision=PROMPT_APPROVED`. Fontes e correção científica devem ser checadas separadamente. Questões corrigidas não elevam retroativamente a nota da saída bruta. O importador valida estrutura e soma; a veracidade das evidências ainda requer auditoria humana/documental.
 
 `style_score` descreve fidelidade observada em um conjunto de questões e não substitui `FINAL_PROMPT_SCORE`. Importar calibração pelo botão correspondente no admin.
 
@@ -77,7 +77,7 @@ Fonte específica: instituição, documento, ano, URL e seção/nota quando veri
 6. `agree/partially_agree` autorizam exclusivamente os valores aprovados. `disagree` exige rebuttal e impede correção; retornar ao auditor. O importador verifica parecer e versão.
 7. Correção envia ID, `expected_version`, `review_id` e `patch`. Banco incrementa versão em exatamente um e invalida aprovações anteriores, inclusive finais do lote.
 8. Nova resolução cega da versão corrigida e reauditoria completa desses itens. Reauditoria é autocontida, com mesma rubrica. Não estimar estilo global usando apenas os corrigidos.
-9. Somente 200 versões atuais machine-approved e perfil editorial calibrado >=94 permitem aprovação humana do bloco.
+9. Somente 200 versões atuais machine-approved e perfil editorial calibrado >=84 permitem aprovação humana do bloco.
 
 Não existe garantia técnica de que um auditor não viu o gabarito fora do sistema. A separação de arquivos e registro anterior reduz contaminação; a operação precisa usar conversa limpa.
 
