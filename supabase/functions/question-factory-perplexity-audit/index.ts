@@ -508,7 +508,7 @@ function auditPrompt(q: any, blind: any, profile: any) {
     "Se a resposta cega divergir do gabarito, não presuma que o resolvedor errou: rejeite/suspenda para revisão científica.",
     "Retorne somente o JSON do schema.",
     "",
-    "RESPOSTA CEGA PERSISTIDA:",
+    "RESPOSTA CEGA DESTA EXECUÇÃO (NÃO PERSISTIDA):",
     JSON.stringify(blind || {}),
     "",
     "PERFIL EDITORIAL CANÔNICO:",
@@ -829,92 +829,72 @@ Deno.serve(async (req) => {
     const q = item.question || {};
     const seq = Number(item.block_sequence_no);
     const examStyle = String(q.exam_style || item?.style_profile?.exam_style || "ENAMED");
-    const existingBlind = item.blind_resolution;
-    const hasBlind = existingBlind && typeof existingBlind === "object"
-      && Object.prototype.hasOwnProperty.call(existingBlind,"independent_answer");
+    const blindCall = await callPerplexity({
+      apiKey,
+      prompt: blindPrompt(q),
+      instructions: "Você é um médico revisor independente. Resolva apenas a questão recebida, sem qualquer gabarito oculto. Produza JSON válido conforme o schema.",
+      schemaName: "LuriaBlindResolution",
+      schema: BLIND_SCHEMA,
+      useWeb: false,
+    });
 
-    if (!hasBlind) {
-      const p = await callPerplexity({
-        apiKey,
-        prompt: blindPrompt(q),
-        instructions: "Você é um médico revisor independente. Resolva apenas a questão recebida, sem qualquer gabarito oculto. Produza JSON válido conforme o schema.",
-        schemaName: "LuriaBlindResolution",
-        schema: BLIND_SCHEMA,
-        useWeb: false,
-      });
+    const blindAnswer = ["A","B","C","D"].includes(String(blindCall.value?.independent_answer))
+      ? String(blindCall.value.independent_answer)
+      : null;
 
-      const answer = ["A","B","C","D"].includes(String(p.value?.independent_answer))
-        ? String(p.value.independent_answer)
-        : null;
-
-      const blindReview = {
-        question_id: String(item.question_id),
-        item_version: Number(item.item_version),
-        independent_answer: answer,
-        ambiguity: Boolean(p.value?.ambiguity),
-        single_best_answer: Boolean(p.value?.single_best_answer),
-        confidence: ["low","medium","high"].includes(String(p.value?.confidence)) ? p.value.confidence : "medium",
-        reason: String(p.value?.reason || "").trim(),
-        provider_response_id: p.response_id,
-        provider_model: p.model,
-      };
-
-      const blindPayload = {
-        schema_version:"2.0",
-        batch_number:batch,
-        block_number:block,
-        review_stage:"blind_resolution",
-        reviewer:"Perplexity",
-        reviews:[blindReview],
-      };
-
-      const { data: stored, error: storeError } = await sb.rpc("admin_import_question_factory_stage", {
-        p_payload: blindPayload,
-      });
-      if (storeError) {
-        return json({
-          ok:false,phase:"blind_resolution",error:"BLIND_PERSIST_FAILED",
-          question_id:item.question_id,item_version:item.item_version,sequence_no:seq,
-          message:storeError.message,
-        }, 422);
-      }
-
-      const blindCoverage = await coverage(sb,batch,block,"blind_resolution",start,end);
-      return json({
-        ok:true,
-        phase:"blind_resolution_persisted",
-        question_id:item.question_id,
-        item_version:item.item_version,
-        sequence_no:seq,
-        persisted:stored?.result || stored,
-        blind_coverage:blindCoverage,
-      });
-    }
+    const blindReview = {
+      question_id: String(item.question_id),
+      item_version: Number(item.item_version),
+      independent_answer: blindAnswer,
+      ambiguity: Boolean(blindCall.value?.ambiguity),
+      single_best_answer: Boolean(blindCall.value?.single_best_answer),
+      confidence: ["low","medium","high"].includes(String(blindCall.value?.confidence)) ? blindCall.value.confidence : "medium",
+      reason: String(blindCall.value?.reason || "").trim(),
+      provider_response_id: blindCall.response_id,
+      provider_model: blindCall.model,
+    };
 
     const p = await callPerplexity({
       apiKey,
-      prompt: auditPrompt(q, existingBlind, item.style_profile || {}),
+      prompt: auditPrompt(q, blindReview, item.style_profile || {}),
       instructions: "Você é um auditor médico adversarial e editorial. Pesquise fontes autoritativas, abra/fetch URLs relevantes e só declare VERIFIED com comprovação. Produza exatamente um parecer completo em JSON conforme o schema.",
       schemaName: "LuriaPerplexityAudit",
       schema: AUDIT_SCHEMA,
       useWeb: true,
     });
 
-    const review = await normalizeAudit(p.value,q,existingBlind,item.style_profile || {},p.evidence);
+    const review = await normalizeAudit(p.value,q,blindReview,item.style_profile || {},p.evidence);
     review.provider_response_id = p.response_id;
     review.provider_model = p.model;
     review.provider_usage = p.usage;
 
+    review.review_stage = reviewStage;
+    review.reviewer = "Perplexity";
+    review.review_status = review.status;
+    review.raw_payload = {
+      ...review,
+      blind_resolution: blindReview,
+      provider_evidence: review.provider_evidence,
+    };
+
     const payload = {
       schema_version:"2.0",
       batch_number:batch,
+      batch_code:"L" + pad3(batch),
       block_number:block,
+      block_code:"L" + pad3(batch) + "-B" + pad2(block),
+      operational_address:"L" + pad3(batch) + "-B" + pad2(block),
+      exam_style:examStyle,
       review_stage:reviewStage,
       reviewer:"Perplexity",
       reviews:[review],
     };
 
-    const { data: stored, error: storeError } = await sb.rpc("admin_import_question_factory_stage", {
+    const importer = reviewStage === "perplexity_initial"
+      ? "admin_import_question_factory_perplexity_initial"
+      : "admin_import_question_factory_perplexity_reaudit";
+
+    const { data: stored, error: storeError } = await sb.rpc(importer, {
       p_payload: payload,
     });
 
