@@ -221,7 +221,7 @@ REGRAS DE CONSISTÊNCIA DO BLOCO ENAMED:
     return `${rules}\n\n${profile(item)}
 ${operationalAccess(ctx,'generation')}
 ${enamedAnswerFormat}
-TAREFA: gerar bloco administrativo de 200 questões. Pode executar em partes de 20, preservando IDs, sequência, cobertura planejada e conferência final das 200. Não fingir entrega completa quando houver parte pendente.
+TAREFA: gerar o bloco administrativo COMPLETO de 200 questões em uma única execução. Não dividir em partes de 20, não fracionar a entrega e não encerrar antes de produzir e validar as 200 questões. Preservar IDs, sequência 1–200, cobertura planejada e conferência final integral do bloco.
 Antes da produção, verificar o estado do perfil. Se estiver CALIBRATED_FROZEN/PROMPT_APPROVED com FINAL_PROMPT_SCORE >=84, usar o perfil congelado e iniciar produção sem reabrir calibração. Só exigir nova calibração/corpus quando a banca ainda não estiver aprovada.
 Definir matriz de cobertura a partir da prova-alvo; não impor sete áreas ENAMED nem quotas universais a outras bancas. Frequências observadas orientam o conjunto, sem criar sequência temática artificial.
 MÉTODO DE CONSTRUÇÃO ADAPTATIVO:
@@ -249,7 +249,7 @@ PRÉ-FLIGHT DE LOTE antes da saída:
 - verificar se itens médios/difíceis têm pelo menos um concorrente forte e 2–3 dados funcionais; se não, regenerar esses itens;
 - em MBE quantitativa, quando o perfil exigir aplicação, preferir cálculo + interpretação de magnitude/implicação, não mera aritmética.
 SAÍDA (preencher os dados reais; null em lote/bloco exige identificação antes de importar):
-${stringify({schema_version:SCHEMA_VERSION,batch:{...context(item,ctx),question_count:200,part_number:1,part_count:10,profile_version:VERSION,reference_exam_years:[],generation_status:'generated'},primary_style_evidence:[],coverage_plan:[],questions:[sample],coverage:{expected:200,delivered:0,complete:false},stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage:'generation',provider:'ChatGPT',run_label:'parte-1',total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'generated_partial',metrics:{part_number:1,part_count:10},notes:''}})}
+${stringify({schema_version:SCHEMA_VERSION,batch:{...context(item,ctx),question_count:200,profile_version:VERSION,reference_exam_years:[],generation_status:'generated'},primary_style_evidence:[],coverage_plan:[],questions:[sample],coverage:{expected:200,delivered:0,complete:false},stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage:'generation',provider:'ChatGPT',run_label:'bloco-completo-200',total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'generated_complete',metrics:{expected_count:200},notes:''}})}
 Validar quantidade, IDs, sequências 1–200 e posição global, A-D, campos obrigatórios, fontes, coerência e duplicatas. Nunca preencher status approved/published. Excel apenas quando solicitado para revisão humana.`;
   }
   function reviewExample(item,stage,ctx) {
