@@ -40,8 +40,8 @@
     {page:"flashcards", target:"[data-flash-section=library], #library-list, #library-decks", title:"Biblioteca e Decks", text:"A Biblioteca reúne os seus cartões e os organiza em decks. Você pode filtrar, revisar, compartilhar, exportar e gerenciar conjuntos.", demo:"flashcards", action:"flash-library"},
 
     {page:"erros", target:".error-tabs", title:"Caderno de Erros", text:"Aqui você revisa erros, cria novos registros, consulta a Biblioteca e importa conteúdo. Deixamos cinco exemplos para visualizar o funcionamento.", demo:"errors", action:"error-review", top:true},
-    {page:"erros", target:".error-review-panel, #error-stage", title:"Revisão dos erros", text:"O CCQ aparece primeiro para revisão ativa. CCQ significa Comando de Checagem de Conhecimento: uma pergunta curta criada a partir do seu erro para obrigar você a recuperar ativamente a informação antes de ver a resposta. Depois, você pode abrir os detalhes da questão, conferir a resposta correta e revisar o raciocínio.", demo:"errors", action:"error-review"},
-    {page:"erros", target:"[data-error-section=create], #error-create-form", title:"Novo Caderno de Erro", text:"No Novo erro você organiza Área, Matéria, Tema, CCQ, questão e resposta. Também pode anexar um print da questão.", demo:"errors", action:"error-create"},
+    {page:"erros", target:".error-review-panel, #error-stage", title:"Revisão dos erros", text:"O Pulo do Gato aparece primeiro para revisão ativa. Ele representa o conceito central da questão: a ideia que você precisa reconhecer ou recuperar para resolver aquele tipo de problema. Depois, você pode abrir os detalhes da questão, conferir a resposta correta e revisar o raciocínio.", demo:"errors", action:"error-review"},
+    {page:"erros", target:"[data-error-section=create], #error-create-form", title:"Novo Caderno de Erro", text:"No Novo erro você organiza Área, Matéria, Tema, Pulo do Gato, questão e resposta. Também pode anexar um print da questão.", demo:"errors", action:"error-create"},
     {page:"erros", target:"#new-error-image, #extract-error-image-text", title:"Extrair texto de um print", text:"Ao adicionar a imagem da questão, o botão Extrair texto pode transformar o conteúdo do print em texto para acelerar o registro do erro.", demo:"errors", action:"error-create"},
     {page:"erros", target:"[data-error-section=library], #error-library", title:"Biblioteca do Caderno de Erros", text:"Todos os erros ficam reunidos na Biblioteca, com busca, filtros, seleção e exportação.", demo:"errors", action:"error-library"},
 
@@ -57,11 +57,11 @@
     {page:"questoes", target:"#qs-open-answer-import", title:"Leitor de gabarito", text:"Depois das questões extraídas, você pode importar um print do resultado. O leitor identifica as questões corretas e erradas e prepara o preenchimento do gabarito.", action:"questions-reader", transparent:true},
     {page:"questoes", target:"#qs-onboarding-answer-key", title:"Gabarito reconhecido", text:"Este é o gabarito de demonstração: as questões 2 e 5 foram erradas e aparecem em vermelho; as demais aparecem em verde.", action:"questions-answerkey", transparent:true},
     {page:"questoes", target:"#qs-apply-answer-import", title:"Introduzir gabarito", text:"Ao aplicar os resultados, o LURIA transfere essas marcações para o simulado. No onboarding fazemos isso apenas visualmente, sem salvar nenhum dado real.", action:"questions-applykey", transparent:true},
-    {page:"questoes", target:"#qs-question-list", title:"Gabarito aplicado", text:"Pronto: o simulado agora mostra 8 acertos, 2 erros e 80% de aproveitamento. Nas questões 2 e 5, o LURIA abre o cadastro detalhado do erro para você preencher Área, Matéria, Resposta correta, CCQ e, se quiser, registrar o que pensou antes de enviar ao Caderno de Erros.", action:"questions-applied", transparent:true},
-    {page:"questoes", target:"#qs-send-errors, .qs-error-fields", title:"Enviar erros ao Caderno de Erros", text:"As questões erradas podem virar CCQs. Você pode ajustar Área, Matéria, Tema e explicação antes de enviar, ou escolher não mandar uma questão ao Caderno de Erros.", action:"questions-applied", transparent:true},
+    {page:"questoes", target:"#qs-question-list", title:"Gabarito aplicado", text:"Pronto: o simulado agora mostra 8 acertos, 2 erros e 80% de aproveitamento. Nas questões 2 e 5, o LURIA abre o cadastro detalhado do erro para você preencher Área, Matéria, Resposta correta, Pulo do Gato e, se quiser, registrar o que pensou antes de enviar ao Caderno de Erros.", action:"questions-applied", transparent:true},
+    {page:"questoes", target:"#qs-send-errors, .qs-error-fields", title:"Enviar erros ao Caderno de Erros", text:"As questões erradas podem virar Pulos do Gato. Você pode ajustar Área, Matéria, Tema e explicação antes de enviar, ou escolher não mandar uma questão ao Caderno de Erros.", action:"questions-applied", transparent:true},
 
-    {page:"dashboard", target:".topbar, .page-heading", title:"Dashboard", text:"O Dashboard reúne agenda, revisões, métricas, CCQ e progresso. Ele é o ponto de partida depois da configuração.", top:true},
-    {page:"dashboard", target:".calendar-panel, #calendar", title:"Agenda", text:"Aulas, flashcards, CCQs e revisões aparecem na mesma rotina. Você pode alternar entre Dia, Semana e Mês."},
+    {page:"dashboard", target:".topbar, .page-heading", title:"Dashboard", text:"O Dashboard reúne agenda, revisões, métricas, Pulo do Gato e progresso. Ele é o ponto de partida depois da configuração.", top:true},
+    {page:"dashboard", target:".calendar-panel, #calendar", title:"Agenda", text:"Aulas, flashcards, Pulos do Gato e revisões aparecem na mesma rotina. Você pode alternar entre Dia, Semana e Mês."},
     {page:"dashboard", target:"#dashboard-streak-card, [data-sidebar-streak-card]", title:"Ofensiva", text:"A ofensiva aparece tanto no Dashboard quanto no menu lateral. Ela registra sua sequência de dias de estudo; um dia pulado reinicia a sequência.", action:"streak"},
 
     {page:"estatisticas", target:".topbar, .page-heading", title:"Estatísticas", text:"Esta área transforma sua atividade em indicadores de desempenho, retenção, volume e pontos de atenção.", top:true},
@@ -614,7 +614,7 @@
           <strong>${item.theme}</strong>
           <span>${item.materia}</span>
           <div class="onboarding-error-library-ccq">
-            <small>CCQ</small>
+            <small>Pulo do Gato</small>
             <p>${item.ccq}</p>
           </div>
           <div class="onboarding-error-library-answer">
@@ -955,7 +955,7 @@
               </label>
 
               <label class="qs-field full">
-                <span>CCQ <small>(obrigatório para enviar ao Caderno de Erros)</small></span>
+                <span>Pulo do Gato <small>(obrigatório para enviar ao Caderno de Erros)</small></span>
                 <input
                   type="text"
                   readonly
@@ -978,7 +978,7 @@
                 <span><b>Matéria:</b> Cardiologia</span>
                 <span><b>Questão:</b> ${number}</span>
                 <span><b>Resposta correta:</b> A</span>
-                <span><b>CCQ:</b> ${number===2
+                <span><b>Pulo do Gato:</b> ${number===2
                   ? "Qual característica do traçado ajuda a diferenciar fibrilação atrial de um ritmo sinusal?"
                   : "Qual achado no ECG favorece taquicardia ventricular diante de uma taquicardia de QRS largo?"}</span>
               </div>
@@ -1724,7 +1724,7 @@
       ["schedule","Criar seu primeiro cronograma"],
       ["notebook","Criar ou preencher um caderno"],
       ["flashcards","Criar 5 flashcards"],
-      ["ccq","Criar seu primeiro CCQ"],
+      ["ccq","Criar seu primeiro Pulo do Gato"],
       ["questions","Fazer uma lista de questões"],
       ["streak","Completar um dia de estudos"]
     ];
@@ -1750,7 +1750,7 @@
     {target:"#qs-onboarding-answer-key",title:"Extrair gabarito",text:"O LURIA extrai o gabarito da imagem e reconhece as questões corretas e erradas. Nesta demonstração: 8 acertos e 2 erros.",action:"questions-answerkey"},
     {target:"#qs-apply-answer-import",title:"Aplicar gabarito",text:"Depois de conferir o reconhecimento, aplique o gabarito ao simulado para preencher os resultados das questões.",action:"questions-applykey"},
     {target:"#qs-question-list",title:"Gabarito aplicado",text:"Pronto. O resultado fica aplicado às questões e os erros podem ser enviados ao Caderno de Erros.",action:"questions-applied"},
-    {target:"#qs-send-errors",title:"Caderno de Erros",text:"Envie somente os erros que você quer revisar. Antes do envio, você pode ajustar Área, Matéria, Tema e CCQ.",action:"questions-applied"}
+    {target:"#qs-send-errors",title:"Caderno de Erros",text:"Envie somente os erros que você quer revisar. Antes do envio, você pode ajustar Área, Matéria, Tema e Pulo do Gato.",action:"questions-applied"}
   ];
   let questionsGuideIndex=0;
   function renderQuestionsGuide(){
