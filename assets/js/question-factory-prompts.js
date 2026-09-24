@@ -1,7 +1,7 @@
 /* Contrato único da fábrica. Não inserir resultados históricos como identidade editorial. */
 (function (root) {
   'use strict';
-  const VERSION = '2.5';
+  const VERSION = '2.6';
   const rubric = { scientific:25, answer_key:20, answer_source:15, distractors:10, explanations:10, style:10, writing:5, difficulty:5 };
   const editable = ['enunciado','alternativa_a','alternativa_b','alternativa_c','alternativa_d','gabarito','explicacao_a','explicacao_b','explicacao_c','explicacao_d','mensagem_chave','area','tema','subtema','dificuldade','fonte_instituicao','fonte_documento','fonte_ano','fonte_url','answer_source_institution','answer_source_document','answer_source_year','answer_source_url','answer_source_section','answer_source_note'];
   const stringify = value => JSON.stringify(value, null, 2);
@@ -60,7 +60,11 @@ stage_metrics = {
   metrics: objeto livre com métricas adicionais úteis,
   notes: resumo operacional curto
 }.
-Não afirmar que atualizou o banco diretamente. A IA apenas devolve stage_metrics; o importador do Admin grava os dados no Supabase.
+PERSISTÊNCIA AUTOMÁTICA NO SUPABASE: se esta IA estiver executando em um ambiente com conector Supabase autorizado e capacidade de executar SQL no projeto da LURIA, após concluir a etapa deve gravar EXATAMENTE o objeto stage_metrics chamando SOMENTE a função controlada:
+select private.qf_record_stage_metrics('<STAGE_METRICS_JSON>'::jsonb);
+Não fazer INSERT/UPDATE/DELETE direto em tabelas para registrar telemetria. Não alterar questões, perfis, lotes ou qualquer outro dado por esse mecanismo. A função é o único destino permitido para telemetria automática.
+Antes da chamada, preencher run_label de forma estável e identificável para que retries sejam idempotentes. Se a chamada retornar stored=true, registrar no resultado supabase_write={attempted:true,stored:true,event_key:<retornado>}. Se falhar, NÃO fingir sucesso: registrar supabase_write={attempted:true,stored:false,error:<erro real>} e ainda devolver stage_metrics completo para importação manual. Se não houver conector Supabase autorizado, registrar supabase_write={attempted:false,stored:false,reason:"SUPABASE_CONNECTOR_UNAVAILABLE"} e devolver stage_metrics normalmente.
+Nunca pedir, imprimir, armazenar ou inventar service_role, senha, token ou chave do Supabase.
 JSON válido é o contrato máquina-a-máquina. Não preencher aprovações, fontes verificadas ou notas sem executar a avaliação. IDs são imutáveis; toda revisão informa item_version e toda correção informa expected_version.`;
   const rubricText = `RUBRICA FINAL (pesos máximos; soma exata = quality_score):\n${stringify(rubric)}
 scientific: exatidão e atualização; answer_key: gabarito e univocidade; answer_source: suporte documental específico; distractors: plausibilidade/discriminação; explanations: justificativas A-D completas + Pulo do Gato discriminativo; style: aderência demonstrada ao corpus; writing: clareza; difficulty: adequação ao perfil.
