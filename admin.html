@@ -16,7 +16,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/logos/favicon.png?v=luria7">
   <link rel="stylesheet" href="assets/css/style.css?v=16.6">
-  <link rel="stylesheet" href="assets/css/admin.css?v=4.5">
+  <link rel="stylesheet" href="assets/css/admin.css?v=4.6">
   <link rel="stylesheet" href="assets/css/admin-editais.css?v=4">
   <link rel="stylesheet" href="assets/css/pwa-mobile.css?v=14">
   <link rel="canonical" href="/admin/">
@@ -383,6 +383,9 @@
             </div>
           </div>
 
+        </section>
+
+        <section class="admin-section admin-qf-quality-section" data-admin-view="factory">
           <section class="admin-qf-quality-panel" aria-labelledby="admin-qf-quality-title">
             <div class="admin-qf-quality-head">
               <div>
@@ -402,22 +405,25 @@
               <div class="admin-factory-empty-wide">Ainda sem blocos auditados.</div>
             </div>
           </section>
+        </section>
 
-          <section class="admin-qf-bad-folder admin-qf-standalone-block" aria-labelledby="admin-qf-bad-title">
-            <div class="admin-qf-bad-folder-head">
+        <section class="admin-section admin-qf-block-tracker-section" data-admin-view="factory" aria-labelledby="admin-qf-block-tracker-title">
+          <section class="admin-qf-block-tracker-panel">
+            <div class="admin-qf-block-tracker-head">
               <div>
-                <span class="eyebrow">Arquivo editorial</span>
-                <strong id="admin-qf-bad-title">Questões ruins</strong>
-                <small>Questões rejeitadas ficam preservadas aqui com motivo, etapa da falha e snapshot da versão.</small>
+                <span class="eyebrow">Acompanhamento operacional</span>
+                <strong id="admin-qf-block-tracker-title">Blocos em produção</strong>
+                <small>Banca, fase atual, fidelidade, confiabilidade e o próximo prompt operacional.</small>
               </div>
-              <div class="admin-qf-bad-folder-actions">
-                <span><b id="admin-qf-bad-count">0</b> arquivadas</span>
-                <button id="admin-qf-bad-open" class="button secondary" type="button">Abrir pasta</button>
-              </div>
+              <span id="admin-qf-block-tracker-count">0 blocos</span>
             </div>
-            <div id="admin-qf-bad-by-style" class="admin-qf-bad-by-style"></div>
+            <div id="admin-qf-block-tracker" class="admin-qf-block-tracker">
+              <div class="admin-factory-empty-wide">Carregando blocos...</div>
+            </div>
           </section>
+        </section>
 
+        <section class="admin-section admin-qf-lots-section" data-admin-view="factory">
           <section class="admin-qf-lots-panel" aria-labelledby="admin-qf-lots-title">
             <div class="admin-factory-batches-head">
               <div>
@@ -442,19 +448,20 @@
           </section>
         </section>
 
-        <section class="admin-section admin-qf-block-tracker-section" data-admin-view="factory" aria-labelledby="admin-qf-block-tracker-title">
-          <section class="admin-qf-block-tracker-panel">
-            <div class="admin-qf-block-tracker-head">
+        <section class="admin-section admin-qf-bad-section" data-admin-view="factory">
+          <section class="admin-qf-bad-folder admin-qf-standalone-block" aria-labelledby="admin-qf-bad-title">
+            <div class="admin-qf-bad-folder-head">
               <div>
-                <span class="eyebrow">Acompanhamento operacional</span>
-                <strong id="admin-qf-block-tracker-title">Blocos em produção</strong>
-                <small>Banca, fase atual, fidelidade, confiabilidade e o próximo prompt operacional.</small>
+                <span class="eyebrow">Arquivo editorial</span>
+                <strong id="admin-qf-bad-title">Questões ruins</strong>
+                <small>Questões rejeitadas ficam preservadas aqui com motivo, etapa da falha e snapshot da versão.</small>
               </div>
-              <span id="admin-qf-block-tracker-count">0 blocos</span>
+              <div class="admin-qf-bad-folder-actions">
+                <span><b id="admin-qf-bad-count">0</b> arquivadas</span>
+                <button id="admin-qf-bad-open" class="button secondary" type="button">Abrir pasta</button>
+              </div>
             </div>
-            <div id="admin-qf-block-tracker" class="admin-qf-block-tracker">
-              <div class="admin-factory-empty-wide">Carregando blocos...</div>
-            </div>
+            <div id="admin-qf-bad-by-style" class="admin-qf-bad-by-style"></div>
           </section>
         </section>
 
