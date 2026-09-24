@@ -54,6 +54,14 @@ const qsState = {
   answerImportRows: []
 };
 
+const qsResolutionState = {
+  currentIndex: 0,
+  selectedById: new Map(),
+  confirmedById: new Set(),
+  highlighterEnabled: false,
+  highlightColor: "yellow"
+};
+
 let AREA_OPTIONS =
   window.LuriaStudyMode
     ?.generalAreasFor(
@@ -9199,6 +9207,36 @@ async function openSet(setId) {
     ])
   );
 
+  qsResolutionState.currentIndex = 0;
+  qsResolutionState.selectedById.clear();
+  qsResolutionState.confirmedById.clear();
+
+  attempts.forEach((attempt) => {
+    const selected =
+      String(
+        attempt.selected_option
+        || ""
+      )
+        .trim()
+        .toUpperCase();
+
+    if (/^[A-D]$/.test(selected)) {
+      qsResolutionState.selectedById.set(
+        attempt.question_item_id,
+        selected
+      );
+
+      if (
+        attempt.result === "correct"
+        || attempt.result === "wrong"
+      ) {
+        qsResolutionState.confirmedById.add(
+          attempt.question_item_id
+        );
+      }
+    }
+  });
+
   loadErrorNotebookSkips();
 
   document.getElementById("qs-current-title").textContent =
@@ -13933,219 +13971,1097 @@ function wireAnswerScreenshotImporter() {
 }
 
 
-function renderQuestions() {
-  const container =
-    document.getElementById("qs-question-list");
+function normalizeResolutionLetter(
+  value
+) {
+  const match =
+    String(
+      value
+      || ""
+    )
+      .trim()
+      .toUpperCase()
+      .match(/[A-D]/);
 
-  container.innerHTML =
-    qsState.items.map((item) => {
-      const attempt =
-        qsState.attempts.get(item.id);
+  return match
+    ? match[0]
+    : "";
+}
 
-      const wrong =
-        attempt?.result === "wrong";
 
-      const annulled =
-        attempt?.result === "annulled";
+function alternativeTextValue(
+  value
+) {
+  if (
+    value == null
+  ) {
+    return "";
+  }
 
-      const sent =
-        attempt?.sent_to_error === true;
+  if (
+    typeof value === "string"
+  ) {
+    return value.trim();
+  }
 
-      const skipErrorNotebook =
-        !sent
-        && isErrorNotebookSkipped(
-          item.id
-        );
+  if (
+    typeof value === "object"
+  ) {
+    return String(
+      value.text
+      || value.label
+      || value.content
+      || value.value
+      || ""
+    ).trim();
+  }
 
-      return `
-        <article
-          class="qs-question ${wrong ? "wrong" : ""} ${annulled ? "annulled" : ""} ${sent ? "sent" : ""} ${skipErrorNotebook ? "skip-error-notebook" : ""}"
-          data-question-id="${qsEscape(item.id)}"
-        >
-          <div class="qs-question-main">
-            <div class="qs-number">${item.question_number}</div>
+  return String(
+    value
+  ).trim();
+}
 
-            <div class="qs-question-title">
-              <strong>${qsEscape(questionExcerpt(item))}</strong>
-              <small>${qsEscape(item.source_label || "Sem identificação de banca")}</small>
-            </div>
 
-            <label class="qs-wrong-toggle">
-              <input
-                type="checkbox"
-                data-wrong-toggle="${qsEscape(item.id)}"
-                ${wrong ? "checked" : ""}
-                ${annulled ? "disabled" : ""}
-              >
-              <span>${annulled ? "Anulada" : "Errei"}</span>
-            </label>
-          </div>
+function parsedQuestionPresentation(
+  item
+) {
+  const source =
+    String(
+      item.raw_text
+      || item.stem
+      || ""
+    )
+      .replace(/\s+/g, " ")
+      .trim();
 
-          <details>
-            <summary>Ver questão extraída</summary>
-            <pre class="qs-question-text">${qsEscape(item.raw_text)}</pre>
-          </details>
+  const alternatives =
+    item.alternatives;
 
-          <div class="qs-error-fields">
-            <label class="qs-error-skip full">
-              <input
-                type="checkbox"
-                data-skip-error-notebook="${qsEscape(item.id)}"
-                ${skipErrorNotebook ? "checked" : ""}
-                ${sent ? "disabled" : ""}
-              >
-              <span>
-                <strong>Não enviar para o Caderno de Erros</strong>
-                <small>
-                  Esta questão continua contabilizada como erro, mas você não precisa preencher os campos abaixo.
-                </small>
-              </span>
-            </label>
+  const letters =
+    ["A", "B", "C", "D"];
 
-            <label class="qs-field">
-              <span>Área *</span>
-              <select data-error-area="${qsEscape(item.id)}">
-                ${areaOptionsHtml(attempt?.area || "")}
-              </select>
-            </label>
+  const options =
+    [];
 
-            <label class="qs-field">
-              <span>Matéria <small>(opcional)</small></span>
-              <input
-                type="text"
-                data-error-materia="${qsEscape(item.id)}"
-                value="${qsEscape(attempt?.materia || "")}"
-                placeholder="Ex.: Cardiologia"
-              >
-            </label>
-
-            <label class="qs-field">
-              <span>Resposta correta *</span>
-              <select data-correct-option="${qsEscape(item.id)}">
-                ${correctOptionHtml(attempt?.correct_option || "")}
-              </select>
-            </label>
-
-            <label class="qs-field full">
-              <span>Pulo do Gato <small>(obrigatório para enviar ao Caderno de Erros)</small></span>
-              <input
-                type="text"
-                data-error-ccq="${qsEscape(item.id)}"
-                value="${qsEscape(attempt?.ccq || "")}"
-                placeholder="Ex.: Quando indicar sulfato de magnésio na eclâmpsia?"
-              >
-            </label>
-
-            <label class="qs-field full">
-              <span>O que pensei <small>(opcional)</small></span>
-              <textarea
-                data-thought="${qsEscape(item.id)}"
-                placeholder="Se quiser, registre rapidamente por que errou."
-              >${qsEscape(attempt?.what_i_thought || "")}</textarea>
-            </label>
-
-            ${renderErrorImagePicker(item)}
-          </div>
-
-          <span class="qs-sent-badge">
-            Já enviado ao Caderno de Erros
-          </span>
-        </article>
-      `;
-    }).join("");
-
-  document
-    .querySelectorAll("[data-wrong-toggle]")
-    .forEach((checkbox) => {
-      checkbox.addEventListener("change", () => {
-        const card =
-          checkbox.closest(".qs-question");
-
-        card.classList.toggle(
-          "wrong",
-          checkbox.checked
-        );
-
-        if (
-          !checkbox.checked
-        ) {
-          const itemId =
-            checkbox.dataset
-              .wrongToggle;
-
-          setErrorNotebookSkipped(
-            itemId,
-            false
-          );
-
-          card.classList.remove(
-            "skip-error-notebook"
-          );
-
-          const skipInput =
-            card.querySelector(
-              "[data-skip-error-notebook]"
+  if (
+    Array.isArray(
+      alternatives
+    )
+    && alternatives.length
+  ) {
+    alternatives
+      .slice(
+        0,
+        4
+      )
+      .forEach(
+        (
+          value,
+          index
+        ) => {
+          const text =
+            alternativeTextValue(
+              value
             );
 
-          if (
-            skipInput
-          ) {
-            skipInput.checked =
-              false;
+          if (text) {
+            options.push({
+              letter:
+                letters[index],
+              text
+            });
           }
         }
+      );
+  } else if (
+    alternatives
+    && typeof alternatives
+      === "object"
+  ) {
+    letters.forEach(
+      (letter) => {
+        const text =
+          alternativeTextValue(
+            alternatives[letter]
+            ?? alternatives[
+              letter.toLowerCase()
+            ]
+          );
 
-        updateLiveSummary();
-      });
-    });
+        if (text) {
+          options.push({
+            letter,
+            text
+          });
+        }
+      }
+    );
+  }
 
-  container
+  let stem =
+    String(
+      item.stem
+      || item.raw_text
+      || ""
+    ).trim();
+
+  if (
+    options.length < 2
+    && source
+  ) {
+    const match =
+      source.match(
+        /\sA\s+([\s\S]+?)\s+B\s+([\s\S]+?)\s+C\s+([\s\S]+?)\s+D\s+([\s\S]+?)(?=\s+E\s+|$)/
+      );
+
+    if (match) {
+      const marker =
+        source.indexOf(
+          match[0]
+        );
+
+      if (marker > 0) {
+        stem =
+          source
+            .slice(
+              0,
+              marker
+            )
+            .trim();
+      }
+
+      options.length =
+        0;
+
+      letters.forEach(
+        (
+          letter,
+          index
+        ) => {
+          const text =
+            String(
+              match[
+                index + 1
+              ]
+              || ""
+            ).trim();
+
+          if (text) {
+            options.push({
+              letter,
+              text
+            });
+          }
+        }
+      );
+    }
+  }
+
+  if (
+    options.length < 4
+  ) {
+    const existing =
+      new Set(
+        options.map(
+          option =>
+            option.letter
+        )
+      );
+
+    letters.forEach(
+      (letter) => {
+        if (
+          !existing.has(
+            letter
+          )
+        ) {
+          options.push({
+            letter,
+            text:
+              `Alternativa ${letter}`
+          });
+        }
+      }
+    );
+
+    options.sort(
+      (
+        a,
+        b
+      ) =>
+        letters.indexOf(
+          a.letter
+        )
+        -
+        letters.indexOf(
+          b.letter
+        )
+    );
+  }
+
+  return {
+    stem:
+      stem
+      || "Enunciado da questão",
+    options:
+      options.slice(
+        0,
+        4
+      )
+  };
+}
+
+
+function resolutionExplanations(
+  item
+) {
+  const raw =
+    item.answer_explanations;
+
+  if (
+    raw
+    && typeof raw === "object"
+    && !Array.isArray(raw)
+  ) {
+    return raw;
+  }
+
+  if (
+    typeof raw === "string"
+    && raw.trim()
+  ) {
+    return {
+      general:
+        raw.trim()
+    };
+  }
+
+  return {};
+}
+
+
+function renderResolutionFeedback(
+  item,
+  selected,
+  confirmed,
+  correct
+) {
+  if (!confirmed) {
+    return "";
+  }
+
+  const hasKey =
+    /^[A-D]$/.test(
+      correct
+    );
+
+  const isCorrect =
+    hasKey
+    && selected
+      === correct;
+
+  const resultCopy =
+    !hasKey
+      ? "Resposta confirmada · gabarito ainda não disponível"
+      : isCorrect
+        ? "Resposta correta"
+        : `Resposta incorreta · gabarito: ${correct}`;
+
+  const resultClass =
+    !hasKey
+      ? ""
+      : isCorrect
+        ? "correct"
+        : "wrong";
+
+  const pulo =
+    String(
+      item.pulo_do_gato
+      || ""
+    ).trim();
+
+  const explanations =
+    resolutionExplanations(
+      item
+    );
+
+  const presentation =
+    parsedQuestionPresentation(
+      item
+    );
+
+  const rows =
+    presentation.options
+      .map(
+        (option) => {
+          const explanation =
+            String(
+              explanations[
+                option.letter
+              ]
+              || explanations[
+                option.letter
+                  .toLowerCase()
+              ]
+              || ""
+            ).trim();
+
+          const fallback =
+            hasKey
+              ? (
+                  option.letter
+                    === correct
+                    ? "Esta é a alternativa correta. A justificativa detalhada será preenchida pela fonte de importação."
+                    : "Esta alternativa está incorreta. A justificativa detalhada será preenchida pela fonte de importação."
+                )
+              : "A justificativa será exibida quando o gabarito e a explicação vierem na importação.";
+
+          return `
+            <div class="qs-justification-row">
+              <span>${option.letter}</span>
+              <p>${qsEscape(
+                explanation
+                || fallback
+              )}</p>
+            </div>
+          `;
+        }
+      )
+      .join("");
+
+  const general =
+    String(
+      explanations.general
+      || explanations.explanation
+      || ""
+    ).trim();
+
+  return `
+    <div class="qs-resolution-feedback" data-resolution-feedback>
+      <div class="qs-resolution-result ${resultClass}">
+        ${qsEscape(
+          resultCopy
+        )}
+      </div>
+
+      <div class="qs-pulo-card">
+        <strong>Pulo do Gato</strong>
+        <p>
+          ${qsEscape(
+            pulo
+            || "O Pulo do Gato desta questão será exibido aqui quando vier junto da importação."
+          )}
+        </p>
+      </div>
+
+      <div class="qs-justification-card">
+        <strong>Justificativa das alternativas</strong>
+        ${
+          general
+            ? `<p>${qsEscape(general)}</p>`
+            : ""
+        }
+        <div class="qs-justification-list">
+          ${rows}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+
+function resolutionOptionClass(
+  letter,
+  selected,
+  confirmed,
+  correct
+) {
+  const classes =
+    ["qs-resolution-option"];
+
+  if (
+    selected === letter
+  ) {
+    classes.push(
+      "selected"
+    );
+  }
+
+  if (
+    confirmed
+    && /^[A-D]$/.test(
+      correct
+    )
+  ) {
+    if (
+      letter === correct
+    ) {
+      classes.push(
+        "correct"
+      );
+    }
+
+    if (
+      selected === letter
+      && letter !== correct
+    ) {
+      classes.push(
+        "wrong"
+      );
+    }
+  }
+
+  return classes.join(
+    " "
+  );
+}
+
+
+function applyResolutionHighlight() {
+  if (
+    !qsResolutionState
+      .highlighterEnabled
+  ) {
+    return;
+  }
+
+  const selection =
+    window.getSelection();
+
+  if (
+    !selection
+    || selection.isCollapsed
+    || !selection.rangeCount
+  ) {
+    return;
+  }
+
+  const range =
+    selection.getRangeAt(
+      0
+    );
+
+  const root =
+    document.getElementById(
+      "qs-resolution-text"
+    );
+
+  if (
+    !root
+    || !root.contains(
+      range.commonAncestorContainer
+        .nodeType === Node.TEXT_NODE
+        ? range.commonAncestorContainer
+            .parentNode
+        : range.commonAncestorContainer
+    )
+  ) {
+    return;
+  }
+
+  const mark =
+    document.createElement(
+      "mark"
+    );
+
+  mark.dataset.highlight =
+    qsResolutionState
+      .highlightColor;
+
+  try {
+    const contents =
+      range.extractContents();
+
+    mark.appendChild(
+      contents
+    );
+
+    range.insertNode(
+      mark
+    );
+
+    selection.removeAllRanges();
+  } catch (error) {
+    console.warn(
+      "Não foi possível aplicar o marca-texto:",
+      error
+    );
+  }
+}
+
+
+async function confirmResolutionAnswer(
+  itemId
+) {
+  const item =
+    qsState.items.find(
+      candidate =>
+        candidate.id
+        === itemId
+    );
+
+  if (!item) {
+    return;
+  }
+
+  const selected =
+    qsResolutionState
+      .selectedById
+      .get(
+        itemId
+      );
+
+  if (
+    !selected
+  ) {
+    setAnswerStatus(
+      "Escolha uma alternativa antes de confirmar.",
+      "error"
+    );
+
+    return;
+  }
+
+  const correct =
+    normalizeResolutionLetter(
+      item.official_answer
+    );
+
+  qsResolutionState
+    .confirmedById
+    .add(
+      itemId
+    );
+
+  if (
+    /^[A-D]$/.test(
+      correct
+    )
+  ) {
+    const previous =
+      qsState.attempts.get(
+        itemId
+      );
+
+    const result =
+      selected === correct
+        ? "correct"
+        : "wrong";
+
+    const row = {
+      user_id:
+        qsState.user.id,
+      question_item_id:
+        itemId,
+      selected_option:
+        selected,
+      result,
+      area:
+        previous?.area
+        || null,
+      materia:
+        previous?.materia
+        || null,
+      correct_option:
+        correct,
+      ccq:
+        previous?.ccq
+        || null,
+      what_i_thought:
+        previous?.what_i_thought
+        || null,
+      sent_to_error:
+        previous?.sent_to_error
+        || false,
+      error_entry_id:
+        previous?.error_entry_id
+        || null,
+      answered_at:
+        new Date()
+          .toISOString()
+    };
+
+    const {
+      data,
+      error
+    } =
+      await qsSb
+        .from(
+          "question_attempts"
+        )
+        .upsert(
+          row,
+          {
+            onConflict:
+              "user_id,question_item_id"
+          }
+        )
+        .select("*")
+        .single();
+
+    if (error) {
+      console.error(
+        error
+      );
+
+      setAnswerStatus(
+        `Não foi possível salvar a resposta: ${error.message}`,
+        "error"
+      );
+
+      qsResolutionState
+        .confirmedById
+        .delete(
+          itemId
+        );
+
+      renderQuestions();
+
+      return;
+    }
+
+    qsState.attempts.set(
+      itemId,
+      data
+      || row
+    );
+  }
+
+  setAnswerStatus(
+    /^[A-D]$/.test(
+      correct
+    )
+      ? "Resposta registrada."
+      : "Resposta confirmada. O gabarito será conectado quando estiver disponível.",
+    "success"
+  );
+
+  renderQuestions();
+  renderSetHistory();
+}
+
+
+function bindResolutionQuestionEvents(
+  item
+) {
+  document
     .querySelectorAll(
-      "[data-skip-error-notebook]"
+      "[data-resolution-option]"
     )
     .forEach(
-      checkbox => {
-        checkbox.addEventListener(
-          "change",
+      (button) => {
+        button.addEventListener(
+          "click",
           () => {
-            const itemId =
-              checkbox.dataset
-                .skipErrorNotebook;
-
-            setErrorNotebookSkipped(
-              itemId,
-              checkbox.checked
-            );
-
-            const card =
-              checkbox.closest(
-                ".qs-question"
-              );
-
-            card
-              ?.classList
-              .toggle(
-                "skip-error-notebook",
-                checkbox.checked
-              );
-
             if (
-              checkbox.checked
+              qsResolutionState
+                .confirmedById
+                .has(
+                  item.id
+                )
             ) {
-              refreshErrorImagePicker(
-                itemId
-              );
+              return;
             }
+
+            qsResolutionState
+              .selectedById
+              .set(
+                item.id,
+                button.dataset
+                  .resolutionOption
+              );
+
+            renderQuestions();
           }
         );
       }
     );
 
-  bindErrorImagePickerEvents(
-    container
-  );
+  document
+    .getElementById(
+      "qs-resolution-confirm"
+    )
+    ?.addEventListener(
+      "click",
+      () =>
+        confirmResolutionAnswer(
+          item.id
+        )
+    );
 
-  updateLiveSummary();
+  document
+    .getElementById(
+      "qs-resolution-prev"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+        qsResolutionState.currentIndex =
+          Math.max(
+            0,
+            qsResolutionState
+              .currentIndex
+              - 1
+          );
+
+        setAnswerStatus(
+          ""
+        );
+
+        renderQuestions();
+      }
+    );
+
+  document
+    .getElementById(
+      "qs-resolution-next"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+        qsResolutionState.currentIndex =
+          Math.min(
+            qsState.items.length
+              - 1,
+            qsResolutionState
+              .currentIndex
+              + 1
+          );
+
+        setAnswerStatus(
+          ""
+        );
+
+        renderQuestions();
+      }
+    );
+
+  document
+    .getElementById(
+      "qs-highlighter-toggle"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+        qsResolutionState.highlighterEnabled =
+          !qsResolutionState
+            .highlighterEnabled;
+
+        const palette =
+          document.getElementById(
+            "qs-highlighter-palette"
+          );
+
+        if (palette) {
+          palette.hidden =
+            !qsResolutionState
+              .highlighterEnabled;
+        }
+
+        document
+          .getElementById(
+            "qs-highlighter-toggle"
+          )
+          ?.classList
+          .toggle(
+            "active",
+            qsResolutionState
+              .highlighterEnabled
+          );
+      }
+    );
+
+  document
+    .querySelectorAll(
+      "[data-highlight-color]"
+    )
+    .forEach(
+      (button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            qsResolutionState.highlightColor =
+              button.dataset
+                .highlightColor;
+
+            document
+              .querySelectorAll(
+                "[data-highlight-color]"
+              )
+              .forEach(
+                candidate =>
+                  candidate.classList
+                    .toggle(
+                      "active",
+                      candidate
+                        === button
+                    )
+              );
+          }
+        );
+      }
+    );
+
+  document
+    .getElementById(
+      "qs-resolution-text"
+    )
+    ?.addEventListener(
+      "mouseup",
+      applyResolutionHighlight
+    );
+}
+
+
+function renderQuestions() {
+  const container =
+    document.getElementById(
+      "qs-question-list"
+    );
+
+  if (!container) {
+    return;
+  }
+
+  if (
+    !qsState.items.length
+  ) {
+    container.innerHTML =
+      '<div class="qs-empty">Este simulado ainda não possui questões importadas.</div>';
+
+    return;
+  }
+
+  qsResolutionState.currentIndex =
+    Math.max(
+      0,
+      Math.min(
+        qsResolutionState
+          .currentIndex,
+        qsState.items.length
+          - 1
+      )
+    );
+
+  const item =
+    qsState.items[
+      qsResolutionState
+        .currentIndex
+    ];
+
+  const presentation =
+    parsedQuestionPresentation(
+      item
+    );
+
+  const selected =
+    qsResolutionState
+      .selectedById
+      .get(
+        item.id
+      )
+      || "";
+
+  const confirmed =
+    qsResolutionState
+      .confirmedById
+      .has(
+        item.id
+      );
+
+  const correct =
+    normalizeResolutionLetter(
+      item.official_answer
+    );
+
+  const progress =
+    (
+      (
+        qsResolutionState
+          .currentIndex
+        + 1
+      )
+      / qsState.items.length
+    ) * 100;
+
+  const optionHtml =
+    presentation.options
+      .map(
+        (option) => `
+          <button
+            class="${resolutionOptionClass(
+              option.letter,
+              selected,
+              confirmed,
+              correct
+            )}"
+            type="button"
+            data-resolution-option="${option.letter}"
+            ${confirmed ? "disabled" : ""}
+          >
+            <span class="qs-resolution-letter">
+              ${option.letter}
+            </span>
+
+            <span>
+              ${qsEscape(
+                option.text
+              )}
+            </span>
+          </button>
+        `
+      )
+      .join("");
+
+  container.innerHTML =
+    `
+      <div class="qs-resolution-shell">
+        <div class="qs-resolution-topbar">
+          <div class="qs-resolution-progress-copy">
+            <strong>
+              Questão ${
+                qsResolutionState
+                  .currentIndex
+                + 1
+              } de ${qsState.items.length}
+            </strong>
+            <small>
+              ${qsEscape(
+                item.source_label
+                || "Simulado"
+              )}
+            </small>
+          </div>
+
+          <div class="qs-highlighter">
+            <button
+              id="qs-highlighter-toggle"
+              class="qs-highlighter-button ${qsResolutionState.highlighterEnabled ? "active" : ""}"
+              type="button"
+              aria-pressed="${qsResolutionState.highlighterEnabled ? "true" : "false"}"
+            >
+              ▰ Marca-texto
+            </button>
+
+            <div
+              id="qs-highlighter-palette"
+              class="qs-highlighter-palette"
+              ${qsResolutionState.highlighterEnabled ? "" : "hidden"}
+              aria-label="Cor do marca-texto"
+            >
+              ${[
+                ["yellow", "Amarelo"],
+                ["green", "Verde"],
+                ["blue", "Azul"],
+                ["orange", "Laranja"]
+              ].map(
+                ([color, label]) => `
+                  <button
+                    class="qs-highlight-color ${qsResolutionState.highlightColor === color ? "active" : ""}"
+                    type="button"
+                    data-highlight-color="${color}"
+                    aria-label="${label}"
+                    title="${label}"
+                  ></button>
+                `
+              ).join("")}
+            </div>
+          </div>
+        </div>
+
+        <div class="qs-resolution-progress" aria-hidden="true">
+          <span style="width:${progress}%"></span>
+        </div>
+
+        <article class="qs-resolution-card">
+          <div class="qs-resolution-question-head">
+            <div class="qs-number">
+              ${item.question_number}
+            </div>
+
+            <div class="qs-resolution-question-title">
+              <small>
+                Questão ${item.question_number}
+              </small>
+
+              <div
+                id="qs-resolution-text"
+                class="qs-resolution-text"
+              >
+                <h3>
+                  ${qsEscape(
+                    presentation.stem
+                  )}
+                </h3>
+              </div>
+            </div>
+          </div>
+
+          ${
+            item.image_url
+              ? `
+                <img
+                  class="qs-resolution-image"
+                  src="${qsEscape(
+                    item.image_url
+                  )}"
+                  alt="Imagem da questão ${item.question_number}"
+                >
+              `
+              : ""
+          }
+
+          <div class="qs-resolution-alternatives">
+            ${optionHtml}
+          </div>
+
+          <div class="qs-resolution-confirm">
+            <button
+              id="qs-resolution-confirm"
+              class="button primary"
+              type="button"
+              ${(
+                !selected
+                || confirmed
+              ) ? "disabled" : ""}
+            >
+              ${confirmed ? "Confirmada" : "Confirmar"}
+            </button>
+          </div>
+
+          ${renderResolutionFeedback(
+            item,
+            selected,
+            confirmed,
+            correct
+          )}
+        </article>
+
+        <div class="qs-resolution-footer">
+          <button
+            id="qs-resolution-prev"
+            class="qs-resolution-nav-button"
+            type="button"
+            ${qsResolutionState.currentIndex === 0 ? "disabled" : ""}
+          >
+            ← Anterior
+          </button>
+
+          <button
+            id="qs-resolution-next"
+            class="qs-resolution-nav-button"
+            type="button"
+            ${qsResolutionState.currentIndex >= qsState.items.length - 1 ? "disabled" : ""}
+          >
+            Próxima →
+          </button>
+        </div>
+      </div>
+    `;
+
+  bindResolutionQuestionEvents(
+    item
+  );
 }
 
 function currentWrongIds() {
