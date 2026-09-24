@@ -2124,18 +2124,17 @@
           <div class="admin-qf-block-grid">${blockCards}</div>
           <div class="admin-qf-final-review">
             <span>Revisão final</span>
-            <strong>ChatGPT + Perplexity + Gemini</strong>
+            <strong>ChatGPT + Perplexity</strong>
             <div>
               ${qfReviewPill("ChatGPT", batch.final_review_chatgpt_status)}
               ${qfReviewPill("Perplexity", batch.final_review_perplexity_status)}
-              ${qfReviewPill("Gemini", batch.final_review_gemini_status)}
               ${qfReviewPill("Você", batch.final_human_review_status)}
             </div>
           </div>
           <div class="admin-qf-batch-actions">
             <button class="button secondary admin-qf-open-batch" type="button" data-qf-batch="${Number(batch.batch_number)}">Ver questões</button>
             <button class="button secondary" type="button" data-qf-export="${Number(batch.batch_number)}:0:audit">Exportar lote completo</button>
-            ${batch.final_review_chatgpt_status === "approved" && batch.final_review_perplexity_status === "approved" && batch.final_review_gemini_status === "approved" && batch.final_human_review_status !== "approved" ? `<button class="button primary" type="button" data-qf-final-approve="${Number(batch.batch_number)}">Aprovar lote final</button>` : ""}
+            ${batch.final_review_chatgpt_status === "approved" && batch.final_review_perplexity_status === "approved" && batch.final_human_review_status !== "approved" ? `<button class="button primary" type="button" data-qf-final-approve="${Number(batch.batch_number)}">Aprovar lote final</button>` : ""}
             <button class="button secondary" type="button" data-qf-import-lot="${Number(batch.batch_number)}">Importar revisão final</button>
           </div>
         </article>
@@ -2590,8 +2589,7 @@
         ];
         const finalLotStages = [
           ["09A","ChatGPT · revisão global das 1.000","lot_chatgpt_final","chatgpt"],
-          ["09B","Perplexity · auditoria final das 1.000","lot_perplexity_final","perplexity"],
-          ["09C","Gemini · auditoria adversarial","lot_gemini_final","gemini"]
+          ["09B","Perplexity · auditoria final das 1.000","lot_perplexity_final","perplexity"]
         ];
         return `
           <article class="admin-qf-style-card">
@@ -2887,8 +2885,7 @@
                 </div>
                 ${[
                   ["07A","ChatGPT · revisão global das 1.000","lot_chatgpt_final","chatgpt"],
-                  ["07B","Perplexity · auditoria final das 1.000","lot_perplexity_final","perplexity"],
-                  ["07C","Gemini · auditoria adversarial","lot_gemini_final","gemini"]
+                  ["07B","Perplexity · auditoria final das 1.000","lot_perplexity_final","perplexity"]
                 ].map(([num,label,stage,provider]) => {
                   const pid=`qf-${String(item.exam_style||"style").replace(/[^a-z0-9]/gi,"-").toLowerCase()}-${stage}`;
                   return `
@@ -3287,7 +3284,7 @@
       }
       const finalButton = event.target.closest("[data-qf-final-approve]");
       if (finalButton) {
-        if (!window.confirm("Confirmar aprovação humana final deste lote, após ChatGPT, Perplexity e Gemini?")) return;
+        if (!window.confirm("Confirmar aprovação humana final deste lote, após ChatGPT e Perplexity?")) return;
         const {error} = await sb.rpc("admin_approve_question_factory_lot",{p_batch_number:Number(finalButton.dataset.qfFinalApprove)});
         if(error)window.alert(error.message); else await loadQuestionFactory();
         return;
