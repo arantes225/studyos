@@ -1,7 +1,7 @@
 /* Contrato único da fábrica. Não inserir resultados históricos como identidade editorial. */
 (function (root) {
   'use strict';
-  const VERSION = '3.0';
+  const VERSION = '3.1';
   const SCHEMA_VERSION = '2.0';
   const rubric = { scientific:25, answer_key:20, answer_source:15, distractors:10, explanations:10, style:10, writing:5, difficulty:5 };
   const editable = ['enunciado','alternativa_a','alternativa_b','alternativa_c','alternativa_d','gabarito','explicacao_a','explicacao_b','explicacao_c','explicacao_d','mensagem_chave','area','tema','subtema','dificuldade','fonte_instituicao','fonte_documento','fonte_ano','fonte_url','answer_source_institution','answer_source_document','answer_source_year','answer_source_url','answer_source_section','answer_source_note'];
@@ -141,8 +141,42 @@ REGRA DE ACESSO:
   function generation(item={},ctx={}) {
     const sample = Object.fromEntries(editable.map(k=>[k,'']));
     Object.assign(sample,{question_id:'ID_IMUTAVEL',question_code:'CODIGO_UNICO',exam_style:item.exam_style||null,block_sequence_no:1,sequence_no:1,dificuldade:'Médio',gabarito:'A',version:1,status:'generated'});
+    const enamedAnswerFormat = String(item.exam_style || '').toUpperCase() === 'ENAMED' ? `
+FORMATO DE RESPOSTA OBRIGATÓRIO — ENAMED
+Além do JSON estruturado exigido pelo sistema, apresentar abaixo de CADA questão um bloco humano de resposta exatamente nesta ordem:
+
+Gabarito: [LETRA] — [TEXTO INTEGRAL DA ALTERNATIVA CORRETA]
+
+Justificativa do gabarito:
+[Explicar de forma objetiva, específica para a vinheta e clinicamente suficiente por que essa alternativa é a única melhor resposta. Esta justificativa deve ser semanticamente consistente com a explicação da alternativa correta no JSON; não criar uma segunda justificativa divergente.]
+
+Pulo do Gato:
+[UMA única frase curta, específica e memorável. Deve conter exatamente o discriminador decisivo da questão: se o aluno tivesse acabado de ouvir essa frase antes da prova, teria informação suficiente para identificar corretamente a resposta. Não usar resumo genérico, definição ampla, repetição literal do gabarito ou conselho vago.]
+
+Alternativa A:
+[Justificar individualmente por que A está certa ou errada NESTE caso, citando o dado da vinheta ou o erro clínico/conceitual relevante.]
+
+Alternativa B:
+[Justificar individualmente por que B está certa ou errada NESTE caso.]
+
+Alternativa C:
+[Justificar individualmente por que C está certa ou errada NESTE caso.]
+
+Alternativa D:
+[Justificar individualmente por que D está certa ou errada NESTE caso.]
+
+REGRAS DE CONSISTÊNCIA DO BLOCO ENAMED:
+- Gabarito deve mostrar simultaneamente a LETRA e o TEXTO da alternativa correta.
+- Justificativa do gabarito não substitui as justificativas A-D; ambas são obrigatórias.
+- Pulo do Gato = mensagem_chave no JSON.
+- Alternativa A/B/C/D = explicacao_a/explicacao_b/explicacao_c/explicacao_d no JSON.
+- A justificativa da alternativa correta deve explicar por que ela é correta; as outras três devem explicar concretamente por que estão erradas naquele cenário.
+- Não aceitar “incorreta”, “não é a melhor”, “pouco provável” ou frases genéricas sem apontar o discriminador clínico/conceitual.
+- O bloco humano deve refletir exatamente o mesmo conteúdo do JSON; nunca haver discrepância entre gabarito, Pulo do Gato e explicações.
+` : '';
     return `${rules}\n\n${profile(item)}
 ${operationalAccess(ctx,'generation')}
+${enamedAnswerFormat}
 TAREFA: gerar bloco administrativo de 200 questões. Pode executar em partes de 20, preservando IDs, sequência, cobertura planejada e conferência final das 200. Não fingir entrega completa quando houver parte pendente.
 Antes da produção, verificar o estado do perfil. Se estiver CALIBRATED_FROZEN/PROMPT_APPROVED com FINAL_PROMPT_SCORE >=84, usar o perfil congelado e iniciar produção sem reabrir calibração. Só exigir nova calibração/corpus quando a banca ainda não estiver aprovada.
 Definir matriz de cobertura a partir da prova-alvo; não impor sete áreas ENAMED nem quotas universais a outras bancas. Frequências observadas orientam o conjunto, sem criar sequência temática artificial.
