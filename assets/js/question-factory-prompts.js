@@ -1,7 +1,8 @@
 /* Contrato único da fábrica. Não inserir resultados históricos como identidade editorial. */
 (function (root) {
   'use strict';
-  const VERSION = '2.8';
+  const VERSION = '2.9';
+  const SCHEMA_VERSION = '2.0';
   const rubric = { scientific:25, answer_key:20, answer_source:15, distractors:10, explanations:10, style:10, writing:5, difficulty:5 };
   const editable = ['enunciado','alternativa_a','alternativa_b','alternativa_c','alternativa_d','gabarito','explicacao_a','explicacao_b','explicacao_c','explicacao_d','mensagem_chave','area','tema','subtema','dificuldade','fonte_instituicao','fonte_documento','fonte_ano','fonte_url','answer_source_institution','answer_source_document','answer_source_year','answer_source_url','answer_source_section','answer_source_note'];
   const stringify = value => JSON.stringify(value, null, 2);
@@ -96,7 +97,7 @@ Somente perfis ainda não aprovados devem registrar edição, URL oficial, IDs/p
     const batchCode = ctx.batch_code || (batchNumber == null ? null : 'L'+String(Number(batchNumber)).padStart(3,'0'));
     const blockCode = ctx.block_code || (batchCode && blockNumber != null ? batchCode+'-B'+String(Number(blockNumber)).padStart(2,'0') : null);
     return {
-      schema_version:VERSION,
+      schema_version:SCHEMA_VERSION,
       batch_number:batchNumber,
       batch_code:batchCode,
       block_number:blockNumber,
@@ -136,7 +137,7 @@ PRÉ-FLIGHT DE LOTE antes da saída:
 - verificar se itens médios/difíceis têm pelo menos um concorrente forte e 2–3 dados funcionais; se não, regenerar esses itens;
 - em MBE quantitativa, quando o perfil exigir aplicação, preferir cálculo + interpretação de magnitude/implicação, não mera aritmética.
 SAÍDA (preencher os dados reais; null em lote/bloco exige identificação antes de importar):
-${stringify({schema_version:VERSION,batch:{...context(item,ctx),question_count:200,part_number:1,part_count:10,profile_version:VERSION,reference_exam_years:[],generation_status:'generated'},primary_style_evidence:[],coverage_plan:[],questions:[sample],coverage:{expected:200,delivered:0,complete:false},stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage:'generation',provider:'ChatGPT',run_label:'parte-1',total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'generated_partial',metrics:{part_number:1,part_count:10},notes:''}})}
+${stringify({schema_version:SCHEMA_VERSION,batch:{...context(item,ctx),question_count:200,part_number:1,part_count:10,profile_version:VERSION,reference_exam_years:[],generation_status:'generated'},primary_style_evidence:[],coverage_plan:[],questions:[sample],coverage:{expected:200,delivered:0,complete:false},stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage:'generation',provider:'ChatGPT',run_label:'parte-1',total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'generated_partial',metrics:{part_number:1,part_count:10},notes:''}})}
 Validar quantidade, IDs, sequências 1–200 e posição global, A-D, campos obrigatórios, fontes, coerência e duplicatas. Nunca preencher status approved/published. Excel apenas quando solicitado para revisão humana.`;
   }
   function reviewExample(item,stage,ctx) {
@@ -148,13 +149,13 @@ Validar quantidade, IDs, sequências 1–200 e posição global, A-D, campos obr
     if(stage==='prompt_calibration')return `${common}
 AUDITORIA DO PROMPT EDITORIAL: avaliar saída BRUTA inédita, antes de correções. Receber registro da resolução cega; depois conferir gabaritos/fontes. Comparar com corpus primário e registrar evidências por item. Distinguir falha científica pontual, falha do gerador, falha de validador e desvio de identidade.
 FINAL_PROMPT_SCORE usa rubrica própria: fidelidade 40, distratores 20, dificuldade 15, diversidade/ausência de pistas 15, clareza/completude 10. Somar componentes; corte 84. Informar ciência e gabarito em flags separados; hard fail impede avanço. Sem corpus suficiente, nota=null e NEEDS_MORE_PRIMARY_STYLE_DATA. Amostra sentinela não substitui teste de generalização; testar ao menos 30 itens novos em áreas variadas e informar limites amostrais. Não usar correções para elevar esta nota.
-${stringify({schema_version:VERSION,review_stage:'prompt_calibration',exam_style:item.exam_style||null,profile_version:VERSION,FINAL_PROMPT_SCORE:null,prompt_component_scores:{fidelity:null,distractors:null,difficulty:null,diversity:null,clarity:null},hard_fail_count:0,sample_size:0,primary_style_evidence:[],decision:'NEEDS_MORE_PRIMARY_STYLE_DATA',findings:[]})}`;
+${stringify({schema_version:SCHEMA_VERSION,review_stage:'prompt_calibration',exam_style:item.exam_style||null,profile_version:VERSION,FINAL_PROMPT_SCORE:null,prompt_component_scores:{fidelity:null,distractors:null,difficulty:null,diversity:null,clarity:null},hard_fail_count:0,sample_size:0,primary_style_evidence:[],decision:'NEEDS_MORE_PRIMARY_STYLE_DATA',findings:[]})}`;
     if(stage==='blind_resolution')return `${rules}
 RESOLUÇÃO CEGA. Abrir SOMENTE prova-cega.json, sem gabaritos, explicações, fontes da resposta ou pareceres prévios. Se esses dados foram expostos na conversa, iniciar nova conversa limpa. Resolver todos os IDs recebidos; não inventar uma letra quando não houver resposta única. Importar este registro antes de abrir o pacote completo.
 ${stringify({...context(item,ctx),review_stage:'blind_resolution',reviewer:'Perplexity',reviews:[{question_id:'ID_IMUTAVEL',item_version:1,independent_answer:null,ambiguity:false,single_best_answer:false,reason:'Registrar raciocínio e dado decisivo; null se irresolúvel.'}],stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage:'blind_resolution',provider:'Perplexity',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}})}`;
     if(['chatgpt_initial','perplexity_initial','perplexity_reaudit'].includes(stage))return `${common}
 ${rubricText}
-TAREFA: ${stage==='chatgpt_initial'?'REVISÃO ADVERSARIAL INDEPENDENTE do bloco. Não aceite autoavaliação do gerador. Primeiro faça um passe formal ignorando os dados clínicos da vinheta: tente prever a chave por comando + alternativas e registre surface_guess_without_vignette e confiança. Depois leia a vinheta, identifique o melhor distrator, explique por que é plausível e forneça uma mudança contrafactual concreta que o tornaria correto/mais defensável. Avalie assimetria lexical, dependência real da vinheta, single-best-answer e dificuldade observada. Falha relevante em qualquer gate = needs_revision.':'Auditoria científica e editorial independente de TODOS os itens recebidos. Usar a resposta cega já registrada para a MESMA versão. Não alterá-la para coincidir com o gabarito.'}
+TAREFA: ${stage==='chatgpt_initial'?'REVISÃO ADVERSARIAL + AUTOCORREÇÃO IMEDIATA do bloco. Não aceite autoavaliação do gerador. Para CADA questão: (1) audite a versão recebida; (2) se APROVADA, mantenha-a; (3) se REVISAR ou REJEITADA, corrija/regenerate imediatamente APENAS os campos necessários, preservando o ID; (4) incremente a versão proposta em +1; (5) faça NOVA revisão adversarial completa da versão corrigida; (6) só marque final_status=approved se a versão corrigida passar todos os gates. Não envie ao Perplexity uma questão que você mesmo ainda considera ruim. Preserve obrigatoriamente o histórico v1→v2, com status e motivo de cada tentativa. Primeiro faça o passe formal ignorando os dados clínicos da vinheta: tente prever a chave por comando + alternativas e registre surface_guess_without_vignette e confiança. Depois leia a vinheta, identifique o melhor distrator, explique por que é plausível e forneça uma mudança contrafactual concreta que o tornaria correto/mais defensável. Avalie assimetria lexical, dependência real da vinheta, single-best-answer e dificuldade observada.':'Auditoria científica e editorial independente de TODOS os itens recebidos. Usar a resposta cega já registrada para a MESMA versão. Não alterá-la para coincidir com o gabarito.'}
 ${stage==='perplexity_reaudit'?'Rever as versões corrigidas ou pendentes. Não atribuir nota global ao bloco usando apenas este subconjunto. Notas globais são agregadas pelo sistema a partir de todas as versões atuais.':''}
 Abrir fontes e comparar a recomendação exata. verified_sources exige institution, document, year, url e section/note quando disponíveis. Relatar falha de acesso como pendência.
 Antes de aprovar cada item, validar também:
@@ -162,14 +163,56 @@ Antes de aprovar cada item, validar também:
 2. a explicação da alternativa correta diz por que está certa;
 3. as três explicações restantes dizem individualmente por que cada alternativa está errada naquele caso.
 Falha em qualquer um desses quatro componentes = needs_revision; ausência, genericidade ou explicação vazia = HARD REJECT 10.
-Não modificar itens. Para todo needs_revision/rejected, propor substituições completas APENAS de campos necessários em proposed_change.exact_replacement; não inventar correção quando faltarem evidências. Campos permitidos: ${editable.join(', ')}.
+${stage==='chatgpt_initial'
+? `Na etapa ChatGPT inicial, MODIFICAR imediatamente itens needs_revision/rejected: devolver patch completo apenas dos campos necessários, aplicar mentalmente a nova versão e reavaliá-la antes da saída. Campos permitidos: ${editable.join(', ')}. O JSON deve trazer initial_reviews, autocorrections e final_reviews. Cada autocorrection deve conter question_id, expected_version, new_version=expected_version+1, original_status, reason e patch. final_reviews deve avaliar a versão NOVA já corrigida. Se não houver correção segura possível, manter final_status rejected/needs_revision e explicar por quê.`
+: `Não modificar itens. Para todo needs_revision/rejected, propor substituições completas APENAS de campos necessários em proposed_change.exact_replacement; não inventar correção quando faltarem evidências. Campos permitidos: ${editable.join(', ')}.`}
 Informar cobertura; trabalhar em partes identificadas se necessário, sem marcar bloco completo até revisar todos os IDs. Recalcular soma/estatísticas por código quando disponível. Números no exemplo são tetos, não notas pré-atribuídas.
 Ao final, emitir obrigatoriamente “RELATÓRIO QUESTÃO POR QUESTÃO”, preservando a ordem dos IDs recebidos. Exemplo:
 42 — REJEITADA — motivo: hard reject por duas respostas defensáveis.
 43 — APROVADA — motivo: SBA clara, dois distratores funcionais e fontes verificadas.
 44 — REVISAR — motivo: Pulo do Gato genérico; reescrever mensagem_chave.
 Não omitir nenhuma questão processada.
-${stringify(reviewExample(item,stage,ctx))}`;
+${stage==='chatgpt_initial' ? stringify({
+  ...context(item,ctx),
+  review_stage:'chatgpt_initial',
+  reviewer:'ChatGPT',
+  initial_reviews:[reviewExample(item,'chatgpt_initial',ctx).reviews[0]],
+  autocorrections:[{
+    question_id:'ID_IMUTAVEL',
+    expected_version:1,
+    new_version:2,
+    original_status:'rejected',
+    reason:'Motivo concreto da rejeição/revisão.',
+    patch:{alternativa_a:'Texto corrigido apenas se necessário'}
+  }],
+  final_reviews:[{
+    ...reviewExample(item,'chatgpt_initial',ctx).reviews[0],
+    item_version:2,
+    status:'approved',
+    proposed_change:{change_required:false,exact_replacement:{},reason:''}
+  }],
+  coverage:{reviewed_ids:[],corrected_ids:[],pending_ids:[],complete:false},
+  stage_metrics:{
+    exam_style:item.exam_style||null,
+    batch_number:ctx.batch_number??null,
+    batch_code:ctx.batch_code||null,
+    block_number:ctx.block_number??null,
+    block_code:ctx.block_code||null,
+    stage:'chatgpt_initial',
+    provider:'ChatGPT',
+    run_label:null,
+    total_count:0,
+    approved_count:0,
+    needs_revision_count:0,
+    rejected_count:0,
+    hard_reject_count:0,
+    agreement_count:0,
+    score:null,
+    status:'completed_after_autocorrection',
+    metrics:{corrected_count:0,second_pass_fail_count:0},
+    notes:''
+  }
+}) : stringify(reviewExample(item,stage,ctx))}`;
     if(stage==='chatgpt_adjudication')return `${common}
 JULGAR parecer mais recente e versão atual. Resolver e conferir fontes. Classificar agree, partially_agree ou disagree, com justificativa. Não corrigir nesta etapa.
 Para agree/partially_agree: approved_patch contém EXATAMENTE campos e textos autorizados; mudanças na fonte, gabarito e explicações devem ser coerentes. Só estes valores poderão ser aplicados. Para disagree: approved_patch={} e rebuttal_to_perplexity obrigatório. Incerteza sem evidência não autoriza alteração; registrar pendência.
