@@ -1596,10 +1596,10 @@
 
 
 .calendar-actions{display:grid;grid-template-columns:max-content max-content;align-items:stretch;justify-content:end;gap:7px 10px}
-.calendar-actions .segmented-control,.calendar-actions .calendar-nav{grid-row:1}
-.calendar-actions .segmented-control{grid-column:1}
-.calendar-actions .calendar-nav{grid-column:2}
-.calendar-add-event{grid-column:1 / -1;grid-row:2;width:100%;min-height:34px;border:1px solid color-mix(in srgb,var(--accent) 40%,var(--border));border-radius:10px;background:color-mix(in srgb,var(--accent) 12%,var(--surface));color:var(--accent);font:inherit;font-size:10px;font-weight:850;cursor:pointer}
+.calendar-add-event{grid-column:1;grid-row:1;width:100%;min-height:34px;border:1px solid color-mix(in srgb,var(--accent) 40%,var(--border));border-radius:10px;background:color-mix(in srgb,var(--accent) 12%,var(--surface));color:var(--accent);font:inherit;font-size:10px;font-weight:850;cursor:pointer}
+.calendar-controls-row{grid-column:1 / -1;grid-row:2;display:grid;grid-template-columns:max-content max-content;align-items:stretch;justify-content:end;gap:10px}
+.calendar-controls-row .segmented-control{grid-column:1}
+.calendar-controls-row .calendar-nav{grid-column:2}
 .calendar-add-event:hover{background:color-mix(in srgb,var(--accent) 18%,var(--surface));border-color:var(--accent)}
 .agenda-card.personal-event{border-color:color-mix(in srgb,var(--accent) 40%,var(--border));background:color-mix(in srgb,var(--accent) 9%,var(--surface));box-shadow:inset 3px 0 0 var(--accent)}
 .agenda-card.personal-event .agenda-kind{color:var(--accent)}
@@ -1607,12 +1607,12 @@
 .event-date-time-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .event-dialog .field small{font-weight:500;color:var(--muted)}
 .event-save-button{background:var(--accent)!important;border-color:var(--accent)!important}
-@media(max-width:620px){.event-date-time-grid{grid-template-columns:1fr}.calendar-actions{width:100%;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.calendar-actions .segmented-control,.calendar-actions .calendar-nav{width:100%;justify-content:space-evenly}.calendar-actions .segmented-control button,.calendar-actions .calendar-nav button{flex:1;padding-inline:6px}}
+@media(max-width:620px){.event-date-time-grid{grid-template-columns:1fr}.calendar-actions{width:100%;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.calendar-controls-row{width:100%;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.calendar-controls-row .segmented-control,.calendar-controls-row .calendar-nav{width:100%;justify-content:space-evenly}.calendar-controls-row .segmented-control button,.calendar-controls-row .calendar-nav button{flex:1;padding-inline:6px}}
 
 
 .calendar-manage-events{
-  grid-column:1 / -1;
-  grid-row:3;
+  grid-column:2;
+  grid-row:1;
   width:100%;
   min-height:34px;
   border:1px solid var(--border);
@@ -2152,6 +2152,11 @@
             </div>
 
             <div class="calendar-actions">
+              <button id="calendar-add-event" class="calendar-add-event" type="button">Adicionar evento</button>
+              <button id="calendar-manage-events" class="calendar-manage-events" type="button" aria-expanded="false">
+                Gerenciar eventos
+              </button>
+
               <div class="calendar-controls-row">
                 <div class="segmented-control" aria-label="Visualização da agenda">
                   <button id="view-day" type="button">Dia</button>
@@ -2165,11 +2170,6 @@
                   <button id="calendar-next" type="button" aria-label="Próximo período">›</button>
                 </div>
               </div>
-
-              <button id="calendar-add-event" class="calendar-add-event" type="button">Adicionar evento</button>
-              <button id="calendar-manage-events" class="calendar-manage-events" type="button" aria-expanded="false">
-                Gerenciar eventos
-              </button>
             </div>
           </div>
 
