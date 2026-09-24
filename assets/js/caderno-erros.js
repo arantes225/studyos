@@ -402,6 +402,83 @@ async function loadErrorAreas() {
         )
         .join("");
 
+  const menu =
+    document.getElementById(
+      "error-area-filter-menu"
+    );
+
+  const label =
+    document.getElementById(
+      "error-area-filter-label"
+    );
+
+  const toggle =
+    document.getElementById(
+      "error-area-filter-toggle"
+    );
+
+  if (menu) {
+    menu.innerHTML = "";
+
+    [
+      {
+        value: "",
+        label: "Todas as áreas"
+      },
+      ...allErrorAreas.map(
+        (area) => ({
+          value: area,
+          label: area
+        })
+      )
+    ].forEach(
+      (item) => {
+        const option =
+          document.createElement(
+            "button"
+          );
+
+        option.type =
+          "button";
+        option.className =
+          "error-area-filter-option";
+        option.dataset.value =
+          item.value;
+        option.textContent =
+          item.label;
+
+        option.addEventListener(
+          "click",
+          (event) => {
+            event.stopPropagation();
+
+            select.value =
+              item.value;
+
+            if (label) {
+              label.textContent =
+                item.label;
+            }
+
+            menu.hidden =
+              true;
+
+            toggle?.setAttribute(
+              "aria-expanded",
+              "false"
+            );
+
+            loadErrorQueue();
+          }
+        );
+
+        menu.appendChild(
+          option
+        );
+      }
+    );
+  }
+
   if (
     errorAgendaDate
   ) {
@@ -411,6 +488,30 @@ async function loadErrorAreas() {
 
     select.disabled =
       true;
+
+    if (label) {
+      label.textContent =
+        errorAgendaArea
+        || "Todas as áreas";
+    }
+
+    if (toggle) {
+      toggle.disabled =
+        true;
+    }
+  } else {
+    if (label) {
+      label.textContent =
+        select.options[
+          select.selectedIndex
+        ]?.textContent
+        || "Todas as áreas";
+    }
+
+    if (toggle) {
+      toggle.disabled =
+        false;
+    }
   }
 }
 
@@ -3111,6 +3212,64 @@ function wireErrorReview() {
       "change",
       loadErrorQueue
     );
+
+  const toggle =
+    document.getElementById(
+      "error-area-filter-toggle"
+    );
+
+  const menu =
+    document.getElementById(
+      "error-area-filter-menu"
+    );
+
+  toggle?.addEventListener(
+    "click",
+    (event) => {
+      event.stopPropagation();
+
+      if (
+        toggle.disabled
+        || !menu
+      ) {
+        return;
+      }
+
+      const open =
+        menu.hidden;
+
+      menu.hidden =
+        !open;
+
+      toggle.setAttribute(
+        "aria-expanded",
+        open
+          ? "true"
+          : "false"
+      );
+    }
+  );
+
+  document.addEventListener(
+    "click",
+    (event) => {
+      if (
+        !event.target.closest(
+          ".error-area-picker"
+        )
+      ) {
+        if (menu) {
+          menu.hidden =
+            true;
+        }
+
+        toggle?.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+      }
+    }
+  );
 }
 
 
