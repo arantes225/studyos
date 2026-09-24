@@ -589,7 +589,7 @@ PONTO DE PARTIDA PARA CORPUS (não equivale a prova analisada): a localizar
 CORPUS VERIFICADO: []
 Não incorporar calibration_notes, style_score_note ou resultados de lotes anteriores à identidade. Campos históricos de extensão, incidência e dificuldade só viram regras após conferência no corpus.
 Antes de gerar: registrar edição, URL oficial, IDs/páginas dos itens analisados, n amostrado, comprimento em palavras, formatos, operações cognitivas, alternativas e limites da amostra. Preferir &gt;=20 itens e 2–3 edições quando disponíveis; não inventar edições inexistentes. Se insuficiente, retornar pendência de calibração, sem prometer fidelidade.
-TAREFA: gerar bloco administrativo de 200 questões. Pode executar em partes de 20, preservando IDs, sequência, cobertura planejada e conferência final das 200. Não fingir entrega completa quando houver parte pendente.
+TAREFA: gerar bloco administrativo de EXATAMENTE 200 questões em UMA ÚNICA EXECUÇÃO E UMA ÚNICA SAÍDA. É PROIBIDO fracionar em partes de 20, partes menores, continuações ou respostas sucessivas. A resposta só é considerada concluída quando contiver as 200 questões completas, com IDs, sequência 1–200, campos obrigatórios e validação final do bloco.
 Antes da produção, exigir relatório de calibração bruta FINAL_PROMPT_SCORE &gt;=94 e corpus documentado. Se ausente, realizar calibração ou informar exatamente o que falta; não substituir por nota de questão corrigida.
 Definir matriz de cobertura a partir da prova-alvo; não impor sete áreas ENAMED nem quotas universais a outras bancas. Frequências observadas orientam o conjunto, sem criar sequência temática artificial.
 Gerar problema completo, alternativas e explicações A-D. Incluir mensagem-chave, área, tema, subtema e dificuldade justificada. Fonte geral e fonte específica do gabarito: instituição, documento, ano, URL real, seção quando disponível e nota de suporte.
@@ -604,7 +604,7 @@ SAÍDA (preencher os dados reais; null em lote/bloco exige identificação antes
     &quot;exam_style&quot;: null,
     &quot;question_count&quot;: 200,
     &quot;part_number&quot;: 1,
-    &quot;part_count&quot;: 10,
+    &quot;part_count&quot;: 1,
     &quot;profile_version&quot;: &quot;2.0&quot;,
     &quot;reference_exam_years&quot;: [],
     &quot;generation_status&quot;: &quot;generated&quot;
