@@ -463,6 +463,11 @@
 .lofi-track-list {
   display: grid;
   gap: 6px;
+  max-height: 210px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
 }
 
 .lofi-track-list-empty {
