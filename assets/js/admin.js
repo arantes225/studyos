@@ -33,6 +33,7 @@
     qfReviewImportBlock: null,
     qfReviewImportMode: "block",
     qfQuality: null,
+    qfBlockFlow: [],
     qfPromptContexts: []
   };
 
@@ -2092,6 +2093,73 @@
     return '<span class="admin-qf-review-pill '+esc(tone)+'">'+esc(label)+': '+esc(qfStatusLabel(status))+'</span>';
   }
 
+  function questionFactoryOperationalStep(stage) {
+    const map = {
+      generation: 1,
+      chatgpt_initial: 2,
+      blind_resolution: 3,
+      perplexity_initial: 3,
+      chatgpt_adjudication: 4,
+      chatgpt_correction: 4,
+      perplexity_reaudit: 5,
+      human_review: 6,
+      block_complete: 7
+    };
+    return map[String(stage || "")] || 1;
+  }
+
+  function renderQuestionFactoryOperationalFlow(batchNumber, blockNumber, flow, blockAction, humanStatus) {
+    const currentStage = String(blockAction?.next?.next_stage || "");
+    const currentStep = questionFactoryOperationalStep(currentStage);
+    const f = flow || {};
+    const generated = Number(f.generated_count || 0);
+    const initialAudited = Number(f.initial_audited_count || 0);
+    const initialFlagged = Number(f.initial_flagged_count || 0);
+    const versioned = Number(f.versioned_count || 0);
+    const blind = Number(f.blind_resolved_count || 0);
+    const perplexityAudited = Number(f.perplexity_audited_count || 0);
+    const perplexityFlagged = Number(f.perplexity_flagged_count || 0);
+    const adjudicated = Number(f.adjudicated_count || 0);
+    const corrected = Number(f.corrected_count || 0);
+    const reaudited = Number(f.reaudit_count || 0);
+    const pending = Number(f.machine_pending_count || 0);
+    const approved = Number(f.machine_approved_count || 0);
+    const hadReaudit = Number(f.reaudit_reviews_total || 0) > 0;
+
+    const steps = [
+      { n:1, title:"Gerar 200", owner:"ChatGPT", stats:`${generated}/200 geradas` },
+      { n:2, title:"Revisão adversarial + autocorreção", owner:"ChatGPT", stats:`${initialAudited} auditadas · ${initialFlagged} sinalizadas · ${versioned} com nova versão` },
+      { n:3, title:"Resolução cega + auditoria", owner:"Perplexity", stats:`${blind} cegas · ${perplexityAudited} auditadas · ${perplexityFlagged} com achados` },
+      { n:4, title:"Julgar parecer + corrigir", owner:"ChatGPT", stats:`${adjudicated} julgadas · ${corrected} corrigidas` },
+      { n:5, title:"Reauditar correções", owner:"Perplexity", stats:`${reaudited} reavaliadas · ${pending} pendentes` },
+      { n:6, title:"Aceitar para o lote", owner:"Você", stats: humanStatus === "approved" ? "Aprovado e enviado ao lote" : `${approved}/200 aprovadas pela máquina` }
+    ];
+
+    return `
+      <div class="admin-qf-flow">
+        ${steps.map(step => {
+          let stateClass = "waiting";
+          if (currentStage === "block_complete" || humanStatus === "approved") stateClass = "done";
+          else if (step.n < currentStep) stateClass = "done";
+          else if (step.n === currentStep) stateClass = "active";
+          if (step.n === 4 && currentStep === 4 && hadReaudit) stateClass += " loop";
+          if (step.n === 5 && currentStep === 4 && hadReaudit) stateClass = "return";
+          return `
+            <div class="admin-qf-flow-step ${stateClass}">
+              <span class="admin-qf-flow-number">${step.n}</span>
+              <div>
+                <small>${esc(step.owner)}</small>
+                <strong>${esc(step.title)}</strong>
+                <em>${esc(step.stats)}</em>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+      ${hadReaudit && currentStep === 4 ? '<div class="admin-qf-flow-loop-note">↺ Ainda há pendências: voltou ao ChatGPT. Depois da correção, retorna ao Perplexity automaticamente.</div>' : ""}
+    `;
+  }
+
   function renderQuestionFactory(snapshot) {
     state.questionFactory = snapshot || {};
     const totals = snapshot?.totals || {};
@@ -2131,12 +2199,9 @@
         const status = machineFlowComplete
           ? (block?.perplexity_review_status || block?.status || "building")
           : (block?.status || "building");
-        const qMetric = Array.isArray(state.qfQuality?.blocks)
-          ? state.qfQuality.blocks.find(x => Number(x.batch_number) === Number(batch.batch_number) && Number(x.block_number) === n)
+        const flow = Array.isArray(state.qfBlockFlow)
+          ? state.qfBlockFlow.find(x => Number(x.batch_number) === Number(batch.batch_number) && Number(x.block_number) === n)
           : null;
-        const initialQ = qMetric?.initial_quality;
-        const postQ = qMetric?.post_correction_quality;
-        const finalQ = qMetric?.final_quality;
 
         return `
           <article class="admin-qf-block-mini admin-qf-block-workflow" data-block-status="${esc(status)}">
@@ -2145,24 +2210,7 @@
               <span class="admin-qf-block-state ${esc(status)}">${esc(blockAction.phase || qfStatusLabel(status))}</span>
             </div>
 
-            <div class="admin-qf-block-mini-counts">
-              <span><b>${reviewed}</b><small>auditadas</small></span>
-              <span class="${needs ? "warn" : ""}"><b>${needs}</b><small>a rever</small></span>
-              <span class="${rejected ? "danger" : ""}"><b>${rejected}</b><small>rejeitadas</small></span>
-              <span><b>${approved}</b><small>OK IA</small></span>
-            </div>
-
-            <div class="admin-qf-block-quality-mini">
-              <span>Step 1 · Auditoria própria <b>${initialQ == null ? "—" : Number(initialQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
-              <span>Step 2 · Perplexity <b>${finalQ == null ? "—" : Number(finalQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
-              <span>Step 3 · Perplexity após correções <b>${postQ == null ? "—" : Number(postQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
-            </div>
-
-            <div class="admin-qf-block-quality-spark" aria-label="Evolução da qualidade do bloco">
-              <span style="height:${initialQ == null ? 3 : Math.max(3,Math.min(100,Number(initialQ)))}%"></span>
-              <span style="height:${postQ == null ? 3 : Math.max(3,Math.min(100,Number(postQ)))}%"></span>
-              <span style="height:${finalQ == null ? 3 : Math.max(3,Math.min(100,Number(finalQ)))}%"></span>
-            </div>
+            ${renderQuestionFactoryOperationalFlow(batch.batch_number, n, flow, blockAction, human)}
 
             <button class="button secondary admin-qf-view-block-wide" type="button" data-qf-view-block="${Number(batch.batch_number)}:${n}">${needs || rejected ? "Ver pendências" : "Ver bloco"}</button>
             <button class="button secondary admin-qf-import-stage-wide" type="button" data-qf-import-stage="${Number(batch.batch_number)}:${n}">Importar etapa</button>
@@ -2548,14 +2596,14 @@
 
   function questionFactoryStageMeta(stage) {
     const map = {
-      generation: { label: "Geração", provider: "chatgpt" },
-      blind_resolution: { label: "Resolução cega", provider: "perplexity" },
-      chatgpt_initial: { label: "Revisão adversarial + autocorreção", provider: "chatgpt" },
-      perplexity_initial: { label: "Auditoria Perplexity", provider: "perplexity" },
-      chatgpt_adjudication: { label: "Julgar parecer", provider: "chatgpt" },
-      chatgpt_correction: { label: "Correção ChatGPT", provider: "chatgpt" },
-      perplexity_reaudit: { label: "Reauditoria Perplexity", provider: "perplexity" },
-      human_review: { label: "Aprovação humana", provider: null },
+      generation: { label: "1 · Gerar 200 questões", provider: "chatgpt" },
+      chatgpt_initial: { label: "2 · ChatGPT · revisão adversarial + autocorreção", provider: "chatgpt" },
+      blind_resolution: { label: "3 · Perplexity · resolução cega + auditoria", provider: "perplexity" },
+      perplexity_initial: { label: "3 · Perplexity · concluir auditoria", provider: "perplexity" },
+      chatgpt_adjudication: { label: "4 · ChatGPT · julgar + corrigir", provider: "chatgpt" },
+      chatgpt_correction: { label: "4 · ChatGPT · aplicar correções", provider: "chatgpt" },
+      perplexity_reaudit: { label: "5 · Perplexity · confirmar correções", provider: "perplexity" },
+      human_review: { label: "6 · Sua aprovação para o lote", provider: null },
       block_complete: { label: "Bloco concluído", provider: null }
     };
     return map[stage] || { label: stage || "Pendente", provider: null };
@@ -2623,6 +2671,14 @@
       return buildBoardGenerationPrompt(style, ctx);
     }
 
+    if (block.next_stage === "blind_resolution" && window.LuriaQuestionPrompts.perplexityCycle) {
+      return window.LuriaQuestionPrompts.perplexityCycle(style, ctx, false);
+    }
+
+    if (block.next_stage === "chatgpt_adjudication" && window.LuriaQuestionPrompts.chatgptCorrectionCycle) {
+      return window.LuriaQuestionPrompts.chatgptCorrectionCycle(style, ctx);
+    }
+
     if (["human_review","block_complete"].includes(block.next_stage)) {
       return "";
     }
@@ -2680,12 +2736,21 @@
   }
 
   async function loadQuestionFactoryBlockTracker() {
-    const { data, error } = await sb.rpc("admin_question_factory_block_tracker");
-    if (error) {
-      console.warn("Não foi possível carregar o acompanhamento dos blocos:", error);
+    const [trackerResult, flowResult] = await Promise.all([
+      sb.rpc("admin_question_factory_block_tracker"),
+      sb.rpc("admin_question_factory_block_flow_snapshot")
+    ]);
+    if (trackerResult.error) {
+      console.warn("Não foi possível carregar o acompanhamento dos blocos:", trackerResult.error);
       return;
     }
-    renderQuestionFactoryBlockTracker(data || []);
+    if (flowResult.error) {
+      console.warn("Não foi possível carregar as métricas do fluxo dos blocos:", flowResult.error);
+      state.qfBlockFlow = [];
+    } else {
+      state.qfBlockFlow = Array.isArray(flowResult.data) ? flowResult.data : [];
+    }
+    renderQuestionFactoryBlockTracker(trackerResult.data || []);
     if (state.questionFactory) renderQuestionFactory(state.questionFactory);
   }
 
