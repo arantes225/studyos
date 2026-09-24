@@ -874,6 +874,10 @@ async function moveAgendaReviewSource(
         "id,area,due_date"
       )
       .eq(
+        "user_id",
+        window.docmapUser.id
+      )
+      .eq(
         "active",
         true
       )
@@ -914,7 +918,7 @@ async function moveAgendaReviewSource(
     throw new Error(
       isFlashcards
         ? "Não encontrei os flashcards dessa atividade na data original."
-        : "Não encontrei os Pulos do Gato dessa atividade na data original."
+        : "Não encontrei os itens do Caderno de Erros dessa atividade na data original."
     );
   }
 
@@ -933,6 +937,18 @@ async function moveAgendaReviewSource(
         due_date:
           newDate
       })
+      .eq(
+        "user_id",
+        window.docmapUser.id
+      )
+      .eq(
+        "active",
+        true
+      )
+      .eq(
+        "due_date",
+        item.activity_date
+      )
       .in(
         "id",
         matchingIds
@@ -974,7 +990,7 @@ async function moveAgendaReviewSource(
     throw new Error(
       isFlashcards
         ? "A nova data não foi aplicada a todos os flashcards."
-        : "A nova data não foi aplicada a todos os Pulos do Gato."
+        : "A nova data não foi aplicada a todos os itens do Caderno de Erros."
     );
   }
 
