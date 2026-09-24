@@ -103,13 +103,26 @@ Aprovação humana final só fica disponível após as três revisões aprovadas
 
 ## Telemetria operacional por etapa
 
-Toda saída de IA da fábrica deve incluir o objeto top-level `stage_metrics`. O Admin persiste esse bloco em `public.question_factory_stage_metrics` por meio de `admin_import_question_factory_stage_metrics`.
+Toda saída de IA da fábrica deve incluir o objeto top-level `stage_metrics`. Ele contém banca, lote/bloco quando aplicável, etapa, provedor, total processado, aprovadas, a revisar, rejeitadas, hard rejects, concordâncias independentes, score agregado quando existir, status, métricas extras e nota curta.
 
-Campos mínimos: banca, lote/bloco quando aplicável, etapa, provedor, total processado, aprovadas, a revisar, rejeitadas, hard rejects, concordâncias independentes, score agregado quando existir, status, métricas extras e nota curta.
+### Persistência automática
 
-As revisões importadas gravam `stage_metrics` automaticamente. Para geração ou qualquer resposta que não passe pelo importador formal de revisão, usar o botão **Atualizar dados da etapa** no dashboard da Fábrica. O Supabase é a fonte de verdade; planilhas/CSV são apenas exportações do histórico.
+Quando ChatGPT, Perplexity ou Gemini estiverem rodando em um ambiente com conector Supabase autorizado e execução SQL disponível, a própria IA deve persistir `stage_metrics` ao terminar a etapa usando **somente**:
 
-O card de cada banca mostra a última etapa registrada. Não declarar que uma IA escreveu diretamente no banco: ela devolve o JSON e o Admin executa a persistência autenticada.
+`select private.qf_record_stage_metrics('<STAGE_METRICS_JSON>'::jsonb);`
+
+A função:
+- valida banca, etapa, provedor, score e contagens;
+- aceita apenas a telemetria operacional;
+- usa `event_key`/run label para tornar retries idempotentes;
+- atualiza o horário da banca para refletir a nova etapa no dashboard;
+- não autoriza a IA a escrever diretamente em questões, perfis, lotes ou outras tabelas.
+
+A IA nunca deve receber, pedir ou imprimir senha, service role, token ou chave do Supabase. A autenticação pertence ao conector já autorizado.
+
+Se a gravação automática retornar `stored=true`, a IA registra o `event_key` retornado. Se a chamada falhar ou não houver conector, ela não inventa sucesso: devolve `stage_metrics` normalmente e o mesmo JSON pode ser importado pelo Admin pelo botão **Atualizar dados da etapa**.
+
+O Supabase continua sendo a fonte de verdade; planilhas/CSV são apenas exportações do histórico.
 
 ## Operação e manutenção
 
