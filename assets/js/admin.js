@@ -2118,7 +2118,10 @@
               <strong>${esc(batchCode)} · Lote ${String(Number(batch.batch_number || 0)).padStart(3,"0")}</strong>
               <small>${esc(batch.exam_style || "Banca não identificada")} · ${batch.automation_mode === "guided_1000" ? "fluxo guiado de 1.000" : "fluxo manual"} · ${formatNumber(batch.question_count)} de 1.000 questões</small>
             </div>
-            <span class="admin-factory-badge">${esc(qfStatusLabel(batch.status))}</span>
+            <div class="admin-qf-batch-head-actions">
+              <span class="admin-factory-badge">${esc(qfStatusLabel(batch.status))}</span>
+              ${batch.status !== "published" ? `<button class="button primary" type="button" data-qf-continue-batch="${Number(batch.batch_number)}">Continuar lote</button>` : ""}
+            </div>
           </div>
           <div class="admin-qf-batch-progress" aria-hidden="true"><span style="width:${progress.toFixed(1)}%"></span></div>
           <div class="admin-qf-block-grid">${blockCards}</div>
