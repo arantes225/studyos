@@ -90,8 +90,8 @@ async function criarConta() {
     return;
   }
 
-  if (password.length < 6) {
-    mostrarMensagem("Use uma senha com pelo menos 6 caracteres.", "error");
+  if (password.length < 8) {
+    mostrarMensagem("Use uma senha com pelo menos 8 caracteres.", "error");
     return;
   }
 
