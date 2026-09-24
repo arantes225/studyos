@@ -2053,6 +2053,29 @@
     return labels[String(value || "")] || "Pendente";
   }
 
+  function qfBatchOperationalLabel(batch) {
+    const status = String(batch?.status || "");
+    if (status === "published") return "Publicado";
+    if (status === "ready") return "Pronto para publicar";
+    if (Number(batch?.approved_blocks || 0) === 5 || status === "reviewing") return "Etapa final";
+    const rows = (state.qfBlockTracker || [])
+      .filter(row => Number(row.batch_number) === Number(batch?.batch_number))
+      .sort((a,b) => Number(a.block_number) - Number(b.block_number));
+    const active = rows.find(row => row.next_stage !== "block_complete");
+    if (!active) return "Blocos concluídos";
+    const labels = {
+      generation: "Geração",
+      chatgpt_initial: "Revisão ChatGPT",
+      blind_resolution: "Resolução cega",
+      perplexity_initial: "Auditoria Perplexity",
+      chatgpt_adjudication: "Julgamento ChatGPT",
+      chatgpt_correction: "Correção ChatGPT",
+      perplexity_reaudit: "Reauditoria Perplexity",
+      human_review: "Aprovação humana"
+    };
+    return labels[active.next_stage] || active.phase || qfStatusLabel(status);
+  }
+
   function qfReviewPill(label, status) {
     const tone = ["approved","needs_revision","rejected"].includes(status) ? status : "";
     return '<span class="admin-qf-review-pill '+esc(tone)+'">'+esc(label)+': '+esc(qfStatusLabel(status))+'</span>';
@@ -2120,11 +2143,14 @@
               <span>Pós-correção <b>${postQ == null ? "—" : Number(postQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
               <span>Final <b>${finalQ == null ? "—" : Number(finalQ).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"}</b></span>
             </div>
-            <div class="admin-qf-block-pipeline">
-              ${qfReviewPill("ChatGPT", block?.chatgpt_review_status)}
-              ${qfReviewPill("Perplexity", block?.perplexity_review_status)}
-              ${human ? qfReviewPill("Você", human) : '<span class="admin-qf-review-pill">Você: aguardando</span>'}
+
+            <div class="admin-qf-block-quality-spark" aria-label="Evolução da qualidade do bloco">
+              <span style="height:${initialQ == null ? 3 : Math.max(3,Math.min(100,Number(initialQ)))}%"></span>
+              <span style="height:${postQ == null ? 3 : Math.max(3,Math.min(100,Number(postQ)))}%"></span>
+              <span style="height:${finalQ == null ? 3 : Math.max(3,Math.min(100,Number(finalQ)))}%"></span>
             </div>
+
+            <button class="button secondary admin-qf-view-block-wide" type="button" data-qf-view-block="${Number(batch.batch_number)}:${n}">${needs || rejected ? "Ver pendências" : "Ver bloco"}</button>
 
             ${!lotInFinalReview && blockAction.provider ? `
               <div class="admin-qf-block-ai-action">
@@ -2132,14 +2158,6 @@
                 <button class="button primary" type="button" data-qf-block-ai="${Number(batch.batch_number)}:${n}">${esc("Copiar + abrir " + blockAction.providerLabel)}</button>
               </div>
             ` : ""}
-
-            <div class="admin-qf-block-mini-actions">
-              <button class="button secondary" type="button" data-qf-view-block="${Number(batch.batch_number)}:${n}">${needs || rejected ? "Ver pendências" : "Ver bloco"}</button>
-              <button class="button secondary" type="button" data-qf-export="${Number(batch.batch_number)}:${n}:blind">Exportar prova cega</button>
-              <button class="button secondary" type="button" data-qf-export="${Number(batch.batch_number)}:${n}:audit">Exportar auditoria e pareceres</button>
-              <button class="button secondary" type="button" data-qf-import-review="${Number(batch.batch_number)}:${n}">Importar resolução, auditoria ou julgamento</button>
-              ${needs || rejected ? `<button class="button secondary admin-qf-correction-import" type="button" data-qf-import-correction="${Number(batch.batch_number)}:${n}">Importar correção ChatGPT</button>` : ""}
-            </div>
 
             ${human === "pending" ? `
               <div class="admin-qf-human-gate">
@@ -2161,7 +2179,6 @@
               <strong>📁 ${esc(batchCode)}</strong>
               <small>Pasta do lote · 1.000 questões · 5 blocos rastreáveis</small>
             </div>
-            <span class="admin-factory-badge">${esc(qfStatusLabel(batch.status))}</span>
           </summary>
         <article class="admin-qf-batch-card">
           <div class="admin-qf-batch-card-head">
@@ -2170,9 +2187,7 @@
               <small>${esc(batch.exam_style || "Banca não identificada")} · ${batch.automation_mode === "guided_1000" ? "fluxo guiado de 1.000" : "fluxo manual"} · ${formatNumber(batch.question_count)} de 1.000 questões</small>
             </div>
             <div class="admin-qf-batch-head-actions">
-              <span class="admin-factory-badge">${esc(qfStatusLabel(batch.status))}</span>
-              ${!lotInFinalReview ? `<button class="button secondary admin-qf-phase-prompt" type="button" data-qf-copy-phase="${Number(batch.batch_number)}">Prompt da fase</button>` : ""}
-              ${!lotInFinalReview ? `<button class="button primary" type="button" data-qf-continue-batch="${Number(batch.batch_number)}">${esc(questionFactoryNextAction(batch.batch_number).label)}</button>` : ""}
+              <span class="admin-factory-badge">${esc(qfBatchOperationalLabel(batch))}</span>
             </div>
           </div>
           <div class="admin-qf-batch-progress" aria-hidden="true"><span style="width:${progress.toFixed(1)}%"></span></div>
@@ -2211,10 +2226,8 @@
             </div>
           </details>
 
-          <div class="admin-qf-batch-actions">
-            ${!lotInFinalReview ? `<button class="button secondary admin-qf-phase-prompt" type="button" data-qf-copy-phase="${Number(batch.batch_number)}">Prompt da fase</button>` : ""}
-            ${!lotInFinalReview ? `<button class="button primary" type="button" data-qf-continue-batch="${Number(batch.batch_number)}">${esc(questionFactoryNextAction(batch.batch_number).label)}</button>` : ""}
-            <button class="button secondary admin-qf-open-batch" type="button" data-qf-batch="${Number(batch.batch_number)}">Ver questões</button>
+          <div class="admin-qf-batch-actions admin-qf-batch-actions-clean">
+            <button class="button secondary admin-qf-open-batch admin-qf-open-batch-wide" type="button" data-qf-batch="${Number(batch.batch_number)}">Ver questões</button>
             <button class="button secondary" type="button" data-qf-export="${Number(batch.batch_number)}:0:audit">Exportar lote completo</button>
             ${batch.final_review_chatgpt_status === "approved" && batch.final_review_perplexity_status === "approved" && batch.final_human_review_status !== "approved" ? `<button class="button primary" type="button" data-qf-final-approve="${Number(batch.batch_number)}">Aprovar lote final</button>` : ""}
             <button class="button secondary" type="button" data-qf-import-lot="${Number(batch.batch_number)}">Importar revisão final</button>
