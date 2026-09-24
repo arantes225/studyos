@@ -2277,7 +2277,9 @@
     state.qfReviewImportMode = mode;
 
     if ($("admin-qf-review-import-meta")) {
-      $("admin-qf-review-import-meta").textContent = mode === "calibration" ? "Cole a auditoria bruta do prompt com FINAL_PROMPT_SCORE, componentes e evidências primárias." : mode === "lot"
+      $("admin-qf-review-import-meta").textContent = mode === "metrics"
+        ? "Cole qualquer JSON da fábrica que contenha stage_metrics. Esta opção atualiza apenas a telemetria operacional."
+        : mode === "calibration" ? "Cole a auditoria bruta do prompt com FINAL_PROMPT_SCORE, componentes e evidências primárias." : mode === "lot"
         ? `Lote ${String(Number(batchNumber)).padStart(3,"0")} · cole o JSON da revisão final das 1.000.`
         : mode === "correction"
           ? `Lote ${String(Number(batchNumber)).padStart(3,"0")} · Bloco ${blockNumber} · cole o JSON das correções do ChatGPT.`
@@ -2303,6 +2305,28 @@
       if (message) message.textContent = "Informe um objeto JSON.";
       return;
     }
+    if (state.qfReviewImportMode === "metrics") {
+      if (!payload.stage_metrics || typeof payload.stage_metrics !== "object") {
+        if (message) message.textContent = "O JSON não contém stage_metrics.";
+        return;
+      }
+      const { data: telemetryData, error: telemetryError } = await sb.rpc(
+        "admin_import_question_factory_stage_metrics",
+        { p_payload: payload }
+      );
+      if (telemetryError) {
+        if (message) message.textContent = telemetryError.message || "Não foi possível atualizar a etapa.";
+        return;
+      }
+      if (message) {
+        message.textContent = telemetryData?.stored
+          ? "Métricas da etapa atualizadas no Supabase e no dashboard."
+          : "Nenhuma métrica foi gravada.";
+      }
+      await Promise.all([loadQuestionFactoryStyles(),loadQuestionFactoryBlockTracker(),loadQuestionFactoryQuality()]);
+      return;
+    }
+
     if (payload.review_stage !== "prompt_calibration" && (Number(payload.batch_number) !== state.qfReviewImportBatch || (state.qfReviewImportMode !== "lot" && Number(payload.block_number) !== state.qfReviewImportBlock))) {
       if (message) message.textContent = "O lote/bloco do JSON não corresponde ao selecionado. Confira o arquivo; os IDs não serão substituídos.";
       return;
@@ -3152,6 +3176,7 @@
     $("admin-qf-bad-next")?.addEventListener("click", () => loadBadQuestionFolder(state.qfBadOffset+state.qfBadPageSize));
 
     $("admin-qf-import-calibration")?.addEventListener("click", () => openReviewImportDialog(null, null, "calibration"));
+    $("admin-qf-import-stage-metrics")?.addEventListener("click", () => openReviewImportDialog(null, null, "metrics"));
     $("admin-qf-batches")?.addEventListener("click", async event => {
       const exportButton = event.target.closest("[data-qf-export]");
       if (exportButton) {
