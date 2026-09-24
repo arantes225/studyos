@@ -3420,3 +3420,120 @@
     font-size: 12px !important;
   }
 }
+
+
+@media (max-width: 760px) {
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-folder-summary {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    align-items: start !important;
+    gap: 8px !important;
+    padding: 12px !important;
+    min-height: 52px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-folder-summary strong {
+    font-size: 13px !important;
+    line-height: 1.3 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-batch-folder-summary small {
+    font-size: 10px !important;
+    line-height: 1.4 !important;
+    white-space: normal !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-block-tracker-panel {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 10px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-block-tracker-head {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-block-tracker-head strong {
+    font-size: 13px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-block-tracker-head small,
+  .pwa-standalone body[data-page="admin"] .admin-qf-block-tracker-head > span {
+    font-size: 9px !important;
+    line-height: 1.4 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-tracker-row {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 7px !important;
+    padding: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-tracker-row > div {
+    min-width: 0 !important;
+    padding: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-tracker-row > div > span {
+    font-size: 8px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-tracker-row > div > strong,
+  .pwa-standalone body[data-page="admin"] .admin-qf-tracker-main strong {
+    font-size: 11px !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-tracker-main small,
+  .pwa-standalone body[data-page="admin"] .admin-qf-tracker-no-prompt {
+    font-size: 9px !important;
+    line-height: 1.4 !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-tracker-next {
+    grid-column: auto !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-tracker-prompt-actions {
+    grid-template-columns: 1fr !important;
+    gap: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-tracker-prompt-actions .button {
+    width: 100% !important;
+    min-height: 42px !important;
+    font-size: 11px !important;
+    white-space: normal !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-human-gate > div {
+    grid-template-columns: 1fr !important;
+    gap: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-human-gate .button {
+    width: 100% !important;
+    min-height: 42px !important;
+    font-size: 11px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-segment-actions,
+  .pwa-standalone body[data-page="admin"] .admin-qf-review-import-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 7px !important;
+  }
+
+  .pwa-standalone body[data-page="admin"] .admin-qf-segment-actions .button,
+  .pwa-standalone body[data-page="admin"] .admin-qf-review-import-actions .button {
+    width: 100% !important;
+    min-height: 42px !important;
+    font-size: 11px !important;
+  }
+}
