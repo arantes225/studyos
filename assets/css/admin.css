@@ -4773,3 +4773,43 @@ body.admin-unlocked #admin-app {
   }
 }
 
+
+
+/* Question Factory — auditoria automática Perplexity por faixas */
+.admin-qf-auto-ranges{
+  display:grid;
+  gap:5px;
+  margin-top:5px;
+  padding-top:5px;
+  border-top:1px solid var(--border);
+}
+.admin-qf-auto-label{
+  color:var(--muted);
+  font-size:6.2px;
+  font-weight:800;
+  line-height:1.25;
+}
+.admin-qf-auto-range-buttons{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:4px;
+}
+.admin-qf-auto-range{
+  min-height:27px!important;
+  padding:0 6px!important;
+  font-size:6.2px!important;
+  white-space:nowrap;
+}
+.admin-qf-auto-range[data-qf-auto-running="1"]{
+  cursor:progress;
+  opacity:.8;
+}
+.admin-qf-auto-range[data-qf-auto-complete="1"]{
+  border-color:color-mix(in srgb,var(--success) 55%,var(--border));
+  background:color-mix(in srgb,var(--success) 10%,var(--surface));
+}
+@media(max-width:470px){
+  .admin-qf-auto-range-buttons{
+    grid-template-columns:1fr;
+  }
+}
