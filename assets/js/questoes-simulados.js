@@ -14027,7 +14027,7 @@ function renderQuestions() {
             </label>
 
             <label class="qs-field full">
-              <span>CCQ <small>(obrigatório para enviar ao Caderno de Erros)</small></span>
+              <span>Pulo do Gato <small>(obrigatório para enviar ao Caderno de Erros)</small></span>
               <input
                 type="text"
                 data-error-ccq="${qsEscape(item.id)}"
@@ -15032,7 +15032,7 @@ async function sendErrorsToNotebook() {
 
   if (missingCcq.length) {
     setAnswerStatus(
-      `Preencha o CCQ nas questões: ${missingCcq.join(", ")}.`,
+      `Preencha o Pulo do Gato nas questões: ${missingCcq.join(", ")}.`,
       "error"
     );
 
@@ -15114,7 +15114,7 @@ async function sendErrorsToNotebook() {
 
 
       /*
-        Salva o CCQ e eventuais
+        Salva o Pulo do Gato e eventuais
         ajustes feitos depois do
         gabarito, antes de criar
         a entrada no Caderno.
