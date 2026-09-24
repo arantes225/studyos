@@ -2641,6 +2641,63 @@
   }
 
 
+  async function maybeAutoRunQuestionFactoryPerplexity(root) {
+    if (!root || state.qfPerplexityAutoRunBusy) return;
+
+    const rows = [...root.querySelectorAll(".admin-qf-tracker-row[data-qf-auto-stage]")];
+    for (const row of rows) {
+      const mode = String(row.dataset.qfAutoMode || "");
+      const stage = String(row.dataset.qfAutoStage || "");
+      if (mode !== "guided_1000") continue;
+      if (!["perplexity_initial","perplexity_reaudit"].includes(stage)) continue;
+
+      const buttons = [...row.querySelectorAll("[data-qf-perplexity-range]")];
+      for (const button of buttons) {
+        const batch = Number(button.dataset.qfAutoBatch);
+        const block = Number(button.dataset.qfAutoBlock);
+        const start = Number(button.dataset.qfAutoStart);
+        const end = Number(button.dataset.qfAutoEnd);
+        const reviewStage = String(button.dataset.qfAutoStage || "perplexity_initial");
+
+        const { data: coverage, error } = await sb.rpc("admin_question_factory_review_coverage", {
+          p_batch_number: batch,
+          p_block_number: block,
+          p_stage: reviewStage,
+          p_reviewer: "Perplexity",
+          p_start: start,
+          p_end: end
+        });
+
+        if (error) {
+          console.warn("Não foi possível verificar cobertura automática Perplexity:", error);
+          return;
+        }
+
+        const persisted = Number(coverage?.persisted || 0);
+        const expected = Number(coverage?.range?.expected || (end-start+1));
+        if (coverage?.complete) {
+          button.dataset.qfAutoComplete = "1";
+          button.textContent = "Q" + String(start).padStart(3,"0") + "–Q" + String(end).padStart(3,"0") + " ✓";
+          continue;
+        }
+
+        button.textContent = persisted + "/" + expected + " · iniciar";
+        state.qfPerplexityAutoRunBusy = true;
+        try {
+          await runQuestionFactoryPerplexityRange(button);
+        } finally {
+          state.qfPerplexityAutoRunBusy = false;
+        }
+
+        window.setTimeout(() => {
+          const tracker = $("admin-qf-block-tracker");
+          if (tracker) maybeAutoRunQuestionFactoryPerplexity(tracker);
+        }, 800);
+        return;
+      }
+    }
+  }
+
   function enhanceQuestionFactoryPerplexityAutomation(root) {
     if (!root) return;
     root.querySelectorAll(".admin-qf-tracker-row[data-qf-auto-stage]").forEach(row => {
@@ -2684,6 +2741,10 @@
       wrap.appendChild(buttons);
       host.appendChild(wrap);
     });
+
+    window.setTimeout(() => {
+      maybeAutoRunQuestionFactoryPerplexity(root);
+    }, 250);
   }
 
   async function runQuestionFactoryPerplexityRange(button) {
@@ -2901,7 +2962,7 @@
       const provider = block.next_provider || meta.provider;
 
       return `
-        <article class="admin-qf-tracker-row" data-qf-auto-batch="${Number(block.batch_number||0)}" data-qf-auto-block="${Number(block.block_number||0)}" data-qf-auto-stage="${esc(block.next_stage || "")}" data-qf-auto-target-stage="${esc(block.blind_target_stage || "")}">
+        <article class="admin-qf-tracker-row" data-qf-auto-batch="${Number(block.batch_number||0)}" data-qf-auto-block="${Number(block.block_number||0)}" data-qf-auto-stage="${esc(block.next_stage || "")}" data-qf-auto-target-stage="${esc(block.blind_target_stage || "")}" data-qf-auto-mode="${esc(block.automation_mode || "")}">
           <div class="admin-qf-tracker-main">
             <strong>${esc(block.block_code || ('L'+String(Number(block.batch_number||0)).padStart(3,'0')+'-B'+String(Number(block.block_number||0)).padStart(2,'0')))}</strong>
             <small>${esc(block.batch_code || ('L'+String(Number(block.batch_number||0)).padStart(3,'0')))} · Bloco ${Number(block.block_number||0)} · ${Number(block.question_count||0)}/${Number(block.target_size||200)} questões</small>
