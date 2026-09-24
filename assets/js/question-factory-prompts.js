@@ -1,7 +1,7 @@
 /* Contrato único da fábrica. Não inserir resultados históricos como identidade editorial. */
 (function (root) {
   'use strict';
-  const VERSION = '2.6';
+  const VERSION = '2.7';
   const rubric = { scientific:25, answer_key:20, answer_source:15, distractors:10, explanations:10, style:10, writing:5, difficulty:5 };
   const editable = ['enunciado','alternativa_a','alternativa_b','alternativa_c','alternativa_d','gabarito','explicacao_a','explicacao_b','explicacao_c','explicacao_d','mensagem_chave','area','tema','subtema','dificuldade','fonte_instituicao','fonte_documento','fonte_ano','fonte_url','answer_source_institution','answer_source_document','answer_source_year','answer_source_url','answer_source_section','answer_source_note'];
   const stringify = value => JSON.stringify(value, null, 2);
@@ -11,6 +11,8 @@ Uma única melhor resposta; dados suficientes; contexto coerente; conteúdo auto
 PULO DO GATO OBRIGATÓRIO: toda questão deve conter mensagem_chave preenchida como o “Pulo do Gato” — UMA frase curta, específica e memorável que, se o aluno tivesse acabado de ouvir antes da prova, seria suficiente para levá-lo à resposta correta daquela questão. Não escrever resumo genérico, definição ampla, repetição do gabarito ou conselho vago; capturar exatamente o discriminador decisivo do item.
 EXPLICAÇÃO OBRIGATÓRIA DAS ALTERNATIVAS: explicar individualmente por que a alternativa correta está certa E por que cada uma das outras três está errada naquele caso. As explicações A-D devem ser específicas para a vinheta, o comando e a alternativa, deixando claro o dado que confirma a correta e o erro clínico/conceitual de cada distrator. “Incorreta”, “não é a melhor” ou justificativa genérica não são aceitas.
 HARD REJECT 10 — PULO DO GATO / EXPLICAÇÕES INCOMPLETAS: se mensagem_chave estiver vazia, genérica, não permitiria acertar o item após ser ouvida, ou se qualquer uma das explicações A-D não disser concretamente por que aquela opção está certa/errada, o item não pode ser aprovado e deve voltar para correção.
+RELATÓRIO QUESTÃO POR QUESTÃO OBRIGATÓRIO: toda etapa de revisão, auditoria, reauditoria ou revisão final deve produzir também uma seção humana sequencial, um item por linha/bloco, sem agrupar questões. Formato mínimo: “42 — REJEITADA — motivo: ...”, “43 — APROVADA — motivo: ...” ou “44 — REVISAR — motivo: ...”. Sempre usar número/ID da questão, status explícito e motivo concreto. Não aceitar apenas totais agregados. Mesmo quando o JSON estruturado já contiver reviews[], repetir um resumo legível questão por questão para facilitar conferência humana.
+STATUS PADRÃO DO RELATÓRIO POR ITEM: APROVADA | REVISAR | REJEITADA. Se REJEITADA, indicar o hard reject ou falha principal; se REVISAR, dizer exatamente o que precisa mudar; se APROVADA, registrar brevemente por que passou.
 Distratores devem permanecer no mesmo eixo decisório e representar erros médicos reais, próximos e plausíveis; não fabricar uma resposta madura contra três caricaturas.
 CONCORRENTE FORTE OBRIGATÓRIO: em item médio/difícil, pelo menos um distrator deve continuar defensável após a leitura completa até que um dado discriminativo específico o derrube. Associação apenas temática não conta.
 REGRA DE SOBREVIVÊNCIA MÍNIMA: além da correta, pelo menos DOIS distratores devem permanecer plausíveis após leitura superficial de comando + alternativas e só devem cair após uso de um dado funcional específico da vinheta. Se apenas um concorrente sobrevive e dois distratores morrem cedo, REJEITAR e regenerar as alternativas.
@@ -149,6 +151,11 @@ Antes de aprovar cada item, validar também:
 Falha em qualquer um desses quatro componentes = needs_revision; ausência, genericidade ou explicação vazia = HARD REJECT 10.
 Não modificar itens. Para todo needs_revision/rejected, propor substituições completas APENAS de campos necessários em proposed_change.exact_replacement; não inventar correção quando faltarem evidências. Campos permitidos: ${editable.join(', ')}.
 Informar cobertura; trabalhar em partes identificadas se necessário, sem marcar bloco completo até revisar todos os IDs. Recalcular soma/estatísticas por código quando disponível. Números no exemplo são tetos, não notas pré-atribuídas.
+Ao final, emitir obrigatoriamente “RELATÓRIO QUESTÃO POR QUESTÃO”, preservando a ordem dos IDs recebidos. Exemplo:
+42 — REJEITADA — motivo: hard reject por duas respostas defensáveis.
+43 — APROVADA — motivo: SBA clara, dois distratores funcionais e fontes verificadas.
+44 — REVISAR — motivo: Pulo do Gato genérico; reescrever mensagem_chave.
+Não omitir nenhuma questão processada.
 ${stringify(reviewExample(item,stage,ctx))}`;
     if(stage==='chatgpt_adjudication')return `${common}
 JULGAR parecer mais recente e versão atual. Resolver e conferir fontes. Classificar agree, partially_agree ou disagree, com justificativa. Não corrigir nesta etapa.
@@ -163,6 +170,7 @@ AUDITORIA GLOBAL DAS 1.000. Revisar todas para duplicação semântica, padrão 
 Rechecagem científica: todos os itens com version>1, todas as questões antes sinalizadas, todas as doses/cutoffs/alto risco e uma amostra adicional de pelo menos 20% das restantes, estratificada por bloco, área e dificuldade, com semente/método registrados. Se não houver classificação de risco confiável, reexaminar todos. Registrar IDs rechecados e cobertura; nunca apresentar amostragem como revisão científica integral.
 ${stage==='lot_gemini_final'?'Gemini é auditor adversarial após ChatGPT e Perplexity. Apenas sinaliza; não modifica.':'Revisão independente: não receber conclusão dos outros revisores como autoridade.'}
 Copiar integralmente version_manifest do pacote. Se qualquer versão mudar, todas as revisões finais e aprovação humana precisam ser renovadas. Cada questão sinalizada deve identificar ID/versão e motivo; mudanças seguem adjudicação, correção e reauditoria. Arrays de achados não podem coexistir com approved.
+Além dos agregados, produzir relatório humano questão por questão para TODOS os itens efetivamente revisados, no formato “ID — APROVADA/REVISAR/REJEITADA — motivo: ...”. Nenhum item revisado pode desaparecer no resumo.
 ${stringify({...context(item,ctx),review_stage:stage,reviewer:stage==='lot_gemini_final'?'Gemini':stage==='lot_chatgpt_final'?'ChatGPT':'Perplexity',lote_status:'needs_revision',version_manifest:[],coverage:{global_reviewed_ids:[],scientific_rechecked_ids:[],sampling_method:'',all_high_risk_rechecked:false},questions_flagged:[],duplicate_clusters:[],answer_source_problems:[],coverage_gaps:[],comments:[],stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:null,stage,provider:stage==='lot_gemini_final'?'Gemini':stage==='lot_chatgpt_final'?'ChatGPT':'Perplexity',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}})}
 Após as três aprovações da versão atual, aguardar aprovação humana final no admin. Não publicar.`;
     throw new Error('Etapa desconhecida: '+stage);
