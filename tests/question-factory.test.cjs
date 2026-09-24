@@ -37,3 +37,24 @@ test('todos os caminhos do admin usam construtor e roteiam adjudicação/final',
  assert.ok(s.includes('admin_import_question_factory_adjudication'));
  assert.ok(!s.includes('payload.batch_number = state'));
 });
+
+test('admin usa roteador universal de importação por etapa e geração tem migration dedicada',()=>{
+ const admin=fs.readFileSync(require('node:path').join(__dirname,'../assets/js/admin.js'),'utf8');
+ const migration=fs.readFileSync(require('node:path').join(__dirname,'../db/question_factory_stage_importers.sql'),'utf8');
+ assert.ok(admin.includes('admin_import_question_factory_stage'));
+ assert.ok(admin.includes('data-qf-import-stage'));
+ for(const name of [
+  'admin_import_question_factory_generation',
+  'admin_import_question_factory_blind_resolution',
+  'admin_import_question_factory_chatgpt_initial',
+  'admin_import_question_factory_perplexity_initial',
+  'admin_import_question_factory_chatgpt_adjudication',
+  'admin_import_question_factory_chatgpt_correction',
+  'admin_import_question_factory_perplexity_reaudit',
+  'admin_import_question_factory_lot_chatgpt_final',
+  'admin_import_question_factory_lot_perplexity_final',
+  'admin_import_question_factory_stage'
+ ]) assert.ok(migration.includes(name),name);
+ assert.ok(migration.includes('question_factory_items_question_id_uidx'));
+ assert.ok(migration.includes('question_factory_items_block_sequence_uidx'));
+});
