@@ -1,7 +1,7 @@
 /* Contrato único da fábrica. Não inserir resultados históricos como identidade editorial. */
 (function (root) {
   'use strict';
-  const VERSION = '3.2';
+  const VERSION = '3.3';
   const SCHEMA_VERSION = '2.0';
   const rubric = { scientific:25, answer_key:20, answer_source:15, distractors:10, explanations:10, style:10, writing:5, difficulty:5 };
   const editable = ['enunciado','alternativa_a','alternativa_b','alternativa_c','alternativa_d','gabarito','explicacao_a','explicacao_b','explicacao_c','explicacao_d','mensagem_chave','area','tema','subtema','dificuldade','fonte_instituicao','fonte_documento','fonte_ano','fonte_url','answer_source_institution','answer_source_document','answer_source_year','answer_source_url','answer_source_section','answer_source_note'];
@@ -119,6 +119,45 @@ Somente perfis ainda não aprovados devem registrar edição, URL oficial, IDs/p
     const destination = ctx.prompt_return_instruction || ctx.return_instruction ||
       `Grave AUTOMATICAMENTE o resultado da etapa ${stage || 'atual'} no lote ${batchCode || 'ATUAL'}${blockCode ? ` e bloco ${blockCode}` : ''}, usando o acesso autorizado já disponível ao site/Supabase e o mecanismo de importação/escrita correspondente à etapa. Após gravar, confirme a persistência lendo novamente o lote/bloco e verificando IDs, versões, contagens e status. Só devolva JSON para importação manual se a gravação automática falhar de verdade, informando o erro real. Nunca pare apenas no relatório se a escrita estiver disponível e nunca invente que gravou algo.`;
 
+    const stagePersistence = {
+      blind_resolution: `PERSISTÊNCIA DESTA ETAPA — PERPLEXITY / RESOLUÇÃO CEGA:
+- Gravar SOMENTE o registro de resolução cega/parecer separado associado a question_id + item_version + ${blockCode || 'bloco atual'}.
+- PROIBIDO alterar enunciado, alternativas, gabarito, explicações, mensagem_chave, fontes ou version da questão principal.
+- A resolução cega deve permanecer isolada para ser confrontada posteriormente com o gabarito.`,
+      perplexity_initial: `PERSISTÊNCIA DESTA ETAPA — PERPLEXITY / AUDITORIA:
+- Gravar SOMENTE em armazenamento/tabela/registro de REVIEWS/PARECERES, vinculado a question_id + item_version + review_id.
+- PROIBIDO aplicar proposed_change diretamente na questão principal.
+- PROIBIDO incrementar version ou sobrescrever campos editoriais/científicos da questão.
+- proposed_change.exact_replacement é apenas RECOMENDAÇÃO para o ChatGPT adjudicar depois.
+- O parecer deve ficar preservado integralmente e separado da questão para evitar contaminação.`,
+      perplexity_reaudit: `PERSISTÊNCIA DESTA ETAPA — PERPLEXITY / REAUDITORIA:
+- Ler a NOVA versão criada após eventual correção do ChatGPT.
+- Gravar um NOVO parecer separado, com novo review_id, sempre vinculado à versão efetivamente reauditada.
+- PROIBIDO modificar a questão principal, inclusive quando ainda houver erro.
+- Se houver nova falha, registrar needs_revision/rejected no parecer; quem decide/aplica mudança continua sendo o ChatGPT em etapa posterior.`,
+      lot_perplexity_final: `PERSISTÊNCIA DESTA ETAPA — PERPLEXITY / REVISÃO FINAL DO LOTE:
+- Gravar a auditoria final do Perplexity em registro separado do lote, preservando version_manifest e findings.
+- PROIBIDO alterar diretamente qualquer uma das 1.000 questões.
+- Achados do Perplexity são parecer independente; qualquer mudança na questão exige adjudicação/correção posterior pelo ChatGPT e nova validação.`,
+      chatgpt_adjudication: `PERSISTÊNCIA DESTA ETAPA — CHATGPT / ADJUDICAÇÃO:
+- Ler a questão principal na versão atual E o parecer separado mais recente do Perplexity para a MESMA question_id + item_version.
+- Decidir item por item: agree | partially_agree | disagree.
+- Gravar a DECISÃO DE ADJUDICAÇÃO separadamente, sempre preservando o review_id do parecer julgado.
+- Nesta etapa, PROIBIDO alterar a questão principal.
+- agree/partially_agree podem autorizar approved_patch; disagree deve manter approved_patch={} e registrar rebuttal_to_perplexity.`,
+      chatgpt_correction: `PERSISTÊNCIA DESTA ETAPA — CHATGPT / CORREÇÃO:
+- Aplicar na QUESTÃO PRINCIPAL somente approved_patch previamente autorizado na adjudicação da MESMA item_version e review_id.
+- Se a adjudicação for disagree, não alterar a questão.
+- Ao aplicar mudança, preservar question_id, criar/incrementar a nova versão pelo mecanismo do backend e manter histórico da versão anterior.
+- Após a correção, limpar aprovações incompatíveis com a versão antiga e encaminhar a nova versão para nova resolução/reauditoria conforme o pipeline.`,
+      chatgpt_initial: `PERSISTÊNCIA DESTA ETAPA — CHATGPT / REVISÃO INICIAL:
+- O ChatGPT pode autocorrigir a questão principal conforme o contrato desta etapa.
+- Toda alteração deve preservar question_id, respeitar expected_version e criar a nova versão pelo mecanismo de importação/autocorreção.
+- Manter histórico da versão original e da versão corrigida; nunca sobrescrever silenciosamente.`
+    }[stage] || `PERSISTÊNCIA DESTA ETAPA:
+- Persistir no destino próprio da etapa sem misturar parecer independente com conteúdo canônico.
+- Pareceres externos não podem sobrescrever a questão principal sem adjudicação explícita do ChatGPT.`;
+
     return `CONTEXTO OPERACIONAL DO LOTE — OBRIGATÓRIO
 Workspace/site: ${workspace}
 Lote: ${batchCode || 'NÃO INFORMADO'}
@@ -130,6 +169,8 @@ ${source}
 
 ONDE DEVOLVER:
 ${destination}
+
+${stagePersistence}
 
 REGRA DE ACESSO E PERSISTÊNCIA:
 - Use o browser/conector/site autenticado disponível para abrir o local acima e trabalhar sobre as questões REAIS e versões ATUAIS do lote/bloco.
@@ -237,7 +278,7 @@ Antes de aprovar cada item, validar também:
 Falha em qualquer um desses quatro componentes = needs_revision; ausência, genericidade ou explicação vazia = HARD REJECT 10.
 ${stage==='chatgpt_initial'
 ? `Na etapa ChatGPT inicial, MODIFICAR imediatamente itens needs_revision/rejected: devolver patch completo apenas dos campos necessários, aplicar mentalmente a nova versão e reavaliá-la antes da saída. Campos permitidos: ${editable.join(', ')}. O JSON deve trazer initial_reviews, autocorrections e final_reviews. Cada autocorrection deve conter question_id, expected_version, new_version=expected_version+1, original_status, reason e patch. final_reviews deve avaliar a versão NOVA já corrigida. Se não houver correção segura possível, manter final_status rejected/needs_revision e explicar por quê.`
-: `Não modificar itens. Para todo needs_revision/rejected, propor substituições completas APENAS de campos necessários em proposed_change.exact_replacement; não inventar correção quando faltarem evidências. Campos permitidos: ${editable.join(', ')}.`}
+: `Não modificar itens. Para todo needs_revision/rejected, propor substituições completas APENAS de campos necessários em proposed_change.exact_replacement; não inventar correção quando faltarem evidências. Campos permitidos: ${editable.join(', ')}. IMPORTANTE: proposed_change é parecer, não patch executável nesta etapa. Persistir o parecer em registro separado; nunca escrever essas propostas na questão principal.`}
 Informar cobertura; trabalhar em partes identificadas se necessário, sem marcar bloco completo até revisar todos os IDs. Recalcular soma/estatísticas por código quando disponível. Números no exemplo são tetos, não notas pré-atribuídas.
 Ao final, emitir obrigatoriamente “RELATÓRIO QUESTÃO POR QUESTÃO”, preservando a ordem dos IDs recebidos. Exemplo:
 42 — REJEITADA — motivo: hard reject por duas respostas defensáveis.
