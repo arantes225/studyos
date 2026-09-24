@@ -3580,7 +3580,7 @@ function openActivityWorkspace(params) {
 
     if (copy) {
       copy.textContent =
-        "CCQs agendados para esta atividade.";
+        "Pulos do Gato agendados para esta atividade.";
     }
 
 
@@ -4238,7 +4238,7 @@ async function loadCcqRotation() {
 
   if (error) {
     console.warn(
-      "Não foi possível carregar os CCQs:",
+      "Não foi possível carregar os Pulos do Gato:",
       error.message
     );
 
