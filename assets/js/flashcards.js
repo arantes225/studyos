@@ -1278,7 +1278,7 @@ async function compressFlashcardImage(
 
     try {
       const dimensionSteps = [
-        1100,
+        FLASHCARD_IMAGE_MAX_DIMENSION,
         1000,
         900,
         820,
