@@ -1194,6 +1194,57 @@ function setLofiPlayMode(
   );
 }
 
+async function resolverUrlLofi(track) {
+  if (
+    track.storage_bucket
+      === "ambientacao-audio"
+  ) {
+    const { data } =
+      sb.storage
+        .from(
+          track.storage_bucket
+        )
+        .getPublicUrl(
+          track.storage_path
+        );
+
+    if (!data?.publicUrl) {
+      throw new Error(
+        "Não foi possível gerar a URL pública do áudio."
+      );
+    }
+
+    return data.publicUrl;
+  }
+
+  const {
+    data: signedAudio,
+    error: signedAudioError
+  } =
+    await sb.storage
+      .from(
+        track.storage_bucket
+      )
+      .createSignedUrl(
+        track.storage_path,
+        60 * 60 * 12
+      );
+
+  if (
+    signedAudioError
+    || !signedAudio?.signedUrl
+  ) {
+    throw (
+      signedAudioError
+      || new Error(
+        "Não foi possível gerar a URL do áudio."
+      )
+    );
+  }
+
+  return signedAudio.signedUrl;
+}
+
 async function carregarFaixaLofi(
   manager,
   track,
@@ -1259,36 +1310,16 @@ async function carregarFaixaLofi(
   );
 
   try {
-    const {
-      data: signedAudio,
-      error: signedAudioError
-    } =
-      await sb.storage
-        .from(
-          track.storage_bucket
-        )
-        .createSignedUrl(
-          track.storage_path,
-          60 * 60 * 12
-        );
-
-    if (
-      signedAudioError
-      || !signedAudio?.signedUrl
-    ) {
-      throw (
-        signedAudioError
-        || new Error(
-          "Não foi possível gerar a URL do áudio."
-        )
+    const audioUrl =
+      await resolverUrlLofi(
+        track
       );
-    }
 
     manager.loadedTrackId =
       track.id;
 
     manager.audio.src =
-      signedAudio.signedUrl;
+      audioUrl;
     manager.audio.load();
 
     writeLofiState(
