@@ -308,17 +308,63 @@
             <article><span>Publicadas</span><strong id="admin-qf-published">0</strong><small>Banco definitivo</small></article>
           </div>
 
-          <div class="admin-factory-flow" aria-label="Fluxo da fábrica">
-            <article><strong>Bloco 1</strong><small>200 questões</small></article>
-            <article><strong>Bloco 2</strong><small>200 questões</small></article>
-            <article><strong>Bloco 3</strong><small>200 questões</small></article>
-            <article><strong>Bloco 4</strong><small>200 questões</small></article>
-            <article><strong>Bloco 5</strong><small>200 questões</small></article>
-            <div class="admin-factory-flow-arrow">→</div>
-            <article class="admin-factory-flow-review"><strong>Revisão global dupla</strong><small>ChatGPT + Perplexity independentes</small></article><div class="admin-factory-flow-arrow">→</div><article class="admin-factory-flow-review"><strong>Gemini adversarial</strong><small>3ª barreira · sinaliza, não altera</small></article>
-            <div class="admin-factory-flow-arrow">→</div>
-            <article class="admin-factory-flow-ready"><strong>1.000 prontas</strong><small>Publicação + limpeza</small></article>
-          </div>
+          <section class="admin-factory-flow-panel admin-factory-flow-v2" aria-label="Fluxo da fábrica">
+            <div class="admin-factory-flow-head">
+              <div>
+                <strong>Pipeline de produção</strong>
+                <small>Cada lote reúne cinco blocos de 200 questões. As etapas finais funcionam como barreiras independentes antes da publicação.</small>
+              </div>
+              <span class="admin-factory-flow-goal">Meta por lote · 1.000 questões</span>
+            </div>
+
+            <div class="admin-factory-pipeline">
+              <article class="admin-factory-pipeline-step">
+                <span class="admin-factory-pipeline-number">01</span>
+                <div class="admin-factory-pipeline-copy">
+                  <strong>Produção em 5 blocos</strong>
+                  <small>Cada bloco contém 200 questões e só avança após a revisão correspondente.</small>
+                </div>
+                <div class="admin-factory-pipeline-blocks" aria-label="Cinco blocos de 200 questões">
+                  <span><b>1</b><small>200</small></span>
+                  <span><b>2</b><small>200</small></span>
+                  <span><b>3</b><small>200</small></span>
+                  <span><b>4</b><small>200</small></span>
+                  <span><b>5</b><small>200</small></span>
+                </div>
+              </article>
+
+              <div class="admin-factory-pipeline-line" aria-hidden="true"></div>
+
+              <article class="admin-factory-pipeline-step is-review">
+                <span class="admin-factory-pipeline-number">02</span>
+                <div class="admin-factory-pipeline-copy">
+                  <strong>Revisão global dupla</strong>
+                  <small>ChatGPT e Perplexity fazem auditorias independentes do lote completo.</small>
+                </div>
+              </article>
+
+              <div class="admin-factory-pipeline-line" aria-hidden="true"></div>
+
+              <article class="admin-factory-pipeline-step is-adversarial">
+                <span class="admin-factory-pipeline-number">03</span>
+                <div class="admin-factory-pipeline-copy">
+                  <strong>Gemini adversarial</strong>
+                  <small>Terceira barreira de controle: procura falhas residuais, sinaliza e não altera o conteúdo.</small>
+                </div>
+              </article>
+
+              <div class="admin-factory-pipeline-line" aria-hidden="true"></div>
+
+              <article class="admin-factory-pipeline-step is-ready">
+                <span class="admin-factory-pipeline-number">04</span>
+                <div class="admin-factory-pipeline-copy">
+                  <strong>1.000 prontas</strong>
+                  <small>Lote validado para publicação no banco definitivo e limpeza dos temporários.</small>
+                </div>
+                <span class="admin-factory-pipeline-result">Pronto para publicar</span>
+              </article>
+            </div>
+          </section>
 
           <section class="admin-qf-quality-panel" aria-labelledby="admin-qf-quality-title">
             <div class="admin-qf-quality-head">
