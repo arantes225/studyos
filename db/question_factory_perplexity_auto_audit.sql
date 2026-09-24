@@ -917,14 +917,19 @@ begin
         when bb.chatgpt_review_status is null
           or bb.chatgpt_review_status='needs_revision'
           then 'chatgpt_initial'
+        when coalesce(s.corrected_waiting_reaudit_count,0) > 0
+          and coalesce(s.blind_seen_count,0) < coalesce(bb.target_size,200)
+          then 'blind_resolution'
+        when coalesce(s.corrected_waiting_reaudit_count,0) > 0
+          then 'perplexity_reaudit'
+        when coalesce(s.blind_seen_count,0) < coalesce(bb.target_size,200)
+          then 'blind_resolution'
         when coalesce(s.perplexity_seen_count,0) < coalesce(bb.target_size,200)
           then 'perplexity_initial'
         when coalesce(s.adjudication_pending_count,0) > 0
           then 'chatgpt_adjudication'
         when coalesce(s.correction_pending_count,0) > 0
           then 'chatgpt_correction'
-        when coalesce(s.corrected_waiting_reaudit_count,0) > 0
-          then 'perplexity_reaudit'
         when coalesce(s.disagreement_count,0) > 0
           then 'perplexity_reaudit'
         when coalesce(s.machine_approved_count,0) < coalesce(bb.target_size,200)
@@ -963,9 +968,14 @@ begin
         'pending_reaudit_count',corrected_waiting_reaudit_count + disagreement_count,
         'machine_approved_count',machine_approved_count,
         'latest_review_stage',latest_review_stage,
+        'blind_target_stage',case
+          when corrected_waiting_reaudit_count > 0 then 'perplexity_reaudit'
+          else 'perplexity_initial'
+        end,
         'phase',case
           when next_stage='generation' then 'Geração'
           when next_stage='chatgpt_initial' then 'Revisão ChatGPT'
+          when next_stage='blind_resolution' then 'Resolução cega Perplexity'
           when next_stage='perplexity_initial' then 'Auditoria Perplexity'
           when next_stage='chatgpt_adjudication' then 'Adjudicação ChatGPT'
           when next_stage='chatgpt_correction' then 'Correção ChatGPT'
@@ -976,7 +986,7 @@ begin
         end,
         'next_stage',next_stage,
         'next_provider',case
-          when next_stage in ('perplexity_initial','perplexity_reaudit') then 'perplexity'
+          when next_stage in ('blind_resolution','perplexity_initial','perplexity_reaudit') then 'perplexity'
           when next_stage in ('generation','chatgpt_initial','chatgpt_adjudication','chatgpt_correction') then 'chatgpt'
           else null
         end,
