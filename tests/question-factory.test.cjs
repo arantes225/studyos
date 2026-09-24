@@ -26,7 +26,7 @@ test('cópias estáticas das duas rotas coincidem com módulo',()=>{
  const escape=s=>s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#x27;');
  for(const path of ['admin.html','admin/index.html']){
   const s=fs.readFileSync(require('node:path').join(__dirname,'..',path),'utf8');
-  assert.ok(s.indexOf('question-factory-prompts.js?v=2.0')<s.indexOf('admin.js?v=4.0'));
+  assert.ok(s.indexOf('question-factory-prompts.js?v=3.2')<s.indexOf('admin.js?v=5.8'));
   assert.ok(s.includes('admin-qf-import-calibration'));
   for(const [key,text] of Object.entries(map)){const start=`<pre id="qf-prompt-${key}" class="admin-qf-prompt">`;assert.equal(s.split(start)[1].split('</pre>')[0],escape(text));}
  }
