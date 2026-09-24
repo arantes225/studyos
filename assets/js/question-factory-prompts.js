@@ -38,6 +38,26 @@ Usar fonte atual aplicável à pergunta e ao cenário brasileiro. Fonte internac
 CALIBRAÇÃO DO PROMPT: FINAL_PROMPT_SCORE >=84/100 na saída bruta inédita, antes de correções; não confundir com style_score.
 QUESTÃO FINAL: quality_score >=97/100, style >=9.7/10, rubrica completa, fontes verificadas, sem hard fail, sem ambiguidade e com única melhor resposta. Nota alta não compensa falha eliminatória.
 Feedback sobre distratores, clareza e segurança pode melhorar regras gerais; só alterar a identidade da banca com evidência primária documentada.
+TELEMETRIA OBRIGATÓRIA POR ETAPA: toda saída JSON deve incluir um objeto top-level stage_metrics. Ele é lido pelo Admin e persistido no Supabase para atualizar o dashboard automaticamente. Preencher com dados REAIS da etapa; nunca estimar contagens. Estrutura obrigatória:
+stage_metrics = {
+  exam_style: banca atual,
+  batch_number: lote atual ou null,
+  block_number: bloco atual ou null,
+  stage: nome exato da etapa,
+  provider: ChatGPT | Perplexity | Gemini | Human,
+  run_label: identificador curto opcional da rodada/parte,
+  total_count: quantidade realmente processada nesta resposta,
+  approved_count: quantidade aprovada nesta etapa,
+  needs_revision_count: quantidade que precisa revisão,
+  rejected_count: quantidade rejeitada,
+  hard_reject_count: quantidade com hard reject,
+  agreement_count: quantidade em que resposta independente concordou com o gabarito quando aplicável,
+  score: nota agregada REAL da etapa quando existir, senão null,
+  status: estado agregado da etapa,
+  metrics: objeto livre com métricas adicionais úteis,
+  notes: resumo operacional curto
+}.
+Não afirmar que atualizou o banco diretamente. A IA apenas devolve stage_metrics; o importador do Admin grava os dados no Supabase.
 JSON válido é o contrato máquina-a-máquina. Não preencher aprovações, fontes verificadas ou notas sem executar a avaliação. IDs são imutáveis; toda revisão informa item_version e toda correção informa expected_version.`;
   const rubricText = `RUBRICA FINAL (pesos máximos; soma exata = quality_score):\n${stringify(rubric)}
 scientific: exatidão e atualização; answer_key: gabarito e univocidade; answer_source: suporte documental específico; distractors: plausibilidade/discriminação; explanations: justificativas A-D; style: aderência demonstrada ao corpus; writing: clareza; difficulty: adequação ao perfil.
