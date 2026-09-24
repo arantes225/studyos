@@ -2114,9 +2114,7 @@
 
   function renderQuestionFactoryOperationalFlow(batchNumber, blockNumber, flow, blockAction, humanStatus) {
     const currentStage = String(blockAction?.next?.next_stage || "");
-    const afterCorrectionBlind = currentStage === "blind_resolution"
-      && String(blockAction?.next?.latest_review_stage || "") === "chatgpt_correction_review";
-    const currentStep = afterCorrectionBlind ? 5 : questionFactoryOperationalStep(currentStage);
+    const currentStep = questionFactoryOperationalStep(currentStage);
     const f = flow || {};
     const generated = Number(f.generated_count || 0);
     const initialAudited = Number(f.initial_audited_count || 0);
@@ -2135,7 +2133,7 @@
     const steps = [
       { n:1, title:"Gerar 200", owner:"ChatGPT", stats:`${generated}/200 geradas` },
       { n:2, title:"Revisão adversarial + autocorreção", owner:"ChatGPT", stats:`${initialAudited} auditadas · ${initialFlagged} sinalizadas · ${versioned} com nova versão` },
-      { n:3, title:"Resolução cega + auditoria", owner:"Perplexity", stats:`${blind} cegas · ${perplexityAudited} auditadas · ${perplexityFlagged} com achados` },
+      { n:3, title:"Auditoria Perplexity", owner:"Perplexity", stats:`${perplexityAudited} auditadas · ${perplexityFlagged} com achados` },
       { n:4, title:"Julgar parecer + corrigir", owner:"ChatGPT", stats:`${adjudicated} julgadas · ${corrected} corrigidas` },
       { n:5, title:"Reauditar correções", owner:"Perplexity", stats:`${reaudited} reavaliadas · ${pending} pendentes` },
       { n:6, title:"Aceitar para o lote", owner:"Você", stats: humanStatus === "approved" ? "Aprovado e enviado ao lote" : `${approved}/200 aprovadas pela máquina` }
@@ -3008,7 +3006,7 @@
         const promptStages = [
           ["01","Gerar 200 questões",null,"chatgpt"],
           ["02","ChatGPT · revisão adversarial + autocorreção","chatgpt_initial","chatgpt"],
-          ["03","Perplexity · resolução cega + auditoria","perplexity_cycle","perplexity"],
+          ["03","Perplexity · auditoria independente","perplexity_cycle","perplexity"],
           ["04","ChatGPT · julgar + corrigir","chatgpt_correction_cycle","chatgpt"],
           ["05","Perplexity · confirmar correções","perplexity_reaudit","perplexity"]
         ];
