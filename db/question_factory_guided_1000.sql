@@ -1,0 +1,23 @@
+-- Lote de 1.000 como unidade operacional da Fábrica de Questões.
+-- Aplicado ao Supabase em 2026-09-24.
+--
+-- Alterações vivas:
+-- 1. question_factory_batches.exam_style
+-- 2. question_factory_batches.automation_mode = manual | guided_1000 | api_auto
+-- 3. question_factory_batches.pipeline_started_at
+-- 4. admin_start_question_factory_lot(text,text)
+--    - exige sessão admin
+--    - valida a banca
+--    - cria um lote de 1.000
+--    - cria B01..B05 com 200 questões-alvo cada
+-- 5. admin_question_factory_block_tracker()
+--    - usa a banca do lote mesmo antes de existirem questões
+-- 6. admin_question_factory_snapshot()
+--    - expõe exam_style, automation_mode e pipeline_started_at ao Admin
+--
+-- O modo guided_1000 é o modo atual do Admin: um único lote operacional,
+-- cinco blocos técnicos e botão "Continuar lote" que aponta sempre para a
+-- próxima etapa pendente.
+--
+-- api_auto fica reservado para executor server-side via Edge Function/API.
+-- Nenhuma chave de provedor deve ser armazenada no frontend.
