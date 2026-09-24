@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const p=require('../assets/js/question-factory-prompts.js');
-const stages=['prompt_calibration','blind_resolution','chatgpt_initial','perplexity_initial','chatgpt_adjudication','chatgpt_correction','perplexity_reaudit','lot_chatgpt_final','lot_perplexity_final','lot_gemini_final'];
+const stages=['prompt_calibration','blind_resolution','chatgpt_initial','perplexity_initial','chatgpt_adjudication','chatgpt_correction','perplexity_reaudit','lot_chatgpt_final','lot_perplexity_final'];
 test('geração inclui todos os campos complementares e contexto sem feedback histórico',()=>{
  const item={exam_style:'AMP-PR',full_generation_brief:'CANONICO',generation_instructions:'INSTRUCAO',recommended_generation_rules:'COMPLEMENTO',what_to_avoid:'CUIDADO',scientific_source_strategy:'CIENCIA',calibration_notes:'NAO_INCLUIR',style_score_note:'NAO_INCLUIR'};
  const s=p.generation(item,{batch_number:7,block_number:3});
@@ -31,11 +31,9 @@ test('cópias estáticas das duas rotas coincidem com módulo',()=>{
   for(const [key,text] of Object.entries(map)){const start=`<pre id="qf-prompt-${key}" class="admin-qf-prompt">`;assert.equal(s.split(start)[1].split('</pre>')[0],escape(text));}
  }
 });
-test('todos os caminhos do admin usam construtor e roteiam adjudicação/Gemini',()=>{
+test('todos os caminhos do admin usam construtor e roteiam adjudicação/final',()=>{
  const s=fs.readFileSync(require('node:path').join(__dirname,'../assets/js/admin.js'),'utf8');
  assert.ok(!s.includes('full_generation_brief ||'));
  assert.ok(s.includes('admin_import_question_factory_adjudication'));
- assert.ok(s.includes('lot_gemini_final'));
- assert.ok(s.includes('https://gemini.google.com/app'));
  assert.ok(!s.includes('payload.batch_number = state'));
 });
