@@ -1,6 +1,6 @@
--- Automatic Perplexity audit pipeline for Question Factory / LURIA 3.4.
--- Mirrors the live Studyos Supabase deployment applied on 2026-09-24.
--- Controlled writes only: no client INSERT/UPDATE/DELETE into question_factory_reviews.
+-- Question Factory: automatic Perplexity audit pipeline (LURIA 3.4)
+-- Mirrors the live Studyos Supabase deployment as of 2026-09-24.
+-- Reviews are persisted only through controlled SECURITY DEFINER importers.
 
 begin;
 
@@ -227,7 +227,18 @@ begin
   with target as (
     select q.id,q.question_id,q.version,q.block_sequence_no
     from public.question_factory_items q
-    where q.block_id=v_block_id and q.block_sequence_no between p_start and p_end
+    where q.block_id=v_block_id
+      and q.block_sequence_no between p_start and p_end
+      and (
+        p_stage <> 'perplexity_reaudit'
+        or q.latest_review_stage='chatgpt_correction_review'
+        or exists(
+          select 1
+          from public.question_factory_reviews rr
+          where rr.item_id=q.id and rr.item_version=q.version
+            and rr.review_stage='perplexity_reaudit' and rr.reviewer=p_reviewer
+        )
+      )
   ),
   covered as (
     select t.*,
@@ -261,6 +272,10 @@ begin
   into v_found,v_persisted,v_approved,v_revision,v_rejected,v_hard,v_agreement,
        v_source_pending,v_score,v_reviewed_ids,v_pending_ids,v_reviewed_sequences,v_pending_sequences
   from covered;
+
+  if p_stage='perplexity_reaudit' then
+    v_expected:=v_found;
+  end if;
 
   return jsonb_build_object(
     'batch_number',p_batch_number,'block_number',p_block_number,
@@ -308,11 +323,20 @@ begin
   from public.question_factory_items qi
   where qi.block_id=v_block_id
     and qi.block_sequence_no between p_start and p_end
-    and exists(
-      select 1
-      from public.question_factory_reviews r
-      where r.item_id=qi.id and r.item_version=qi.version
-        and r.review_stage='chatgpt_initial' and r.review_status='approved'
+    and (
+      (
+        p_review_stage='perplexity_initial'
+        and exists(
+          select 1
+          from public.question_factory_reviews r
+          where r.item_id=qi.id and r.item_version=qi.version
+            and r.review_stage='chatgpt_initial' and r.review_status='approved'
+        )
+      )
+      or (
+        p_review_stage='perplexity_reaudit'
+        and qi.latest_review_stage='chatgpt_correction_review'
+      )
     )
     and not exists(
       select 1
@@ -421,12 +445,15 @@ begin
      raise exception 'Resolução cega não pode ser criada após auditoria da mesma versão';
    end if;
 
-   if not exists(
-     select 1 from public.question_factory_reviews r0
-     where r0.item_id=q.id and r0.item_version=q.version
-       and r0.review_stage='chatgpt_initial' and r0.review_status='approved'
+   if not (
+     q.latest_review_stage='chatgpt_correction_review'
+     or exists(
+       select 1 from public.question_factory_reviews r0
+       where r0.item_id=q.id and r0.item_version=q.version
+         and r0.review_stage='chatgpt_initial' and r0.review_status='approved'
+     )
    ) then
-     raise exception 'Resolução cega bloqueada: revisão adversarial ChatGPT aprovada obrigatória para %',q.question_id;
+     raise exception 'Resolução cega bloqueada: versão atual precisa estar aprovada no ChatGPT inicial ou corrigida pelo ChatGPT para %',q.question_id;
    end if;
 
    insert into public.question_factory_reviews(
@@ -682,24 +709,28 @@ begin
       0::bigint initial_flagged_count,
       count(*) filter(where has_blind_resolution) blind_resolved_count,
       count(*) filter(where has_perplexity) perplexity_audited_count,
-      count(*) filter(where current_perplexity_status in ('needs_revision','rejected')) perplexity_flagged_count,
+      count(*) filter(where current_perplexity_status in ('needs_revision','rejected') or current_agreement in ('partially_agree','disagree')) perplexity_flagged_count,
       count(*) filter(where current_agreement is not null) adjudicated_count,
       count(*) filter(where corrected_to_current_version) corrected_count,
       count(*) filter(where current_perplexity_stage='perplexity_reaudit') reaudit_count,
       count(*) filter(
-        where current_perplexity_status='approved'
-          and (
-            current_perplexity_stage='perplexity_reaudit'
-            or (current_perplexity_stage='perplexity_initial' and current_agreement='agree')
-          )
-      ) machine_approved_count,
-      count(*) filter(
-        where not (
+        where coalesce(
           current_perplexity_status='approved'
           and (
             current_perplexity_stage='perplexity_reaudit'
             or (current_perplexity_stage='perplexity_initial' and current_agreement='agree')
-          )
+          ),
+          false
+        )
+      ) machine_approved_count,
+      count(*) filter(
+        where not coalesce(
+          current_perplexity_status='approved'
+          and (
+            current_perplexity_stage='perplexity_reaudit'
+            or (current_perplexity_stage='perplexity_initial' and current_agreement='agree')
+          ),
+          false
         )
       ) machine_pending_count
     from item_base
@@ -738,7 +769,8 @@ CREATE OR REPLACE FUNCTION public.admin_question_factory_block_tracker()
  SECURITY DEFINER
  SET search_path TO ''
 AS $function$
-declare result jsonb;
+declare
+  result jsonb;
 begin
   if not public.is_admin_session() then
     raise exception 'admin access required' using errcode='42501';
@@ -747,153 +779,216 @@ begin
   with block_base as (
     select
       b.batch_number,
-      coalesce(b.batch_code,'L'||lpad(b.batch_number::text,3,'0')) batch_code,
+      coalesce(b.batch_code,'L'||lpad(b.batch_number::text,3,'0')) as batch_code,
       b.automation_mode,
-      bl.id block_id,
-      coalesce(bl.block_code,coalesce(b.batch_code,'L'||lpad(b.batch_number::text,3,'0'))||'-B'||lpad(bl.block_number::text,2,'0')) block_code,
-      bl.block_number, bl.target_size, bl.status,
-      bl.chatgpt_review_status, bl.perplexity_review_status, bl.human_review_status,
-      bl.style_score, bl.reliability_score, bl.style_score_note, bl.style_score_updated_at,
-      (select count(*) from public.question_factory_items q where q.block_id=bl.id) question_count,
+      bl.id as block_id,
+      coalesce(
+        bl.block_code,
+        coalesce(b.batch_code,'L'||lpad(b.batch_number::text,3,'0'))
+          ||'-B'||lpad(bl.block_number::text,2,'0')
+      ) as block_code,
+      bl.block_number,
+      bl.target_size,
+      bl.status,
+      bl.chatgpt_review_status,
+      bl.perplexity_review_status,
+      bl.human_review_status,
+      bl.style_score,
+      bl.reliability_score,
+      bl.style_score_note,
+      bl.style_score_updated_at,
       coalesce((
         select q.exam_style
         from public.question_factory_items q
-        where q.block_id=bl.id and nullif(q.exam_style,'') is not null
-        group by q.exam_style order by count(*) desc,q.exam_style limit 1
-      ),b.exam_style) exam_style,
-
-      (select count(*)
-       from public.question_factory_items q
-       where q.block_id=bl.id
-         and exists(
-           select 1 from public.question_factory_reviews r
-           where r.item_id=q.id and r.item_version=q.version
-             and r.review_stage='blind_resolution' and r.reviewer='Perplexity'
-         )
-      ) blind_seen_count,
-
-      (select count(*)
-       from public.question_factory_items q
-       where q.block_id=bl.id
-         and exists(
-           select 1 from public.question_factory_reviews r
-           where r.item_id=q.id and r.item_version=q.version
-             and r.review_stage in ('perplexity_initial','perplexity_reaudit')
-             and r.reviewer='Perplexity'
-         )
-      ) perplexity_seen_count,
-
-      (select count(*)
-       from public.question_factory_items q
-       where q.block_id=bl.id
-         and (
-           select case
-             when r.review_stage='perplexity_initial' then r.chatgpt_agreement_status is not null
-             when r.review_stage='perplexity_reaudit' and r.review_status in ('needs_revision','rejected')
-               then r.chatgpt_agreement_status is not null
-             else true
-           end
-           from public.question_factory_reviews r
-           where r.item_id=q.id and r.item_version=q.version
-             and r.review_stage in ('perplexity_initial','perplexity_reaudit')
-             and r.reviewer='Perplexity'
-           order by case r.review_stage when 'perplexity_reaudit' then 2 else 1 end desc,
-                    r.created_at desc,r.id desc
-           limit 1
-         )
-      ) adjudication_satisfied_count,
-
-      (select count(*)
-       from public.question_factory_items q
-       where q.block_id=bl.id
-         and exists(
-           select 1
-           from public.question_factory_reviews r
-           where r.item_id=q.id and r.item_version=q.version
-             and r.review_stage in ('perplexity_initial','perplexity_reaudit')
-             and r.reviewer='Perplexity'
-             and r.review_status in ('needs_revision','rejected')
-             and r.chatgpt_agreement_status in ('agree','partially_agree')
-             and coalesce(r.raw_payload->'adjudication'->'approved_patch','{}'::jsonb) <> '{}'::jsonb
-         )
-      ) pending_correction_count,
-
-      (select count(*)
-       from public.question_factory_items q
-       where q.block_id=bl.id
-         and q.latest_review_stage='chatgpt_correction_review'
-      ) pending_reaudit_after_correction_count,
-
-      (select count(*)
-       from public.question_factory_items q
-       where q.block_id=bl.id
-         and exists(
-           select 1
-           from public.question_factory_reviews r
-           where r.item_id=q.id and r.item_version=q.version
-             and r.review_stage in ('perplexity_initial','perplexity_reaudit')
-             and r.reviewer='Perplexity'
-             and r.chatgpt_agreement_status='disagree'
-         )
-      ) pending_reaudit_after_disagreement_count,
-
-      (select q.latest_review_stage
-       from public.question_factory_items q
-       where q.block_id=bl.id and nullif(q.latest_review_stage,'') is not null
-       group by q.latest_review_stage
-       order by max(q.updated_at) desc limit 1) latest_review_stage
+        where q.block_id=bl.id
+          and nullif(q.exam_style,'') is not null
+        group by q.exam_style
+        order by count(*) desc,q.exam_style
+        limit 1
+      ),b.exam_style) as exam_style
     from public.question_factory_blocks bl
     join public.question_factory_batches b on b.id=bl.batch_id
   ),
+  item_state as (
+    select
+      q.id as item_id,
+      q.block_id,
+      q.version,
+      q.latest_review_stage,
+      pr.review_stage as perplexity_stage,
+      pr.review_status as perplexity_status,
+      pr.chatgpt_agreement_status as agreement_status,
+      coalesce(pr.raw_payload->'adjudication'->'approved_patch','{}'::jsonb) as approved_patch,
+      exists(
+        select 1
+        from public.question_factory_reviews r
+        where r.item_id=q.id
+          and r.item_version=q.version
+          and r.review_stage='blind_resolution'
+          and r.reviewer='Perplexity'
+      ) as has_blind
+    from public.question_factory_items q
+    left join lateral (
+      select r.*
+      from public.question_factory_reviews r
+      where r.item_id=q.id
+        and r.item_version=q.version
+        and r.review_stage in ('perplexity_initial','perplexity_reaudit')
+        and r.reviewer='Perplexity'
+      order by
+        case r.review_stage when 'perplexity_reaudit' then 2 else 1 end desc,
+        r.created_at desc,
+        r.id desc
+      limit 1
+    ) pr on true
+  ),
+  item_stats as (
+    select
+      block_id,
+      count(*) as question_count,
+      count(*) filter (where has_blind) as blind_seen_count,
+      count(*) filter (where perplexity_stage is not null) as perplexity_seen_count,
+      count(*) filter (
+        where (
+          perplexity_stage='perplexity_initial'
+          and agreement_status is null
+        ) or (
+          perplexity_stage='perplexity_reaudit'
+          and perplexity_status in ('needs_revision','rejected')
+          and agreement_status is null
+        )
+      ) as adjudication_pending_count,
+      count(*) filter (
+        where (
+          perplexity_stage='perplexity_initial'
+          and agreement_status is not null
+        ) or (
+          perplexity_stage='perplexity_reaudit'
+          and perplexity_status in ('needs_revision','rejected')
+          and agreement_status is not null
+        )
+      ) as adjudicated_count,
+      count(*) filter (where agreement_status='disagree') as disagreement_count,
+      count(*) filter (
+        where agreement_status in ('agree','partially_agree')
+          and approved_patch <> '{}'::jsonb
+      ) as correction_pending_count,
+      count(*) filter (where latest_review_stage='chatgpt_correction_review') as corrected_count,
+      count(*) filter (where perplexity_stage='perplexity_reaudit') as valid_reaudit_count,
+      count(*) filter (
+        where latest_review_stage='chatgpt_correction_review'
+          and perplexity_stage is distinct from 'perplexity_reaudit'
+      ) as corrected_waiting_reaudit_count,
+      count(*) filter (
+        where (
+          perplexity_stage='perplexity_initial'
+          and perplexity_status='approved'
+          and agreement_status='agree'
+          and approved_patch='{}'::jsonb
+        ) or (
+          perplexity_stage='perplexity_reaudit'
+          and perplexity_status='approved'
+        )
+      ) as machine_approved_count,
+      max(latest_review_stage) filter (where latest_review_stage is not null) as any_latest_review_stage
+    from item_state
+    group by block_id
+  ),
   enriched as (
-    select bb.*,
-      p.style_score profile_style_score,
-      p.style_confidence_score profile_confidence_score,
+    select
+      bb.*,
+      coalesce(s.question_count,0) as question_count,
+      coalesce(s.blind_seen_count,0) as blind_seen_count,
+      coalesce(s.perplexity_seen_count,0) as perplexity_seen_count,
+      coalesce(s.adjudication_pending_count,0) as adjudication_pending_count,
+      coalesce(s.adjudicated_count,0) as adjudicated_count,
+      coalesce(s.disagreement_count,0) as disagreement_count,
+      coalesce(s.correction_pending_count,0) as correction_pending_count,
+      coalesce(s.corrected_count,0) as corrected_count,
+      coalesce(s.valid_reaudit_count,0) as valid_reaudit_count,
+      coalesce(s.corrected_waiting_reaudit_count,0) as corrected_waiting_reaudit_count,
+      coalesce(s.machine_approved_count,0) as machine_approved_count,
+      s.any_latest_review_stage as latest_review_stage,
+      p.style_score as profile_style_score,
+      p.style_confidence_score as profile_confidence_score,
       case
-        when bb.question_count < coalesce(bb.target_size,200) then 'generation'
-        when bb.chatgpt_review_status is null or bb.chatgpt_review_status='needs_revision' then 'chatgpt_initial'
-        when bb.perplexity_seen_count < coalesce(bb.target_size,200) then 'perplexity_initial'
-        when bb.adjudication_satisfied_count < coalesce(bb.target_size,200) then 'chatgpt_adjudication'
-        when bb.pending_correction_count > 0 then 'chatgpt_correction'
-        when bb.pending_reaudit_after_correction_count > 0
-          or bb.pending_reaudit_after_disagreement_count > 0 then 'perplexity_reaudit'
-        when bb.human_review_status is distinct from 'approved' then 'human_review'
+        when coalesce(s.question_count,0) < coalesce(bb.target_size,200)
+          then 'generation'
+        when bb.chatgpt_review_status is null
+          or bb.chatgpt_review_status='needs_revision'
+          then 'chatgpt_initial'
+        when coalesce(s.perplexity_seen_count,0) < coalesce(bb.target_size,200)
+          then 'perplexity_initial'
+        when coalesce(s.adjudication_pending_count,0) > 0
+          then 'chatgpt_adjudication'
+        when coalesce(s.correction_pending_count,0) > 0
+          then 'chatgpt_correction'
+        when coalesce(s.corrected_waiting_reaudit_count,0) > 0
+          then 'perplexity_reaudit'
+        when coalesce(s.disagreement_count,0) > 0
+          then 'perplexity_reaudit'
+        when coalesce(s.machine_approved_count,0) < coalesce(bb.target_size,200)
+          then 'perplexity_reaudit'
+        when bb.human_review_status is distinct from 'approved'
+          then 'human_review'
         else 'block_complete'
-      end next_stage
+      end as next_stage
     from block_base bb
+    left join item_stats s on s.block_id=bb.block_id
     left join public.question_exam_style_profiles p on p.exam_style=bb.exam_style
   )
-  select coalesce(jsonb_agg(jsonb_build_object(
-    'batch_number',batch_number,'batch_code',batch_code,'automation_mode',automation_mode,
-    'block_number',block_number,'block_code',block_code,'question_count',question_count,
-    'target_size',target_size,'exam_style',exam_style,'status',status,
-    'chatgpt_review_status',chatgpt_review_status,'perplexity_review_status',perplexity_review_status,
-    'human_review_status',human_review_status,
-    'blind_seen_count',blind_seen_count,'perplexity_seen_count',perplexity_seen_count,
-    'adjudication_satisfied_count',adjudication_satisfied_count,
-    'pending_correction_count',pending_correction_count,
-    'pending_reaudit_count',pending_reaudit_after_correction_count+pending_reaudit_after_disagreement_count,
-    'latest_review_stage',latest_review_stage,
-    'phase',case
-      when next_stage='generation' then 'Geração'
-      when next_stage='chatgpt_initial' then 'Revisão ChatGPT'
-      when next_stage='perplexity_initial' then 'Auditoria Perplexity'
-      when next_stage in ('chatgpt_adjudication','chatgpt_correction') then 'Correção ChatGPT'
-      when next_stage='perplexity_reaudit' then 'Reauditoria Perplexity'
-      when next_stage='human_review' then 'Aprovação humana'
-      when next_stage='block_complete' then 'No lote'
-      else 'Fluxo'
-    end,
-    'next_stage',next_stage,
-    'next_provider',case
-      when next_stage in ('perplexity_initial','perplexity_reaudit') then 'perplexity'
-      when next_stage in ('generation','chatgpt_initial','chatgpt_adjudication','chatgpt_correction') then 'chatgpt'
-      else null
-    end,
-    'style_score',coalesce(style_score,profile_style_score),
-    'reliability_score',coalesce(reliability_score,profile_confidence_score),
-    'style_score_note',style_score_note,'style_score_updated_at',style_score_updated_at
-  ) order by batch_number,block_number),'[]'::jsonb)
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'batch_number',batch_number,
+        'batch_code',batch_code,
+        'automation_mode',automation_mode,
+        'block_number',block_number,
+        'block_code',block_code,
+        'question_count',question_count,
+        'target_size',target_size,
+        'exam_style',exam_style,
+        'status',status,
+        'chatgpt_review_status',chatgpt_review_status,
+        'perplexity_review_status',perplexity_review_status,
+        'human_review_status',human_review_status,
+        'blind_seen_count',blind_seen_count,
+        'perplexity_seen_count',perplexity_seen_count,
+        'adjudication_pending_count',adjudication_pending_count,
+        'adjudicated_count',adjudicated_count,
+        'adjudication_disagree_count',disagreement_count,
+        'correction_pending_count',correction_pending_count,
+        'corrected_count',corrected_count,
+        'valid_reaudit_count',valid_reaudit_count,
+        'pending_reaudit_count',corrected_waiting_reaudit_count + disagreement_count,
+        'machine_approved_count',machine_approved_count,
+        'latest_review_stage',latest_review_stage,
+        'phase',case
+          when next_stage='generation' then 'Geração'
+          when next_stage='chatgpt_initial' then 'Revisão ChatGPT'
+          when next_stage='perplexity_initial' then 'Auditoria Perplexity'
+          when next_stage='chatgpt_adjudication' then 'Adjudicação ChatGPT'
+          when next_stage='chatgpt_correction' then 'Correção ChatGPT'
+          when next_stage='perplexity_reaudit' then 'Reauditoria Perplexity'
+          when next_stage='human_review' then 'Aprovação humana'
+          when next_stage='block_complete' then 'No lote'
+          else 'Fluxo'
+        end,
+        'next_stage',next_stage,
+        'next_provider',case
+          when next_stage in ('perplexity_initial','perplexity_reaudit') then 'perplexity'
+          when next_stage in ('generation','chatgpt_initial','chatgpt_adjudication','chatgpt_correction') then 'chatgpt'
+          else null
+        end,
+        'style_score',coalesce(style_score,profile_style_score),
+        'reliability_score',coalesce(reliability_score,profile_confidence_score),
+        'style_score_note',style_score_note,
+        'style_score_updated_at',style_score_updated_at
+      )
+      order by batch_number,block_number
+    ),
+    '[]'::jsonb
+  )
   into result
   from enriched;
 
