@@ -1,7 +1,7 @@
 /* Contrato único da fábrica. Não inserir resultados históricos como identidade editorial. */
 (function (root) {
   'use strict';
-  const VERSION = '2.7';
+  const VERSION = '2.8';
   const rubric = { scientific:25, answer_key:20, answer_source:15, distractors:10, explanations:10, style:10, writing:5, difficulty:5 };
   const editable = ['enunciado','alternativa_a','alternativa_b','alternativa_c','alternativa_d','gabarito','explicacao_a','explicacao_b','explicacao_c','explicacao_d','mensagem_chave','area','tema','subtema','dificuldade','fonte_instituicao','fonte_documento','fonte_ano','fonte_url','answer_source_institution','answer_source_document','answer_source_year','answer_source_url','answer_source_section','answer_source_note'];
   const stringify = value => JSON.stringify(value, null, 2);
@@ -47,7 +47,9 @@ TELEMETRIA OBRIGATÓRIA POR ETAPA: toda saída JSON deve incluir um objeto top-l
 stage_metrics = {
   exam_style: banca atual,
   batch_number: lote atual ou null,
+  batch_code: ID humano do lote no formato L001 quando houver lote,
   block_number: bloco atual ou null,
+  block_code: ID humano do bloco no formato L001-B01 quando houver bloco,
   stage: nome exato da etapa,
   provider: ChatGPT | Perplexity | Gemini | Human,
   run_label: identificador curto opcional da rodada/parte,
@@ -89,7 +91,18 @@ Se prompt_calibration.status == "CALIBRATED_FROZEN" OU prompt_calibration.identi
 Somente perfis ainda não aprovados devem registrar edição, URL oficial, IDs/páginas, n amostrado, formatos e limites da amostra antes de declarar fidelidade. Preferir >=20 itens e 2–3 edições quando disponíveis; não inventar edições inexistentes.`;
   }
   function context(item, ctx={}) {
-    return { schema_version:VERSION, batch_number:ctx.batch_number ?? null, block_number:ctx.block_number ?? null, exam_style:item?.exam_style || null };
+    const batchNumber = ctx.batch_number ?? null;
+    const blockNumber = ctx.block_number ?? null;
+    const batchCode = ctx.batch_code || (batchNumber == null ? null : 'L'+String(Number(batchNumber)).padStart(3,'0'));
+    const blockCode = ctx.block_code || (batchCode && blockNumber != null ? batchCode+'-B'+String(Number(blockNumber)).padStart(2,'0') : null);
+    return {
+      schema_version:VERSION,
+      batch_number:batchNumber,
+      batch_code:batchCode,
+      block_number:blockNumber,
+      block_code:blockCode,
+      exam_style:item?.exam_style || null
+    };
   }
   function generation(item={},ctx={}) {
     const sample = Object.fromEntries(editable.map(k=>[k,'']));
