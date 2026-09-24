@@ -2671,6 +2671,7 @@
       return;
     }
     renderQuestionFactoryBlockTracker(data || []);
+    if (state.questionFactory) renderQuestionFactory(state.questionFactory);
   }
 
   function renderQuestionFactoryStyles(styles) {
