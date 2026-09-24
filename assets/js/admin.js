@@ -2642,6 +2642,162 @@
     return map[stage] || { label: stage || "Pendente", provider: null };
   }
 
+
+  function enhanceQuestionFactoryPerplexityAutomation(root) {
+    if (!root) return;
+    root.querySelectorAll(".admin-qf-tracker-row[data-qf-auto-stage]").forEach(row => {
+      const stage = String(row.dataset.qfAutoStage || "");
+      if (!["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(stage)) return;
+      if (row.querySelector(".admin-qf-auto-ranges")) return;
+
+      const batch = Number(row.dataset.qfAutoBatch);
+      const block = Number(row.dataset.qfAutoBlock);
+      if (!Number.isInteger(batch) || !Number.isInteger(block)) return;
+
+      const host = row.querySelector(".admin-qf-tracker-next");
+      if (!host) return;
+
+      const wrap = document.createElement("div");
+      wrap.className = "admin-qf-auto-ranges";
+
+      const label = document.createElement("small");
+      label.className = "admin-qf-auto-label";
+      label.textContent = "Automático · persiste questão por questão";
+      wrap.appendChild(label);
+
+      const buttons = document.createElement("div");
+      buttons.className = "admin-qf-auto-range-buttons";
+      [[1,50],[51,100],[101,150],[151,200]].forEach(range => {
+        const button = document.createElement("button");
+        button.className = "button secondary admin-qf-auto-range";
+        button.type = "button";
+        button.dataset.qfPerplexityRange = "1";
+        button.dataset.qfAutoBatch = String(batch);
+        button.dataset.qfAutoBlock = String(block);
+        button.dataset.qfAutoStart = String(range[0]);
+        button.dataset.qfAutoEnd = String(range[1]);
+        button.dataset.qfAutoStage = stage === "perplexity_reaudit" ? "perplexity_reaudit" : "perplexity_initial";
+        button.textContent = "Q" + String(range[0]).padStart(3,"0") + "–Q" + String(range[1]).padStart(3,"0");
+        buttons.appendChild(button);
+      });
+
+      wrap.appendChild(buttons);
+      host.appendChild(wrap);
+    });
+  }
+
+  async function runQuestionFactoryPerplexityRange(button) {
+    if (!button || button.dataset.qfAutoRunning === "1") return;
+
+    const batch = Number(button.dataset.qfAutoBatch);
+    const block = Number(button.dataset.qfAutoBlock);
+    const start = Number(button.dataset.qfAutoStart);
+    const end = Number(button.dataset.qfAutoEnd);
+    const reviewStage = String(button.dataset.qfAutoStage || "perplexity_initial");
+    const expected = end - start + 1;
+    const originalText = button.textContent || ("Q" + start + "–Q" + end);
+
+    const edgeErrorMessage = async error => {
+      try {
+        const response = error && error.context;
+        if (response && typeof response.clone === "function") {
+          const payload = await response.clone().json();
+          return payload && (payload.message || payload.error) || error.message || "Falha na Edge Function.";
+        }
+      } catch (_) {}
+      return error && error.message || "Falha na Edge Function.";
+    };
+
+    button.dataset.qfAutoRunning = "1";
+    button.disabled = true;
+    button.textContent = "Preparando...";
+
+    try {
+      let completed = false;
+      let lastAuditPersisted = -1;
+      let sameAuditCount = 0;
+      const maxIterations = expected * 3 + 10;
+
+      for (let attempt = 0; attempt < maxIterations; attempt += 1) {
+        const result = await sb.functions.invoke("question-factory-perplexity-audit", {
+          body: {
+            batch_number: batch,
+            block_number: block,
+            start: start,
+            end: end,
+            review_stage: reviewStage
+          }
+        });
+
+        if (result.error) throw new Error(await edgeErrorMessage(result.error));
+        const data = result.data;
+        if (!data || data.ok !== true) {
+          throw new Error(data && (data.message || data.error) || "A auditoria automática falhou.");
+        }
+
+        if (data.phase === "blind_resolution_persisted") {
+          const blindDone = Number(data.blind_coverage && data.blind_coverage.persisted || 0);
+          button.textContent = "Cega " + blindDone + "/" + expected;
+          sameAuditCount = 0;
+          continue;
+        }
+
+        const coverage = data.coverage;
+        if (coverage) {
+          const persisted = Number(coverage.persisted || 0);
+          const pending = Array.isArray(coverage.pending_ids)
+            ? coverage.pending_ids.length
+            : Math.max(0, expected - persisted);
+
+          button.textContent = coverage.complete
+            ? "Q" + String(start).padStart(3,"0") + "–Q" + String(end).padStart(3,"0") + " ✓"
+            : persisted + "/" + expected + " · " + pending + " pend.";
+
+          if (coverage.complete) {
+            completed = true;
+            break;
+          }
+
+          if (persisted === lastAuditPersisted) sameAuditCount += 1;
+          else sameAuditCount = 0;
+          lastAuditPersisted = persisted;
+
+          if (sameAuditCount > 4) {
+            throw new Error("A cobertura não avançou após várias tentativas. O fluxo foi interrompido para evitar chamadas repetidas.");
+          }
+        }
+      }
+
+      if (!completed) {
+        throw new Error("A faixa não chegou a 100% de cobertura dentro do limite seguro de tentativas.");
+      }
+
+      button.dataset.qfAutoComplete = "1";
+      button.title = "Cobertura confirmada no Supabase para a versão atual.";
+
+      await Promise.all([
+        loadQuestionFactory(),
+        loadQuestionFactoryStyles(),
+        loadQuestionFactoryBlockTracker(),
+        loadQuestionFactoryQuality()
+      ]);
+    } catch (error) {
+      console.error("Falha na auditoria automática Perplexity:", error);
+      button.textContent = "Erro · retomar";
+      button.title = error && error.message || String(error);
+      window.alert(
+        "Auditoria automática interrompida. Nada foi marcado como concluído sem persistência.\n\n"
+        + (error && error.message || String(error))
+      );
+    } finally {
+      button.dataset.qfAutoRunning = "0";
+      button.disabled = false;
+      if (!button.dataset.qfAutoComplete && button.textContent === "Preparando...") {
+        button.textContent = originalText;
+      }
+    }
+  }
+
   function defaultQuestionFactoryWorkspaceUrl() {
     try {
       return window.location.href.split("#")[0].split("?")[0];
@@ -2745,7 +2901,7 @@
       const provider = block.next_provider || meta.provider;
 
       return `
-        <article class="admin-qf-tracker-row">
+        <article class="admin-qf-tracker-row" data-qf-auto-batch="${Number(block.batch_number||0)}" data-qf-auto-block="${Number(block.block_number||0)}" data-qf-auto-stage="${esc(block.next_stage || "")}">
           <div class="admin-qf-tracker-main">
             <strong>${esc(block.block_code || ('L'+String(Number(block.batch_number||0)).padStart(3,'0')+'-B'+String(Number(block.block_number||0)).padStart(2,'0')))}</strong>
             <small>${esc(block.batch_code || ('L'+String(Number(block.batch_number||0)).padStart(3,'0')))} · Bloco ${Number(block.block_number||0)} · ${Number(block.question_count||0)}/${Number(block.target_size||200)} questões</small>
@@ -2767,6 +2923,7 @@
         </article>
       `;
     }).join("");
+    enhanceQuestionFactoryPerplexityAutomation(wrap);
   }
 
   async function loadQuestionFactoryBlockTracker() {
@@ -3705,6 +3862,12 @@
 
     ["admin-qf-style-dashboard","admin-qf-style-manual","admin-qf-block-tracker"].forEach(containerId => {
       $(containerId)?.addEventListener("click", async event => {
+        const autoRange = event.target.closest("[data-qf-perplexity-range]");
+        if (autoRange) {
+          await runQuestionFactoryPerplexityRange(autoRange);
+          return;
+        }
+
         const copy = event.target.closest("[data-inline-prompt].admin-qf-copy-inline");
         if (copy) {
           const target = $(copy.dataset.inlinePrompt);
