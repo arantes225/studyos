@@ -4439,3 +4439,55 @@ body.admin-unlocked #admin-app {
 .admin-qf-final-review.active>span{
   font-weight:900;
 }
+
+
+/* Fábrica — qualidade integrada e ações essenciais por bloco */
+.admin-qf-block-quality-spark{
+  height:58px;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  align-items:end;
+  gap:7px;
+  padding:8px 9px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--surface-2);
+}
+.admin-qf-block-quality-spark span{
+  display:block;
+  min-height:3px;
+  border-radius:6px 6px 2px 2px;
+  background:var(--accent);
+  opacity:.85;
+}
+.admin-qf-view-block-wide{
+  width:100%;
+  min-height:36px!important;
+  font-size:9px!important;
+  font-weight:850;
+}
+.admin-qf-open-batch-wide{
+  min-width:190px;
+  min-height:40px!important;
+  font-size:10px!important;
+  font-weight:850;
+}
+.admin-qf-batch-actions-clean{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.admin-qf-batch-actions-clean .button{
+  min-height:38px;
+}
+@media(max-width:700px){
+  .admin-qf-open-batch-wide{
+    width:100%;
+    min-width:0;
+  }
+  .admin-qf-batch-actions-clean{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+}
