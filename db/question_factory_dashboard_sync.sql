@@ -132,3 +132,91 @@ begin
   return result;
 end;
 $function$;
+
+
+-- Every calibration import also timestamps the board profile so the admin dashboard
+-- can display the current round/decision without a separate manual update.
+create or replace function public.admin_import_question_factory_calibration(p_payload jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+declare
+  total numeric:=0;
+  k text;
+  cap numeric;
+  n numeric;
+  evidence jsonb:=p_payload->'primary_style_evidence';
+  score numeric:=(p_payload->>'FINAL_PROMPT_SCORE')::numeric;
+begin
+  if not public.is_admin_session() then
+    raise exception 'admin access required' using errcode='42501';
+  end if;
+
+  if coalesce(p_payload->>'schema_version','') not in ('2.0','2.3')
+     or p_payload->>'review_stage' is distinct from 'prompt_calibration' then
+    raise exception 'Contrato/etapa inválido';
+  end if;
+
+  if not exists(
+    select 1
+    from public.question_exam_style_profiles
+    where exam_style=p_payload->>'exam_style'
+  ) then
+    raise exception 'Banca inválida';
+  end if;
+
+  if score is not null then
+    for k,cap in
+      select key,value::numeric
+      from jsonb_each_text('{"fidelity":40,"distractors":20,"difficulty":15,"diversity":15,"clarity":10}')
+    loop
+      if jsonb_typeof(p_payload->'prompt_component_scores'->k) is distinct from 'number' then
+        raise exception 'Componente de calibração ausente: %',k;
+      end if;
+      n:=(p_payload->'prompt_component_scores'->>k)::numeric;
+      if n<0 or n>cap then raise exception 'Componente fora do teto'; end if;
+      total:=total+n;
+    end loop;
+
+    if total<>score then raise exception 'Soma da calibração incorreta'; end if;
+    if jsonb_typeof(evidence) is distinct from 'array' or evidence='[]'::jsonb then
+      raise exception 'Corpus documentado obrigatório para atribuir nota';
+    end if;
+    if exists(
+      select 1 from jsonb_array_elements(evidence) e
+      where coalesce(e->>'url','') !~ '^https?://'
+         or nullif(e->>'edition','') is null
+         or nullif(e->>'sampled_items','') is null
+         or nullif(e->>'observed_features','') is null
+    ) then
+      raise exception 'Corpus exige URL, edição, itens amostrados e características observadas';
+    end if;
+    if score>=84 and (
+      coalesce((p_payload->>'sample_size')::int,0)<15
+      or (p_payload->>'hard_fail_count')::int is distinct from 0
+      or p_payload->>'decision' is distinct from 'PROMPT_APPROVED'
+    ) then
+      raise exception 'Avanço exige pelo menos 15 itens brutos inéditos, zero hard fails e PROMPT_APPROVED';
+    end if;
+  end if;
+
+  update public.question_exam_style_profiles
+  set final_prompt_score=score,
+      prompt_calibration=p_payload,
+      primary_style_evidence=coalesce(evidence,'[]'),
+      calibrated_at=now(),
+      updated_at=now()
+  where exam_style=p_payload->>'exam_style';
+
+  return jsonb_build_object(
+    'updated',true,
+    'exam_style',p_payload->>'exam_style',
+    'FINAL_PROMPT_SCORE',score,
+    'decision',p_payload->>'decision',
+    'calibrated_at',now(),
+    'calibration_threshold',84
+  );
+end
+$function$;
