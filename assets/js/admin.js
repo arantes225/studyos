@@ -2532,6 +2532,12 @@
         const calibrationStatus = item.final_prompt_score == null
           ? "Calibração do prompt pendente"
           : (calibrated ? "Prompt calibrado · " : "Prompt a revisar · ") + item.final_prompt_score + "/100";
+        const productionReady = (
+          String(calibration.dashboard_status || "").toLowerCase() === "ready_for_production"
+          || String(calibration.status || "").toUpperCase() === "CALIBRATED_FROZEN"
+          || (calibrated && decision === "PROMPT_APPROVED"
+            && String(calibration.identity_status || calibration.profile_status || "").toUpperCase() === "FROZEN")
+        );
         const calibrationMeta = [
           roundLabel ? "Rodada " + roundLabel : "",
           decision || "",
@@ -2585,6 +2591,7 @@
                   <strong>${esc(confidenceValue)}</strong>
                 </span>
                 <span class="admin-qf-style-score-status">${esc(calibrationStatus)}</span>
+                ${productionReady ? `<span class="admin-qf-style-score-status admin-qf-production-ready">Pronto para produção</span>` : ""}
                 ${calibrationMeta ? `<span class="admin-qf-style-score-status">${esc(calibrationMeta)}</span>` : ""}
                 ${historicalBest ? `<span class="admin-qf-style-score-status">${esc(historicalBest)}</span>` : ""}
                 ${latestStageSummary ? `<span class="admin-qf-style-score-status">Última etapa · ${esc(latestStageSummary)}</span>` : ""}
