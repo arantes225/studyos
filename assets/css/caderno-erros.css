@@ -1577,3 +1577,13 @@
   background:color-mix(in srgb,var(--danger) 86%,#000)!important;
   border-color:color-mix(in srgb,var(--danger) 86%,#000)!important;
 }
+
+
+.error-image-load {
+  margin-top: 10px;
+  align-self: flex-start;
+}
+
+.error-detail-block .error-image-load + .error-image {
+  margin-top: 10px;
+}
