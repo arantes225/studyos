@@ -5,6 +5,7 @@
 
   if (standalone) {
     document.documentElement.classList.add("pwa-standalone");
+    document.documentElement.dataset.pwa = "standalone";
   }
 
   if (!("serviceWorker" in navigator)) return;
