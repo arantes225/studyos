@@ -2083,6 +2083,7 @@
       const batchCode = batch.batch_code || ('L'+String(Number(batch.batch_number || 0)).padStart(3,'0'));
       const blocks = Array.isArray(batch.blocks) ? batch.blocks : [];
       const progress = Math.min(100, (Number(batch.question_count || 0) / 1000) * 100);
+      const lotInFinalReview = Number(batch.approved_blocks || 0) === 5 || ["reviewing","ready","published"].includes(String(batch.status || ""));
       const blockCards = [1,2,3,4,5].map(n => {
         const block = blocks.find(x => Number(x.block_number) === n);
         const count = Number(block?.question_count || 0);
@@ -2098,6 +2099,7 @@
         const initialQ = qMetric?.initial_quality;
         const postQ = qMetric?.post_correction_quality;
         const finalQ = qMetric?.final_quality;
+        const blockAction = questionFactoryBlockAction(batch.batch_number, n);
 
         return `
           <article class="admin-qf-block-mini admin-qf-block-workflow" data-block-status="${esc(status)}">
@@ -2123,6 +2125,13 @@
               ${qfReviewPill("Perplexity", block?.perplexity_review_status)}
               ${human ? qfReviewPill("Você", human) : '<span class="admin-qf-review-pill">Você: aguardando</span>'}
             </div>
+
+            ${!lotInFinalReview && blockAction.provider ? `
+              <div class="admin-qf-block-ai-action">
+                <small>${esc(blockAction.phase)}</small>
+                <button class="button primary" type="button" data-qf-block-ai="${Number(batch.batch_number)}:${n}">${esc("Copiar + abrir " + blockAction.providerLabel)}</button>
+              </div>
+            ` : ""}
 
             <div class="admin-qf-block-mini-actions">
               <button class="button secondary" type="button" data-qf-view-block="${Number(batch.batch_number)}:${n}">${needs || rejected ? "Ver pendências" : "Ver bloco"}</button>
@@ -2162,15 +2171,15 @@
             </div>
             <div class="admin-qf-batch-head-actions">
               <span class="admin-factory-badge">${esc(qfStatusLabel(batch.status))}</span>
-              ${batch.status !== "published" ? `<button class="button secondary admin-qf-phase-prompt" type="button" data-qf-copy-phase="${Number(batch.batch_number)}">Prompt da fase</button>` : ""}
-              ${batch.status !== "published" ? `<button class="button primary" type="button" data-qf-continue-batch="${Number(batch.batch_number)}">${esc(questionFactoryNextAction(batch.batch_number).label)}</button>` : ""}
+              ${!lotInFinalReview ? `<button class="button secondary admin-qf-phase-prompt" type="button" data-qf-copy-phase="${Number(batch.batch_number)}">Prompt da fase</button>` : ""}
+              ${!lotInFinalReview ? `<button class="button primary" type="button" data-qf-continue-batch="${Number(batch.batch_number)}">${esc(questionFactoryNextAction(batch.batch_number).label)}</button>` : ""}
             </div>
           </div>
           <div class="admin-qf-batch-progress" aria-hidden="true"><span style="width:${progress.toFixed(1)}%"></span></div>
           <div class="admin-qf-block-grid">${blockCards}</div>
-          <div class="admin-qf-final-review">
-            <span>Revisão final</span>
-            <strong>ChatGPT + Perplexity</strong>
+          <div class="admin-qf-final-review ${lotInFinalReview ? "active" : ""}">
+            <span>${lotInFinalReview ? "Revisão final das 1.000" : "Revisão final"}</span>
+            <strong>${lotInFinalReview ? "Agora o trabalho passa do bloco para o lote completo" : "ChatGPT + Perplexity"}</strong>
             <div>
               ${qfReviewPill("ChatGPT", batch.final_review_chatgpt_status)}
               ${qfReviewPill("Perplexity", batch.final_review_perplexity_status)}
@@ -2203,8 +2212,8 @@
           </details>
 
           <div class="admin-qf-batch-actions">
-            ${batch.status !== "published" ? `<button class="button secondary admin-qf-phase-prompt" type="button" data-qf-copy-phase="${Number(batch.batch_number)}">Prompt da fase</button>` : ""}
-            ${batch.status !== "published" ? `<button class="button primary" type="button" data-qf-continue-batch="${Number(batch.batch_number)}">${esc(questionFactoryNextAction(batch.batch_number).label)}</button>` : ""}
+            ${!lotInFinalReview ? `<button class="button secondary admin-qf-phase-prompt" type="button" data-qf-copy-phase="${Number(batch.batch_number)}">Prompt da fase</button>` : ""}
+            ${!lotInFinalReview ? `<button class="button primary" type="button" data-qf-continue-batch="${Number(batch.batch_number)}">${esc(questionFactoryNextAction(batch.batch_number).label)}</button>` : ""}
             <button class="button secondary admin-qf-open-batch" type="button" data-qf-batch="${Number(batch.batch_number)}">Ver questões</button>
             <button class="button secondary" type="button" data-qf-export="${Number(batch.batch_number)}:0:audit">Exportar lote completo</button>
             ${batch.final_review_chatgpt_status === "approved" && batch.final_review_perplexity_status === "approved" && batch.final_human_review_status !== "approved" ? `<button class="button primary" type="button" data-qf-final-approve="${Number(batch.batch_number)}">Aprovar lote final</button>` : ""}
@@ -3101,6 +3110,63 @@
     ]);
   }
 
+  function questionFactoryBlockAction(batchNumber, blockNumber) {
+    const batch = Number(batchNumber);
+    const block = Number(blockNumber);
+    const next = (state.qfBlockTracker || []).find(row =>
+      Number(row.batch_number) === batch && Number(row.block_number) === block
+    ) || null;
+
+    if (!next) {
+      return { next:null, provider:null, label:"Carregando fase...", phase:"" };
+    }
+
+    if (next.next_stage === "human_review") {
+      return { next, provider:null, label:"Aguardando sua aprovação", phase:"Aprovação humana" };
+    }
+
+    if (next.next_stage === "block_complete") {
+      return { next, provider:null, label:"Bloco concluído", phase:"Concluído" };
+    }
+
+    const provider = next.next_provider || "chatgpt";
+    const providerLabel = provider === "perplexity" ? "Perplexity" : provider === "gemini" ? "Gemini" : "ChatGPT";
+    const phaseLabels = {
+      generation:"Gerar 200 questões",
+      chatgpt_initial:"Revisão adversarial + autocorreção",
+      blind_resolution:"Resolução cega",
+      perplexity_initial:"Auditoria",
+      chatgpt_adjudication:"Julgar parecer",
+      chatgpt_correction:"Corrigir consenso",
+      perplexity_reaudit:"Reauditoria"
+    };
+    const phase = phaseLabels[next.next_stage] || next.phase || "Próxima fase";
+    return { next, provider, providerLabel, phase, label:`${phase} · abrir ${providerLabel}` };
+  }
+
+  async function runQuestionFactoryBlockAction(batchNumber, blockNumber, button) {
+    const action = questionFactoryBlockAction(batchNumber, blockNumber);
+    const next = action.next;
+
+    if (!next) {
+      window.alert("A fase deste bloco ainda não foi carregada. Atualize a página e tente novamente.");
+      return;
+    }
+
+    if (!action.provider) {
+      window.alert(action.label);
+      return;
+    }
+
+    const prompt = questionFactoryBlockPrompt(next);
+    if (!prompt) {
+      window.alert("Não foi possível montar o prompt deste bloco.");
+      return;
+    }
+
+    await copyAndOpenAI(prompt, action.provider, button);
+  }
+
   function questionFactoryNextAction(batchNumber) {
     const batch = Number(batchNumber);
     const rows = (state.qfBlockTracker || [])
@@ -3532,6 +3598,13 @@
     $("admin-qf-import-stage-metrics")?.addEventListener("click", () => openReviewImportDialog(null, null, "metrics"));
     $("admin-qf-start-lot")?.addEventListener("click", startQuestionFactoryLot);
     $("admin-qf-batches")?.addEventListener("click", async event => {
+      const blockAiButton = event.target.closest("[data-qf-block-ai]");
+      if (blockAiButton) {
+        const [batch, block] = blockAiButton.dataset.qfBlockAi.split(":");
+        await runQuestionFactoryBlockAction(batch, block, blockAiButton);
+        return;
+      }
+
       const phasePromptButton = event.target.closest("[data-qf-copy-phase]");
       if (phasePromptButton) {
         await copyQuestionFactoryPhasePrompt(phasePromptButton.dataset.qfCopyPhase, phasePromptButton);
