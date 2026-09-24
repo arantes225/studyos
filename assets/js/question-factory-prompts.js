@@ -377,13 +377,27 @@ Após as três aprovações da versão atual, aguardar aprovação humana final 
   function perplexityCycle(item={},ctx={},isReaudit=false) {
     if (isReaudit) {
       return `FLUXO OPERACIONAL ÚNICO — PERPLEXITY · CONFIRMAÇÃO APÓS CORREÇÕES
-Execute integralmente a etapa abaixo no MESMO bloco. Não pule para aprovação humana enquanto existir qualquer needs_revision/rejected.
+Este é UM envio operacional. Para cada versão corrigida, faça primeiro a nova resolução cega e depois a reauditoria, no MESMO bloco.
+
+SUBETAPA 5A — NOVA RESOLUÇÃO CEGA DA VERSÃO CORRIGIDA
+1. Não consulte gabarito, explicações, fontes da resposta ou parecer anterior.
+2. Resolva a versão atual corrigida de forma independente.
+3. Persista como blind_resolution e confirme a gravação.
+
+${segment(item,'blind_resolution',ctx)}
+
+SUBETAPA 5B — REAUDITORIA PERPLEXITY
+Somente depois da nova resolução cega estar persistida:
+1. Reabra a MESMA versão atual.
+2. Confira a correção contra ciência, fontes, estilo, single-best-answer, Pulo do Gato e explicações A-D.
+3. Persista como perplexity_reaudit.
+4. Não altere diretamente a questão.
 
 ${segment(item,'perplexity_reaudit',ctx)}
 
 REGRA DE SAÍDA:
-- Se TODAS as versões atuais auditadas estiverem aprovadas e o bloco estiver sem pendências, encerrar esta rodada e liberar a aprovação humana.
-- Se existir qualquer achado, persistir o parecer e encerrar a rodada com retorno obrigatório ao ChatGPT para julgamento/correção. Não aprovar o bloco.`;
+- Se TODAS as versões atuais estiverem aprovadas e o bloco estiver sem pendências, liberar a aprovação humana.
+- Se existir qualquer achado, persistir o parecer e retornar obrigatoriamente ao ChatGPT · julgar + corrigir. O ciclo 4↔5 se repete até zerar pendências.`;
     }
 
     return `FLUXO OPERACIONAL ÚNICO — PERPLEXITY · RESOLUÇÃO CEGA + AUDITORIA
