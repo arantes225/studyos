@@ -1408,7 +1408,7 @@ async function loadErrorMetrics() {
 
   setDashboardText(
     "metric-errors",
-    `${active} Pulo${active === 1 ? "" : "s"} do Gato ativo${active === 1 ? "" : "s"}`
+    `${active} erro${active === 1 ? "" : "s"} ativo${active === 1 ? "" : "s"}`
   );
 
   setDashboardText(
