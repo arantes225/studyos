@@ -1,7 +1,7 @@
 /* Contrato único da fábrica. Não inserir resultados históricos como identidade editorial. */
 (function (root) {
   'use strict';
-  const VERSION = '2.9';
+  const VERSION = '3.0';
   const SCHEMA_VERSION = '2.0';
   const rubric = { scientific:25, answer_key:20, answer_source:15, distractors:10, explanations:10, style:10, writing:5, difficulty:5 };
   const editable = ['enunciado','alternativa_a','alternativa_b','alternativa_c','alternativa_d','gabarito','explicacao_a','explicacao_b','explicacao_c','explicacao_d','mensagem_chave','area','tema','subtema','dificuldade','fonte_instituicao','fonte_documento','fonte_ano','fonte_url','answer_source_institution','answer_source_document','answer_source_year','answer_source_url','answer_source_section','answer_source_note'];
@@ -105,10 +105,44 @@ Somente perfis ainda não aprovados devem registrar edição, URL oficial, IDs/p
       exam_style:item?.exam_style || null
     };
   }
+
+  function operationalAccess(ctx={}, stage='') {
+    const batchNumber = ctx.batch_number ?? null;
+    const blockNumber = ctx.block_number ?? null;
+    const batchCode = ctx.batch_code || (batchNumber == null ? null : 'L'+String(Number(batchNumber)).padStart(3,'0'));
+    const blockCode = ctx.block_code || (batchCode && blockNumber != null ? batchCode+'-B'+String(Number(blockNumber)).padStart(2,'0') : null);
+    if (!batchCode && !ctx.prompt_workspace_url && !ctx.workspace_url) return '';
+
+    const workspace = ctx.prompt_workspace_url || ctx.workspace_url || 'URL do Admin informada no contexto do lote';
+    const source = ctx.prompt_source_instruction || ctx.source_instruction ||
+      `Entre no Admin da LURIA/Resibulando → Fábrica de questões → Produção em tempo real → lote ${batchCode || 'ATUAL'}${blockCode ? ` → bloco ${blockCode}` : ''}. Leia diretamente as versões atuais das questões deste escopo. Não peça que o usuário cole novamente as questões se o ambiente tiver acesso autenticado ao site, browser ou conector.`;
+    const destination = ctx.prompt_return_instruction || ctx.return_instruction ||
+      `Devolva a saída estruturada da etapa ${stage || 'atual'} vinculada ao lote ${batchCode || 'ATUAL'}${blockCode ? ` e bloco ${blockCode}` : ''}. Se o ambiente tiver ação autorizada específica de escrita/importação para esta etapa, use-a; caso contrário, entregue o JSON completo no chat para importação pelo Admin. Nunca invente que gravou algo.`;
+
+    return `CONTEXTO OPERACIONAL DO LOTE — OBRIGATÓRIO
+Workspace/site: ${workspace}
+Lote: ${batchCode || 'NÃO INFORMADO'}
+Bloco: ${blockCode || 'NÃO APLICÁVEL'}
+Etapa: ${stage || 'NÃO INFORMADA'}
+
+ONDE BUSCAR / LER:
+${source}
+
+ONDE DEVOLVER:
+${destination}
+
+REGRA DE ACESSO:
+- Use o browser/conector/site autenticado disponível para abrir o local acima e trabalhar sobre as questões REAIS e versões ATUAIS do lote/bloco.
+- Não use questões de outro lote, bloco, arquivo antigo ou contexto de conversa como substituto silencioso.
+- Se não conseguir acessar o local indicado, pare antes de avaliar e responda ACCESS_REQUIRED, informando exatamente qual acesso faltou.
+- Nunca alegue que leu, alterou, importou ou gravou questões se isso não aconteceu.
+- IDs, batch_code, block_code e versões lidos no sistema prevalecem sobre qualquer exemplo do prompt.`;
+  }
   function generation(item={},ctx={}) {
     const sample = Object.fromEntries(editable.map(k=>[k,'']));
     Object.assign(sample,{question_id:'ID_IMUTAVEL',question_code:'CODIGO_UNICO',exam_style:item.exam_style||null,block_sequence_no:1,sequence_no:1,dificuldade:'Médio',gabarito:'A',version:1,status:'generated'});
     return `${rules}\n\n${profile(item)}
+${operationalAccess(ctx,'generation')}
 TAREFA: gerar bloco administrativo de 200 questões. Pode executar em partes de 20, preservando IDs, sequência, cobertura planejada e conferência final das 200. Não fingir entrega completa quando houver parte pendente.
 Antes da produção, verificar o estado do perfil. Se estiver CALIBRATED_FROZEN/PROMPT_APPROVED com FINAL_PROMPT_SCORE >=84, usar o perfil congelado e iniciar produção sem reabrir calibração. Só exigir nova calibração/corpus quando a banca ainda não estiver aprovada.
 Definir matriz de cobertura a partir da prova-alvo; não impor sete áreas ENAMED nem quotas universais a outras bancas. Frequências observadas orientam o conjunto, sem criar sequência temática artificial.
@@ -144,13 +178,14 @@ Validar quantidade, IDs, sequências 1–200 e posição global, A-D, campos obr
     return {...context(item,ctx),review_stage:stage,reviewer:stage==='chatgpt_initial'?'ChatGPT':'Perplexity',reviews:[{question_id:'ID_IMUTAVEL',item_version:1,quality_score:null,component_scores:{...rubric,style:null},independent_answer:'A',original_answer:'A',status:'rejected',confidence:'high',ambiguity:false,single_best_answer:true,hard_fail:false,hard_fail_reasons:[],answer_source_issue:null,source_verification_status:'SOURCE_VERIFICATION_PENDING',style_evidence_status:'NEEDS_MORE_PRIMARY_STYLE_DATA',distractor_quality:'GOOD',alternative_granularity:'PASS',difficulty_alignment:'PASS',surface_guess_without_vignette:null,surface_guess_confidence:null,lexical_asymmetry:'PASS',best_distractor:null,best_distractor_rationale:null,counterfactual_change:null,vignette_dependency:'PASS',points_lost:[],scientific_issue:null,style_issue:null,explanation_issue:null,suggested_correction:null,verified_sources:[],proposed_change:{change_required:false,exact_replacement:{},reason:''}}],coverage:{reviewed_ids:[],pending_ids:[],complete:false},stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage,provider:stage==='chatgpt_initial'?'ChatGPT':'Perplexity',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}};
   }
   function segment(item={},stage,ctx={}) {
-    const common=`${rules}\n\n${profile(item)}\n`;
+    const common=`${rules}\n\n${profile(item)}\n${operationalAccess(ctx,stage)}\n`;
     if(stage==='generation')return generation(item,ctx);
     if(stage==='prompt_calibration')return `${common}
 AUDITORIA DO PROMPT EDITORIAL: avaliar saída BRUTA inédita, antes de correções. Receber registro da resolução cega; depois conferir gabaritos/fontes. Comparar com corpus primário e registrar evidências por item. Distinguir falha científica pontual, falha do gerador, falha de validador e desvio de identidade.
 FINAL_PROMPT_SCORE usa rubrica própria: fidelidade 40, distratores 20, dificuldade 15, diversidade/ausência de pistas 15, clareza/completude 10. Somar componentes; corte 84. Informar ciência e gabarito em flags separados; hard fail impede avanço. Sem corpus suficiente, nota=null e NEEDS_MORE_PRIMARY_STYLE_DATA. Amostra sentinela não substitui teste de generalização; testar ao menos 30 itens novos em áreas variadas e informar limites amostrais. Não usar correções para elevar esta nota.
 ${stringify({schema_version:SCHEMA_VERSION,review_stage:'prompt_calibration',exam_style:item.exam_style||null,profile_version:VERSION,FINAL_PROMPT_SCORE:null,prompt_component_scores:{fidelity:null,distractors:null,difficulty:null,diversity:null,clarity:null},hard_fail_count:0,sample_size:0,primary_style_evidence:[],decision:'NEEDS_MORE_PRIMARY_STYLE_DATA',findings:[]})}`;
     if(stage==='blind_resolution')return `${rules}
+${operationalAccess(ctx,'blind_resolution')}
 RESOLUÇÃO CEGA. Abrir SOMENTE prova-cega.json, sem gabaritos, explicações, fontes da resposta ou pareceres prévios. Se esses dados foram expostos na conversa, iniciar nova conversa limpa. Resolver todos os IDs recebidos; não inventar uma letra quando não houver resposta única. Importar este registro antes de abrir o pacote completo.
 ${stringify({...context(item,ctx),review_stage:'blind_resolution',reviewer:'Perplexity',reviews:[{question_id:'ID_IMUTAVEL',item_version:1,independent_answer:null,ambiguity:false,single_best_answer:false,reason:'Registrar raciocínio e dado decisivo; null se irresolúvel.'}],stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage:'blind_resolution',provider:'Perplexity',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}})}`;
     if(['chatgpt_initial','perplexity_initial','perplexity_reaudit'].includes(stage))return `${common}
