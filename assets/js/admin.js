@@ -2430,7 +2430,21 @@
         const reliability = item.style_confidence_score == null ? null : Number(item.style_confidence_score);
         const scoreValue = item.style_score == null ? "—" : Number(item.style_score).toLocaleString("pt-BR",{maximumFractionDigits:1});
         const confidenceValue = reliability == null ? "—" : `${reliability.toLocaleString("pt-BR",{maximumFractionDigits:0})}%`;
-        const calibrationStatus = item.final_prompt_score == null ? "Calibração do prompt pendente" : Number(item.final_prompt_score) >= 84 ? "Prompt calibrado · " + item.final_prompt_score + "/100" : "Prompt a revisar · " + item.final_prompt_score + "/100";
+        const calibration = item.prompt_calibration && typeof item.prompt_calibration === "object" ? item.prompt_calibration : {};
+        const roundLabel = calibration.round ? String(calibration.round) : "";
+        const decision = String(calibration.decision || "").toUpperCase();
+        const calibrated = item.final_prompt_score != null && Number(item.final_prompt_score) >= 84;
+        const calibrationStatus = item.final_prompt_score == null
+          ? "Calibração do prompt pendente"
+          : (calibrated ? "Prompt calibrado · " : "Prompt a revisar · ") + item.final_prompt_score + "/100";
+        const calibrationMeta = [
+          roundLabel ? "Rodada " + roundLabel : "",
+          decision || "",
+          item.updated_at ? "Atualizado " + formatDateTime(item.updated_at) : ""
+        ].filter(Boolean).join(" · ");
+        const historicalBest = calibration.highest_historical_style_score != null
+          ? "Melhor histórico: " + Number(calibration.highest_historical_style_score).toLocaleString("pt-BR",{maximumFractionDigits:1}) + "/100" + (calibration.highest_historical_version ? " · " + calibration.highest_historical_version : "")
+          : "";
         const slug = String(item.exam_style || `banca-${index+1}`).replace(/[^a-z0-9]/gi,"-").toLowerCase();
         const masterPromptId = `qf-dashboard-${slug}-master`;
         const promptStages = [
@@ -2463,6 +2477,8 @@
                   <strong>${esc(confidenceValue)}</strong>
                 </span>
                 <span class="admin-qf-style-score-status">${esc(calibrationStatus)}</span>
+                ${calibrationMeta ? `<span class="admin-qf-style-score-status">${esc(calibrationMeta)}</span>` : ""}
+                ${historicalBest ? `<span class="admin-qf-style-score-status">${esc(historicalBest)}</span>` : ""}
               </div>
             </div>
             <div class="admin-qf-style-total">
