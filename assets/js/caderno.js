@@ -3027,7 +3027,10 @@ function setNotebookEditMode(
 
 
 const NOTEBOOK_LAZY_IMAGE_PLACEHOLDER =
-  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdj+P///38ACfsD/QeGmOQAAAAASUVORK5CYII=";
+  "data:image/svg+xml;charset=UTF-8,"
+  + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="220" viewBox="0 0 640 220"><rect width="640" height="220" rx="18" fill="#f4f7fb"/><path d="M285 86h70v48h-70z" fill="none" stroke="#7b8da5" stroke-width="5" rx="7"/><circle cx="307" cy="103" r="7" fill="#7b8da5"/><path d="M292 126l17-16 13 12 10-9 16 13" fill="none" stroke="#7b8da5" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><text x="320" y="173" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="600" fill="#66788f">Clique para carregar a imagem</text></svg>'
+    );
 
 
 function prepareNotebookLazyImageHtml(
