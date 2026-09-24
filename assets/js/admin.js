@@ -2572,7 +2572,7 @@
     return {
       prompt_workspace_url: saved.workspace_url || defaultQuestionFactoryWorkspaceUrl(),
       prompt_source_instruction: saved.source_instruction || `Entre no Admin da LURIA/Resibulando → Fábrica de questões → Produção em tempo real → lote ${batchCode}. Abra o bloco indicado no prompt e leia diretamente todas as questões e versões atuais necessárias para a etapa.`,
-      prompt_return_instruction: saved.return_instruction || `Devolva o resultado estruturado no mesmo lote ${batchCode}, associado ao bloco e à etapa indicados no prompt. Se houver acesso autorizado de escrita/importação, use o mecanismo específico da etapa; caso contrário, devolva o JSON completo no chat para importação pelo Admin.`
+      prompt_return_instruction: saved.return_instruction || `Grave automaticamente o resultado no mesmo lote ${batchCode}, associado ao bloco e à etapa indicados no prompt, usando o acesso autorizado ao site/Supabase e o mecanismo específico de importação da etapa. Depois confirme a persistência relendo o bloco. Só devolva JSON manual se a escrita falhar, com o erro real.`
     };
   }
 
