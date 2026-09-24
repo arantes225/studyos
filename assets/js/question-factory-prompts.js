@@ -1,7 +1,7 @@
 /* Contrato único da fábrica. Não inserir resultados históricos como identidade editorial. */
 (function (root) {
   'use strict';
-  const VERSION = '3.1';
+  const VERSION = '3.2';
   const SCHEMA_VERSION = '2.0';
   const rubric = { scientific:25, answer_key:20, answer_source:15, distractors:10, explanations:10, style:10, writing:5, difficulty:5 };
   const editable = ['enunciado','alternativa_a','alternativa_b','alternativa_c','alternativa_d','gabarito','explicacao_a','explicacao_b','explicacao_c','explicacao_d','mensagem_chave','area','tema','subtema','dificuldade','fonte_instituicao','fonte_documento','fonte_ano','fonte_url','answer_source_institution','answer_source_document','answer_source_year','answer_source_url','answer_source_section','answer_source_note'];
@@ -117,7 +117,7 @@ Somente perfis ainda não aprovados devem registrar edição, URL oficial, IDs/p
     const source = ctx.prompt_source_instruction || ctx.source_instruction ||
       `Entre no Admin da LURIA/Resibulando → Fábrica de questões → Produção em tempo real → lote ${batchCode || 'ATUAL'}${blockCode ? ` → bloco ${blockCode}` : ''}. Leia diretamente as versões atuais das questões deste escopo. Não peça que o usuário cole novamente as questões se o ambiente tiver acesso autenticado ao site, browser ou conector.`;
     const destination = ctx.prompt_return_instruction || ctx.return_instruction ||
-      `Devolva a saída estruturada da etapa ${stage || 'atual'} vinculada ao lote ${batchCode || 'ATUAL'}${blockCode ? ` e bloco ${blockCode}` : ''}. Se o ambiente tiver ação autorizada específica de escrita/importação para esta etapa, use-a; caso contrário, entregue o JSON completo no chat para importação pelo Admin. Nunca invente que gravou algo.`;
+      `Grave AUTOMATICAMENTE o resultado da etapa ${stage || 'atual'} no lote ${batchCode || 'ATUAL'}${blockCode ? ` e bloco ${blockCode}` : ''}, usando o acesso autorizado já disponível ao site/Supabase e o mecanismo de importação/escrita correspondente à etapa. Após gravar, confirme a persistência lendo novamente o lote/bloco e verificando IDs, versões, contagens e status. Só devolva JSON para importação manual se a gravação automática falhar de verdade, informando o erro real. Nunca pare apenas no relatório se a escrita estiver disponível e nunca invente que gravou algo.`;
 
     return `CONTEXTO OPERACIONAL DO LOTE — OBRIGATÓRIO
 Workspace/site: ${workspace}
@@ -131,10 +131,13 @@ ${source}
 ONDE DEVOLVER:
 ${destination}
 
-REGRA DE ACESSO:
+REGRA DE ACESSO E PERSISTÊNCIA:
 - Use o browser/conector/site autenticado disponível para abrir o local acima e trabalhar sobre as questões REAIS e versões ATUAIS do lote/bloco.
+- ChatGPT e Perplexity neste fluxo devem assumir que possuem acesso autorizado ao projeto; portanto, ao concluir a etapa, DEVEM persistir automaticamente o resultado no mesmo lote/bloco usando a ação/RPC/controle de importação correspondente.
+- Após a escrita, releia o lote/bloco e confirme que a versão persistida corresponde exatamente ao resultado produzido.
+- Atualize também o estado operacional da etapa quando o mecanismo correspondente fizer isso como parte da importação.
 - Não use questões de outro lote, bloco, arquivo antigo ou contexto de conversa como substituto silencioso.
-- Se não conseguir acessar o local indicado, pare antes de avaliar e responda ACCESS_REQUIRED, informando exatamente qual acesso faltou.
+- Se o acesso ou a gravação falhar de verdade, responda ACCESS_REQUIRED ou WRITE_FAILED, com o erro concreto e o ponto exato em que falhou; nesse caso, devolva também o JSON completo para contingência manual.
 - Nunca alegue que leu, alterou, importou ou gravou questões se isso não aconteceu.
 - IDs, batch_code, block_code e versões lidos no sistema prevalecem sobre qualquer exemplo do prompt.`;
   }
