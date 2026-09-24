@@ -421,7 +421,14 @@
                 <strong id="admin-qf-lots-title">Lotes de 1.000</strong>
                 <small>Cada lote é formado por cinco blocos de 200. Após a revisão bloco a bloco, o lote segue para a revisão final.</small>
               </div>
-              <span id="admin-qf-batch-count">0 lotes</span>
+              <div class="admin-qf-lot-start">
+                <select id="admin-qf-start-lot-style" aria-label="Banca do novo lote">
+                  <option value="">Escolher banca</option>
+                </select>
+                <button id="admin-qf-start-lot" class="button primary" type="button">Iniciar lote de 1.000</button>
+                <span id="admin-qf-start-lot-status" class="admin-qf-start-lot-status" aria-live="polite"></span>
+                <span id="admin-qf-batch-count">0 lotes</span>
+              </div>
             </div>
 
             <div id="admin-qf-batches" class="admin-factory-batches">
