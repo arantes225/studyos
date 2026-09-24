@@ -1034,15 +1034,15 @@ Após as três aprovações da versão atual, aguardar aprovação humana final 
       <div class="admin-qf-dialog-head">
         <div>
           <span class="eyebrow">IA → Supabase</span>
-          <h2>Importar revisão</h2>
+          <h2>Importar etapa</h2>
           <p id="admin-qf-review-import-meta">Cole o JSON 2.0 da etapa correspondente.</p>
         </div>
         <button id="admin-qf-review-import-close" class="dialog-close" type="button" aria-label="Fechar">×</button>
       </div>
       <div class="admin-qf-review-import-body">
         <label>
-          <span>JSON da auditoria</span>
-          <textarea id="admin-qf-review-import-json" spellcheck="false" placeholder='{"schema_version":"2.0","review_stage":"perplexity_initial","batch_number":1,"block_number":1,"reviews":[...]}'></textarea>
+          <span>JSON da etapa</span>
+          <textarea id="admin-qf-review-import-json" spellcheck="false" placeholder='{"schema_version":"2.0","batch":{"batch_number":1,"block_number":1},"questions":[...]} ou {"schema_version":"2.0","review_stage":"perplexity_initial",...}'></textarea>
         </label>
         <div id="admin-qf-review-import-message" class="admin-qf-review-import-message"></div>
         <div class="admin-qf-review-import-actions">
