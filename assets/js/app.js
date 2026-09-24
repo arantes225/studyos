@@ -742,6 +742,169 @@ async function salvarAudioPreferido(userId, trackId) {
   }
 }
 
+function lofiModeLabel(mode) {
+  return mode === "sequence"
+    ? "sequência"
+    : "repetir";
+}
+
+function renderLofiTrackList(manager) {
+  document.querySelectorAll("[data-lofi-list]").forEach((list) => {
+    if (!manager.catalogLoaded) {
+      if (list.dataset.lofiCatalogKey) {
+        list.replaceChildren();
+        delete list.dataset.lofiCatalogKey;
+      }
+
+      if (!list.children.length) {
+        const placeholder =
+          document.createElement("div");
+
+        placeholder.className =
+          "lofi-track-list-empty";
+
+        placeholder.textContent =
+          manager.catalogLoading
+            ? "Carregando lista de sons..."
+            : "Lista de sons";
+        list.appendChild(placeholder);
+      }
+
+      return;
+    }
+
+    const catalogKey =
+      manager.tracks
+        .map((track) => String(track.id))
+        .join("|");
+
+    if (
+      list.dataset.lofiCatalogKey
+      !== catalogKey
+    ) {
+      list.replaceChildren();
+      list.dataset.lofiCatalogKey =
+        catalogKey;
+
+      if (!manager.tracks.length) {
+        const empty =
+          document.createElement("div");
+
+        empty.className =
+          "lofi-track-list-empty";
+        empty.textContent =
+          "Nenhum som disponível.";
+        list.appendChild(empty);
+      } else {
+        manager.tracks.forEach(
+          (track, index) => {
+            const button =
+              document.createElement("button");
+
+            button.type =
+              "button";
+            button.className =
+              "lofi-track-item";
+            button.dataset.lofiTrackId =
+              track.id;
+
+            const number =
+              document.createElement("span");
+            number.className =
+              "lofi-track-number";
+            number.textContent =
+              String(index + 1).padStart(2, "0");
+
+            const copy =
+              document.createElement("span");
+            copy.className =
+              "lofi-track-item-copy";
+
+            const title =
+              document.createElement("strong");
+            title.textContent =
+              track.title || "Som ambiente";
+
+            const hint =
+              document.createElement("small");
+            hint.textContent =
+              "Tocar esta faixa";
+
+            copy.append(
+              title,
+              hint
+            );
+
+            const icon =
+              document.createElement("span");
+            icon.className =
+              "lofi-track-play";
+            icon.setAttribute(
+              "aria-hidden",
+              "true"
+            );
+            icon.textContent =
+              "▶";
+
+            button.append(
+              number,
+              copy,
+              icon
+            );
+
+            list.appendChild(
+              button
+            );
+          }
+        );
+      }
+    }
+
+    list
+      .querySelectorAll(
+        "[data-lofi-track-id]"
+      )
+      .forEach((button) => {
+        const isActive =
+          button.dataset.lofiTrackId
+          === manager.track?.id;
+
+        const isPlaying =
+          isActive
+          && manager.loadedTrackId
+            === manager.track?.id
+          && !manager.audio.paused;
+
+        button.classList.toggle(
+          "active",
+          isActive
+        );
+        button.classList.toggle(
+          "playing",
+          isPlaying
+        );
+        button.setAttribute(
+          "aria-pressed",
+          isActive
+            ? "true"
+            : "false"
+        );
+
+        const icon =
+          button.querySelector(
+            ".lofi-track-play"
+          );
+
+        if (icon) {
+          icon.textContent =
+            isPlaying
+              ? "❚❚"
+              : "▶";
+        }
+      });
+  });
+}
+
 function updateLofiControls(manager) {
   const audio = manager.audio;
 
@@ -751,27 +914,44 @@ function updateLofiControls(manager) {
   });
 
   document.querySelectorAll("[data-lofi-status]").forEach((el) => {
+    if (manager.catalogError) {
+      el.textContent =
+        "lista indisponível";
+      return;
+    }
+
     if (manager.error) {
-      el.textContent = "áudio indisponível";
+      el.textContent =
+        "áudio indisponível";
       return;
     }
 
     if (!manager.catalogLoaded) {
-      el.textContent = manager.loading
-        ? "carregando..."
-        : "toque para carregar";
+      el.textContent =
+        manager.catalogLoading
+          ? "carregando lista..."
+          : "lista disponível ao abrir";
+      return;
+    }
+
+    if (manager.audioLoading) {
+      el.textContent =
+        "carregando áudio...";
       return;
     }
 
     if (!manager.ready) {
-      el.textContent = "carregando...";
+      el.textContent =
+        manager.track
+          ? "pronto para tocar"
+          : "selecione um som";
       return;
     }
 
     el.textContent =
       audio.paused
-        ? "pausado · loop"
-        : "tocando · loop";
+        ? `pausado · ${lofiModeLabel(manager.playMode)}`
+        : `tocando · ${lofiModeLabel(manager.playMode)}`;
   });
 
   document.querySelectorAll("[data-lofi-toggle]").forEach((button) => {
@@ -786,36 +966,65 @@ function updateLofiControls(manager) {
     );
 
     button.disabled =
-      Boolean(manager.loading) || Boolean(manager.error);
+      Boolean(manager.catalogLoading)
+      || Boolean(manager.audioLoading)
+      || Boolean(manager.catalogError)
+      || !manager.track;
+  });
+
+  document.querySelectorAll("[data-lofi-mode]").forEach((button) => {
+    const active =
+      button.dataset.lofiMode
+      === manager.playMode;
+
+    button.classList.toggle(
+      "active",
+      active
+    );
+    button.setAttribute(
+      "aria-pressed",
+      active
+        ? "true"
+        : "false"
+    );
   });
 
   document.querySelectorAll("[data-lofi-select]").forEach((select) => {
-    const currentValue = select.value;
+    const currentValue =
+      select.value;
 
     if (!manager.catalogLoaded) {
       select.innerHTML =
-        '<option value="">Faixas carregam ao tocar</option>';
+        '<option value="">Carregando lista...</option>';
       select.disabled = true;
       return;
     }
 
-    select.innerHTML = manager.tracks.length
-      ? manager.tracks.map((track) => `
-          <option value="${track.id}">
-            ${track.title}
-          </option>
-        `).join("")
-      : '<option value="">Nenhum som disponível</option>';
+    select.innerHTML =
+      manager.tracks.length
+        ? manager.tracks.map((track) => `
+            <option value="${track.id}">
+              ${track.title}
+            </option>
+          `).join("")
+        : '<option value="">Nenhum som disponível</option>';
 
     if (manager.track?.id) {
-      select.value = manager.track.id;
+      select.value =
+        manager.track.id;
     } else if (currentValue) {
-      select.value = currentValue;
+      select.value =
+        currentValue;
     }
 
     select.disabled =
-      !manager.tracks.length || Boolean(manager.error);
+      !manager.tracks.length
+      || Boolean(manager.catalogError);
   });
+
+  renderLofiTrackList(
+    manager
+  );
 
   document.querySelectorAll("[data-lofi-volume]").forEach((input) => {
     if (document.activeElement !== input) {
@@ -852,206 +1061,471 @@ function updateLofiControls(manager) {
   });
 }
 
-
-async function carregarLofiSobDemanda(manager) {
+async function carregarCatalogoLofi(manager) {
   if (manager.catalogLoaded) {
     return Boolean(manager.track);
   }
 
-  if (manager.loadingPromise) {
-    return manager.loadingPromise;
+  if (manager.catalogPromise) {
+    return manager.catalogPromise;
   }
 
-  manager.loading = true;
-  manager.error = null;
-  updateLofiControls(manager);
+  manager.catalogLoading =
+    true;
+  manager.catalogError =
+    null;
+  updateLofiControls(
+    manager
+  );
 
-  manager.loadingPromise = (async () => {
-    try {
-      const [tracks, preferredFromDb] =
-        await Promise.all([
-          carregarAudioTracks(),
-          carregarAudioPreferido(manager.userId)
-        ]);
+  manager.catalogPromise =
+    (async () => {
+      try {
+        const [tracks, preferredFromDb] =
+          await Promise.all([
+            carregarAudioTracks(),
+            carregarAudioPreferido(
+              manager.userId
+            )
+          ]);
 
-      manager.tracks = tracks || [];
-      manager.catalogLoaded = true;
+        manager.tracks =
+          tracks || [];
+        manager.catalogLoaded =
+          true;
 
-      const saved =
-        readLofiState(manager.userId);
-
-      const preferredId =
-        saved.trackId
-        || preferredFromDb
-        || manager.tracks[0]?.id
-        || null;
-
-      manager.track =
-        manager.tracks.find(
-          (item) => item.id === preferredId
-        )
-        || manager.tracks[0]
-        || null;
-
-      if (!manager.track) {
-        manager.error =
-          "Nenhuma faixa configurada.";
-        return false;
-      }
-
-      manager.audio.loop =
-        manager.track.loop_enabled !== false;
-
-      writeLofiState(
-        manager.userId,
-        {
-          ...saved,
-          trackId: manager.track.id
-        }
-      );
-
-      const {
-        data: signedAudio,
-        error: signedAudioError
-      } =
-        await sb.storage
-          .from(manager.track.storage_bucket)
-          .createSignedUrl(
-            manager.track.storage_path,
-            60 * 60 * 12
+        const saved =
+          readLofiState(
+            manager.userId
           );
 
-      if (
-        signedAudioError
-        || !signedAudio?.signedUrl
-      ) {
-        throw signedAudioError
-        || new Error(
-          "Não foi possível gerar a URL do áudio."
+        const preferredId =
+          saved.trackId
+          || preferredFromDb
+          || manager.tracks[0]?.id
+          || null;
+
+        manager.track =
+          manager.tracks.find(
+            (item) =>
+              item.id
+              === preferredId
+          )
+          || manager.tracks[0]
+          || null;
+
+        if (!manager.track) {
+          manager.catalogError =
+            "Nenhuma faixa configurada.";
+          return false;
+        }
+
+        writeLofiState(
+          manager.userId,
+          {
+            ...saved,
+            trackId:
+              manager.track.id,
+            playMode:
+              manager.playMode
+          }
+        );
+
+        return true;
+      } catch (error) {
+        console.warn(
+          "Não foi possível carregar a lista de sons:",
+          error
+        );
+
+        manager.catalogError =
+          "Não foi possível carregar a lista.";
+        return false;
+      } finally {
+        manager.catalogLoading =
+          false;
+        manager.catalogPromise =
+          null;
+        updateLofiControls(
+          manager
         );
       }
+    })();
 
-      manager.audio.src =
-        signedAudio.signedUrl;
-      manager.audio.load();
-
-      return true;
-    } catch (error) {
-      console.warn(
-        "Não foi possível carregar o player de lo-fi:",
-        error
-      );
-      manager.error =
-        "Não foi possível carregar o áudio.";
-      return false;
-    } finally {
-      manager.loading = false;
-      manager.loadingPromise = null;
-      updateLofiControls(manager);
-    }
-  })();
-
-  return manager.loadingPromise;
+  return manager.catalogPromise;
 }
 
+function setLofiPlayMode(
+  manager,
+  mode
+) {
+  const nextMode =
+    mode === "sequence"
+      ? "sequence"
+      : "repeat";
 
-async function trocarFaixaLofi(manager, trackId) {
-  if (!manager.catalogLoaded) {
-    const loaded =
-      await carregarLofiSobDemanda(manager);
+  manager.playMode =
+    nextMode;
 
-    if (!loaded) return;
-  }
-
-  const nextTrack =
-    manager.tracks.find(
-      (track) => track.id === trackId
-    );
-
-  if (!nextTrack) return;
-
-  const wasPlaying =
-    !manager.audio.paused;
-
-  manager.track = nextTrack;
-  manager.ready = false;
-  manager.error = null;
-
-  manager.audio.pause();
-  manager.audio.currentTime = 0;
   manager.audio.loop =
-    nextTrack.loop_enabled !== false;
-
-  const {
-    data: signedAudio,
-    error: signedAudioError
-  } =
-    await sb.storage
-      .from(nextTrack.storage_bucket)
-      .createSignedUrl(
-        nextTrack.storage_path,
-        60 * 60 * 12
-      );
-
-  if (
-    signedAudioError
-    || !signedAudio?.signedUrl
-  ) {
-    manager.error =
-      "Não foi possível carregar o áudio.";
-
-    updateLofiControls(
-      manager
-    );
-
-    return;
-  }
-
-  manager.audio.src =
-    signedAudio.signedUrl;
-  manager.audio.load();
+    nextMode === "repeat";
 
   writeLofiState(
     manager.userId,
     {
-      ...readLofiState(manager.userId),
-      trackId: nextTrack.id,
-      currentTime: 0,
-      volume: manager.audio.volume
+      ...readLofiState(
+        manager.userId
+      ),
+      playMode:
+        nextMode,
+      trackId:
+        manager.track?.id
+        || null,
+      volume:
+        manager.audio.volume,
+      currentTime:
+        manager.audio.currentTime
+        || 0
     }
   );
 
-  salvarAudioPreferido(
-    manager.userId,
-    nextTrack.id
+  updateLofiControls(
+    manager
+  );
+}
+
+async function carregarFaixaLofi(
+  manager,
+  track,
+  {
+    autoplay = false,
+    resume = false
+  } = {}
+) {
+  if (!track) {
+    return false;
+  }
+
+  if (
+    manager.loadedTrackId
+      === track.id
+    && manager.audio.src
+    && manager.ready
+  ) {
+    if (
+      autoplay
+      && manager.audio.paused
+    ) {
+      await manager.audio.play();
+    }
+
+    return true;
+  }
+
+  manager.audioLoading =
+    true;
+  manager.ready =
+    false;
+  manager.error =
+    null;
+  manager.track =
+    track;
+
+  const saved =
+    readLofiState(
+      manager.userId
+    );
+
+  manager.pendingSeek =
+    resume
+    && saved.trackId
+      === track.id
+      ? Math.max(
+          0,
+          Number(
+            saved.currentTime
+            || 0
+          )
+        )
+      : 0;
+
+  manager.audio.pause();
+  manager.audio.loop =
+    manager.playMode
+      === "repeat";
+
+  updateLofiControls(
+    manager
   );
 
-  updateLofiControls(manager);
+  try {
+    const {
+      data: signedAudio,
+      error: signedAudioError
+    } =
+      await sb.storage
+        .from(
+          track.storage_bucket
+        )
+        .createSignedUrl(
+          track.storage_path,
+          60 * 60 * 12
+        );
 
-  if (wasPlaying) {
-    try {
-      await manager.audio.play();
-    } catch (error) {
-      console.warn(
-        "O navegador bloqueou a reprodução após trocar de faixa:",
-        error
+    if (
+      signedAudioError
+      || !signedAudio?.signedUrl
+    ) {
+      throw (
+        signedAudioError
+        || new Error(
+          "Não foi possível gerar a URL do áudio."
+        )
       );
     }
+
+    manager.loadedTrackId =
+      track.id;
+
+    manager.audio.src =
+      signedAudio.signedUrl;
+    manager.audio.load();
+
+    writeLofiState(
+      manager.userId,
+      {
+        ...saved,
+        trackId:
+          track.id,
+        currentTime:
+          resume
+            ? Number(
+                saved.currentTime
+                || 0
+              )
+            : 0,
+        volume:
+          manager.audio.volume,
+        playMode:
+          manager.playMode
+      }
+    );
+
+    salvarAudioPreferido(
+      manager.userId,
+      track.id
+    );
+
+    if (autoplay) {
+      await manager.audio.play();
+    }
+
+    return true;
+  } catch (error) {
+    console.warn(
+      "Não foi possível carregar o áudio:",
+      error
+    );
+
+    manager.error =
+      "Não foi possível carregar o áudio.";
+    manager.ready =
+      false;
+    manager.loadedTrackId =
+      null;
+
+    return false;
+  } finally {
+    manager.audioLoading =
+      false;
+    updateLofiControls(
+      manager
+    );
   }
 }
 
+async function trocarFaixaLofi(
+  manager,
+  trackId,
+  options = {}
+) {
+  if (!manager.catalogLoaded) {
+    const loaded =
+      await carregarCatalogoLofi(
+        manager
+      );
+
+    if (!loaded) {
+      return false;
+    }
+  }
+
+  const nextTrack =
+    manager.tracks.find(
+      (track) =>
+        track.id === trackId
+    );
+
+  if (!nextTrack) {
+    return false;
+  }
+
+  manager.track =
+    nextTrack;
+
+  const currentState =
+    readLofiState(
+      manager.userId
+    );
+
+  writeLofiState(
+    manager.userId,
+    {
+      ...currentState,
+      trackId:
+        nextTrack.id,
+      currentTime:
+        options.resume
+          ? Number(
+              currentState.currentTime
+              || 0
+            )
+          : 0,
+      volume:
+        manager.audio.volume,
+      playMode:
+        manager.playMode
+    }
+  );
+
+  updateLofiControls(
+    manager
+  );
+
+  return carregarFaixaLofi(
+    manager,
+    nextTrack,
+    options
+  );
+}
+
+async function tocarProximaFaixaLofi(
+  manager
+) {
+  if (
+    manager.playMode
+      !== "sequence"
+    || manager.tracks.length
+      < 1
+  ) {
+    return;
+  }
+
+  const currentIndex =
+    manager.tracks.findIndex(
+      (track) =>
+        track.id
+        === manager.track?.id
+    );
+
+  const nextIndex =
+    currentIndex >= 0
+      ? (
+          currentIndex + 1
+        ) % manager.tracks.length
+      : 0;
+
+  const nextTrack =
+    manager.tracks[
+      nextIndex
+    ];
+
+  if (!nextTrack) {
+    return;
+  }
+
+  await trocarFaixaLofi(
+    manager,
+    nextTrack.id,
+    {
+      autoplay:
+        true,
+      resume:
+        false
+    }
+  );
+}
 
 function bindLofiControls(manager) {
+  document.querySelectorAll("[data-lofi-list]").forEach((list) => {
+    if (list.dataset.lofiBound === "1") return;
+    list.dataset.lofiBound = "1";
+
+    list.addEventListener(
+      "click",
+      async (event) => {
+        const button =
+          event.target.closest(
+            "[data-lofi-track-id]"
+          );
+
+        if (
+          !button
+          || !list.contains(
+            button
+          )
+        ) {
+          return;
+        }
+
+        await trocarFaixaLofi(
+          manager,
+          button.dataset.lofiTrackId,
+          {
+            autoplay:
+              true,
+            resume:
+              false
+          }
+        );
+      }
+    );
+  });
+
   document.querySelectorAll("[data-lofi-select]").forEach((select) => {
     if (select.dataset.lofiBound === "1") return;
     select.dataset.lofiBound = "1";
 
-    select.addEventListener("change", () => {
-      trocarFaixaLofi(
-        manager,
-        select.value
-      );
-    });
+    select.addEventListener(
+      "change",
+      () => {
+        trocarFaixaLofi(
+          manager,
+          select.value,
+          {
+            autoplay:
+              true,
+            resume:
+              false
+          }
+        );
+      }
+    );
+  });
+
+  document.querySelectorAll("[data-lofi-mode]").forEach((button) => {
+    if (button.dataset.lofiBound === "1") return;
+    button.dataset.lofiBound = "1";
+
+    button.addEventListener(
+      "click",
+      () => {
+        setLofiPlayMode(
+          manager,
+          button.dataset.lofiMode
+        );
+      }
+    );
   });
 
   document.querySelectorAll("[data-lofi-toggle]").forEach((button) => {
@@ -1061,13 +1535,42 @@ function bindLofiControls(manager) {
     button.addEventListener("click", async () => {
       try {
         if (!manager.catalogLoaded) {
-          const loaded =
-            await carregarLofiSobDemanda(manager);
+          const catalogReady =
+            await carregarCatalogoLofi(
+              manager
+            );
 
-          if (!loaded) return;
+          if (!catalogReady) {
+            return;
+          }
         }
 
-        if (!manager.track || manager.error) return;
+        if (
+          !manager.track
+          || manager.catalogError
+        ) {
+          return;
+        }
+
+        if (
+          manager.loadedTrackId
+            !== manager.track.id
+          || !manager.audio.src
+          || !manager.ready
+        ) {
+          await carregarFaixaLofi(
+            manager,
+            manager.track,
+            {
+              autoplay:
+                true,
+              resume:
+                true
+            }
+          );
+
+          return;
+        }
 
         if (manager.audio.paused) {
           await manager.audio.play();
@@ -1097,19 +1600,30 @@ function bindLofiControls(manager) {
           )
         );
 
-      manager.audio.volume = volume;
+      manager.audio.volume =
+        volume;
 
       writeLofiState(
         manager.userId,
         {
-          ...readLofiState(manager.userId),
+          ...readLofiState(
+            manager.userId
+          ),
           volume,
+          playMode:
+            manager.playMode,
+          trackId:
+            manager.track?.id
+            || null,
           currentTime:
-            manager.audio.currentTime || 0
+            manager.audio.currentTime
+            || 0
         }
       );
 
-      updateLofiControls(manager);
+      updateLofiControls(
+        manager
+      );
     });
   });
 
@@ -1124,14 +1638,16 @@ function bindLofiControls(manager) {
         Number(input.value);
 
       if (Number.isFinite(target)) {
-        manager.audio.currentTime = target;
+        manager.audio.currentTime =
+          target;
       }
     });
   });
 
-  updateLofiControls(manager);
+  updateLofiControls(
+    manager
+  );
 }
-
 
 async function iniciarLofiGlobal(userId) {
   const saved =
@@ -1144,20 +1660,34 @@ async function iniciarLofiGlobal(userId) {
     audio: new Audio(),
     ready: false,
     error: null,
-    loading: false,
-    loadingPromise: null,
+    catalogError: null,
+    catalogLoading: false,
+    catalogPromise: null,
     catalogLoaded: false,
-    lastSavedSecond: -1
+    audioLoading: false,
+    loadedTrackId: null,
+    pendingSeek: 0,
+    lastSavedSecond: -1,
+    playMode:
+      saved.playMode === "sequence"
+        ? "sequence"
+        : "repeat"
   };
 
-  window.docmapAudio = manager;
+  window.docmapAudio =
+    manager;
 
-  // Não baixa metadados nem arquivo de música na inicialização.
-  // O player só consulta as faixas e define o src após ação do usuário.
-  manager.audio.preload = "none";
+  // O catálogo textual pode aparecer imediatamente.
+  // O arquivo MP3 continua sem src e sem preload até uma ação do usuário.
+  manager.audio.preload =
+    "none";
+  manager.audio.loop =
+    manager.playMode === "repeat";
 
   manager.audio.volume =
-    Number.isFinite(Number(saved.volume))
+    Number.isFinite(
+      Number(saved.volume)
+    )
       ? Math.max(
           0,
           Math.min(
@@ -1170,32 +1700,39 @@ async function iniciarLofiGlobal(userId) {
   manager.audio.addEventListener(
     "loadedmetadata",
     () => {
-      manager.ready = true;
+      manager.ready =
+        true;
 
-      const savedState =
-        readLofiState(userId);
+      const seek =
+        Number(
+          manager.pendingSeek
+          || 0
+        );
 
-      const savedTime =
-        savedState.trackId === manager.track?.id
-          ? Number(savedState.currentTime || 0)
-          : 0;
+      manager.pendingSeek =
+        0;
 
       if (
-        Number.isFinite(savedTime)
-        && savedTime > 0
-        && savedTime < manager.audio.duration
+        Number.isFinite(seek)
+        && seek > 0
+        && seek < manager.audio.duration
       ) {
         manager.audio.currentTime =
-          savedTime;
+          seek;
       }
 
-      updateLofiControls(manager);
+      updateLofiControls(
+        manager
+      );
     }
   );
 
   manager.audio.addEventListener(
     "play",
-    () => updateLofiControls(manager)
+    () =>
+      updateLofiControls(
+        manager
+      )
   );
 
   manager.audio.addEventListener(
@@ -1204,15 +1741,39 @@ async function iniciarLofiGlobal(userId) {
       writeLofiState(
         userId,
         {
-          ...readLofiState(userId),
-          trackId: manager.track?.id || null,
-          volume: manager.audio.volume,
+          ...readLofiState(
+            userId
+          ),
+          trackId:
+            manager.track?.id
+            || null,
+          volume:
+            manager.audio.volume,
           currentTime:
-            manager.audio.currentTime || 0
+            manager.audio.currentTime
+            || 0,
+          playMode:
+            manager.playMode
         }
       );
 
-      updateLofiControls(manager);
+      updateLofiControls(
+        manager
+      );
+    }
+  );
+
+  manager.audio.addEventListener(
+    "ended",
+    async () => {
+      if (
+        manager.playMode
+        === "sequence"
+      ) {
+        await tocarProximaFaixaLofi(
+          manager
+        );
+      }
     }
   );
 
@@ -1221,34 +1782,50 @@ async function iniciarLofiGlobal(userId) {
     () => {
       const second =
         Math.floor(
-          manager.audio.currentTime || 0
+          manager.audio.currentTime
+          || 0
         );
 
       if (
-        second !== manager.lastSavedSecond
+        second
+          !== manager.lastSavedSecond
         && second % 5 === 0
       ) {
-        manager.lastSavedSecond = second;
+        manager.lastSavedSecond =
+          second;
 
         writeLofiState(
           userId,
           {
-            ...readLofiState(userId),
-            trackId: manager.track?.id || null,
-            volume: manager.audio.volume,
+            ...readLofiState(
+              userId
+            ),
+            trackId:
+              manager.track?.id
+              || null,
+            volume:
+              manager.audio.volume,
             currentTime:
-              manager.audio.currentTime || 0
+              manager.audio.currentTime
+              || 0,
+            playMode:
+              manager.playMode
           }
         );
       }
 
-      updateLofiControls(manager);
+      updateLofiControls(
+        manager
+      );
     }
   );
 
   manager.audio.addEventListener(
     "volumechange",
-    () => updateLofiControls(manager)
+    () =>
+      updateLofiControls(
+        manager
+      )
   );
 
   manager.audio.addEventListener(
@@ -1256,9 +1833,14 @@ async function iniciarLofiGlobal(userId) {
     () => {
       manager.error =
         "Arquivo de áudio não encontrado.";
-      manager.ready = false;
+      manager.ready =
+        false;
+      manager.loadedTrackId =
+        null;
 
-      updateLofiControls(manager);
+      updateLofiControls(
+        manager
+      );
     }
   );
 
@@ -1268,17 +1850,37 @@ async function iniciarLofiGlobal(userId) {
       writeLofiState(
         userId,
         {
-          ...readLofiState(userId),
-          trackId: manager.track?.id || null,
-          volume: manager.audio.volume,
+          ...readLofiState(
+            userId
+          ),
+          trackId:
+            manager.track?.id
+            || null,
+          volume:
+            manager.audio.volume,
           currentTime:
-            manager.audio.currentTime || 0
+            manager.audio.currentTime
+            || 0,
+          playMode:
+            manager.playMode
         }
       );
     }
   );
 
-  bindLofiControls(manager);
+  bindLofiControls(
+    manager
+  );
+
+  if (
+    document.querySelector(
+      "[data-lofi-shell]"
+    )
+  ) {
+    carregarCatalogoLofi(
+      manager
+    );
+  }
 
   window.dispatchEvent(
     new CustomEvent(
