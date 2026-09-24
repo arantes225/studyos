@@ -4287,3 +4287,25 @@ body.admin-unlocked #admin-app {
     text-align:left;
   }
 }
+
+
+.admin-qf-batch-head-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+@media(max-width:700px){
+  .admin-qf-batch-card-head{
+    align-items:flex-start;
+    gap:10px;
+  }
+  .admin-qf-batch-head-actions{
+    width:100%;
+    justify-content:stretch;
+  }
+  .admin-qf-batch-head-actions .button{
+    width:100%;
+  }
+}
