@@ -46,6 +46,119 @@ function setProfileStatus(text, type = "") {
   element.className = `profile-status ${type}`.trim();
 }
 
+
+const PROFILE_GENDER_OPTIONS = [
+  { value: "", label: "Selecione" },
+  { value: "male", label: "Masculino" },
+  { value: "female", label: "Feminino" },
+  { value: "other", label: "Outro" },
+  { value: "prefer_not_to_say", label: "Prefiro não informar" }
+];
+
+function profileSpecialtyOptions() {
+  return Array.from(
+    document.querySelectorAll(
+      "#specialty-options option"
+    )
+  )
+    .map((option) => option.value)
+    .filter(Boolean);
+}
+
+function closeProfilePickers(except = null) {
+  [
+    ["profile-gender-menu", "profile-gender-toggle"],
+    ["profile-specialty-menu", "profile-specialty-toggle"]
+  ].forEach(([menuId, toggleId]) => {
+    if (except === menuId) return;
+    const menu = document.getElementById(menuId);
+    const toggle = document.getElementById(toggleId);
+    if (menu) menu.hidden = true;
+    toggle?.setAttribute("aria-expanded", "false");
+  });
+}
+
+function syncProfilePickerLabels() {
+  const gender = document.getElementById("profile-gender")?.value || "";
+  const genderLabel = document.getElementById("profile-gender-label");
+  if (genderLabel) {
+    genderLabel.textContent =
+      PROFILE_GENDER_OPTIONS.find((item) => item.value === gender)?.label
+      || "Selecione";
+  }
+
+  const specialty = document.getElementById("profile-specialty")?.value || "";
+  const specialtyLabel = document.getElementById("profile-specialty-label");
+  if (specialtyLabel) {
+    specialtyLabel.textContent = specialty || "Selecione";
+  }
+}
+
+function buildProfilePicker(menuId, toggleId, options, onSelect) {
+  const menu = document.getElementById(menuId);
+  const toggle = document.getElementById(toggleId);
+  if (!menu || !toggle) return;
+
+  menu.innerHTML = "";
+
+  options.forEach((item) => {
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className = "profile-picker-option";
+    option.textContent = item.label;
+    option.dataset.value = item.value;
+
+    option.addEventListener("click", (event) => {
+      event.stopPropagation();
+      onSelect(item.value);
+      menu.hidden = true;
+      toggle.setAttribute("aria-expanded", "false");
+      syncProfilePickerLabels();
+      updateProfilePreview();
+    });
+
+    menu.appendChild(option);
+  });
+
+  toggle.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const open = menu.hidden;
+    closeProfilePickers(open ? menuId : null);
+    menu.hidden = !open;
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+}
+
+function wireProfilePickers() {
+  buildProfilePicker(
+    "profile-gender-menu",
+    "profile-gender-toggle",
+    PROFILE_GENDER_OPTIONS,
+    (value) => {
+      const input = document.getElementById("profile-gender");
+      if (input) input.value = value;
+    }
+  );
+
+  buildProfilePicker(
+    "profile-specialty-menu",
+    "profile-specialty-toggle",
+    profileSpecialtyOptions().map((value) => ({ value, label: value })),
+    (value) => {
+      const input = document.getElementById("profile-specialty");
+      if (input) input.value = value;
+    }
+  );
+
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest(".profile-picker")) {
+      closeProfilePickers();
+    }
+  });
+
+  syncProfilePickerLabels();
+}
+
 function updateProfilePreview() {
   const name =
     document.getElementById("profile-name").value.trim()
@@ -95,6 +208,7 @@ async function loadProfileSettings() {
   document.getElementById("profile-specialty").value =
     data?.specialty || "";
 
+  syncProfilePickerLabels();
   updateProfilePreview();
 }
 
@@ -170,6 +284,8 @@ async function saveProfileSettings() {
 }
 
 function wireProfileSettings() {
+  wireProfilePickers();
+
   [
     "profile-name",
     "profile-gender",
