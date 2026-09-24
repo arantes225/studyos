@@ -4179,3 +4179,69 @@ body.admin-unlocked #admin-app {
   border: 0;
   border-radius: 0;
 }
+
+
+/* Fábrica — hierarquia dos prompts */
+.admin-qf-global-contract-item > summary {
+  background: var(--surface-soft, rgba(127,127,127,.06));
+}
+
+.admin-qf-style-prompt-item summary small {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.admin-qf-flow-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  margin: 8px 0;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
+.admin-qf-flow-note span,
+.admin-qf-human-step small,
+.admin-qf-maintenance-note {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.admin-qf-human-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 12px;
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.admin-qf-human-step > b {
+  min-width: 38px;
+  text-align: center;
+}
+
+.admin-qf-human-step > div {
+  display: grid;
+  gap: 3px;
+}
+
+.admin-qf-lot-review-group,
+.admin-qf-maintenance-group {
+  margin-top: 10px;
+}
+
+.admin-qf-lot-review-prompts {
+  display: grid;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.admin-qf-maintenance-note {
+  margin: 0 0 8px;
+}
