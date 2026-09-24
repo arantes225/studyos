@@ -34,6 +34,75 @@
       gap: 16px;
     }
 
+    .qs-help-row {
+      display: flex;
+      justify-content: flex-end;
+      margin: 6px 0 12px;
+    }
+
+    .qs-help-button {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 13px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .qs-help-button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .qs-help-dialog {
+      width: min(520px, calc(100vw - 28px));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 0;
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow);
+    }
+
+    .qs-help-dialog::backdrop {
+      background: rgba(15, 23, 42, .38);
+    }
+
+    .qs-help-dialog-shell {
+      padding: 20px;
+    }
+
+    .qs-help-dialog-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .qs-help-dialog-head h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .qs-help-dialog-content {
+      margin-top: 14px;
+      display: grid;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.55;
+    }
+
+    .qs-help-dialog-content strong {
+      color: var(--text);
+    }
+
     .qs-panel {
       padding: 20px;
       border: 1px solid var(--border);
@@ -1187,6 +1256,12 @@
           </div>
         </header>
 
+        <div class="qs-help-row">
+          <button id="qs-help-open" class="qs-help-button" type="button">
+            Como funcionam os simulados
+          </button>
+        </div>
+
         <section class="qs-mode-tabs" aria-label="Seções de Questões e Simulados">
           <button class="qs-mode-tab active" type="button" data-qs-mode="mine">
             Meus simulados
@@ -1395,14 +1470,6 @@
                   >
                 </label>
 
-                <div class="qs-manual-copy">
-                  <strong>Como funciona</strong>
-                  <p>
-                    O LURIA cria o simulado com a quantidade de questões escolhida.
-                    Depois você abre o gabarito e marca somente as questões que errou.
-                  </p>
-                </div>
-
                 <div class="qs-import-actions">
                   <button id="qs-create-manual" class="button primary" type="button">
                     Criar simulado manual
@@ -1527,6 +1594,22 @@
       </div>
     </main>
   </div>
+
+  <dialog id="qs-help-dialog" class="qs-help-dialog">
+    <div class="qs-help-dialog-shell">
+      <div class="qs-help-dialog-head">
+        <h2>Como funcionam os simulados</h2>
+        <button id="qs-help-close" class="qs-dialog-close" type="button" aria-label="Fechar">×</button>
+      </div>
+
+      <div class="qs-help-dialog-content">
+        <div><strong>Adicionar:</strong> envie um PDF para extração automática ou crie um simulado manualmente.</div>
+        <div><strong>Responder:</strong> abra o simulado e responda as questões diretamente no LURIA.</div>
+        <div><strong>Corrigir:</strong> confira o gabarito, o Pulo do Gato e as justificativas das alternativas.</div>
+        <div><strong>Erros:</strong> quando quiser, envie as questões erradas para o Caderno de Erros.</div>
+      </div>
+    </div>
+  </dialog>
 
   <!-- IMPORTAR PRINT DO GABARITO -->
   <dialog id="qs-answer-import-dialog" class="qs-answer-import-dialog">
@@ -1657,6 +1740,27 @@
   <script src="assets/js/app.js?v=17.4"></script>
   <script src="assets/js/study-mode.js?v=13.0"></script>
   <script src="assets/js/questoes-simulados.js?v=19.0"></script>
+
+  <script>
+    (() => {
+      const openButton = document.getElementById("qs-help-open");
+      const dialog = document.getElementById("qs-help-dialog");
+      const closeButton = document.getElementById("qs-help-close");
+
+      if (!openButton || !dialog) return;
+
+      openButton.addEventListener("click", () => {
+        if (typeof dialog.showModal === "function") dialog.showModal();
+        else dialog.setAttribute("open", "");
+      });
+
+      closeButton?.addEventListener("click", () => dialog.close());
+
+      dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) dialog.close();
+      });
+    })();
+  </script>
 
   <script>
     /* O JS principal já calcula a taxa de acerto semanal.
