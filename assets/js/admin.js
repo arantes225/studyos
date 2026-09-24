@@ -2324,6 +2324,19 @@
       return;
     }
 
+    let telemetryStored = false;
+    if (payload.stage_metrics && typeof payload.stage_metrics === "object") {
+      const { data: telemetryData, error: telemetryError } = await sb.rpc(
+        "admin_import_question_factory_stage_metrics",
+        { p_payload: payload }
+      );
+      if (telemetryError) {
+        console.warn("Etapa importada, mas a telemetria não pôde ser registrada:", telemetryError);
+      } else {
+        telemetryStored = Boolean(telemetryData?.stored);
+      }
+    }
+
     if (
       payload.style_score != null
       || payload.style_confidence_score != null
@@ -2339,11 +2352,14 @@
     }
 
     if (message) {
-      message.textContent = payload.review_stage === "prompt_calibration" ? "Calibração registrada." : payload.review_stage === "chatgpt_adjudication" ? `Julgamentos importados: ${data?.decisions_imported || 0}.` : state.qfReviewImportMode === "lot"
+      const baseMessage = payload.review_stage === "prompt_calibration" ? "Calibração registrada." : payload.review_stage === "chatgpt_adjudication" ? `Julgamentos importados: ${data?.decisions_imported || 0}.` : state.qfReviewImportMode === "lot"
         ? (data?.ready ? "Revisão final importada. Lote marcado como pronto." : "Revisão final importada. O lote ainda possui etapa pendente.")
         : state.qfReviewImportMode === "correction"
           ? `Correções importadas: ${data?.corrected || 0}. Próxima etapa: nova resolução cega e reauditoria Perplexity.`
           : `Importadas ${data?.imported || 0}: ${data?.approved || 0} aprovadas, ${data?.needs_revision || 0} a rever.`;
+      message.textContent = telemetryStored
+        ? `${baseMessage} Métricas da etapa atualizadas no dashboard.`
+        : baseMessage;
     }
 
     await Promise.all([loadQuestionFactory(),loadQuestionFactoryStyles(),loadQuestionFactoryBlockTracker(),loadQuestionFactoryQuality(),loadBadQuestionFolder(0)]);
@@ -2500,6 +2516,19 @@
         const historicalBest = calibration.highest_historical_style_score != null
           ? "Melhor histórico: " + Number(calibration.highest_historical_style_score).toLocaleString("pt-BR",{maximumFractionDigits:1}) + "/100" + (calibration.highest_historical_version ? " · " + calibration.highest_historical_version : "")
           : "";
+        const latestStage = item.latest_stage_metrics && typeof item.latest_stage_metrics === "object"
+          ? item.latest_stage_metrics
+          : null;
+        const latestStageSummary = latestStage
+          ? [
+              latestStage.stage || "etapa",
+              latestStage.provider || "",
+              latestStage.score == null ? "" : Number(latestStage.score).toLocaleString("pt-BR",{maximumFractionDigits:1}) + "/100",
+              latestStage.total_count ? Number(latestStage.total_count) + " itens" : "",
+              latestStage.hard_reject_count ? Number(latestStage.hard_reject_count) + " hard reject" + (Number(latestStage.hard_reject_count) === 1 ? "" : "s") : "",
+              latestStage.created_at ? formatDateTime(latestStage.created_at) : ""
+            ].filter(Boolean).join(" · ")
+          : "";
         const slug = String(item.exam_style || `banca-${index+1}`).replace(/[^a-z0-9]/gi,"-").toLowerCase();
         const masterPromptId = `qf-dashboard-${slug}-master`;
         const promptStages = [
@@ -2534,6 +2563,7 @@
                 <span class="admin-qf-style-score-status">${esc(calibrationStatus)}</span>
                 ${calibrationMeta ? `<span class="admin-qf-style-score-status">${esc(calibrationMeta)}</span>` : ""}
                 ${historicalBest ? `<span class="admin-qf-style-score-status">${esc(historicalBest)}</span>` : ""}
+                ${latestStageSummary ? `<span class="admin-qf-style-score-status">Última etapa · ${esc(latestStageSummary)}</span>` : ""}
               </div>
             </div>
             <div class="admin-qf-style-total">
