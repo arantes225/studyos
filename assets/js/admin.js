@@ -2571,18 +2571,23 @@
           : "";
         const slug = String(item.exam_style || `banca-${index+1}`).replace(/[^a-z0-9]/gi,"-").toLowerCase();
         const masterPromptId = `qf-dashboard-${slug}-master`;
+        const globalPromptId = `qf-dashboard-${slug}-global-contract`;
+        const globalPromptText = window.LuriaQuestionPrompts.globalContract
+          ? window.LuriaQuestionPrompts.globalContract()
+          : "";
         const promptStages = [
-          ["00","Calibrar prompt editorial","prompt_calibration","perplexity"],
           ["01","Prompt mestre · geração",null,"chatgpt"],
-          ["02A","Perplexity · resolução cega","blind_resolution","perplexity"],
           ["02","ChatGPT · revisão adversarial","chatgpt_initial","chatgpt"],
-          ["03","Perplexity · auditoria","perplexity_initial","perplexity"],
-          ["04","ChatGPT · julgar parecer","chatgpt_adjudication","chatgpt"],
-          ["05","ChatGPT · corrigir consenso","chatgpt_correction","chatgpt"],
-          ["06","Perplexity · reauditoria","perplexity_reaudit","perplexity"],
-          ["07A","ChatGPT · revisão global das 1.000","lot_chatgpt_final","chatgpt"],
-          ["07B","Perplexity · auditoria final das 1.000","lot_perplexity_final","perplexity"],
-                  ["07C","Gemini · auditoria adversarial","lot_gemini_final","gemini"]
+          ["03","Perplexity · resolução cega","blind_resolution","perplexity"],
+          ["04","Perplexity · auditoria","perplexity_initial","perplexity"],
+          ["05","ChatGPT · julgar parecer","chatgpt_adjudication","chatgpt"],
+          ["06","ChatGPT · corrigir consenso","chatgpt_correction","chatgpt"],
+          ["07","Perplexity · reauditoria","perplexity_reaudit","perplexity"]
+        ];
+        const finalLotStages = [
+          ["09A","ChatGPT · revisão global das 1.000","lot_chatgpt_final","chatgpt"],
+          ["09B","Perplexity · auditoria final das 1.000","lot_perplexity_final","perplexity"],
+          ["09C","Gemini · auditoria adversarial","lot_gemini_final","gemini"]
         ];
         return `
           <article class="admin-qf-style-card">
@@ -2653,6 +2658,25 @@
                 <small>Abrir geração, auditorias e revisões</small>
               </summary>
               <div class="admin-qf-style-prompts-body">
+                <details class="admin-qf-style-prompt-item admin-qf-global-contract-item">
+                  <summary>
+                    <b>00</b>
+                    <span>Contrato Global · regras gerais</span>
+                    <small>Incluído automaticamente em todos os prompts</small>
+                  </summary>
+                  <div>
+                    <div class="admin-qf-style-prompt-actions">
+                      <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(globalPromptId)}">Copiar contrato</button>
+                    </div>
+                    <pre id="${esc(globalPromptId)}" class="admin-qf-prompt">${esc(globalPromptText)}</pre>
+                  </div>
+                </details>
+
+                <div class="admin-qf-flow-note">
+                  <strong>Fluxo do bloco</strong>
+                  <span>Contrato Global → Perfil da banca → Etapa atual</span>
+                </div>
+
                 ${promptStages.map(([num,label,stage,provider]) => {
                   const pid = stage
                     ? `qf-dashboard-${slug}-${stage}`
@@ -2673,6 +2697,57 @@
                     </details>
                   `;
                 }).join("")}
+
+                <div class="admin-qf-human-step">
+                  <b>08</b>
+                  <div>
+                    <strong>Aprovação humana do bloco</strong>
+                    <small>Feita no Admin depois da reauditoria. Não é um prompt de IA.</small>
+                  </div>
+                </div>
+
+                <details class="admin-qf-style-prompt-item admin-qf-lot-review-group">
+                  <summary><b>09</b><span>Revisão final do lote de 1.000</span></summary>
+                  <div class="admin-qf-lot-review-prompts">
+                    ${finalLotStages.map(([num,label,stage,provider]) => {
+                      const pid = `qf-dashboard-${slug}-${stage}`;
+                      const promptText = buildBoardSegmentPrompt(item,stage);
+                      return `
+                        <details class="admin-qf-style-prompt-item">
+                          <summary><b>${esc(num)}</b><span>${esc(label)}</span></summary>
+                          <div>
+                            <div class="admin-qf-style-prompt-actions">
+                              <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Copiar</button>
+                              <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "gemini" ? "Gemini" : provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>
+                            </div>
+                            <pre id="${esc(pid)}" class="admin-qf-prompt">${esc(promptText)}</pre>
+                          </div>
+                        </details>
+                      `;
+                    }).join("")}
+                  </div>
+                </details>
+
+                <details class="admin-qf-style-prompt-item admin-qf-maintenance-group">
+                  <summary>
+                    <b>M</b>
+                    <span>Manutenção da banca</span>
+                    <small>${productionReady ? "Não faz parte do fluxo normal" : "Use para concluir a calibração"}</small>
+                  </summary>
+                  <div>
+                    ${productionReady ? '<p class="admin-qf-maintenance-note">Esta banca já está pronta para produção. Recalibre apenas se houver motivo editorial real.</p>' : ""}
+                    <details class="admin-qf-style-prompt-item">
+                      <summary><b>M1</b><span>Calibrar prompt editorial</span></summary>
+                      <div>
+                        <div class="admin-qf-style-prompt-actions">
+                          <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="qf-dashboard-${slug}-prompt_calibration">Copiar</button>
+                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="qf-dashboard-${slug}-prompt_calibration" data-ai-provider="perplexity">Abrir Perplexity</button>
+                        </div>
+                        <pre id="qf-dashboard-${slug}-prompt_calibration" class="admin-qf-prompt">${esc(buildBoardSegmentPrompt(item,"prompt_calibration"))}</pre>
+                      </div>
+                    </details>
+                  </div>
+                </details>
               </div>
             </details>
           </article>
