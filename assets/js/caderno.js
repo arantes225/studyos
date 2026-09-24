@@ -4175,9 +4175,21 @@ async function saveCurrentNotebook(
       result.data.id,
       result.data.content_html
     );
+
+    /*
+      Imagens novas entram inicialmente como data URL para manter
+      a edição instantânea. Assim que o caderno existe no banco,
+      movemos essas imagens para o Storage e persistimos apenas
+      a referência remota. Isso evita carregar a imagem inteira
+      junto com o HTML nas próximas aberturas.
+    */
+    await materializeNotebookImagesForShare(
+      result.data
+    );
+
   } catch (imageSyncError) {
     console.warn(
-      "Não foi possível sincronizar referências de imagem:",
+      "Não foi possível sincronizar/materializar imagens do caderno:",
       imageSyncError
     );
   }
