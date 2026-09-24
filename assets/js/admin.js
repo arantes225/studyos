@@ -2128,7 +2128,7 @@
           <article class="admin-qf-block-mini admin-qf-block-workflow" data-block-status="${esc(status)}">
             <div class="admin-qf-block-mini-head">
               <div><strong>${esc(block?.block_code || ('L'+String(Number(batch.batch_number||0)).padStart(3,'0')+'-B'+String(n).padStart(2,'0')))}</strong><small>Bloco ${n} · ${count}/200 questões</small></div>
-              <span class="admin-qf-block-state ${esc(status)}">${esc(qfStatusLabel(status))}</span>
+              <span class="admin-qf-block-state ${esc(status)}">${esc(blockAction.phase || qfStatusLabel(status))}</span>
             </div>
 
             <div class="admin-qf-block-mini-counts">
@@ -2191,6 +2191,12 @@
             </div>
           </div>
           <div class="admin-qf-batch-progress" aria-hidden="true"><span style="width:${progress.toFixed(1)}%"></span></div>
+          <div class="admin-qf-inline-quality-head">
+            <div>
+              <strong>Qualidade dos blocos</strong>
+              <small>Inicial, pós-correção e final em cada bloco do lote.</small>
+            </div>
+          </div>
           <div class="admin-qf-block-grid">${blockCards}</div>
           <div class="admin-qf-final-review ${lotInFinalReview ? "active" : ""}">
             <span>${lotInFinalReview ? "Revisão final das 1.000" : "Revisão final"}</span>
