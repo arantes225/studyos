@@ -4309,3 +4309,24 @@ body.admin-unlocked #admin-app {
     width:100%;
   }
 }
+
+
+/* Fábrica — produção em tempo real em largura total */
+[data-admin-view="factory"].admin-qf-lots-section,
+.admin-qf-lots-section,
+.admin-qf-lots-panel,
+.admin-factory-batches{
+  width:100%;
+  max-width:none;
+}
+.admin-factory-batches{
+  grid-template-columns:minmax(0,1fr)!important;
+}
+.admin-qf-batch-folder,
+.admin-qf-batch-card{
+  width:100%;
+  max-width:none;
+}
+.admin-qf-lots-section .admin-factory-batches-head{
+  align-items:flex-start;
+}
