@@ -1595,16 +1595,16 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 82px;
-  margin: 0 auto 16px;
+  min-height: 98px;
+  margin: 0 auto 18px;
   text-align: center;
 }
 
 .error-pulo-brand img {
   display: none;
   width: auto;
-  height: 82px;
-  max-width: min(320px, 100%);
+  height: 98px;
+  max-width: min(384px, 100%);
   object-fit: contain;
   margin: 0 auto;
 }
