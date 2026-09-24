@@ -16,7 +16,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="assets/img/logos/favicon.png?v=luria2">
   <link rel="stylesheet" href="assets/css/style.css?v=16.6">
-  <link rel="stylesheet" href="assets/css/ambientacao.css?v=13.0">
+  <link rel="stylesheet" href="assets/css/ambientacao.css?v=13.1">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
   <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
 
@@ -296,7 +296,7 @@
             <p>Escolha uma faixa para repetir ou ouvir em sequência. A lista fica visível sem baixar os arquivos de áudio.</p>
 
             <div class="lofi-player" data-lofi-shell>
-              <div class="lofi-player-main">
+              <div class="lofi-player-main lofi-player-main-compact">
                 <button class="lofi-main-toggle" type="button" data-lofi-toggle aria-label="Tocar som ambiente">
                   ▶
                 </button>
@@ -305,18 +305,14 @@
                   <strong data-lofi-title>Som ambiente</strong>
                   <small data-lofi-status>carregando lista...</small>
                 </div>
-              </div>
-
-              <div class="lofi-playback-mode">
-                <span>Modo de reprodução</span>
 
                 <div class="lofi-playback-mode-actions" role="group" aria-label="Modo de reprodução">
                   <button class="lofi-mode-button active" type="button" data-lofi-mode="repeat" aria-pressed="true">
-                    ↻ Repetir faixa
+                    ↻ Repetir
                   </button>
 
                   <button class="lofi-mode-button" type="button" data-lofi-mode="sequence" aria-pressed="false">
-                    Em sequência
+                    Sequência
                   </button>
                 </div>
               </div>
