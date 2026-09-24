@@ -2120,7 +2120,7 @@
             </div>
             <div class="admin-qf-batch-head-actions">
               <span class="admin-factory-badge">${esc(qfStatusLabel(batch.status))}</span>
-              ${batch.status !== "published" ? `<button class="button primary" type="button" data-qf-continue-batch="${Number(batch.batch_number)}">Continuar lote</button>` : ""}
+              ${batch.status !== "published" ? `<button class="button primary" type="button" data-qf-continue-batch="${Number(batch.batch_number)}">${esc(questionFactoryNextAction(batch.batch_number).label)}</button>` : ""}
             </div>
           </div>
           <div class="admin-qf-batch-progress" aria-hidden="true"><span style="width:${progress.toFixed(1)}%"></span></div>
@@ -2135,7 +2135,7 @@
             </div>
           </div>
           <div class="admin-qf-batch-actions">
-            ${batch.status !== "published" ? `<button class="button primary" type="button" data-qf-continue-batch="${Number(batch.batch_number)}">Continuar lote</button>` : ""}
+            ${batch.status !== "published" ? `<button class="button primary" type="button" data-qf-continue-batch="${Number(batch.batch_number)}">${esc(questionFactoryNextAction(batch.batch_number).label)}</button>` : ""}
             <button class="button secondary admin-qf-open-batch" type="button" data-qf-batch="${Number(batch.batch_number)}">Ver questões</button>
             <button class="button secondary" type="button" data-qf-export="${Number(batch.batch_number)}:0:audit">Exportar lote completo</button>
             ${batch.final_review_chatgpt_status === "approved" && batch.final_review_perplexity_status === "approved" && batch.final_human_review_status !== "approved" ? `<button class="button primary" type="button" data-qf-final-approve="${Number(batch.batch_number)}">Aprovar lote final</button>` : ""}
@@ -2977,13 +2977,23 @@
     ]);
   }
 
-  async function continueQuestionFactoryLot(batchNumber, button) {
+  function questionFactoryNextAction(batchNumber) {
     const batch = Number(batchNumber);
     const rows = (state.qfBlockTracker || [])
       .filter(row => Number(row.batch_number) === batch)
       .sort((a,b) => Number(a.block_number) - Number(b.block_number));
-
     const next = rows.find(row => !["block_complete"].includes(row.next_stage));
+    if (!next) return { next:null, label:"Revisão final do lote", provider:null };
+    if (next.next_stage === "human_review") return { next, label:"Aguardando sua aprovação", provider:null };
+    const provider = next.next_provider || "chatgpt";
+    const providerLabel = provider === "perplexity" ? "Perplexity" : provider === "gemini" ? "Gemini" : "ChatGPT";
+    return { next, provider, label:`Copiar prompt + abrir ${providerLabel}` };
+  }
+
+  async function continueQuestionFactoryLot(batchNumber, button) {
+    const batch = Number(batchNumber);
+    const action = questionFactoryNextAction(batch);
+    const next = action.next;
     if (!next) {
       window.alert("Os cinco blocos já concluíram o fluxo individual. O lote está pronto para a revisão final.");
       return;
