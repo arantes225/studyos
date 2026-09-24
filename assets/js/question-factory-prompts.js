@@ -1,7 +1,7 @@
 /* Contrato único da fábrica. Não inserir resultados históricos como identidade editorial. */
 (function (root) {
   'use strict';
-  const VERSION = '3.3';
+  const VERSION = '3.4';
   const SCHEMA_VERSION = '2.0';
   const rubric = { scientific:25, answer_key:20, answer_source:15, distractors:10, explanations:10, style:10, writing:5, difficulty:5 };
   const editable = ['enunciado','alternativa_a','alternativa_b','alternativa_c','alternativa_d','gabarito','explicacao_a','explicacao_b','explicacao_c','explicacao_d','mensagem_chave','area','tema','subtema','dificuldade','fonte_instituicao','fonte_documento','fonte_ano','fonte_url','answer_source_institution','answer_source_document','answer_source_year','answer_source_url','answer_source_section','answer_source_note'];
@@ -239,10 +239,23 @@ Gerar então problema completo, alternativas e explicações A-D. Para cada item
 - explicacao de cada alternativa incorreta: dizer por que está errada especificamente naquele caso e qual detalhe impediria escolhê-la.
 Incluir também área, tema, subtema e dificuldade justificada. Fonte geral e fonte específica do gabarito: instituição, documento, ano, URL real, seção quando disponível e nota de suporte.
 Identificar duplicatas por decisão/conceito e cenário, além de similaridade lexical; não apenas trocar idade ou nomes.
+DIVERSIDADE TEMÁTICA OBRIGATÓRIA DO BLOCO: as 200 questões devem variar de forma real entre áreas, temas, subtemas, cenários, decisões clínicas e operações cognitivas compatíveis com o perfil da banca. É proibido concentrar o bloco em poucos assuntos quando o perfil/corpus da banca tiver maior amplitude.
+- Construir antes da geração uma matriz de cobertura temática do bloco.
+- Evitar repetição sequencial do mesmo tema/subtema.
+- Não reutilizar a mesma doença, decisão clínica, armadilha, estrutura de caso ou eixo terapêutico em série.
+- Nenhum tema deve dominar o bloco sem justificativa explícita no perfil da banca/corpus primário.
+- Quando houver múltiplas áreas oficiais ou recorrentes na prova-alvo, todas devem aparecer em proporção compatível com a evidência disponível.
+- Dentro de uma mesma área, variar entre diagnóstico, conduta, prevenção, rastreamento, interpretação de exames, complicações, farmacologia, seguimento e raciocínio prognóstico quando aplicável.
+- Repetir um assunto só é aceitável se a banca realmente o cobra com alta frequência E se os itens exigirem decisões clínicas diferentes.
+- Se a matriz final revelar concentração excessiva, repetição de subtema ou blocos temáticos em sequência, o lote FALHA e deve ser rebalanceado antes da entrega.
 Gerar cada questão de forma independente. Não reutilizar caso-base, esqueleto semântico, conjunto de alternativas ou transformação mecânica entre bancas ou dentro do lote.
 Antes de entregar cada item, o GERADOR executa apenas uma pré-checagem. A aprovação depende de REVISÃO ADVERSARIAL INDEPENDENTE: o revisor não recebe a justificativa interna do gerador como autoridade e testa formal cueing, assimetria lexical, melhor distrator, contrafactual, dependência da vinheta, single-best-answer e dificuldade observada. Qualquer HARD REJECT impede entrada no lote. A versão rejeitada não pode ser exportada para auditoria externa. Regenerar o conjunto de alternativas e, se necessário, a vinheta; a nova versão volta a uma nova revisão adversarial. Só entra no lote quando surface_guess não acerta a chave com confiança média/alta, lexical_asymmetry=PASS, contrafactual=PASS e vignette_dependency=PASS (para médio/difícil), além de single-best-answer=PASS.
 Após fechar o conteúdo, embaralhar a posição da alternativa correta sem alterar seu texto.
 PRÉ-FLIGHT DE LOTE antes da saída:
+- validar diversidade temática real das 200 questões contra a matriz de cobertura planejada;
+- contar distribuição por área, tema e subtema e detectar concentração excessiva;
+- reprovar o bloco se houver repetição mecânica do mesmo assunto, cenário, doença, decisão clínica ou estrutura de caso;
+- confirmar que questões consecutivas não formam sequências artificiais do mesmo tema, salvo se isso reproduzir explicitamente o perfil da prova-alvo;
 - para lote de calibração com 15 itens, aplicar exatamente A-B-C-D-A-B-C-D-A-B-C-D-A-B-C por reordenação das alternativas após fechamento semântico;
 - validar automaticamente essa sequência antes da saída; se houver divergência, corrigir SOMENTE a posição das opções;
 - verificar se o lote contém variedade real de dificuldade compatível com o perfil; se a banca prevê parte intermediária-alta e todos os itens forem fáceis/baixa-média, o lote FALHA;
