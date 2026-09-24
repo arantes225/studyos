@@ -2364,9 +2364,9 @@
       return "Crítico";
     };
 
-    if ($("admin-qf-quality-initial")) $("admin-qf-quality-initial").textContent = pct(overall.avg_initial_quality);
-    if ($("admin-qf-quality-post")) $("admin-qf-quality-post").textContent = pct(overall.avg_post_correction_quality);
-    if ($("admin-qf-quality-final")) $("admin-qf-quality-final").textContent = pct(overall.avg_final_quality);
+    if ($("admin-qf-quality-initial")) $("admin-qf-quality-initial").textContent = pct(overall.step1_quality ?? overall.avg_initial_quality);
+    if ($("admin-qf-quality-post")) $("admin-qf-quality-post").textContent = pct(overall.step2_quality ?? null);
+    if ($("admin-qf-quality-final")) $("admin-qf-quality-final").textContent = pct(overall.step3_quality ?? overall.avg_post_correction_quality);
     if ($("admin-qf-quality-first-pass")) $("admin-qf-quality-first-pass").textContent = pct(overall.first_pass_approval_rate);
     if ($("admin-qf-quality-reaudit")) $("admin-qf-quality-reaudit").textContent = pct(overall.reaudit_approval_rate);
 
@@ -2374,20 +2374,20 @@
     const blocks = Array.isArray(data?.blocks) ? data.blocks : [];
     if (wrap) {
       wrap.innerHTML = blocks.length ? blocks.map(b => {
-        const initial = Number(b.initial_quality || 0);
-        const post = Number(b.post_correction_quality || 0);
-        const final = Number(b.final_quality || 0);
+        const initial = Number(b.step1_quality ?? b.initial_quality ?? 0);
+        const perplexityInitial = Number(b.step2_quality ?? 0);
+        const reaudited = Number(b.step3_quality ?? b.post_correction_quality ?? 0);
         const label = `L${String(Number(b.batch_number||0)).padStart(3,"0")} · Bloco ${Number(b.block_number||0)}`;
         return `
           <article class="admin-qf-quality-row">
             <div class="admin-qf-quality-row-head">
               <strong>${esc(label)}</strong>
-              <span>${b.final_quality == null ? "Sem nota final" : pct(b.final_quality)+" · "+qualityLabel(b.final_quality)}</span>
+              <span>${b.step3_quality != null ? pct(b.step3_quality)+" · "+qualityLabel(b.step3_quality) : (b.step2_quality != null ? pct(b.step2_quality)+" · "+qualityLabel(b.step2_quality) : ((b.step1_quality ?? b.initial_quality) == null ? "Sem nota" : pct(b.step1_quality ?? b.initial_quality)+" · "+qualityLabel(b.step1_quality ?? b.initial_quality)))}</span>
             </div>
             <div class="admin-qf-quality-bars">
-              <div><small>Step 1 · Auditoria própria</small><span><i style="width:${Math.max(0,Math.min(100,initial))}%"></i></span><b>${b.initial_quality == null ? "—" : pct(b.initial_quality)}</b></div>
-              <div><small>Step 3 · Perplexity após correções</small><span><i style="width:${Math.max(0,Math.min(100,post))}%"></i></span><b>${b.post_correction_quality == null ? "—" : pct(b.post_correction_quality)}</b></div>
-              <div><small>Step 2 · Perplexity</small><span><i style="width:${Math.max(0,Math.min(100,final))}%"></i></span><b>${b.final_quality == null ? "—" : pct(b.final_quality)}</b></div>
+              <div><small>Step 1 · Auditoria própria após gerar</small><span><i style="width:${Math.max(0,Math.min(100,initial))}%"></i></span><b>${(b.step1_quality ?? b.initial_quality) == null ? "—" : pct(b.step1_quality ?? b.initial_quality)}</b></div>
+              <div><small>Step 2 · Perplexity</small><span><i style="width:${Math.max(0,Math.min(100,perplexityInitial))}%"></i></span><b>${b.step2_quality == null ? "—" : pct(b.step2_quality)}</b></div>
+              <div><small>Step 3 · Perplexity após correções</small><span><i style="width:${Math.max(0,Math.min(100,reaudited))}%"></i></span><b>${b.step3_quality == null ? "—" : pct(b.step3_quality)}</b></div>
             </div>
             <div class="admin-qf-quality-row-meta">
               <span>${formatNumber(b.approved_count)} aprovadas</span>
