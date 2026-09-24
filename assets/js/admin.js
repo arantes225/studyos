@@ -2674,7 +2674,9 @@
         button.dataset.qfAutoBlock = String(block);
         button.dataset.qfAutoStart = String(range[0]);
         button.dataset.qfAutoEnd = String(range[1]);
-        button.dataset.qfAutoStage = stage === "perplexity_reaudit" ? "perplexity_reaudit" : "perplexity_initial";
+        button.dataset.qfAutoStage = stage === "blind_resolution"
+          ? (row.dataset.qfAutoTargetStage || "perplexity_initial")
+          : (stage === "perplexity_reaudit" ? "perplexity_reaudit" : "perplexity_initial");
         button.textContent = "Q" + String(range[0]).padStart(3,"0") + "–Q" + String(range[1]).padStart(3,"0");
         buttons.appendChild(button);
       });
@@ -2899,7 +2901,7 @@
       const provider = block.next_provider || meta.provider;
 
       return `
-        <article class="admin-qf-tracker-row" data-qf-auto-batch="${Number(block.batch_number||0)}" data-qf-auto-block="${Number(block.block_number||0)}" data-qf-auto-stage="${esc(block.next_stage || "")}">
+        <article class="admin-qf-tracker-row" data-qf-auto-batch="${Number(block.batch_number||0)}" data-qf-auto-block="${Number(block.block_number||0)}" data-qf-auto-stage="${esc(block.next_stage || "")}" data-qf-auto-target-stage="${esc(block.blind_target_stage || "")}">
           <div class="admin-qf-tracker-main">
             <strong>${esc(block.block_code || ('L'+String(Number(block.batch_number||0)).padStart(3,'0')+'-B'+String(Number(block.block_number||0)).padStart(2,'0')))}</strong>
             <small>${esc(block.batch_code || ('L'+String(Number(block.batch_number||0)).padStart(3,'0')))} · Bloco ${Number(block.block_number||0)} · ${Number(block.question_count||0)}/${Number(block.target_size||200)} questões</small>
