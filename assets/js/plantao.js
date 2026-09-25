@@ -1065,8 +1065,11 @@
         if(/erisipela/.test(text)) return "Placa eritematosa quente, dolorosa, edemaciada e bem delimitada, frequentemente em membro inferior.";
         if(/celulite/.test(text)) return "Área de eritema, calor, edema e dor com limites menos definidos, sem crepitação ou necrose no quadro não complicado.";
         return "Pele íntegra, sem exantema, petéquias ou lesões agudas relevantes; mucosas coradas e sem cianose ou icterícia.";
-      default:
-        return "Sem alteração objetiva relevante neste segmento ao exame atual.";
+      default:{
+        const complaint=String(state.current?.presentation?.chief_complaint||state.current?.summary||"a apresentação atual");
+        const label=String(action?.label||"segmento examinado");
+        return label+": não há achado focal adicional que explique ou agrave "+complaint+" além dos sinais já documentados neste caso.";
+      }
     }
   }
 
@@ -2213,6 +2216,19 @@
 
     const pulseReturned=beforeVitals?.pulse===false && state.vitals?.pulse===true;
     const pulseLost=beforeVitals?.pulse!==false && state.vitals?.pulse===false;
+
+    // Mantém a imagem/estado do paciente sincronizados com a fisiologia do monitor.
+    if(state.vitals?.pulse===false || Number(state.vitals?.hr)===0){
+      state.vitals={...state.vitals,mental:"Inconsciente"};
+    } else if(pulseReturned){
+      const currentMental=normalizeLabel(state.vitals?.mental||"");
+      if(!currentMental || /inconsciente|coma|nao responsiv|nao responde/.test(currentMental)){
+        state.vitals={...state.vitals,mental:"Sonolento"};
+      }
+    } else if(Number(state.vitals?.spo2)<80 && !/inconsciente|coma/.test(normalizeLabel(state.vitals?.mental||""))){
+      state.vitals={...state.vitals,mental:"Confuso"};
+    }
+
     if(pulseLost && state.arrestStartedAt==null) state.arrestStartedAt=state.elapsed;
     if(state.vitals?.pulse===true) state.arrestStartedAt=null;
     const type=actionId==="defibrillate" ? "defibrillation"
