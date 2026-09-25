@@ -2365,3 +2365,73 @@ body.plantao-phone-mode .plantao-phone-page-back{
     height:28px;
   }
 }
+
+/* v7.0 — No PWA, o LuriaZap vira a própria tela do aparelho */
+.pwa-standalone body.plantao-phone-mode{
+  min-height:100dvh;
+  overflow:hidden;
+  background:var(--surface);
+}
+.pwa-standalone body.plantao-phone-mode .main,
+.pwa-standalone body.plantao-phone-mode .page.plantao-page,
+.pwa-standalone body.plantao-phone-mode #plantao-library,
+.pwa-standalone body.plantao-phone-mode #plantao-telefone.plantao-phone-preview,
+.pwa-standalone body.plantao-phone-mode .plantao-phone-layout,
+.pwa-standalone body.plantao-phone-mode .plantao-phone-layout>.plantao-phone-station,
+.pwa-standalone body.plantao-phone-mode .plantao-phone-device,
+.pwa-standalone body.plantao-phone-mode .plantao-phone-screen{
+  width:100%!important;
+  max-width:none!important;
+  min-height:100dvh!important;
+  height:100dvh!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  background:var(--surface)!important;
+  aspect-ratio:auto!important;
+}
+.pwa-standalone body.plantao-phone-mode #plantao-library,
+.pwa-standalone body.plantao-phone-mode #plantao-telefone.plantao-phone-preview,
+.pwa-standalone body.plantao-phone-mode .plantao-phone-layout{
+  display:block!important;
+}
+.pwa-standalone body.plantao-phone-mode .plantao-phone-layout>.plantao-phone-station::before,
+.pwa-standalone body.plantao-phone-mode .plantao-phone-layout>.plantao-phone-station::after,
+.pwa-standalone body.plantao-phone-mode .plantao-phone-notch,
+.pwa-standalone body.plantao-phone-mode .plantao-phone-statusbar,
+.pwa-standalone body.plantao-phone-mode .plantao-phone-page-back{
+  display:none!important;
+}
+.pwa-standalone body.plantao-phone-mode .plantao-phone-screen{
+  overflow:hidden!important;
+}
+.pwa-standalone body.plantao-phone-mode .plantao-phone-inbox,
+.pwa-standalone body.plantao-phone-mode .plantao-phone-chat-view{
+  min-height:100dvh;
+  height:100dvh;
+}
+.pwa-standalone body.plantao-phone-mode .plantao-phone-chat-head,
+.pwa-standalone body.plantao-phone-mode .plantao-phone-inbox-head{
+  min-height:calc(64px + env(safe-area-inset-top));
+  padding:
+    calc(12px + env(safe-area-inset-top))
+    max(16px,env(safe-area-inset-right))
+    12px
+    max(16px,env(safe-area-inset-left));
+}
+.pwa-standalone body.plantao-phone-mode .plantao-phone-chat-body{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:calc(14px + env(safe-area-inset-bottom));
+}
+.pwa-standalone body.plantao-phone-mode .plantao-phone-choices{
+  margin:
+    0
+    max(10px,env(safe-area-inset-right))
+    calc(10px + env(safe-area-inset-bottom))
+    max(10px,env(safe-area-inset-left));
+}
