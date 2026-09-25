@@ -123,7 +123,25 @@
           <button class="admin-view-tab" type="button" data-admin-view-tab="plans" aria-selected="false">
             Planos
           </button>
+          <button class="admin-view-tab" type="button" data-admin-view-tab="plantao" aria-selected="false">
+            Plantão
+          </button>
         </nav>
+
+        <section class="admin-section" data-admin-view="plantao" hidden>
+          <div class="admin-section-head">
+            <div>
+              <span class="eyebrow">Plantão</span>
+              <h2>Importar casos clínicos</h2>
+              <p>Selecione um JSON com até 50 casos. O importador valida o lote e faz UPSERT pelo slug.</p>
+            </div>
+          </div>
+          <div class="admin-plantao-import">
+            <label class="admin-pin-field"><span>Arquivo JSON</span><input id="admin-plantao-json-file" type="file" accept=".json,application/json"></label>
+            <div id="admin-plantao-import-message" class="admin-status" aria-live="polite">Nenhum arquivo selecionado.</div>
+            <button id="admin-plantao-import-submit" class="button primary" type="button" disabled>Importar para o Supabase</button>
+          </div>
+        </section>
 
         <section class="admin-section admin-plan-settings" data-admin-view="plans" hidden>
           <div class="admin-section-head">
@@ -1105,7 +1123,7 @@ Após as três aprovações da versão atual, aguardar aprovação humana final 
   <script src="assets/js/app.js?v=17.3"></script>
   <script src="assets/js/admin-editais.js?v=3"></script>
   <script src="assets/js/question-factory-prompts.js?v=4.0"></script>
-  <script src="assets/js/admin.js?v=6.5"></script>
+  <script src="assets/js/admin.js?v=6.6"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
