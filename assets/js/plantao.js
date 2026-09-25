@@ -205,6 +205,10 @@
 
     if(phone){
       renderPhoneCases();
+      if(!state.phoneSession){
+        $("plantao-phone-station").hidden=true;
+        $("plantao-phone-inbox").hidden=false;
+      }
       window.scrollTo({top:0,behavior:"instant"});
     }else{
       window.scrollTo({top:0,behavior:"instant"});
@@ -215,18 +219,22 @@
     const host=$("plantao-phone-case-list");
     if(!host) return;
     if(!state.phoneCases.length){
-      host.innerHTML='<div class="placeholder">Nenhum caso de Telefone disponível ainda.</div>';
+      host.innerHTML='<div class="plantao-phone-empty">Nenhuma interconsulta disponível.</div>';
       return;
     }
     host.innerHTML=state.phoneCases.map(item=>`
-      <article class="plantao-phone-case-card">
-        <div>
-          <span class="badge">${esc(item.specialty)} · ${esc(item.difficulty)}</span>
-          <h3>${esc(item.title)}</h3>
-          <p>${esc(item.requester_role)} solicita uma interconsulta.</p>
-        </div>
-        <button class="button primary" type="button" data-start-phone-case="${esc(item.id)}">Atender ligação</button>
-      </article>
+      <button class="plantao-phone-conversation" type="button" data-start-phone-case="${esc(item.id)}">
+        <span class="plantao-phone-conversation-avatar" aria-hidden="true">✚</span>
+        <span class="plantao-phone-conversation-main">
+          <span class="plantao-phone-conversation-top">
+            <strong>${esc(item.requester_role||"Interconsulta")}</strong>
+            <small>agora</small>
+          </span>
+          <span class="plantao-phone-conversation-title">${esc(item.title)}</span>
+          <span class="plantao-phone-conversation-preview">${esc(item.opening_message||"Nova solicitação de interconsulta")}</span>
+        </span>
+        <span class="plantao-phone-conversation-chevron" aria-hidden="true">›</span>
+      </button>
     `).join("");
   }
 
@@ -244,7 +252,7 @@
       session_id:session.id,user_id:state.user.id,turn_index:0,sender:"requester",content:item.opening_message,metadata:{pilot:true}
     });
     if(msgError) console.warn("Telefone: falha ao registrar abertura",msgError);
-    $("plantao-phone-case-list").hidden=true;
+    $("plantao-phone-inbox").hidden=true;
     $("plantao-phone-station").hidden=false;
     $("plantao-phone-requester").textContent=item.requester_role||"Solicitante";
     $("plantao-phone-context").textContent=(item.specialty||"Interconsulta")+" · "+new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
@@ -324,8 +332,18 @@
     }
     state.phoneSession=null; state.phoneCase=null; state.phoneTurn=0;
     $("plantao-phone-station").hidden=true;
-    $("plantao-phone-case-list").hidden=false;
+    $("plantao-phone-inbox").hidden=false;
     renderPhoneCases();
+  });
+
+  $("plantao-phone-exit")?.addEventListener("click",async()=>{
+    if(state.phoneSession?.id){
+      await sb.from("interconsultation_sessions").update({status:"abandoned",completed_at:new Date().toISOString()}).eq("id",state.phoneSession.id);
+    }
+    state.phoneSession=null; state.phoneCase=null; state.phoneTurn=0;
+    $("plantao-phone-station").hidden=true;
+    $("plantao-phone-inbox").hidden=false;
+    setPlantaoMode("emergency");
   });
 
   function closeSiteFilters(except=null){
