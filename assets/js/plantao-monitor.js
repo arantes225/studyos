@@ -131,6 +131,45 @@
     });
     if(!reduced.matches) frame=requestAnimationFrame(draw);
   }
+  function setupMonitorExpansion() {
+    const monitor = document.querySelector('.plantao-monitor');
+    if (!monitor || monitor.dataset.expandReady === '1') return;
+    monitor.dataset.expandReady = '1';
+    monitor.setAttribute('role','button');
+    monitor.setAttribute('tabindex','0');
+    monitor.setAttribute('aria-expanded','false');
+    monitor.setAttribute('title','Toque para ampliar o monitor');
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'plantao-monitor-backdrop';
+    backdrop.hidden = true;
+    document.body.appendChild(backdrop);
+
+    const setExpanded = expanded => {
+      monitor.classList.toggle('is-expanded', expanded);
+      backdrop.hidden = !expanded;
+      document.body.classList.toggle('plantao-monitor-open', expanded);
+      monitor.setAttribute('aria-expanded', String(expanded));
+      monitor.setAttribute('title', expanded ? 'Toque para fechar o monitor ampliado' : 'Toque para ampliar o monitor');
+      if (!frame) frame = requestAnimationFrame(draw);
+    };
+    const toggle = () => setExpanded(!monitor.classList.contains('is-expanded'));
+
+    monitor.addEventListener('click', toggle);
+    backdrop.addEventListener('click', () => setExpanded(false));
+    monitor.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggle();
+      }
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && monitor.classList.contains('is-expanded')) setExpanded(false);
+    });
+  }
+
+  setupMonitorExpansion();
+
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!frame)frame=requestAnimationFrame(draw);});
   new MutationObserver(()=>{if(!frame)frame=requestAnimationFrame(draw);}).observe(document.getElementById('plantao-simulator'),{attributes:true,attributeFilter:['hidden']});
   reduced.addEventListener('change',()=>{if(!frame)frame=requestAnimationFrame(draw);});
