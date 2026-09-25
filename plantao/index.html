@@ -64,7 +64,7 @@
             </a>
           </nav>
           <div id="plantao-emergencia" class="plantao-library-head"><div><h2>Sala de emergência</h2><p>Primeiro módulo do Plantão. Novos ambientes podem usar o mesmo motor.</p></div></div>
-          <div class="plantao-filters" aria-label="Filtros dos casos">
+          <div id="plantao-emergency-filters" class="plantao-filters" aria-label="Filtros dos casos">
             <label>Especialidade
               <select id="plantao-filter-specialty">
                 <option value="">Todas</option>
@@ -81,32 +81,32 @@
           <div id="plantao-empty" class="placeholder" hidden>Nenhum caso clínico disponível.</div>
           <article id="plantao-telefone" class="plantao-phone-preview panel" hidden aria-labelledby="plantao-phone-title">
             <div class="plantao-phone-copy">
-              <span class="badge">Em preparação</span>
-              <h2 id="plantao-phone-title">Telefone</h2>
-              <p>OSCE conversacional: o caso chega por mensagem e você conduz as perguntas, o raciocínio clínico e a orientação como especialista.</p>
+              <span class="badge accent">Telefone</span>
+              <h2 id="plantao-phone-title">Interconsulta por telefone</h2>
+              <p>Você é o especialista. O solicitante apresenta um caso incompleto e você conduz a conversa: pergunta, raciocina e orienta sem menus clínicos.</p>
               <div class="plantao-phone-rules">
                 <span><strong>60</strong> casos/mês</span>
                 <span><strong>20 min</strong> por caso</span>
-                <span><strong>IA</strong> para conversa livre</span>
+                <span><strong>OSCE</strong> conversacional</span>
               </div>
+              <div id="plantao-phone-case-list" class="plantao-phone-case-list" aria-live="polite"></div>
             </div>
-            <div class="plantao-phone-demo" aria-label="Caso demonstrativo do Telefone">
+            <div id="plantao-phone-station" class="plantao-phone-station" hidden>
               <div class="plantao-phone-device">
                 <div class="plantao-phone-notch" aria-hidden="true"></div>
                 <div class="plantao-phone-screen">
-                  <header class="plantao-phone-chat-head"><span>‹</span><strong>Interconsulta</strong><span>•••</span></header>
-                  <div class="plantao-phone-chat-body">
-                    <div class="plantao-phone-case-label">CASO DEMONSTRATIVO</div>
-                    <div class="plantao-phone-bubble incoming"><strong>PS · Clínica Médica</strong><span>Paciente masculino, 58 anos, com dor torácica intensa iniciada há cerca de 40 minutos, associada a sudorese e náusea. PA 148/92 mmHg, FC 96 bpm, SpO₂ 97%.</span></div>
-                    <div class="plantao-phone-bubble incoming"><span>Preciso discutir a condução desse paciente. O que você quer saber primeiro?</span></div>
-                    <div class="plantao-phone-bubble outgoing"><span>Quero saber as características da dor, antecedentes cardiovasculares e o ECG inicial.</span></div>
-                    <div class="plantao-phone-bubble incoming"><span>Dor retroesternal em aperto, irradiando para o braço esquerdo. Hipertenso e tabagista. O ECG acabou de ficar disponível.</span></div>
-                    <div class="plantao-phone-typing"><i></i><i></i><i></i></div>
-                  </div>
-                  <div class="plantao-phone-compose"><span>Digite sua resposta…</span><button type="button" aria-label="Enviar">↑</button></div>
+                  <header class="plantao-phone-chat-head">
+                    <button id="plantao-phone-back" type="button" aria-label="Voltar para casos">‹</button>
+                    <div><strong id="plantao-phone-requester">Interconsulta</strong><small id="plantao-phone-context">Plantão</small></div>
+                    <span>•••</span>
+                  </header>
+                  <div id="plantao-phone-chat-body" class="plantao-phone-chat-body" aria-live="polite"></div>
+                  <form id="plantao-phone-compose" class="plantao-phone-compose-form">
+                    <input id="plantao-phone-input" type="text" autocomplete="off" placeholder="Digite sua resposta…" aria-label="Mensagem para o solicitante">
+                    <button type="submit" aria-label="Enviar">↑</button>
+                  </form>
                 </div>
               </div>
-              <p class="plantao-phone-demo-note">Prévia visual — conversa demonstrativa para ajustar o layout antes da integração com IA.</p>
             </div>
           </article>
         </section>
