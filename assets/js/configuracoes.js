@@ -1509,7 +1509,8 @@ function syncTargetExamUi() {
 
 function renderTargetExamOptions() {
   const grid = document.getElementById("target-exam-grid");
-  const exams = window.LuriaExamPriority?.exams || [];
+  const exams = [...(window.LuriaExamPriority?.exams || [])]
+    .sort((a,b)=>String(a).localeCompare(String(b),"pt-BR",{sensitivity:"base"}));
   if (!grid) return;
 
   grid.innerHTML = exams.map((exam) => `
@@ -1518,6 +1519,19 @@ function renderTargetExamOptions() {
       <span><span class="target-exam-name">${exam}</span><strong class="target-exam-rank" hidden></strong></span>
     </label>
   `).join("");
+
+  const search = document.getElementById("target-exam-search");
+  const filterOptions = () => {
+    const term = String(search?.value || "").trim().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+    grid.querySelectorAll(".target-exam-option").forEach((label) => {
+      const name = String(label.querySelector(".target-exam-name")?.textContent || "")
+        .normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+      label.hidden = Boolean(term) && !name.includes(term);
+    });
+    grid.scrollTop = 0;
+  };
+  search?.addEventListener("input", filterOptions);
+  filterOptions();
 
   grid.addEventListener("change", (event) => {
     const input = event.target.closest('input[type="checkbox"]');
