@@ -65,8 +65,24 @@
           </nav>
           <div id="plantao-emergencia" class="plantao-library-head"><div><h2>Sala de emergência</h2><p>Primeiro módulo do Plantão. Novos ambientes podem usar o mesmo motor.</p></div></div>
           <div id="plantao-emergency-filters" class="plantao-filters" aria-label="Filtros dos casos">
-            <label>Especialidade<select id="plantao-filter-specialty"><option value="">Todas</option></select></label>
-            <label>Dificuldade<select id="plantao-filter-difficulty"><option value="">Todas</option></select></label>
+            <div class="plantao-site-filter">
+              <span class="plantao-filter-label">Especialidade</span>
+              <div class="plantao-site-select" data-plantao-filter="specialty">
+                <button id="plantao-filter-specialty-button" class="plantao-site-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                  <span id="plantao-filter-specialty-label">Todas</span><span aria-hidden="true">⌄</span>
+                </button>
+                <div id="plantao-filter-specialty-list" class="plantao-site-select-list" role="listbox" hidden></div>
+              </div>
+            </div>
+            <div class="plantao-site-filter">
+              <span class="plantao-filter-label">Dificuldade</span>
+              <div class="plantao-site-select" data-plantao-filter="difficulty">
+                <button id="plantao-filter-difficulty-button" class="plantao-site-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                  <span id="plantao-filter-difficulty-label">Todas</span><span aria-hidden="true">⌄</span>
+                </button>
+                <div id="plantao-filter-difficulty-list" class="plantao-site-select-list" role="listbox" hidden></div>
+              </div>
+            </div>
             <button id="plantao-filter-clear" class="button secondary" type="button">Limpar filtros</button>
           </div>
           <div id="plantao-case-grid" class="plantao-case-grid" aria-live="polite"></div>
@@ -174,7 +190,7 @@
   <script src="assets/js/app.js?v=17.4"></script>
   <script src="assets/js/plantao-monitor.js?v=2.1"></script>
   <script src="assets/js/plantao-engine.js?v=3.0"></script>
-  <script src="assets/js/plantao.js?v=5.2"></script>
+  <script src="assets/js/plantao.js?v=5.3"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
 </html>
