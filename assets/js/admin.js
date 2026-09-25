@@ -2220,11 +2220,15 @@
             <button class="button secondary admin-qf-view-block-wide" type="button" data-qf-view-block="${Number(batch.batch_number)}:${n}">${needs || rejected ? "Ver pendências" : "Ver bloco"}</button>
             <button class="button secondary admin-qf-import-stage-wide" type="button" data-qf-import-stage="${Number(batch.batch_number)}:${n}">Importar etapa</button>
 
-            ${!lotInFinalReview && blockAction.provider ? `
+            ${!lotInFinalReview ? `
               <div class="admin-qf-block-ai-action">
-                <small>${esc(blockAction.phase)}</small>
-                <button class="button primary" type="button" data-qf-copy-block-stage="${Number(batch.batch_number)}:${n}">${esc("Copiar prompt · " + blockAction.phase)}</button>
-                <button class="button secondary" type="button" data-qf-block-ai="${Number(batch.batch_number)}:${n}">${esc("Copiar + abrir " + blockAction.providerLabel)}</button>
+                <small>${esc(blockAction.phase || "Etapa atual")}</small>
+                ${blockAction.provider ? `
+                  <button class="button primary" type="button" data-qf-copy-block-stage="${Number(batch.batch_number)}:${n}">Copiar prompt da etapa</button>
+                  <button class="button secondary" type="button" data-qf-block-ai="${Number(batch.batch_number)}:${n}">${esc("Copiar + abrir " + blockAction.providerLabel)}</button>
+                ` : `
+                  <button class="button secondary" type="button" disabled>${blockAction?.next?.next_stage === "human_review" ? "Etapa sem prompt · aprovação humana" : "Prompt da etapa indisponível"}</button>
+                `}
               </div>
             ` : ""}
 
@@ -3344,40 +3348,53 @@
     const button = $("admin-qf-start-lot");
     const status = $("admin-qf-start-lot-status");
     const examStyle = String(select?.value || "").trim();
+
     if (!examStyle) {
-      if (status) status.textContent = "Escolha a banca.";
+      if (status) status.textContent = "Escolha a banca antes de criar o lote.";
+      select?.focus();
       return;
     }
-    if (!window.confirm(`Iniciar um novo lote de 1.000 questões de ${examStyle}? Os 5 blocos de 200 serão criados agora.`)) return;
 
-    const original = button?.textContent || "Iniciar lote de 1.000";
+    if (!window.confirm(`Criar um novo lote de 1.000 questões de ${examStyle}? Os 5 blocos de 200 serão criados agora.`)) return;
+
+    const original = button?.textContent || "Criar novo lote";
     if (button) {
       button.disabled = true;
-      button.textContent = "Criando Lote...";
+      button.textContent = "Criando lote...";
     }
-    if (status) status.textContent = "Criando os 5 blocos...";
+    if (status) status.textContent = "Criando lote e os 5 blocos de 200...";
 
-    const { data, error } = await sb.rpc("admin_start_question_factory_lot", {
-      p_exam_style: examStyle,
-      p_automation_mode: "guided_1000"
-    });
+    try {
+      const { data, error } = await sb.rpc("admin_start_question_factory_lot", {
+        p_exam_style: examStyle,
+        p_automation_mode: "guided_1000"
+      });
 
-    if (button) {
-      button.disabled = false;
-      button.textContent = original;
+      if (error) {
+        console.error("Falha ao criar lote da fábrica:", error);
+        if (status) status.textContent = error.message || "Não foi possível criar o lote.";
+        return;
+      }
+
+      if (status) {
+        status.textContent = `${data?.batch_code || "Novo lote"} criado com sucesso · 5 blocos de 200.`;
+      }
+
+      await Promise.all([
+        loadQuestionFactory(),
+        loadQuestionFactoryBlockTracker(),
+        loadQuestionFactoryPromptContexts(),
+        loadQuestionFactoryQuality()
+      ]);
+    } catch (error) {
+      console.error("Erro inesperado ao criar lote da fábrica:", error);
+      if (status) status.textContent = "Erro ao criar o lote. Tente novamente.";
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = original;
+      }
     }
-    if (error) {
-      if (status) status.textContent = error.message || "Não foi possível iniciar o lote.";
-      return;
-    }
-
-    if (status) status.textContent = `${data?.batch_code || "Lote"} criado: 5 blocos de 200. Use “Continuar lote”.`;
-    await Promise.all([
-      loadQuestionFactory(),
-      loadQuestionFactoryBlockTracker(),
-      loadQuestionFactoryPromptContexts(),
-      loadQuestionFactoryQuality()
-    ]);
   }
 
   function questionFactoryBlockAction(batchNumber, blockNumber) {
