@@ -108,7 +108,7 @@
         <article class="plantao-case-card">
           <div class="plantao-case-card-head">
             <div>
-              <h3>${esc(item.presentation?.display_title || item.title)}</h3>
+              <h3>${esc(item.presentation?.chief_complaint || item.presentation?.display_title || item.summary || "Queixa não informada")}</h3>
               <div class="plantao-case-tags">
                 <span>${esc(item.specialty)}</span>
                 <span>${esc(item.difficulty)}</span>
@@ -638,11 +638,11 @@
     state.session=data;
 
     $("plantao-setting").textContent=item.setting || "Sala de emergência";
-    $("plantao-case-title").textContent=item.presentation?.display_title || item.title;
+    $("plantao-case-title").textContent=item.presentation?.chief_complaint || item.presentation?.display_title || item.summary || "Queixa não informada";
     $("plantao-opening").textContent=item.presentation?.opening || item.summary;
     $("plantao-age").textContent=item.presentation?.age || "";
     $("plantao-sex").textContent=item.presentation?.sex || "";
-    $("plantao-chief").textContent=item.presentation?.chief_complaint ? "Queixa: "+item.presentation.chief_complaint : "";
+    $("plantao-chief").textContent="";
     $("plantao-time").textContent=fmtTime(0);
     updateScore();
     renderVitals();
