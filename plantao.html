@@ -89,32 +89,39 @@
           <div id="plantao-case-grid" class="plantao-case-grid" aria-live="polite"></div>
           <div id="plantao-empty" class="placeholder" hidden>Nenhum caso clínico disponível.</div>
           </div>
-          <article id="plantao-telefone" class="plantao-phone-preview panel" hidden aria-labelledby="plantao-phone-title">
-            <div class="plantao-phone-copy">
-              <span class="badge accent">Telefone</span>
-              <h2 id="plantao-phone-title">Interconsulta por telefone</h2>
-              <p>Você é o especialista. O solicitante apresenta um caso incompleto e você conduz a conversa: pergunta, raciocina e orienta sem menus clínicos.</p>
-              <div class="plantao-phone-rules">
-                <span><strong>60</strong> casos/mês</span>
-                <span><strong>20 min</strong> por caso</span>
-                <span><strong>OSCE</strong> conversacional</span>
-              </div>
-              <div id="plantao-phone-case-list" class="plantao-phone-case-list" aria-live="polite"></div>
-            </div>
-            <div id="plantao-phone-station" class="plantao-phone-station" hidden>
-              <div class="plantao-phone-device">
+          <article id="plantao-telefone" class="plantao-phone-preview" hidden aria-labelledby="plantao-phone-title">
+            <div class="plantao-phone-station">
+              <div class="plantao-phone-device" aria-label="Telefone de interconsultas">
                 <div class="plantao-phone-notch" aria-hidden="true"></div>
                 <div class="plantao-phone-screen">
-                  <header class="plantao-phone-chat-head">
-                    <button id="plantao-phone-back" type="button" aria-label="Voltar para casos">‹</button>
-                    <div><strong id="plantao-phone-requester">Interconsulta</strong><small id="plantao-phone-context">Plantão</small></div>
-                    <span>•••</span>
-                  </header>
-                  <div id="plantao-phone-chat-body" class="plantao-phone-chat-body" aria-live="polite"></div>
-                  <form id="plantao-phone-compose" class="plantao-phone-compose-form">
-                    <input id="plantao-phone-input" type="text" autocomplete="off" placeholder="Digite sua resposta…" aria-label="Mensagem para o solicitante">
-                    <button type="submit" aria-label="Enviar">↑</button>
-                  </form>
+                  <section id="plantao-phone-inbox" class="plantao-phone-inbox">
+                    <header class="plantao-phone-chat-head plantao-phone-inbox-head">
+                      <button id="plantao-phone-exit" type="button" aria-label="Voltar para o Plantão">‹</button>
+                      <div>
+                        <strong id="plantao-phone-title">Interconsultas</strong>
+                        <small>Plantão · Telefone</small>
+                      </div>
+                      <span aria-hidden="true">•••</span>
+                    </header>
+                    <div class="plantao-phone-inbox-toolbar">
+                      <strong>Conversas</strong>
+                      <small>Escolha uma interconsulta para atender</small>
+                    </div>
+                    <div id="plantao-phone-case-list" class="plantao-phone-case-list" aria-live="polite"></div>
+                  </section>
+
+                  <section id="plantao-phone-station" class="plantao-phone-chat-view" hidden>
+                    <header class="plantao-phone-chat-head">
+                      <button id="plantao-phone-back" type="button" aria-label="Voltar para conversas">‹</button>
+                      <div><strong id="plantao-phone-requester">Interconsulta</strong><small id="plantao-phone-context">Plantão</small></div>
+                      <span aria-hidden="true">•••</span>
+                    </header>
+                    <div id="plantao-phone-chat-body" class="plantao-phone-chat-body" aria-live="polite"></div>
+                    <form id="plantao-phone-compose" class="plantao-phone-compose-form">
+                      <input id="plantao-phone-input" type="text" autocomplete="off" placeholder="Digite sua resposta…" aria-label="Mensagem para o solicitante">
+                      <button type="submit" aria-label="Enviar">↑</button>
+                    </form>
+                  </section>
                 </div>
               </div>
             </div>
