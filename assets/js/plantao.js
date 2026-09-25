@@ -1546,7 +1546,7 @@
     const grid=$("plantao-case-grid");
     const empty=$("plantao-empty");
     const phone=$("plantao-telefone");
-    const isPhone=mode==="telefone";
+    const isPhone=mode==="telefone" || mode==="phone";
     if(emergency) emergency.hidden=isPhone;
     if(filters) filters.hidden=isPhone;
     if(grid) grid.hidden=isPhone;
