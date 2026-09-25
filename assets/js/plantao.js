@@ -147,7 +147,6 @@
     {id:"check_pulse",label:"Checar pulso e respiração",category:"iniciais",subgroup:"Avaliação imediata",time_min:.25,points:0,result:"Pulso e padrão respiratório avaliados."},
     {id:"check_rhythm",label:"Avaliar ritmo no monitor",category:"iniciais",subgroup:"Avaliação imediata",time_min:.25,points:0,result:"Ritmo avaliado no monitor.",requires_all:["monitor"],requires_penalty:2},
     {id:"abcde",label:"Avaliação ABCDE",category:"iniciais",subgroup:"Avaliação imediata",time_min:1,points:0,result:"ABCDE realizado de forma sistemática."},
-    {id:"trauma_abcde",label:"ABCDE do trauma",category:"iniciais",subgroup:"Trauma",time_min:1,points:0,result:"ABCDE do trauma realizado com busca ativa de ameaças imediatas à vida."},
     {id:"iv_access",label:"Acesso venoso periférico",category:"iniciais",subgroup:"Acessos",time_min:.5,points:0,result:"Acesso venoso periférico obtido."},
     {id:"iv_access_2",label:"Segundo acesso venoso periférico",category:"iniciais",subgroup:"Acessos",time_min:.5,points:0,result:"Segundo acesso venoso periférico obtido."},
     {id:"io_access",label:"Acesso intraósseo",category:"iniciais",subgroup:"Acessos",time_min:.5,points:0,result:"Acesso intraósseo obtido."},
@@ -219,7 +218,7 @@
     {id:"echo",label:"Ecocardiograma",category:"imagem",subgroup:"Ultrassom",time_min:4,points:0,result:"Ecocardiograma realizado."},
     {id:"vascular_doppler",label:"Doppler vascular",category:"imagem",subgroup:"Ultrassom",time_min:4,points:0,result:"Doppler vascular realizado."},
     {id:"ct_spine",label:"Tomografia de coluna",category:"imagem",subgroup:"Tomografia",time_min:6,points:0,result:"Tomografia de coluna realizada."},
-    {id:"defibrillate",label:"Desfibrilar",category:"procedimentos_terapeuticos",subgroup:"Terapia elétrica",time_min:.25,points:0,result:"Desfibrilação executada conforme o estágio atual do caso.",repeatable:true},
+    {id:"defibrillate",label:"Desfibrilar",category:"iniciais",subgroup:"Ressuscitação",time_min:.25,points:0,result:"Desfibrilação executada conforme o estágio atual do caso.",repeatable:true},
     {id:"sync_cardioversion",label:"Cardioversão sincronizada",category:"procedimentos_terapeuticos",subgroup:"Terapia elétrica",time_min:.25,points:0,result:"Cardioversão sincronizada realizada."},
     {id:"airway",label:"Via aérea definitiva / intubação",category:"procedimentos_terapeuticos",subgroup:"Via aérea",time_min:.5,points:0,result:"Via aérea definitiva realizada; confirmar posicionamento e ventilação."},
     {id:"cricothyrotomy",label:"Cricotireoidostomia",category:"procedimentos_terapeuticos",subgroup:"Via aérea",time_min:1,points:0,result:"Via aérea cirúrgica realizada."},
@@ -476,6 +475,7 @@
     if(slug==="af-unstable-ed" && ["defibrillate","shock1","shock2","shock3","unsync_shock"].includes(id))
       return {level:"mortal",reason:"Você aplicou desfibrilação não sincronizada em um paciente com taquiarritmia com pulso. O paciente deteriorou para assistolia."};
     if(slug==="vf-arrest-ed" && !done("cpr")) {
+      if(id==="cricothyrotomy") return {level:"mortal",reason:"Cricotireoidostomia realizada em um paciente em parada cardiorrespiratória antes das medidas imediatas de ressuscitação."};
       if(["ct_head","ct_chest","ct_abdomen","mri_brain","mri_spine","xray_chest","xray_abdomen"].includes(id))
         return {level:"mortal",reason:"Você priorizou um exame demorado durante uma PCR antes de iniciar RCP."};
       if(["exam_neuro","exam_head","exam_airway","exam_eyes","exam_chest","exam_upper","exam_abdomen","exam_lower","exam_extremities","exam_skin"].includes(id))
@@ -547,8 +547,13 @@
       state.score-=6;
       state.penalties+=6;
       applyEffects(event.effects||{});
-      feed((event.message||"O paciente apresentou piora clínica.")+" (−6 pontos por atraso)","warning");
+      feed("O paciente apresentou piora clínica.","warning");
     }
+  }
+
+  function fatalDelayReason() {
+    if(state.current?.slug==="vf-arrest-ed" && !done("cpr") && state.elapsed>=4) return "A parada cardiorrespiratória permaneceu sem RCP por tempo crítico.";
+    return "";
   }
 
   async function persistSession(extra={}) {
@@ -653,6 +658,8 @@
         const message=recordSequenceViolation(action,sequenceIssue);
         feed((sequenceIssue.message||message)+" (−"+penalty+" pontos por sequência)","warning");
         applyDeterioration();
+        const fatalDelay=fatalDelayReason();
+        if(fatalDelay){await killPatient(fatalDelay,action);return;}
       } else {
         if(sequenceIssue) {
           const penalty=Number(sequenceIssue.penalty||0);
@@ -666,6 +673,8 @@
         state.elapsed+=delta;
         // Do not let a late definitive action erase deterioration that occurred during its delay.
         applyDeterioration();
+        const fatalDelay=fatalDelayReason();
+        if(fatalDelay){await killPatient(fatalDelay,action);return;}
         if(!repeated)state.performed.push(action.id);
         if(original.id==="defibrillate" && !state.performed.includes("defibrillate")) state.performed.push("defibrillate");
         for(const id of (original.satisfies||[])) if(!state.performed.includes(id)) state.performed.push(id);
