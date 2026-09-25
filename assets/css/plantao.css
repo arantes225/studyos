@@ -273,3 +273,10 @@
 .plantao-monitor-dock .plantao-feed-item span{display:block;position:static;line-height:1.2;margin:0 0 4px}
 .plantao-monitor-dock .plantao-feed-item p{display:block;position:static;margin:0!important;line-height:1.38;height:auto;min-height:0;overflow:visible}
 @media(max-width:680px){.plantao-monitor-dock .plantao-feed-item{margin-bottom:7px;padding:9px 10px}}
+
+/* v4.4 — Entenda o caso em tópicos */
+.plantao-understand-topic{padding:14px 0;border-bottom:1px solid var(--line)}
+.plantao-understand-topic:last-child{border-bottom:0}
+.plantao-understand-topic h3{margin:0 0 8px;font-size:1.15rem!important;line-height:1.25;font-weight:900;color:var(--ink)}
+.plantao-understand-topic p{margin:0;font-size:1rem!important;line-height:1.65}
+@media(max-width:680px){.plantao-understand-topic h3{font-size:1.08rem!important}.plantao-understand-topic p{font-size:.98rem!important}}
