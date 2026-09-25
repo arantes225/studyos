@@ -232,7 +232,6 @@
   }
 
   function updateAreaPlaceholders(mode) {
-    const dentistry = false;
 
     document
       .querySelectorAll(
