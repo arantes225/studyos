@@ -561,7 +561,16 @@
     {id:"cta_chest",label:"Angio-TC de tórax",category:"imagem",subgroup:"Tomografia",time_min:6,points:0,result:"Angio-TC de tórax realizada; sem achado adicional relevante neste caso."},
     {id:"mri_brain",label:"Ressonância de crânio",category:"imagem",subgroup:"Ressonância",time_min:10,points:0,result:"Ressonância de crânio realizada; sem achado adicional relevante neste caso."},
     {id:"mri_spine",label:"Ressonância de coluna",category:"imagem",subgroup:"Ressonância",time_min:10,points:0,result:"Ressonância de coluna realizada; sem achado adicional relevante neste caso."},
-    {id:"us_abdomen",label:"Ultrassonografia de abdômen",category:"imagem",subgroup:"Ultrassom",time_min:4,points:0,result:"Ultrassonografia de abdômen realizada."},
+    {id:"us_abdomen",label:"Ultrassonografia de abdome total",category:"imagem",subgroup:"Ultrassom",time_min:4,points:0,result:"Ultrassonografia de abdome total realizada.",satisfies:["abdominal_ultrasound","us_abdomen_total"]},
+    {id:"us_upper_abdomen",label:"Ultrassonografia de abdome superior",category:"imagem",subgroup:"Ultrassom",time_min:4,points:0,result:"Ultrassonografia de abdome superior realizada."},
+    {id:"us_pelvis",label:"Ultrassonografia pélvica",category:"imagem",subgroup:"Ultrassom",time_min:4,points:0,result:"Ultrassonografia pélvica realizada.",satisfies:["pelvic_ultrasound"]},
+    {id:"us_transvaginal",label:"Ultrassonografia transvaginal",category:"imagem",subgroup:"Ultrassom",time_min:4,points:0,result:"Ultrassonografia transvaginal realizada.",satisfies:["transvaginal_ultrasound","tvus"]},
+    {id:"us_obstetric",label:"Ultrassonografia obstétrica",category:"imagem",subgroup:"Ultrassom",time_min:4,points:0,result:"Ultrassonografia obstétrica realizada.",satisfies:["obstetric_ultrasound"]},
+    {id:"us_renal_urinary",label:"Ultrassonografia de rins e vias urinárias",category:"imagem",subgroup:"Ultrassom",time_min:4,points:0,result:"Ultrassonografia de rins e vias urinárias realizada.",satisfies:["renal_ultrasound"]},
+    {id:"us_scrotal",label:"Ultrassonografia de bolsa escrotal com Doppler",category:"imagem",subgroup:"Ultrassom",time_min:4,points:0,result:"Ultrassonografia de bolsa escrotal com Doppler realizada.",satisfies:["scrotal_ultrasound","testicular_ultrasound"]},
+    {id:"us_thyroid",label:"Ultrassonografia de tireoide",category:"imagem",subgroup:"Ultrassom",time_min:4,points:0,result:"Ultrassonografia de tireoide realizada."},
+    {id:"us_soft_tissue",label:"Ultrassonografia de partes moles",category:"imagem",subgroup:"Ultrassom",time_min:3,points:0,result:"Ultrassonografia de partes moles realizada."},
+    {id:"us_lung",label:"Ultrassonografia pulmonar",category:"imagem",subgroup:"Ultrassom",time_min:2,points:0,result:"Ultrassonografia pulmonar realizada.",satisfies:["lung_ultrasound"]},
     {id:"echo",label:"Ecocardiograma",category:"imagem",subgroup:"Ultrassom",time_min:4,points:0,result:"Ecocardiograma realizado."},
     {id:"vascular_doppler",label:"Doppler vascular",category:"imagem",subgroup:"Ultrassom",time_min:4,points:0,result:"Doppler vascular realizado."},
     {id:"ct_spine",label:"Tomografia de coluna",category:"imagem",subgroup:"Tomografia",time_min:6,points:0,result:"Tomografia de coluna realizada."},
@@ -1172,10 +1181,43 @@
       if(/obstrucao intestinal/.test(t)) return "TC: alças dilatadas com ponto de transição, compatível com obstrução intestinal.";
       return "TC de abdômen/pelve sem achado agudo específico relevante.";
     }
-    if(id==="us_abdomen"){
+    if(id==="us_abdomen" || id==="us_upper_abdomen"){
       if(/colecistite/.test(t)) return "Ultrassom: cálculos, espessamento da parede vesicular, distensão e sinal de Murphy ultrassonográfico.";
       if(/colelitiase/.test(t)) return "Ultrassom: cálculos móveis na vesícula, sem sinais inflamatórios de colecistite.";
-      return "Ultrassonografia abdominal sem alteração focal aguda relevante.";
+      if(/hidronefrose|lit(i|í)ase renal|c(o|ó)lica renal/.test(t)) return "Ultrassom: dilatação do sistema coletor compatível com hidronefrose, conforme o lado acometido.";
+      return id==="us_upper_abdomen" ? "Ultrassonografia de abdome superior sem alteração focal aguda relevante." : "Ultrassonografia de abdome total sem alteração focal aguda relevante.";
+    }
+    if(id==="us_transvaginal" || id==="us_pelvis"){
+      if(/gravidez ectopica/.test(t)) return "Ultrassonografia transvaginal: ausência de gestação intrauterina identificável e achado anexial suspeito, com ou sem líquido livre, conforme o caso.";
+      if(/torcao ovariana/.test(t)) return "Ultrassonografia pélvica/transvaginal: ovário aumentado e edemaciado, com alteração do fluxo ao Doppler, compatível com torção no contexto clínico.";
+      if(/abortamento|aborto/.test(t)) return "Ultrassonografia transvaginal: achados gestacionais compatíveis com o estágio e a evolução do abortamento descrito no caso.";
+      if(/doenca inflamatoria pelvica|dip|abscesso tubo-ovariano/.test(t)) return "Ultrassonografia pélvica/transvaginal com achados inflamatórios anexiais compatíveis com o quadro clínico.";
+      return "Ultrassonografia pélvica/transvaginal sem alteração aguda específica relevante.";
+    }
+    if(id==="us_obstetric"){
+      if(/descolamento prematuro de placenta|dpp/.test(t)) return "Ultrassonografia obstétrica realizada; a ausência de achado específico não exclui descolamento prematuro de placenta.";
+      if(/placenta previa/.test(t)) return "Ultrassonografia obstétrica mostra placenta recobrindo ou próxima ao orifício interno do colo, conforme a apresentação do caso.";
+      return "Ultrassonografia obstétrica com avaliação de vitalidade, localização gestacional, placenta e líquido amniótico conforme a idade gestacional.";
+    }
+    if(id==="us_renal_urinary"){
+      if(/hidronefrose|lit(i|í)ase renal|c(o|ó)lica renal/.test(t)) return "Ultrassonografia de rins e vias urinárias: dilatação pielocalicial compatível com hidronefrose, conforme o lado acometido.";
+      return "Ultrassonografia de rins e vias urinárias sem dilatação relevante ou outra alteração aguda específica.";
+    }
+    if(id==="us_scrotal"){
+      if(/torcao testicular/.test(t)) return "Ultrassonografia escrotal com Doppler: redução ou ausência de fluxo no testículo acometido, compatível com torção no contexto clínico.";
+      if(/epididimite|orquite/.test(t)) return "Ultrassonografia escrotal com Doppler: hiperemia epididimária/testicular compatível com processo inflamatório.";
+      return "Ultrassonografia de bolsa escrotal sem alteração aguda específica relevante.";
+    }
+    if(id==="us_thyroid") return "Ultrassonografia de tireoide realizada, sem achado agudo específico relevante neste contexto.";
+    if(id==="us_soft_tissue"){
+      if(/abscesso|celulite/.test(t)) return "Ultrassonografia de partes moles diferencia coleção drenável de edema/celulite conforme o sítio examinado.";
+      return "Ultrassonografia de partes moles sem coleção ou alteração focal aguda relevante.";
+    }
+    if(id==="us_lung"){
+      if(/pneumotorax/.test(t)) return "Ultrassonografia pulmonar com ausência de deslizamento pleural e achados compatíveis com pneumotórax no lado acometido.";
+      if(/edema agudo|insuficiencia cardiaca/.test(t)) return "Ultrassonografia pulmonar com múltiplas linhas B bilaterais, compatíveis com congestão intersticial.";
+      if(/derrame pleural/.test(t)) return "Ultrassonografia pulmonar evidencia líquido pleural no hemitórax acometido.";
+      return "Ultrassonografia pulmonar sem achado crítico adicional.";
     }
     if(id==="echo"){
       if(/tamponamento/.test(t)) return "Ecocardiograma: derrame pericárdico com sinais de comprometimento hemodinâmico/tamponamento.";
