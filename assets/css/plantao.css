@@ -805,3 +805,10 @@ body.plantao-monitor-open{overflow:hidden}
     padding:6px 8px;
   }
 }
+
+
+/* Alternância exclusiva de modo */
+body.plantao-phone-mode #plantao-emergency-panel{display:none!important}
+body.plantao-phone-mode #plantao-telefone{display:grid!important}
+body.plantao-emergency-mode #plantao-emergency-panel{display:block!important}
+body.plantao-emergency-mode #plantao-telefone{display:none!important}
