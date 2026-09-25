@@ -1086,8 +1086,15 @@
     $("plantao-setting").textContent=item.setting || "Sala de emergência";
     $("plantao-case-title").textContent=item.presentation?.chief_complaint || item.presentation?.display_title || "Caso em avaliação";
     $("plantao-opening").textContent=safeOpening;
-    $("plantao-age").textContent=item.presentation?.age || "";
-    $("plantao-sex").textContent=item.presentation?.sex || "";
+    const rawAge=String(item.presentation?.age||"").trim();
+    const ageNumber=Number(rawAge);
+    const ageLabel=rawAge
+      ? (/ano|mes|mês|dia/i.test(rawAge) ? rawAge : (Number.isFinite(ageNumber) ? ageNumber+" "+(ageNumber===1?"ano":"anos") : rawAge))
+      : "";
+    const rawSex=normalizeLabel(item.presentation?.sex||"");
+    const sexLabel=rawSex==="f"||rawSex==="feminino" ? "Feminino" : rawSex==="m"||rawSex==="masculino" ? "Masculino" : (item.presentation?.sex||"");
+    $("plantao-age").textContent=ageLabel ? "Idade · "+ageLabel : "";
+    $("plantao-sex").textContent=sexLabel ? "Sexo · "+sexLabel : "";
     $("plantao-chief").textContent="";
     $("plantao-time").textContent=fmtTime(0);
     updateScore();
