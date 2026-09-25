@@ -6036,19 +6036,11 @@ async function loadSharedFlashcards() {
 }
 
 function flashDeckKey(card) {
-  return [
-    card.area || "Sem área",
-    card.materia || "Sem matéria",
-    card.theme || "Sem tema"
-  ].join("|||");
+  return card?.area || "Sem área";
 }
 
 function flashDeckLabel(card) {
-  return [
-    card.area,
-    card.materia,
-    card.theme
-  ].filter(Boolean).join(" · ") || "Deck sem classificação";
+  return card?.area || "Deck sem área";
 }
 
 function populateLibraryTaxonomyFilters() {
@@ -6120,51 +6112,194 @@ function renderLibraryDecks() {
     return;
   }
 
-  const cards =
-    filteredLibraryCards();
+  const mode =
+    window.luriaStudyMode
+    || "medicine";
 
-  const groups =
-    new Map();
+  const configuredAreas =
+    window.LuriaStudyMode
+      ?.generalAreasFor(
+        mode
+      )
+    || [];
 
-  for (const card of cards) {
-    const key =
-      flashDeckKey(card);
+  const knownAreas =
+    [
+      ...new Set(
+        libraryCards
+          .map(card => card.area)
+          .filter(Boolean)
+      )
+    ];
 
-    if (!groups.has(key)) {
-      groups.set(key, []);
-    }
+  const deckAreas =
+    [
+      ...configuredAreas,
+      ...knownAreas.filter(
+        area =>
+          !configuredAreas.includes(area)
+      )
+    ];
 
-    groups.get(key).push(card);
-  }
+  const activeFilter =
+    document
+      .getElementById(
+        "library-active"
+      )
+      ?.value
+    || "active";
 
-  if (!groups.size) {
-    host.innerHTML = "";
-    return;
-  }
+  const search =
+    document
+      .getElementById(
+        "library-search"
+      )
+      ?.value
+      .trim()
+      .toLowerCase()
+    || "";
+
+  const selectedMateria =
+    document
+      .getElementById(
+        "library-materia"
+      )
+      ?.value
+    || "";
+
+  const selectedTheme =
+    document
+      .getElementById(
+        "library-theme"
+      )
+      ?.value
+    || "";
+
+  const selectedArea =
+    document
+      .getElementById(
+        "library-area"
+      )
+      ?.value
+    || "";
+
+  const visibleAreas =
+    selectedArea
+      ? deckAreas.filter(
+          area => area === selectedArea
+        )
+      : deckAreas;
+
+  const matchesSecondaryFilters =
+    (card) => {
+      if (
+        selectedMateria
+        && card.materia !== selectedMateria
+      ) {
+        return false;
+      }
+
+      if (
+        selectedTheme
+        && card.theme !== selectedTheme
+      ) {
+        return false;
+      }
+
+      if (
+        activeFilter === "active"
+        && !card.active
+      ) {
+        return false;
+      }
+
+      if (
+        activeFilter === "archived"
+        && card.active
+      ) {
+        return false;
+      }
+
+      if (!search) {
+        return true;
+      }
+
+      return [
+        card.area,
+        card.materia,
+        card.theme,
+        card.front_text,
+        card.back_text
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(search);
+    };
 
   host.innerHTML =
-    [...groups.values()]
-      .map(deck => {
-        const sample = deck[0];
-        const owned = deck.filter(card => !card.shared);
-        const sharedCount = deck.length - owned.length;
+    visibleAreas
+      .map(area => {
+        const deckCards =
+          libraryCards.filter(
+            card =>
+              card.area === area
+              && matchesSecondaryFilters(card)
+          );
+
+        const reviewCards =
+          libraryCards.filter(
+            card =>
+              card.area === area
+              && card.active
+          );
+
+        const owned =
+          deckCards.filter(
+            card => !card.shared
+          );
+
+        const sharedCount =
+          deckCards.length
+          - owned.length;
+
+        const materiasCount =
+          new Set(
+            deckCards
+              .map(card => card.materia)
+              .filter(Boolean)
+          ).size;
 
         return `
-          <article class="flash-deck-card">
+          <article class="flash-deck-card" data-deck-area="${escapeFlashHtml(area)}">
             <div class="flash-deck-taxonomy">
-              ${sample.area ? `<span class="taxonomy-chip">${escapeFlashHtml(sample.area)}</span>` : ""}
-              ${sample.materia ? `<span class="taxonomy-chip">${escapeFlashHtml(sample.materia)}</span>` : ""}
-              ${sample.theme ? `<span class="taxonomy-chip accent">${escapeFlashHtml(sample.theme)}</span>` : ""}
+              <span class="taxonomy-chip">${escapeFlashHtml(area)}</span>
               ${sharedCount ? `<span class="flash-shared-badge">${sharedCount} compartilhado${sharedCount === 1 ? "" : "s"}</span>` : ""}
             </div>
-            <strong>${escapeFlashHtml(flashDeckLabel(sample))}</strong>
-            <small>${deck.length} flashcard${deck.length === 1 ? "" : "s"}</small>
+
+            <strong>${escapeFlashHtml(area)}</strong>
+
+            <small>
+              ${deckCards.length} flashcard${deckCards.length === 1 ? "" : "s"}
+              ${materiasCount ? ` · ${materiasCount} matéria${materiasCount === 1 ? "" : "s"}` : ""}
+            </small>
+
             <div class="flash-deck-buttons">
-              <button class="button primary" type="button" data-review-deck="${escapeFlashHtml(flashDeckKey(sample))}">
-                Revisar agora
+              <button
+                class="button primary"
+                type="button"
+                data-review-area-deck="${escapeFlashHtml(area)}"
+                ${reviewCards.length ? "" : "disabled"}
+              >
+                Revisar deck
               </button>
+
               ${owned.length ? `
-                <button class="button secondary" type="button" data-share-deck="${escapeFlashHtml(flashDeckKey(sample))}">
+                <button
+                  class="button secondary"
+                  type="button"
+                  data-share-area-deck="${escapeFlashHtml(area)}"
+                >
                   Compartilhar
                 </button>
               ` : ""}
@@ -6174,32 +6309,58 @@ function renderLibraryDecks() {
       })
       .join("");
 
-  host.querySelectorAll("[data-review-deck]")
+  host
+    .querySelectorAll(
+      "[data-review-area-deck]"
+    )
     .forEach(button => {
-      button.addEventListener("click", () => {
-        const key = button.dataset.reviewDeck;
-        startExtraReview(
-          cards.filter(card => flashDeckKey(card) === key),
-          flashDeckLabel(
-            cards.find(card => flashDeckKey(card) === key)
-          )
-        );
-      });
+      button.addEventListener(
+        "click",
+        () => {
+          const area =
+            button.dataset
+              .reviewAreaDeck;
+
+          const cards =
+            libraryCards.filter(
+              card =>
+                card.area === area
+                && card.active
+            );
+
+          startExtraReview(
+            cards,
+            area
+          );
+        }
+      );
     });
 
-  host.querySelectorAll("[data-share-deck]")
+  host
+    .querySelectorAll(
+      "[data-share-area-deck]"
+    )
     .forEach(button => {
-      button.addEventListener("click", async () => {
-        const key = button.dataset.shareDeck;
-        const deck = cards.filter(
-          card => flashDeckKey(card) === key && !card.shared
-        );
+      button.addEventListener(
+        "click",
+        async () => {
+          const area =
+            button.dataset
+              .shareAreaDeck;
 
-        await shareFlashcardDeck(
-          deck,
-          flashDeckLabel(deck[0])
-        );
-      });
+          const deck =
+            libraryCards.filter(
+              card =>
+                card.area === area
+                && !card.shared
+            );
+
+          await shareFlashcardDeck(
+            deck,
+            area
+          );
+        }
+      );
     });
 }
 
