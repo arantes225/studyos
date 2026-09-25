@@ -2698,6 +2698,52 @@
     }
   }
 
+  async function autoRunPerplexityInitialFromTrackerRows(rows) {
+    if (state.qfPerplexityAutoRunBusy) return;
+    const blocks = Array.isArray(rows) ? rows : [];
+
+    for (const block of blocks) {
+      if (String(block.automation_mode || "") !== "guided_1000") continue;
+      if (String(block.next_stage || "") !== "perplexity_initial") continue;
+
+      const batch = Number(block.batch_number);
+      const blockNumber = Number(block.block_number);
+      if (!Number.isInteger(batch) || !Number.isInteger(blockNumber)) continue;
+
+      for (const [start,end] of [[1,50],[51,100],[101,150],[151,200]]) {
+        const { data:coverage, error } = await sb.rpc("admin_question_factory_review_coverage", {
+          p_batch_number:batch,
+          p_block_number:blockNumber,
+          p_stage:"perplexity_initial",
+          p_reviewer:"Perplexity",
+          p_start:start,
+          p_end:end
+        });
+
+        if (error) {
+          console.warn("Falha ao verificar cobertura direta do Perplexity Initial:", error);
+          return;
+        }
+        if (coverage?.complete === true) continue;
+
+        const syntheticButton = document.createElement("button");
+        syntheticButton.dataset.qfAutoBatch = String(batch);
+        syntheticButton.dataset.qfAutoBlock = String(blockNumber);
+        syntheticButton.dataset.qfAutoStart = String(start);
+        syntheticButton.dataset.qfAutoEnd = String(end);
+        syntheticButton.dataset.qfAutoStage = "perplexity_initial";
+
+        state.qfPerplexityAutoRunBusy = true;
+        try {
+          await runQuestionFactoryPerplexityRange(syntheticButton);
+        } finally {
+          state.qfPerplexityAutoRunBusy = false;
+        }
+        return;
+      }
+    }
+  }
+
   function enhanceQuestionFactoryPerplexityAutomation(root) {
     if (!root) return;
     root.querySelectorAll(".admin-qf-tracker-row[data-qf-auto-stage]").forEach(row => {
@@ -2999,8 +3045,13 @@
     } else {
       state.qfBlockFlow = Array.isArray(flowResult.data) ? flowResult.data : [];
     }
-    renderQuestionFactoryBlockTracker(trackerResult.data || []);
+    const trackerRows = trackerResult.data || [];
+    renderQuestionFactoryBlockTracker(trackerRows);
     if (state.questionFactory) renderQuestionFactory(state.questionFactory);
+
+    window.setTimeout(() => {
+      autoRunPerplexityInitialFromTrackerRows(trackerRows);
+    }, 100);
   }
 
   function renderQuestionFactoryStyles(styles) {
