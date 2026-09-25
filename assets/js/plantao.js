@@ -638,10 +638,14 @@
 
     const pts=Number(action.points||0);
     if(action.clinical_class) return {level:action.clinical_class,reason:action.clinical_reason||""};
+    const required=(rules.required_actions||[]);
+    const recommended=(rules.recommended_actions||[]);
+    if(required.some(x=>x===id||x===action.id)) return {level:"essencial",reason:action.clinical_reason||"Conduta essencial para o manejo deste caso."};
+    if(recommended.some(x=>x===id||x===action.id)) return {level:"benefica",reason:action.clinical_reason||"Conduta útil e apropriada neste caso."};
     if(pts<=-15) return {level:"mortal",reason:action.result||"A conduta provocou deterioração crítica."};
     if(pts<0) return {level:"malefica",reason:action.result||"A conduta foi prejudicial."};
     if(pts>0) return {level:"benefica",reason:""};
-    return {level:"neutra",reason:""};
+    return {level:"neutra",reason:action.clinical_reason||"Conduta sem benefício ou dano relevante para este caso."};
   }
 
   function recordClinicalEvent(level,action,reason) {
@@ -947,8 +951,9 @@
 
     const essentialTotal=(state.current.completion_rules?.required_actions||[]).length;
     const essentialDone=essentialTotal-missingRequired.length;
-    const positive=state.current.actions.filter(a=>state.performed.includes(a.id)&&Number(a.points||0)>0).length;
-    const harmful=state.current.actions.filter(a=>state.performed.includes(a.id)&&Number(a.points||0)<0).length;
+    const eventCount=level=>state.clinicalEvents.filter(x=>x.level===level).length;
+    const positive=eventCount("essencial")+eventCount("benefica");
+    const harmful=eventCount("malefica")+eventCount("mortal");
 
     $("plantao-performance").innerHTML=[
       ["Tempo",fmtTime(state.elapsed)],
@@ -957,7 +962,9 @@
       ["Destino",state.disposition?.label||"Não definido"],
       ["Ações realizadas",String(state.performed.length)],
       ["Essenciais",essentialDone+"/"+essentialTotal],
-      ["Ações úteis",String(positive)],
+      ["Ações essenciais",String(eventCount("essencial"))],
+      ["Ações benéficas",String(eventCount("benefica"))],
+      ["Ações neutras",String(eventCount("neutra"))],
       ["Ações prejudiciais",String(harmful)],
       ["Erros de sequência",String(state.sequenceViolations.length)],
       ["Condutas maléficas",String(state.clinicalEvents.filter(x=>x.level==="malefica").length)],
