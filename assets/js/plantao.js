@@ -684,7 +684,16 @@
   }
 
   function fatalDelayReason() {
-    if(state.current?.slug==="vf-arrest-ed" && !done("cpr") && state.elapsed>=4) return "A parada cardiorrespiratória permaneceu sem RCP por tempo crítico.";
+    const t=normalizeLabel(state.current?.title||"");
+    const anyDone=(ids)=>ids.some(done);
+    if((state.current?.slug==="vf-arrest-ed" || t.includes("pcr pediatrica em fibrilacao ventricular")) && !done("cpr") && state.elapsed>=4) return "A parada cardiorrespiratória permaneceu sem RCP por tempo crítico.";
+    if(t.includes("pneumotorax hipertensivo") && !done("needle_decompression") && state.elapsed>=4) return "A descompressão torácica foi atrasada criticamente.";
+    if(/fibrilacao atrial instavel|taquicardia ventricular com pulso instavel/.test(t) && !done("sync_cardioversion") && state.elapsed>=6) return "A cardioversão sincronizada foi atrasada apesar da instabilidade.";
+    if(t.includes("anafilaxia") && !done("epi_im") && state.elapsed>=5) return "A adrenalina IM foi atrasada em anafilaxia grave.";
+    if(/choque septico|sepse|meningococcemia|neutropenia febril/.test(t) && !anyDone(["ceftriaxone","piperacillin_tazo","vancomycin"]) && state.elapsed>=12) return "O antimicrobiano foi atrasado em sepse grave.";
+    if(/estado de mal epileptico|convulsao febril prolongada/.test(t) && !anyDone(["midazolam","diazepam"]) && state.elapsed>=5) return "O benzodiazepínico foi atrasado durante convulsão prolongada.";
+    if(/eclampsia|pre-eclampsia pos-parto/.test(t) && !done("magnesium") && state.elapsed>=8) return "O sulfato de magnésio foi atrasado na emergência obstétrica.";
+    if(t.includes("intoxicacao por opioide") && !done("bvm") && state.elapsed>=4) return "A ventilação foi atrasada na depressão respiratória.";
     return "";
   }
 
