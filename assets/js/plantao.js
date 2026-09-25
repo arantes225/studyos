@@ -63,12 +63,19 @@
     if (!user) return;
     state.user=user;
 
-    const accessRes = await sb.rpc("has_interconsultation_access");
-    const phoneAllowed = !accessRes.error && accessRes.data === true;
+    // A navegação do Plantão não pode depender de uma RPC opcional: se a checagem
+    // de acesso falhar, a Sala de emergência deve continuar abrindo normalmente.
+    let phoneAllowed = true;
+    try {
+      const accessRes = await sb.rpc("has_interconsultation_access");
+      if (!accessRes.error && typeof accessRes.data === "boolean") phoneAllowed = accessRes.data;
+    } catch (error) {
+      console.warn("Plantão: checagem do Telefone indisponível; mantendo a navegação funcional.", error);
+    }
     const phoneModeCard = $("plantao-phone-mode-card");
     const phoneSection = $("plantao-telefone");
     if (phoneModeCard) phoneModeCard.hidden = !phoneAllowed;
-    if (phoneSection) phoneSection.hidden = !phoneAllowed;
+    if (phoneSection) phoneSection.hidden = true;
 
     // Plantão é restrito ao admin; busca os casos por RPC administrativo.
     // Isso evita depender da combinação de RLS/cache de sessão para montar a biblioteca.
@@ -1315,7 +1322,33 @@
     show("plantao-library");
   }
 
+  function setPlantaoMode(mode){
+    const emergency=$("plantao-emergencia");
+    const filters=document.querySelector(".plantao-filters");
+    const grid=$("plantao-case-grid");
+    const empty=$("plantao-empty");
+    const phone=$("plantao-telefone");
+    const isPhone=mode==="telefone";
+    if(emergency) emergency.hidden=isPhone;
+    if(filters) filters.hidden=isPhone;
+    if(grid) grid.hidden=isPhone;
+    if(empty && isPhone) empty.hidden=true;
+    if(phone) phone.hidden=!isPhone;
+    document.querySelectorAll(".plantao-mode-card").forEach(card=>{
+      const active=isPhone ? card.id==="plantao-phone-mode-card" : card.id!=="plantao-phone-mode-card";
+      card.classList.toggle("active",active);
+      if(active) card.setAttribute("aria-current","page"); else card.removeAttribute("aria-current");
+    });
+  }
+
   document.addEventListener("click",async event=>{
+    const modeCard=event.target.closest(".plantao-mode-card");
+    if(modeCard){
+      event.preventDefault();
+      if(modeCard.id==="plantao-phone-mode-card") setPlantaoMode("telefone");
+      else setPlantaoMode("emergencia");
+      return;
+    }
     const start=event.target.closest("[data-start-case]");
     if (start) return startCase(start.dataset.startCase);
 
