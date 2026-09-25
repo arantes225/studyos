@@ -45,6 +45,7 @@
     fetalStatus:"",
     clinicalEvents:[],
     category:null,
+    examTab:"gerais",
     penalties:0, criticalElapsed:0, diagnosis:null, disposition:null, busy:false,
     phoneCases:[], phoneCase:null, phoneSession:null, phoneTurn:0, phoneMode:false, phoneUsedChoices:new Set(),
     filters:{specialty:"",difficulty:""}
@@ -1398,6 +1399,11 @@
   function interventionSection(action){
     return action.category==="tratamento" ? "medicamentos" : "gerais";
   }
+  function examSection(action){
+    if(action.category==="imagem") return "imagem";
+    if(action.category==="laboratorio") return "laboratoriais";
+    return "gerais";
+  }
   function isPediatricCase() {
     const specialty=normalizeLabel(state.current?.specialty||"");
     const rawAge=String(state.current?.presentation?.age||"");
@@ -1524,6 +1530,11 @@
       state.interventionTab=state.interventionTab||"gerais";
       const tabHtml='<div class="plantao-intervention-tabs"><button type="button" data-intervention-tab="gerais" class="'+(state.interventionTab==="gerais"?"active":"")+'">Gerais</button><button type="button" data-intervention-tab="medicamentos" class="'+(state.interventionTab==="medicamentos"?"active":"")+'">Medicamentos</button></div>';
       available=available.filter(a=>interventionSection(a)===state.interventionTab);
+      $("plantao-actions").dataset.tabs=tabHtml;
+    } else if(state.category==="exames"){
+      state.examTab=state.examTab||"gerais";
+      const tabHtml='<div class="plantao-intervention-tabs plantao-exam-tabs"><button type="button" data-exam-tab="gerais" class="'+(state.examTab==="gerais"?"active":"")+'">Gerais</button><button type="button" data-exam-tab="imagem" class="'+(state.examTab==="imagem"?"active":"")+'">Exames de imagem</button><button type="button" data-exam-tab="laboratoriais" class="'+(state.examTab==="laboratoriais"?"active":"")+'">Exames laboratoriais</button></div>';
+      available=available.filter(a=>examSection(a)===state.examTab);
       $("plantao-actions").dataset.tabs=tabHtml;
     } else $("plantao-actions").dataset.tabs="";
     const groups=[...new Set(available.map(a=>a.subgroup||CATEGORY_LABELS[a.category]||"Opções"))];
@@ -2617,6 +2628,13 @@
     const interventionTab=event.target.closest("[data-intervention-tab]");
     if (interventionTab) {
       state.interventionTab=interventionTab.dataset.interventionTab;
+      renderActions();
+      return;
+    }
+
+    const examTab=event.target.closest("[data-exam-tab]");
+    if (examTab) {
+      state.examTab=examTab.dataset.examTab;
       renderActions();
       return;
     }
