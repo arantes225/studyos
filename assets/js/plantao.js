@@ -92,12 +92,18 @@
     state.cases=Array.isArray(casesRes.data) ? casesRes.data : [];
 
     const sessionsRes = await sb.from("clinical_case_sessions")
-      .select("id,case_id,status,started_at,completed_at,score,result")
+      .select("id,case_id,status,started_at,completed_at,score,result,attempt_count")
       .eq("user_id",user.id)
       .eq("status","completed")
       .order("started_at",{ascending:false})
       .limit(100);
     state.sessions=sessionsRes.error ? [] : (sessionsRes.data || []);
+    // Remove resíduos de atendimentos interrompidos em fechamentos/reloads anteriores.
+    const cleanup=await sb.from("clinical_case_sessions")
+      .delete()
+      .eq("user_id",user.id)
+      .neq("status","completed");
+    if(cleanup.error) console.warn("Plantão: limpeza de sessões incompletas pendente",cleanup.error);
     const specialties=[...new Set(state.cases.map(x=>x.specialty).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"pt-BR"));
     const difficulties=[...new Set(state.cases.map(x=>x.difficulty).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"pt-BR"));
     if($("plantao-filter-specialty")) $("plantao-filter-specialty").innerHTML='<option value="">Todas</option>'+specialties.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
@@ -126,6 +132,7 @@
     empty.hidden=true;
     grid.innerHTML=visibleCases.map(item=>{
       const best=bestScore(item.id);
+      const attempts=state.sessions.find(x=>x.case_id===item.id && x.status==="completed")?.attempt_count || (best==null ? 0 : 1);
       return `
         <article class="plantao-case-card">
           <div class="plantao-case-card-head">
@@ -137,7 +144,7 @@
                 <span>${esc(item.setting)}</span>
               </div>
             </div>
-            ${best==null ? "" : `<span class="badge accent">Melhor: ${Math.round(best)}/100</span>`}
+            ${best==null ? "" : `<span class="badge accent">Melhor: ${Math.round(best)}/100 · ${attempts} tentativa${attempts===1?"":"s"}</span>`}
           </div>
           <p>Paciente aguardando avaliação. O diagnóstico será revelado somente após a conclusão do caso.</p>
           <button class="button primary" type="button" data-start-case="${esc(item.id)}">Iniciar caso</button>
@@ -1172,6 +1179,7 @@
     if(!saved){feed("Não foi possível salvar o encerramento. Tente novamente em Definir destino.","warning");return;}
     state.sessions.unshift({id:state.session.id,case_id:state.current.id,status:"completed",score,result,started_at:state.session.started_at,completed_at:new Date().toISOString()});
     state.session.status="completed";
+    await pruneCaseHistory(state.current.id);
     renderDebrief(score,missingRequired,missingRecommended);
     show("plantao-debrief");
   }
@@ -1259,10 +1267,19 @@
     if(error){console.warn("Plantão: não foi possível limpar o histórico da estação",error);return false;}
     state.sessions=state.sessions.filter(s=>s.case_id!==caseId);
     const {data}=await sb.from("clinical_case_sessions")
-      .select("id,case_id,status,started_at,completed_at,score,result")
+      .select("id,case_id,status,started_at,completed_at,score,result,attempt_count")
       .eq("user_id",state.user.id).eq("case_id",caseId).eq("status","completed")
       .order("score",{ascending:false}).limit(1);
     if(data?.length)state.sessions.push(data[0]);
+    return true;
+  }
+
+  async function discardActiveSession() {
+    const sessionId=state.session?.id;
+    if(!sessionId || state.session?.status==="completed") return true;
+    const {error}=await sb.rpc("discard_clinical_case_session",{p_session_id:sessionId});
+    if(error){console.warn("Plantão: não foi possível descartar a sessão incompleta",error);return false;}
+    state.session=null;
     return true;
   }
 
@@ -1270,6 +1287,7 @@
     const caseId=state.current?.id;
     const leavingDebrief=!!caseId && state.session?.status==="completed";
     if(leavingDebrief) await pruneCaseHistory(caseId);
+    else await discardActiveSession();
     state.current=null;
     state.session=null;
     renderLibrary();
@@ -1306,11 +1324,16 @@
   $("plantao-action-search")?.addEventListener("input",renderActions);
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("plantao-action-drawer").hidden)closeActions();});
   $("plantao-back")?.addEventListener("click",async()=>{
-    if (state.session?.id) await persistSession({status:"abandoned"});
-    backToLibrary();
+    await backToLibrary();
   });
   $("plantao-all-cases")?.addEventListener("click",()=>backToLibrary());
-  $("plantao-retry")?.addEventListener("click",()=>state.current && startCase(state.current.id));
+  $("plantao-retry")?.addEventListener("click",async()=>{
+    if(!state.current)return;
+    const caseId=state.current.id;
+    if(state.session?.status==="completed") await pruneCaseHistory(caseId);
+    else await discardActiveSession();
+    await startCase(caseId);
+  });
   $("plantao-death-review")?.addEventListener("click",openDeathDebrief);
 
   function updatePhonePreviewClock(){
