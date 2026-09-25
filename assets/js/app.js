@@ -1962,6 +1962,8 @@ async function iniciarLofiGlobal(userId) {
 }
 
 
+let ultimaOfensivaCarregada = null;
+
 async function registrarAcessoDiario() {
   const { data, error } = await sb.rpc("register_daily_access");
 
@@ -1971,6 +1973,14 @@ async function registrarAcessoDiario() {
   }
 
   const streak = Array.isArray(data) ? data[0] : data;
+  if (!streak) return;
+
+  ultimaOfensivaCarregada = streak;
+  renderizarOfensivaGlobal();
+}
+
+function renderizarOfensivaGlobal() {
+  const streak = ultimaOfensivaCarregada;
   if (!streak) return;
 
   document.querySelectorAll("[data-streak-value]").forEach((el) => {
@@ -4378,6 +4388,7 @@ async function iniciarApp() {
       cachedProfile,
       cachedAdmin
     );
+    renderizarOfensivaGlobal();
 
   updateLuriaLogo(
     document.documentElement.dataset.theme
@@ -4531,6 +4542,7 @@ async function iniciarApp() {
             finalProfile,
             acessoAdmin === true
           );
+          renderizarOfensivaGlobal();
 
         prepararMobileMenu();
         prepararSidebarDesktop(
