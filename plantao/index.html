@@ -46,23 +46,24 @@
             </div>
           </article>
           <nav class="plantao-mode-menu" aria-label="Modos do Plantão">
-            <a class="plantao-mode-card active" href="#plantao-emergencia" aria-current="page">
+            <button id="plantao-emergency-mode-card" class="plantao-mode-card active" type="button" aria-current="page">
               <span class="plantao-mode-icon" aria-hidden="true">🏥</span>
               <span class="plantao-mode-copy">
                 <strong>Sala de emergência</strong>
                 <small>Atendimento completo à beira-leito: anamnese, exame, exames, intervenções e destino.</small>
               </span>
               <span class="plantao-mode-status">Disponível</span>
-            </a>
-            <a id="plantao-phone-mode-card" class="plantao-mode-card" href="#plantao-telefone" hidden>
+            </button>
+            <button id="plantao-phone-mode-card" class="plantao-mode-card" type="button" hidden>
               <span class="plantao-mode-icon" aria-hidden="true">☎</span>
               <span class="plantao-mode-copy">
                 <strong>Telefone</strong>
                 <small>OSCE conversacional: receba o caso e desenvolva perguntas, raciocínio clínico e orientação.</small>
               </span>
               <span class="plantao-mode-status">Piloto disponível</span>
-            </a>
+            </button>
           </nav>
+          <div id="plantao-emergency-panel">
           <div id="plantao-emergencia" class="plantao-library-head"><div><h2>Sala de emergência</h2><p>Primeiro módulo do Plantão. Novos ambientes podem usar o mesmo motor.</p></div></div>
           <div id="plantao-emergency-filters" class="plantao-filters" aria-label="Filtros dos casos">
             <div class="plantao-site-filter">
@@ -87,6 +88,7 @@
           </div>
           <div id="plantao-case-grid" class="plantao-case-grid" aria-live="polite"></div>
           <div id="plantao-empty" class="placeholder" hidden>Nenhum caso clínico disponível.</div>
+          </div>
           <article id="plantao-telefone" class="plantao-phone-preview panel" hidden aria-labelledby="plantao-phone-title">
             <div class="plantao-phone-copy">
               <span class="badge accent">Telefone</span>
