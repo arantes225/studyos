@@ -4327,8 +4327,7 @@ function carregarOnboardingGlobal() {
 
 
 async function iniciarApp() {
-  // Não bloqueia a primeira pintura com o onboarding.
-  // Ele é carregado em segundo plano depois que a navegação principal estiver utilizável.
+  // Carrega o onboarding sem bloquear a pintura inicial.
   const onboardingPromise =
     carregarOnboardingGlobal().catch(() => {});
 
@@ -4343,6 +4342,8 @@ async function iniciarApp() {
   const user =
     data.session.user;
 
+  // PRIMEIRA PINTURA: somente dados locais/cache.
+  // Nada de Supabase remoto pode segurar a exibição da página.
   const cachedTheme =
     readCachedTheme(user.id);
 
@@ -4350,67 +4351,33 @@ async function iniciarApp() {
     applyThemeSetting(
       cachedTheme
     );
+  } else {
+    applyThemeSetting("system");
   }
 
-  // As consultas independentes agora rodam em paralelo.
-  // Antes elas eram aguardadas em série e somavam vários round-trips do Supabase.
-  // O RPC is_admin() é a fonte de verdade também para montar o menu.
-  // Antes ele só era chamado dentro de /admin e /plantao, então o link Plantão
-  // desaparecia do menu nas demais páginas.
-  const adminCheckPromise = verificarAcessoAdmin();
-
-  const [
-    entitlements,
-    profile,
-    ,
-    acessoAdminInicial
-  ] = await Promise.all([
-    carregarEntitlements(),
-    carregarPerfil(user.id),
-    carregarTema(user.id),
-    adminCheckPromise
-  ]);
-
-  let acessoAdmin =
-    acessoAdminInicial;
-
-  // O Plantão é um módulo do produto e não deve redirecionar o usuário para o
-  // Dashboard quando a checagem administrativa falha. Somente /admin exige admin.
-  if (
-    page === "admin"
-    && acessoAdmin !== true
-  ) {
-    window.location.replace(
-      "/dashboard/"
-    );
-    return;
-  }
-
-  const requiredFeature =
-    PAGE_FEATURES[page]
+  const cachedProfile =
+    readCachedProfile(user.id)
     || null;
 
-  if (
-    requiredFeature
-    && !temFeature(
-      entitlements,
-      requiredFeature
+  const cachedEntitlements =
+    readFreshCache(
+      entitlementsCacheKey(user.id),
+      6 * 60 * 60 * 1000
     )
-  ) {
-    if (page !== "dashboard") {
-      window.location.replace(
-        "/dashboard/"
-      );
-      return;
-    }
+    || essentialEntitlementsFallback();
 
-    console.warn(
-      "Entitlement de dashboard ausente; mantendo o Dashboard acessível para evitar loop de redirecionamento."
-    );
-  }
+  const cachedAdmin =
+    readFreshCache(
+      adminCacheKey(user.id),
+      10 * 60 * 1000
+    ) === true;
 
   document.getElementById("sidebar").innerHTML =
-    sidebarMarkup(user, profile, acessoAdmin === true);
+    sidebarMarkup(
+      user,
+      cachedProfile,
+      cachedAdmin
+    );
 
   updateLuriaLogo(
     document.documentElement.dataset.theme
@@ -4453,32 +4420,29 @@ async function iniciarApp() {
   prepararStudyMenu(
     user.id
   );
-  aplicarEntitlementsNaNavegacao(
-    entitlements
-  );
   prepararConfiguracoes();
-
-  // Expõe a página assim que autenticação, tema, perfil e acesso essencial estiverem resolvidos.
-  document.body.classList.add(
-    "app-ready"
-  );
 
   window.docmapUser =
     user;
   window.docmapSession =
     data.session;
   window.docmapProfile =
-    profile;
+    cachedProfile;
   window.docmapEntitlements =
-    entitlements;
+    cachedEntitlements;
   window.docmapPlan =
-    entitlements?.plan
-    || "essential";
+    cachedAdmin
+      ? "admin"
+      : (
+          cachedEntitlements?.plan
+          || "essential"
+        );
   window.docmapIsAdmin =
-    acessoAdmin === true;
+    cachedAdmin;
 
-  aplicarRestricoesDeImagem(
-    entitlements
+  // A página fica visível imediatamente.
+  document.body.classList.add(
+    "app-ready"
   );
 
   window.dispatchEvent(
@@ -4494,13 +4458,133 @@ async function iniciarApp() {
           plan:
             window.docmapPlan,
           entitlements:
-            window.docmapEntitlements
+            window.docmapEntitlements,
+          cached:
+            true
         }
       }
     )
   );
 
-  // Tudo abaixo é complementar e não deve segurar a navegação.
+  // Tudo abaixo é atualização assíncrona e NÃO bloqueia a página.
+  Promise.all([
+    carregarEntitlements(),
+    carregarPerfil(user.id),
+    carregarTema(user.id),
+    verificarAcessoAdmin()
+  ])
+    .then(
+      ([
+        entitlements,
+        profile,
+        ,
+        acessoAdmin
+      ]) => {
+        const finalEntitlements =
+          entitlements
+          || cachedEntitlements;
+
+        const finalProfile =
+          profile
+          || cachedProfile;
+
+        window.docmapProfile =
+          finalProfile;
+        window.docmapEntitlements =
+          finalEntitlements;
+        window.docmapIsAdmin =
+          acessoAdmin === true;
+        window.docmapPlan =
+          acessoAdmin === true
+            ? "admin"
+            : (
+                finalEntitlements?.plan
+                || "essential"
+              );
+
+        // Atualiza sidebar depois que perfil/admin reais chegarem.
+        document.getElementById("sidebar").innerHTML =
+          sidebarMarkup(
+            user,
+            finalProfile,
+            acessoAdmin === true
+          );
+
+        prepararMobileMenu();
+        prepararSidebarDesktop(
+          user.id
+        );
+        prepararStudyMenu(
+          user.id
+        );
+
+        if (acessoAdmin === true) {
+          prepararAdminNavigation(
+            true
+          ).catch(() => {});
+        } else {
+          aplicarEntitlementsNaNavegacao(
+            finalEntitlements
+          );
+          aplicarRestricoesDeImagem(
+            finalEntitlements
+          );
+
+          const requiredFeature =
+            PAGE_FEATURES[page]
+            || null;
+
+          if (
+            requiredFeature
+            && !temFeature(
+              finalEntitlements,
+              requiredFeature
+            )
+            && page !== "dashboard"
+          ) {
+            window.location.replace(
+              "/dashboard/"
+            );
+            return;
+          }
+
+          if (page === "admin") {
+            window.location.replace(
+              "/dashboard/"
+            );
+            return;
+          }
+        }
+
+        window.dispatchEvent(
+          new CustomEvent(
+            "docmap:access-updated",
+            {
+              detail: {
+                user,
+                session:
+                  data.session,
+                isAdmin:
+                  window.docmapIsAdmin,
+                plan:
+                  window.docmapPlan,
+                entitlements:
+                  window.docmapEntitlements
+              }
+            }
+          )
+        );
+      }
+    )
+    .catch(
+      (error) => {
+        console.warn(
+          "Falha na atualização de perfil/permissões em segundo plano:",
+          error
+        );
+      }
+    );
+
   iniciarLofiGlobal(
     user.id
   ).catch(
@@ -4532,29 +4616,6 @@ async function iniciarApp() {
         );
       }
     );
-
-  // Em páginas comuns, a checagem de Admin não é necessária para a primeira pintura.
-  if (page !== "admin") {
-    prepararAdminNavigation()
-      .then(
-        (isAdmin) => {
-          window.docmapIsAdmin =
-            isAdmin === true;
-        }
-      )
-      .catch(
-        (error) => {
-          console.warn(
-            "Não foi possível preparar a navegação Admin:",
-            error
-          );
-        }
-      );
-  } else {
-    prepararAdminNavigation(
-      true
-    ).catch(() => {});
-  }
 
   onboardingPromise.catch(() => {});
 }
