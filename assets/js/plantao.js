@@ -131,7 +131,7 @@
             </div>
             ${best==null ? "" : `<span class="badge accent">Melhor: ${Math.round(best)}/100</span>`}
           </div>
-          <p>${esc(item.summary)}</p>
+          <p>Paciente aguardando avaliação. O diagnóstico será revelado somente após a conclusão do caso.</p>
           <button class="button primary" type="button" data-start-case="${esc(item.id)}">Iniciar caso</button>
         </article>
       `;
