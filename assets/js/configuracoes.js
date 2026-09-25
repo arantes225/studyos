@@ -1492,6 +1492,19 @@ function syncTargetExamUi() {
 
   const count = document.getElementById("target-exam-count");
   if (count) count.textContent = `${targetExamOrder.length}/3`;
+
+  const summary = document.getElementById("target-exam-priority-summary");
+  if (summary) {
+    summary.innerHTML = TARGET_EXAM_WEIGHTS.map((weight,index) => {
+      const exam = targetExamOrder[index] || "";
+      return `
+        <div class="target-exam-slot ${exam ? "filled" : ""}">
+          <span>${index + 1}ª escolha · ${weight}% do peso</span>
+          <strong>${exam || "Nenhuma prova selecionada"}</strong>
+        </div>
+      `;
+    }).join("");
+  }
 }
 
 function renderTargetExamOptions() {
