@@ -1,4 +1,6 @@
-const CACHE_VERSION = "luria-pwa-v105-plantao-clinical-cases";
+const CACHE_VERSION = "luria-pwa-v106-plantao-image-cache";
+const PLANTAO_IMAGE_CACHE = "luria-plantao-images-v1";
+const PLANTAO_IMAGE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const STATIC_CACHE = CACHE_VERSION + "-static";
 const RUNTIME_CACHE = CACHE_VERSION + "-runtime";
 
@@ -59,7 +61,7 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Páginas e código do app: rede primeiro.
+  // Imagens de pacientes do Plantão: cache-first por 7 dias.\n  // Depois do primeiro uso, a mesma imagem volta do cache e evita novo download.\n  if (url.pathname.startsWith("/assets/img/plantao/")) {\n    event.respondWith((async () => {\n      const cache = await caches.open(PLANTAO_IMAGE_CACHE);\n      const cached = await cache.match(request);\n      if (cached) {\n        const cachedAt = Number(cached.headers.get("sw-cached-at") || 0);\n        if (cachedAt && (Date.now() - cachedAt) < PLANTAO_IMAGE_MAX_AGE_MS) return cached;\n      }\n      try {\n        const response = await fetch(request);\n        if (response && response.ok) {\n          const body = await response.clone().blob();\n          const headers = new Headers(response.headers);\n          headers.set("sw-cached-at", String(Date.now()));\n          await cache.put(request, new Response(body, { status: response.status, statusText: response.statusText, headers }));\n        }\n        return response;\n      } catch (err) {\n        if (cached) return cached;\n        throw err;\n      }\n    })());\n    return;\n  }\n\n  // Páginas e código do app: rede primeiro.
   // Isso evita que um deploy novo fique preso em versões antigas do HTML/JS/CSS.
   const isAppCode =
     url.pathname.endsWith(".js")
