@@ -975,13 +975,14 @@
   }
 
   function caseIdentity(){
-    const title=String(state.current?.title||"este caso").trim();
     const complaint=String(state.current?.presentation?.chief_complaint||state.current?.summary||"").trim();
-    return {title,complaint};
+    const descriptor=complaint ? "este quadro de "+complaint : "este caso clínico";
+    const diagnosis=state.diagnosis ? String(state.current?.title||"").trim() : "";
+    return {descriptor,complaint,diagnosis};
   }
 
   function caseSpecificNeutralResult(action,kind="ação"){
-    const {title,complaint}=caseIdentity();
+    const {descriptor,complaint}=caseIdentity();
     const label=String(action?.label||kind).trim();
     const v=state.vitals||state.current?.initial_vitals||{};
     const details=[];
@@ -989,12 +990,12 @@
     if(v.hr!=null) details.push("FC "+v.hr+" bpm");
     if(v.rr!=null) details.push("FR "+v.rr+" irpm");
     if(v.spo2!=null) details.push("SpO₂ "+v.spo2+"%");
-    const base="No caso de "+title+", "+label.toLowerCase()+" foi "+(kind==="exame"?"avaliado":"realizado")+" considerando a queixa de "+(complaint||"apresentação descrita")+".";
+    const base="Em "+descriptor+", "+label.toLowerCase()+" foi "+(kind==="exame"?"avaliado":"realizado")+" considerando a queixa de "+(complaint||"apresentação descrita")+".";
     return base+(details.length?" No momento: "+details.join(", ")+".":"");
   }
 
   function interventionResult(action,beforeVitals={}){
-    const {title,complaint}=caseIdentity();
+    const {descriptor,complaint}=caseIdentity();
     const label=String(action?.label||"Intervenção");
     const after=state.vitals||{};
     const changes=[];
@@ -1007,7 +1008,7 @@
     const generic=/^(?:.+ administrad[ao]|.+ realizad[ao]|.+ iniciad[ao]|.+ instalad[ao]|.+ obtid[ao]|.+ aplicad[ao]|.+ acionad[ao])\.?$/i.test(explicit);
     if(!generic && explicit) return contextual(explicit);
     const context=complaint ? " diante de "+complaint : "";
-    return label+" no caso de "+title+context+"."+(changes.length?" Resposta imediata: "+changes.join("; ")+".":" Sinais vitais permanecem em reavaliação após a intervenção.");
+    return label+" em "+descriptor+context+"."+(changes.length?" Resposta imediata: "+changes.join("; ")+".":" Sinais vitais permanecem em reavaliação após a intervenção.");
   }
 
   function isGenericHistoryAnswer(answer){
@@ -1052,7 +1053,7 @@
       if(/eclampsia|pre-eclampsia/.test(t)) return "Estou com dor de cabeça forte, visão embaçada e náusea; também percebi inchaço maior nos últimos dias.";
       if(/panico/.test(t)) return "Senti coração muito acelerado, falta de ar, tremores, formigamento nas mãos e uma sensação súbita de que algo muito ruim ia acontecer.";
       if(/conjuntivite|blefarite|ceratite|hordeolo/.test(t)) return "O incômodo fica principalmente no olho/pálpebra afetado, com vermelhidão, lacrimejamento ou secreção; não tive sintomas gerais importantes.";
-      const id=caseIdentity(); return "Neste episódio de "+id.title+", o sintoma principal continua sendo "+(id.complaint||"o quadro descrito")+"; não surgiu outro sintoma novo além do que já foi relatado.";
+      const id=caseIdentity(); return "Neste episódio de "+id.descriptor+", o sintoma principal continua sendo "+(id.complaint||"o quadro descrito")+"; não surgiu outro sintoma novo além do que já foi relatado.";
     }
 
     if(k.includes("antecedentes")){
@@ -1063,7 +1064,7 @@
       if(/insuficiencia cardiaca|edema agudo/.test(t)) return "Tenho hipertensão e problema cardíaco em acompanhamento, com episódios prévios de inchaço e falta de ar.";
       if(/doenca renal|renal|dialise|hipercalemia/.test(t)) return "Tenho doença renal crônica e faço acompanhamento; quando indicado, realizo diálise regularmente.";
       if(/gesta|gravidez|eclamps|placenta|abort/.test(t)) return "Estou em acompanhamento obstétrico e sei aproximadamente a idade gestacional; até este episódio, a evolução vinha sem intercorrência semelhante.";
-      const id=caseIdentity(); return "Para este quadro de "+id.title+", não há antecedente previamente documentado que explique melhor o episódio além do que já foi informado.";
+      const id=caseIdentity(); return "Para este quadro de "+id.descriptor+", não há antecedente previamente documentado que explique melhor o episódio além do que já foi informado.";
     }
 
     if(k.includes("medicamentos")){
@@ -1072,7 +1073,7 @@
       if(/diabet|cetoacid|hiperglic|hipoglic/.test(t)) return "Uso medicação para diabetes; houve dificuldade recente para manter alimentação, hidratação ou tratamento como de costume.";
       if(/fibrilacao atrial/.test(t)) return "Uso os medicamentos prescritos para o coração; não comecei nenhuma droga nova nas últimas horas.";
       if(/hipertens/.test(t)) return "Uso anti-hipertensivos diariamente e não fiz mudança intencional recente na prescrição.";
-      return "Não tomei nenhuma medicação nova especificamente para este episódio antes de chegar.";
+      const id=caseIdentity(); return "Antes de chegar por "+id.descriptor+", não foi registrada medicação nova diretamente ligada ao início deste episódio.";
     }
 
     if(k.includes("contexto") || k.includes("fatores de risco")){
@@ -1082,11 +1083,11 @@
       if(/trauma|fratura|hemotorax|pneumotorax/.test(t)) return "O quadro começou logo após o mecanismo de trauma descrito, sem intervalo assintomático importante.";
       if(/calor|exaustao/.test(t)) return "Passei bastante tempo exposto ao calor, com hidratação inadequada, antes de começar a me sentir mal.";
       if(/reacao medicamentosa/.test(t)) return "As lesões começaram após o início recente de um medicamento que eu ainda não costumava usar.";
-      return "Não identifiquei um gatilho único, mas o início e a evolução foram diferentes do meu estado habitual.";
+      const id=caseIdentity(); return "Para "+id.descriptor+", não há gatilho adicional documentado além do início e da evolução já descritos na história.";
     }
 
     if(k.includes("alerg")){
-      return "Não tenho alergia medicamentosa conhecida.";
+      const id=caseIdentity(); return "Durante a avaliação de "+id.descriptor+", não há alergia medicamentosa registrada no caso.";
     }
 
     if(k.includes("inicio") || k.includes("evolucao")){
@@ -1094,7 +1095,7 @@
     }
 
     const id=caseIdentity();
-    return "Sobre "+String(topic||"esta pergunta").toLowerCase()+": no caso de "+id.title+", o dado disponível é "+(id.complaint||state.current?.summary||"a apresentação descrita")+". Não há outro achado específico documentado além disso.";
+    return "Sobre "+String(topic||"esta pergunta").toLowerCase()+": no caso de "+id.descriptor+", o dado disponível é "+(id.complaint||state.current?.summary||"a apresentação descrita")+". Não há outro achado específico documentado além disso.";
   }
 
   function diagnosticTestResult(action){
