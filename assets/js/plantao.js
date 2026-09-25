@@ -572,6 +572,7 @@
     const rules=state.current?.completion_rules||{};
     const mal=normalizeLabel(rules.maleficos||"");
     const mort=normalizeLabel(rules.mortais||"");
+    const caseTitle=normalizeLabel(state.current?.title||"");
     const actionText=normalizeLabel([id,action.label,action.subgroup].filter(Boolean).join(" "));
 
     // Regras estruturadas importadas da planilha: primeiro avalia as condutas mortais,
@@ -596,6 +597,15 @@
       return {level:"malefica",reason:"Este exame atrasa uma intervenção tempo-dependente e é classificado como maléfico neste caso."};
     if(isSedation && /sedacao sem controle de via aerea/.test(mal))
       return {level:"malefica",reason:"Sedação sem controle adequado da via aérea é classificada como maléfica neste caso."};
+
+    const brainBleed=/avc hemorragico|hemorragia subaracnoidea|hematoma epidural|hematoma subdural/.test(caseTitle);
+    if(brainBleed && isThrombolysis) return {level:"mortal",reason:"Trombólise é classificada como mortal neste caso simulado."};
+    if(brainBleed && isAnticoag) return {level:"malefica",reason:"Anticoagulação é classificada como maléfica neste caso."};
+    if(caseTitle.includes("sindrome aortica aguda") && isThrombolysis) return {level:"mortal",reason:"Trombólise é classificada como mortal neste caso simulado."};
+    if(caseTitle.includes("sindrome aortica aguda") && isAnticoag) return {level:"malefica",reason:"Anticoagulação antes de excluir dissecção é maléfica neste caso."};
+    if(caseTitle.includes("anafilaxia") && id==="antihistamine" && !done("epi_im")) return {level:"malefica",reason:"Anti-histamínico antes da adrenalina IM atrasa a terapia prioritária."};
+    if(caseTitle.includes("intoxicacao por benzodiazepinico") && id==="flumazenil") return {level:"malefica",reason:"Flumazenil indiscriminado é maléfico neste caso."};
+    if(caseTitle.includes("pneumotorax hipertensivo") && isImaging && !done("needle_decompression")) return {level:"malefica",reason:"Imagem antes da descompressão no paciente instável é maléfica."};
 
     const pts=Number(action.points||0);
     if(action.clinical_class) return {level:action.clinical_class,reason:action.clinical_reason||""};
