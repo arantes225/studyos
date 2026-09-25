@@ -19,7 +19,7 @@
 
   <link rel="stylesheet" href="assets/css/style.css?v=16.6">
   <link rel="stylesheet" href="assets/css/image-lightbox.css?v=1">
-  <link rel="stylesheet" href="assets/css/flashcards.css?v=14.9">
+  <link rel="stylesheet" href="assets/css/flashcards.css?v=15.0">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
   <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
   <link rel="canonical" href="/flashcards/">
@@ -337,12 +337,6 @@
                   hidden
                 ></span>
 
-                <span
-                  id="review-theme"
-                  class="taxonomy-chip accent"
-                  hidden
-                ></span>
-
               </div>
 
               <div class="review-card">
@@ -563,15 +557,6 @@
               </div>
 
               <label class="flash-field full">
-                <span>Pulo do Gato <small>(conceito central da questão)</small></span>
-                <input
-                  id="create-theme"
-                  type="text"
-                  placeholder="Ex.: Insuficiência cardíaca"
-                >
-              </label>
-
-              <label class="flash-field full">
                 <span>Frente *</span>
                 <textarea
                   id="create-front"
@@ -737,7 +722,6 @@
                     <th>Origem</th>
                     <th>Área</th>
                     <th>Matéria</th>
-                    <th>Tema</th>
                     <th>Frente</th>
                     <th>Verso</th>
                   </tr>
@@ -859,33 +843,6 @@
                   aria-hidden="true"
                 >
                   <option value="">Todas as matérias</option>
-                </select>
-              </div>
-
-              <div class="library-filter-picker" data-library-picker="library-theme">
-                <button
-                  class="library-filter-toggle"
-                  type="button"
-                  data-library-picker-toggle="library-theme"
-                  aria-haspopup="listbox"
-                  aria-expanded="false"
-                >
-                  <span data-library-picker-label="library-theme">Todos os temas</span>
-                  <span class="library-filter-chevron" aria-hidden="true">⌄</span>
-                </button>
-                <div
-                  class="library-filter-menu"
-                  data-library-picker-menu="library-theme"
-                  role="listbox"
-                  hidden
-                ></div>
-                <select
-                  id="library-theme"
-                  class="library-filter-native"
-                  tabindex="-1"
-                  aria-hidden="true"
-                >
-                  <option value="">Todos os temas</option>
                 </select>
               </div>
 
@@ -1051,15 +1008,6 @@
           <span>Matéria</span>
           <input
             id="flash-edit-materia"
-            type="text"
-            placeholder="Opcional"
-          >
-        </label>
-
-        <label class="full">
-          <span>Tema</span>
-          <input
-            id="flash-edit-theme"
             type="text"
             placeholder="Opcional"
           >
