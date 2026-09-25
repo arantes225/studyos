@@ -950,8 +950,8 @@ Deno.serve(async (req) => {
       return json({ok:false,error:"INVALID_OPERATIONAL_ADDRESS"},400);
     }
     if (!Number.isInteger(start) || !Number.isInteger(end)
-        || start<1 || end<start || end>200 || expected!==50) {
-      return json({ok:false,error:"RANGE_MUST_HAVE_50_ITEMS"},400);
+        || start!==1 || end!==200 || expected!==200) {
+      return json({ok:false,error:"RANGE_MUST_BE_Q001_Q200"},400);
     }
 
     const batchNumber = Number(batchCode.slice(1));
@@ -1038,7 +1038,7 @@ Deno.serve(async (req) => {
           generated_reviews:reviews.length,
           validated_reviews:reviews.length,
         },
-        notes:"Faixa de 50 pareceres gerada integralmente antes do RPC de importação.",
+        notes:"Bloco completo de 200 pareceres gerado integralmente antes do RPC de importação.",
       }
     };
 
