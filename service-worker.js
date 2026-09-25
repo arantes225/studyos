@@ -1,4 +1,4 @@
-const CACHE_VERSION = "luria-pwa-v106-plantao-image-cache";
+const CACHE_VERSION = "luria-pwa-v107-exam-priority";
 const PLANTAO_IMAGE_CACHE = "luria-plantao-images-v1";
 const PLANTAO_IMAGE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const STATIC_CACHE = CACHE_VERSION + "-static";
@@ -25,7 +25,9 @@ const APP_SHELL = [
   "/assets/js/app.js",
   "/assets/js/supabase.js?v=passkey1",
   "/assets/js/auth.js?v=auth3",
-  "/assets/js/configuracoes.js?v=14.0",
+  "/assets/js/configuracoes.js?v=13.1",
+  "/assets/js/exam-priority-data.js?v=1",
+  "/assets/js/exam-priority.js?v=1",
   "/assets/js/onboarding.js?v=2.4",
   "/assets/css/onboarding.css?v=1.9",
   "/assets/js/storage-router.js?v=1.0.0",
