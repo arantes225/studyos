@@ -67,11 +67,46 @@
           <div id="plantao-case-grid" class="plantao-case-grid" aria-live="polite"></div>
           <div id="plantao-empty" class="placeholder" hidden>Nenhum caso clínico disponível.</div>
           <article id="plantao-telefone" class="plantao-phone-preview panel" aria-labelledby="plantao-phone-title">
-            <div class="plantao-phone-preview-icon" aria-hidden="true">☎</div>
-            <div>
+            <div class="plantao-phone-copy">
               <span class="badge">Em preparação</span>
               <h2 id="plantao-phone-title">Telefone</h2>
-              <p>O caso chega por mensagem e você conduz a conversa como especialista: pergunta, interpreta as respostas e define a orientação. O módulo será liberado quando as trilhas e a IA estiverem prontas.</p>
+              <p>OSCE conversacional: o caso chega por mensagem e você conduz as perguntas, o raciocínio clínico e a orientação como especialista.</p>
+            </div>
+            <div class="plantao-phone-shell" aria-label="Prévia do simulador por telefone">
+              <div class="plantao-phone-status">
+                <span id="plantao-phone-time" aria-label="Horário atual"></span>
+                <span aria-hidden="true">▮▮▮ ))) ▰</span>
+              </div>
+              <div class="plantao-phone-notch" aria-hidden="true"></div>
+              <div class="plantao-phone-header">
+                <button type="button" class="plantao-phone-back" aria-label="Voltar" disabled>‹</button>
+                <div class="plantao-phone-avatar" aria-hidden="true">+</div>
+                <div class="plantao-phone-contact">
+                  <strong>Contato definido pelo caso</strong>
+                  <small>Ex.: plantonista, R1 ou enfermagem</small>
+                </div>
+                <span class="plantao-phone-more" aria-hidden="true">⋮</span>
+              </div>
+              <div class="plantao-phone-chat" aria-live="polite">
+                <div class="plantao-chat-stamp"><span id="plantao-phone-chat-time"></span> · PLANTÃO</div>
+                <div class="plantao-chat-bubble incoming">
+                  <small>PLANTONISTA · EMERGÊNCIA</small>
+                  <p>Paciente de 68 anos com dor torácica e dispneia. Pode avaliar?</p>
+                </div>
+                <div class="plantao-chat-bubble outgoing">
+                  <p>Como estão pressão, frequência cardíaca e saturação?</p>
+                </div>
+                <div class="plantao-chat-bubble incoming">
+                  <small>PLANTONISTA · EMERGÊNCIA</small>
+                  <p>PA 86/54, FC 118, SatO₂ 91% em ar ambiente.</p>
+                </div>
+              </div>
+              <div class="plantao-phone-compose">
+                <span aria-hidden="true">☺</span>
+                <span class="plantao-phone-placeholder">Digite sua pergunta…</span>
+                <span aria-hidden="true">⌁</span>
+                <span aria-hidden="true">◉</span>
+              </div>
             </div>
           </article>
         </section>
