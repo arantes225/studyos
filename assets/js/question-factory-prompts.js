@@ -68,6 +68,7 @@ stage_metrics = {
   notes: resumo operacional curto
 }.
 PERSISTÊNCIA AUTOMÁTICA NO SUPABASE: se esta IA estiver executando em um ambiente com conector Supabase autorizado e capacidade de executar SQL no projeto da LURIA, após concluir a etapa deve gravar EXATAMENTE o objeto stage_metrics chamando SOMENTE a função controlada:
+ATENÇÃO PARA PERPLEXITY: este acesso é pela CONTA PESSOAL conectada ao Supabase. Não usar, solicitar ou depender de PERPLEXITY_API_KEY. O conector/sessão autenticada é suficiente para ler e chamar os RPCs autorizados.
 select private.qf_record_stage_metrics('<STAGE_METRICS_JSON>'::jsonb);
 Não fazer INSERT/UPDATE/DELETE direto em tabelas para registrar telemetria. Não alterar questões, perfis, lotes ou qualquer outro dado por esse mecanismo. A função é o único destino permitido para telemetria automática.
 Antes da chamada, preencher run_label de forma estável e identificável para que retries sejam idempotentes. Se a chamada retornar stored=true, registrar no resultado supabase_write={attempted:true,stored:true,event_key:<retornado>}. Se falhar, NÃO fingir sucesso: registrar supabase_write={attempted:true,stored:false,error:<erro real>} e ainda devolver stage_metrics completo para importação manual. Se não houver conector Supabase autorizado, registrar supabase_write={attempted:false,stored:false,reason:"SUPABASE_CONNECTOR_UNAVAILABLE"} e devolver stage_metrics normalmente.
@@ -132,17 +133,25 @@ Somente perfis ainda não aprovados devem registrar edição, URL oficial, IDs/p
 - Gravar SOMENTE o registro de resolução cega/parecer separado associado a question_id + item_version + ${blockCode || 'bloco atual'}.
 - PROIBIDO alterar enunciado, alternativas, gabarito, explicações, mensagem_chave, fontes ou version da questão principal.
 - A resolução cega deve permanecer isolada para ser confrontada posteriormente com o gabarito.`,
-      perplexity_initial: `PERSISTÊNCIA DESTA ETAPA — PERPLEXITY / AUDITORIA:
-- Gravar SOMENTE em armazenamento/tabela/registro de REVIEWS/PARECERES, vinculado a question_id + item_version + review_id.
+      perplexity_initial: `PERSISTÊNCIA DESTA ETAPA — PERPLEXITY PESSOAL / AUDITORIA:
+- Executar na conta pessoal do Perplexity com acesso já autorizado ao Supabase; NÃO usar API key do Perplexity.
+- Antes de auditar, reconsultar o Supabase e confirmar o batch_code, o block_code e as 200 item_version atuais do endereço operacional.
+- Gravar SOMENTE em REVIEWS/PARECERES, vinculado a question_id + item_version; o review_id é gerado/controlado pelo backend.
+- Persistir cada questão pelo importador public.admin_import_question_factory_perplexity_initial(jsonb). Pode enviar em lotes de trabalho, mas a fonte de verdade é o review individual persistido.
 - PROIBIDO aplicar proposed_change diretamente na questão principal.
 - PROIBIDO incrementar version ou sobrescrever campos editoriais/científicos da questão.
 - proposed_change.exact_replacement é apenas RECOMENDAÇÃO para o ChatGPT adjudicar depois.
+- Depois de cada faixa, consultar public.admin_question_factory_review_coverage(...) para a etapa perplexity_initial e reviewer=Perplexity.
+- A etapa só termina com 200/200 question_id distintos na item_version atual e coverage.complete=true.
 - O parecer deve ficar preservado integralmente e separado da questão para evitar contaminação.`,
-      perplexity_reaudit: `PERSISTÊNCIA DESTA ETAPA — PERPLEXITY / REAUDITORIA:
-- Ler a versão ATUAL, seja ela corrigida pelo ChatGPT ou mantida na mesma item_version após uma discordância que exige novo parecer.
-- Gravar um NOVO parecer separado, com novo review_id, sempre vinculado à versão efetivamente reauditada.
+      perplexity_reaudit: `PERSISTÊNCIA DESTA ETAPA — PERPLEXITY PESSOAL / REAUDITORIA:
+- Executar na conta pessoal do Perplexity com acesso já autorizado ao Supabase; NÃO usar API key do Perplexity.
+- Reconsultar o Supabase antes de começar e ler a versão ATUAL, seja ela corrigida pelo ChatGPT ou mantida na mesma item_version após uma discordância que exige novo parecer.
+- Persistir cada parecer pelo importador public.admin_import_question_factory_perplexity_reaudit(jsonb), vinculado à question_id + item_version atual.
 - PROIBIDO modificar a questão principal, inclusive quando ainda houver erro.
-- Se houver nova falha, registrar needs_revision/rejected no parecer; quem decide/aplica mudança continua sendo o ChatGPT em etapa posterior.`,
+- Se houver nova falha, registrar needs_revision/rejected no parecer; quem decide/aplica mudança continua sendo o ChatGPT em etapa posterior.
+- Se a reauditoria estiver respondendo a uma discordância do ChatGPT sem patch, não exigir nova version: reauditar a MESMA item_version e atualizar apenas o parecer controlado dessa etapa.
+- Após persistir, reconsultar coverage e o tracker. Só liberar a fase seguinte quando todas as pendências atuais da reauditoria estiverem zeradas.`,
       lot_perplexity_final: `PERSISTÊNCIA DESTA ETAPA — PERPLEXITY / REVISÃO FINAL DO LOTE:
 - Gravar a auditoria final do Perplexity em registro separado do lote, preservando version_manifest e findings.
 - PROIBIDO alterar diretamente qualquer uma das 1.000 questões.
@@ -191,8 +200,12 @@ ${stagePersistence}
 
 REGRA DE ACESSO E PERSISTÊNCIA:
 - Use o browser/conector/site autenticado disponível para abrir o endereço operacional acima e trabalhar sobre as questões REAIS e versões ATUAIS desse lote/bloco.
-- ChatGPT e Perplexity neste fluxo devem persistir automaticamente o resultado SOMENTE nesse mesmo endereço operacional, usando a ação/RPC/controle de importação correspondente.
-- Após a escrita, releia o MESMO endereço operacional e confirme batch_code, block_code, IDs, versões, contagens e status.
+- FLUXO PERPLEXITY PESSOAL: NÃO existe PERPLEXITY_API_KEY, worker automático, chamada HTTP à API do Perplexity ou Edge Function gerando parecer. O Perplexity deve ser executado na CONTA PESSOAL do usuário, em uma sessão que já tenha acesso ao projeto Supabase da LURIA.
+- Na conta pessoal do Perplexity, use o acesso/conector Supabase disponível na própria sessão para: (1) conferir o projeto; (2) localizar exatamente batch_code e block_code; (3) ler somente as item_version atuais; (4) executar a auditoria; (5) persistir cada review individual pelo RPC/importador controlado da etapa; (6) reconsultar coverage e o tracker; (7) só então declarar a etapa concluída.
+- NUNCA pedir ao usuário PERPLEXITY_API_KEY, service_role, anon key, publishable key, JWT, senha ou token. A autenticação é a da conta/conector já autorizado.
+- NUNCA usar INSERT/UPDATE/DELETE direto nas tabelas para substituir os importadores controlados. Para reviews Perplexity, usar public.admin_import_question_factory_perplexity_initial(jsonb) ou public.admin_import_question_factory_perplexity_reaudit(jsonb), conforme a etapa; para telemetria, usar o importador controlado de stage_metrics.
+- ChatGPT e Perplexity neste fluxo devem persistir o resultado SOMENTE nesse mesmo endereço operacional, usando a ação/RPC/controle de importação correspondente.
+- Após a escrita, releia o MESMO endereço operacional e confirme batch_code, block_code, question_id, item_version, review_stage, reviewer, contagens e status.
 - Não use questões de outro lote, bloco, arquivo antigo ou contexto de conversa como substituto silencioso.
 - Se o acesso ou a gravação falhar de verdade, responda ACCESS_REQUIRED ou WRITE_FAILED, com o erro concreto e o ponto exato em que falhou; nesse caso, devolva também o JSON completo para contingência manual.
 - Nunca alegue que leu, alterou, importou ou gravou questões se isso não aconteceu.
