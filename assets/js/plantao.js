@@ -1020,6 +1020,7 @@
   });
 
   $("plantao-finish")?.addEventListener("click",()=>{if(state.disposition)finishCase();else openActions("hipoteses");});
+  $("plantao-conduta-finish")?.addEventListener("click",()=>{if(state.disposition)finishCase();else feed("Defina a conduta final antes de finalizar o atendimento.","warning");});
   $("plantao-action-close")?.addEventListener("click",closeActions);
   $("plantao-action-search")?.addEventListener("input",renderActions);
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("plantao-action-drawer").hidden)closeActions();});
