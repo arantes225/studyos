@@ -2722,7 +2722,7 @@
 
       const buttons = document.createElement("div");
       buttons.className = "admin-qf-auto-range-buttons";
-      [[1,50],[51,100],[101,150],[151,200]].forEach(range => {
+      [[1,200]].forEach(range => {
         const button = document.createElement("button");
         button.className = "button secondary admin-qf-auto-range";
         button.type = "button";
@@ -2754,9 +2754,13 @@
     const block = Number(button.dataset.qfAutoBlock);
     const start = Number(button.dataset.qfAutoStart);
     const end = Number(button.dataset.qfAutoEnd);
-    const reviewStage = String(button.dataset.qfAutoStage || "perplexity_initial");
     const expected = end - start + 1;
-    const originalText = button.textContent || ("Q" + start + "–Q" + end);
+    const originalText = button.textContent || "Q001–Q200";
+
+    if (start !== 1 || end !== 200 || expected !== 200) {
+      window.alert("Perplexity Initial deve executar Q001–Q200 em um único lote.");
+      return;
+    }
 
     const edgeErrorMessage = async error => {
       try {
@@ -2771,70 +2775,40 @@
 
     button.dataset.qfAutoRunning = "1";
     button.disabled = true;
-    button.textContent = "Preparando...";
+    button.textContent = "Gerando 200 pareceres...";
 
     try {
-      let completed = false;
-      let lastAuditPersisted = -1;
-      let sameAuditCount = 0;
-      const maxIterations = expected * 3 + 10;
+      const batchCode = "L" + String(batch).padStart(3,"0");
+      const blockCode = batchCode + "-B" + String(block).padStart(2,"0");
 
-      for (let attempt = 0; attempt < maxIterations; attempt += 1) {
-        const result = await sb.functions.invoke("question-factory-perplexity-audit", {
-          body: {
-            batch_number: batch,
-            block_number: block,
-            start: start,
-            end: end,
-            review_stage: reviewStage
-          }
-        });
-
-        if (result.error) throw new Error(await edgeErrorMessage(result.error));
-        const data = result.data;
-        if (!data || data.ok !== true) {
-          throw new Error(data && (data.message || data.error) || "A auditoria automática falhou.");
+      const result = await sb.functions.invoke("question-factory-perplexity-initial-batch", {
+        body: {
+          batch_code: batchCode,
+          block_code: blockCode,
+          start: 1,
+          end: 200
         }
+      });
 
-        if (data.phase === "blind_resolution_persisted") {
-          const blindDone = Number(data.blind_coverage && data.blind_coverage.persisted || 0);
-          button.textContent = "Cega " + blindDone + "/" + expected;
-          sameAuditCount = 0;
-          continue;
-        }
-
-        const coverage = data.coverage;
-        if (coverage) {
-          const persisted = Number(coverage.persisted || 0);
-          const pending = Array.isArray(coverage.pending_ids)
-            ? coverage.pending_ids.length
-            : Math.max(0, expected - persisted);
-
-          button.textContent = coverage.complete
-            ? "Q" + String(start).padStart(3,"0") + "–Q" + String(end).padStart(3,"0") + " ✓"
-            : persisted + "/" + expected + " · " + pending + " pend.";
-
-          if (coverage.complete) {
-            completed = true;
-            break;
-          }
-
-          if (persisted === lastAuditPersisted) sameAuditCount += 1;
-          else sameAuditCount = 0;
-          lastAuditPersisted = persisted;
-
-          if (sameAuditCount > 4) {
-            throw new Error("A cobertura não avançou após várias tentativas. O fluxo foi interrompido para evitar chamadas repetidas.");
-          }
-        }
+      if (result.error) throw new Error(await edgeErrorMessage(result.error));
+      const data = result.data;
+      if (!data || data.ok !== true) {
+        throw new Error(data && (data.message || data.error) || "A auditoria Perplexity Initial falhou.");
       }
 
-      if (!completed) {
-        throw new Error("A faixa não chegou a 100% de cobertura dentro do limite seguro de tentativas.");
+      const coverage = data.coverage || {};
+      const persisted = Number(coverage.persisted || 0);
+      const pending = Array.isArray(coverage.pending_ids)
+        ? coverage.pending_ids.length
+        : Math.max(0, 200 - persisted);
+
+      if (persisted !== 200 || pending !== 0 || coverage.complete !== true) {
+        throw new Error("PERSISTENCE_COVERAGE_MISMATCH: " + persisted + "/200 persistidos; " + pending + " pendentes.");
       }
 
       button.dataset.qfAutoComplete = "1";
-      button.title = "Cobertura confirmada no Supabase para a versão atual.";
+      button.textContent = "Q001–Q200 ✓";
+      button.title = "200 reviews Perplexity Initial confirmados na versão atual.";
 
       await Promise.all([
         loadQuestionFactory(),
@@ -2843,21 +2817,22 @@
         loadQuestionFactoryQuality()
       ]);
     } catch (error) {
-      console.error("Falha na auditoria automática Perplexity:", error);
-      button.textContent = "Erro · retomar";
+      console.error("Falha na auditoria Perplexity Initial de 200 itens:", error);
+      button.textContent = "Erro · retomar 200";
       button.title = error && error.message || String(error);
       window.alert(
-        "Auditoria automática interrompida. Nada foi marcado como concluído sem persistência.\n\n"
+        "Perplexity Initial não foi concluído. Nenhum sucesso será declarado sem 200/200 persistidos.\n\n"
         + (error && error.message || String(error))
       );
     } finally {
       button.dataset.qfAutoRunning = "0";
       button.disabled = false;
-      if (!button.dataset.qfAutoComplete && button.textContent === "Preparando...") {
+      if (!button.dataset.qfAutoComplete && button.textContent === "Gerando 200 pareceres...") {
         button.textContent = originalText;
       }
     }
   }
+
 
   function defaultQuestionFactoryWorkspaceUrl() {
     try {
