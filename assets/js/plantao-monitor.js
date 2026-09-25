@@ -49,12 +49,14 @@
     for(const beat of beatWindow(t,p)) {
       const d=t-beat;
       if(p.type==='vt') {
-        value+=25*gaussian(d,-.015,.046)-18*gaussian(d,.055,.04)-7*gaussian(d,.19,.065);
+        // TV: complexo largo, arredondado e com amplitude controlada, como em monitor multiparamétrico.
+        value+=18*gaussian(d,-.025,.075)-12*gaussian(d,.075,.07)-5*gaussian(d,.23,.085);
       } else {
         // AF has no discrete P wave. Organized post-ROSC does not assert sinus origin.
-        if(p.type==='sinus') value+=4*gaussian(d,-.16,.026);
-        value+=-5*gaussian(d,-.022,.009)+29*gaussian(d,0,.009)-8*gaussian(d,.025,.011);
-        value+=7*gaussian(d,Math.min(.26,60/p.hr*.43),.042);
+        if(p.type==='sinus') value+=3.2*gaussian(d,-.17,.035);
+        // QRS de monitor: menos "agulha", largura visual mais uniforme e ganho controlado.
+        value+=-3.2*gaussian(d,-.035,.018)+18*gaussian(d,0,.021)-5.2*gaussian(d,.045,.022);
+        value+=4.8*gaussian(d,Math.min(.28,60/p.hr*.43),.065);
       }
     }
     return value;
@@ -111,9 +113,9 @@
     // Hierarquia visual do monitor: ECG é o traçado principal e ocupa a maior faixa vertical.
     // PLET fica intermediário e RESP propositalmente compacto.
     const rows=[
-      {label:'ECG · 6 s',color:'#55ef93',sample:t=>ecg(t,p),top:0,height:118,base:70,scale:1.55,lineWidth:2.4},
-      {label:'PLET',color:'#50e5f4',sample:t=>pleth(t,p,vitals),top:118,height:62,base:151,scale:.62,lineWidth:2},
-      {label:'RESP',color:'#f5da57',sample:t=>Number.isFinite(rr)&&rr>=0 ? 15*Math.sin(t*rr/60*Math.PI*2) : null,top:180,height:40,base:203,scale:.48,lineWidth:1.8}
+      {label:'ECG · 6 s',color:'#55ef93',sample:t=>ecg(t,p),top:0,height:120,base:72,scale:1.08,lineWidth:2.2},
+      {label:'PLET',color:'#50e5f4',sample:t=>pleth(t,p,vitals),top:120,height:62,base:153,scale:.54,lineWidth:1.9},
+      {label:'RESP',color:'#f5da57',sample:t=>Number.isFinite(rr)&&rr>=0 ? 15*Math.sin(t*rr/60*Math.PI*2) : null,top:182,height:38,base:204,scale:.34,lineWidth:1.6}
     ];
     rows.forEach((row,i)=>{
       ctx.save();
