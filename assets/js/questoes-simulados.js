@@ -7860,18 +7860,12 @@ async function loadSets() {
     console.error(attemptsResult.error);
   }
 
+  // Na biblioteca, imagens não são necessárias para calcular métricas.
+  // Evita assinar dezenas de arquivos privados durante o carregamento inicial.
   const items =
-    await attachQuestionImageUrls(
-      itemsResult.data || []
-    );
+    itemsResult.data || [];
 
-  qsState.imageGallery =
-    galleryResult?.error
-      ? []
-      : await attachGalleryImageUrls(
-          galleryResult?.data
-          || []
-        );
+  qsState.imageGallery = [];
   const attempts = attemptsResult.data || [];
 
   const itemToSet = new Map(
@@ -8754,78 +8748,80 @@ function renderSetHistory() {
     );
 }
 
-async function attachQuestionImageUrls(
-  items
+async function attachPrivateImageUrls(
+  rows
 ) {
   const ownPrefix =
     `${qsState.user.id}/`;
 
+  const sourceRows =
+    rows || [];
 
-  return Promise.all(
-    items.map(
-      async item => {
-        if (
-          !item.image_path
-          ||
-          !String(
-            item.image_path
-          ).startsWith(
-            ownPrefix
-          )
-        ) {
-          return {
-            ...item,
-            image_url:
-              null
-          };
-        }
+  const validPaths =
+    [...new Set(
+      sourceRows
+        .map(row => row?.image_path)
+        .filter(path =>
+          path
+          && String(path).startsWith(ownPrefix)
+        )
+    )];
+
+  if (!validPaths.length) {
+    return sourceRows.map(row => ({
+      ...row,
+      image_url: null
+    }));
+  }
+
+  const {
+    data,
+    error
+  } =
+    await qsSb
+      .storage
+      .from("docmap")
+      .createSignedUrls(
+        validPaths,
+        300
+      );
+
+  if (error) {
+    console.warn(
+      "Não foi possível assinar as imagens privadas em lote:",
+      error
+    );
+
+    return sourceRows.map(row => ({
+      ...row,
+      image_url: null
+    }));
+  }
+
+  const signedByPath =
+    new Map(
+      (data || []).map(item => [
+        item.path,
+        item.signedUrl || null
+      ])
+    );
+
+  return sourceRows.map(row => ({
+    ...row,
+    image_url:
+      row?.image_path
+      && String(row.image_path).startsWith(ownPrefix)
+        ? signedByPath.get(row.image_path) || null
+        : null
+  }));
+}
 
 
-        /*
-          O bucket deve permanecer PRIVADO.
-          A imagem só abre através de URL assinada curta.
-        */
-        const {
-          data,
-          error
-        } =
-          await qsSb
-            .storage
-            .from(
-              "docmap"
-            )
-            .createSignedUrl(
-              item.image_path,
-              300
-            );
-
-
-        if (
-          error
-        ) {
-          console.warn(
-            "Não foi possível abrir a imagem privada da questão:",
-            error
-          );
-
-
-          return {
-            ...item,
-            image_url:
-              null
-          };
-        }
-
-
-        return {
-          ...item,
-
-          image_url:
-            data?.signedUrl
-            || null
-        };
-      }
-    )
+async function attachQuestionImageUrls(
+  items
+) {
+  return attachPrivateImageUrls(
+    items || []
   );
 }
 
@@ -8833,65 +8829,8 @@ async function attachQuestionImageUrls(
 async function attachGalleryImageUrls(
   rows
 ) {
-  const ownPrefix =
-    `${qsState.user.id}/`;
-
-  return Promise.all(
-    (rows || []).map(
-      async row => {
-        if (
-          !row.image_path
-          ||
-          !String(
-            row.image_path
-          ).startsWith(
-            ownPrefix
-          )
-        ) {
-          return {
-            ...row,
-            image_url:
-              null
-          };
-        }
-
-        const {
-          data,
-          error
-        } =
-          await qsSb
-            .storage
-            .from(
-              "docmap"
-            )
-            .createSignedUrl(
-              row.image_path,
-              300
-            );
-
-        if (
-          error
-        ) {
-          console.warn(
-            "Não foi possível abrir uma imagem da galeria:",
-            error
-          );
-
-          return {
-            ...row,
-            image_url:
-              null
-          };
-        }
-
-        return {
-          ...row,
-          image_url:
-            data?.signedUrl
-            || null
-        };
-      }
-    )
+  return attachPrivateImageUrls(
+    rows || []
   );
 }
 
