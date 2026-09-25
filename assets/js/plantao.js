@@ -473,6 +473,8 @@
   function classifyAction(action,original) {
     const slug=state.current?.slug||"";
     const id=original?.id||action.id;
+    if(slug==="af-unstable-ed" && ["defibrillate","shock1","shock2","shock3","unsync_shock"].includes(id))
+      return {level:"mortal",reason:"Você aplicou desfibrilação não sincronizada em um paciente com taquiarritmia com pulso. O paciente deteriorou para assistolia."};
     if(slug==="vf-arrest-ed" && !done("cpr")) {
       if(["ct_head","ct_chest","ct_abdomen","mri_brain","mri_spine","xray_chest","xray_abdomen"].includes(id))
         return {level:"mortal",reason:"Você priorizou um exame demorado durante uma PCR antes de iniciar RCP."};
@@ -495,6 +497,11 @@
     if(state.dead)return;
     state.dead=true;
     state.deathReason=reason||"O paciente evoluiu a óbito.";
+    state.vitals={...state.vitals,hr:0,spo2:0,rr:0,bp:"0/0",temp:state.vitals.temp,rhythm:"Assistolia",pulse:false,mental:"Inconsciente"};
+    state.monitorOn=true;
+    window.PlantaoMonitor?.update(state.vitals,{slug:state.current?.slug,enabled:true});
+    renderVitals();
+    $("plantao-time").textContent=fmtTime(state.elapsed);
     state.score=Math.min(state.score,-50);
     state.penalties+=25;
     recordClinicalEvent("mortal",action||{id:"death",label:"Óbito"},state.deathReason);
@@ -504,6 +511,8 @@
     $("plantao-simulator").classList.add("patient-dead");
     $("plantao-action-tabs").inert=true;
     $("plantao-action-drawer").hidden=true;
+    $("plantao-action-search").value="";
+    renderActions();
     $("plantao-finish").disabled=true;
     await persistSession({status:"completed",completed_at:new Date().toISOString(),score:0,result:{death:true,death_reason:state.deathReason,clinical_events:state.clinicalEvents,scoring_version:4}});
   }
