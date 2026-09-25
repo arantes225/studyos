@@ -510,20 +510,39 @@
         if(/celulite|erisipela.*face|angioedema/.test(text)) return "Face inspecionada: edema e alterações de partes moles são avaliados quanto a extensão, simetria, calor, hiperemia e progressão.";
         return "Crânio normocefálico, face simétrica, sem deformidades, hematomas, dor focal ou sinais externos de trauma.";
       case "exam_eyes":
-        if(/avc|hemorragia subaracnoidea|meningite|encefal|intoxic|coma|convuls|trauma cran/.test(text)) return "Pupilas avaliadas quanto a diâmetro, simetria e fotorreação; motilidade ocular e presença de desvio do olhar pesquisadas. Os achados devem ser correlacionados ao estado neurológico do caso.";
-        if(/tireotoxic|hipertireoid/.test(text)) return "Olhos com pesquisa dirigida de retração palpebral, olhar fixo, hiperemia, proptose e alterações de motilidade ocular; há sinais oculares compatíveis com hiperatividade adrenérgica quando presentes no caso.";
-        return "Conjuntivas sem hiperemia importante; pupilas isocóricas e fotorreagentes; motilidade ocular extrínseca preservada, sem desvio do olhar.";
+        if(/conjuntivite bacteriana/.test(text)) return "Hiperemia conjuntival difusa com secreção mucopurulenta; córnea transparente, pupila fotorreagente e sem dor ocular profunda.";
+        if(/conjuntivite viral/.test(text)) return "Hiperemia conjuntival aquosa, secreção serosa e sem opacidade corneana; pupila fotorreagente.";
+        if(/ceratite/.test(text)) return "Olho doloroso e hiperemiado, com fotofobia; córnea apresenta alteração focal compatível com ceratite e deve ser examinada com fluoresceína.";
+        if(/corpo estranho superficial ocular/.test(text)) return "Hiperemia e lacrimejamento no olho acometido; corpo estranho superficial visível ou defeito epitelial à fluoresceína, sem deformidade pupilar.";
+        if(/blefarite/.test(text)) return "Bordas palpebrais hiperemiadas, com crostas/descamação junto aos cílios; conjuntiva sem alteração grave.";
+        if(/hordeolo/.test(text)) return "Nódulo palpebral focal, doloroso e hiperemiado junto à margem ciliar, compatível com hordéolo.";
+        if(/avc|hemorragia subaracnoidea|meningite|encefal|intoxic|coma|convuls|trauma cran/.test(text)) return "Pupilas avaliadas quanto a diâmetro, simetria e fotorreação; motilidade ocular e desvio conjugado do olhar pesquisados, junto ao restante do exame neurológico.";
+        if(/tireotoxic|hipertireoid/.test(text)) return "Retração palpebral e olhar vivo; pesquisa de proptose, hiperemia conjuntival e limitação da motilidade ocular. Pupilas fotorreagentes.";
+        return "Conjuntivas sem hiperemia importante; córneas transparentes; pupilas isocóricas e fotorreagentes; motilidade ocular extrínseca preservada.";
       case "exam_ears":
-        if(/otite externa|dor de ouvido|otalgia/.test(text)) return "Otoscopia: conduto auditivo externo inspecionado quanto a edema, hiperemia, secreção e dor à mobilização do trago/pavilhão; membrana timpânica visualizada quando possível.";
-        if(/otite media|mastoidite/.test(text)) return "Otoscopia: membrana timpânica avaliada quanto a hiperemia, abaulamento, opacidade, nível líquido e perfuração; região mastoidea examinada para dor, edema e hiperemia.";
-        return "Pavilhões e condutos auditivos sem edema ou secreção; membranas timpânicas íntegras, translúcidas, sem abaulamento ou hiperemia relevante.";
+        if(/otite externa/.test(text)) return "Dor à mobilização do trago/pavilhão; conduto auditivo externo hiperemiado e edemaciado, podendo haver secreção. Membrana timpânica sem abaulamento quando visualizada.";
+        if(/otite media aguda/.test(text)) return "Membrana timpânica opaca, hiperemiada e abaulada, com perda dos reparos anatômicos e mobilidade reduzida; conduto sem edema importante.";
+        if(/cerume impactado/.test(text)) return "Conduto auditivo preenchido por cerume impactado, dificultando ou impedindo a visualização da membrana timpânica.";
+        if(/corpo estranho em ouvido/.test(text)) return "Corpo estranho visível no conduto auditivo externo; são avaliados edema, sangramento, secreção e integridade da membrana timpânica antes da retirada.";
+        if(/mastoidite/.test(text)) return "Alteração otoscópica compatível com otite média associada a dor, hiperemia e edema retroauricular/mastoideo.";
+        return "Pavilhões e condutos auditivos livres; membranas timpânicas íntegras, translúcidas, sem abaulamento, perfuração ou secreção.";
       case "exam_nose":
-        if(/sinusite|rinossinus|epistaxe/.test(text)) return "Cavidades nasais inspecionadas quanto a secreção, sangramento, edema de mucosa e obstrução; seios da face avaliados por dor à palpação/percussão.";
-        return "Mucosa nasal sem sangramento ativo ou secreção purulenta; sem dor significativa à palpação dos seios da face.";
+        if(/epistaxe anterior/.test(text)) return "Sangramento anterior visível em cavidade nasal, geralmente em septo anterior; sem sinais de sangramento posterior volumoso na inspeção inicial.";
+        if(/corpo estranho nasal/.test(text)) return "Corpo estranho unilateral visível em cavidade nasal, com obstrução e possível secreção local; sem sangramento importante.";
+        if(/rinite alergica/.test(text)) return "Mucosa nasal pálida e edemaciada, com cornetos aumentados e secreção aquosa bilateral.";
+        if(/sinusite bacteriana|rinossinusite/.test(text)) return "Mucosa nasal edemaciada com secreção espessa; dor/sensibilidade sobre seios da face no território sintomático.";
+        return "Mucosa nasal sem sangramento ativo ou secreção purulenta; fossas nasais pérvias e sem dor importante nos seios da face.";
       case "exam_mouth":
-        if(/faring|amigdal|odinofagia|abscesso peritonsilar/.test(text)) return "Cavidade oral e orofaringe inspecionadas com atenção a hiperemia, exsudato, hipertrofia/amigdalas, assimetria, desvio de úvula, trismo, lesões de mucosa e condição dentária.";
-        if(/desidrat|cetoacid|hiperosmolar/.test(text)) return "Mucosa oral seca, com avaliação de hidratação, língua e presença de lesões; orofaringe sem obstrução mecânica evidente.";
-        return "Mucosa oral úmida, sem lesões relevantes; orofaringe sem exsudato, edema importante ou assimetria.";
+        if(/faringoamigdalite estreptococica/.test(text)) return "Orofaringe hiperemiada, amígdalas aumentadas com exsudato e petéquias palatinas; sem sinais de abscesso peritonsilar.";
+        if(/faringite viral/.test(text)) return "Orofaringe hiperemiada, sem exsudato purulento exuberante; ausência de assimetria peritonsilar ou desvio de úvula.";
+        if(/candidiase oral/.test(text)) return "Placas esbranquiçadas aderidas à mucosa oral/língua, removíveis à raspagem com base eritematosa.";
+        if(/gengivoestomatite herpetica/.test(text)) return "Gengiva hiperemiada e friável, com múltiplas vesículas/úlceras dolorosas em mucosa oral.";
+        if(/estomatite aftosa/.test(text)) return "Úlcera oral rasa, dolorosa, de base esbranquiçada/amarelada e halo eritematoso, sem sinais de infecção profunda.";
+        if(/herpangina/.test(text)) return "Pequenas vesículas/úlceras em palato mole e pilares amigdalianos, com hiperemia de orofaringe.";
+        if(/doenca mao-pe-boca/.test(text)) return "Vesículas/úlceras dolorosas na cavidade oral, em conjunto com as lesões cutâneas típicas do quadro.";
+        if(/abscesso peritonsilar/.test(text)) return "Assimetria de orofaringe com abaulamento peritonsilar, desvio contralateral da úvula, trismo e voz abafada.";
+        if(/desidrat|cetoacid|hiperosmolar/.test(text)) return "Mucosa oral seca e saliva espessa, compatíveis com desidratação; sem obstrução mecânica da orofaringe.";
+        return "Mucosa oral úmida, dentição sem foco evidente; orofaringe sem exsudato, edema importante, assimetria ou lesões agudas.";
       case "exam_airway":
         if(/anafilax|angioedema|epiglot|obstrucao de via aerea/.test(text)) return "Via aérea examinada imediatamente: voz, estridor, sialorreia, edema de lábios/língua/orofaringe e capacidade de manejar secreções avaliados; há risco de comprometimento de via aérea compatível com o caso.";
         return "Via aérea pérvia; paciente consegue vocalizar, sem estridor, sialorreia, secreções obstrutivas ou edema orofaríngeo importante.";
