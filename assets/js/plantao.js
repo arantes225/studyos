@@ -87,6 +87,7 @@
     const sessionsRes = await sb.from("clinical_case_sessions")
       .select("id,case_id,status,started_at,completed_at,score,result")
       .eq("user_id",user.id)
+      .eq("status","completed")
       .order("started_at",{ascending:false})
       .limit(100);
     state.sessions=sessionsRes.error ? [] : (sessionsRes.data || []);
