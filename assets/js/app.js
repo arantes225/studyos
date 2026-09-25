@@ -3908,35 +3908,29 @@ async function carregarEntitlements() {
         )
       : null;
 
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    try {
-      const { data, error } =
-        await sb.rpc("get_my_entitlements");
+  try {
+    const { data, error } =
+      await sb.rpc("get_my_entitlements");
 
-      if (!error && data) {
-        if (userId) {
-          writeTimedCache(
-            entitlementsCacheKey(userId),
-            data
-          );
-        }
-        return data;
+    if (!error && data) {
+      if (userId) {
+        writeTimedCache(
+          entitlementsCacheKey(userId),
+          data
+        );
       }
-
-      console.warn(
-        "Não foi possível carregar o plano do usuário:",
-        error?.message || "resposta vazia"
-      );
-    } catch (error) {
-      console.warn(
-        "Não foi possível carregar o plano do usuário:",
-        error
-      );
+      return data;
     }
 
-    if (attempt === 0) {
-      await new Promise(resolve => setTimeout(resolve, 350));
-    }
+    console.warn(
+      "Não foi possível carregar o plano do usuário:",
+      error?.message || "resposta vazia"
+    );
+  } catch (error) {
+    console.warn(
+      "Não foi possível carregar o plano do usuário:",
+      error
+    );
   }
 
   if (cached) {
@@ -4209,42 +4203,36 @@ async function verificarAcessoAdmin() {
         )
       : null;
 
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    try {
-      const { data, error } =
-        await sb.rpc("is_admin");
+  try {
+    const { data, error } =
+      await sb.rpc("is_admin");
 
-      if (!error) {
-        const confirmed =
-          data === true;
+    if (!error) {
+      const confirmed =
+        data === true;
 
-        if (userId) {
-          writeTimedCache(
-            adminCacheKey(userId),
-            confirmed
-          );
-        }
-
-        return confirmed;
+      if (userId) {
+        writeTimedCache(
+          adminCacheKey(userId),
+          confirmed
+        );
       }
 
-      console.warn(
-        "Não foi possível verificar acesso administrativo:",
-        error.message
-      );
-    } catch (error) {
-      console.warn(
-        "Não foi possível verificar acesso administrativo:",
-        error
-      );
+      return confirmed;
     }
 
-    if (attempt === 0) {
-      await new Promise(resolve => setTimeout(resolve, 350));
-    }
+    console.warn(
+      "Não foi possível verificar acesso administrativo:",
+      error.message
+    );
+  } catch (error) {
+    console.warn(
+      "Não foi possível verificar acesso administrativo:",
+      error
+    );
   }
 
-  return cached === true;
+  return typeof cached === "boolean" ? cached : null;
 }
 
 
@@ -4331,10 +4319,22 @@ async function iniciarApp() {
   const onboardingPromise =
     carregarOnboardingGlobal().catch(() => {});
 
-  const { data, error } =
-    await sb.auth.getSession();
+  let sessionTimer;
+  let sessionResult;
+  try {
+    sessionResult = await Promise.race([
+      sb.auth.getSession(),
+      new Promise((_, reject) => {
+        sessionTimer = setTimeout(() => reject(new Error("Não foi possível verificar sua sessão a tempo.")), 20000);
+      })
+    ]);
+  } finally {
+    clearTimeout(sessionTimer);
+  }
+  const { data, error } = sessionResult;
 
-  if (error || !data.session) {
+  if (error) throw error;
+  if (!data.session) {
     window.location.replace("/login/");
     return;
   }
@@ -4402,10 +4402,11 @@ async function iniciarApp() {
         info.eyebrow;
     });
 
-  document.getElementById("logout")
-    ?.addEventListener(
+  document
+    .addEventListener(
       "click",
-      async () => {
+      async (event) => {
+        if (!event.target.closest?.("#logout")) return;
         await sb.auth.signOut();
         window.location.replace(
           "/login/"
@@ -4522,7 +4523,7 @@ async function iniciarApp() {
           prepararAdminNavigation(
             true
           ).catch(() => {});
-        } else {
+        } else if (finalEntitlements.source !== "fallback") {
           aplicarEntitlementsNaNavegacao(
             finalEntitlements
           );
@@ -4548,7 +4549,7 @@ async function iniciarApp() {
             return;
           }
 
-          if (page === "admin") {
+          if (page === "admin" && acessoAdmin === false) {
             window.location.replace(
               "/dashboard/"
             );
@@ -4620,4 +4621,21 @@ async function iniciarApp() {
   onboardingPromise.catch(() => {});
 }
 
-iniciarApp();
+iniciarApp().catch((error) => {
+  console.warn("Não foi possível iniciar a página:", error);
+  // Do not label an unavailable Auth service as logout or a downgraded plan.
+  const notice = document.createElement("section");
+  notice.className = "panel";
+  notice.setAttribute("role", "alert");
+  const message = document.createElement("p");
+  message.textContent = "Não foi possível conectar agora. Sua sessão local foi preservada. Tente novamente em alguns instantes.";
+  const retry = document.createElement("button");
+  retry.type = "button";
+  retry.className = "button primary";
+  retry.textContent = "Tentar novamente";
+  retry.addEventListener("click", () => window.location.reload());
+  notice.append(message, retry);
+  const main = document.querySelector("main") || document.body;
+  main.replaceChildren(notice);
+  document.body.classList.add("app-ready");
+});

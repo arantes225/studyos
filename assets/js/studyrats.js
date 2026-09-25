@@ -481,7 +481,14 @@ function sharedStudyratsDeadlineText(date){
   return 'Faltam '+diff+' dias';
 }
 
-async function sharedStudyratsLoad(){
+let sharedStudyratsLoadPending = null;
+function sharedStudyratsLoad(){
+  if (sharedStudyratsLoadPending) return sharedStudyratsLoadPending;
+  sharedStudyratsLoadPending = sharedStudyratsFetch().finally(() => { sharedStudyratsLoadPending = null; });
+  return sharedStudyratsLoadPending;
+}
+
+async function sharedStudyratsFetch(){
   const host=document.getElementById('studyrats-list');
   if(!host||!window.supabaseClient)return;
   const result=await window.supabaseClient.rpc('my_studyrats_challenges_v3');

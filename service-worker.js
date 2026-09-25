@@ -1,4 +1,4 @@
-const CACHE_VERSION = "luria-pwa-v121-phone-guided";
+const CACHE_VERSION = "luria-pwa-v123-resilience";
 const PLANTAO_IMAGE_CACHE = "luria-plantao-images-v1";
 const PLANTAO_IMAGE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const STATIC_CACHE = CACHE_VERSION + "-static";
@@ -22,9 +22,9 @@ const APP_SHELL = [
   "/assets/css/pwa-mobile.css?v=18",
   "/assets/css/luria-brand-v5.css",
   "/assets/js/luria-brand-v5.js?v=12",
-  "/assets/js/app.js",
-  "/assets/js/supabase.js?v=passkey1",
-  "/assets/js/auth.js?v=auth3",
+  "/assets/js/app.js?v=17.7",
+  "/assets/js/supabase.js?v=resilience1",
+  "/assets/js/auth.js?v=auth4",
   "/assets/js/configuracoes.js?v=13.1",
   "/assets/js/exam-priority-data.js?v=1",
   "/assets/js/exam-priority.js?v=1",
