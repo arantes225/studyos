@@ -258,3 +258,10 @@
 [data-theme="dark"] .plantao-intervention-tabs button.active,
 .theme-dark .plantao-intervention-tabs button.active,
 .dark .plantao-intervention-tabs button.active{color:#fff}
+
+/* v4.2 — prontuário em tempo real: mensagens com altura fixa desde o primeiro item */
+.plantao-monitor-dock>.plantao-feed{display:flex;flex-direction:column;justify-content:flex-start}
+.plantao-monitor-dock .plantao-feed-list{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;flex:1 1 auto;overflow-y:auto;overflow-x:hidden}
+.plantao-monitor-dock .plantao-feed-item{flex:0 0 auto;height:auto;min-height:0;padding:10px 11px}
+.plantao-monitor-dock .plantao-feed-item p{flex:none}
+@media(max-width:680px){.plantao-monitor-dock .plantao-feed-item{min-height:0;height:auto;padding:10px}}
