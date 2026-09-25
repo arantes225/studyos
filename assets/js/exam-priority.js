@@ -35,11 +35,13 @@
     return Array.from(new Set((selected||[]).filter((exam)=>exams.includes(exam)))).slice(0,3);
   }
 
+  const POSITION_WEIGHTS=[0.50,0.30,0.20];
+
   function evaluate(theme,area,selectedExams){
     const selected=sanitizeExams(selectedExams);
     const record=resolveRecord(theme,area);
     if(!record||!selected.length) return {matched:Boolean(record),score:0,tier:"none",coverage:0,total:selected.length,canonicalTheme:record?.theme||null,area:record?.area||area||null,ranks:{}};
-    const weights=[0.50,0.30,0.20].slice(0,selected.length);
+    const weights=POSITION_WEIGHTS.slice(0,selected.length);
     const weightTotal=weights.reduce((a,b)=>a+b,0)||1;
     let weightedRelevance=0;
     let coveredWeight=0;
@@ -58,7 +60,8 @@
     const mean=weightedRelevance/weightTotal;
     const score=(mean*0.72)+(coverage*0.28);
     const tier=score>=0.72?"high":score>=0.46?"medium":score>0?"low":"none";
-    return {matched:true,score,tier,coverage:values.length,total:selected.length,canonicalTheme:record.theme,area:record.area,ranks};
+    const coverageCount=selected.filter((exam)=>Number(record.ranks[exam]||0)>0).length;
+    return {matched:true,score,tier,coverage:coverageCount,total:selected.length,weightedCoverage:coverage,canonicalTheme:record.theme,area:record.area,ranks,weights:Object.fromEntries(selected.map((exam,index)=>[exam,weights[index]||0]))};
   }
 
   function sortRows(rows,selectedExams){
@@ -78,6 +81,7 @@
   // Ex.: LuriaExamPriority.registerAlias("SCA: diagnóstico e manejo","Síndromes coronarianas agudas")
   window.LuriaExamPriority={
     exams:[...exams],
+    positionWeights:[...POSITION_WEIGHTS],
     normalize,
     sanitizeExams,
     evaluate,
