@@ -153,7 +153,8 @@
     iniciais:{label:"Procedimentos iniciais / emergência",icon:"ϟ",categories:["iniciais","monitorizacao"]},
     exames:{label:"Exames",icon:"▤",categories:["exames","laboratorio","imagem"]},
     intervir:{label:"Intervenções",icon:"✚",categories:["tratamento","procedimentos","procedimentos_terapeuticos"]},
-    hipoteses:{label:"Hipóteses e conduta final",icon:"◎",categories:["hipoteses","destino","encaminhamento","raciocinio"]}
+    hipoteses:{label:"Hipóteses",icon:"◎",categories:["hipoteses","raciocinio"]},
+    conduta:{label:"Conduta final",icon:"✓",categories:["destino","encaminhamento"]}
   };
   const GENERIC_ACTIONS = [
     {id:"exam_neuro",label:"Exame neurológico",category:"exame",subgroup:"01 · Neurológico",time_min:.5,points:0,result:"Consciente e orientado, Glasgow 15, fala clara, pupilas isocóricas e fotorreagentes, força preservada e simétrica nos quatro membros, sem déficit focal aparente."},
@@ -327,14 +328,22 @@
     {id:"generic_dest_observation",role:"disposition",label:"Observação hospitalar",category:"destino",subgroup:"Conduta final",time_min:.1,points:0,genericDisposition:true},
     {id:"generic_dest_ward",role:"disposition",label:"Internação em enfermaria / unidade monitorizada",category:"destino",subgroup:"Conduta final",time_min:.1,points:0,genericDisposition:true},
     {id:"generic_dest_icu",role:"disposition",label:"Internação em UTI",category:"destino",subgroup:"Conduta final",time_min:.1,points:0,genericDisposition:true},
-    {id:"generic_refer_surgery",label:"Encaminhar para Cirurgia Geral",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Cirurgia Geral acionada."},
-    {id:"generic_refer_cardio",label:"Encaminhar para Cardiologia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Cardiologia acionada."},
-    {id:"generic_refer_neuro",label:"Encaminhar para Neurologia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Neurologia acionada."},
-    {id:"generic_refer_ortho",label:"Encaminhar para Ortopedia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Ortopedia acionada."},
-    {id:"generic_refer_vascular",label:"Encaminhar para Cirurgia Vascular",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Cirurgia Vascular acionada."},
-    {id:"generic_refer_urology",label:"Encaminhar para Urologia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Urologia acionada."},
-    {id:"generic_refer_obgyn",label:"Encaminhar para Ginecologia e Obstetrícia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Ginecologia e Obstetrícia acionada."},
-    {id:"generic_refer_psych",label:"Encaminhar para Psiquiatria",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Psiquiatria acionada."}
+    {id:"generic_refer_none",label:"Não encaminhar",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Atendimento mantido sem encaminhamento para outra especialidade."},
+    {id:"generic_refer_surgery",label:"Cirurgia Geral",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Cirurgia Geral acionada."},
+    {id:"generic_refer_cardio",label:"Cardiologia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Cardiologia acionada."},
+    {id:"generic_refer_neuro",label:"Neurologia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Neurologia acionada."},
+    {id:"generic_refer_ortho",label:"Ortopedia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Ortopedia acionada."},
+    {id:"generic_refer_vascular",label:"Cirurgia Vascular",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Cirurgia Vascular acionada."},
+    {id:"generic_refer_urology",label:"Urologia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Urologia acionada."},
+    {id:"generic_refer_obgyn",label:"Ginecologia e Obstetrícia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Ginecologia e Obstetrícia acionada."},
+    {id:"generic_refer_psych",label:"Psiquiatria",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Psiquiatria acionada."},
+    {id:"generic_refer_pediatrics",label:"Pediatria",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Pediatria acionada."},
+    {id:"generic_refer_infectious",label:"Infectologia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Infectologia acionada."},
+    {id:"generic_refer_pulmonology",label:"Pneumologia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Pneumologia acionada."},
+    {id:"generic_refer_gastro",label:"Gastroenterologia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Gastroenterologia acionada."},
+    {id:"generic_refer_nephro",label:"Nefrologia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Nefrologia acionada."},
+    {id:"generic_refer_hematology",label:"Hematologia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Hematologia acionada."},
+    {id:"generic_refer_endocrine",label:"Endocrinologia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Endocrinologia acionada."}
   ];
 
   const HIDDEN_CASE_ACTIONS = new Set(["shock1","shock2","shock3","electrolytes","cxr","ct_brain"]);
