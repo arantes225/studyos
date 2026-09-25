@@ -2744,6 +2744,60 @@
     }
   }
 
+  async function copyPerplexityManualPackage(button) {
+    if (!button || button.dataset.qfCopying === "1") return;
+    const batch = Number(button.dataset.qfAutoBatch);
+    const block = Number(button.dataset.qfAutoBlock);
+    const row = button.closest(".admin-qf-tracker-row");
+    const promptNode = row?.querySelector(".admin-qf-tracker-hidden-prompt");
+    const prompt = String(promptNode?.textContent || "").trim();
+    if (!prompt) {
+      window.alert("Prompt Perplexity não encontrado para este bloco.");
+      return;
+    }
+
+    button.dataset.qfCopying = "1";
+    const old = button.textContent;
+    button.disabled = true;
+    button.textContent = "Preparando 200 questões...";
+
+    try {
+      const { data, error } = await sb.rpc("admin_question_factory_export_block_for_perplexity", {
+        p_batch_number: batch,
+        p_block_number: block
+      });
+      if (error) throw error;
+      if (!data || Number(data.current_items) !== 200 || !Array.isArray(data.questions) || data.questions.length !== 200) {
+        throw new Error("BLOCK_COVERAGE_MISMATCH: o pacote precisa conter exatamente 200 questões atuais.");
+      }
+
+      const packageText = [
+        prompt,
+        "",
+        "============================================================",
+        "PACOTE DE DADOS DO BLOCO — 200 QUESTÕES ATUAIS",
+        "============================================================",
+        "Use EXCLUSIVAMENTE as questões abaixo. Elas pertencem ao endereço operacional do prompt.",
+        "Embora as 200 questões estejam disponíveis neste pacote, execute a auditoria em 4 faixas sequenciais de 50:",
+        "Q001–Q050 → confirmar 50/50; Q051–Q100 → confirmar 50/50; Q101–Q150 → confirmar 50/50; Q151–Q200 → confirmar 50/50.",
+        "",
+        JSON.stringify(data, null, 2)
+      ].join("\n");
+
+      await navigator.clipboard.writeText(packageText);
+      button.textContent = "Prompt + 200 questões copiados ✓";
+      window.setTimeout(() => { button.textContent = old; }, 3000);
+    } catch (error) {
+      console.error("Falha ao copiar pacote Perplexity:", error);
+      button.textContent = "Erro ao copiar";
+      window.alert(error?.message || String(error));
+      window.setTimeout(() => { button.textContent = old; }, 3000);
+    } finally {
+      button.dataset.qfCopying = "0";
+      button.disabled = false;
+    }
+  }
+
   function enhanceQuestionFactoryPerplexityAutomation(root) {
     if (!root) return;
     root.querySelectorAll(".admin-qf-tracker-row[data-qf-auto-stage]").forEach(row => {
@@ -2763,34 +2817,26 @@
 
       const label = document.createElement("small");
       label.className = "admin-qf-auto-label";
-      label.textContent = "Automático · persiste questão por questão";
+      label.textContent = "Manual · copie o prompt com as 200 questões e envie ao Perplexity";
       wrap.appendChild(label);
 
       const buttons = document.createElement("div");
       buttons.className = "admin-qf-auto-range-buttons";
-      [[1,50],[51,100],[101,150],[151,200]].forEach(range => {
-        const button = document.createElement("button");
-        button.className = "button secondary admin-qf-auto-range";
-        button.type = "button";
-        button.dataset.qfPerplexityRange = "1";
-        button.dataset.qfAutoBatch = String(batch);
-        button.dataset.qfAutoBlock = String(block);
-        button.dataset.qfAutoStart = String(range[0]);
-        button.dataset.qfAutoEnd = String(range[1]);
-        button.dataset.qfAutoStage = stage === "blind_resolution"
-          ? (row.dataset.qfAutoTargetStage || "perplexity_initial")
-          : (stage === "perplexity_reaudit" ? "perplexity_reaudit" : "perplexity_initial");
-        button.textContent = "Q" + String(range[0]).padStart(3,"0") + "–Q" + String(range[1]).padStart(3,"0");
-        buttons.appendChild(button);
-      });
+
+      const copyPackage = document.createElement("button");
+      copyPackage.className = "button primary admin-qf-copy-perplexity-package";
+      copyPackage.type = "button";
+      copyPackage.dataset.qfAutoBatch = String(batch);
+      copyPackage.dataset.qfAutoBlock = String(block);
+      copyPackage.textContent = "Copiar prompt + 200 questões";
+      copyPackage.addEventListener("click", () => copyPerplexityManualPackage(copyPackage));
+      buttons.appendChild(copyPackage);
 
       wrap.appendChild(buttons);
       host.appendChild(wrap);
     });
 
-    window.setTimeout(() => {
-      maybeAutoRunQuestionFactoryPerplexity(root);
-    }, 250);
+    // Fluxo Perplexity manual: nenhuma chamada de API é disparada ao renderizar.
   }
 
   async function runQuestionFactoryPerplexityRange(button) {
@@ -3051,9 +3097,8 @@
     renderQuestionFactoryBlockTracker(trackerRows);
     if (state.questionFactory) renderQuestionFactory(state.questionFactory);
 
-    window.setTimeout(() => {
-      autoRunPerplexityInitialFromTrackerRows(trackerRows);
-    }, 100);
+    // Perplexity Initial é manual: copiar pacote (prompt + 200 questões) e executar no Perplexity.
+    // Não chamar Edge Function/API automaticamente.
   }
 
   function renderQuestionFactoryStyles(styles) {
