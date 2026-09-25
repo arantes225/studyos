@@ -79,8 +79,8 @@
     const mental = normalize(vitals.mental);
     const unconscious = /inconsciente|desacordad|nao responsiv|nao responde|arresponsiv|coma|irresponsiv/.test(mental);
     const img = document.getElementById('plantao-patient-image');
-    const src = `assets/img/plantao/${unconscious ? 'unconscious' : 'awake'}.webp`;
-    if (img && img.getAttribute('src') !== src) img.src = src;
+    const src = unconscious ? caseContext.unconscious_image : caseContext.patient_image;
+    if (img && src && img.getAttribute('src') !== src) img.src = src;
     if (img) img.alt = `Ilustração do paciente ${unconscious ? 'desacordado' : 'acordado'} no leito`;
     const badge = document.getElementById('plantao-consciousness');
     if (badge) badge.textContent = vitals.mental || 'Estado neurológico não informado';
