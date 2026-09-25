@@ -731,3 +731,31 @@ body.plantao-monitor-open{overflow:hidden}
   .plantao-filters .button{grid-column:auto}
   .plantao-site-select-list{max-height:240px}
 }
+
+
+/* v3.4 — traçados ligeiramente maiores e coluna numérica mais à direita. */
+.plantao-bedside .plantao-monitor-dock .plantao-monitor{
+  grid-template-columns:minmax(0,1fr) minmax(44px,.34fr);
+}
+.plantao-monitor-dock .plantao-vital:nth-child(1),
+.plantao-monitor-dock .plantao-vital:nth-child(2),
+.plantao-monitor-dock .plantao-vital:nth-child(3),
+.plantao-monitor-dock .plantao-vital:nth-child(5){
+  justify-self:end;
+  width:max-content;
+  max-width:100%;
+  text-align:right;
+  padding-left:1px;
+  padding-right:1px;
+}
+.plantao-monitor-dock .plantao-vital:nth-child(1) strong,
+.plantao-monitor-dock .plantao-vital:nth-child(2) strong,
+.plantao-monitor-dock .plantao-vital:nth-child(3) strong,
+.plantao-monitor-dock .plantao-vital:nth-child(5) strong{
+  justify-content:flex-end;
+}
+@media(max-width:680px){
+  .plantao-bedside .plantao-monitor-dock .plantao-monitor{
+    grid-template-columns:minmax(0,1fr) 42px;
+  }
+}
