@@ -118,6 +118,8 @@
     if(elapsed<0 || elapsed>reaction.duration){reaction=null;return;}
     const progress=Math.max(0,Math.min(1,elapsed/reaction.duration));
     const type=reaction.type;
+    const rosc=reaction.details?.rosc===true
+      || (reaction.details?.before?.pulse===false && reaction.details?.after?.pulse===true);
 
     if(type==='defibrillation' || type==='cardioversion'){
       const alpha=Math.max(0,1-progress*3);
@@ -138,7 +140,33 @@
       ctx.fillStyle=type==='defibrillation'?'#ffffff':'#ffe66d';
       ctx.fillText(type==='defibrillation'?'CHOQUE':'SYNC',Math.max(8,x-28),18);
       ctx.restore();
+
+      if(rosc && progress>.28){
+        ctx.save();
+        const a=Math.min(1,(progress-.28)/.18) * Math.max(0,1-(progress-.78)/.22);
+        ctx.fillStyle='rgba(85,239,147,'+(Math.max(.15,a)*.20)+')';
+        ctx.fillRect(0,0,w,h);
+        ctx.fillStyle='#55ef93';
+        ctx.font='bold 20px sans-serif';
+        ctx.textAlign='center';
+        ctx.fillText('ROSC · PULSO PRESENTE',w/2,38);
+        ctx.textAlign='start';
+        ctx.restore();
+      }
       return;
+    }
+
+    if(rosc){
+      ctx.save();
+      const a=Math.sin(Math.min(1,progress)*Math.PI);
+      ctx.fillStyle='rgba(85,239,147,'+(a*.18)+')';
+      ctx.fillRect(0,0,w,h);
+      ctx.fillStyle='#55ef93';
+      ctx.font='bold 20px sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText('ROSC · PULSO PRESENTE',w/2,38);
+      ctx.textAlign='start';
+      ctx.restore();
     }
 
     if(type==='cpr'){
