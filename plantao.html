@@ -17,7 +17,7 @@
   <link rel="icon" type="image/png" href="/assets/img/logos/logo-icone-original.png?v=favicon2">
   <link rel="stylesheet" href="assets/css/style.css?v=16.6">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
-  <link rel="stylesheet" href="assets/css/plantao.css?v=4.0">
+  <link rel="stylesheet" href="assets/css/plantao.css?v=4.1">
   <link rel="canonical" href="/plantao/">
   <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
   <script>(function(){try{if(location.pathname.endsWith("/plantao.html"))history.replaceState(null,"","/plantao/"+location.search+location.hash);}catch(e){}})();</script>
@@ -45,7 +45,25 @@
               <span><strong id="plantao-session-count">—</strong> tentativas</span>
             </div>
           </article>
-          <div class="plantao-library-head"><div><h2>Sala de emergência</h2><p>Primeiro módulo do Plantão. Novos ambientes podem usar o mesmo motor.</p></div></div>
+          <nav class="plantao-mode-menu" aria-label="Modos do Plantão">
+            <a class="plantao-mode-card active" href="#plantao-emergencia" aria-current="page">
+              <span class="plantao-mode-icon" aria-hidden="true">🏥</span>
+              <span class="plantao-mode-copy">
+                <strong>Sala de emergência</strong>
+                <small>Atendimento completo à beira-leito: anamnese, exame, exames, intervenções e destino.</small>
+              </span>
+              <span class="plantao-mode-status">Disponível</span>
+            </a>
+            <a class="plantao-mode-card" href="#plantao-telefone">
+              <span class="plantao-mode-icon" aria-hidden="true">☎</span>
+              <span class="plantao-mode-copy">
+                <strong>Telefone</strong>
+                <small>OSCE conversacional: receba o caso e desenvolva perguntas, raciocínio clínico e orientação.</small>
+              </span>
+              <span class="plantao-mode-status muted">Em preparação</span>
+            </a>
+          </nav>
+          <div id="plantao-emergencia" class="plantao-library-head"><div><h2>Sala de emergência</h2><p>Primeiro módulo do Plantão. Novos ambientes podem usar o mesmo motor.</p></div></div>
           <div class="plantao-filters" aria-label="Filtros dos casos">
             <label>Especialidade<select id="plantao-filter-specialty"><option value="">Todas</option></select></label>
             <label>Dificuldade<select id="plantao-filter-difficulty"><option value="">Todas</option></select></label>
@@ -53,6 +71,14 @@
           </div>
           <div id="plantao-case-grid" class="plantao-case-grid" aria-live="polite"></div>
           <div id="plantao-empty" class="placeholder" hidden>Nenhum caso clínico disponível.</div>
+          <article id="plantao-telefone" class="plantao-phone-preview panel" aria-labelledby="plantao-phone-title">
+            <div class="plantao-phone-preview-icon" aria-hidden="true">☎</div>
+            <div>
+              <span class="badge">Em preparação</span>
+              <h2 id="plantao-phone-title">Telefone</h2>
+              <p>O caso chega por mensagem e você conduz a conversa como especialista: pergunta, interpreta as respostas e define a orientação. O módulo será liberado quando as trilhas e a IA estiverem prontas.</p>
+            </div>
+          </article>
         </section>
 
         <section id="plantao-simulator" class="plantao-simulator" hidden>
