@@ -322,18 +322,116 @@
     {id:"diazepam",label:"Diazepam",category:"tratamento",subgroup:"Neurológicos",time_min:.25,points:0,result:"Diazepam administrado."},
     {id:"levetiracetam",label:"Levetiracetam",category:"tratamento",subgroup:"Neurológicos",time_min:.25,points:0,result:"Levetiracetam administrado."},
     {id:"phenobarbital",label:"Fenobarbital",category:"tratamento",subgroup:"Neurológicos",time_min:.25,points:0,result:"Fenobarbital administrado."},
-    {id:"haloperidol",label:"Haloperidol",category:"tratamento",subgroup:"Psiquiátricos",time_min:.25,points:0,result:"Haloperidol administrado."}
+    {id:"haloperidol",label:"Haloperidol",category:"tratamento",subgroup:"Psiquiátricos",time_min:.25,points:0,result:"Haloperidol administrado."},
+    {id:"amoxicillin",label:"Amoxicilina",category:"tratamento",subgroup:"Antimicrobianos",time_min:.25,points:0,result:"Amoxicilina administrada."},
+    {id:"amox_clav",label:"Amoxicilina-clavulanato",category:"tratamento",subgroup:"Antimicrobianos",time_min:.25,points:0,result:"Amoxicilina-clavulanato administrada."},
+    {id:"penicillin_g",label:"Penicilina G cristalina",category:"tratamento",subgroup:"Antimicrobianos",time_min:.25,points:0,result:"Penicilina G cristalina administrada."},
+    {id:"benzathine_penicillin",label:"Penicilina benzatina",category:"tratamento",subgroup:"Antimicrobianos",time_min:.25,points:0,result:"Penicilina benzatina administrada."},
+    {id:"cefazolin",label:"Cefazolina",category:"tratamento",subgroup:"Antimicrobianos",time_min:.25,points:0,result:"Cefazolina administrada."},
+    {id:"cephalexin",label:"Cefalexina",category:"tratamento",subgroup:"Antimicrobianos",time_min:.25,points:0,result:"Cefalexina administrada."},
+    {id:"cefepime",label:"Cefepime",category:"tratamento",subgroup:"Antimicrobianos",time_min:.25,points:0,result:"Cefepime administrado."},
+    {id:"meropenem",label:"Meropenem",category:"tratamento",subgroup:"Antimicrobianos",time_min:.25,points:0,result:"Meropenem administrado."},
+    {id:"metronidazole",label:"Metronidazol",category:"tratamento",subgroup:"Antimicrobianos",time_min:.25,points:0,result:"Metronidazol administrado."},
+    {id:"clindamycin",label:"Clindamicina",category:"tratamento",subgroup:"Antimicrobianos",time_min:.25,points:0,result:"Clindamicina administrada."},
+    {id:"doxycycline",label:"Doxiciclina",category:"tratamento",subgroup:"Antimicrobianos",time_min:.25,points:0,result:"Doxiciclina administrada."},
+    {id:"tmp_smx",label:"Sulfametoxazol-trimetoprim",category:"tratamento",subgroup:"Antimicrobianos",time_min:.25,points:0,result:"Sulfametoxazol-trimetoprim administrado."},
+    {id:"nitrofurantoin",label:"Nitrofurantoína",category:"tratamento",subgroup:"Antimicrobianos",time_min:.25,points:0,result:"Nitrofurantoína administrada."},
+    {id:"fosfomycin",label:"Fosfomicina",category:"tratamento",subgroup:"Antimicrobianos",time_min:.25,points:0,result:"Fosfomicina administrada."},
+    {id:"acyclovir",label:"Aciclovir",category:"tratamento",subgroup:"Antivirais",time_min:.25,points:0,result:"Aciclovir administrado."},
+    {id:"oseltamivir",label:"Oseltamivir",category:"tratamento",subgroup:"Antivirais",time_min:.25,points:0,result:"Oseltamivir administrado."},
+    {id:"fluconazole",label:"Fluconazol",category:"tratamento",subgroup:"Antifúngicos",time_min:.25,points:0,result:"Fluconazol administrado."},
+    {id:"nystatin",label:"Nistatina",category:"tratamento",subgroup:"Antifúngicos",time_min:.25,points:0,result:"Nistatina administrada."},
+    {id:"mupirocin",label:"Mupirocina tópica",category:"tratamento",subgroup:"Dermatológicos",time_min:.25,points:0,result:"Mupirocina tópica aplicada."},
+    {id:"permethrin",label:"Permetrina",category:"tratamento",subgroup:"Dermatológicos",time_min:.25,points:0,result:"Permetrina aplicada conforme indicação."},
+    {id:"topical_corticosteroid",label:"Corticoide tópico",category:"tratamento",subgroup:"Dermatológicos",time_min:.25,points:0,result:"Corticoide tópico aplicado."},
+    {id:"ibuprofen",label:"Ibuprofeno",category:"tratamento",subgroup:"Analgesia",time_min:.25,points:0,result:"Ibuprofeno administrado."},
+    {id:"ketorolac",label:"Cetorolaco",category:"tratamento",subgroup:"Analgesia",time_min:.25,points:0,result:"Cetorolaco administrado."},
+    {id:"diclofenac",label:"Diclofenaco",category:"tratamento",subgroup:"Analgesia",time_min:.25,points:0,result:"Diclofenaco administrado."},
+    {id:"colchicine",label:"Colchicina",category:"tratamento",subgroup:"Anti-inflamatórios",time_min:.25,points:0,result:"Colchicina administrada."},
+    {id:"prednisone",label:"Prednisona",category:"tratamento",subgroup:"Corticoides",time_min:.25,points:0,result:"Prednisona administrada."},
+    {id:"dexamethasone",label:"Dexametasona",category:"tratamento",subgroup:"Corticoides",time_min:.25,points:0,result:"Dexametasona administrada."},
+    {id:"budesonide",label:"Budesonida inalatória",category:"tratamento",subgroup:"Respiratórios",time_min:.25,points:0,result:"Budesonida inalatória administrada."},
+    {id:"racemic_epinephrine",label:"Adrenalina nebulizada",category:"tratamento",subgroup:"Respiratórios",time_min:.25,points:0,result:"Adrenalina nebulizada administrada."},
+    {id:"pantoprazole",label:"Pantoprazol IV",category:"tratamento",subgroup:"Gastrointestinais",time_min:.25,points:0,result:"Pantoprazol administrado."},
+    {id:"omeprazole",label:"Omeprazol",category:"tratamento",subgroup:"Gastrointestinais",time_min:.25,points:0,result:"Omeprazol administrado."},
+    {id:"metoclopramide",label:"Metoclopramida",category:"tratamento",subgroup:"Sintomáticos",time_min:.25,points:0,result:"Metoclopramida administrada."},
+    {id:"dimenhydrinate",label:"Dimenidrinato",category:"tratamento",subgroup:"Sintomáticos",time_min:.25,points:0,result:"Dimenidrinato administrado."},
+    {id:"lactulose",label:"Lactulose",category:"tratamento",subgroup:"Gastrointestinais",time_min:.25,points:0,result:"Lactulose administrada."},
+    {id:"polyethylene_glycol",label:"Polietilenoglicol",category:"tratamento",subgroup:"Gastrointestinais",time_min:.25,points:0,result:"Polietilenoglicol administrado."},
+    {id:"propranolol",label:"Propranolol",category:"tratamento",subgroup:"Cardiovasculares",time_min:.25,points:0,result:"Propranolol administrado."},
+    {id:"esmolol",label:"Esmolol",category:"tratamento",subgroup:"Cardiovasculares",time_min:.25,points:0,result:"Esmolol administrado."},
+    {id:"verapamil",label:"Verapamil",category:"tratamento",subgroup:"Cardiovasculares",time_min:.25,points:0,result:"Verapamil administrado."},
+    {id:"labetalol",label:"Labetalol",category:"tratamento",subgroup:"Anti-hipertensivos",time_min:.25,points:0,result:"Labetalol administrado."},
+    {id:"hydralazine",label:"Hidralazina",category:"tratamento",subgroup:"Anti-hipertensivos",time_min:.25,points:0,result:"Hidralazina administrada."},
+    {id:"nicardipine",label:"Nicardipina",category:"tratamento",subgroup:"Anti-hipertensivos",time_min:.25,points:0,result:"Nicardipina administrada."},
+    {id:"nifedipine",label:"Nifedipino",category:"tratamento",subgroup:"Anti-hipertensivos",time_min:.25,points:0,result:"Nifedipino administrado."},
+    {id:"nitroprusside",label:"Nitroprussiato de sódio",category:"tratamento",subgroup:"Anti-hipertensivos",time_min:.25,points:0,result:"Nitroprussiato de sódio iniciado."},
+    {id:"vasopressin",label:"Vasopressina",category:"tratamento",subgroup:"Vasoativos",time_min:.25,points:0,result:"Vasopressina iniciada."},
+    {id:"phenylephrine",label:"Fenilefrina",category:"tratamento",subgroup:"Vasoativos",time_min:.25,points:0,result:"Fenilefrina iniciada."},
+    {id:"methimazole",label:"Metimazol",category:"tratamento",subgroup:"Endócrinos",time_min:.25,points:0,result:"Metimazol administrado."},
+    {id:"propylthiouracil",label:"Propiltiouracil",category:"tratamento",subgroup:"Endócrinos",time_min:.25,points:0,result:"Propiltiouracil administrado."},
+    {id:"potassium_iodide",label:"Iodeto de potássio",category:"tratamento",subgroup:"Endócrinos",time_min:.25,points:0,result:"Iodeto de potássio administrado."},
+    {id:"potassium_chloride",label:"Cloreto de potássio",category:"tratamento",subgroup:"Eletrólitos",time_min:.25,points:0,result:"Cloreto de potássio administrado."},
+    {id:"calcium_gluconate",label:"Gluconato de cálcio",category:"tratamento",subgroup:"Eletrólitos",time_min:.25,points:0,result:"Gluconato de cálcio administrado."},
+    {id:"sodium_polystyrene",label:"Poliestirenossulfonato de sódio",category:"tratamento",subgroup:"Eletrólitos",time_min:.25,points:0,result:"Poliestirenossulfonato administrado."},
+    {id:"oxytocin",label:"Ocitocina",category:"tratamento",subgroup:"Obstetrícia",time_min:.25,points:0,result:"Ocitocina administrada."},
+    {id:"misoprostol",label:"Misoprostol",category:"tratamento",subgroup:"Obstetrícia",time_min:.25,points:0,result:"Misoprostol administrado."},
+    {id:"methylergometrine",label:"Metilergometrina",category:"tratamento",subgroup:"Obstetrícia",time_min:.25,points:0,result:"Metilergometrina administrada."},
+    {id:"carboprost",label:"Carboprost",category:"tratamento",subgroup:"Obstetrícia",time_min:.25,points:0,result:"Carboprost administrado."},
+    {id:"anti_d_immunoglobulin",label:"Imunoglobulina anti-D",category:"tratamento",subgroup:"Obstetrícia",time_min:.25,points:0,result:"Imunoglobulina anti-D administrada."},
+    {id:"methotrexate",label:"Metotrexato",category:"tratamento",subgroup:"Obstetrícia",time_min:.25,points:0,result:"Metotrexato administrado conforme indicação selecionada."},
+    {id:"terbutaline",label:"Terbutalina",category:"tratamento",subgroup:"Obstetrícia",time_min:.25,points:0,result:"Terbutalina administrada."},
+    {id:"tamsulosin",label:"Tansulosina",category:"tratamento",subgroup:"Urológicos",time_min:.25,points:0,result:"Tansulosina administrada."},
+    {id:"finasteride",label:"Finasterida",category:"tratamento",subgroup:"Urológicos",time_min:.25,points:0,result:"Finasterida administrada."},
+    {id:"benztropine",label:"Biperideno",category:"tratamento",subgroup:"Neurológicos",time_min:.25,points:0,result:"Biperideno administrado."},
+    {id:"phenytoin",label:"Fenitoína",category:"tratamento",subgroup:"Neurológicos",time_min:.25,points:0,result:"Fenitoína administrada."},
+    {id:"valproate",label:"Valproato de sódio",category:"tratamento",subgroup:"Neurológicos",time_min:.25,points:0,result:"Valproato de sódio administrado."},
+    {id:"thiamine",label:"Tiamina",category:"tratamento",subgroup:"Toxicologia",time_min:.25,points:0,result:"Tiamina administrada."},
+    {id:"fomepizole",label:"Fomepizol",category:"tratamento",subgroup:"Antídotos",time_min:.25,points:0,result:"Fomepizol administrado."},
+    {id:"activated_charcoal",label:"Carvão ativado",category:"tratamento",subgroup:"Toxicologia",time_min:.25,points:0,result:"Carvão ativado administrado conforme indicação."},
+    {id:"acetylcysteine",label:"N-acetilcisteína",category:"tratamento",subgroup:"Antídotos",time_min:.25,points:0,result:"N-acetilcisteína administrada."}
   ];
 
-  const GENERAL_DIAGNOSES = [
-    "PCR em fibrilação ventricular","PCR em taquicardia ventricular sem pulso","Assistolia","Atividade elétrica sem pulso",
-    "Fibrilação atrial com instabilidade","Taquicardia supraventricular","Taquicardia ventricular com pulso","Bradicardia sintomática",
-    "Síndrome coronariana aguda","Edema agudo de pulmão","Choque cardiogênico","Choque hipovolêmico","Choque distributivo",
-    "Anafilaxia","Choque séptico","Pneumonia","Crise asmática","DPOC exacerbada","Embolia pulmonar","Pneumotórax hipertensivo",
-    "AVC isquêmico","AVC hemorrágico","Crise convulsiva","Meningite","Hipoglicemia","Cetoacidose diabética","Estado hiperosmolar",
-    "Hemorragia digestiva","Pancreatite aguda","Colecistite aguda","Colangite","Apendicite","Obstrução intestinal","Perfuração de víscera",
-    "Pielonefrite","Cólica renal","Trauma cranioencefálico","Trauma torácico","Trauma abdominal"
-  ].map((label,index)=>({id:"generic_dx_"+index,role:"diagnosis",label,category:"hipoteses",subgroup:"Hipótese principal",time_min:.1,points:0,genericDiagnosis:true}));
+  function diagnosisSubgroup(item){
+    const text=normalizeLabel([item?.title,item?.specialty].filter(Boolean).join(" "));
+    if(/infarto|coronar|angina|fibrilacao|taquic|bradic|pericard|cardio|aort|tampon|edema agudo de pulmao|estenose aortica/.test(text)) return "Cardíacas e vasculares";
+    if(/pneum|asma|dpoc|bronq|pleur|hemopt|toracica|respirat|epiglot|crupe|laring/.test(text)) return "Respiratórias";
+    if(/avc|hemorragia subarac|mening|convuls|epilep|guillain|miasten|neurol|tce|hematoma epidural|hematoma subdural|cauda equina/.test(text)) return "Neurológicas";
+    if(/sepse|septic|celulit|erisip|abscesso|infect|meningococ|pielonefr|pneumonia|endometrit|mastit|fasceite|artrite septica|impetigo/.test(text)) return "Infecciosas";
+    if(/diabet|cetoacid|hiperosm|hipoglic|hiperglic|hiper?calem|hipocalem|hiponatrem|tireo|adrenal|metabol/.test(text)) return "Endócrinas e metabólicas";
+    if(/apendic|colec|colang|pancreat|obstrucao|volvulo|invagin|perfur|divert|hernia|hemorragia digest|gastr|reflux|dispeps|constip|diarreia|periton|isquemia mesenter/.test(text)) return "Gastrointestinais e cirúrgicas";
+    if(/renal|urin|cistite|epidid|orquite|hidrocele|varicocele|parafim|fimose|balan|colica renal|retencao urinaria/.test(text)) return "Renais e urológicas";
+    if(/gesta|gravidez|aborta|eclamps|placenta|puerper|parto|vagino|vulvo|cervic|ovar|uter|mamari|mastalgia|endometr|dismen|barthol|tricomon|sifilis/.test(text)) return "Ginecológicas e obstétricas";
+    if(/intoxic|abstin|alcool|metanol|salicil|cocaina|cafeina|opioide|benzodiazep|simpatomim/.test(text)) return "Toxicológicas";
+    if(/trauma|fratura|luxacao|entorse|queimadura|ferimento|contus|mordedura|escori|afogamento|tornozelo|ombro|punho|joelho|costal/.test(text)) return "Trauma e ortopedia";
+    if(/dermat|urtic|escab|tinea|herpes|folicul|intertrigo|onicocrip|paroniq|varicela|molusco|pedicul/.test(text)) return "Dermatológicas";
+    if(/conjunt|cerat|blefar|horde|ocular/.test(text)) return "Oftalmológicas";
+    if(/otite|sinus|rinite|faring|epistaxe|cerume|corpo estranho nasal|corpo estranho em ouvido/.test(text)) return "Otorrino";
+    if(String(item?.specialty||"")==="Pediatria") return "Pediátricas";
+    return "Outras hipóteses";
+  }
+
+  function allCaseDiagnoses(){
+    const seen=new Set();
+    return state.cases
+      .filter(item=>item?.title)
+      .filter(item=>{
+        const key=normalizeLabel(item.title);
+        if(seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .map((item,index)=>({
+        id:"catalog_dx_"+index,
+        role:"diagnosis",
+        label:item.title,
+        category:"hipoteses",
+        subgroup:diagnosisSubgroup(item),
+        time_min:.1,
+        points:0,
+        genericDiagnosis:true
+      }));
+  }
 
   const GENERAL_DISPOSITIONS = [
     {id:"generic_dest_discharge",role:"disposition",label:"Alta domiciliar",category:"destino",subgroup:"Conduta final",time_min:.1,points:0,genericDisposition:true},
@@ -388,7 +486,7 @@
     const caseList=[...caseActions(),...importedHistoryActions()];
 
     const byId=new Map(caseList.map(a=>[a.id,a]));
-    const generic=[...GENERIC_ACTIONS,...GENERAL_DIAGNOSES,...GENERAL_DISPOSITIONS].map(a=>{
+    const generic=[...GENERIC_ACTIONS,...allCaseDiagnoses(),...GENERAL_DISPOSITIONS].map(a=>{
       const exact=byId.get(a.id);
       return exact ? {...a,...exact,subgroup:a.subgroup||exact.subgroup} : a;
     });
