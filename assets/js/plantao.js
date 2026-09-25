@@ -380,30 +380,30 @@
     conduta:{label:"Conduta final",icon:"✓",categories:["destino","encaminhamento"]}
   };
   const GENERIC_ACTIONS = [
-    {id:"exam_ectoscopy",label:"Ectoscopia / estado geral",category:"exame",subgroup:"01 · Ectoscopia",time_min:.5,points:0,result:"__PHYSICAL__"},
-    {id:"exam_head",label:"Crânio e face",category:"exame",subgroup:"02 · Crânio e face",time_min:.5,points:0,result:"__PHYSICAL__"},
-    {id:"exam_eyes",label:"Olhos e pupilas",category:"exame",subgroup:"03 · Olhos",time_min:.5,points:0,result:"__PHYSICAL__"},
-    {id:"exam_ears",label:"Otoscopia / orelhas",category:"exame",subgroup:"04 · Orelhas",time_min:.5,points:0,result:"__PHYSICAL__"},
-    {id:"exam_nose",label:"Nariz e seios da face",category:"exame",subgroup:"05 · Nariz e seios da face",time_min:.5,points:0,result:"__PHYSICAL__"},
-    {id:"exam_mouth",label:"Boca e orofaringe",category:"exame",subgroup:"06 · Boca e orofaringe",time_min:.5,points:0,result:"__PHYSICAL__"},
-    {id:"exam_airway",label:"Vias aéreas",category:"exame",subgroup:"07 · Vias aéreas",time_min:.5,points:0,result:"__PHYSICAL__"},
-    {id:"exam_neck",label:"Pescoço e linfonodos",category:"exame",subgroup:"08 · Pescoço",time_min:.5,points:0,result:"__PHYSICAL__"},
-    {id:"exam_thyroid",label:"Tireoide",category:"exame",subgroup:"09 · Tireoide",time_min:.5,points:0,result:"__PHYSICAL__"},
-    {id:"exam_neuro",label:"Exame neurológico",category:"exame",subgroup:"10 · Neurológico",time_min:.75,points:0,result:"__PHYSICAL__"},
-    {id:"exam_chest",label:"Aparelho respiratório",category:"exame",subgroup:"11 · Tórax · Respiratório",time_min:.75,points:0,result:"__PHYSICAL__"},
-    {id:"exam_cardio",label:"Aparelho cardiovascular",category:"exame",subgroup:"12 · Tórax · Cardiovascular",time_min:.75,points:0,result:"__PHYSICAL__"},
-    {id:"exam_breast",label:"Mamas",category:"exame",subgroup:"13 · Mamas",time_min:.5,points:0,result:"__PHYSICAL__"},
-    {id:"exam_abdomen",label:"Abdômen",category:"exame",subgroup:"14 · Abdômen",time_min:.75,points:0,result:"__PHYSICAL__"},
-    {id:"exam_back",label:"Dorso e região lombar",category:"exame",subgroup:"15 · Dorso e lombar",time_min:.5,points:0,result:"__PHYSICAL__"},
-    {id:"exam_spine",label:"Coluna vertebral",category:"exame",subgroup:"16 · Coluna",time_min:.5,points:0,result:"__PHYSICAL__"},
-    {id:"exam_gyne",label:"Exame ginecológico",category:"exame",subgroup:"17 · Ginecológico",time_min:1,points:0,result:"__PHYSICAL__"},
-    {id:"exam_gu",label:"Exame genitourinário",category:"exame",subgroup:"18 · Genitourinário",time_min:1,points:0,result:"__PHYSICAL__"},
-    {id:"exam_rectal",label:"Exame anorretal / toque retal",category:"exame",subgroup:"19 · Anorretal",time_min:.75,points:0,result:"__PHYSICAL__"},
-    {id:"exam_upper",label:"Membros superiores",category:"exame",subgroup:"20 · Membros superiores",time_min:.5,points:0,result:"__PHYSICAL__"},
-    {id:"exam_lower",label:"Membros inferiores",category:"exame",subgroup:"21 · Membros inferiores",time_min:.5,points:0,result:"__PHYSICAL__"},
-    {id:"exam_msk",label:"Musculoesquelético",category:"exame",subgroup:"22 · Musculoesquelético",time_min:.75,points:0,result:"__PHYSICAL__"},
-    {id:"exam_extremities",label:"Extremidades e perfusão",category:"exame",subgroup:"23 · Perfusão periférica",time_min:.5,points:0,result:"__PHYSICAL__"},
-    {id:"exam_skin",label:"Pele e mucosas",category:"exame",subgroup:"24 · Pele e mucosas",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_ectoscopy",label:"Ectoscopia / estado geral",category:"exame",subgroup:"01 · Ectoscopia",time_min:.333,points:0,result:"__PHYSICAL__"},
+    {id:"exam_head",label:"Crânio e face",category:"exame",subgroup:"02 · Crânio e face",time_min:.333,points:0,result:"__PHYSICAL__"},
+    {id:"exam_eyes",label:"Olhos e pupilas",category:"exame",subgroup:"03 · Olhos",time_min:.333,points:0,result:"__PHYSICAL__"},
+    {id:"exam_ears",label:"Otoscopia / orelhas",category:"exame",subgroup:"04 · Orelhas",time_min:.333,points:0,result:"__PHYSICAL__"},
+    {id:"exam_nose",label:"Nariz e seios da face",category:"exame",subgroup:"05 · Nariz e seios da face",time_min:.333,points:0,result:"__PHYSICAL__"},
+    {id:"exam_mouth",label:"Boca e orofaringe",category:"exame",subgroup:"06 · Boca e orofaringe",time_min:.333,points:0,result:"__PHYSICAL__"},
+    {id:"exam_airway",label:"Vias aéreas",category:"exame",subgroup:"07 · Vias aéreas",time_min:.333,points:0,result:"__PHYSICAL__"},
+    {id:"exam_neck",label:"Pescoço e linfonodos",category:"exame",subgroup:"08 · Pescoço",time_min:.333,points:0,result:"__PHYSICAL__"},
+    {id:"exam_thyroid",label:"Tireoide",category:"exame",subgroup:"09 · Tireoide",time_min:.333,points:0,result:"__PHYSICAL__"},
+    {id:"exam_neuro",label:"Exame neurológico",category:"exame",subgroup:"10 · Neurológico",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_chest",label:"Aparelho respiratório",category:"exame",subgroup:"11 · Tórax · Respiratório",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_cardio",label:"Aparelho cardiovascular",category:"exame",subgroup:"12 · Tórax · Cardiovascular",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_breast",label:"Mamas",category:"exame",subgroup:"13 · Mamas",time_min:.333,points:0,result:"__PHYSICAL__"},
+    {id:"exam_abdomen",label:"Abdômen",category:"exame",subgroup:"14 · Abdômen",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_back",label:"Dorso e região lombar",category:"exame",subgroup:"15 · Dorso e lombar",time_min:.333,points:0,result:"__PHYSICAL__"},
+    {id:"exam_spine",label:"Coluna vertebral",category:"exame",subgroup:"16 · Coluna",time_min:.333,points:0,result:"__PHYSICAL__"},
+    {id:"exam_gyne",label:"Exame ginecológico",category:"exame",subgroup:"17 · Ginecológico",time_min:.667,points:0,result:"__PHYSICAL__"},
+    {id:"exam_gu",label:"Exame genitourinário",category:"exame",subgroup:"18 · Genitourinário",time_min:.667,points:0,result:"__PHYSICAL__"},
+    {id:"exam_rectal",label:"Exame anorretal / toque retal",category:"exame",subgroup:"19 · Anorretal",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_upper",label:"Membros superiores",category:"exame",subgroup:"20 · Membros superiores",time_min:.333,points:0,result:"__PHYSICAL__"},
+    {id:"exam_lower",label:"Membros inferiores",category:"exame",subgroup:"21 · Membros inferiores",time_min:.333,points:0,result:"__PHYSICAL__"},
+    {id:"exam_msk",label:"Musculoesquelético",category:"exame",subgroup:"22 · Musculoesquelético",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_extremities",label:"Extremidades e perfusão",category:"exame",subgroup:"23 · Perfusão periférica",time_min:.333,points:0,result:"__PHYSICAL__"},
+    {id:"exam_skin",label:"Pele e mucosas",category:"exame",subgroup:"24 · Pele e mucosas",time_min:.333,points:0,result:"__PHYSICAL__"},
     {id:"monitor",label:"Ligar monitor multiparamétrico",category:"iniciais",subgroup:"Monitorização",time_min:.25,points:0,result:"Monitor conectado; sinais vitais e traçados passam a ser exibidos."},
     {id:"check_pulse",label:"Checar pulso e respiração",category:"iniciais",subgroup:"Avaliação imediata",time_min:.25,points:0,result:"Pulso e padrão respiratório avaliados."},
     {id:"check_rhythm",label:"Avaliar ritmo no monitor",category:"iniciais",subgroup:"Avaliação imediata",time_min:.25,points:0,result:"Ritmo avaliado no monitor.",requires_all:["monitor"],requires_penalty:2},
@@ -844,7 +844,7 @@
         label:question,
         category:"anamnese",
         subgroup:topic,
-        time_min:.25,
+        time_min:.1,
         points:0,
         result:answer
       };
@@ -1148,6 +1148,7 @@
     recordClinicalEvent("mortal",action||{id:"death",label:"Óbito"},state.deathReason);
     feed("ÓBITO: "+state.deathReason,"warning");
     $("plantao-death-reason").textContent=state.deathReason;
+    const criticalHost=$("plantao-critical-window"); if(criticalHost) criticalHost.hidden=true;
     $("plantao-death-overlay").hidden=false;
     $("plantao-simulator").classList.add("patient-dead");
     $("plantao-action-tabs").inert=true;
@@ -1198,17 +1199,43 @@
     }
   }
 
-  function fatalDelayReason() {
+  function criticalWindow() {
     const t=normalizeLabel(state.current?.title||"");
-    const anyDone=(ids)=>ids.some(done);
-    if((state.current?.slug==="vf-arrest-ed" || t.includes("pcr pediatrica em fibrilacao ventricular")) && !done("cpr") && state.elapsed>=4) return "A parada cardiorrespiratória permaneceu sem RCP por tempo crítico.";
-    if(t.includes("pneumotorax hipertensivo") && !done("needle_decompression") && state.elapsed>=4) return "A descompressão torácica foi atrasada criticamente.";
-    if(/fibrilacao atrial instavel|taquicardia ventricular com pulso instavel/.test(t) && !done("sync_cardioversion") && state.elapsed>=6) return "A cardioversão sincronizada foi atrasada apesar da instabilidade.";
-    if(t.includes("anafilaxia") && !done("epi_im") && state.elapsed>=5) return "A adrenalina IM foi atrasada em anafilaxia grave.";
-    if(/choque septico|sepse|meningococcemia|neutropenia febril/.test(t) && !anyDone(["ceftriaxone","piperacillin_tazo","vancomycin"]) && state.elapsed>=12) return "O antimicrobiano foi atrasado em sepse grave.";
-    if(/estado de mal epileptico|convulsao febril prolongada/.test(t) && !anyDone(["midazolam","diazepam"]) && state.elapsed>=5) return "O benzodiazepínico foi atrasado durante convulsão prolongada.";
-    if(/eclampsia|pre-eclampsia pos-parto/.test(t) && !done("magnesium") && state.elapsed>=8) return "O sulfato de magnésio foi atrasado na emergência obstétrica.";
-    if(t.includes("intoxicacao por opioide") && !done("bvm") && state.elapsed>=4) return "A ventilação foi atrasada na depressão respiratória.";
+    if(state.current?.slug==="vf-arrest-ed" || /pcr pediatrica em fibrilacao ventricular|parada cardiorrespiratoria/.test(t))
+      return {actionIds:["cpr"],label:"Iniciar RCP",deadline:.5,fatal:"A parada cardiorrespiratória permaneceu sem RCP por mais de 30 segundos."};
+    if(t.includes("pneumotorax hipertensivo"))
+      return {actionIds:["needle_decompression"],label:"Descompressão torácica",deadline:1,fatal:"A descompressão torácica foi atrasada além da janela crítica."};
+    if(/fibrilacao atrial instavel|taquicardia ventricular com pulso instavel/.test(t))
+      return {actionIds:["sync_cardioversion"],label:"Cardioversão sincronizada",deadline:2,fatal:"A cardioversão sincronizada foi atrasada apesar da instabilidade."};
+    if(t.includes("anafilaxia"))
+      return {actionIds:["epi_im"],label:"Adrenalina IM",deadline:2,fatal:"A adrenalina IM foi atrasada em anafilaxia grave."};
+    if(/estado de mal epileptico|convulsao febril prolongada/.test(t))
+      return {actionIds:["midazolam","diazepam"],label:"Benzodiazepínico",deadline:2,fatal:"O benzodiazepínico foi atrasado durante convulsão prolongada."};
+    if(/eclampsia|pre-eclampsia pos-parto/.test(t))
+      return {actionIds:["magnesium"],label:"Sulfato de magnésio",deadline:3,fatal:"O sulfato de magnésio foi atrasado na emergência obstétrica."};
+    if(t.includes("intoxicacao por opioide"))
+      return {actionIds:["bvm","naloxone"],label:"Ventilar / naloxona",deadline:1,fatal:"O suporte ventilatório foi atrasado na depressão respiratória grave."};
+    if(/choque septico|meningococcemia|neutropenia febril/.test(t))
+      return {actionIds:["ceftriaxone","piperacillin_tazo","vancomycin","cefepime","meropenem"],label:"Antimicrobiano",deadline:10,fatal:"O antimicrobiano foi atrasado de forma crítica na sepse grave."};
+    return null;
+  }
+
+  function renderCriticalWindow() {
+    const host=$("plantao-critical-window");
+    if(!host) return;
+    const rule=criticalWindow();
+    if(!rule){host.hidden=true;host.textContent="";return;}
+    const completed=rule.actionIds.some(id=>done(id));
+    if(completed){host.hidden=true;host.textContent="";return;}
+    const remaining=Math.max(0,rule.deadline-state.elapsed);
+    host.hidden=false;
+    host.innerHTML='<strong>CASO TEMPO-DEPENDENTE</strong><span>'+esc(rule.label)+' até '+fmtTime(rule.deadline)+' · restam '+fmtTime(remaining)+'</span>';
+    host.classList.toggle("critical",remaining<=Math.min(.5,rule.deadline/2));
+  }
+
+  function fatalDelayReason() {
+    const rule=criticalWindow();
+    if(rule && !rule.actionIds.some(id=>done(id)) && state.elapsed>=rule.deadline) return rule.fatal;
     return "";
   }
 
@@ -1305,6 +1332,7 @@
     updateScore();
     renderVitals();
     renderActions();
+    renderCriticalWindow();
     feed(safeOpening,"event",0);
     show("plantao-simulator");
   }
@@ -1331,6 +1359,7 @@
         const message=recordSequenceViolation(action,sequenceIssue);
         feed((sequenceIssue.message||message)+" (−"+penalty+" pontos por sequência)","warning");
         applyDeterioration();
+        renderCriticalWindow();
         const fatalDelay=fatalDelayReason();
         if(fatalDelay){await killPatient(fatalDelay,action);return;}
       } else {
@@ -1376,6 +1405,7 @@
         if(diedFromAction)return;
       }
       $("plantao-time").textContent=fmtTime(state.elapsed);
+      renderCriticalWindow();
       updateScore();renderVitals();
       const saved=await persistSession();
       if(!saved)feed("Não foi possível salvar agora. Mantenha esta tela aberta; a próxima ação tentará novamente.","warning");
