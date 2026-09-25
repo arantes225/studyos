@@ -1467,15 +1467,31 @@ function setTargetExamsStatus(text, type = "") {
   el.className = `settings-save-status ${type}`.trim();
 }
 
+let targetExamOrder = [];
+const TARGET_EXAM_WEIGHTS = [50, 30, 20];
+
 function selectedTargetExams() {
-  return Array.from(
-    document.querySelectorAll('#target-exam-grid input[type="checkbox"]:checked')
-  ).map((input) => input.value);
+  return [...targetExamOrder];
 }
 
-function updateTargetExamCount() {
+function syncTargetExamUi() {
+  const grid = document.getElementById("target-exam-grid");
+  if (!grid) return;
+
+  grid.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+    const position = targetExamOrder.indexOf(input.value);
+    input.checked = position >= 0;
+    const badge = input.closest(".target-exam-option")?.querySelector(".target-exam-rank");
+    if (badge) {
+      badge.textContent = position >= 0
+        ? `${position + 1}ª · ${TARGET_EXAM_WEIGHTS[position]}%`
+        : "";
+      badge.hidden = position < 0;
+    }
+  });
+
   const count = document.getElementById("target-exam-count");
-  if (count) count.textContent = `${selectedTargetExams().length}/3`;
+  if (count) count.textContent = `${targetExamOrder.length}/3`;
 }
 
 function renderTargetExamOptions() {
@@ -1486,7 +1502,7 @@ function renderTargetExamOptions() {
   grid.innerHTML = exams.map((exam) => `
     <label class="target-exam-option">
       <input type="checkbox" value="${exam}">
-      <span>${exam}</span>
+      <span><span class="target-exam-name">${exam}</span><strong class="target-exam-rank" hidden></strong></span>
     </label>
   `).join("");
 
@@ -1494,17 +1510,22 @@ function renderTargetExamOptions() {
     const input = event.target.closest('input[type="checkbox"]');
     if (!input) return;
 
-    const selected = selectedTargetExams();
-    if (selected.length > 3) {
-      input.checked = false;
-      setTargetExamsStatus("Você pode escolher no máximo 3 provas.", "error");
+    if (input.checked) {
+      if (targetExamOrder.length >= 3) {
+        input.checked = false;
+        setTargetExamsStatus("Você pode escolher no máximo 3 provas.", "error");
+        return;
+      }
+      if (!targetExamOrder.includes(input.value)) targetExamOrder.push(input.value);
     } else {
-      setTargetExamsStatus("");
+      targetExamOrder = targetExamOrder.filter((exam) => exam !== input.value);
     }
-    updateTargetExamCount();
+
+    setTargetExamsStatus("");
+    syncTargetExamUi();
   });
 
-  updateTargetExamCount();
+  syncTargetExamUi();
 }
 
 async function loadTargetExams() {
@@ -1523,22 +1544,14 @@ async function loadTargetExams() {
     return;
   }
 
-  const selected = window.LuriaExamPriority?.sanitizeExams(data?.target_exams || []) || [];
-  grid.querySelectorAll('input[type="checkbox"]').forEach((input) => {
-    input.checked = selected.includes(input.value);
-  });
-  updateTargetExamCount();
+  targetExamOrder = window.LuriaExamPriority?.sanitizeExams(data?.target_exams || []) || [];
+  syncTargetExamUi();
 }
 
 async function saveTargetExams() {
   if (!settingsUser) return;
 
   const targetExams = window.LuriaExamPriority?.sanitizeExams(selectedTargetExams()) || [];
-  if (targetExams.length > 3) {
-    setTargetExamsStatus("Você pode escolher no máximo 3 provas.", "error");
-    return;
-  }
-
   const button = document.getElementById("save-target-exams");
   if (button) button.disabled = true;
   setTargetExamsStatus("Salvando...");
@@ -1560,7 +1573,7 @@ async function saveTargetExams() {
 
   setTargetExamsStatus(
     targetExams.length
-      ? `${targetExams.length} prova${targetExams.length === 1 ? "" : "s"} salva${targetExams.length === 1 ? "" : "s"}. O Cronograma Base usará essa prioridade.`
+      ? "Provas salvas na ordem de prioridade. O Cronograma Base aplicará pesos de 50%, 30% e 20%."
       : "Seleção limpa. O Cronograma Base volta à ordem padrão.",
     "success"
   );
