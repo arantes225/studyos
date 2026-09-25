@@ -53,6 +53,74 @@
     filters:{specialty:"",difficulty:""}
   };
 
+  const PHONE_DRAFT_TTL_MS = 6 * 60 * 60 * 1000;
+
+  function phoneDraftKey(){
+    return state.user?.id ? `luria:plantao:luriazap:draft:${state.user.id}` : null;
+  }
+
+  function clearPhoneDraft(){
+    const key=phoneDraftKey();
+    if(!key) return;
+    try{localStorage.removeItem(key);}catch(error){console.warn("LuriaZap: não foi possível limpar o rascunho local.",error);}
+  }
+
+  function persistPhoneDraft(){
+    const key=phoneDraftKey();
+    if(!key || !state.phoneSession?.id || !state.phoneCase?.id) return;
+    try{
+      const now=Date.now();
+      localStorage.setItem(key,JSON.stringify({
+        version:1,
+        userId:state.user.id,
+        caseId:state.phoneCase.id,
+        sessionId:state.phoneSession.id,
+        quotaCountedAt:state.phoneSession.quota_counted_at||null,
+        turn:Number(state.phoneTurn||0),
+        usedChoices:[...state.phoneUsedChoices],
+        messages:currentPhoneMessages(),
+        savedAt:now,
+        expiresAt:now+PHONE_DRAFT_TTL_MS
+      }));
+    }catch(error){
+      console.warn("LuriaZap: não foi possível salvar o progresso local.",error);
+    }
+  }
+
+  function restorePhoneDraft(){
+    const key=phoneDraftKey();
+    if(!key) return false;
+    let draft=null;
+    try{draft=JSON.parse(localStorage.getItem(key)||"null");}catch{}
+    if(!draft || draft.userId!==state.user.id || !draft.caseId || !draft.sessionId){
+      clearPhoneDraft();
+      return false;
+    }
+    if(!Number.isFinite(Number(draft.expiresAt)) || Date.now()>=Number(draft.expiresAt)){
+      clearPhoneDraft();
+      return false;
+    }
+    const item=state.phoneCases.find(x=>String(x.id)===String(draft.caseId));
+    if(!item){
+      clearPhoneDraft();
+      return false;
+    }
+    state.phoneCase=item;
+    state.phoneSession={id:draft.sessionId,quota_counted_at:draft.quotaCountedAt||null};
+    state.phoneTurn=Math.max(0,Number(draft.turn||0));
+    state.phoneUsedChoices=new Set(Array.isArray(draft.usedChoices)?draft.usedChoices:[]);
+    $("plantao-phone-inbox").hidden=true;
+    $("plantao-phone-station").hidden=false;
+    $("plantao-phone-requester").textContent=item.requester_role||"R1 de Clínica Médica";
+    $("plantao-phone-context").textContent=item.title||item.specialty||"Caso clínico";
+    const messages=Array.isArray(draft.messages)&&draft.messages.length
+      ? draft.messages
+      : [{sender:"requester",content:item.opening_message}];
+    renderPhoneMessages(messages);
+    renderPhoneChoices();
+    return true;
+  }
+
   function fmtTime(minutes) {
     const total = Math.max(0, Math.round(Number(minutes||0)*60));
     return String(Math.floor(total/60)).padStart(2,"0")+":"+String(total%60).padStart(2,"0");
@@ -129,7 +197,8 @@
     buildSiteFilter("specialty",specialties);
     buildSiteFilter("difficulty",difficulties);
     renderLibrary();
-    setPlantaoMode("emergency");
+    const restoredPhoneDraft=phoneAllowed && restorePhoneDraft();
+    setPlantaoMode(restoredPhoneDraft?"phone":"emergency");
   }
 
   function bestScore(caseId) {
@@ -262,6 +331,7 @@
     $("plantao-phone-context").textContent=item.title||item.specialty||"Caso clínico";
     renderPhoneMessages([{sender:"requester",content:item.opening_message}]);
     renderPhoneChoices();
+    persistPhoneDraft();
   }
 
   function updatePhoneStatusTime(){
@@ -353,6 +423,7 @@
     const reply=phoneReplyFor(clean)||"Não tenho essa informação agora.";
     const messages=[...currentPhoneMessages(),{sender:"specialist",content:clean},{sender:"requester",content:reply}];
     renderPhoneMessages(messages);
+    persistPhoneDraft();
     await sb.from("interconsultation_messages").insert([
       {session_id:state.phoneSession.id,user_id:state.user.id,turn_index:specialistIndex,sender:"specialist",content:clean,metadata:{pilot:true,...choiceMeta}},
       {session_id:state.phoneSession.id,user_id:state.user.id,turn_index:requesterIndex,sender:"requester",content:reply,metadata:{pilot:true,...choiceMeta}}
@@ -362,6 +433,7 @@
       turn_count:state.phoneTurn,
       state:{mode:"scripted_pilot",last_user_message:clean}
     }).eq("id",state.phoneSession.id);
+    persistPhoneDraft();
   }
 
   $("plantao-emergency-mode-card")?.addEventListener("click",()=>setPlantaoMode("emergency"));
@@ -380,6 +452,7 @@
     if(state.phoneSession?.id){
       await sb.from("interconsultation_sessions").update({status:"abandoned",completed_at:new Date().toISOString()}).eq("id",state.phoneSession.id);
     }
+    clearPhoneDraft();
     state.phoneSession=null; state.phoneCase=null; state.phoneTurn=0; state.phoneUsedChoices=new Set();
     $("plantao-phone-station").hidden=true;
     $("plantao-phone-inbox").hidden=false;
@@ -394,6 +467,7 @@
     if(state.phoneSession?.id){
       await sb.from("interconsultation_sessions").update({status:"abandoned",completed_at:new Date().toISOString()}).eq("id",state.phoneSession.id);
     }
+    clearPhoneDraft();
     state.phoneSession=null; state.phoneCase=null; state.phoneTurn=0; state.phoneUsedChoices=new Set();
     $("plantao-phone-station").hidden=true;
     $("plantao-phone-inbox").hidden=false;
