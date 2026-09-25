@@ -307,6 +307,25 @@ function themeCacheKey(userId) {
   return `docmap:theme:${userId}`;
 }
 
+function entitlementsCacheKey(userId) {
+  return `docmap:entitlements:${userId}`;
+}
+
+function adminCacheKey(userId) {
+  return `docmap:admin:${userId}`;
+}
+
+function readFreshCache(key, maxAgeMs) {
+  const cached = readLocalJson(key);
+  if (!cached || !cached.saved_at) return null;
+  if (Date.now() - Number(cached.saved_at) > maxAgeMs) return null;
+  return cached.value ?? null;
+}
+
+function writeTimedCache(key, value) {
+  writeLocalJson(key, { value, saved_at: Date.now() });
+}
+
 function readLocalJson(key) {
   try {
     return JSON.parse(localStorage.getItem(key) || "null");
@@ -3877,39 +3896,54 @@ function essentialEntitlementsFallback() {
 
 
 async function carregarEntitlements() {
-  try {
-    const {
-      data,
-      error
-    } =
-      await sb.rpc(
-        "get_my_entitlements"
-      );
+  const userId =
+    (await sb.auth.getSession())?.data?.session?.user?.id
+    || null;
 
-    if (
-      error
-      || !data
-    ) {
+  const cached =
+    userId
+      ? readFreshCache(
+          entitlementsCacheKey(userId),
+          6 * 60 * 60 * 1000
+        )
+      : null;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const { data, error } =
+        await sb.rpc("get_my_entitlements");
+
+      if (!error && data) {
+        if (userId) {
+          writeTimedCache(
+            entitlementsCacheKey(userId),
+            data
+          );
+        }
+        return data;
+      }
+
       console.warn(
         "Não foi possível carregar o plano do usuário:",
         error?.message || "resposta vazia"
       );
-
-      return essentialEntitlementsFallback();
+    } catch (error) {
+      console.warn(
+        "Não foi possível carregar o plano do usuário:",
+        error
+      );
     }
 
-    return data;
-
-  } catch (
-    error
-  ) {
-    console.warn(
-      "Não foi possível carregar o plano do usuário:",
-      error
-    );
-
-    return essentialEntitlementsFallback();
+    if (attempt === 0) {
+      await new Promise(resolve => setTimeout(resolve, 350));
+    }
   }
+
+  if (cached) {
+    return cached;
+  }
+
+  return essentialEntitlementsFallback();
 }
 
 
@@ -4163,36 +4197,54 @@ function aplicarEntitlementsNaNavegacao(
 
 
 async function verificarAcessoAdmin() {
-  try {
-    const {
-      data,
-      error
-    } =
-      await sb.rpc(
-        "is_admin"
-      );
+  const userId =
+    (await sb.auth.getSession())?.data?.session?.user?.id
+    || null;
 
-    if (error) {
+  const cached =
+    userId
+      ? readFreshCache(
+          adminCacheKey(userId),
+          10 * 60 * 1000
+        )
+      : null;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const { data, error } =
+        await sb.rpc("is_admin");
+
+      if (!error) {
+        const confirmed =
+          data === true;
+
+        if (userId) {
+          writeTimedCache(
+            adminCacheKey(userId),
+            confirmed
+          );
+        }
+
+        return confirmed;
+      }
+
       console.warn(
         "Não foi possível verificar acesso administrativo:",
         error.message
       );
-
-      return false;
+    } catch (error) {
+      console.warn(
+        "Não foi possível verificar acesso administrativo:",
+        error
+      );
     }
 
-    return data === true;
-
-  } catch (
-    error
-  ) {
-    console.warn(
-      "Não foi possível verificar acesso administrativo:",
-      error
-    );
-
-    return false;
+    if (attempt === 0) {
+      await new Promise(resolve => setTimeout(resolve, 350));
+    }
   }
+
+  return cached === true;
 }
 
 
