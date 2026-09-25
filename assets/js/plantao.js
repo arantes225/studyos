@@ -2259,6 +2259,14 @@
   }
 
   document.addEventListener("click",async event=>{
+    const closeDrawer=event.target.closest("#plantao-action-close");
+    if (closeDrawer) {
+      event.preventDefault();
+      event.stopPropagation();
+      closeActions();
+      return;
+    }
+
     const start=event.target.closest("[data-start-case]");
     if (start) return startCase(start.dataset.startCase);
 
