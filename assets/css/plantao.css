@@ -86,3 +86,15 @@
   .plantao-monitor-dock{bottom:auto}
   .plantao-monitor-dock>.plantao-feed{max-height:none;min-height:220px}
 }
+
+/* v3.3 — desfecho fatal da simulação. */
+.plantao-simulator{position:relative}
+.plantao-death-overlay{position:absolute;inset:0;z-index:50;display:grid;place-items:center;padding:24px;background:#000a;backdrop-filter:grayscale(1) contrast(1.1)}
+.plantao-death-overlay[hidden]{display:none!important}
+.patient-dead .plantao-bedside,.patient-dead .plantao-patient-card{filter:grayscale(1)}
+.patient-dead .plantao-scene>img{filter:grayscale(1) brightness(.72)}
+.plantao-death-card{width:min(720px,92%);padding:30px;text-align:center;background:#080808e8;border:1px solid #8f1010;border-radius:18px;box-shadow:0 18px 60px #000;color:#fff}
+.plantao-death-card>span{font-size:12px;font-weight:900;letter-spacing:.18em;color:#c9c9c9}
+.plantao-death-card h2{margin:10px 0 8px;font-size:clamp(34px,6vw,72px);line-height:.9;letter-spacing:-.04em;color:#e32020;text-shadow:0 3px 0 #530000}
+.plantao-death-card p{max-width:620px;margin:14px auto 20px;font-size:15px;line-height:1.5;color:#eee}
+@media(max-width:680px){.plantao-death-overlay{position:fixed}.plantao-death-card{padding:22px 14px}.plantao-death-card h2{font-size:38px}}
