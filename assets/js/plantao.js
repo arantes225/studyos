@@ -1000,7 +1000,23 @@
     $("plantao-sources").innerHTML=(state.current.source_refs||[]).map(src=>`<a href="${esc(src.url)}" target="_blank" rel="noopener noreferrer">${esc(src.title)}</a>`).join("");
   }
 
-  function backToLibrary() {
+  async function pruneCaseHistory(caseId) {
+    if(!caseId)return;
+    const {error}=await sb.rpc("prune_clinical_case_sessions_keep_best",{p_case_id:caseId});
+    if(error){console.warn("Plantão: não foi possível limpar o histórico da estação",error);return false;}
+    state.sessions=state.sessions.filter(s=>s.case_id!==caseId);
+    const {data}=await sb.from("clinical_case_sessions")
+      .select("id,case_id,status,started_at,completed_at,score,result")
+      .eq("user_id",state.user.id).eq("case_id",caseId).eq("status","completed")
+      .order("score",{ascending:false}).limit(1);
+    if(data?.length)state.sessions.push(data[0]);
+    return true;
+  }
+
+  async function backToLibrary() {
+    const caseId=state.current?.id;
+    const leavingDebrief=!!caseId && state.session?.status==="completed";
+    if(leavingDebrief) await pruneCaseHistory(caseId);
     state.current=null;
     state.session=null;
     renderLibrary();
@@ -1040,7 +1056,7 @@
     if (state.session?.id) await persistSession({status:"abandoned"});
     backToLibrary();
   });
-  $("plantao-all-cases")?.addEventListener("click",backToLibrary);
+  $("plantao-all-cases")?.addEventListener("click",()=>backToLibrary());
   $("plantao-retry")?.addEventListener("click",()=>state.current && startCase(state.current.id));
   $("plantao-death-review")?.addEventListener("click",openDeathDebrief);
 
