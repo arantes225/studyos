@@ -947,7 +947,12 @@
     $("plantao-diagnosis").textContent=d.diagnosis || "";
     $("plantao-final-score").textContent=score;
     $("plantao-pulo").textContent=d.pulo_do_gato || "";
-    $("plantao-case-explanation").textContent=d.explanation || d.explicacao || d.contexto_geral || d.summary || "Revise a definição do quadro, reconhecimento clínico, prioridades iniciais, tratamento e critérios de reavaliação apresentados neste caso.";
+    $("plantao-case-explanation").innerHTML=[
+      ["O que costuma ter?",d.o_que_costuma_ter||d.epidemiologia||d.explanation||d.explicacao||""],
+      ["O que está acontecendo?",d.o_que_esta_acontecendo||d.quadro_clinico||d.explanation||d.explicacao||""],
+      ["Como aparece no plantão?",d.como_aparece_no_plantao||d.apresentacao||state.current?.summary||""],
+      ["Como faço o fechamento diagnóstico?",d.fechamento_diagnostico||d.diagnostico||d.diagnosis||""]
+    ].map(x=>'<section class="plantao-understand-topic"><h3>'+esc(x[0])+'</h3><p>'+esc(x[1]||"Conteúdo ainda não cadastrado para este tópico.")+'</p></section>').join("");
 
     const essentialTotal=(state.current.completion_rules?.required_actions||[]).length;
     const essentialDone=essentialTotal-missingRequired.length;
