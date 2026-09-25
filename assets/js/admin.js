@@ -2659,6 +2659,7 @@
     const row = button.closest(".admin-qf-tracker-row");
     const promptNode = row?.querySelector(".admin-qf-tracker-hidden-prompt");
     const prompt = String(promptNode?.textContent || "").trim();
+
     if (!prompt) {
       window.alert("Prompt Perplexity não encontrado para este bloco.");
       return;
@@ -2667,38 +2668,35 @@
     button.dataset.qfCopying = "1";
     const old = button.textContent;
     button.disabled = true;
-    button.textContent = "Preparando 200 questões...";
+    button.textContent = "Preparando prompt operacional...";
 
     try {
-      const { data, error } = await sb.rpc("admin_question_factory_export_block_for_perplexity", {
-        p_batch_number: batch,
-        p_block_number: block
-      });
-      if (error) throw error;
-      if (!data || Number(data.current_items) !== 200 || !Array.isArray(data.questions) || data.questions.length !== 200) {
-        throw new Error("BLOCK_COVERAGE_MISMATCH: o pacote precisa conter exatamente 200 questões atuais.");
-      }
+      const batchCode = "L" + String(batch).padStart(3,"0");
+      const blockCode = batchCode + "-B" + String(block).padStart(2,"0");
 
-      const packageText = [
+      const personalFlow = [
         prompt,
         "",
         "============================================================",
-        "PACOTE DE DADOS DO BLOCO — 200 QUESTÕES ATUAIS",
+        "MODO DE EXECUÇÃO — CONTA PESSOAL DO PERPLEXITY",
         "============================================================",
-        "Use EXCLUSIVAMENTE as questões abaixo. Elas pertencem ao endereço operacional do prompt.",
-        "IMPORTANTE: este fluxo NÃO usa Perplexity API key nem Edge Function para gerar pareceres. Execute na sua conta pessoal do Perplexity, usando o acesso autenticado ao Supabase conectado à sessão.",
-        "A própria sessão do Perplexity deve reler o bloco no Supabase antes de escrever, persistir cada review pelo RPC controlado da etapa e reconsultar coverage antes de declarar conclusão.",
-        "Embora as 200 questões estejam disponíveis neste pacote, execute a auditoria em 4 faixas sequenciais de 50:",
-        "Q001–Q050 → confirmar 50/50; Q051–Q100 → confirmar 50/50; Q101–Q150 → confirmar 50/50; Q151–Q200 → confirmar 50/50.",
-        "",
-        JSON.stringify(data, null, 2)
+        "Este fluxo NÃO usa PERPLEXITY_API_KEY e NÃO usa Edge Function para gerar pareceres.",
+        "Use a sua conexão autenticada ao Supabase da LURIA/Studyos.",
+        "Endereço obrigatório: " + blockCode + ".",
+        "Antes de qualquer auditoria, releia o Supabase e confirme batch_code, block_code, question_id e item_version atuais.",
+        "Não use uma cópia das questões colada neste prompt como fonte de verdade.",
+        "Leia as questões diretamente no Supabase e persista cada review pelo importador controlado da etapa.",
+        "Nunca faça INSERT/UPDATE/DELETE direto nas tabelas de questões/reviews para contornar os RPCs.",
+        "Ao final, reconsulte admin_question_factory_review_coverage e admin_question_factory_block_tracker.",
+        "Só declare conclusão quando a cobertura exigida estiver completa e o tracker tiver avançado de fase.",
+        "Se o conector Supabase da sua sessão não estiver disponível, pare com ACCESS_REQUIRED; não peça API key ao usuário."
       ].join("\n");
 
-      await navigator.clipboard.writeText(packageText);
-      button.textContent = "Prompt + 200 questões copiados ✓";
+      await navigator.clipboard.writeText(personalFlow);
+      button.textContent = "Prompt operacional copiado ✓";
       window.setTimeout(() => { button.textContent = old; }, 3000);
     } catch (error) {
-      console.error("Falha ao copiar pacote Perplexity:", error);
+      console.error("Falha ao copiar prompt Perplexity pessoal:", error);
       button.textContent = "Erro ao copiar";
       window.alert(error?.message || String(error));
       window.setTimeout(() => { button.textContent = old; }, 3000);
@@ -2738,7 +2736,7 @@
       copyPackage.type = "button";
       copyPackage.dataset.qfAutoBatch = String(batch);
       copyPackage.dataset.qfAutoBlock = String(block);
-      copyPackage.textContent = "Copiar prompt operacional + 200 questões";
+      copyPackage.textContent = "Copiar prompt para Perplexity pessoal";
       copyPackage.addEventListener("click", () => copyPerplexityManualPackage(copyPackage));
       buttons.appendChild(copyPackage);
 
@@ -2772,8 +2770,8 @@
     const batchCode = saved.batch_code || ("L"+String(batch).padStart(3,"0"));
     return {
       prompt_workspace_url: saved.workspace_url || defaultQuestionFactoryWorkspaceUrl(),
-      prompt_source_instruction: saved.source_instruction || `Entre no Admin da LURIA/Resibulando → Fábrica de questões → Produção em tempo real → lote ${batchCode}. Abra o bloco indicado no prompt e leia diretamente todas as questões e versões atuais necessárias para a etapa.`,
-      prompt_return_instruction: saved.return_instruction || `Grave automaticamente o resultado no mesmo lote ${batchCode}, associado ao bloco e à etapa indicados no prompt, usando o acesso autorizado ao site/Supabase e o mecanismo específico de importação da etapa. Depois confirme a persistência relendo o bloco. Só devolva JSON manual se a escrita falhar, com o erro real.`
+      prompt_source_instruction: saved.source_instruction || `Na sua conta pessoal do Perplexity, use a conexão autenticada ao Supabase da LURIA/Studyos. Localize o lote ${batchCode}, abra exatamente o block_code indicado no prompt e leia diretamente do banco somente as questões e item_version atuais necessárias para a etapa. Não use cópia colada, cache ou versões antigas como fonte de verdade.`,
+      prompt_return_instruction: saved.return_instruction || `Grave automaticamente o resultado no mesmo lote ${batchCode}, associado ao block_code e à etapa exatos, usando a conexão Supabase da conta pessoal e SOMENTE o RPC/importador controlado da etapa. Depois confirme a persistência com review_coverage e block_tracker. Nunca peça PERPLEXITY_API_KEY. Só devolva JSON manual se a escrita realmente falhar, com o erro real.`
     };
   }
 
