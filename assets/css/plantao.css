@@ -1840,3 +1840,119 @@ body.plantao-phone-mode .plantao-phone-device{
   background:var(--accent);
   color:#fff;
 }
+
+
+/* v6.7 — LuriaZap 100% sincronizado com o tema do site */
+body[data-page="plantao"] .plantao-phone-device,
+body[data-page="plantao"] .plantao-phone-shell{
+  border-color:color-mix(in srgb,var(--text) 78%,var(--accent) 22%)!important;
+  background:var(--surface)!important;
+  box-shadow:0 22px 58px color-mix(in srgb,var(--text) 16%,transparent)!important;
+}
+body[data-page="plantao"] .plantao-phone-screen,
+body[data-page="plantao"] .plantao-phone-inbox,
+body[data-page="plantao"] .plantao-phone-chat-view,
+body[data-page="plantao"] .plantao-phone-case-list{
+  background:var(--surface)!important;
+  color:var(--text)!important;
+}
+body[data-page="plantao"] .plantao-phone-inbox-head,
+body[data-page="plantao"] .plantao-phone-chat-head,
+body[data-page="plantao"] .plantao-phone-header{
+  background:linear-gradient(
+    180deg,
+    var(--accent),
+    color-mix(in srgb,var(--accent) 78%,var(--text) 22%)
+  )!important;
+  color:#fff!important;
+}
+body[data-page="plantao"] .plantao-phone-statusbar{
+  color:#fff!important;
+}
+body[data-page="plantao"] .plantao-phone-inbox-toolbar,
+body[data-page="plantao"] .plantao-phone-choices,
+body[data-page="plantao"] .plantao-phone-compose-form{
+  background:var(--surface-2)!important;
+  color:var(--text)!important;
+  border-color:var(--border)!important;
+}
+body[data-page="plantao"] .plantao-phone-chat-body{
+  color:var(--text)!important;
+  background:
+    radial-gradient(
+      circle at 20px 20px,
+      color-mix(in srgb,var(--accent) 11%,transparent) 1.5px,
+      transparent 1.6px
+    ) 0 0/42px 42px,
+    var(--bg)!important;
+}
+body[data-page="plantao"] .plantao-phone-conversation{
+  background:var(--surface)!important;
+  color:var(--text)!important;
+  border-bottom-color:var(--border)!important;
+}
+body[data-page="plantao"] .plantao-phone-conversation:hover{
+  background:var(--surface-2)!important;
+}
+body[data-page="plantao"] .plantao-phone-conversation:active{
+  background:var(--accent-soft)!important;
+}
+body[data-page="plantao"] .plantao-phone-conversation-avatar,
+body[data-page="plantao"] .plantao-phone-contact-avatar{
+  background:var(--accent-soft)!important;
+  color:var(--accent)!important;
+}
+body[data-page="plantao"] .plantao-phone-conversation-title,
+body[data-page="plantao"] .plantao-phone-conversation-top strong{
+  color:var(--text)!important;
+}
+body[data-page="plantao"] .plantao-phone-conversation-preview,
+body[data-page="plantao"] .plantao-phone-conversation-top small,
+body[data-page="plantao"] .plantao-phone-conversation-chevron,
+body[data-page="plantao"] .plantao-phone-choice-group>strong{
+  color:var(--muted)!important;
+}
+body[data-page="plantao"] .plantao-phone-bubble.incoming{
+  background:var(--surface)!important;
+  color:var(--text)!important;
+  border:1px solid var(--border)!important;
+}
+body[data-page="plantao"] .plantao-phone-bubble.outgoing{
+  background:var(--accent)!important;
+  color:#fff!important;
+  border-color:var(--accent)!important;
+}
+body[data-page="plantao"] .plantao-phone-choice-group button{
+  background:var(--surface)!important;
+  color:var(--text)!important;
+  border-color:var(--border)!important;
+}
+body[data-page="plantao"] .plantao-phone-choice-group button:hover{
+  background:var(--accent-soft)!important;
+  color:var(--accent)!important;
+  border-color:var(--accent)!important;
+}
+body[data-page="plantao"] .plantao-phone-compose-form input{
+  background:var(--surface)!important;
+  color:var(--text)!important;
+  border-color:var(--border)!important;
+}
+body[data-page="plantao"] .plantao-phone-compose-form input:focus{
+  border-color:var(--accent)!important;
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)!important;
+}
+body[data-page="plantao"] .plantao-phone-compose-form button{
+  background:var(--accent)!important;
+  color:#fff!important;
+}
+body[data-page="plantao"] .plantao-phone-notch{
+  background:color-mix(in srgb,var(--text) 90%,#000 10%)!important;
+}
+
+/* Os três temas mantêm a mesma hierarquia, mudando apenas a paleta global. */
+:root[data-theme="dark"] body[data-page="plantao"] .plantao-phone-device,
+:root[data-theme="leila-mood"] body[data-page="plantao"] .plantao-phone-device{
+  box-shadow:
+    0 22px 58px color-mix(in srgb,var(--text) 20%,transparent),
+    inset 0 0 0 1px var(--border)!important;
+}
