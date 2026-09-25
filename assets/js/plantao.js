@@ -1258,6 +1258,7 @@
       ["Essenciais",essentialDone+"/"+essentialTotal],
       ["Ações essenciais",String(eventCount("essencial"))],
       ["Ações benéficas",String(eventCount("benefica"))],
+      ["Bônus por ações benéficas","+"+(eventCount("benefica")*2)+" pontos"],
       ["Ações neutras",String(eventCount("neutra"))],
       ["Ações prejudiciais",String(harmful)],
       ["Erros de sequência",String(state.sequenceViolations.length)],
