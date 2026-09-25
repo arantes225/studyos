@@ -948,7 +948,9 @@
     $("plantao-sequence-errors").innerHTML=sequence.length?sequence.join(""):'<div class="plantao-review-item"><span>✓</span><span>Nenhum erro de sequência registrado.</span></div>';
 
     const wrongEvents=state.clinicalEvents.filter(x=>x.level==="malefica"||x.level==="mortal");
-    $("plantao-wrong-actions").innerHTML=wrongEvents.length?wrongEvents.map(item=>`<div class="plantao-review-item"><span>!</span><span><strong>${esc(item.action_label)}:</strong> ${esc(item.reason||"Conduta inadequada para o contexto clínico.")}</span></div>`).join(""):'<div class="plantao-review-item"><span>✓</span><span>Nenhuma conduta errada registrada.</span></div>';
+    const expectedWrong=(d.wrong_actions||[]).map(text=>`<div class="plantao-review-item"><span>•</span><span>${esc(text)}</span></div>`);
+    const performedWrong=wrongEvents.map(item=>`<div class="plantao-review-item"><span>!</span><span><strong>${esc(item.action_label)}:</strong> ${esc(item.reason||"Conduta inadequada para o contexto clínico.")}</span></div>`);
+    $("plantao-wrong-actions").innerHTML=[...performedWrong,...expectedWrong].join("")||'<div class="plantao-review-item"><span>✓</span><span>Nenhuma conduta errada prevista ou registrada.</span></div>';
 
     const danger=(d.dangerous_actions||[]).map(text=>`<div class="plantao-review-item"><span>!</span><span>${esc(text)}</span></div>`);
     $("plantao-danger-actions").innerHTML=danger.join("");
