@@ -250,3 +250,11 @@
     line-height:1.5;
   }
 }
+
+/* v4.1 — tema escuro: subabas de Intervenções legíveis */
+[data-theme="dark"] .plantao-intervention-tabs button,
+.theme-dark .plantao-intervention-tabs button,
+.dark .plantao-intervention-tabs button{color:#fff}
+[data-theme="dark"] .plantao-intervention-tabs button.active,
+.theme-dark .plantao-intervention-tabs button.active,
+.dark .plantao-intervention-tabs button.active{color:#fff}
