@@ -2435,3 +2435,83 @@ body.plantao-phone-mode .plantao-phone-page-back{
     calc(10px + env(safe-area-inset-bottom))
     max(10px,env(safe-area-inset-left));
 }
+
+/* v7.1 — Caso em andamento destacado no topo do LuriaZap */
+body[data-page="plantao"] .plantao-phone-resume-card{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:12px;
+  align-items:center;
+  margin:10px 10px 12px;
+  padding:14px;
+  border:1px solid color-mix(in srgb,var(--accent) 42%,var(--border) 58%);
+  border-radius:18px;
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb,var(--accent-soft) 88%,var(--surface) 12%),
+      color-mix(in srgb,var(--surface) 92%,var(--accent) 8%));
+  box-shadow:0 8px 22px color-mix(in srgb,var(--accent) 12%,transparent);
+}
+body[data-page="plantao"] .plantao-phone-resume-copy{
+  min-width:0;
+  display:grid;
+  gap:3px;
+}
+body[data-page="plantao"] .plantao-phone-resume-label{
+  width:max-content;
+  max-width:100%;
+  padding:4px 7px;
+  border-radius:999px;
+  background:var(--accent);
+  color:#fff;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+body[data-page="plantao"] .plantao-phone-resume-copy strong{
+  margin-top:3px;
+  color:var(--text);
+  font-size:13px;
+  line-height:1.25;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+body[data-page="plantao"] .plantao-phone-resume-copy small{
+  color:var(--muted);
+  font-size:10px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+body[data-page="plantao"] .plantao-phone-resume-button{
+  min-height:36px;
+  padding:0 12px;
+  border:0;
+  border-radius:999px;
+  background:var(--accent);
+  color:#fff;
+  font:inherit;
+  font-size:11px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 5px 14px color-mix(in srgb,var(--accent) 24%,transparent);
+}
+body[data-page="plantao"] .plantao-phone-resume-button:hover{
+  filter:brightness(1.04);
+  transform:translateY(-1px);
+}
+body[data-page="plantao"] .plantao-phone-resume-button:focus-visible{
+  outline:3px solid color-mix(in srgb,var(--accent) 28%,transparent);
+  outline-offset:2px;
+}
+@media(max-width:430px){
+  body[data-page="plantao"] .plantao-phone-resume-card{
+    grid-template-columns:1fr;
+    align-items:stretch;
+  }
+  body[data-page="plantao"] .plantao-phone-resume-button{
+    width:100%;
+  }
+}
