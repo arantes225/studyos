@@ -322,7 +322,7 @@
       return exact ? {...a,...exact,subgroup:a.subgroup||exact.subgroup} : a;
     });
     const existingIds=new Set(generic.map(a=>a.id));
-    const extras=caseList.filter(a=>!existingIds.has(a.id)&&!HIDDEN_CASE_ACTIONS.has(a.id)&&a.role!=="diagnosis"&&a.role!=="disposition");
+    const extras=caseList.filter(a=>!existingIds.has(a.id)&&!HIDDEN_CASE_ACTIONS.has(a.id)&&a.role!=="diagnosis"&&a.role!=="disposition"&&!["exame","iniciais","monitorizacao"].includes(a.category));
     return [...generic,...extras];
   }
   function resolveSpecialAction(action){
