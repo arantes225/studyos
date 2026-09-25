@@ -1945,7 +1945,7 @@
 
   function setAdminView(view) {
     const next =
-      ["metrics", "factory", "editais", "plans"].includes(view)
+      ["metrics", "factory", "editais", "plans", "plantao"].includes(view)
         ? view
         : "metrics";
 
@@ -2014,7 +2014,7 @@
     let initial = "metrics";
     try {
       const saved = sessionStorage.getItem("luria-admin-view");
-      if (["metrics", "factory", "editais", "plans"].includes(saved)) {
+      if (["metrics", "factory", "editais", "plans", "plantao"].includes(saved)) {
         initial = saved;
       }
     } catch (_) {}
