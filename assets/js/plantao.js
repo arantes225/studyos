@@ -428,8 +428,10 @@
     $("plantao-action-tabs").querySelector(`[data-case-category="${state.category}"]`)?.focus();
   }
   function updateScore() {
-    const score=E.score(state.current,state);
-    $("plantao-score-live").textContent=score.total+"/100 · −"+score.penalties+" pts";
+    const clock=$("plantao-score-live");
+    if(!clock)return;
+    clock.textContent="◷ "+fmtTime(state.elapsed);
+    clock.setAttribute("aria-label","Tempo do caso: "+fmtTime(state.elapsed));
   }
   function patientSex(){
     const raw=normalizeLabel(state.current?.presentation?.sex||"");
