@@ -1040,3 +1040,142 @@ body.plantao-phone-mode .topbar{
     padding-top:max(18px,env(safe-area-inset-top));
   }
 }
+
+
+/* Telefone · barra de status e escolhas guiadas */
+.plantao-phone-statusbar{
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:34px;
+  z-index:6;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:8px 18px 0;
+  color:#fff;
+  pointer-events:none;
+  font-size:11px;
+  font-weight:800;
+}
+.plantao-phone-status-icons{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+.plantao-phone-signal{
+  height:12px;
+  display:flex;
+  align-items:flex-end;
+  gap:2px;
+}
+.plantao-phone-signal i{
+  display:block;
+  width:2px;
+  border-radius:2px;
+  background:currentColor;
+}
+.plantao-phone-signal i:nth-child(1){height:4px}
+.plantao-phone-signal i:nth-child(2){height:6px}
+.plantao-phone-signal i:nth-child(3){height:9px}
+.plantao-phone-signal i:nth-child(4){height:12px}
+.plantao-phone-wifi{
+  font-size:16px;
+  line-height:1;
+  transform:rotate(180deg);
+}
+.plantao-phone-battery{
+  position:relative;
+  width:19px;
+  height:9px;
+  border:1.5px solid currentColor;
+  border-radius:3px;
+  padding:1px;
+}
+.plantao-phone-battery::after{
+  content:"";
+  position:absolute;
+  top:2px;
+  right:-3px;
+  width:2px;
+  height:4px;
+  border-radius:0 2px 2px 0;
+  background:currentColor;
+}
+.plantao-phone-battery i{
+  display:block;
+  width:78%;
+  height:100%;
+  border-radius:1px;
+  background:currentColor;
+}
+.plantao-phone-inbox-head,
+.plantao-phone-chat-head{
+  padding-top:46px;
+}
+.plantao-phone-choices{
+  flex:0 0 auto;
+  max-height:245px;
+  overflow:auto;
+  padding:9px 10px 12px;
+  border-top:1px solid #dbe6ee;
+  background:#eef5f9;
+  display:grid;
+  gap:9px;
+}
+.plantao-phone-choice-group{
+  display:grid;
+  gap:6px;
+}
+.plantao-phone-choice-group>strong{
+  font-size:9px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:#647989;
+}
+.plantao-phone-choice-group>div{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.plantao-phone-choice-group button{
+  border:1px solid #c9d9e4;
+  border-radius:16px;
+  background:#fff;
+  color:#123a55;
+  padding:7px 9px;
+  font:inherit;
+  font-size:10px;
+  font-weight:700;
+  line-height:1.25;
+  cursor:pointer;
+  text-align:left;
+}
+.plantao-phone-choice-group button:hover{
+  border-color:#168af0;
+  background:#f7fbff;
+}
+.plantao-phone-choice-group button:active{
+  transform:translateY(1px);
+}
+.plantao-phone-choice-done{
+  padding:7px 4px;
+  text-align:center;
+  color:#758694;
+  font-size:10px;
+}
+@media(max-width:680px){
+  .plantao-phone-statusbar{
+    padding-top:max(8px,env(safe-area-inset-top));
+    height:calc(34px + env(safe-area-inset-top));
+  }
+  .plantao-phone-inbox-head,
+  .plantao-phone-chat-head{
+    padding-top:calc(42px + env(safe-area-inset-top));
+  }
+  .plantao-phone-choices{
+    max-height:38dvh;
+    padding-bottom:max(12px,env(safe-area-inset-bottom));
+  }
+}
