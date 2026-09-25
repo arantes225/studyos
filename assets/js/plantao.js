@@ -87,19 +87,25 @@
     }
   }
 
-  function restorePhoneDraft(){
+  function getPhoneDraft(){
     const key=phoneDraftKey();
-    if(!key) return false;
+    if(!key) return null;
     let draft=null;
     try{draft=JSON.parse(localStorage.getItem(key)||"null");}catch{}
     if(!draft || draft.userId!==state.user.id || !draft.caseId || !draft.sessionId){
       clearPhoneDraft();
-      return false;
+      return null;
     }
     if(!Number.isFinite(Number(draft.expiresAt)) || Date.now()>=Number(draft.expiresAt)){
       clearPhoneDraft();
-      return false;
+      return null;
     }
+    return draft;
+  }
+
+  function restorePhoneDraft(){
+    const draft=getPhoneDraft();
+    if(!draft) return false;
     const item=state.phoneCases.find(x=>String(x.id)===String(draft.caseId));
     if(!item){
       clearPhoneDraft();
@@ -197,8 +203,7 @@
     buildSiteFilter("specialty",specialties);
     buildSiteFilter("difficulty",difficulties);
     renderLibrary();
-    const restoredPhoneDraft=phoneAllowed && restorePhoneDraft();
-    setPlantaoMode(restoredPhoneDraft?"phone":"emergency");
+    setPlantaoMode("emergency");
   }
 
   function bestScore(caseId) {
@@ -294,7 +299,19 @@
       host.innerHTML='<div class="plantao-phone-empty">Nenhuma interconsulta disponível.</div>';
       return;
     }
-    host.innerHTML=state.phoneCases.map(item=>`
+    const draft=getPhoneDraft();
+    const draftCase=draft ? state.phoneCases.find(x=>String(x.id)===String(draft.caseId)) : null;
+    const resumeCard=draftCase ? `
+      <section class="plantao-phone-resume-card" aria-label="Caso em andamento">
+        <div class="plantao-phone-resume-copy">
+          <span class="plantao-phone-resume-label">Caso em andamento</span>
+          <strong>${esc(draftCase.title||"Interconsulta")}</strong>
+          <small>${esc(draftCase.requester_role||draftCase.specialty||"LuriaZap")}</small>
+        </div>
+        <button class="plantao-phone-resume-button" type="button" data-resume-phone-case>Continuar caso</button>
+      </section>
+    ` : "";
+    host.innerHTML=resumeCard+state.phoneCases.map(item=>`
       <button class="plantao-phone-conversation" type="button" data-start-phone-case="${esc(item.id)}">
         <span class="plantao-phone-conversation-avatar" aria-hidden="true">✚</span>
         <span class="plantao-phone-conversation-main">
@@ -441,6 +458,11 @@
     event.preventDefault(); setPlantaoMode("phone");
   });
   $("plantao-phone-case-list")?.addEventListener("click",event=>{
+    const resume=event.target.closest("[data-resume-phone-case]");
+    if(resume){
+      if(restorePhoneDraft()) setPlantaoMode("phone");
+      return;
+    }
     const btn=event.target.closest("[data-start-phone-case]");
     if(btn) startPhoneCase(btn.dataset.startPhoneCase);
   });
