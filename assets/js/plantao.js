@@ -848,13 +848,17 @@
         if(/tireotoxic|hipertireoid|tempestade tireoid/.test(text)) return "Tireoide inspecionada e palpada quanto a bócio, nódulos, dor, sopro e mobilidade; tremor fino, pele quente/úmida e sinais oculares são pesquisados em conjunto.";
         return "Tireoide sem aumento evidente, nódulo dominante ou dor à palpação; mobilidade à deglutição preservada.";
       case "exam_neuro":
-        if(/avc|hemorragia|subaracnoidea|convuls|meningite|encefal|coma|tce|trauma cran/.test(text)) return "Exame neurológico completo: Glasgow/nível de consciência, fala e linguagem, pares cranianos, pupilas, força, sensibilidade, coordenação, reflexos e sinais focais avaliados de forma dirigida ao quadro.";
+        if(/avc isquemico|avc de circulacao posterior/.test(text)) return "Déficit neurológico focal de início agudo: assimetria de força/sensibilidade e alteração de fala ou coordenação compatíveis com o território acometido; pupilas fotorreagentes.";
+        if(/avc hemorragico|hemorragia subaracnoidea/.test(text)) return "Nível de consciência reduzido em relação ao basal, cefaleia intensa e possível déficit focal; pupilas fotorreagentes, sem sinais de hipoglicemia como explicação.";
+        if(/meningite/.test(text)) return "Rigidez de nuca presente, fotofobia e desconforto à flexão cervical; sem déficit focal motor grosseiro no exame inicial.";
+        if(/convuls|estado de mal/.test(text)) return "Paciente em período ictal/pós-ictal conforme o momento do caso, com rebaixamento transitório da consciência e recuperação neurológica a ser acompanhada.";
+        if(/tce|trauma cran|hematoma epidural|hematoma subdural/.test(text)) return "Alteração do nível de consciência compatível com TCE, com avaliação de Glasgow e pesquisa de anisocoria/déficit focal; achados neurológicos acompanham a gravidade descrita.";
         return "Consciente e orientado; fala clara; pupilas isocóricas e fotorreagentes; pares cranianos sem déficit grosseiro; força e sensibilidade preservadas e simétricas, sem déficit focal aparente.";
       case "exam_chest":
-        if(/asma|broncoespasmo/.test(text)) return "Tórax com aumento do trabalho respiratório e expiração prolongada; ausculta dirigida à presença e intensidade de sibilos e à redução do murmúrio vesicular.";
+        if(/asma|broncoespasmo/.test(text)) return "Taquipneia, uso de musculatura acessória e expiração prolongada; sibilos difusos bilateralmente, com murmúrio vesicular reduzido nas crises mais graves.";
         if(/edema agudo|insuficiencia cardiaca/.test(text)) return "Ausculta pulmonar com estertores crepitantes, predominando em bases, em contexto de dispneia/ortopneia; expansibilidade avaliada bilateralmente.";
-        if(/pneumotorax hipertensivo/.test(text)) return "Assimetria ventilatória com redução acentuada do murmúrio vesicular no hemitórax acometido; expansibilidade, percussão e sinais de esforço respiratório são avaliados imediatamente.";
-        if(/pneumonia|choque septico pulmonar/.test(text)) return "Ausculta com achados focais compatíveis com acometimento pulmonar, pesquisando crepitações, sopro tubário e redução localizada do murmúrio vesicular.";
+        if(/pneumotorax hipertensivo/.test(text)) return "Expansibilidade reduzida no hemitórax acometido, murmúrio vesicular abolido ou muito diminuído e hipertimpanismo à percussão, com esforço respiratório importante.";
+        if(/pneumonia|choque septico pulmonar/.test(text)) return "Crepitações focais e redução localizada do murmúrio vesicular no território acometido; pode haver sopro tubário e aumento do frêmito tóraco-vocal.";
         if(/embolia pulmonar/.test(text)) return "Taquipneia e esforço respiratório podem estar presentes; ausculta pode ser pouco específica, sem achado focal obrigatório apesar da hipoxemia.";
         return "Tórax simétrico, expansibilidade bilateral preservada; murmúrio vesicular presente nos dois hemitórax, sem sibilos, roncos ou crepitações relevantes.";
       case "exam_cardio":{
@@ -864,7 +868,7 @@
         else if(/taquicardia ventricular|taquicardia supraventricular/.test(text)) arr.push("Ritmo taquicárdico.");
         else if(/bradicardia/.test(text)) arr.push("Ritmo bradicárdico.");
         else arr.push("Bulhas cardíacas audíveis, sem sopro evidente ao exame inicial.");
-        if(/tamponamento/.test(text)) arr.push("Avaliam-se abafamento de bulhas, turgência jugular e sinais de baixo débito.");
+        if(/tamponamento/.test(text)) arr.push("Bulhas hipofonéticas, turgência jugular e sinais de baixo débito/perfusão periférica reduzida.");
         if(hypotensive) arr.push("Perfusão periférica reduzida em contexto de hipotensão.");
         return arr.join(" ");
       }
@@ -872,46 +876,70 @@
         if(/mastite|abscesso mamario|puerperal/.test(text)) return "Mamas inspecionadas e palpadas: pesquisa de hiperemia, calor, dor, endurecimento, flutuação, fissuras mamilares e drenagem. Há alteração focal compatível com o quadro mamário descrito.";
         return "Mamas sem hiperemia, calor, massa dolorosa, flutuação ou secreção anormal evidente ao exame.";
       case "exam_abdomen":
-        if(/apendic|colecist|pancreat|abdome agudo|periton|obstrucao intestinal|isquemia mesenterica|gravidez ectopica/.test(text)) return "Abdômen examinado por inspeção, ausculta, percussão e palpação superficial/profunda, com pesquisa dirigida de dor localizada, defesa, rigidez, descompressão dolorosa, massas e sinais específicos conforme a hipótese.";
+        if(/apendicite/.test(text)) return "Dor predominante em fossa ilíaca direita, com defesa localizada e dor à descompressão; sinais de irritação peritoneal podem estar presentes conforme a evolução.";
+        if(/colecistite/.test(text)) return "Dor à palpação do hipocôndrio direito, com sinal de Murphy positivo; sem rigidez abdominal difusa.";
+        if(/pancreatite/.test(text)) return "Dor importante em epigástrio, com sensibilidade à palpação profunda e sem sinais peritoneais exuberantes na apresentação típica.";
+        if(/obstrucao intestinal|volvulo/.test(text)) return "Abdômen distendido e timpânico, com ruídos hidroaéreos aumentados/metálicos inicialmente e dor difusa, sem peritonismo obrigatório no início.";
+        if(/peritonite|perfuracao de viscera/.test(text)) return "Abdômen rígido, muito doloroso, com defesa involuntária e descompressão brusca positiva, compatível com irritação peritoneal.";
+        if(/isquemia mesenterica/.test(text)) return "Dor abdominal intensa desproporcional aos achados iniciais de palpação, com abdômen relativamente pouco exuberante nas fases precoces.";
+        if(/gravidez ectopica/.test(text)) return "Dor pélvica intensa, mais evidente em um dos quadrantes inferiores, com defesa e sinais de irritação peritoneal quando há hemoperitônio.";
         if(/cetoacid|hiperosmolar/.test(text)) return "Abdômen sem sinais de irritação peritoneal; dor difusa pode acompanhar o distúrbio metabólico, devendo ser reavaliada após estabilização.";
         return "Abdômen plano, flácido, ruídos hidroaéreos presentes; indolor à palpação superficial e profunda, sem defesa, rigidez ou massa palpável.";
       case "exam_back":
-        if(/pielonefr|colica renal|litia|uropatia/.test(text)) return "Dorso e região lombar examinados com pesquisa de dor à punho-percussão lombar e dor paravertebral; achados são comparados bilateralmente.";
+        if(/pielonefr/.test(text)) return "Dor à punho-percussão lombar (Giordano) no lado acometido, associada a sensibilidade em flanco.";
+        if(/colica renal|litia|uropatia/.test(text)) return "Dor intensa em flanco/lombar, sem sinais de irritação peritoneal; punho-percussão pode reproduzir o desconforto.";
         if(/aneurisma de aorta|sindrome aortica/.test(text)) return "Dorso examinado em busca de dor intensa, assimetria, sinais de hipoperfusão e outras pistas vasculares associadas ao quadro.";
         return "Dorso sem lesões ou deformidades aparentes; punho-percussão lombar sem dor significativa bilateralmente.";
       case "exam_spine":
         if(/trauma|queda|acidente/.test(text)) return "Coluna cervical, torácica e lombar avaliadas quanto a dor em linha média, deformidade, degrau, déficit neurológico e necessidade de manutenção de imobilização.";
         return "Coluna sem deformidade ou dor importante à palpação da linha média; mobilidade preservada quando clinicamente segura.";
       case "exam_gyne":
-        if(/ectopica|aborto|sangramento vaginal|doenca inflamatoria pelvica|torcao ovariana|eclampsia|pre-eclampsia/.test(text)) return "Exame ginecológico dirigido: inspeção vulvar, exame especular quando indicado e toque bimanual, avaliando sangramento, corrimento, colo, dor à mobilização cervical, dor anexial, massas e características uterinas.";
+        if(/placenta previa/.test(text)) return "Sangramento vaginal vermelho vivo ao exame externo/especular; toque vaginal digital não é realizado antes de excluir placenta prévia.";
+        if(/descolamento prematuro|dpp/.test(text)) return "Útero hipertônico e doloroso à palpação, com sangramento vaginal variável; há dor abdominal contínua.";
+        if(/gravidez ectopica/.test(text)) return "Sangramento vaginal discreto/moderado, dor anexial unilateral e dor à mobilização do colo, conforme estabilidade do caso.";
+        if(/abortamento/.test(text)) return "Sangramento vaginal com coágulos/material eliminado; colo uterino pode estar aberto no abortamento em evolução e fechado após esvaziamento completo.";
+        if(/doenca inflamatoria pelvica/.test(text)) return "Dor à mobilização do colo e dor anexial/uterina ao toque bimanual, com corrimento cervical patológico.";
+        if(/torcao ovariana/.test(text)) return "Dor anexial intensa e unilateral à palpação, com defesa pélvica e possível massa anexial dolorosa.";
+        if(/eclampsia|pre-eclampsia/.test(text)) return "Sem sangramento vaginal significativo; útero compatível com idade gestacional, com avaliação obstétrica direcionada ao bem-estar fetal.";
         return "Genitália externa sem lesões evidentes; exame especular/toque bimanual sem sangramento significativo, corrimento patológico, dor cervical ou massa anexial ao exame inicial.";
       case "exam_gu":
-        if(/torcao testicular|epididim|orquite|retencao urinaria|priapismo/.test(text)) return "Genitália externa e regiões inguinais examinadas com atenção a posição testicular, edema, hiperemia, dor, reflexo cremastérico, hérnias, distensão vesical e demais achados pertinentes.";
+        if(/torcao testicular/.test(text)) return "Testículo acometido elevado e muito doloroso, com orientação horizontal e reflexo cremastérico ausente no lado sintomático.";
+        if(/epididim/.test(text)) return "Epidídimo aumentado e doloroso, com edema escrotal; reflexo cremastérico preservado.";
+        if(/orquite/.test(text)) return "Testículo aumentado, edemaciado e doloroso, com hiperemia escrotal.";
+        if(/retencao urinaria/.test(text)) return "Globo vesical palpável e doloroso em hipogástrio, compatível com retenção urinária.";
+        if(/priapismo/.test(text)) return "Ereção persistente e dolorosa dos corpos cavernosos, com glande relativamente flácida no priapismo isquêmico.";
         return "Genitália externa sem edema, lesão ou secreção relevante; regiões inguinais sem hérnia evidente; sem distensão suprapúbica importante.";
       case "exam_rectal":
-        if(/hemorragia digestiva|sangramento retal|melena|hematoquezia|abscesso perianal/.test(text)) return "Região perianal inspecionada e toque retal realizado quando indicado, avaliando sangue, melena, massa, dor, flutuação, fissura e tônus esfincteriano.";
+        if(/hemorragia digestiva alta|melena/.test(text)) return "Toque retal com fezes enegrecidas/melênicas, sem massa palpável.";
+        if(/hematoquezia|sangramento retal/.test(text)) return "Sangue vermelho vivo ao toque/inspeção, sem descrição de massa obstrutiva no exame inicial.";
+        if(/abscesso perianal/.test(text)) return "Tumefação perianal muito dolorosa, hiperemiada e flutuante, com dor intensa à palpação.";
         return "Região perianal sem lesão evidente; toque retal sem sangue macroscópico, massa ou dor importante quando clinicamente indicado.";
       case "exam_upper":
         if(/avc|neurolog/.test(text)) return "Membros superiores avaliados quanto a força, sensibilidade, simetria, pulsos e sinais de déficit focal.";
         return "Membros superiores simétricos, sem edema ou deformidade; pulsos radiais palpáveis e simétricos, perfusão distal preservada.";
       case "exam_lower":
-        if(/embolia pulmonar|trombose venosa|tvp/.test(text)) return "Membros inferiores avaliados comparativamente: edema unilateral, dor, empastamento, assimetria de panturrilhas, temperatura, coloração e pulsos periféricos.";
-        if(/isquemia aguda|arterial/.test(text)) return "Membros inferiores avaliados quanto aos 6 Ps de isquemia, temperatura, coloração, enchimento capilar e pulsos em diferentes níveis.";
+        if(/embolia pulmonar|trombose venosa|tvp/.test(text)) return "Edema e aumento de circunferência unilateral de membro inferior, com dor/empastamento de panturrilha; pulsos arteriais preservados.";
+        if(/isquemia aguda|arterial/.test(text)) return "Membro frio, pálido, doloroso, com redução/ausência de pulso distal e enchimento capilar lentificado; déficit sensitivo ou motor pode surgir nos quadros avançados.";
         return "Membros inferiores simétricos, sem edema importante; panturrilhas sem empastamento; pulsos periféricos palpáveis e simétricos.";
       case "exam_msk":
-        if(/luxacao|fratura|trauma|artrite septica/.test(text)) return "Sistema musculoesquelético examinado com inspeção, palpação, amplitude de movimento, estabilidade, dor, deformidade e avaliação neurovascular distal da região acometida.";
+        if(/artrite septica/.test(text)) return "Articulação muito dolorosa, quente e edemaciada, com limitação importante tanto do movimento ativo quanto passivo.";
+        if(/fratura/.test(text)) return "Dor focal intensa, edema e possível deformidade no segmento acometido, com avaliação neurovascular distal documentada.";
+        if(/luxacao/.test(text)) return "Deformidade articular evidente, dor e perda da amplitude de movimento, com perfusão e sensibilidade distal avaliadas.";
+        if(/trauma/.test(text)) return "Dor e edema localizados no segmento traumatizado, com limitação funcional proporcional ao mecanismo e sem déficit neurovascular quando não descrito.";
         return "Sem deformidades musculoesqueléticas evidentes; amplitude de movimento global preservada nas articulações não dolorosas, sem edema articular importante.";
       case "exam_extremities":
         return hypotensive || /choque|sepse|hemorrag|anafilax/.test(text)
           ? "Extremidades avaliadas quanto a temperatura, coloração, pulsos e enchimento capilar; há sinais de perfusão periférica reduzida compatíveis com instabilidade hemodinâmica."
           : "Extremidades aquecidas e bem perfundidas; pulsos periféricos palpáveis e simétricos; enchimento capilar inferior a 2 segundos.";
       case "exam_skin":
-        if(/anafilax|urticaria/.test(text)) return "Pele examinada integralmente em busca de urticária, eritema, angioedema e progressão das lesões; mucosas também avaliadas.";
-        if(/meningococcemia|purpura|petéquias/.test(text)) return "Pele examinada em busca de petéquias, púrpura, equimoses e lesões não desaparecendo à digitopressão, além de coloração e perfusão.";
-        if(/celulite|erisipela|fasceite/.test(text)) return "Pele examinada quanto a hiperemia, calor, edema, dor, crepitação, bolhas, necrose e extensão das margens da lesão.";
+        if(/anafilax|urticaria/.test(text)) return "Placas urticariformes eritematosas e pruriginosas, podendo haver angioedema de lábios/pálpebras no quadro sistêmico.";
+        if(/meningococcemia|purpura|petéquias/.test(text)) return "Petéquias e lesões purpúricas não desaparecem à digitopressão, com perfusão periférica reduzida nos casos de choque.";
+        if(/fasceite/.test(text)) return "Área eritematosa e edemaciada com dor desproporcional ao aspecto inicial, podendo haver bolhas, alteração de sensibilidade e crepitação em evolução.";
+        if(/erisipela/.test(text)) return "Placa eritematosa quente, dolorosa, edemaciada e bem delimitada, frequentemente em membro inferior.";
+        if(/celulite/.test(text)) return "Área de eritema, calor, edema e dor com limites menos definidos, sem crepitação ou necrose no quadro não complicado.";
         return "Pele íntegra, sem exantema, petéquias ou lesões agudas relevantes; mucosas coradas e sem cianose ou icterícia.";
       default:
-        return "Exame realizado de forma sistemática, com descrição dos achados pertinentes ao caso.";
+        return "Sem alteração objetiva relevante neste segmento ao exame atual.";
     }
   }
 
