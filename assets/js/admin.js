@@ -4500,4 +4500,45 @@
       }
     );
   }
+
+
+  function wirePlantaoImporter() {
+    const input = document.getElementById("admin-plantao-json-file");
+    const submit = document.getElementById("admin-plantao-import-submit");
+    const message = document.getElementById("admin-plantao-import-message");
+    if (!input || !submit || !message || input.dataset.wired === "1") return;
+    input.dataset.wired = "1";
+    let payload = null;
+    input.addEventListener("change", async () => {
+      payload = null; submit.disabled = true;
+      const file = input.files && input.files[0];
+      if (!file) { message.textContent = "Nenhum arquivo selecionado."; return; }
+      try {
+        const parsed = JSON.parse(await file.text());
+        if (!Array.isArray(parsed)) throw new Error("O JSON precisa ser uma lista de casos.");
+        if (!parsed.length || parsed.length > 50) throw new Error("Cada arquivo deve conter de 1 a 50 casos.");
+        const invalid = parsed.find((x) => !x || typeof x !== "object" || !String(x.slug || "").trim() || !String(x.title || "").trim());
+        if (invalid) throw new Error("Todos os casos precisam ter slug e title.");
+        payload = parsed; submit.disabled = false;
+        message.textContent = file.name + " · " + parsed.length + " casos prontos para importar.";
+      } catch (err) {
+        message.textContent = "Arquivo inválido: " + (err?.message || err);
+      }
+    });
+    submit.addEventListener("click", async () => {
+      if (!payload) return;
+      submit.disabled = true; message.textContent = "Importando " + payload.length + " casos...";
+      try {
+        const { data, error } = await sb.rpc("admin_import_clinical_cases", { p_cases: payload });
+        if (error) throw error;
+        message.textContent = "Concluído: " + (data?.processed ?? payload.length) + " processados · " + (data?.inserted ?? 0) + " novos · " + (data?.updated ?? 0) + " atualizados.";
+        input.value = ""; payload = null;
+      } catch (err) {
+        submit.disabled = false;
+        message.textContent = "Falha na importação: " + (err?.message || err);
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", wirePlantaoImporter);
 })();
