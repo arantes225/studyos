@@ -63,25 +63,34 @@
     if (!user) return;
     state.user=user;
 
-    const [casesRes,sessionsRes] = await Promise.all([
-      sb.from("clinical_cases")
+    // Carrega os casos primeiro. Sessões são secundárias e nunca podem zerar a biblioteca.
+    let casesRes = await sb.from("clinical_cases")
+      .select("id,slug,title,setting,specialty,difficulty,summary,presentation,initial_vitals,actions,deterioration,completion_rules,debrief,source_refs,version")
+      .eq("active",true)
+      .order("title");
+
+    // Retry explícito para sessão recém-restaurada/PWA retomado.
+    if (casesRes.error) {
+      await new Promise(resolve=>setTimeout(resolve,350));
+      casesRes = await sb.from("clinical_cases")
         .select("id,slug,title,setting,specialty,difficulty,summary,presentation,initial_vitals,actions,deterioration,completion_rules,debrief,source_refs,version")
         .eq("active",true)
-        .order("title"),
-      sb.from("clinical_case_sessions")
-        .select("id,case_id,status,started_at,completed_at,score,result")
-        .eq("user_id",user.id)
-        .order("started_at",{ascending:false})
-        .limit(100)
-    ]);
+        .order("title");
+    }
 
     if (casesRes.error) {
       console.error("Plantão: falha ao carregar casos",casesRes.error);
       $("plantao-empty").hidden=false;
-      $("plantao-empty").textContent="Não foi possível carregar os casos clínicos.";
+      $("plantao-empty").textContent="Não foi possível carregar os casos clínicos. Recarregue a página.";
       return;
     }
     state.cases=casesRes.data || [];
+
+    const sessionsRes = await sb.from("clinical_case_sessions")
+      .select("id,case_id,status,started_at,completed_at,score,result")
+      .eq("user_id",user.id)
+      .order("started_at",{ascending:false})
+      .limit(100);
     state.sessions=sessionsRes.error ? [] : (sessionsRes.data || []);
     const specialties=[...new Set(state.cases.map(x=>x.specialty).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"pt-BR"));
     const difficulties=[...new Set(state.cases.map(x=>x.difficulty).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"pt-BR"));
