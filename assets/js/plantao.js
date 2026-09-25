@@ -77,26 +77,22 @@
     if (phoneModeCard) phoneModeCard.hidden = !phoneAllowed;
     if (phoneSection) phoneSection.hidden = true;
 
-    // Plantão é restrito ao admin; busca os casos por RPC administrativo.
-    // Isso evita depender da combinação de RLS/cache de sessão para montar a biblioteca.
-    let casesRes = await sb.rpc("admin_list_active_clinical_cases");
-
-    // Fallback defensivo para instalações antigas enquanto a migration propaga.
-    if (casesRes.error) {
-      console.warn("Plantão: RPC de casos falhou; tentando leitura direta.", casesRes.error);
-      casesRes = await sb.from("clinical_cases")
-        .select("id,slug,title,setting,specialty,difficulty,summary,presentation,initial_vitals,actions,deterioration,completion_rules,debrief,source_refs,version")
-        .eq("active",true)
-        .order("title");
+    // Biblioteca leve: carrega somente metadados. O conteúdo clínico completo
+    // é buscado sob demanda quando o usuário realmente inicia a estação.
+    let casesRes=await sb.rpc("list_active_clinical_case_summaries");
+    if(casesRes.error){
+      console.warn("Plantão: RPC leve indisponível; usando apenas metadados por leitura direta.",casesRes.error);
+      casesRes=await sb.from("clinical_cases")
+        .select("id,slug,title,setting,specialty,difficulty,summary,presentation,version")
+        .eq("active",true).order("title");
     }
-
-    if (casesRes.error) {
-      console.error("Plantão: falha ao carregar casos",casesRes.error);
+    if(casesRes.error){
+      console.error("Plantão: falha ao carregar índice de casos",casesRes.error);
       $("plantao-empty").hidden=false;
       $("plantao-empty").textContent="Não foi possível carregar os casos clínicos.";
       return;
     }
-    state.cases=Array.isArray(casesRes.data) ? casesRes.data : [];
+    state.cases=Array.isArray(casesRes.data)?casesRes.data:[];
 
     const sessionsRes = await sb.from("clinical_case_sessions")
       .select("id,case_id,status,started_at,completed_at,score,result,attempt_count")
@@ -1036,8 +1032,17 @@
 
   async function startCase(caseId) {
     if(state.busy)return;
-    const item=state.cases.find(x=>x.id===caseId);
-    if (!item) return;
+    const summaryItem=state.cases.find(x=>x.id===caseId);
+    if(!summaryItem)return;
+    state.busy=true;
+    const caseRes=await sb.rpc("get_active_clinical_case",{p_case_id:caseId});
+    if(caseRes.error || !caseRes.data?.length){
+      state.busy=false;
+      console.error("Plantão: falha ao baixar o caso",caseRes.error);
+      window.alert("Não foi possível carregar este caso.");
+      return;
+    }
+    const item=caseRes.data[0];
     state.current=item;
     state.elapsed=0;
     state.score=0;
