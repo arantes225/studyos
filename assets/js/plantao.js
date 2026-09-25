@@ -2640,6 +2640,44 @@
     requestAnimationFrame(()=>$("plantao-report-close")?.focus());
   }
 
+  function confirmPlantaoFinalization(actionLabel){
+    const overlay=$("plantao-confirm-overlay");
+    const message=$("plantao-confirm-message");
+    const ok=$("plantao-confirm-ok");
+    const cancel=$("plantao-confirm-cancel");
+    if(!overlay || !ok || !cancel) return Promise.resolve(true);
+
+    if(message){
+      message.textContent=(actionLabel ? actionLabel+". " : "")+"Esta decisão encerra o atendimento e abre a avaliação.";
+    }
+    overlay.hidden=false;
+    overlay.setAttribute("aria-hidden","false");
+
+    return new Promise(resolve=>{
+      let settled=false;
+      const finish=value=>{
+        if(settled) return;
+        settled=true;
+        overlay.hidden=true;
+        overlay.setAttribute("aria-hidden","true");
+        ok.removeEventListener("click",onOk);
+        cancel.removeEventListener("click",onCancel);
+        overlay.removeEventListener("click",onBackdrop);
+        document.removeEventListener("keydown",onKey);
+        resolve(value);
+      };
+      const onOk=()=>finish(true);
+      const onCancel=()=>finish(false);
+      const onBackdrop=event=>{if(event.target===overlay) finish(false);};
+      const onKey=event=>{if(event.key==="Escape") finish(false);};
+      ok.addEventListener("click",onOk);
+      cancel.addEventListener("click",onCancel);
+      overlay.addEventListener("click",onBackdrop);
+      document.addEventListener("keydown",onKey);
+      requestAnimationFrame(()=>ok.focus());
+    });
+  }
+
   async function runAction(actionId) {
     if (!state.current || state.busy || state.session?.status==="completed") return;
     const original=mergedActions().find(x=>x.id===actionId);
@@ -2648,7 +2686,7 @@
     const action=E.resolve(state.current,state,selected);
     if(action.role==='disposition') {
       if(!state.diagnosis) { feed("Selecione uma hipótese principal antes de definir o destino final.","warning");return; }
-      if(!window.confirm(action.label+"? Esta decisão encerra o atendimento e abre a avaliação."))return;
+      if(!(await confirmPlantaoFinalization(action.label))) return;
     }
     state.busy=true;renderActions();
     $("plantao-finish").disabled=true;$("plantao-back").disabled=true;
