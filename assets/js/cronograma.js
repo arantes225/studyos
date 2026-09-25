@@ -5357,7 +5357,9 @@ function renderBaseSchedulePreview() {
 
   if (prioritySummary) {
     prioritySummary.textContent = scheduleState.targetExams.length
-      ? `Prioridade cruzada: ${scheduleState.targetExams.join(" · ")}`
+      ? "Prioridade cruzada: " + scheduleState.targetExams
+          .map((exam,index) => `${index + 1}ª ${exam} (${[50,30,20][index]}%)`)
+          .join(" · ")
       : "Sem provas-alvo: ordem padrão do Cronograma Base";
   }
 
