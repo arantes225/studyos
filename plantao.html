@@ -59,7 +59,7 @@
           <div class="plantao-sim-top">
             <button id="plantao-back" class="button secondary" type="button">← Casos</button>
             <div class="plantao-clock"><span>Tempo do caso</span><strong id="plantao-time">00:00</strong></div>
-            <button id="plantao-finish" class="button primary" type="button">Definir destino</button>
+            <button id="plantao-finish" class="button primary plantao-top-finish" type="button" hidden>Finalizar</button>
           </div>
 
           <article class="plantao-patient-card panel">
@@ -77,7 +77,7 @@
               <div id="plantao-score-live" class="plantao-score-live" aria-live="polite">0/100</div>
               <nav id="plantao-action-tabs" class="plantao-action-tabs" aria-label="Grupos de ações"></nav>
               <section id="plantao-action-drawer" class="plantao-action-drawer" hidden aria-labelledby="plantao-action-title">
-                <div class="plantao-drawer-head"><button id="plantao-action-close" class="button secondary" type="button">← Voltar</button><h2 id="plantao-action-title">Ações</h2></div>
+                <div class="plantao-drawer-head"><button id="plantao-action-close" class="button secondary" type="button">← Voltar</button><h2 id="plantao-action-title">Ações</h2><button id="plantao-conduta-finish" class="button primary plantao-conduta-finish" type="button" hidden>Finalizar</button></div>
                 <label class="plantao-search-label" for="plantao-action-search">Buscar nesta lista</label>
                 <input id="plantao-action-search" class="plantao-action-search" type="search" placeholder="Medicamento, exame ou conduta…">
                 <div id="plantao-actions" class="plantao-actions"></div>
