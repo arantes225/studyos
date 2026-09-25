@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  let vitals = {}, context = {}, frame = 0;
+  let vitals = {}, context = {}, enabled = false, frame = 0;
   const normalize = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const number = value => value === null || value === undefined || value === '' ? NaN : parseFloat(value);
   // Educational rhythm strip: fixed time scale and durations in seconds, not a 12-lead ECG.
@@ -74,6 +74,7 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   function update(next, caseContext={}) {
     context=caseContext;
+    enabled=caseContext.enabled===true;
     vitals = {...next};
     const mental = normalize(vitals.mental);
     const unconscious = /inconsciente|desacordad|nao responsiv|nao responde|arresponsiv|coma|irresponsiv/.test(mental);
@@ -94,6 +95,14 @@
     if (!ctx) return;
     const w = canvas.width, h = canvas.height;
     ctx.clearRect(0,0,w,h);
+    if(!enabled){
+      ctx.fillStyle='#07131d';ctx.fillRect(0,0,w,h);
+      ctx.fillStyle='#6f8797';ctx.font='bold 22px sans-serif';ctx.textAlign='center';
+      ctx.fillText('MONITOR DESLIGADO',w/2,h/2);
+      ctx.textAlign='start';
+      if(!reduced.matches) frame=requestAnimationFrame(draw);
+      return;
+    }
     ctx.strokeStyle = '#143044';ctx.lineWidth = 1;
     for (let x=0;x<w;x+=25) {ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
     const p=profile(vitals,context);
