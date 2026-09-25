@@ -44,7 +44,7 @@ Usar fonte atual aplicável à pergunta e ao cenário brasileiro. Fonte internac
 CALIBRAÇÃO DO PROMPT: FINAL_PROMPT_SCORE >=84/100 na saída bruta inédita, antes de correções; não confundir com style_score.
 QUESTÃO FINAL: quality_score >=97/100, style >=9.7/10, rubrica completa, fontes verificadas, sem hard fail, sem ambiguidade e com única melhor resposta. Nota alta não compensa falha eliminatória.
 Feedback sobre distratores, clareza e segurança pode melhorar regras gerais; só alterar a identidade da banca com evidência primária documentada.
-PERSISTÊNCIA CONTROLADA POR FAIXA — RESULTADO DA ETAPA: nas etapas perplexity_initial e perplexity_reaudit, o bloco de 200 deve ser processado em QUATRO FAIXAS SEQUENCIAIS DE 50: Q001–Q050, Q051–Q100, Q101–Q150 e Q151–Q200. Em cada faixa, primeiro gerar e validar exatamente 50 reviews completos em memória; NÃO chamar o importador com 49 ou menos. Somente quando os 50 reviews estiverem completos e sem IDs duplicados, chamar o importador controlado da etapa UMA VEZ com os 50 objetos reviews[]. Depois, RECONSULTAR o banco e confirmar exatamente 50/50 reviews persistidos da versão atual para aquela faixa. Se houver 49/50 ou qualquer divergência, coverage.complete=false, NÃO iniciar a faixa seguinte e corrigir a persistência. stage_metrics, totais agregados, relatório textual ou telemetria NÃO substituem reviews individuais. Ao final das quatro faixas, o bloco só pode avançar se a reconsulta confirmar exatamente 200 question_id distintos da etapa, todos na item_version atual. Nunca usar INSERT/UPDATE/DELETE direto nas tabelas; usar exclusivamente o importador controlado da etapa.
+PERSISTÊNCIA FLEXÍVEL E INCREMENTAL — RESULTADO DA ETAPA: nas etapas perplexity_initial e perplexity_reaudit, NÃO existe tamanho obrigatório de lote para gravação. O Perplexity pode persistir 1 questão por vez ou agrupar qualquer quantidade conveniente, desde que cada objeto reviews[] seja completo, pertença ao bloco correto e use a item_version atual. É permitido executar várias chamadas sucessivas ao importador. Cada chamada deve ser validada antes de gravar e seguida de reconsulta ao banco para confirmar quais question_id foram realmente persistidos. Falha em uma questão não invalida as já persistidas: mantenha as válidas, registre a pendência real e continue/reprocesse somente o que faltar. stage_metrics, totais agregados, relatório textual ou telemetria NÃO substituem reviews individuais. O bloco só pode avançar quando a reconsulta final confirmar exatamente 200 question_id distintos da etapa, todos na item_version atual, sem pendências. Nunca usar INSERT/UPDATE/DELETE direto nas tabelas; usar exclusivamente o importador controlado da etapa.
 CONFIRMAÇÃO APÓS GRAVAÇÃO: depois de importar a etapa, reconsultar o bloco e conferir que a contagem de revisões individuais da etapa para item_version atual corresponde exatamente ao total processado. Só então informar que a etapa foi persistida e permitir transição de fluxo.
 TELEMETRIA OBRIGATÓRIA POR ETAPA: toda saída JSON deve incluir um objeto top-level stage_metrics. Ele é lido pelo Admin e persistido no Supabase para atualizar o dashboard automaticamente. Preencher com dados REAIS da etapa; nunca estimar contagens. Estrutura obrigatória:
 stage_metrics = {
@@ -141,7 +141,8 @@ Somente perfis ainda não aprovados devem registrar edição, URL oficial, IDs/p
 - PROIBIDO aplicar proposed_change diretamente na questão principal.
 - PROIBIDO incrementar version ou sobrescrever campos editoriais/científicos da questão.
 - proposed_change.exact_replacement é apenas RECOMENDAÇÃO para o ChatGPT adjudicar depois.
-- Depois de cada faixa, consultar public.admin_question_factory_review_coverage(...) para a etapa perplexity_initial e reviewer=Perplexity.
+- Depois de cada chamada de importação, consultar public.admin_question_factory_review_coverage(...) para a etapa perplexity_initial e reviewer=Perplexity.
+- Não há tamanho mínimo nem máximo obrigatório por chamada; o importante é preservar question_id + item_version corretos e confirmar a persistência real.
 - A etapa só termina com 200/200 question_id distintos na item_version atual e coverage.complete=true.
 - O parecer deve ficar preservado integralmente e separado da questão para evitar contaminação.`,
       perplexity_reaudit: `PERSISTÊNCIA DESTA ETAPA — PERPLEXITY PESSOAL / REAUDITORIA:
@@ -454,155 +455,106 @@ Após as três aprovações da versão atual, aguardar aprovação humana final 
   }
   function perplexityCycle(item={},ctx={},isReaudit=false) {
     if (isReaudit) {
-      return `FLUXO OPERACIONAL ÚNICO — PERPLEXITY · CONFIRMAÇÃO / REAUDITORIA
-Este é UM envio operacional. Reaudite diretamente as versões atuais pendentes do mesmo bloco; NÃO existe subetapa separada de blind_resolution.
+      return `FLUXO OPERACIONAL ÚNICO — PERPLEXITY PESSOAL · REAUDITORIA
+Execute na sua conta pessoal do Perplexity conectada ao Supabase. NÃO use API key do Perplexity.
 
-1. Trabalhe EXCLUSIVAMENTE no bloco operacional recebido e nas item_version atuais.
-2. Para cada questão, antes de confrontar o gabarito armazenado, resolva-a de forma independente e registre independent_answer no PRÓPRIO parecer perplexity_reaudit.
-3. Em seguida confronte gabarito, ciência, fontes, single-best-answer, hard rejects, dependência da vinheta, surface guess, assimetria, functional_killer_1/2, Pulo do Gato e explicações A-D.
-4. Inclua no mesmo review todas as evidências exigidas pelo LURIA 3.4; aprovação sem esses campos não é válida.
-5. Persista como perplexity_reaudit POR QUESTÃO usando o importador oficial. stage_metrics sozinho NÃO conclui esta fase.
-6. Reconsulte o bloco e confirme review individual perplexity_reaudit para TODAS as versões atuais processadas. Se qualquer uma faltar, coverage.complete=false e não libere a próxima fase.
-7. Não altere diretamente a questão principal.
-8. Se a pendência veio de disagree do ChatGPT sem correção da questão, reavalie o parecer à luz da contestação mantendo a mesma item_version; não exija incremento de versão inexistente.
+OBJETIVO:
+Reauditar exclusivamente as versões atuais pendentes do bloco operacional e persistir cada parecer real pelo RPC controlado.
+
+REGRAS DE EXECUÇÃO:
+1. Confirme no Supabase batch_code, block_code, question_id e item_version antes de trabalhar.
+2. Leia diretamente do banco as questões atuais pendentes. Não use cópia antiga, export anterior ou histórico da conversa como fonte de verdade.
+3. Para cada questão, resolva-a independentemente antes de confrontar o gabarito e registre independent_answer no próprio review perplexity_reaudit.
+4. Depois confronte gabarito, ciência, fonte, SBA, ambiguidade, dependência da vinheta, surface guess, assimetria lexical, functional_killer_1/2, Pulo do Gato, explicações A-D, dificuldade e estilo.
+5. Persista usando public.admin_import_question_factory_perplexity_reaudit(jsonb).
+6. NÃO existe quantidade obrigatória por chamada. Pode gravar 1, várias ou todas as pendências em uma chamada, desde que cada review esteja completo e válido.
+7. Se uma questão falhar na validação/importação, não descarte as demais já persistidas. Corrija/reprocesse somente as pendentes.
+8. Após cada chamada, reconsulte coverage para saber exatamente quais question_id continuam faltando.
+9. Se a pendência veio de disagree do ChatGPT sem patch, reaudite a MESMA item_version; não crie versão artificial.
+10. Não altere diretamente question_factory_items ou question_factory_reviews.
 
 ${segment(item,'perplexity_reaudit',ctx)}
 
-REGRA DE SAÍDA:
-- Se TODAS as versões atuais estiverem aprovadas, com parecer completo e o bloco estiver sem pendências, liberar a aprovação humana.
-- Se existir qualquer achado, persistir o parecer e retornar obrigatoriamente ao ChatGPT · julgar + corrigir. O ciclo 4↔5 se repete até zerar pendências.`;
+CONDIÇÃO DE SAÍDA:
+- Só liberar aprovação humana quando todas as pendências atuais tiverem review perplexity_reaudit válido na item_version atual e o tracker indicar zero pendências.
+- Se houver qualquer needs_revision/rejected, persistir o parecer e devolver o fluxo ao ChatGPT · julgar + corrigir.
+- Nunca declarar conclusão apenas por contagem estimada ou relatório textual.`;
     }
 
-    return `FLUXO OPERACIONAL — PERPLEXITY · AUDITORIA INDEPENDENTE
-EXECUÇÃO OBRIGATÓRIA — NÃO ENTREGUE APENAS ORIENTAÇÕES, DIAGNÓSTICO DO PIPELINE OU EXEMPLO DE PAYLOAD.
+    return `FLUXO OPERACIONAL — PERPLEXITY PESSOAL · AUDITORIA INDEPENDENTE
+EXECUTE NA SUA CONTA PESSOAL CONECTADA AO SUPABASE. NÃO USE PERPLEXITY_API_KEY.
 
-OBJETIVO DESTA ETAPA:
-Você deve efetivamente ler as questões reais da faixa atual, auditá-las individualmente, produzir os reviews completos, validar o conjunto, chamar o importador oficial e reler o banco para comprovar a persistência.
+OBJETIVO:
+Auditar as 200 questões atuais do bloco real no Supabase e persistir os reviews individualmente, sem exigir um tamanho fixo de lote por chamada.
 
-NÃO encerre esta tarefa dizendo apenas que:
-- o importador existe;
-- o worker precisa ser chamado;
-- falta um programador;
-- segue um JSON de exemplo;
-- o pipeline deveria fazer determinada operação.
-Se houver acesso ao bloco e ao RPC, EXECUTE o fluxo. Só interrompa por erro real e identificável de acesso, validação ou persistência.
-
-ORDEM OBRIGATÓRIA DA EXECUÇÃO:
-1. Abrir o endereço operacional informado neste prompt.
-2. Selecionar a PRIMEIRA faixa de 50 ainda incompleta.
-3. Buscar exatamente as 50 questões atuais dessa faixa.
-4. Confirmar que há exatamente 50 itens e registrar os 50 question_id + item_version atuais.
-5. Buscar o chatgpt_initial da MESMA item_version quando existir; tratá-lo apenas como contexto editorial, nunca como resposta clínica.
-6. Para cada questão, resolver primeiro de forma independente usando somente enunciado + alternativas A-D.
-7. Só depois abrir gabarito, explicações, Pulo do Gato, fontes e revisão anterior.
-8. Fazer auditoria científica/editorial completa de cada item.
-9. Produzir exatamente 50 objetos reviews[] completos.
-10. Validar cobertura, IDs, versões e campos obrigatórios.
-11. Se qualquer review estiver incompleto, corrigir esse review ANTES de importar.
-12. Chamar public.admin_import_question_factory_perplexity_initial UMA ÚNICA VEZ com os 50 reviews.
-13. Reconsultar a mesma faixa no banco.
-14. Confirmar current_items=50, persisted_reviews=50 e pending=0.
-15. Só então declarar a faixa concluída e passar à próxima.
-
-Este bloco possui 200 questões, mas esta etapa DEVE ser executada em 4 FAIXAS SEQUENCIAIS DE 50:
-1) Q001–Q050
-2) Q051–Q100
-3) Q101–Q150
-4) Q151–Q200
-
-REGRA CENTRAL:
-- Trabalhe SOMENTE com a faixa operacional recebida nesta execução.
-- Cada execução deve conter EXATAMENTE 50 questões atuais do mesmo bloco.
-- Primeiro gere e valide os 50 reviews completos.
-- Somente depois chame o importador oficial UMA VEZ com reviews[] contendo exatamente os 50 pareceres.
-- Depois reconsulte o banco e confirme 50/50 persistidos antes de iniciar a próxima faixa.
-- Se houver 49/50 ou qualquer divergência, coverage.complete=false e a próxima faixa fica BLOQUEADA.
-
-1. Trabalhe EXCLUSIVAMENTE no lote/bloco/faixa recebidos; não misture outro lote, bloco, faixa ou versão antiga.
-2. Use apenas a item_version atual de cada questão. Não altere a questão principal e não incremente versão nesta etapa.
-3. Para CADA questão, antes de confrontar o gabarito armazenado, faça uma resolução independente usando enunciado + alternativas A-D e registre independent_answer no PRÓPRIO review perplexity_initial. Não ajuste a resposta independente para coincidir com o gabarito.
-4. Depois faça a auditoria científica e editorial completa da MESMA versão.
-5. Para cada questão, avalie obrigatoriamente: ciência; gabarito; single-best-answer; ambiguidade; dependência da vinheta; surface_guess_without_vignette; surface_guess_confidence; lexical_asymmetry; melhor distrator; best_distractor_rationale; counterfactual_change; functional_killer_1; functional_killer_2; qualidade dos distratores; explicações A-D; mensagem_chave/Pulo do Gato; dificuldade; estilo; fontes; proposed_change.
-6. Fonte só pode ser VERIFIED se instituição, documento, ano, URL, seção e recomendação aplicável estiverem realmente confirmados. Sem confirmação suficiente, usar SOURCE_VERIFICATION_PENDING ou SOURCE_VERIFICATION_FAILED; nesse caso, o item NÃO pode ser approved.
-7. Status permitido por item: approved | needs_revision | rejected. Nunca aprovar apenas para completar a faixa.
-8. Cada review deve conter question_id, item_version, review_stage='perplexity_initial', reviewer='Perplexity', original_answer, independent_answer, answer_agreement, review_status/status, confidence, ambiguity, single_best_answer, hard_fail, hard_fail_reasons, quality_score, component_scores, verified_sources, source_checks, proposed_change, explanation_checks, message_key_check, surface_guess_without_vignette, surface_guess_confidence, lexical_asymmetry, best_distractor, best_distractor_rationale, counterfactual_change, vignette_dependency, functional_killer_1 e functional_killer_2.
-9. Antes do importador, valide a FAIXA INTEIRA:
-   - items.length = 50
-   - reviews.length = 50
-   - 50 question_id únicos
-   - nenhuma questão fora da faixa
-   - item_version igual à versão atual
-   - nenhum review incompleto
-   - coverage.reviewed_ids contém exatamente os 50 IDs
-   - coverage.pending_ids = []
-   - coverage.complete = true
-10. Se qualquer validação falhar, NÃO chame o importador. Corrija/regere o review faltante primeiro.
-11. Importar exclusivamente por public.admin_import_question_factory_perplexity_initial(p_payload jsonb). É proibido INSERT/UPDATE/DELETE direto em question_factory_reviews ou question_factory_items.
-12. Após a importação, RECONSULTE a mesma faixa e confirme exatamente:
-   current_items = 50
-   persisted_reviews = 50
-   pending = 0
-13. Somente com 50/50 persistidos a faixa é concluída e a próxima pode começar.
-14. Repita exatamente a mesma rotina para Q051–Q100, Q101–Q150 e Q151–Q200.
-15. O bloco inteiro só pode ser considerado concluído após confirmar:
-   200 itens atuais
-   200 reviews perplexity_initial persistidos
-   pending = 0
-   complete = true
+PASSO A PASSO:
+1. Abra o endereço operacional indicado no prompt.
+2. Confirme no Supabase batch_code, block_code, exam_style, question_id e item_version.
+3. Consulte a cobertura atual de perplexity_initial e identifique apenas os question_id ainda pendentes.
+4. Leia diretamente do banco as questões atuais pendentes.
+5. Para CADA questão, antes de confrontar o gabarito, resolva usando somente enunciado + alternativas A-D e registre independent_answer.
+6. Só depois leia gabarito, explicações, Pulo do Gato, fonte e eventual chatgpt_initial da MESMA item_version.
+7. Faça a auditoria completa: ciência; gabarito; SBA; ambiguidade; dependência real da vinheta; surface_guess_without_vignette; surface_guess_confidence; lexical_asymmetry; melhor distrator; best_distractor_rationale; counterfactual_change; functional_killer_1; functional_killer_2; qualidade dos distratores; explicações A-D; mensagem_chave; dificuldade; estilo; fontes; proposed_change.
+8. Fonte só pode ser VERIFIED quando realmente checada. Se não for possível confirmar, use SOURCE_VERIFICATION_PENDING ou SOURCE_VERIFICATION_FAILED e não aprove o item.
+9. Status permitido por item: approved | needs_revision | rejected.
+10. Valide cada review antes de importar: question_id correto, item_version atual, campos obrigatórios completos e sem duplicidade dentro do payload atual.
+11. Persista exclusivamente por public.admin_import_question_factory_perplexity_initial(jsonb).
+12. NÃO existe obrigação de subir 50 de uma vez. Você pode:
+   - persistir questão por questão;
+   - persistir pequenos grupos;
+   - persistir grupos maiores;
+   - persistir as 200 em uma chamada, se o ambiente suportar.
+13. O tamanho da chamada é decisão operacional; NÃO é critério de validade da etapa.
+14. Se uma chamada contiver, por exemplo, 17 reviews válidos, grave os 17. Não bloqueie esperando completar 50.
+15. Se 16 persistirem e 1 falhar, mantenha os 16 e reprocesse apenas o item pendente.
+16. Após cada chamada, reconsulte public.admin_question_factory_review_coverage(...) e use o resultado real como fonte de verdade.
+17. Continue até coverage confirmar exatamente 200 question_id distintos na item_version atual.
+18. Nunca use INSERT/UPDATE/DELETE direto nas tabelas para contornar o importador.
+19. Nunca altere a questão principal nesta etapa.
+20. Nunca declare sucesso antes da reconsulta final.
 
 ${segment(item,'perplexity_initial',ctx)}
 
-VALIDAÇÃO OBRIGATÓRIA ANTES DO RPC:
-- reviews.length deve ser EXATAMENTE 50.
-- Os 50 question_id devem ser únicos.
-- Cada question_id deve pertencer à faixa atual.
+VALIDAÇÃO DE CADA PAYLOAD:
+- reviews.length pode ser qualquer inteiro >= 1.
+- Todos os question_id do payload devem ser únicos.
+- Todos devem pertencer ao block_code operacional.
 - item_version deve coincidir com a versão corrente no banco.
 - original_answer deve existir.
-- independent_answer deve existir; se irresolúvel, registrar explicitamente null + ambiguity=true + single_best_answer=false.
-- review_status/status deve existir e ser approved | needs_revision | rejected.
-- Deve haver justificativa clínica/editorial específica.
-- explanation_checks deve conter A, B, C e D, cada uma com PASS/FAIL + reason.
+- independent_answer deve existir; se irresolúvel, registrar null + ambiguity=true + single_best_answer=false quando o contrato permitir.
+- review_status/status deve ser approved | needs_revision | rejected.
+- explanation_checks deve conter A, B, C e D com PASS/FAIL + reason.
 - message_key_check deve existir com status, reason e decisive_feature.
-- functional_killer_1 e functional_killer_2 devem existir e eliminar distratores diferentes.
-- source_checks deve existir e refletir verificação real.
-- verified_sources não pode ser inventado; se a fonte não puder ser confirmada, usar SOURCE_VERIFICATION_PENDING/FAILED.
+- functional_killer_1 e functional_killer_2 devem estar preenchidos.
+- source_checks deve refletir verificação real.
 - proposed_change deve existir, mesmo quando change_required=false.
-- coverage.reviewed_ids deve conter exatamente os mesmos 50 IDs.
-- coverage.pending_ids deve ser [].
-- coverage.complete só pode ser true se os 50 reviews estiverem completos e válidos.
-
-IMPORTAÇÃO OBRIGATÓRIA:
-Usar EXCLUSIVAMENTE:
-select public.admin_import_question_factory_perplexity_initial('<PAYLOAD_JSON>'::jsonb);
-Nunca usar INSERT/UPDATE/DELETE direto em question_factory_reviews ou question_factory_items.
 
 CONFIRMAÇÃO PÓS-IMPORTAÇÃO:
-Depois do RPC, execute uma leitura separada da mesma faixa e só aceite sucesso quando:
-current_items = 50
-persisted_reviews = 50
-pending = 0
+Depois de cada RPC:
+- reconsulte coverage;
+- registre persisted e pending_ids reais;
+- não reprocesse IDs já confirmados, salvo se a versão mudou;
+- prossiga somente com os pendentes.
 
-Se der 49/50, 48/50 ou qualquer divergência:
-- coverage.complete=false;
-- a faixa NÃO está concluída;
-- a próxima faixa NÃO pode começar;
-- não informe sucesso.
+CONDIÇÃO FINAL DO BLOCO:
+- total atual = 200;
+- persisted_reviews = 200;
+- pending_ids = [];
+- complete = true;
+- todos os reviews correspondem à item_version atual.
 
-REGRA ANTI-FALSO-SUCESSO — PERPLEXITY INITIAL:
-- É proibido processar as 200 em uma única execução.
-- É proibido importar menos de 50 reviews numa faixa.
-- É proibido iniciar a próxima faixa sem confirmar 50/50 da anterior.
+REGRA ANTI-FALSO-SUCESSO:
+- É proibido impor artificialmente lote de 50.
+- É proibido segurar reviews válidos só porque ainda não chegou a 50.
 - É proibido usar reviews de versões antigas.
 - É proibido copiar o gabarito como resposta independente.
 - É proibido marcar fonte como verificada sem checagem real.
-- É proibido substituir reviews individuais por stage_metrics ou totais.
+- É proibido substituir reviews individuais por stage_metrics ou resumo.
 - É proibido marcar complete=true antes da reconsulta ao banco.
-- É proibido alterar question_factory_items nesta etapa.
 
 REGRA DE SAÍDA:
-- Para cada faixa, só declarar sucesso quando 50/50 estiverem persistidos.
-- Depois da quarta faixa, só avançar para ChatGPT quando 200/200 perplexity_initial estiverem persistidos na versão atual.
-- Se houver needs_revision/rejected, o próximo passo é ChatGPT · julgar + corrigir após a etapa Perplexity Initial estar integralmente persistida.`;
+- Só avançar para o ChatGPT quando 200/200 perplexity_initial estiverem persistidos na versão atual.
+- Se houver needs_revision/rejected, o próximo passo é ChatGPT · julgar + corrigir após a cobertura integral da etapa.`;
   }
 
   function chatgptCorrectionCycle(item={},ctx={}) {
