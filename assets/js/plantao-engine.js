@@ -35,15 +35,24 @@
   function score(item,state){
     const rules=item.completion_rules||{};
     const required=requiredActions(item);
-    const recommended=Array.isArray(rules.recommended_actions)?rules.recommended_actions:[];
-    const ratio=ids=>ids.length?ids.filter(id=>done(item,state.performed,id)).length/ids.length:1;
-    const missingRequired=required.filter(id=>!done(item,state.performed,id));
-    const omissionPenalty=missingRequired.length*8;
-    const earned=45*ratio(required)+15*ratio(recommended)
-      +(success(item,state)?15:0)+(state.diagnosis?.correct?10:0)+(state.disposition?.correct?15:0);
+    const completed=required.filter(id=>done(item,state.performed,id)).length;
+    // 70 pontos: condutas-chave, divididos igualmente entre elas.
+    // 15 pontos: hipótese correta. 15 pontos: destino correto.
+    // Penalidades são subtraídas depois. A nota exibida não fica negativa,
+    // mas raw preserva o saldo real (ex.: 0 - 12 = -12).
+    const keyEarned=required.length ? 70*(completed/required.length) : 0;
+    const earned=keyEarned+(state.diagnosis?.correct?15:0)+(state.disposition?.correct?15:0);
     const timePenalty=Math.max(0,(state.criticalElapsed||0)-Number(rules.max_minutes||30));
-    const penalties=Number(state.penalties||0)+timePenalty+omissionPenalty;
-    return {earned:Math.round(earned),penalties:Math.round(penalties*10)/10,omissionPenalty,missingRequired,total:Math.max(0,Math.min(100,Math.round(earned-penalties)))};
+    const penalties=Number(state.penalties||0)+timePenalty;
+    const raw=Math.round((earned-penalties)*10)/10;
+    return {
+      earned:Math.round(earned*10)/10,
+      penalties:Math.round(penalties*10)/10,
+      omissionPenalty:0,
+      missingRequired:required.filter(id=>!done(item,state.performed,id)),
+      raw,
+      total:Math.max(0,Math.min(100,Math.round(raw)))
+    };
   }
   const api={done,resolve,score,success,requiredActions};root.PlantaoEngine=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
