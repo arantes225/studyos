@@ -637,3 +637,58 @@ body.plantao-monitor-open{overflow:hidden}
   .plantao-phone-case-card .button{width:100%}
   .plantao-phone-device{border-width:6px;border-radius:30px}
 }
+
+
+/* v3.3 — monitor mais compacto para liberar espaço ao prontuário. */
+.plantao-bedside .plantao-monitor-dock .plantao-monitor{
+  grid-template-rows:auto repeat(3,minmax(32px,auto)) 24px 11px;
+  gap:2px;
+  padding-top:6px;
+  padding-bottom:5px;
+}
+.plantao-monitor-dock .plantao-monitor canvas{
+  min-height:0;
+}
+.plantao-monitor-dock .plantao-vital:nth-child(4),
+.plantao-monitor-dock .plantao-vital:nth-child(5){
+  padding-top:2px;
+  padding-bottom:1px;
+  align-self:center;
+}
+.plantao-monitor-dock .plantao-vital:nth-child(4) strong,
+.plantao-monitor-dock .plantao-vital:nth-child(5) strong{
+  display:flex;
+  align-items:baseline;
+  gap:4px;
+  line-height:1;
+  white-space:nowrap;
+}
+.plantao-monitor-dock .plantao-vital:nth-child(4) strong small,
+.plantao-monitor-dock .plantao-vital:nth-child(5) strong small{
+  display:inline;
+  margin-top:0;
+  font-size:7px;
+  line-height:1;
+}
+.plantao-monitor-dock .plantao-monitor>small{
+  margin-top:1px;
+  line-height:1;
+}
+.plantao-monitor-dock{
+  gap:5px;
+}
+@media(max-width:680px){
+  .plantao-bedside .plantao-monitor-dock .plantao-monitor{
+    grid-template-rows:auto repeat(3,30px) 22px 10px;
+    padding-top:4px;
+    padding-bottom:3px;
+    gap:1px;
+  }
+  .plantao-monitor-dock .plantao-vital:nth-child(4) strong small,
+  .plantao-monitor-dock .plantao-vital:nth-child(5) strong small{
+    font-size:6px;
+  }
+  .plantao-monitor-dock{
+    gap:4px;
+  }
+}
