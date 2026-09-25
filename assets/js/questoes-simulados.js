@@ -4887,9 +4887,6 @@ async function createManualSimulation() {
     qsState.pendingNewSetId =
       setRecord.id;
 
-    qsState.pendingNewSetId =
-      setRecord.id;
-
     await loadSets();
 
 
@@ -6156,6 +6153,9 @@ async function importPdf() {
       .value =
         "";
 
+
+    qsState.pendingNewSetId =
+      setRecord.id;
 
     await loadSets();
 
