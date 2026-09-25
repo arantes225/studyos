@@ -974,6 +974,42 @@
     ].filter(Boolean).join(" "));
   }
 
+  function caseIdentity(){
+    const title=String(state.current?.title||"este caso").trim();
+    const complaint=String(state.current?.presentation?.chief_complaint||state.current?.summary||"").trim();
+    return {title,complaint};
+  }
+
+  function caseSpecificNeutralResult(action,kind="ação"){
+    const {title,complaint}=caseIdentity();
+    const label=String(action?.label||kind).trim();
+    const v=state.vitals||state.current?.initial_vitals||{};
+    const details=[];
+    if(v.bp) details.push("PA "+v.bp+" mmHg");
+    if(v.hr!=null) details.push("FC "+v.hr+" bpm");
+    if(v.rr!=null) details.push("FR "+v.rr+" irpm");
+    if(v.spo2!=null) details.push("SpO₂ "+v.spo2+"%");
+    const base="No caso de "+title+", "+label.toLowerCase()+" foi "+(kind==="exame"?"avaliado":"realizado")+" considerando a queixa de "+(complaint||"apresentação descrita")+".";
+    return base+(details.length?" No momento: "+details.join(", ")+".":"");
+  }
+
+  function interventionResult(action,beforeVitals={}){
+    const {title,complaint}=caseIdentity();
+    const label=String(action?.label||"Intervenção");
+    const after=state.vitals||{};
+    const changes=[];
+    [["FC","hr"," bpm"],["SpO₂","spo2","%"],["FR","rr"," irpm"],["PA","bp",""]].forEach(([name,key,unit])=>{
+      if(beforeVitals?.[key]!=null && after?.[key]!=null && String(beforeVitals[key])!==String(after[key])){
+        changes.push(name+" "+beforeVitals[key]+" → "+after[key]+unit);
+      }
+    });
+    const explicit=String(action?.result||"").trim();
+    const generic=/^(?:.+ administrad[ao]|.+ realizad[ao]|.+ iniciad[ao]|.+ instalad[ao]|.+ obtid[ao]|.+ aplicad[ao]|.+ acionad[ao])\.?$/i.test(explicit);
+    if(!generic && explicit) return contextual(explicit);
+    const context=complaint ? " diante de "+complaint : "";
+    return label+" no caso de "+title+context+"."+(changes.length?" Resposta imediata: "+changes.join("; ")+".":" Sinais vitais permanecem em reavaliação após a intervenção.");
+  }
+
   function isGenericHistoryAnswer(answer){
     const a=normalizeLabel(answer);
     return !a
@@ -1016,7 +1052,7 @@
       if(/eclampsia|pre-eclampsia/.test(t)) return "Estou com dor de cabeça forte, visão embaçada e náusea; também percebi inchaço maior nos últimos dias.";
       if(/panico/.test(t)) return "Senti coração muito acelerado, falta de ar, tremores, formigamento nas mãos e uma sensação súbita de que algo muito ruim ia acontecer.";
       if(/conjuntivite|blefarite|ceratite|hordeolo/.test(t)) return "O incômodo fica principalmente no olho/pálpebra afetado, com vermelhidão, lacrimejamento ou secreção; não tive sintomas gerais importantes.";
-      return "Não percebi outro sintoma marcante além dos que fazem parte deste episódio.";
+      const id=caseIdentity(); return "Neste episódio de "+id.title+", o sintoma principal continua sendo "+(id.complaint||"o quadro descrito")+"; não surgiu outro sintoma novo além do que já foi relatado.";
     }
 
     if(k.includes("antecedentes")){
@@ -1027,7 +1063,7 @@
       if(/insuficiencia cardiaca|edema agudo/.test(t)) return "Tenho hipertensão e problema cardíaco em acompanhamento, com episódios prévios de inchaço e falta de ar.";
       if(/doenca renal|renal|dialise|hipercalemia/.test(t)) return "Tenho doença renal crônica e faço acompanhamento; quando indicado, realizo diálise regularmente.";
       if(/gesta|gravidez|eclamps|placenta|abort/.test(t)) return "Estou em acompanhamento obstétrico e sei aproximadamente a idade gestacional; até este episódio, a evolução vinha sem intercorrência semelhante.";
-      return "Não tenho antecedente diretamente relacionado a este quadro e nunca tive um episódio exatamente igual.";
+      const id=caseIdentity(); return "Para este quadro de "+id.title+", não há antecedente previamente documentado que explique melhor o episódio além do que já foi informado.";
     }
 
     if(k.includes("medicamentos")){
@@ -1057,7 +1093,8 @@
       return String(state.current?.presentation?.opening||answer||state.current?.summary||"O quadro começou antes da chegada e evoluiu até motivar atendimento.");
     }
 
-    return answer;
+    const id=caseIdentity();
+    return "Sobre "+String(topic||"esta pergunta").toLowerCase()+": no caso de "+id.title+", o dado disponível é "+(id.complaint||state.current?.summary||"a apresentação descrita")+". Não há outro achado específico documentado além disso.";
   }
 
   function diagnosticTestResult(action){
@@ -1249,7 +1286,7 @@
       return "Doppler sem trombose ou redução arterial significativa.";
     }
 
-    return String(action.result||"Resultado sem alteração específica relevante.");
+    return caseSpecificNeutralResult(action,"exame");
   }
 
   function importedHistoryActions(){
@@ -1350,7 +1387,7 @@
     if(action.id==="io_access") return "Acesso intraósseo obtido, com fluxo adequado após confirmação de posicionamento.";
     if(action.id==="call_team") return "Equipe de emergência acionada e apoio adicional a caminho.";
     if(action.id==="cpr") return !pulsePresent ? "RCP iniciada imediatamente, com compressões torácicas contínuas e ventilação conforme protocolo." : "RCP iniciada apesar da presença de pulso palpável.";
-    return contextual(action.result||action.label);
+    return caseSpecificNeutralResult(action,"procedimento");
   }
 
   function mergedActions(){
@@ -2608,7 +2645,7 @@
               ? diagnosticTestResult(action)
               : (["iniciais","monitorizacao"].includes(action.category)
                   ? initialProcedureResult(action)
-                  : contextual(action.result||action.label)));
+                  : interventionResult(action,vitalsBeforeAction)));
         const isDiagnosticExam=["exames","laboratorio","imagem"].includes(action.category);
         if(isDiagnosticExam){
           feed((action.label||"Exame")+" realizado. Laudo disponível.","event");
