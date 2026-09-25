@@ -1266,7 +1266,15 @@ async function finishReviewSession({
         return;
       }
     } else {
+      /*
+        Ao sair da página, tenta encerrar imediatamente, mas mantém
+        o heartbeat local. Se o navegador cancelar a requisição,
+        a próxima visita encerra a mesma sessão com o último segundo
+        efetivamente visto. A RPC é idempotente para sessões já encerradas.
+      */
       void request;
+      reviewSessionFinishing = false;
+      return;
     }
   }
 
