@@ -1101,7 +1101,10 @@
       esc(item.blocked?"Ação antecipada bloqueada":"Ação fora de sequência")+
       ':</strong> '+esc(item.message)+(item.penalty?' (−'+esc(item.penalty)+' pts)':'')+'</span></div>'
     );
-    $("plantao-sequence-errors").innerHTML=sequence.length?sequence.join(""):'<div class="plantao-review-item"><span>✓</span><span>Nenhum erro de sequência registrado.</span></div>';
+    const expectedSequence=(d.sequence_errors||[]).map(text=>
+      '<div class="plantao-review-item plantao-sequence-item"><span>•</span><span><strong>Ponto crítico de sequência:</strong> '+esc(text)+'</span></div>'
+    );
+    $("plantao-sequence-errors").innerHTML=[...sequence,...expectedSequence].join("")||'<div class="plantao-review-item"><span>✓</span><span>Nenhum erro de sequência registrado.</span></div>';
 
     const wrongEvents=state.clinicalEvents.filter(x=>x.level==="malefica"||x.level==="mortal");
     const expectedWrong=(d.wrong_actions||[]).map(text=>`<div class="plantao-review-item"><span>•</span><span>${esc(text)}</span></div>`);
