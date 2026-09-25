@@ -63,6 +63,13 @@
     if (!user) return;
     state.user=user;
 
+    const accessRes = await sb.rpc("has_interconsultation_access");
+    const phoneAllowed = !accessRes.error && accessRes.data === true;
+    const phoneModeCard = $("plantao-phone-mode-card");
+    const phoneSection = $("plantao-telefone");
+    if (phoneModeCard) phoneModeCard.hidden = !phoneAllowed;
+    if (phoneSection) phoneSection.hidden = !phoneAllowed;
+
     // Plantão é restrito ao admin; busca os casos por RPC administrativo.
     // Isso evita depender da combinação de RLS/cache de sessão para montar a biblioteca.
     let casesRes = await sb.rpc("admin_list_active_clinical_cases");
