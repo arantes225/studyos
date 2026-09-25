@@ -42,7 +42,8 @@
     deathReason:"",
     clinicalEvents:[],
     category:null,
-    penalties:0, criticalElapsed:0, diagnosis:null, disposition:null, busy:false
+    penalties:0, criticalElapsed:0, diagnosis:null, disposition:null, busy:false,
+    phoneCases:[], phoneCase:null, phoneSession:null, phoneTurn:0, phoneMode:false
   };
 
   function fmtTime(minutes) {
@@ -76,6 +77,15 @@
     const phoneSection = $("plantao-telefone");
     if (phoneModeCard) phoneModeCard.hidden = !phoneAllowed;
     if (phoneSection) phoneSection.hidden = true;
+
+    if(phoneAllowed){
+      const phoneCasesRes=await sb.from("interconsultation_cases")
+        .select("id,slug,title,specialty,difficulty,requester_role,opening_message,known_by_requester")
+        .eq("active",true)
+        .order("created_at",{ascending:true});
+      state.phoneCases=phoneCasesRes.error ? [] : (phoneCasesRes.data||[]);
+      renderPhoneCases();
+    }
 
     // Biblioteca leve: carrega somente metadados. O conteúdo clínico completo
     // é buscado sob demanda quando o usuário realmente inicia a estação.
@@ -155,6 +165,146 @@
       `;
     }).join("");
   }
+
+  function setPlantaoMode(mode){
+    const phone=mode==="phone";
+    state.phoneMode=phone;
+    const emergencyIds=["plantao-emergencia","plantao-emergency-filters","plantao-case-grid","plantao-empty"];
+    emergencyIds.forEach(id=>{const el=$(id); if(el) el.hidden=phone;});
+    const phoneSection=$("plantao-telefone");
+    if(phoneSection) phoneSection.hidden=!phone;
+    document.querySelectorAll(".plantao-mode-card").forEach(card=>{
+      const isPhone=card.id==="plantao-phone-mode-card";
+      const active=phone ? isPhone : !isPhone;
+      card.classList.toggle("active",active);
+      if(active) card.setAttribute("aria-current","page"); else card.removeAttribute("aria-current");
+    });
+    if(phone){
+      renderPhoneCases();
+      phoneSection?.scrollIntoView({behavior:"smooth",block:"start"});
+    }else{
+      $("plantao-emergencia")?.scrollIntoView({behavior:"smooth",block:"start"});
+    }
+  }
+
+  function renderPhoneCases(){
+    const host=$("plantao-phone-case-list");
+    if(!host) return;
+    if(!state.phoneCases.length){
+      host.innerHTML='<div class="placeholder">Nenhum caso de Telefone disponível ainda.</div>';
+      return;
+    }
+    host.innerHTML=state.phoneCases.map(item=>`
+      <article class="plantao-phone-case-card">
+        <div>
+          <span class="badge">${esc(item.specialty)} · ${esc(item.difficulty)}</span>
+          <h3>${esc(item.title)}</h3>
+          <p>${esc(item.requester_role)} solicita uma interconsulta.</p>
+        </div>
+        <button class="button primary" type="button" data-start-phone-case="${esc(item.id)}">Atender ligação</button>
+      </article>
+    `).join("");
+  }
+
+  async function startPhoneCase(caseId){
+    const item=state.phoneCases.find(x=>x.id===caseId);
+    if(!item) return;
+    state.phoneCase=item;
+    state.phoneTurn=0;
+    const {data:session,error}=await sb.from("interconsultation_sessions")
+      .insert({user_id:state.user.id,case_id:item.id,status:"in_progress",turn_count:0,state:{mode:"scripted_pilot"}})
+      .select("*").single();
+    if(error){console.error("Telefone: não foi possível iniciar a sessão",error);return;}
+    state.phoneSession=session;
+    const {error:msgError}=await sb.from("interconsultation_messages").insert({
+      session_id:session.id,user_id:state.user.id,turn_index:0,sender:"requester",content:item.opening_message,metadata:{pilot:true}
+    });
+    if(msgError) console.warn("Telefone: falha ao registrar abertura",msgError);
+    $("plantao-phone-case-list").hidden=true;
+    $("plantao-phone-station").hidden=false;
+    $("plantao-phone-requester").textContent=item.requester_role||"Solicitante";
+    $("plantao-phone-context").textContent=(item.specialty||"Interconsulta")+" · "+new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+    renderPhoneMessages([{sender:"requester",content:item.opening_message}]);
+    $("plantao-phone-input")?.focus();
+  }
+
+  function phoneReplyFor(text){
+    const t=normalizeLabel(text);
+    const k=state.phoneCase?.known_by_requester||{};
+    if(/remedio|medicacao|usa|enalapril|furosemida|carvedilol/.test(t)) return k.medications;
+    if(/creatin|ureia|renal|rim|potass/.test(t)) return k.renal_function;
+    if(/compens|dispneia|edema|estertor|pulmao|ausculta|ic /.test(t)) return k.heart_failure_status;
+    if(/joelho|dor|trauma|tempo|comec|movimento/.test(t)) return [k.pain_history,k.knee_exam].filter(Boolean).join(" ");
+    if(/pressao| pa |fc|frequencia|satur|sinais vitais|temperatura/.test(" "+t+" ")) return k.vitals;
+    if(/alerg/.test(t)) return k.allergies;
+    if((/diclofenaco|aine/.test(t)) && (/nao|evit|susp|contra/.test(t))) return "Entendi. Vou evitar o diclofenaco fixo. Você sugere alguma alternativa para a dor?";
+    if(/paracetamol|dipirona/.test(t)) return "Perfeito. Vou usar analgesia mais segura e reavaliar o joelho. Obrigado.";
+    if(/diclofenaco|aine/.test(t) && /pode|liber|deixa|mantem|fixo/.test(t)) return "Certo. Só confirmando: você autoriza deixar o diclofenaco fixo mesmo com insuficiência cardíaca e uso de enalapril e furosemida?";
+    return "Não tenho essa informação agora. Se quiser, consigo checar os dados do prontuário e te responder algo mais específico.";
+  }
+
+  function renderPhoneMessages(messages){
+    const body=$("plantao-phone-chat-body");
+    if(!body) return;
+    body.innerHTML=messages.map(m=>`
+      <div class="plantao-phone-bubble ${m.sender==="specialist"?"outgoing":"incoming"}">
+        ${m.sender==="requester"?'<strong>'+esc(state.phoneCase?.requester_role||"Solicitante")+'</strong>':""}
+        <span>${esc(m.content)}</span>
+      </div>
+    `).join("");
+    body.scrollTop=body.scrollHeight;
+    body.dataset.messages=JSON.stringify(messages);
+  }
+
+  function currentPhoneMessages(){
+    const body=$("plantao-phone-chat-body");
+    try{return JSON.parse(body?.dataset.messages||"[]");}catch{return [];}
+  }
+
+  async function sendPhoneMessage(text){
+    if(!state.phoneSession||!state.phoneCase||!text.trim()) return;
+    const clean=text.trim();
+    state.phoneTurn+=1;
+    const specialistIndex=state.phoneTurn*2-1;
+    const requesterIndex=state.phoneTurn*2;
+    const reply=phoneReplyFor(clean)||"Não tenho essa informação agora.";
+    const messages=[...currentPhoneMessages(),{sender:"specialist",content:clean},{sender:"requester",content:reply}];
+    renderPhoneMessages(messages);
+    $("plantao-phone-input").value="";
+    await sb.from("interconsultation_messages").insert([
+      {session_id:state.phoneSession.id,user_id:state.user.id,turn_index:specialistIndex,sender:"specialist",content:clean,metadata:{pilot:true}},
+      {session_id:state.phoneSession.id,user_id:state.user.id,turn_index:requesterIndex,sender:"requester",content:reply,metadata:{pilot:true}}
+    ]);
+    await sb.from("interconsultation_sessions").update({
+      quota_counted_at:state.phoneSession.quota_counted_at||new Date().toISOString(),
+      turn_count:state.phoneTurn,
+      state:{mode:"scripted_pilot",last_user_message:clean}
+    }).eq("id",state.phoneSession.id);
+  }
+
+  document.querySelector('.plantao-mode-card[href="#plantao-emergencia"]')?.addEventListener("click",event=>{
+    event.preventDefault(); setPlantaoMode("emergency");
+  });
+  $("plantao-phone-mode-card")?.addEventListener("click",event=>{
+    event.preventDefault(); setPlantaoMode("phone");
+  });
+  $("plantao-phone-case-list")?.addEventListener("click",event=>{
+    const btn=event.target.closest("[data-start-phone-case]");
+    if(btn) startPhoneCase(btn.dataset.startPhoneCase);
+  });
+  $("plantao-phone-compose")?.addEventListener("submit",event=>{
+    event.preventDefault();
+    sendPhoneMessage($("plantao-phone-input")?.value||"");
+  });
+  $("plantao-phone-back")?.addEventListener("click",async()=>{
+    if(state.phoneSession?.id){
+      await sb.from("interconsultation_sessions").update({status:"abandoned",completed_at:new Date().toISOString()}).eq("id",state.phoneSession.id);
+    }
+    state.phoneSession=null; state.phoneCase=null; state.phoneTurn=0;
+    $("plantao-phone-station").hidden=true;
+    $("plantao-phone-case-list").hidden=false;
+    renderPhoneCases();
+  });
 
   ["plantao-filter-specialty","plantao-filter-difficulty"].forEach(id=>{
     $(id)?.addEventListener("change",renderLibrary);
