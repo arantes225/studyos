@@ -384,6 +384,10 @@
     renderPhoneCases();
   });
 
+  $("plantao-phone-page-back")?.addEventListener("click",()=>{
+    $("plantao-phone-exit")?.click();
+  });
+
   $("plantao-phone-exit")?.addEventListener("click",async()=>{
     if(state.phoneSession?.id){
       await sb.from("interconsultation_sessions").update({status:"abandoned",completed_at:new Date().toISOString()}).eq("id",state.phoneSession.id);
