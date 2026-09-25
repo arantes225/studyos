@@ -1,7 +1,7 @@
 /* Contrato único da fábrica. Não inserir resultados históricos como identidade editorial. */
 (function (root) {
   'use strict';
-  const VERSION = '3.4';
+  const VERSION = '3.5';
   const SCHEMA_VERSION = '2.0';
   const rubric = { scientific:25, answer_key:20, answer_source:15, distractors:10, explanations:10, style:10, writing:5, difficulty:5 };
   const editable = ['enunciado','alternativa_a','alternativa_b','alternativa_c','alternativa_d','gabarito','explicacao_a','explicacao_b','explicacao_c','explicacao_d','mensagem_chave','area','tema','subtema','dificuldade','fonte_instituicao','fonte_documento','fonte_ano','fonte_url','answer_source_institution','answer_source_document','answer_source_year','answer_source_url','answer_source_section','answer_source_note'];
@@ -44,8 +44,18 @@ Usar fonte atual aplicável à pergunta e ao cenário brasileiro. Fonte internac
 CALIBRAÇÃO DO PROMPT: FINAL_PROMPT_SCORE >=84/100 na saída bruta inédita, antes de correções; não confundir com style_score.
 QUESTÃO FINAL: quality_score >=97/100, style >=9.7/10, rubrica completa, fontes verificadas, sem hard fail, sem ambiguidade e com única melhor resposta. Nota alta não compensa falha eliminatória.
 Feedback sobre distratores, clareza e segurança pode melhorar regras gerais; só alterar a identidade da banca com evidência primária documentada.
-PERSISTÊNCIA FLEXÍVEL E INCREMENTAL — RESULTADO DA ETAPA: nas etapas perplexity_initial e perplexity_reaudit, NÃO existe tamanho obrigatório de lote para gravação. O Perplexity pode persistir 1 questão por vez ou agrupar qualquer quantidade conveniente, desde que cada objeto reviews[] seja completo, pertença ao bloco correto e use a item_version atual. É permitido executar várias chamadas sucessivas ao importador. Cada chamada deve ser validada antes de gravar e seguida de reconsulta ao banco para confirmar quais question_id foram realmente persistidos. Falha em uma questão não invalida as já persistidas: mantenha as válidas, registre a pendência real e continue/reprocesse somente o que faltar. stage_metrics, totais agregados, relatório textual ou telemetria NÃO substituem reviews individuais. O bloco só pode avançar quando a reconsulta final confirmar exatamente 200 question_id distintos da etapa, todos na item_version atual, sem pendências. Nunca usar INSERT/UPDATE/DELETE direto nas tabelas; usar exclusivamente o importador controlado da etapa.
-CONFIRMAÇÃO APÓS GRAVAÇÃO: depois de importar a etapa, reconsultar o bloco e conferir que a contagem de revisões individuais da etapa para item_version atual corresponde exatamente ao total processado. Só então informar que a etapa foi persistida e permitir transição de fluxo.
+PERSISTÊNCIA FLEXÍVEL E INCREMENTAL — RESULTADO DA ETAPA:
+- Para perplexity_initial e perplexity_reaudit, a FONTE DE VERDADE DE LEITURA é a página pública temporária da Fábrica de Questões informada no ENDEREÇO OPERACIONAL do prompt. O Perplexity deve abrir esse endereço no navegador, selecionar o bloco correto e trabalhar somente sobre as versões exibidas ali.
+- O Perplexity NÃO deve depender de conector Supabase, SQL, RPC, API key, service_role, anon key, JWT ou acesso ao Admin para executar essas duas etapas.
+- O resultado deve ser enviado pelo FORMULÁRIO "Enviar resultado" da própria página pública, em JSON completo, preservando question_id + item_version. O formulário registra o pacote em uma caixa de entrada isolada para validação posterior; ele NÃO altera diretamente a questão principal.
+- Não existe tamanho obrigatório de lote por envio: pode enviar 1 questão, pequenos grupos ou um grupo maior, desde que reviews[] esteja completo e todos os itens pertençam ao mesmo bloco/etapa.
+- Se um envio falhar, mantenha o JSON localmente, corrija apenas o problema apontado e reenvie. Nunca invente confirmação.
+- stage_metrics, totais agregados e relatório textual NÃO substituem reviews individuais.
+- Para etapas executadas pelo ChatGPT dentro do ambiente administrativo, permanecem válidos os importadores/RPCs controlados já definidos para a etapa.
+CONFIRMAÇÃO APÓS ENVIO DO PERPLEXITY:
+- Só declarar "ENVIADO AO BRIDGE" quando a própria página retornar protocolo/receipt_id.
+- Esse protocolo confirma RECEBIMENTO no bridge, não importação definitiva na Fábrica. Nunca declarar "persistido no Supabase", "coverage completo" ou "etapa concluída no banco" com base apenas no formulário.
+- A validação/importação definitiva é feita depois pelo fluxo administrativo da LURIA.
 TELEMETRIA OBRIGATÓRIA POR ETAPA: toda saída JSON deve incluir um objeto top-level stage_metrics. Ele é lido pelo Admin e persistido no Supabase para atualizar o dashboard automaticamente. Preencher com dados REAIS da etapa; nunca estimar contagens. Estrutura obrigatória:
 stage_metrics = {
   exam_style: banca atual,
@@ -67,12 +77,11 @@ stage_metrics = {
   metrics: objeto livre com métricas adicionais úteis,
   notes: resumo operacional curto
 }.
-PERSISTÊNCIA AUTOMÁTICA NO SUPABASE: se esta IA estiver executando em um ambiente com conector Supabase autorizado e capacidade de executar SQL no projeto da LURIA, após concluir a etapa deve gravar EXATAMENTE o objeto stage_metrics chamando SOMENTE a função controlada:
-ATENÇÃO PARA PERPLEXITY: este acesso é pela CONTA PESSOAL conectada ao Supabase. Não usar, solicitar ou depender de PERPLEXITY_API_KEY. O conector/sessão autenticada é suficiente para ler e chamar os RPCs autorizados.
-select private.qf_record_stage_metrics('<STAGE_METRICS_JSON>'::jsonb);
-Não fazer INSERT/UPDATE/DELETE direto em tabelas para registrar telemetria. Não alterar questões, perfis, lotes ou qualquer outro dado por esse mecanismo. A função é o único destino permitido para telemetria automática.
-Antes da chamada, preencher run_label de forma estável e identificável para que retries sejam idempotentes. Se a chamada retornar stored=true, registrar no resultado supabase_write={attempted:true,stored:true,event_key:<retornado>}. Se falhar, NÃO fingir sucesso: registrar supabase_write={attempted:true,stored:false,error:<erro real>} e ainda devolver stage_metrics completo para importação manual. Se não houver conector Supabase autorizado, registrar supabase_write={attempted:false,stored:false,reason:"SUPABASE_CONNECTOR_UNAVAILABLE"} e devolver stage_metrics normalmente.
-Nunca pedir, imprimir, armazenar ou inventar service_role, senha, token ou chave do Supabase.
+TELEMETRIA / DESTINO:
+- Se provider=Perplexity e stage for perplexity_initial ou perplexity_reaudit, NÃO tentar gravar stage_metrics diretamente no Supabase. Incluir stage_metrics no MESMO JSON enviado pelo formulário público. Registrar bridge_write={attempted:true,received:true,receipt_id:<protocolo>} somente se a página confirmar o protocolo; se falhar, bridge_write={attempted:true,received:false,error:<erro real>}.
+- Se provider=ChatGPT e o ambiente administrativo tiver acesso autorizado ao Supabase, a telemetria pode continuar usando SOMENTE a função controlada private.qf_record_stage_metrics(...), conforme o fluxo interno.
+- Nunca fazer INSERT/UPDATE/DELETE direto para telemetria ou reviews.
+- Nunca pedir, imprimir, armazenar ou inventar service_role, senha, token, anon key, publishable key, JWT ou chave do Supabase.
 JSON válido é o contrato máquina-a-máquina. Não preencher aprovações, fontes verificadas ou notas sem executar a avaliação. IDs são imutáveis; toda revisão informa item_version e toda correção informa expected_version.`;
   const rubricText = `RUBRICA FINAL (pesos máximos; soma exata = quality_score):\n${stringify(rubric)}
 scientific: exatidão e atualização; answer_key: gabarito e univocidade; answer_source: suporte documental específico; distractors: plausibilidade/discriminação; explanations: justificativas A-D completas + Pulo do Gato discriminativo; style: aderência demonstrada ao corpus; writing: clareza; difficulty: adequação ao perfil.
@@ -116,43 +125,54 @@ Somente perfis ainda não aprovados devem registrar edição, URL oficial, IDs/p
     const batchCode = ctx.batch_code || (batchNumber == null ? null : 'L'+String(Number(batchNumber)).padStart(3,'0'));
     const blockCode = ctx.block_code || (batchCode && blockNumber != null ? batchCode+'-B'+String(Number(blockNumber)).padStart(2,'0') : null);
     const operationalAddress = blockCode || batchCode || null;
-    const workspace = ctx.prompt_workspace_url || ctx.workspace_url || 'https://www.resibulando.online/admin/';
-    const source = ctx.prompt_source_instruction || (blockCode
-      ? `Entre no Admin da LURIA/Resibulando → Fábrica de questões → Produção em tempo real → lote ${batchCode} → bloco ${blockCode}. Leia exclusivamente as questões e versões atuais desse bloco.`
-      : batchCode
-        ? `Entre no Admin da LURIA/Resibulando → Fábrica de questões → Produção em tempo real → lote ${batchCode}. Trabalhe exclusivamente nesse lote.`
-        : 'Este é um prompt-modelo sem lote/bloco vinculado. NÃO executar nem persistir até receber um endereço operacional concreto.');
-    const destination = ctx.prompt_return_instruction || (blockCode
-      ? `Grave o resultado exclusivamente no lote ${batchCode}, bloco ${blockCode}, na etapa indicada. Nunca escrever em outro bloco.`
-      : batchCode
-        ? `Grave o resultado exclusivamente no lote ${batchCode}, na etapa indicada. Nunca escrever em outro lote.`
-        : 'Sem destino operacional: não gravar nada.');
+    const isPerplexityBridgeStage = ['perplexity_initial','perplexity_reaudit'].includes(stage);
+    const bridgeBase = 'https://www.resibulando.online/qf-r8K2mV7qL4x9P1cF/';
+    const bridgeUrl = blockCode ? bridgeBase + '?block=' + encodeURIComponent(blockCode) : bridgeBase;
+    const workspace = ctx.prompt_workspace_url || ctx.workspace_url || (isPerplexityBridgeStage ? bridgeUrl : 'https://www.resibulando.online/admin/');
+    const source = ctx.prompt_source_instruction || (isPerplexityBridgeStage
+      ? (blockCode
+          ? `Abra EXATAMENTE ${bridgeUrl}. Confirme na própria página que block_code=${blockCode}, selecione a etapa ${stage}, clique em "Carregar bloco" e use exclusivamente o JSON exibido em "Dados publicados do bloco". Essa página consulta as versões atuais da Fábrica; não use cópia antiga nem o histórico da conversa.`
+          : 'Este prompt do Perplexity está sem block_code concreto. NÃO executar até receber um bloco L001-B01 a L001-B05.')
+      : (blockCode
+          ? `Entre no Admin da LURIA/Resibulando → Fábrica de questões → Produção em tempo real → lote ${batchCode} → bloco ${blockCode}. Leia exclusivamente as questões e versões atuais desse bloco.`
+          : batchCode
+            ? `Entre no Admin da LURIA/Resibulando → Fábrica de questões → Produção em tempo real → lote ${batchCode}. Trabalhe exclusivamente nesse lote.`
+            : 'Este é um prompt-modelo sem lote/bloco vinculado. NÃO executar nem persistir até receber um endereço operacional concreto.'));
+    const destination = ctx.prompt_return_instruction || (isPerplexityBridgeStage
+      ? (blockCode
+          ? `Na MESMA página ${bridgeUrl}, use o formulário "Enviar resultado". Cole o JSON completo desta etapa e clique em "Enviar parecer". Só considere recebido se a página retornar um protocolo/receipt_id. O formulário é uma caixa de entrada isolada e NÃO modifica diretamente a questão principal.`
+          : 'Sem bloco concreto: não enviar nada.')
+      : (blockCode
+          ? `Grave o resultado exclusivamente no lote ${batchCode}, bloco ${blockCode}, na etapa indicada. Nunca escrever em outro bloco.`
+          : batchCode
+            ? `Grave o resultado exclusivamente no lote ${batchCode}, na etapa indicada. Nunca escrever em outro lote.`
+            : 'Sem destino operacional: não gravar nada.'));
 
     const stagePersistence = {
       blind_resolution: `PERSISTÊNCIA DESTA ETAPA — PERPLEXITY / RESOLUÇÃO CEGA:
 - Gravar SOMENTE o registro de resolução cega/parecer separado associado a question_id + item_version + ${blockCode || 'bloco atual'}.
 - PROIBIDO alterar enunciado, alternativas, gabarito, explicações, mensagem_chave, fontes ou version da questão principal.
 - A resolução cega deve permanecer isolada para ser confrontada posteriormente com o gabarito.`,
-      perplexity_initial: `PERSISTÊNCIA DESTA ETAPA — PERPLEXITY PESSOAL / AUDITORIA:
-- Executar na conta pessoal do Perplexity com acesso já autorizado ao Supabase; NÃO usar API key do Perplexity.
-- Antes de auditar, reconsultar o Supabase e confirmar o batch_code, o block_code e as 200 item_version atuais do endereço operacional.
-- Gravar SOMENTE em REVIEWS/PARECERES, vinculado a question_id + item_version; o review_id é gerado/controlado pelo backend.
-- Persistir cada questão pelo importador public.admin_import_question_factory_perplexity_initial(jsonb). Pode enviar em lotes de trabalho, mas a fonte de verdade é o review individual persistido.
-- PROIBIDO aplicar proposed_change diretamente na questão principal.
-- PROIBIDO incrementar version ou sobrescrever campos editoriais/científicos da questão.
-- proposed_change.exact_replacement é apenas RECOMENDAÇÃO para o ChatGPT adjudicar depois.
-- Depois de cada chamada de importação, consultar public.admin_question_factory_review_coverage(...) para a etapa perplexity_initial e reviewer=Perplexity.
-- Não há tamanho mínimo nem máximo obrigatório por chamada; o importante é preservar question_id + item_version corretos e confirmar a persistência real.
-- A etapa só termina com 200/200 question_id distintos na item_version atual e coverage.complete=true.
-- O parecer deve ficar preservado integralmente e separado da questão para evitar contaminação.`,
-      perplexity_reaudit: `PERSISTÊNCIA DESTA ETAPA — PERPLEXITY PESSOAL / REAUDITORIA:
-- Executar na conta pessoal do Perplexity com acesso já autorizado ao Supabase; NÃO usar API key do Perplexity.
-- Reconsultar o Supabase antes de começar e ler a versão ATUAL, seja ela corrigida pelo ChatGPT ou mantida na mesma item_version após uma discordância que exige novo parecer.
-- Persistir cada parecer pelo importador public.admin_import_question_factory_perplexity_reaudit(jsonb), vinculado à question_id + item_version atual.
+      perplexity_initial: `DESTINO DESTA ETAPA — PERPLEXITY / AUDITORIA:
+- Ler o bloco exclusivamente pela página pública temporária indicada acima.
+- NÃO usar conector Supabase, SQL, RPC, Admin ou API do Perplexity para obter as questões.
+- Para cada item, preservar exatamente question_id e item_version mostrados na página.
+- Gerar reviews[] completos da etapa perplexity_initial.
+- PROIBIDO aplicar proposed_change diretamente na questão principal ou inventar nova version.
+- proposed_change.exact_replacement é apenas RECOMENDAÇÃO para adjudicação posterior pelo ChatGPT.
+- Enviar o JSON pelo formulário "Enviar resultado" da MESMA página.
+- Pode enviar 1 questão ou qualquer grupo conveniente; cada envio deve conter somente itens deste bloco e desta etapa.
+- Só afirmar "ENVIADO AO BRIDGE" quando a página retornar receipt_id. Esse recibo NÃO significa importação final no banco.
+- O parecer deve permanecer separado da questão principal para evitar contaminação.`,
+      perplexity_reaudit: `DESTINO DESTA ETAPA — PERPLEXITY / REAUDITORIA:
+- Reabrir a página pública temporária indicada acima e recarregar o bloco antes de começar, para obter a versão ATUAL.
+- NÃO usar conector Supabase, SQL, RPC ou cópia antiga como fonte da questão.
+- Reauditar somente question_id + item_version atuais recebidos na página.
 - PROIBIDO modificar a questão principal, inclusive quando ainda houver erro.
-- Se houver nova falha, registrar needs_revision/rejected no parecer; quem decide/aplica mudança continua sendo o ChatGPT em etapa posterior.
-- Se a reauditoria estiver respondendo a uma discordância do ChatGPT sem patch, não exigir nova version: reauditar a MESMA item_version e atualizar apenas o parecer controlado dessa etapa.
-- Após persistir, reconsultar coverage e o tracker. Só liberar a fase seguinte quando todas as pendências atuais da reauditoria estiverem zeradas.`,
+- Se houver nova falha, registrar needs_revision/rejected no parecer; a correção continua sendo responsabilidade do ChatGPT em etapa posterior.
+- Se a reauditoria responder a uma discordância sem patch, mantenha a MESMA item_version exibida na página.
+- Enviar o JSON pelo formulário "Enviar resultado" da própria página e guardar o receipt_id.
+- O recibo confirma apenas recebimento no bridge; não declarar coverage completo nem importação definitiva.`,
       lot_perplexity_final: `PERSISTÊNCIA DESTA ETAPA — PERPLEXITY / REVISÃO FINAL DO LOTE:
 - Gravar a auditoria final do Perplexity em registro separado do lote, preservando version_manifest e findings.
 - PROIBIDO alterar diretamente qualquer uma das 1.000 questões.
@@ -200,17 +220,20 @@ ${destination}
 ${stagePersistence}
 
 REGRA DE ACESSO E PERSISTÊNCIA:
-- Use o browser/conector/site autenticado disponível para abrir o endereço operacional acima e trabalhar sobre as questões REAIS e versões ATUAIS desse lote/bloco.
-- FLUXO PERPLEXITY PESSOAL: NÃO existe PERPLEXITY_API_KEY, worker automático, chamada HTTP à API do Perplexity ou Edge Function gerando parecer. O Perplexity deve ser executado na CONTA PESSOAL do usuário, em uma sessão que já tenha acesso ao projeto Supabase da LURIA.
-- Na conta pessoal do Perplexity, use o acesso/conector Supabase disponível na própria sessão para: (1) conferir o projeto; (2) localizar exatamente batch_code e block_code; (3) ler somente as item_version atuais; (4) executar a auditoria; (5) persistir cada review individual pelo RPC/importador controlado da etapa; (6) reconsultar coverage e o tracker; (7) só então declarar a etapa concluída.
-- NUNCA pedir ao usuário PERPLEXITY_API_KEY, service_role, anon key, publishable key, JWT, senha ou token. A autenticação é a da conta/conector já autorizado.
-- NUNCA usar INSERT/UPDATE/DELETE direto nas tabelas para substituir os importadores controlados. Para reviews Perplexity, usar public.admin_import_question_factory_perplexity_initial(jsonb) ou public.admin_import_question_factory_perplexity_reaudit(jsonb), conforme a etapa; para telemetria, usar o importador controlado de stage_metrics.
-- ChatGPT e Perplexity neste fluxo devem persistir o resultado SOMENTE nesse mesmo endereço operacional, usando a ação/RPC/controle de importação correspondente.
-- Após a escrita, releia o MESMO endereço operacional e confirme batch_code, block_code, question_id, item_version, review_stage, reviewer, contagens e status.
+${isPerplexityBridgeStage ? `- PERPLEXITY: use o NAVEGADOR para abrir a página pública exata acima. Ela é a única fonte operacional desta etapa.
+- Confirme visualmente/estruturalmente block_code=${blockCode || 'NÃO VINCULADO'} e review_stage=${stage}.
+- Clique em "Carregar bloco" antes de iniciar; leia somente "Dados publicados do bloco".
+- Não tente acessar /admin/, Supabase, SQL, RPC, connector, API key ou secrets para obter ou devolver os itens.
+- Depois de produzir o JSON, cole-o no formulário "Enviar resultado" da mesma página e envie.
+- Só marque bridge_write.received=true se a página retornar receipt_id; copie o receipt_id para a saída final.
+- receipt_id = recebimento no bridge, NÃO importação definitiva, NÃO coverage e NÃO aprovação da etapa.
+- Se o navegador não conseguir abrir a página ou o formulário falhar, responda ACCESS_REQUIRED ou WRITE_FAILED com o erro real e devolva o JSON completo no chat para contingência.` : `- Use o site/admin e os conectores autorizados definidos para esta etapa interna.
+- Nunca use INSERT/UPDATE/DELETE direto para contornar importadores controlados.
+- Após qualquer escrita administrativa, releia o mesmo endereço operacional e confirme os identificadores e versões.`}
 - Não use questões de outro lote, bloco, arquivo antigo ou contexto de conversa como substituto silencioso.
-- Se o acesso ou a gravação falhar de verdade, responda ACCESS_REQUIRED ou WRITE_FAILED, com o erro concreto e o ponto exato em que falhou; nesse caso, devolva também o JSON completo para contingência manual.
-- Nunca alegue que leu, alterou, importou ou gravou questões se isso não aconteceu.
-- IDs, batch_code, block_code e versões lidos no sistema prevalecem sobre qualquer exemplo do prompt.`;
+- Nunca alegue que leu, alterou, enviou, importou ou gravou questões se isso não aconteceu.
+- IDs, batch_code, block_code e versões lidos no sistema prevalecem sobre qualquer exemplo do prompt.
+- NUNCA pedir ao usuário PERPLEXITY_API_KEY, service_role, anon key, publishable key, JWT, senha ou token.`;
   }
 
   function generation(item={},ctx={}) {
@@ -454,109 +477,58 @@ Após as três aprovações da versão atual, aguardar aprovação humana final 
     throw new Error('Etapa desconhecida: '+stage);
   }
   function perplexityCycle(item={},ctx={},isReaudit=false) {
-    if (isReaudit) {
-      return `FLUXO OPERACIONAL ÚNICO — PERPLEXITY PESSOAL · REAUDITORIA
-Execute na sua conta pessoal do Perplexity conectada ao Supabase. NÃO use API key do Perplexity.
+    const blockNumber = ctx.block_number ?? null;
+    const batchNumber = ctx.batch_number ?? null;
+    const batchCode = ctx.batch_code || (batchNumber == null ? null : 'L'+String(Number(batchNumber)).padStart(3,'0'));
+    const blockCode = ctx.block_code || (batchCode && blockNumber != null ? batchCode+'-B'+String(Number(blockNumber)).padStart(2,'0') : null);
+    const bridgeBase = 'https://www.resibulando.online/qf-r8K2mV7qL4x9P1cF/';
+    const bridgeUrl = blockCode ? bridgeBase + '?block=' + encodeURIComponent(blockCode) : bridgeBase;
+    const stage = isReaudit ? 'perplexity_reaudit' : 'perplexity_initial';
 
-OBJETIVO:
-Reauditar exclusivamente as versões atuais pendentes do bloco operacional e persistir cada parecer real pelo RPC controlado.
+    return `FLUXO OPERACIONAL — PERPLEXITY · ${isReaudit ? 'REAUDITORIA' : 'AUDITORIA INDEPENDENTE'}
+NÃO USE SUPABASE, SQL, RPC, ADMIN, CONNECTOR OU API KEY PARA OBTER AS QUESTÕES.
+USE SOMENTE A PÁGINA PÚBLICA TEMPORÁRIA DA LURIA.
 
-REGRAS DE EXECUÇÃO:
-1. Confirme no Supabase batch_code, block_code, question_id e item_version antes de trabalhar.
-2. Leia diretamente do banco as questões atuais pendentes. Não use cópia antiga, export anterior ou histórico da conversa como fonte de verdade.
-3. Para cada questão, resolva-a independentemente antes de confrontar o gabarito e registre independent_answer no próprio review perplexity_reaudit.
-4. Depois confronte gabarito, ciência, fonte, SBA, ambiguidade, dependência da vinheta, surface guess, assimetria lexical, functional_killer_1/2, Pulo do Gato, explicações A-D, dificuldade e estilo.
-5. Persista usando public.admin_import_question_factory_perplexity_reaudit(jsonb).
-6. NÃO existe quantidade obrigatória por chamada. Pode gravar 1, várias ou todas as pendências em uma chamada, desde que cada review esteja completo e válido.
-7. Se uma questão falhar na validação/importação, não descarte as demais já persistidas. Corrija/reprocesse somente as pendentes.
-8. Após cada chamada, reconsulte coverage para saber exatamente quais question_id continuam faltando.
-9. Se a pendência veio de disagree do ChatGPT sem patch, reaudite a MESMA item_version; não crie versão artificial.
-10. Não altere diretamente question_factory_items ou question_factory_reviews.
+URL EXATA:
+${bridgeUrl}
 
-${segment(item,'perplexity_reaudit',ctx)}
-
-CONDIÇÃO DE SAÍDA:
-- Só liberar aprovação humana quando todas as pendências atuais tiverem review perplexity_reaudit válido na item_version atual e o tracker indicar zero pendências.
-- Se houver qualquer needs_revision/rejected, persistir o parecer e devolver o fluxo ao ChatGPT · julgar + corrigir.
-- Nunca declarar conclusão apenas por contagem estimada ou relatório textual.`;
-    }
-
-    return `FLUXO OPERACIONAL — PERPLEXITY PESSOAL · AUDITORIA INDEPENDENTE
-EXECUTE NA SUA CONTA PESSOAL CONECTADA AO SUPABASE. NÃO USE PERPLEXITY_API_KEY.
-
-OBJETIVO:
-Auditar as 200 questões atuais do bloco real no Supabase e persistir os reviews individualmente, sem exigir um tamanho fixo de lote por chamada.
+ENDEREÇO ESPERADO:
+batch_code=${batchCode || 'NÃO VINCULADO'}
+block_code=${blockCode || 'NÃO VINCULADO'}
+review_stage=${stage}
 
 PASSO A PASSO:
-1. Abra o endereço operacional indicado no prompt.
-2. Confirme no Supabase batch_code, block_code, exam_style, question_id e item_version.
-3. Consulte a cobertura atual de perplexity_initial e identifique apenas os question_id ainda pendentes.
-4. Leia diretamente do banco as questões atuais pendentes.
-5. Para CADA questão, antes de confrontar o gabarito, resolva usando somente enunciado + alternativas A-D e registre independent_answer.
-6. Só depois leia gabarito, explicações, Pulo do Gato, fonte e eventual chatgpt_initial da MESMA item_version.
-7. Faça a auditoria completa: ciência; gabarito; SBA; ambiguidade; dependência real da vinheta; surface_guess_without_vignette; surface_guess_confidence; lexical_asymmetry; melhor distrator; best_distractor_rationale; counterfactual_change; functional_killer_1; functional_killer_2; qualidade dos distratores; explicações A-D; mensagem_chave; dificuldade; estilo; fontes; proposed_change.
-8. Fonte só pode ser VERIFIED quando realmente checada. Se não for possível confirmar, use SOURCE_VERIFICATION_PENDING ou SOURCE_VERIFICATION_FAILED e não aprove o item.
-9. Status permitido por item: approved | needs_revision | rejected.
-10. Valide cada review antes de importar: question_id correto, item_version atual, campos obrigatórios completos e sem duplicidade dentro do payload atual.
-11. Persista exclusivamente por public.admin_import_question_factory_perplexity_initial(jsonb).
-12. NÃO existe obrigação de subir 50 de uma vez. Você pode:
-   - persistir questão por questão;
-   - persistir pequenos grupos;
-   - persistir grupos maiores;
-   - persistir as 200 em uma chamada, se o ambiente suportar.
-13. O tamanho da chamada é decisão operacional; NÃO é critério de validade da etapa.
-14. Se uma chamada contiver, por exemplo, 17 reviews válidos, grave os 17. Não bloqueie esperando completar 50.
-15. Se 16 persistirem e 1 falhar, mantenha os 16 e reprocesse apenas o item pendente.
-16. Após cada chamada, reconsulte public.admin_question_factory_review_coverage(...) e use o resultado real como fonte de verdade.
-17. Continue até coverage confirmar exatamente 200 question_id distintos na item_version atual.
-18. Nunca use INSERT/UPDATE/DELETE direto nas tabelas para contornar o importador.
-19. Nunca altere a questão principal nesta etapa.
-20. Nunca declare sucesso antes da reconsulta final.
+1. Abra a URL exata acima no navegador.
+2. Confirme que a página mostra o bloco ${blockCode || 'esperado'}. Se não coincidir, PARE e retorne ADDRESS_MISMATCH.
+3. No seletor "Etapa", escolha ${stage}.
+4. Defina a faixa desejada (1–200 ou subconjunto) e clique em "Carregar bloco".
+5. Use EXCLUSIVAMENTE o JSON exibido em "Dados publicados do bloco". Essa é a fonte de verdade operacional desta execução.
+6. Para cada questão, preserve exatamente question_id e item_version.
+7. ${isReaudit ? 'Reavalie a versão atual exibida. Se a pendência veio de discordância sem patch, mantenha a mesma item_version; não crie versão artificial.' : 'Antes de confrontar o gabarito, resolva independentemente o item usando enunciado + alternativas e registre independent_answer no próprio review.'}
+8. Faça a auditoria completa: ciência; gabarito; SBA; ambiguidade; dependência da vinheta; surface_guess_without_vignette; surface_guess_confidence; lexical_asymmetry; melhor distrator; best_distractor_rationale; counterfactual_change; functional_killer_1/2; qualidade dos distratores; explicações A-D; Pulo do Gato; dificuldade; estilo; fontes e proposed_change.
+9. Fonte só pode ser VERIFIED se realmente checada. Caso contrário use SOURCE_VERIFICATION_PENDING ou SOURCE_VERIFICATION_FAILED.
+10. Status por item: approved | needs_revision | rejected.
+11. Monte um JSON válido com schema_version, review_stage="${stage}", reviewer="Perplexity", batch_number, block_number, reviews[] e stage_metrics.
+12. Não altere a questão principal. proposed_change é recomendação, não edição.
+13. Vá ao formulário "Enviar resultado" da MESMA página.
+14. Cole o JSON completo e clique em "Enviar parecer".
+15. Se a página retornar protocolo/receipt_id, registre bridge_write={attempted:true,received:true,receipt_id:"..."}.
+16. Se o envio falhar, registre bridge_write={attempted:true,received:false,error:"ERRO REAL"} e devolva também o JSON completo no chat.
+17. NÃO declare "persistido no Supabase", "coverage completo", "200/200 no banco" ou "etapa finalizada" apenas porque recebeu receipt_id. O formulário é uma caixa de entrada isolada para validação/importação posterior.
 
-${segment(item,'perplexity_initial',ctx)}
+REGRAS DE ESCOPO:
+- Nunca trabalhar em outro bloco além de ${blockCode || 'NÃO VINCULADO'}.
+- Nunca misturar versões antigas.
+- Nunca inventar receipt_id.
+- Nunca pedir credenciais/chaves.
+- Pode enviar 1 questão ou qualquer quantidade conveniente por formulário; todos os reviews do envio devem pertencer ao mesmo bloco e à mesma etapa.
 
-VALIDAÇÃO DE CADA PAYLOAD:
-- reviews.length pode ser qualquer inteiro >= 1.
-- Todos os question_id do payload devem ser únicos.
-- Todos devem pertencer ao block_code operacional.
-- item_version deve coincidir com a versão corrente no banco.
-- original_answer deve existir.
-- independent_answer deve existir; se irresolúvel, registrar null + ambiguity=true + single_best_answer=false quando o contrato permitir.
-- review_status/status deve ser approved | needs_revision | rejected.
-- explanation_checks deve conter A, B, C e D com PASS/FAIL + reason.
-- message_key_check deve existir com status, reason e decisive_feature.
-- functional_killer_1 e functional_killer_2 devem estar preenchidos.
-- source_checks deve refletir verificação real.
-- proposed_change deve existir, mesmo quando change_required=false.
+${segment(item,stage,ctx)}
 
-CONFIRMAÇÃO PÓS-IMPORTAÇÃO:
-Depois de cada RPC:
-- reconsulte coverage;
-- registre persisted e pending_ids reais;
-- não reprocesse IDs já confirmados, salvo se a versão mudou;
-- prossiga somente com os pendentes.
-
-CONDIÇÃO FINAL DO BLOCO:
-- total atual = 200;
-- persisted_reviews = 200;
-- pending_ids = [];
-- complete = true;
-- todos os reviews correspondem à item_version atual.
-
-REGRA ANTI-FALSO-SUCESSO:
-- É proibido impor artificialmente lote de 50.
-- É proibido segurar reviews válidos só porque ainda não chegou a 50.
-- É proibido usar reviews de versões antigas.
-- É proibido copiar o gabarito como resposta independente.
-- É proibido marcar fonte como verificada sem checagem real.
-- É proibido substituir reviews individuais por stage_metrics ou resumo.
-- É proibido marcar complete=true antes da reconsulta ao banco.
-
-REGRA DE SAÍDA:
-- Só avançar para o ChatGPT quando 200/200 perplexity_initial estiverem persistidos na versão atual.
-- Se houver needs_revision/rejected, o próximo passo é ChatGPT · julgar + corrigir após a cobertura integral da etapa.`;
+SAÍDA HUMANA OBRIGATÓRIA:
+Além do JSON, produza relatório questão por questão: "ID — APROVADA/REVISAR/REJEITADA — motivo: ...".
+Ao final, informe somente o estado real do bridge: ENVIADO AO BRIDGE + receipt_id, ou ENVIO FALHOU + erro.`;
   }
-
   function chatgptCorrectionCycle(item={},ctx={}) {
     return `FLUXO OPERACIONAL ÚNICO — CHATGPT · JULGAR PARECER + CORRIGIR
 Este é UM envio operacional. Execute adjudicação e correção em sequência no MESMO bloco. Não obrigue o usuário a abrir dois prompts separados.
