@@ -46,7 +46,7 @@
     clinicalEvents:[],
     category:null,
     penalties:0, criticalElapsed:0, diagnosis:null, disposition:null, busy:false,
-    phoneCases:[], phoneCase:null, phoneSession:null, phoneTurn:0, phoneMode:false,
+    phoneCases:[], phoneCase:null, phoneSession:null, phoneTurn:0, phoneMode:false, phoneUsedChoices:new Set(),
     filters:{specialty:"",difficulty:""}
   };
 
@@ -243,6 +243,7 @@
     if(!item) return;
     state.phoneCase=item;
     state.phoneTurn=0;
+    state.phoneUsedChoices=new Set();
     const {data:session,error}=await sb.from("interconsultation_sessions")
       .insert({user_id:state.user.id,case_id:item.id,status:"in_progress",turn_count:0,state:{mode:"scripted_pilot"}})
       .select("*").single();
@@ -257,7 +258,54 @@
     $("plantao-phone-requester").textContent=item.requester_role||"Solicitante";
     $("plantao-phone-context").textContent=(item.specialty||"Interconsulta")+" · "+new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
     renderPhoneMessages([{sender:"requester",content:item.opening_message}]);
-    $("plantao-phone-input")?.focus();
+    renderPhoneChoices();
+  }
+
+  function updatePhoneStatusTime(){
+    const el=$("plantao-phone-status-time");
+    if(!el) return;
+    el.textContent=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  }
+
+  function phoneChoiceOptions(){
+    return [
+      {id:"meds",group:"Perguntar",label:"Quais medicamentos ele usa?",text:"Quais medicamentos o paciente usa atualmente?"},
+      {id:"renal",group:"Perguntar",label:"Como está a função renal?",text:"Como estão creatinina, ureia, potássio e função renal?"},
+      {id:"hf",group:"Perguntar",label:"A IC está compensada?",text:"A insuficiência cardíaca está compensada? Tem dispneia, edema ou estertores?"},
+      {id:"pain",group:"Perguntar",label:"Como é a dor no joelho?",text:"Como começou a dor no joelho? Houve trauma? Como está o exame do joelho?"},
+      {id:"vitals",group:"Perguntar",label:"Quais são os sinais vitais?",text:"Quais são os sinais vitais agora? Pressão, frequência cardíaca, saturação e temperatura?"},
+      {id:"allergy",group:"Perguntar",label:"Tem alguma alergia?",text:"O paciente tem alguma alergia medicamentosa?"},
+      {id:"avoid_nsaid",group:"Orientar",label:"Evitar diclofenaco/AINE",text:"Eu evitaria diclofenaco e outros AINEs sistêmicos nesse paciente por causa da insuficiência cardíaca e do risco renal."},
+      {id:"analgesia",group:"Conduta",label:"Sugerir analgesia mais segura",text:"Sugiro analgesia com dipirona ou paracetamol, conforme contraindicações, e reavaliar o joelho."}
+    ];
+  }
+
+  function renderPhoneChoices(){
+    const host=$("plantao-phone-choices");
+    if(!host) return;
+    const available=phoneChoiceOptions().filter(opt=>!state.phoneUsedChoices.has(opt.id));
+    if(!available.length){
+      host.innerHTML='<div class="plantao-phone-choice-done">Sem outras opções neste caso piloto.</div>';
+      return;
+    }
+    const grouped={};
+    available.forEach(opt=>{(grouped[opt.group] ||= []).push(opt);});
+    host.innerHTML=Object.entries(grouped).map(([group,opts])=>`
+      <section class="plantao-phone-choice-group">
+        <strong>${esc(group)}</strong>
+        <div>
+          ${opts.map(opt=>`<button type="button" data-phone-choice="${esc(opt.id)}">${esc(opt.label)}</button>`).join("")}
+        </div>
+      </section>
+    `).join("");
+  }
+
+  async function choosePhoneOption(choiceId){
+    const opt=phoneChoiceOptions().find(item=>item.id===choiceId);
+    if(!opt || state.phoneUsedChoices.has(choiceId)) return;
+    state.phoneUsedChoices.add(choiceId);
+    renderPhoneChoices();
+    await sendPhoneMessage(opt.text,{choiceId:opt.id,choiceGroup:opt.group});
   }
 
   function phoneReplyFor(text){
@@ -293,7 +341,7 @@
     try{return JSON.parse(body?.dataset.messages||"[]");}catch{return [];}
   }
 
-  async function sendPhoneMessage(text){
+  async function sendPhoneMessage(text,choiceMeta={}){
     if(!state.phoneSession||!state.phoneCase||!text.trim()) return;
     const clean=text.trim();
     state.phoneTurn+=1;
@@ -304,8 +352,8 @@
     renderPhoneMessages(messages);
     $("plantao-phone-input").value="";
     await sb.from("interconsultation_messages").insert([
-      {session_id:state.phoneSession.id,user_id:state.user.id,turn_index:specialistIndex,sender:"specialist",content:clean,metadata:{pilot:true}},
-      {session_id:state.phoneSession.id,user_id:state.user.id,turn_index:requesterIndex,sender:"requester",content:reply,metadata:{pilot:true}}
+      {session_id:state.phoneSession.id,user_id:state.user.id,turn_index:specialistIndex,sender:"specialist",content:clean,metadata:{pilot:true,...choiceMeta}},
+      {session_id:state.phoneSession.id,user_id:state.user.id,turn_index:requesterIndex,sender:"requester",content:reply,metadata:{pilot:true,...choiceMeta}}
     ]);
     await sb.from("interconsultation_sessions").update({
       quota_counted_at:state.phoneSession.quota_counted_at||new Date().toISOString(),
@@ -322,15 +370,15 @@
     const btn=event.target.closest("[data-start-phone-case]");
     if(btn) startPhoneCase(btn.dataset.startPhoneCase);
   });
-  $("plantao-phone-compose")?.addEventListener("submit",event=>{
-    event.preventDefault();
-    sendPhoneMessage($("plantao-phone-input")?.value||"");
+  $("plantao-phone-choices")?.addEventListener("click",event=>{
+    const btn=event.target.closest("[data-phone-choice]");
+    if(btn) choosePhoneOption(btn.dataset.phoneChoice);
   });
   $("plantao-phone-back")?.addEventListener("click",async()=>{
     if(state.phoneSession?.id){
       await sb.from("interconsultation_sessions").update({status:"abandoned",completed_at:new Date().toISOString()}).eq("id",state.phoneSession.id);
     }
-    state.phoneSession=null; state.phoneCase=null; state.phoneTurn=0;
+    state.phoneSession=null; state.phoneCase=null; state.phoneTurn=0; state.phoneUsedChoices=new Set();
     $("plantao-phone-station").hidden=true;
     $("plantao-phone-inbox").hidden=false;
     renderPhoneCases();
@@ -340,7 +388,7 @@
     if(state.phoneSession?.id){
       await sb.from("interconsultation_sessions").update({status:"abandoned",completed_at:new Date().toISOString()}).eq("id",state.phoneSession.id);
     }
-    state.phoneSession=null; state.phoneCase=null; state.phoneTurn=0;
+    state.phoneSession=null; state.phoneCase=null; state.phoneTurn=0; state.phoneUsedChoices=new Set();
     $("plantao-phone-station").hidden=true;
     $("plantao-phone-inbox").hidden=false;
     setPlantaoMode("emergency");
@@ -1969,8 +2017,10 @@
     const mm=String(now.getMinutes()).padStart(2,"0");
     const value=hh+":"+mm;
     const status=$("plantao-phone-time");
+    const deviceStatus=$("plantao-phone-status-time");
     const stamp=$("plantao-phone-chat-time");
     if(status) status.textContent=value;
+    if(deviceStatus) deviceStatus.textContent=value;
     if(stamp) stamp.textContent=value;
   }
 
