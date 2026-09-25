@@ -569,6 +569,34 @@
       if(["exam_neuro","exam_head","exam_airway","exam_eyes","exam_chest","exam_upper","exam_abdomen","exam_lower","exam_extremities","exam_skin"].includes(id))
         return {level:"malefica",reason:"Você atrasou RCP para realizar exame físico durante uma PCR."};
     }
+    const rules=state.current?.completion_rules||{};
+    const mal=normalizeLabel(rules.maleficos||"");
+    const mort=normalizeLabel(rules.mortais||"");
+    const actionText=normalizeLabel([id,action.label,action.subgroup].filter(Boolean).join(" "));
+
+    // Regras estruturadas importadas da planilha: primeiro avalia as condutas mortais,
+    // depois as maléficas. Regras específicas vencem o comportamento genérico.
+    const isDischarge=/alta|home|discharge/.test(actionText);
+    const isThrombolysis=/thrombolytic|trombol|trombolise/.test(actionText);
+    const isAnticoag=/heparin|enoxaparin|anticoag/.test(actionText);
+    const isImaging=/ct_|mri_|xray|tomografia|ressonancia|raio/.test(actionText);
+    const isAggressiveAirway=/cricothyrotomy|airway|intub|orofaring/.test(actionText);
+    const isSedation=/midazolam|diazepam|propofol|ketamine|fentanyl|morphine|sedac/.test(actionText);
+
+    if(isDischarge && /alta|abandono/.test(mort))
+      return {level:"mortal",reason:"A planilha deste caso classifica alta/abandono nesta condição como conduta mortal no simulador."};
+    if(isThrombolysis && /trombol/.test(mort))
+      return {level:"mortal",reason:"A planilha deste caso classifica trombólise nesta situação como conduta mortal no simulador."};
+    if(isAggressiveAirway && /instrumentacao.*obstrucao/.test(mort))
+      return {level:"mortal",reason:"A planilha deste caso classifica instrumentação que precipite obstrução como conduta mortal no simulador."};
+
+    if((isThrombolysis||isAnticoag) && /anticoagulacao|trombolise/.test(mal))
+      return {level:"malefica",reason:"A planilha deste caso classifica anticoagulação/trombólise nesta situação como conduta maléfica."};
+    if(isImaging && /aguardar rx|atrasar.*exames|baixo valor.*atrase/.test(mal))
+      return {level:"malefica",reason:"Este exame atrasa uma intervenção tempo-dependente e é classificado como maléfico neste caso."};
+    if(isSedation && /sedacao sem controle de via aerea/.test(mal))
+      return {level:"malefica",reason:"Sedação sem controle adequado da via aérea é classificada como maléfica neste caso."};
+
     const pts=Number(action.points||0);
     if(action.clinical_class) return {level:action.clinical_class,reason:action.clinical_reason||""};
     if(pts<=-15) return {level:"mortal",reason:action.result||"A conduta provocou deterioração crítica."};
