@@ -1956,3 +1956,60 @@ body[data-page="plantao"] .plantao-phone-notch{
     0 22px 58px color-mix(in srgb,var(--text) 20%,transparent),
     inset 0 0 0 1px var(--border)!important;
 }
+
+
+/* Plantão · confirmação final no layout LURIA */
+.plantao-confirm-overlay{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  background:rgba(5,25,44,.48);
+  backdrop-filter:blur(7px);
+}
+.plantao-confirm-overlay[hidden]{display:none!important}
+.plantao-confirm-modal{
+  width:min(100%,460px);
+  padding:22px;
+  border:1px solid var(--border);
+  border-radius:22px;
+  background:var(--panel);
+  box-shadow:0 24px 70px rgba(5,25,44,.28);
+}
+.plantao-confirm-modal h2{
+  margin:12px 0 8px;
+  font-size:22px;
+  line-height:1.2;
+}
+.plantao-confirm-modal p{
+  margin:0;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.55;
+}
+.plantao-confirm-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:20px;
+}
+@media(max-width:520px){
+  .plantao-confirm-overlay{
+    align-items:end;
+    padding:12px;
+  }
+  .plantao-confirm-modal{
+    width:100%;
+    border-radius:20px;
+    padding:18px;
+  }
+  .plantao-confirm-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .plantao-confirm-actions .button{
+    width:100%;
+  }
+}
