@@ -108,26 +108,40 @@
     const p=profile(vitals,context);
     const rr=number(vitals.rr);
     const seconds=reduced.matches ? 6 : time/1000;
+    // Hierarquia visual do monitor: ECG é o traçado principal e ocupa a maior faixa vertical.
+    // PLET fica intermediário e RESP propositalmente compacto.
     const rows=[
-      {label:'ECG · 6 s',color:'#55ef93',sample:t=>ecg(t,p)},
-      {label:'PLET',color:'#50e5f4',sample:t=>pleth(t,p,vitals)},
-      {label:'RESP',color:'#f5da57',sample:t=>Number.isFinite(rr)&&rr>=0 ? 15*Math.sin(t*rr/60*Math.PI*2) : null}
+      {label:'ECG · 6 s',color:'#55ef93',sample:t=>ecg(t,p),top:0,height:118,base:70,scale:1.55,lineWidth:2.4},
+      {label:'PLET',color:'#50e5f4',sample:t=>pleth(t,p,vitals),top:118,height:62,base:151,scale:.62,lineWidth:2},
+      {label:'RESP',color:'#f5da57',sample:t=>Number.isFinite(rr)&&rr>=0 ? 15*Math.sin(t*rr/60*Math.PI*2) : null,top:180,height:40,base:203,scale:.48,lineWidth:1.8}
     ];
     rows.forEach((row,i)=>{
-      const base=42+i*72;
-      ctx.fillStyle=row.color;ctx.font='15px sans-serif';ctx.fillText(row.label,8,base-25);
-      ctx.beginPath();ctx.strokeStyle=row.color;ctx.lineWidth=2;
-      if(row.sample(seconds)===null) {
-        ctx.font='15px sans-serif';
-        ctx.fillText(i===0?'Traçado não disponível':'Sem sinal',150,base);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0,row.top,w,row.height);
+      ctx.clip();
+
+      ctx.fillStyle=row.color;
+      ctx.font=i===0?'bold 15px sans-serif':'13px sans-serif';
+      ctx.fillText(row.label,8,row.top+(i===0?18:14));
+
+      ctx.beginPath();
+      ctx.strokeStyle=row.color;
+      ctx.lineWidth=row.lineWidth;
+      const first=row.sample(seconds);
+      if(first===null) {
+        ctx.font='13px sans-serif';
+        ctx.fillText(i===0?'Traçado não disponível':'Sem sinal',150,row.base);
+        ctx.restore();
         return;
       }
       for(let x=0;x<w;x++) {
         const t=seconds-6+6*x/w;
-        const y=base-row.sample(t);
+        const y=row.base-row.sample(t)*row.scale;
         if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
       }
       ctx.stroke();
+      ctx.restore();
     });
     if(!reduced.matches) frame=requestAnimationFrame(draw);
   }
