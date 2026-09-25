@@ -2964,8 +2964,10 @@
       return buildBoardGenerationPrompt(style, ctx);
     }
 
-    if (block.next_stage === "blind_resolution" && window.LuriaQuestionPrompts.perplexityCycle) {
-      const afterCorrection = String(block.latest_review_stage || "") === "chatgpt_correction_review";
+    if (["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(block.next_stage)
+        && window.LuriaQuestionPrompts.perplexityCycle) {
+      const afterCorrection = block.next_stage === "perplexity_reaudit"
+        || String(block.latest_review_stage || "") === "chatgpt_correction_review";
       return window.LuriaQuestionPrompts.perplexityCycle(style, ctx, afterCorrection);
     }
 
