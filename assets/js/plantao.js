@@ -36,6 +36,7 @@
     triggered:[],
     log:[],
     sequenceViolations:[],
+    monitorOn:false,
     category:null,
     penalties:0, criticalElapsed:0, diagnosis:null, disposition:null, busy:false
   };
@@ -127,6 +128,192 @@
     intervir:{label:"Intervenções",icon:"✚",categories:["tratamento","procedimentos","procedimentos_terapeuticos"]},
     hipoteses:{label:"Hipóteses e conduta final",icon:"◎",categories:["hipoteses","destino","encaminhamento","raciocinio"]}
   };
+  const GENERIC_ACTIONS = [
+    {id:"exam_neuro",label:"Exame neurológico",category:"exame",subgroup:"01 · Neurológico",time_min:.5,points:0,result:"Exame neurológico realizado; nenhum achado adicional relevante para este caso."},
+    {id:"exam_head",label:"Cabeça e pescoço",category:"exame",subgroup:"02 · Cabeça e pescoço",time_min:.5,points:0,result:"Exame de cabeça e pescoço realizado; nenhum achado adicional relevante para este caso."},
+    {id:"exam_airway",label:"Vias aéreas",category:"exame",subgroup:"03 · Vias aéreas",time_min:.5,points:0,result:"Via aérea avaliada quanto a patência, secreções, edema, trauma e sinais de obstrução."},
+    {id:"exam_eyes",label:"Olhos e pupilas",category:"exame",subgroup:"04 · Olhos",time_min:.5,points:0,result:"Olhos e pupilas avaliados; sem achado adicional relevante para este caso."},
+    {id:"exam_chest",label:"Tórax",category:"exame",subgroup:"05 · Tórax",time_min:.5,points:0,result:"Tórax examinado com inspeção, palpação e ausculta conforme o contexto."},
+    {id:"exam_upper",label:"Membros superiores",category:"exame",subgroup:"06 · Membros superiores",time_min:.5,points:0,result:"Membros superiores examinados; sem achado adicional relevante para este caso."},
+    {id:"exam_abdomen",label:"Abdômen",category:"exame",subgroup:"07 · Abdômen",time_min:.5,points:0,result:"Abdômen examinado; sem achado adicional relevante para este caso."},
+    {id:"exam_lower",label:"Membros inferiores",category:"exame",subgroup:"08 · Membros inferiores",time_min:.5,points:0,result:"Membros inferiores examinados; sem achado adicional relevante para este caso."},
+    {id:"exam_extremities",label:"Extremidades e perfusão",category:"exame",subgroup:"09 · Extremidades",time_min:.5,points:0,result:"Perfusão periférica, temperatura, pulsos e enchimento capilar avaliados."},
+    {id:"exam_skin",label:"Pele e mucosas",category:"exame",subgroup:"10 · Pele",time_min:.5,points:0,result:"Pele e mucosas examinadas; sem achado adicional relevante para este caso."},
+    {id:"monitor",label:"Ligar monitor multiparamétrico",category:"iniciais",subgroup:"Monitorização",time_min:.25,points:0,result:"Monitor conectado; sinais vitais e traçados passam a ser exibidos."},
+    {id:"check_pulse",label:"Checar pulso e respiração",category:"iniciais",subgroup:"Avaliação imediata",time_min:.25,points:0,result:"Pulso e padrão respiratório avaliados."},
+    {id:"check_rhythm",label:"Avaliar ritmo no monitor",category:"iniciais",subgroup:"Avaliação imediata",time_min:.25,points:0,result:"Ritmo avaliado no monitor.",requires_all:["monitor"],requires_penalty:2},
+    {id:"abcde",label:"Avaliação ABCDE",category:"iniciais",subgroup:"Avaliação imediata",time_min:1,points:0,result:"ABCDE realizado de forma sistemática."},
+    {id:"trauma_abcde",label:"ABCDE do trauma",category:"iniciais",subgroup:"Trauma",time_min:1,points:0,result:"ABCDE do trauma realizado com busca ativa de ameaças imediatas à vida."},
+    {id:"iv_access",label:"Acesso venoso periférico",category:"iniciais",subgroup:"Acessos",time_min:.5,points:0,result:"Acesso venoso periférico obtido."},
+    {id:"iv_access_2",label:"Segundo acesso venoso periférico",category:"iniciais",subgroup:"Acessos",time_min:.5,points:0,result:"Segundo acesso venoso periférico obtido."},
+    {id:"io_access",label:"Acesso intraósseo",category:"iniciais",subgroup:"Acessos",time_min:.5,points:0,result:"Acesso intraósseo obtido."},
+    {id:"oxygen",label:"Oxigênio suplementar",category:"iniciais",subgroup:"Suporte",time_min:.25,points:0,result:"Oxigênio suplementar iniciado."},
+    {id:"bvm",label:"Bolsa-válvula-máscara",category:"iniciais",subgroup:"Suporte",time_min:.25,points:0,result:"Ventilação com bolsa-válvula-máscara iniciada."},
+    {id:"cpr",label:"Iniciar RCP",category:"iniciais",subgroup:"Ressuscitação",time_min:.25,points:0,result:"RCP de alta qualidade iniciada."},
+    {id:"call_team",label:"Acionar equipe de emergência",category:"iniciais",subgroup:"Suporte",time_min:.25,points:0,result:"Equipe de emergência acionada."},
+    {id:"glucose",label:"Glicemia capilar",category:"iniciais",subgroup:"Avaliação imediata",time_min:.25,points:0,result:"Glicemia capilar aferida."},
+    {id:"ecg",label:"Eletrocardiograma de 12 derivações",category:"exames",subgroup:"Gerais",time_min:.5,points:0,result:"ECG realizado; sem alteração adicional relevante além do contexto do caso."},
+    {id:"pulse_ox",label:"Oximetria de pulso",category:"exames",subgroup:"Gerais",time_min:.1,points:0,result:"Oximetria aferida."},
+    {id:"capnography",label:"Capnografia",category:"exames",subgroup:"Gerais",time_min:.25,points:0,result:"Capnografia realizada."},
+    {id:"temperature",label:"Temperatura",category:"exames",subgroup:"Gerais",time_min:.1,points:0,result:"Temperatura aferida."},
+    {id:"urinalysis",label:"Urina tipo 1",category:"laboratorio",subgroup:"Laboratoriais",time_min:.5,points:0,result:"Urina tipo 1 sem alteração adicional relevante neste caso."},
+    {id:"pregnancy",label:"β-hCG",category:"laboratorio",subgroup:"Laboratoriais",time_min:.5,points:0,result:"β-hCG solicitado; interpretar conforme o contexto."},
+    {id:"cbc",label:"Hemograma completo",category:"laboratorio",subgroup:"Hematologia",time_min:.5,points:0,result:"Hemograma disponível; sem alteração adicional relevante neste caso."},
+    {id:"wbc",label:"Leucócitos e diferencial",category:"laboratorio",subgroup:"Hematologia",time_min:.5,points:0,result:"Série branca disponível; sem alteração adicional relevante neste caso."},
+    {id:"platelets",label:"Plaquetas",category:"laboratorio",subgroup:"Hematologia",time_min:.5,points:0,result:"Plaquetas disponíveis; sem alteração adicional relevante neste caso."},
+    {id:"sodium",label:"Sódio",category:"laboratorio",subgroup:"Eletrólitos",time_min:.5,points:0,result:"Sódio sem alteração adicional relevante neste caso.",satisfies:["electrolytes"]},
+    {id:"potassium",label:"Potássio",category:"laboratorio",subgroup:"Eletrólitos",time_min:.5,points:0,result:"Potássio sem alteração adicional relevante neste caso.",satisfies:["electrolytes"]},
+    {id:"calcium_lab",label:"Cálcio",category:"laboratorio",subgroup:"Eletrólitos",time_min:.5,points:0,result:"Cálcio sem alteração adicional relevante neste caso."},
+    {id:"magnesium_lab",label:"Magnésio",category:"laboratorio",subgroup:"Eletrólitos",time_min:.5,points:0,result:"Magnésio sem alteração adicional relevante neste caso."},
+    {id:"chloride",label:"Cloro",category:"laboratorio",subgroup:"Eletrólitos",time_min:.5,points:0,result:"Cloro sem alteração adicional relevante neste caso."},
+    {id:"urea",label:"Ureia",category:"laboratorio",subgroup:"Função renal",time_min:.5,points:0,result:"Ureia sem alteração adicional relevante neste caso."},
+    {id:"creatinine",label:"Creatinina",category:"laboratorio",subgroup:"Função renal",time_min:.5,points:0,result:"Creatinina sem alteração adicional relevante neste caso.",satisfies:["electrolytes"]},
+    {id:"gas",label:"Gasometria",category:"laboratorio",subgroup:"Gasometria",time_min:.5,points:0,result:"Gasometria disponível; interpretar conforme o quadro clínico."},
+    {id:"lactate",label:"Lactato",category:"laboratorio",subgroup:"Gasometria",time_min:.5,points:0,result:"Lactato disponível; interpretar conforme perfusão e contexto clínico."},
+    {id:"troponin",label:"Troponina",category:"laboratorio",subgroup:"Cardíacos",time_min:.5,points:0,result:"Troponina disponível; interpretar no contexto clínico e eletrocardiográfico."},
+    {id:"bnp",label:"BNP / NT-proBNP",category:"laboratorio",subgroup:"Cardíacos",time_min:.5,points:0,result:"Peptídeo natriurético disponível; interpretar conforme o contexto."},
+    {id:"ast",label:"TGO (AST)",category:"laboratorio",subgroup:"Hepáticos",time_min:.5,points:0,result:"TGO disponível; sem alteração adicional relevante neste caso."},
+    {id:"alt",label:"TGP (ALT)",category:"laboratorio",subgroup:"Hepáticos",time_min:.5,points:0,result:"TGP disponível; sem alteração adicional relevante neste caso."},
+    {id:"ggt",label:"Gama-GT",category:"laboratorio",subgroup:"Hepáticos",time_min:.5,points:0,result:"Gama-GT disponível; sem alteração adicional relevante neste caso."},
+    {id:"alp",label:"Fosfatase alcalina",category:"laboratorio",subgroup:"Hepáticos",time_min:.5,points:0,result:"Fosfatase alcalina disponível; sem alteração adicional relevante neste caso."},
+    {id:"bilirubin_total",label:"Bilirrubina total",category:"laboratorio",subgroup:"Hepáticos",time_min:.5,points:0,result:"Bilirrubina total disponível; sem alteração adicional relevante neste caso."},
+    {id:"bilirubin_direct",label:"Bilirrubina direta",category:"laboratorio",subgroup:"Hepáticos",time_min:.5,points:0,result:"Bilirrubina direta disponível; sem alteração adicional relevante neste caso."},
+    {id:"amylase",label:"Amilase",category:"laboratorio",subgroup:"Pancreáticos",time_min:.5,points:0,result:"Amilase disponível; sem alteração adicional relevante neste caso."},
+    {id:"lipase",label:"Lipase",category:"laboratorio",subgroup:"Pancreáticos",time_min:.5,points:0,result:"Lipase disponível; sem alteração adicional relevante neste caso."},
+    {id:"crp",label:"PCR (proteína C reativa)",category:"laboratorio",subgroup:"Inflamatórios",time_min:.5,points:0,result:"Proteína C reativa disponível; interpretar conforme o contexto."},
+    {id:"procalcitonin",label:"Procalcitonina",category:"laboratorio",subgroup:"Inflamatórios",time_min:.5,points:0,result:"Procalcitonina disponível; interpretar conforme o contexto."},
+    {id:"pt_inr",label:"TP / INR",category:"laboratorio",subgroup:"Coagulação",time_min:.5,points:0,result:"TP/INR disponível."},
+    {id:"aptt",label:"TTPa",category:"laboratorio",subgroup:"Coagulação",time_min:.5,points:0,result:"TTPa disponível."},
+    {id:"ddimer",label:"D-dímero",category:"laboratorio",subgroup:"Coagulação",time_min:.5,points:0,result:"D-dímero disponível; interpretar conforme probabilidade pré-teste."},
+    {id:"tsh",label:"TSH",category:"laboratorio",subgroup:"Endócrinos",time_min:.5,points:0,result:"TSH disponível."},
+    {id:"free_t4",label:"T4 livre",category:"laboratorio",subgroup:"Endócrinos",time_min:.5,points:0,result:"T4 livre disponível."},
+    {id:"ketones",label:"Cetonemia",category:"laboratorio",subgroup:"Metabólicos",time_min:.5,points:0,result:"Cetonemia disponível."},
+    {id:"pocus",label:"POCUS",category:"imagem",subgroup:"Ultrassom",time_min:.5,points:0,result:"POCUS realizado; nenhum achado adicional relevante neste caso."},
+    {id:"fast",label:"FAST / eFAST",category:"imagem",subgroup:"Ultrassom",time_min:.5,points:0,result:"FAST/eFAST realizado; sem achado adicional relevante neste caso."},
+    {id:"xray_chest",label:"Raio-X de tórax",category:"imagem",subgroup:"Radiografia",time_min:1,points:0,result:"Radiografia de tórax realizada; sem achado adicional relevante neste caso.",satisfies:["cxr"]},
+    {id:"xray_abdomen",label:"Raio-X de abdômen",category:"imagem",subgroup:"Radiografia",time_min:1,points:0,result:"Radiografia de abdômen realizada; sem achado adicional relevante neste caso."},
+    {id:"ct_head",label:"Tomografia de crânio",category:"imagem",subgroup:"Tomografia",time_min:5,points:0,result:"Tomografia de crânio realizada; sem achado adicional relevante neste caso.",satisfies:["ct_brain"]},
+    {id:"ct_chest",label:"Tomografia de tórax",category:"imagem",subgroup:"Tomografia",time_min:5,points:0,result:"Tomografia de tórax realizada; sem achado adicional relevante neste caso."},
+    {id:"ct_abdomen",label:"Tomografia de abdômen e pelve",category:"imagem",subgroup:"Tomografia",time_min:5,points:0,result:"Tomografia de abdômen e pelve realizada; sem achado adicional relevante neste caso."},
+    {id:"cta_head_neck",label:"Angio-TC de crânio e pescoço",category:"imagem",subgroup:"Tomografia",time_min:6,points:0,result:"Angio-TC realizada; sem achado adicional relevante neste caso."},
+    {id:"cta_chest",label:"Angio-TC de tórax",category:"imagem",subgroup:"Tomografia",time_min:6,points:0,result:"Angio-TC de tórax realizada; sem achado adicional relevante neste caso."},
+    {id:"mri_brain",label:"Ressonância de crânio",category:"imagem",subgroup:"Ressonância",time_min:10,points:0,result:"Ressonância de crânio realizada; sem achado adicional relevante neste caso."},
+    {id:"mri_spine",label:"Ressonância de coluna",category:"imagem",subgroup:"Ressonância",time_min:10,points:0,result:"Ressonância de coluna realizada; sem achado adicional relevante neste caso."},
+    {id:"defibrillate",label:"Desfibrilar",category:"procedimentos_terapeuticos",subgroup:"Terapia elétrica",time_min:.25,points:0,result:"Desfibrilação executada conforme o estágio atual do caso.",repeatable:true},
+    {id:"sync_cardioversion",label:"Cardioversão sincronizada",category:"procedimentos_terapeuticos",subgroup:"Terapia elétrica",time_min:.25,points:0,result:"Cardioversão sincronizada realizada."},
+    {id:"airway",label:"Via aérea definitiva / intubação",category:"procedimentos_terapeuticos",subgroup:"Via aérea",time_min:.5,points:0,result:"Via aérea definitiva realizada; confirmar posicionamento e ventilação."},
+    {id:"cricothyrotomy",label:"Cricotireoidostomia",category:"procedimentos_terapeuticos",subgroup:"Via aérea",time_min:1,points:0,result:"Via aérea cirúrgica realizada."},
+    {id:"needle_decompression",label:"Descompressão torácica imediata",category:"procedimentos_terapeuticos",subgroup:"Tórax",time_min:.5,points:0,result:"Descompressão torácica realizada."},
+    {id:"chest_tube",label:"Drenagem torácica",category:"procedimentos_terapeuticos",subgroup:"Tórax",time_min:2,points:0,result:"Dreno torácico instalado."},
+    {id:"pelvic_binder",label:"Cinta pélvica",category:"procedimentos_terapeuticos",subgroup:"Trauma",time_min:.5,points:0,result:"Cinta pélvica aplicada."},
+    {id:"tourniquet",label:"Torniquete",category:"procedimentos_terapeuticos",subgroup:"Hemorragia",time_min:.25,points:0,result:"Torniquete aplicado."},
+    {id:"direct_pressure",label:"Compressão direta de sangramento",category:"procedimentos_terapeuticos",subgroup:"Hemorragia",time_min:.25,points:0,result:"Compressão direta realizada."},
+    {id:"urinary_catheter",label:"Sonda vesical",category:"procedimentos_terapeuticos",subgroup:"Dispositivos",time_min:.5,points:0,result:"Sonda vesical instalada."},
+    {id:"ng_tube",label:"Sonda nasogástrica",category:"procedimentos_terapeuticos",subgroup:"Dispositivos",time_min:.5,points:0,result:"Sonda nasogástrica instalada."},
+    {id:"epi_im",label:"Adrenalina IM",category:"tratamento",subgroup:"Medicamentos",time_min:.25,points:0,result:"Adrenalina IM administrada."},
+    {id:"epi",label:"Adrenalina IV/IO",category:"tratamento",subgroup:"Medicamentos",time_min:.25,points:0,result:"Adrenalina IV/IO administrada."},
+    {id:"amiodarone",label:"Amiodarona",category:"tratamento",subgroup:"Medicamentos",time_min:.25,points:0,result:"Amiodarona administrada."},
+    {id:"lidocaine",label:"Lidocaína",category:"tratamento",subgroup:"Medicamentos",time_min:.25,points:0,result:"Lidocaína administrada."},
+    {id:"bicarb",label:"Bicarbonato de sódio",category:"tratamento",subgroup:"Medicamentos",time_min:.25,points:0,result:"Bicarbonato administrado; benefício depende da indicação clínica."},
+    {id:"calcium",label:"Cálcio IV",category:"tratamento",subgroup:"Medicamentos",time_min:.25,points:0,result:"Cálcio IV administrado; benefício depende da indicação clínica."},
+    {id:"atropine",label:"Atropina",category:"tratamento",subgroup:"Medicamentos",time_min:.25,points:0,result:"Atropina administrada."},
+    {id:"adenosine",label:"Adenosina",category:"tratamento",subgroup:"Medicamentos",time_min:.25,points:0,result:"Adenosina administrada."},
+    {id:"magnesium",label:"Sulfato de magnésio",category:"tratamento",subgroup:"Medicamentos",time_min:.25,points:0,result:"Sulfato de magnésio administrado."},
+    {id:"norepi",label:"Noradrenalina",category:"tratamento",subgroup:"Vasoativos",time_min:.25,points:0,result:"Noradrenalina iniciada e titulada."},
+    {id:"dobutamine",label:"Dobutamina",category:"tratamento",subgroup:"Vasoativos",time_min:.25,points:0,result:"Dobutamina iniciada."},
+    {id:"dopamine",label:"Dopamina",category:"tratamento",subgroup:"Vasoativos",time_min:.25,points:0,result:"Dopamina iniciada."},
+    {id:"nitroglycerin",label:"Nitroglicerina",category:"tratamento",subgroup:"Cardiovasculares",time_min:.25,points:0,result:"Nitroglicerina administrada."},
+    {id:"metoprolol",label:"Metoprolol",category:"tratamento",subgroup:"Cardiovasculares",time_min:.25,points:0,result:"Metoprolol administrado."},
+    {id:"diltiazem",label:"Diltiazem",category:"tratamento",subgroup:"Cardiovasculares",time_min:.25,points:0,result:"Diltiazem administrado."},
+    {id:"furosemide",label:"Furosemida",category:"tratamento",subgroup:"Medicamentos",time_min:.25,points:0,result:"Furosemida administrada."},
+    {id:"salbutamol",label:"Salbutamol",category:"tratamento",subgroup:"Respiratórios",time_min:.25,points:0,result:"Salbutamol administrado."},
+    {id:"ipratropium",label:"Ipratrópio",category:"tratamento",subgroup:"Respiratórios",time_min:.25,points:0,result:"Ipratrópio administrado."},
+    {id:"hydrocortisone",label:"Hidrocortisona",category:"tratamento",subgroup:"Medicamentos",time_min:.25,points:0,result:"Hidrocortisona administrada."},
+    {id:"antihistamine",label:"Anti-histamínico H1",category:"tratamento",subgroup:"Medicamentos",time_min:.25,points:0,result:"Anti-histamínico administrado."},
+    {id:"ceftriaxone",label:"Ceftriaxona",category:"tratamento",subgroup:"Antimicrobianos",time_min:.25,points:0,result:"Ceftriaxona administrada."},
+    {id:"azithromycin",label:"Azitromicina",category:"tratamento",subgroup:"Antimicrobianos",time_min:.25,points:0,result:"Azitromicina administrada."},
+    {id:"piperacillin_tazo",label:"Piperacilina-tazobactam",category:"tratamento",subgroup:"Antimicrobianos",time_min:.25,points:0,result:"Piperacilina-tazobactam administrada."},
+    {id:"vancomycin",label:"Vancomicina",category:"tratamento",subgroup:"Antimicrobianos",time_min:.25,points:0,result:"Vancomicina administrada."},
+    {id:"morphine",label:"Morfina",category:"tratamento",subgroup:"Analgesia",time_min:.25,points:0,result:"Morfina administrada."},
+    {id:"fentanyl",label:"Fentanil",category:"tratamento",subgroup:"Analgesia",time_min:.25,points:0,result:"Fentanil administrado."},
+    {id:"dipyrone",label:"Dipirona",category:"tratamento",subgroup:"Analgesia",time_min:.25,points:0,result:"Dipirona administrada."},
+    {id:"paracetamol",label:"Paracetamol",category:"tratamento",subgroup:"Analgesia",time_min:.25,points:0,result:"Paracetamol administrado."},
+    {id:"ondansetron",label:"Ondansetrona",category:"tratamento",subgroup:"Sintomáticos",time_min:.25,points:0,result:"Ondansetrona administrada."},
+    {id:"midazolam",label:"Midazolam",category:"tratamento",subgroup:"Sedação",time_min:.25,points:0,result:"Midazolam administrado."},
+    {id:"ketamine",label:"Cetamina",category:"tratamento",subgroup:"Sedação",time_min:.25,points:0,result:"Cetamina administrada."},
+    {id:"propofol",label:"Propofol",category:"tratamento",subgroup:"Sedação",time_min:.25,points:0,result:"Propofol administrado."},
+    {id:"rocuronium",label:"Rocurônio",category:"tratamento",subgroup:"Sequência rápida",time_min:.25,points:0,result:"Rocurônio administrado."},
+    {id:"succinylcholine",label:"Succinilcolina",category:"tratamento",subgroup:"Sequência rápida",time_min:.25,points:0,result:"Succinilcolina administrada."},
+    {id:"crystalloid",label:"Cristaloide IV",category:"tratamento",subgroup:"Fluidos",time_min:.5,points:0,result:"Cristaloide administrado com reavaliação clínica."},
+    {id:"blood",label:"Concentrado de hemácias",category:"tratamento",subgroup:"Hemoderivados",time_min:.5,points:0,result:"Concentrado de hemácias iniciado."},
+    {id:"plasma",label:"Plasma fresco congelado",category:"tratamento",subgroup:"Hemoderivados",time_min:.5,points:0,result:"Plasma fresco congelado iniciado."},
+    {id:"platelets_tx",label:"Concentrado de plaquetas",category:"tratamento",subgroup:"Hemoderivados",time_min:.5,points:0,result:"Concentrado de plaquetas iniciado."},
+    {id:"tranexamic",label:"Ácido tranexâmico",category:"tratamento",subgroup:"Hemostáticos",time_min:.25,points:0,result:"Ácido tranexâmico administrado."}
+  ];
+
+  const GENERAL_DIAGNOSES = [
+    "PCR em fibrilação ventricular","PCR em taquicardia ventricular sem pulso","Assistolia","Atividade elétrica sem pulso",
+    "Fibrilação atrial com instabilidade","Taquicardia supraventricular","Taquicardia ventricular com pulso","Bradicardia sintomática",
+    "Síndrome coronariana aguda","Edema agudo de pulmão","Choque cardiogênico","Choque hipovolêmico","Choque distributivo",
+    "Anafilaxia","Choque séptico","Pneumonia","Crise asmática","DPOC exacerbada","Embolia pulmonar","Pneumotórax hipertensivo",
+    "AVC isquêmico","AVC hemorrágico","Crise convulsiva","Meningite","Hipoglicemia","Cetoacidose diabética","Estado hiperosmolar",
+    "Hemorragia digestiva","Pancreatite aguda","Colecistite aguda","Colangite","Apendicite","Obstrução intestinal","Perfuração de víscera",
+    "Pielonefrite","Cólica renal","Trauma cranioencefálico","Trauma torácico","Trauma abdominal"
+  ].map((label,index)=>({id:"generic_dx_"+index,role:"diagnosis",label,category:"hipoteses",subgroup:"Hipótese principal",time_min:.1,points:0,genericDiagnosis:true}));
+
+  const GENERAL_DISPOSITIONS = [
+    {id:"generic_dest_discharge",role:"disposition",label:"Alta domiciliar",category:"destino",subgroup:"Conduta final",time_min:.1,points:0,genericDisposition:true},
+    {id:"generic_dest_observation",role:"disposition",label:"Observação hospitalar",category:"destino",subgroup:"Conduta final",time_min:.1,points:0,genericDisposition:true},
+    {id:"generic_dest_ward",role:"disposition",label:"Internação em enfermaria / unidade monitorizada",category:"destino",subgroup:"Conduta final",time_min:.1,points:0,genericDisposition:true},
+    {id:"generic_dest_icu",role:"disposition",label:"Internação em UTI",category:"destino",subgroup:"Conduta final",time_min:.1,points:0,genericDisposition:true},
+    {id:"generic_refer_surgery",label:"Encaminhar para Cirurgia Geral",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Cirurgia Geral acionada."},
+    {id:"generic_refer_cardio",label:"Encaminhar para Cardiologia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Cardiologia acionada."},
+    {id:"generic_refer_neuro",label:"Encaminhar para Neurologia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Neurologia acionada."},
+    {id:"generic_refer_ortho",label:"Encaminhar para Ortopedia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Ortopedia acionada."},
+    {id:"generic_refer_vascular",label:"Encaminhar para Cirurgia Vascular",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Cirurgia Vascular acionada."},
+    {id:"generic_refer_urology",label:"Encaminhar para Urologia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Urologia acionada."},
+    {id:"generic_refer_obgyn",label:"Encaminhar para Ginecologia e Obstetrícia",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Ginecologia e Obstetrícia acionada."},
+    {id:"generic_refer_psych",label:"Encaminhar para Psiquiatria",category:"encaminhamento",subgroup:"Especialidades",time_min:.1,points:0,result:"Psiquiatria acionada."}
+  ];
+
+  const HIDDEN_CASE_ACTIONS = new Set(["shock1","shock2","shock3","electrolytes","cxr","ct_brain"]);
+  function caseActions(){ return Array.isArray(state.current?.actions) ? state.current.actions : []; }
+  function normalizeLabel(value){ return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase(); }
+  function mergedActions(){
+    const caseList=caseActions();
+    const byId=new Map(caseList.map(a=>[a.id,a]));
+    const generic=[...GENERIC_ACTIONS,...GENERAL_DIAGNOSES,...GENERAL_DISPOSITIONS].map(a=>{
+      const exact=byId.get(a.id);
+      return exact ? {...a,...exact,subgroup:a.subgroup||exact.subgroup} : a;
+    });
+    const existingIds=new Set(generic.map(a=>a.id));
+    const extras=caseList.filter(a=>!existingIds.has(a.id)&&!HIDDEN_CASE_ACTIONS.has(a.id));
+    return [...generic,...extras];
+  }
+  function resolveSpecialAction(action){
+    if(action.id!=="defibrillate") return action;
+    const sequence=["shock1","shock2","shock3"];
+    const next=sequence.find(id=>!done(id));
+    return next ? caseActions().find(a=>a.id===next) || action : action;
+  }
+  function isCorrectGenericDiagnosis(label){
+    const target=normalizeLabel(state.current?.debrief?.diagnosis||state.current?.title||"");
+    const candidate=normalizeLabel(label);
+    if(!target||!candidate) return false;
+    const keys=candidate.split(/\s+/).filter(x=>x.length>4);
+    return keys.length ? keys.filter(k=>target.includes(k)).length>=Math.min(2,keys.length) : target.includes(candidate);
+  }
+  function inferGenericDisposition(action){
+    const correct=caseActions().find(a=>a.role==="disposition"&&a.correct===true);
+    if(!correct) return false;
+    const a=normalizeLabel(action.label), b=normalizeLabel(correct.label);
+    if(a.includes("uti")) return b.includes("uti");
+    if(a.includes("observ")) return b.includes("observ");
+    if(a.includes("enfermaria")||a.includes("monitorizada")) return b.includes("enfermaria")||b.includes("monitorizada")||b.includes("ward");
+    if(a.includes("alta")) return b.includes("alta");
+    return false;
+  }
+
   const groupOf = category => Object.keys(GROUPS).find(key=>GROUPS[key].categories.includes(category)) || "intervir";
   const done = id => E.done(state.current,state.performed,id);
   function openActions(category) {
@@ -153,7 +340,7 @@
 
   function renderVitals() {
     const v=state.vitals || {};
-    window.PlantaoMonitor?.update(v, {slug:state.current?.slug});
+    window.PlantaoMonitor?.update(v, {slug:state.current?.slug,enabled:state.monitorOn});
     const items=[
       ["FC",v.hr,"bpm"],
       ["SpO₂",v.spo2,"%"],
@@ -164,7 +351,7 @@
     $("plantao-vitals").innerHTML=items.map(([label,val,unit],idx)=>`
       <div class="plantao-vital">
         <span>${esc(label)}</span>
-        <strong>${esc(val ?? "—")}${unit && val!=null && val!=="—" ? " <small>"+unit+"</small>" : ""}</strong>
+        <strong>${esc(state.monitorOn ? (val ?? "—") : "—")}${state.monitorOn && unit && val!=null && val!=="—" ? " <small>"+unit+"</small>" : ""}</strong>
       </div>
     `).join("");
   }
@@ -180,7 +367,7 @@
   }
 
   function renderActions() {
-    const actions=Array.isArray(state.current?.actions) ? state.current.actions : [];
+    const actions=mergedActions();
     if(!GROUPS[state.category])state.category="anamnese";
     $("plantao-action-tabs").innerHTML=Object.entries(GROUPS).map(([key,g])=>`
       <button class="plantao-action-tab" type="button" data-case-category="${key}" aria-controls="plantao-action-drawer" aria-expanded="${!$("plantao-action-drawer").hidden&&key===state.category}">
@@ -192,7 +379,8 @@
     const groups=[...new Set(available.map(a=>a.subgroup||CATEGORY_LABELS[a.category]||"Opções"))];
     $("plantao-actions").innerHTML=groups.map(group=>`<section class="plantao-action-group"><h3>${esc(group)}</h3>${available.filter(a=>(a.subgroup||CATEGORY_LABELS[a.category]||"Opções")===group).map(action=>{
       const completed=done(action.id);
-      return `<button class="plantao-action" type="button" data-case-action="${esc(action.id)}" ${state.busy||(completed&&!action.repeatable)?"disabled":""}>
+      const specialRepeat=action.id==="defibrillate";
+      return `<button class="plantao-action" type="button" data-case-action="${esc(action.id)}" ${state.busy||(completed&&!action.repeatable&&!specialRepeat)?"disabled":""}>
         <strong>${esc(action.label)}</strong>
         <small>${completed&&!action.repeatable?"Realizado":"+"+fmtTime(action.time_min||0)}${action.role==='disposition'?" · Encerrar atendimento":""}</small>
       </button>`;
@@ -301,6 +489,7 @@
     state.triggered=[];
     state.log=[];
     state.sequenceViolations=[];
+    state.monitorOn=false;
     state.category=null;
     state.penalties=0; state.criticalElapsed=0; state.diagnosis=null; state.disposition=null; state.busy=false;
     $("plantao-action-search").value="";
@@ -343,9 +532,10 @@
 
   async function runAction(actionId) {
     if (!state.current || state.busy || state.session?.status==="completed") return;
-    const original=(state.current.actions||[]).find(x=>x.id===actionId);
+    const original=mergedActions().find(x=>x.id===actionId);
     if (!original || (done(actionId)&&!original.repeatable)) return;
-    const action=E.resolve(state.current,state,original);
+    const selected=resolveSpecialAction(original);
+    const action=E.resolve(state.current,state,selected);
     if(action.role==='disposition') {
       if(!state.diagnosis) { feed("Selecione uma hipótese principal antes de definir o destino final.","warning");return; }
       if(!window.confirm(action.label+"? Esta decisão encerra o atendimento e abre a avaliação."))return;
@@ -376,12 +566,23 @@
         // Do not let a late definitive action erase deterioration that occurred during its delay.
         applyDeterioration();
         if(!repeated)state.performed.push(action.id);
+        if(original.id==="defibrillate" && !state.performed.includes("defibrillate")) state.performed.push("defibrillate");
+        for(const id of (original.satisfies||[])) if(!state.performed.includes(id)) state.performed.push(id);
+        if(action.id==="monitor" || original.id==="monitor") state.monitorOn=true;
         const points=repeated?0:Number(action.points||0);
         state.score+=points;
         if(points<0)state.penalties+=Math.abs(points);
         applyEffects(action.effects||{});
-        if(action.role==='diagnosis')state.diagnosis={id:action.id,label:action.label,correct:action.correct===true};
-        if(action.role==='disposition')state.disposition={id:action.id,label:action.label,correct:action.correct===true};
+        if(action.role==='diagnosis'){
+          const correct=action.genericDiagnosis===true ? isCorrectGenericDiagnosis(action.label) : action.correct===true;
+          state.diagnosis={id:action.id,label:action.label,correct};
+          if(action.genericDiagnosis===true && !correct){state.penalties+=4;state.score-=4;}
+        }
+        if(action.role==='disposition'){
+          const correct=action.genericDisposition===true ? inferGenericDisposition(action) : action.correct===true;
+          state.disposition={id:action.id,label:action.label,correct};
+          if(action.genericDisposition===true && !correct){state.penalties+=8;state.score-=8;}
+        }
         feed(contextual(action.result||action.label)+(points<0?` (−${Math.abs(points)} pontos)`:""),points<0?"warning":"event");
       }
       $("plantao-time").textContent=fmtTime(state.elapsed);
