@@ -787,6 +787,7 @@
     $("plantao-diagnosis").textContent=d.diagnosis || "";
     $("plantao-final-score").textContent=score;
     $("plantao-pulo").textContent=d.pulo_do_gato || "";
+    $("plantao-case-explanation").textContent=d.explanation || d.explicacao || d.contexto_geral || d.summary || "Revise a definição do quadro, reconhecimento clínico, prioridades iniciais, tratamento e critérios de reavaliação apresentados neste caso.";
 
     const essentialTotal=(state.current.completion_rules?.required_actions||[]).length;
     const essentialDone=essentialTotal-missingRequired.length;
@@ -802,7 +803,10 @@
       ["Essenciais",essentialDone+"/"+essentialTotal],
       ["Ações úteis",String(positive)],
       ["Ações prejudiciais",String(harmful)],
-      ["Erros de sequência",String(state.sequenceViolations.length)]
+      ["Erros de sequência",String(state.sequenceViolations.length)],
+      ["Condutas maléficas",String(state.clinicalEvents.filter(x=>x.level==="malefica").length)],
+      ["Condutas mortais",String(state.clinicalEvents.filter(x=>x.level==="mortal").length)],
+      ["Desfecho",state.dead?"Óbito":"Paciente vivo"]
     ].map(([a,b])=>`<div class="plantao-performance-row"><span>${esc(a)}</span><strong>${esc(b)}</strong></div>`).join("");
 
     const key=[...(d.key_actions||[]),d.scoring_note].filter(Boolean).map(text=>`<div class="plantao-review-item"><span>✓</span><span>${esc(text)}</span></div>`);
@@ -816,6 +820,9 @@
       ':</strong> '+esc(item.message)+(item.penalty?' (−'+esc(item.penalty)+' pts)':'')+'</span></div>'
     );
     $("plantao-sequence-errors").innerHTML=sequence.length?sequence.join(""):'<div class="plantao-review-item"><span>✓</span><span>Nenhum erro de sequência registrado.</span></div>';
+
+    const wrongEvents=state.clinicalEvents.filter(x=>x.level==="malefica"||x.level==="mortal");
+    $("plantao-wrong-actions").innerHTML=wrongEvents.length?wrongEvents.map(item=>`<div class="plantao-review-item"><span>!</span><span><strong>${esc(item.action_label)}:</strong> ${esc(item.reason||"Conduta inadequada para o contexto clínico.")}</span></div>`).join(""):'<div class="plantao-review-item"><span>✓</span><span>Nenhuma conduta errada registrada.</span></div>';
 
     const danger=(d.dangerous_actions||[]).map(text=>`<div class="plantao-review-item"><span>!</span><span>${esc(text)}</span></div>`);
     $("plantao-danger-actions").innerHTML=danger.join("");
