@@ -1570,7 +1570,7 @@
     show("plantao-library");
   }
 
-  function setPlantaoMode(mode){
+  function setPlantaoModeLegacyUnused(mode){
     const emergency=$("plantao-emergencia");
     const filters=document.querySelector(".plantao-filters");
     const grid=$("plantao-case-grid");
