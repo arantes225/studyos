@@ -172,7 +172,7 @@
   }
 
   function setPlantaoMode(mode){
-    const phone=mode==="phone";
+    const phone=mode==="phone" || mode==="telefone";
     state.phoneMode=phone;
 
     const emergencyPanel=$("plantao-emergency-panel");
@@ -1905,33 +1905,7 @@
     show("plantao-library");
   }
 
-  function setPlantaoModeLegacyUnused(mode){
-    const emergency=$("plantao-emergencia");
-    const filters=document.querySelector(".plantao-filters");
-    const grid=$("plantao-case-grid");
-    const empty=$("plantao-empty");
-    const phone=$("plantao-telefone");
-    const isPhone=mode==="telefone" || mode==="phone";
-    if(emergency) emergency.hidden=isPhone;
-    if(filters) filters.hidden=isPhone;
-    if(grid) grid.hidden=isPhone;
-    if(empty && isPhone) empty.hidden=true;
-    if(phone) phone.hidden=!isPhone;
-    document.querySelectorAll(".plantao-mode-card").forEach(card=>{
-      const active=isPhone ? card.id==="plantao-phone-mode-card" : card.id!=="plantao-phone-mode-card";
-      card.classList.toggle("active",active);
-      if(active) card.setAttribute("aria-current","page"); else card.removeAttribute("aria-current");
-    });
-  }
-
   document.addEventListener("click",async event=>{
-    const modeCard=event.target.closest(".plantao-mode-card");
-    if(modeCard){
-      event.preventDefault();
-      if(modeCard.id==="plantao-phone-mode-card") setPlantaoMode("telefone");
-      else setPlantaoMode("emergencia");
-      return;
-    }
     const start=event.target.closest("[data-start-case]");
     if (start) return startCase(start.dataset.startCase);
 
