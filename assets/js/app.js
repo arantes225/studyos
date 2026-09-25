@@ -268,6 +268,7 @@ const PAGE_INFO = {
   flashcards: { title: "Flashcards", eyebrow: "Estudar" },
   erros: { title: "Caderno de erros", eyebrow: "Estudar" },
   questoes: { title: "Questões e Simulados", eyebrow: "Estudar" },
+  plantao: { title: "Plantão", eyebrow: "Casos Clínicos" },
   estatisticas: { title: "Estatísticas", eyebrow: "Desempenho" },
   editais: { title: "Editais / Provas", eyebrow: "Planejamento" },
   amigos: { title: "Amigos", eyebrow: "Compartilhar" },
@@ -423,6 +424,7 @@ function sidebarMarkup(user, profile = null) {
           <a class="nav-sublink ${page === "flashcards" ? "active" : ""}" href="/flashcards/">Flashcards</a>
           <a class="nav-sublink ${page === "erros" ? "active" : ""}" href="/caderno-erros/">Caderno de erros</a>
           <a class="nav-sublink ${page === "questoes" ? "active" : ""}" href="/questoes-simulados/">Questões e Simulados</a>
+          <a class="nav-sublink ${page === "plantao" ? "active" : ""}" href="/plantao/">Plantão</a>
         </div>
       </div>
 
@@ -2200,7 +2202,8 @@ function prepararStudyMenu(
       "caderno",
       "flashcards",
       "erros",
-      "questoes"
+      "questoes",
+      "plantao"
     ].includes(
       page
     );
