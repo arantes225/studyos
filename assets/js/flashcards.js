@@ -7,6 +7,16 @@ let reviewIndex = 0;
 let reviewMode = "scheduled";
 let reviewModeLabel = "";
 
+let reviewSessionActive = false;
+let reviewStudySessionId = null;
+let reviewSessionStartedAt = null;
+let reviewSessionTimerId = null;
+let reviewSessionFinishing = false;
+let reviewPomodoroMinutes = 25;
+let reviewPomodoroRemaining = 25 * 60;
+let reviewPomodoroRunning = false;
+let reviewPomodoroTimerId = null;
+
 let importRows = [];
 
 let importFileKind =
@@ -246,7 +256,8 @@ async function loadFlashSettings() {
     .select(`
       flashcard_intervals_hard,
       flashcard_intervals_medium,
-      flashcard_intervals_easy
+      flashcard_intervals_easy,
+      pomodoro_focus_minutes
     `)
     .eq(
       "user_id",
@@ -268,6 +279,18 @@ async function loadFlashSettings() {
       ...flashSettings,
       ...data
     };
+
+    reviewPomodoroMinutes =
+      Math.max(
+        1,
+        Number(
+          data.pomodoro_focus_minutes
+          || 25
+        )
+      );
+
+    reviewPomodoroRemaining =
+      reviewPomodoroMinutes * 60;
   }
 }
 
@@ -806,7 +829,475 @@ async function setReviewImage(
     url;
 }
 
+
+function reviewSessionStorageKey() {
+  return flashUser
+    ? `luria:flash-review-session:${flashUser.id}`
+    : "luria:flash-review-session";
+}
+
+function formatReviewClock(totalSeconds) {
+  const safe = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  const hours = Math.floor(safe / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+  const seconds = String(safe % 60).padStart(2, "0");
+
+  return hours
+    ? `${hours}:${String(minutes).padStart(2, "0")}:${seconds}`
+    : `${minutes}:${seconds}`;
+}
+
+function persistReviewSessionHeartbeat() {
+  if (!flashUser || !reviewStudySessionId || !reviewSessionStartedAt) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(
+      reviewSessionStorageKey(),
+      JSON.stringify({
+        sessionId: reviewStudySessionId,
+        startedAt: reviewSessionStartedAt,
+        lastSeenAt: Date.now()
+      })
+    );
+  } catch {}
+}
+
+function clearReviewSessionHeartbeat() {
+  try {
+    localStorage.removeItem(reviewSessionStorageKey());
+  } catch {}
+}
+
+async function closeAbandonedReviewSession() {
+  if (!flashUser) return;
+
+  let stored = null;
+
+  try {
+    stored = JSON.parse(
+      localStorage.getItem(reviewSessionStorageKey()) || "null"
+    );
+  } catch {}
+
+  if (!stored?.sessionId || !stored?.startedAt) {
+    return;
+  }
+
+  const endAt =
+    Math.max(
+      Number(stored.startedAt),
+      Number(stored.lastSeenAt) || Number(stored.startedAt)
+    );
+
+  const seconds =
+    Math.max(
+      0,
+      Math.floor(
+        (endAt - Number(stored.startedAt)) / 1000
+      )
+    );
+
+  try {
+    await flashSb.rpc(
+      "finish_study_session_v2",
+      {
+        p_session_id: stored.sessionId,
+        p_duration_seconds: seconds
+      }
+    );
+  } catch (error) {
+    console.warn(
+      "Não foi possível encerrar a sessão anterior de flashcards:",
+      error
+    );
+  }
+
+  clearReviewSessionHeartbeat();
+}
+
+function commonReviewValue(field) {
+  const values =
+    [...new Set(
+      reviewQueue
+        .map(card => card?.[field])
+        .filter(Boolean)
+    )];
+
+  return values.length === 1
+    ? values[0]
+    : null;
+}
+
+function updateReviewLauncher() {
+  const launcher =
+    document.getElementById("review-launcher");
+
+  const stage =
+    document.getElementById("review-stage");
+
+  const empty =
+    document.getElementById("review-empty");
+
+  const focusToolbar =
+    document.getElementById("review-focus-toolbar");
+
+  const count =
+    document.getElementById("review-launcher-count");
+
+  const title =
+    document.getElementById("review-launcher-title");
+
+  const copy =
+    document.getElementById("review-launcher-copy");
+
+  const startButton =
+    document.getElementById("start-review-session");
+
+  if (reviewSessionActive) {
+    if (launcher) launcher.hidden = true;
+    if (focusToolbar) focusToolbar.hidden = false;
+    return;
+  }
+
+  if (stage) stage.hidden = true;
+  if (empty) empty.hidden = true;
+  if (focusToolbar) focusToolbar.hidden = true;
+  if (launcher) launcher.hidden = false;
+
+  if (count) {
+    count.textContent =
+      `${reviewQueue.length} flashcard${reviewQueue.length === 1 ? "" : "s"}`;
+  }
+
+  if (title) {
+    title.textContent =
+      reviewMode === "extra"
+        ? (reviewModeLabel || "Deck selecionado")
+        : "Revisões do dia";
+  }
+
+  if (copy) {
+    copy.textContent =
+      reviewQueue.length
+        ? (
+            reviewMode === "extra"
+              ? "Deck pronto. A revisão só começa quando você tocar em Iniciar revisão."
+              : "Suas revisões estão prontas. Os flashcards permanecem fechados até você iniciar."
+          )
+        : "Nenhuma revisão pendente neste momento.";
+  }
+
+  if (startButton) {
+    startButton.disabled = !reviewQueue.length;
+  }
+
+  const sessionCopy =
+    document.getElementById("review-session-copy");
+
+  if (sessionCopy) {
+    sessionCopy.textContent =
+      reviewMode === "extra"
+        ? `Deck · ${reviewModeLabel || "selecionado"}`
+        : (
+            flashAgendaDate
+              ? (
+                  flashAgendaArea
+                    ? `Agendados para ${flashAgendaDate} · ${flashAgendaArea}`
+                    : `Agendados para ${flashAgendaDate}`
+                )
+              : "Revisões do dia"
+          );
+  }
+
+  const position =
+    document.getElementById("review-position");
+
+  if (position) {
+    position.textContent =
+      `0 / ${reviewQueue.length}`;
+  }
+}
+
+function stopReviewSessionTimer() {
+  if (reviewSessionTimerId) {
+    clearInterval(reviewSessionTimerId);
+    reviewSessionTimerId = null;
+  }
+}
+
+function renderReviewElapsed() {
+  const element =
+    document.getElementById("review-elapsed");
+
+  if (!element) return;
+
+  const seconds =
+    reviewSessionStartedAt
+      ? (Date.now() - reviewSessionStartedAt) / 1000
+      : 0;
+
+  element.textContent =
+    formatReviewClock(seconds);
+}
+
+function startReviewSessionTimer() {
+  stopReviewSessionTimer();
+
+  renderReviewElapsed();
+  persistReviewSessionHeartbeat();
+
+  reviewSessionTimerId =
+    window.setInterval(
+      () => {
+        renderReviewElapsed();
+        persistReviewSessionHeartbeat();
+      },
+      1000
+    );
+}
+
+function stopReviewPomodoro() {
+  if (reviewPomodoroTimerId) {
+    clearInterval(reviewPomodoroTimerId);
+    reviewPomodoroTimerId = null;
+  }
+
+  reviewPomodoroRunning = false;
+}
+
+function renderReviewPomodoro() {
+  const clock =
+    document.getElementById("review-pomodoro-clock");
+
+  const button =
+    document.getElementById("review-pomodoro-toggle");
+
+  if (clock) {
+    clock.textContent =
+      formatReviewClock(reviewPomodoroRemaining);
+  }
+
+  if (button) {
+    button.textContent =
+      reviewPomodoroRunning
+        ? "Pausar Pomodoro"
+        : (
+            reviewPomodoroRemaining < reviewPomodoroMinutes * 60
+              ? "Continuar Pomodoro"
+              : "Iniciar Pomodoro"
+          );
+  }
+}
+
+function toggleReviewPomodoro() {
+  if (!reviewSessionActive) return;
+
+  if (reviewPomodoroRunning) {
+    stopReviewPomodoro();
+    renderReviewPomodoro();
+    return;
+  }
+
+  if (reviewPomodoroRemaining <= 0) {
+    reviewPomodoroRemaining =
+      reviewPomodoroMinutes * 60;
+  }
+
+  reviewPomodoroRunning = true;
+  renderReviewPomodoro();
+
+  reviewPomodoroTimerId =
+    window.setInterval(
+      () => {
+        reviewPomodoroRemaining =
+          Math.max(
+            0,
+            reviewPomodoroRemaining - 1
+          );
+
+        renderReviewPomodoro();
+
+        if (reviewPomodoroRemaining <= 0) {
+          stopReviewPomodoro();
+          renderReviewPomodoro();
+        }
+      },
+      1000
+    );
+}
+
+async function startReviewSession() {
+  if (
+    reviewSessionActive
+    || reviewSessionFinishing
+    || !reviewQueue.length
+  ) {
+    return;
+  }
+
+  const button =
+    document.getElementById("start-review-session");
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Iniciando...";
+  }
+
+  setFlashStatus("review-status", "");
+
+  const {
+    data,
+    error
+  } =
+    await flashSb.rpc(
+      "start_study_session",
+      {
+        p_activity_kind: "flashcards",
+        p_source_id: null,
+        p_area: commonReviewValue("area"),
+        p_materia: commonReviewValue("materia")
+      }
+    );
+
+  if (error) {
+    console.error(error);
+
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Iniciar revisão";
+    }
+
+    setFlashStatus(
+      "review-status",
+      `Não foi possível iniciar a contagem de tempo: ${error.message}`,
+      "error"
+    );
+
+    return;
+  }
+
+  reviewStudySessionId =
+    data?.id || null;
+
+  reviewSessionStartedAt =
+    Date.now();
+
+  reviewSessionActive =
+    true;
+
+  reviewPomodoroRemaining =
+    reviewPomodoroMinutes * 60;
+
+  reviewPomodoroRunning =
+    false;
+
+  document.body.classList.add(
+    "flash-review-session-active"
+  );
+
+  if (button) {
+    button.textContent = "Iniciar revisão";
+  }
+
+  updateReviewLauncher();
+  startReviewSessionTimer();
+  renderReviewPomodoro();
+
+  await renderCurrentReview();
+}
+
+async function finishReviewSession({
+  silent = false,
+  keepaliveAttempt = false
+} = {}) {
+  if (
+    reviewSessionFinishing
+    || !reviewSessionActive
+  ) {
+    return;
+  }
+
+  reviewSessionFinishing = true;
+
+  stopReviewSessionTimer();
+  stopReviewPomodoro();
+
+  const sessionId =
+    reviewStudySessionId;
+
+  const seconds =
+    Math.max(
+      0,
+      Math.floor(
+        reviewSessionStartedAt
+          ? (Date.now() - reviewSessionStartedAt) / 1000
+          : 0
+      )
+    );
+
+  persistReviewSessionHeartbeat();
+
+  if (sessionId) {
+    const request =
+      flashSb.rpc(
+        "finish_study_session_v2",
+        {
+          p_session_id: sessionId,
+          p_duration_seconds: seconds
+        }
+      );
+
+    if (!keepaliveAttempt) {
+      const { error } = await request;
+
+      if (error) {
+        reviewSessionFinishing = false;
+
+        if (!silent) {
+          setFlashStatus(
+            "review-status",
+            `Não foi possível registrar o tempo: ${error.message}`,
+            "error"
+          );
+        }
+
+        return;
+      }
+    } else {
+      void request;
+    }
+  }
+
+  clearReviewSessionHeartbeat();
+
+  reviewStudySessionId = null;
+  reviewSessionStartedAt = null;
+  reviewSessionActive = false;
+  reviewSessionFinishing = false;
+
+  document.body.classList.remove(
+    "flash-review-session-active"
+  );
+
+  reviewPomodoroRemaining =
+    reviewPomodoroMinutes * 60;
+
+  renderReviewPomodoro();
+  updateReviewLauncher();
+
+  if (!silent) {
+    await loadMetrics();
+  }
+}
+
 async function renderCurrentReview() {
+  if (!reviewSessionActive) {
+    updateReviewLauncher();
+    return;
+  }
+
   const empty =
     document.getElementById(
       "review-empty"
@@ -1126,11 +1617,50 @@ async function loadReviewQueue() {
   }
 
 
-  await renderCurrentReview();
+  updateReviewLauncher();
 }
 
 
 function wireReview() {
+  document
+    .getElementById(
+      "start-review-session"
+    )
+    ?.addEventListener(
+      "click",
+      startReviewSession
+    );
+
+  document
+    .getElementById(
+      "finish-review-session"
+    )
+    ?.addEventListener(
+      "click",
+      () => finishReviewSession()
+    );
+
+  document
+    .getElementById(
+      "review-pomodoro-toggle"
+    )
+    ?.addEventListener(
+      "click",
+      toggleReviewPomodoro
+    );
+
+  window.addEventListener(
+    "pagehide",
+    () => {
+      if (reviewSessionActive) {
+        finishReviewSession({
+          silent: true,
+          keepaliveAttempt: true
+        });
+      }
+    }
+  );
+
   document
     .getElementById(
       "show-answer"
@@ -6861,7 +7391,7 @@ function startExtraReview(cards, label = "revisão extraordinária") {
       `Revisão extra · ${label}`;
   }
 
-  renderCurrentReview();
+  updateReviewLauncher();
 }
 
 async function loadLibrary() {
@@ -7309,7 +7839,10 @@ async function initFlashcards() {
   wireLibrary();
 
   await loadFlashSettings();
+  await closeAbandonedReviewSession();
   await redeemFlashcardShareFromUrl();
+
+  renderReviewPomodoro();
 
   await Promise.all([
     loadMetrics(),
