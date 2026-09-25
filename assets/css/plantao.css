@@ -558,3 +558,41 @@ body.plantao-monitor-open{overflow:hidden}
     grid-template-columns:minmax(0,1.9fr) 72px!important;
   }
 }
+
+
+/* v4.7 — identificação do paciente mais clara */
+.plantao-patient-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:14px;
+  align-items:stretch;
+}
+.plantao-patient-meta span{
+  display:flex;
+  align-items:center;
+  min-height:34px;
+  padding:8px 11px;
+  border:1px solid var(--border);
+  border-radius:11px;
+  background:var(--surface-2);
+  color:var(--text);
+  font-size:12px;
+  font-weight:800;
+  line-height:1.2;
+}
+#plantao-age{
+  flex-basis:100%;
+  width:max-content;
+  max-width:220px;
+  font-size:13px;
+}
+#plantao-sex{
+  max-width:220px;
+}
+#plantao-chief:empty{display:none}
+@media(max-width:680px){
+  .plantao-patient-meta{display:grid;grid-template-columns:1fr 1fr}
+  #plantao-age{grid-column:1/-1;max-width:none}
+  #plantao-sex{max-width:none}
+}
