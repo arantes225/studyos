@@ -350,7 +350,6 @@
     const reply=phoneReplyFor(clean)||"Não tenho essa informação agora.";
     const messages=[...currentPhoneMessages(),{sender:"specialist",content:clean},{sender:"requester",content:reply}];
     renderPhoneMessages(messages);
-    $("plantao-phone-input").value="";
     await sb.from("interconsultation_messages").insert([
       {session_id:state.phoneSession.id,user_id:state.user.id,turn_index:specialistIndex,sender:"specialist",content:clean,metadata:{pilot:true,...choiceMeta}},
       {session_id:state.phoneSession.id,user_id:state.user.id,turn_index:requesterIndex,sender:"requester",content:reply,metadata:{pilot:true,...choiceMeta}}
