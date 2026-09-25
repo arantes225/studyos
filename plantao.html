@@ -17,7 +17,7 @@
   <link rel="icon" type="image/png" href="/assets/img/logos/logo-icone-original.png?v=favicon2">
   <link rel="stylesheet" href="assets/css/style.css?v=16.6">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
-  <link rel="stylesheet" href="assets/css/plantao.css?v=5.1">
+  <link rel="stylesheet" href="assets/css/plantao.css?v=5.2">
   <link rel="canonical" href="/plantao/">
   <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
   <script>(function(){try{if(location.pathname.endsWith("/plantao.html"))history.replaceState(null,"","/plantao/"+location.search+location.hash);}catch(e){}})();</script>
@@ -181,6 +181,34 @@
 
         </section>
 
+        <div id="plantao-report-overlay" class="plantao-report-overlay" hidden aria-hidden="true">
+          <article class="plantao-report-board" role="dialog" aria-modal="true" aria-labelledby="plantao-report-exam">
+            <div class="plantao-report-clip" aria-hidden="true"></div>
+            <button id="plantao-report-close" class="plantao-report-close" type="button" aria-label="Fechar laudo">×</button>
+            <header class="plantao-report-head">
+              <span class="plantao-report-brand">LURIA · SALA DE EMERGÊNCIA</span>
+              <h2>Laudo de exame</h2>
+            </header>
+            <section class="plantao-report-patient">
+              <div><span>Paciente</span><strong id="plantao-report-name">—</strong></div>
+              <div><span>Idade</span><strong id="plantao-report-age">—</strong></div>
+              <div><span>Sexo</span><strong id="plantao-report-sex">—</strong></div>
+              <div><span>Horário</span><strong id="plantao-report-time">—</strong></div>
+            </section>
+            <section class="plantao-report-content">
+              <span class="plantao-report-label">Exame</span>
+              <h3 id="plantao-report-exam">—</h3>
+              <div class="plantao-report-rule"></div>
+              <span class="plantao-report-label">Laudo:</span>
+              <p id="plantao-report-text">—</p>
+            </section>
+            <footer class="plantao-report-footer">
+              <span>Documento simulado para fins educacionais</span>
+              <button id="plantao-report-ok" class="button primary" type="button">Fechar laudo</button>
+            </footer>
+          </article>
+        </div>
+
         <section id="plantao-debrief" class="plantao-debrief" hidden>
           <div class="plantao-debrief-head panel">
             <div><span class="badge accent">Debriefing</span><h2 id="plantao-debrief-title">Caso encerrado</h2><p id="plantao-diagnosis"></p></div>
@@ -204,7 +232,7 @@
   <script src="assets/js/app.js?v=17.8-streak"></script>
   <script src="assets/js/plantao-monitor.js?v=2.2"></script>
   <script src="assets/js/plantao-engine.js?v=3.0"></script>
-  <script src="assets/js/plantao.js?v=6.2"></script>
+  <script src="assets/js/plantao.js?v=6.3"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
 </html>
