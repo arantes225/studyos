@@ -518,3 +518,43 @@ body.plantao-monitor-open{overflow:hidden}
     line-height:1.52;
   }
 }
+
+
+/* v4.6 — monitor com faixa de traçado ampliada e coluna numérica compacta */
+.plantao-monitor-dock .plantao-monitor{
+  grid-template-columns:minmax(0,1.9fr) minmax(46px,.22fr);
+  column-gap:5px;
+}
+.plantao-monitor-dock .plantao-vital:nth-child(1),
+.plantao-monitor-dock .plantao-vital:nth-child(2),
+.plantao-monitor-dock .plantao-vital:nth-child(3){
+  padding-left:3px;
+  padding-right:1px;
+}
+.plantao-monitor-dock .plantao-vital strong{
+  font-size:clamp(13px,1.45vw,20px);
+}
+.plantao-monitor-dock .plantao-monitor canvas{
+  width:100%;
+  min-width:0;
+  transform:none;
+}
+.plantao-monitor.is-expanded{
+  grid-template-columns:minmax(0,2fr) minmax(105px,.22fr)!important;
+}
+@media(max-width:980px) and (min-width:681px){
+  .plantao-monitor-dock .plantao-monitor{
+    grid-template-columns:minmax(0,1.82fr) 46px;
+    column-gap:4px;
+  }
+}
+@media(max-width:680px){
+  .plantao-bedside .plantao-monitor-dock .plantao-monitor{
+    grid-template-columns:minmax(0,1.82fr) 39px;
+    column-gap:3px;
+  }
+  .plantao-monitor-dock .plantao-vital strong{font-size:15px}
+  .plantao-monitor.is-expanded{
+    grid-template-columns:minmax(0,1.9fr) 72px!important;
+  }
+}
