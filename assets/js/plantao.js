@@ -1273,11 +1273,93 @@
     });
   }
 
+  function isTraumaCase(){
+    const t=clinicalContextText();
+    return /trauma|atropel|acidente|queda|ferimento|arma de fogo|arma branca|fratura|luxacao|hemotorax traum|pneumotorax traum|tce|traumatismo|politrauma|hemorragia arterial de extremidade/.test(t);
+  }
+
+  function initialProcedureResult(action){
+    const v=state.vitals||state.current?.initial_vitals||{};
+    const hr=Number(v.hr);
+    const rr=Number(v.rr);
+    const spo2=Number(v.spo2);
+    const temp=Number(v.temp);
+    const bp=String(v.bp||"");
+    const rhythm=String(v.rhythm||"").trim();
+    const pulsePresent=v.pulse!==false && Number.isFinite(hr) && hr>0;
+    const systolic=Number(bp.split("/")[0]);
+    const t=clinicalContextText();
+
+    if(action.id==="check_pulse"){
+      if(!pulsePresent || hr===0 || /assistolia|fibrilacao ventricular|parada cardiorrespiratoria|pcr/.test(normalizeLabel(rhythm+" "+t))){
+        const breathing=Number.isFinite(rr)&&rr>0 ? "respiração agônica/ineficaz" : "ausência de respiração normal";
+        return "Pulso central não palpável. "+breathing+".";
+      }
+      const regular=/fibrilacao atrial|irregular/.test(normalizeLabel(rhythm)) ? "irregular" : "regular";
+      const quality=Number.isFinite(systolic)&&systolic<90 ? "fino e de baixa amplitude" : (hr>=120 ? "rápido, de amplitude preservada" : "palpável e de boa amplitude");
+      const resp=!Number.isFinite(rr) ? "padrão respiratório não quantificado"
+        : rr===0 ? "apneia"
+        : rr>=30 ? "taquipneia importante, com "+rr+" irpm"
+        : rr>=21 ? "taquipneia, com "+rr+" irpm"
+        : rr<10 ? "bradipneia, com "+rr+" irpm"
+        : "respiração espontânea, "+rr+" irpm, sem apneia";
+      return "Pulso central presente, "+regular+", cerca de "+Math.round(hr)+" bpm, "+quality+". "+resp+".";
+    }
+
+    if(action.id==="check_rhythm"){
+      if(!state.monitorOn) return "O monitor ainda não está conectado.";
+      return "Ritmo no monitor: "+(rhythm||"não identificado")+"; frequência aproximada de "+(Number.isFinite(hr)?Math.round(hr)+" bpm":"—")+".";
+    }
+
+    if(action.id==="glucose"){
+      if(/hipoglicemia/.test(t)) return "Glicemia capilar: 42 mg/dL.";
+      if(/cetoacidose/.test(t)) return "Glicemia capilar: 428 mg/dL.";
+      if(/estado hiperosmolar|hiperosmolar/.test(t)) return "Glicemia capilar: 684 mg/dL.";
+      if(/hiperglicemia/.test(t)) return "Glicemia capilar: 286 mg/dL.";
+      return "Glicemia capilar: 104 mg/dL.";
+    }
+
+    if(action.id==="abcde"){
+      if(!isTraumaCase()) return "Avaliação ABCDE reservada aos casos de trauma neste simulador.";
+      const a=/via aerea|obstrucao|estridor/.test(t) ? "A: via aérea ameaçada, com necessidade de intervenção imediata." : "A: via aérea pérvia, sem obstrução evidente.";
+      const b=(!Number.isFinite(rr)||rr===0) ? "B: ausência de ventilação espontânea eficaz."
+        : "B: FR "+rr+" irpm, SpO₂ "+(Number.isFinite(spo2)?spo2+"%":"—")+", "+(rr>=30||spo2<92?"com comprometimento respiratório.":"ventilação espontânea presente.");
+      const c=!pulsePresent ? "C: sem pulso central palpável."
+        : "C: pulso "+Math.round(hr)+" bpm, PA "+(bp||"—")+", "+(Number.isFinite(systolic)&&systolic<90?"sinais de hipoperfusão.":"perfusão central preservada.");
+      const d="D: "+(String(v.mental||"Consciente"))+".";
+      const e="E: exposição realizada com pesquisa de hemorragias, deformidades e lesões traumáticas ocultas.";
+      return [a,b,c,d,e].join(" ");
+    }
+
+    if(action.id==="monitor"){
+      return "Monitor conectado: FC "+(Number.isFinite(hr)?Math.round(hr)+" bpm":"—")+", SpO₂ "+(Number.isFinite(spo2)?spo2+"%":"—")+", FR "+(Number.isFinite(rr)?rr+" irpm":"—")+", PA "+(bp||"—")+", temperatura "+(Number.isFinite(temp)?String(temp).replace(".",",")+" °C":"—")+".";
+    }
+
+    if(action.id==="oxygen"){
+      return Number.isFinite(spo2)&&spo2<94
+        ? "Oxigênio suplementar iniciado por hipoxemia; reavaliar SpO₂ e trabalho respiratório após a intervenção."
+        : "Oxigênio suplementar iniciado; paciente não apresentava hipoxemia importante antes da intervenção.";
+    }
+
+    if(action.id==="bvm"){
+      return "Ventilação com bolsa-válvula-máscara iniciada; há expansão torácica bilateral visível a cada ventilação.";
+    }
+
+    if(action.id==="iv_access") return "Acesso venoso periférico calibroso obtido e pérvio.";
+    if(action.id==="iv_access_2") return "Segundo acesso venoso periférico calibroso obtido e pérvio.";
+    if(action.id==="io_access") return "Acesso intraósseo obtido, com fluxo adequado após confirmação de posicionamento.";
+    if(action.id==="call_team") return "Equipe de emergência acionada e apoio adicional a caminho.";
+    if(action.id==="cpr") return !pulsePresent ? "RCP iniciada imediatamente, com compressões torácicas contínuas e ventilação conforme protocolo." : "RCP iniciada apesar da presença de pulso palpável.";
+    return contextual(action.result||action.label);
+  }
+
   function mergedActions(){
     const caseList=[...caseActions(),...importedHistoryActions()];
 
     const byId=new Map(caseList.map(a=>[a.id,a]));
-    const generic=[...GENERIC_ACTIONS,...allCaseDiagnoses(),...GENERAL_DISPOSITIONS].map(a=>{
+    const generic=[...GENERIC_ACTIONS,...allCaseDiagnoses(),...GENERAL_DISPOSITIONS]
+      .filter(a=>a.id!=="abcde" || isTraumaCase())
+      .map(a=>{
       const exact=byId.get(a.id);
       return exact ? {...a,...exact,subgroup:a.subgroup||exact.subgroup} : a;
     });
@@ -2489,7 +2571,9 @@
           ? physicalExamResult(action)
           : (["exames","laboratorio","imagem"].includes(action.category)
               ? diagnosticTestResult(action)
-              : contextual(action.result||action.label));
+              : (["iniciais","monitorizacao"].includes(action.category)
+                  ? initialProcedureResult(action)
+                  : contextual(action.result||action.label)));
         const isDiagnosticExam=["exames","laboratorio","imagem"].includes(action.category);
         if(isDiagnosticExam){
           feed((action.label||"Exame")+" realizado. Laudo disponível.","event");
