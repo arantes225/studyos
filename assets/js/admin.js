@@ -2220,17 +2220,19 @@
             <button class="button secondary admin-qf-view-block-wide" type="button" data-qf-view-block="${Number(batch.batch_number)}:${n}">${needs || rejected ? "Ver pendências" : "Ver bloco"}</button>
             <button class="button secondary admin-qf-import-stage-wide" type="button" data-qf-import-stage="${Number(batch.batch_number)}:${n}">Importar etapa</button>
 
-            ${!lotInFinalReview ? `
-              <div class="admin-qf-block-ai-action">
-                <small>${esc(blockAction.phase || "Etapa atual")}</small>
-                ${blockAction.provider ? `
-                  <button class="button primary" type="button" data-qf-copy-block-stage="${Number(batch.batch_number)}:${n}">Copiar prompt da etapa</button>
-                  <button class="button secondary" type="button" data-qf-block-ai="${Number(batch.batch_number)}:${n}">${esc("Copiar + abrir " + blockAction.providerLabel)}</button>
-                ` : `
-                  <button class="button secondary" type="button" disabled>${blockAction?.next?.next_stage === "human_review" ? "Etapa sem prompt · aprovação humana" : "Prompt da etapa indisponível"}</button>
-                `}
-              </div>
-            ` : ""}
+            <div class="admin-qf-block-ai-action">
+              <small>${esc(blockAction.phase || "Etapa atual")}</small>
+              ${blockAction.provider ? `
+                <button class="button primary" type="button" data-qf-copy-block-stage="${Number(batch.batch_number)}:${n}">Copiar prompt da etapa</button>
+                <button class="button secondary" type="button" data-qf-block-ai="${Number(batch.batch_number)}:${n}">${esc("Copiar + abrir " + blockAction.providerLabel)}</button>
+              ` : blockAction?.next?.next_stage === "human_review" ? `
+                <button class="button secondary" type="button" disabled>Etapa sem prompt · aprovação humana</button>
+              ` : blockAction?.next?.next_stage === "block_complete" ? `
+                <button class="button secondary" type="button" disabled>Bloco concluído</button>
+              ` : `
+                <button class="button secondary" type="button" disabled>Prompt da etapa indisponível</button>
+              `}
+            </div>
 
             ${human === "pending" && blockAction?.next?.next_stage === "human_review" ? `
               <div class="admin-qf-human-gate">
