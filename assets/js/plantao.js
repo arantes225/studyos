@@ -1003,6 +1003,13 @@
       return;
     }
 
+    const interventionTab=event.target.closest("[data-intervention-tab]");
+    if (interventionTab) {
+      state.interventionTab=interventionTab.dataset.interventionTab;
+      renderActions();
+      return;
+    }
+
     const action=event.target.closest("[data-case-action]");
     if (action) return runAction(action.dataset.caseAction);
   });
