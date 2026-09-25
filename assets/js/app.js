@@ -424,7 +424,7 @@ function sidebarMarkup(user, profile = null) {
           <a class="nav-sublink ${page === "flashcards" ? "active" : ""}" href="/flashcards/">Flashcards</a>
           <a class="nav-sublink ${page === "erros" ? "active" : ""}" href="/caderno-erros/">Caderno de erros</a>
           <a class="nav-sublink ${page === "questoes" ? "active" : ""}" href="/questoes-simulados/">Questões e Simulados</a>
-          <a class="nav-sublink ${page === "plantao" ? "active" : ""}" href="/plantao/">Plantão</a>
+          ${profile?.is_admin === true ? `<a class="nav-sublink ${page === "plantao" ? "active" : ""}" href="/plantao/">Plantão</a>` : ""}
         </div>
       </div>
 
@@ -492,7 +492,7 @@ async function carregarPerfil(userId) {
 
   const { data, error } = await sb
     .from("profiles")
-    .select("display_name, gender, specialty")
+    .select("display_name, gender, specialty, is_admin")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -4303,7 +4303,7 @@ async function iniciarApp() {
   // As consultas independentes agora rodam em paralelo.
   // Antes elas eram aguardadas em série e somavam vários round-trips do Supabase.
   const adminCheckPromise =
-    page === "admin"
+    (page === "admin" || page === "plantao")
       ? verificarAcessoAdmin()
       : Promise.resolve(null);
 
@@ -4323,7 +4323,7 @@ async function iniciarApp() {
     acessoAdminInicial;
 
   if (
-    page === "admin"
+    (page === "admin" || page === "plantao")
     && acessoAdmin !== true
   ) {
     window.location.replace(
