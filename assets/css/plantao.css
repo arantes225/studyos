@@ -2013,3 +2013,99 @@ body[data-page="plantao"] .plantao-phone-notch{
     width:100%;
   }
 }
+
+
+/* v6.8 — marca LuriaZap no topo da lista de conversas */
+body[data-page="plantao"] .plantao-phone-inbox-head{
+  grid-template-columns:30px minmax(0,1fr) 30px;
+  min-height:82px;
+  padding:40px 14px 12px;
+  background:var(--surface)!important;
+  color:var(--accent)!important;
+  border-bottom:1px solid var(--border);
+}
+body[data-page="plantao"] .plantao-phone-inbox-head>button{
+  color:var(--accent)!important;
+}
+body[data-page="plantao"] .plantao-phone-inbox-head>span{
+  color:var(--muted)!important;
+}
+body[data-page="plantao"] .plantao-phone-brand{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+body[data-page="plantao"] .plantao-phone-brand-symbol{
+  position:relative;
+  flex:0 0 31px;
+  width:31px;
+  height:31px;
+}
+body[data-page="plantao"] .plantao-phone-brand-logo{
+  position:absolute;
+  inset:0;
+  width:31px;
+  height:31px;
+  object-fit:contain;
+}
+body[data-page="plantao"] .plantao-phone-brand-logo-dark,
+body[data-page="plantao"] .plantao-phone-brand-logo-pink{
+  display:none;
+}
+body[data-page="plantao"] .plantao-phone-brand-name{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:18px!important;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:-.025em;
+  color:var(--accent)!important;
+  text-align:left!important;
+}
+:root[data-theme="dark"] body[data-page="plantao"] .plantao-phone-inbox-head{
+  color:#fff!important;
+}
+:root[data-theme="dark"] body[data-page="plantao"] .plantao-phone-inbox-head>button,
+:root[data-theme="dark"] body[data-page="plantao"] .plantao-phone-brand-name{
+  color:#fff!important;
+}
+:root[data-theme="dark"] body[data-page="plantao"] .plantao-phone-brand-logo-light{
+  display:none;
+}
+:root[data-theme="dark"] body[data-page="plantao"] .plantao-phone-brand-logo-dark{
+  display:block;
+  filter:brightness(0) invert(1);
+}
+:root[data-theme="leila-mood"] body[data-page="plantao"] .plantao-phone-brand-logo-light{
+  display:none;
+}
+:root[data-theme="leila-mood"] body[data-page="plantao"] .plantao-phone-brand-logo-pink{
+  display:block;
+}
+:root[data-theme="leila-mood"] body[data-page="plantao"] .plantao-phone-inbox-head>button,
+:root[data-theme="leila-mood"] body[data-page="plantao"] .plantao-phone-brand-name{
+  color:var(--accent)!important;
+}
+@media(max-width:430px){
+  body[data-page="plantao"] .plantao-phone-inbox-head{
+    min-height:78px;
+    padding-left:11px;
+    padding-right:11px;
+  }
+  body[data-page="plantao"] .plantao-phone-brand{
+    gap:6px;
+  }
+  body[data-page="plantao"] .plantao-phone-brand-symbol,
+  body[data-page="plantao"] .plantao-phone-brand-logo{
+    width:28px;
+    height:28px;
+    flex-basis:28px;
+  }
+  body[data-page="plantao"] .plantao-phone-brand-name{
+    font-size:17px!important;
+  }
+}
