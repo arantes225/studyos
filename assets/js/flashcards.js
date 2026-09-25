@@ -4273,6 +4273,206 @@ function wireImport() {
     );
 }
 
+function closeLibraryFilterPickers(exceptId = null) {
+  document
+    .querySelectorAll("[data-library-picker-menu]")
+    .forEach(menu => {
+      const id =
+        menu.dataset.libraryPickerMenu;
+
+      if (exceptId && id === exceptId) {
+        return;
+      }
+
+      menu.hidden = true;
+
+      document
+        .querySelector(
+          `[data-library-picker-toggle="${CSS.escape(id)}"]`
+        )
+        ?.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+    });
+}
+
+function renderLibraryFilterPicker(selectId) {
+  const select =
+    document.getElementById(selectId);
+
+  const toggle =
+    document.querySelector(
+      `[data-library-picker-toggle="${CSS.escape(selectId)}"]`
+    );
+
+  const label =
+    document.querySelector(
+      `[data-library-picker-label="${CSS.escape(selectId)}"]`
+    );
+
+  const menu =
+    document.querySelector(
+      `[data-library-picker-menu="${CSS.escape(selectId)}"]`
+    );
+
+  if (!select || !toggle || !label || !menu) {
+    return;
+  }
+
+  const options =
+    [...select.options];
+
+  const selected =
+    options.find(
+      option =>
+        option.value === select.value
+    )
+    || options[0];
+
+  label.textContent =
+    selected?.textContent
+      ?.trim()
+    || "";
+
+  menu.innerHTML = "";
+
+  for (const option of options) {
+    const item =
+      document.createElement("button");
+
+    item.type = "button";
+    item.className =
+      "library-filter-option";
+
+    item.dataset.value =
+      option.value;
+
+    item.setAttribute(
+      "role",
+      "option"
+    );
+
+    item.setAttribute(
+      "aria-selected",
+      option.value === select.value
+        ? "true"
+        : "false"
+    );
+
+    item.textContent =
+      option.textContent
+        ?.trim()
+      || "";
+
+    item.addEventListener(
+      "click",
+      event => {
+        event.stopPropagation();
+
+        select.value =
+          option.value;
+
+        label.textContent =
+          item.textContent;
+
+        menu.hidden = true;
+
+        toggle.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+
+        select.dispatchEvent(
+          new Event(
+            "change",
+            {
+              bubbles: true
+            }
+          )
+        );
+      }
+    );
+
+    menu.appendChild(item);
+  }
+}
+
+function refreshLibraryFilterPickers() {
+  [
+    "library-area",
+    "library-materia",
+    "library-theme",
+    "library-active"
+  ].forEach(
+    renderLibraryFilterPicker
+  );
+}
+
+function wireLibraryFilterPickers() {
+  [
+    "library-area",
+    "library-materia",
+    "library-theme",
+    "library-active"
+  ].forEach(selectId => {
+    const toggle =
+      document.querySelector(
+        `[data-library-picker-toggle="${CSS.escape(selectId)}"]`
+      );
+
+    const menu =
+      document.querySelector(
+        `[data-library-picker-menu="${CSS.escape(selectId)}"]`
+      );
+
+    toggle?.addEventListener(
+      "click",
+      event => {
+        event.stopPropagation();
+
+        if (!menu) {
+          return;
+        }
+
+        const willOpen =
+          menu.hidden;
+
+        closeLibraryFilterPickers(
+          willOpen
+            ? selectId
+            : null
+        );
+
+        menu.hidden =
+          !willOpen;
+
+        toggle.setAttribute(
+          "aria-expanded",
+          willOpen
+            ? "true"
+            : "false"
+        );
+      }
+    );
+  });
+
+  document.addEventListener(
+    "click",
+    event => {
+      if (
+        !event.target.closest(
+          ".library-filter-picker"
+        )
+      ) {
+        closeLibraryFilterPickers();
+      }
+    }
+  );
+
+  refreshLibraryFilterPickers();
+}
+
 function populateLibraryAreas() {
   const select =
     document.getElementById(
@@ -4318,6 +4518,10 @@ function populateLibraryAreas() {
     select.value =
       current;
   }
+
+  renderLibraryFilterPicker(
+    "library-area"
+  );
 }
 
 function filteredLibraryCards() {
@@ -6102,6 +6306,14 @@ function populateLibraryTaxonomyFilters() {
   if (themes.includes(previousTheme)) {
     themeSelect.value = previousTheme;
   }
+
+  renderLibraryFilterPicker(
+    "library-materia"
+  );
+
+  renderLibraryFilterPicker(
+    "library-theme"
+  );
 }
 
 function renderLibraryDecks() {
@@ -6836,6 +7048,8 @@ function wireReviewCardMenu() {
 
 
 function wireLibrary() {
+  wireLibraryFilterPickers();
+
   document
     .getElementById(
       "library-search"
@@ -6873,6 +7087,15 @@ function wireLibrary() {
   document
     .getElementById(
       "library-theme"
+    )
+    ?.addEventListener(
+      "change",
+      renderLibrary
+    );
+
+  document
+    .getElementById(
+      "library-active"
     )
     ?.addEventListener(
       "change",
@@ -7054,6 +7277,7 @@ function wireLibrary() {
       ) {
         closeFlashcardMenus();
         closeReviewCardMenu();
+        closeLibraryFilterPickers();
       }
     }
   );
