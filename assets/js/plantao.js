@@ -116,8 +116,12 @@
     }).join("");
   }
 
+  const GROUPS = {avaliar:["anamnese","exame","monitorizacao"], investigar:["exames","laboratorio","imagem"], intervir:["procedimentos","tratamento"], discutir:["raciocinio"]};
+  const groupOf = category => Object.keys(GROUPS).find(key=>GROUPS[key].includes(category)) || "discutir";
+
   function renderVitals() {
     const v=state.vitals || {};
+    window.PlantaoMonitor?.update(v);
     const items=[
       ["FC",v.hr,"bpm"],
       ["PA",v.bp,"mmHg"],
@@ -147,22 +151,22 @@
 
   function renderActions() {
     const actions=Array.isArray(state.current?.actions) ? state.current.actions : [];
-    const categories=[...new Set(actions.map(x=>x.category))];
+    const categories=Object.keys(GROUPS);
     if (!state.category || !categories.includes(state.category)) state.category=categories[0] || null;
 
     $("plantao-action-tabs").innerHTML=categories.map(cat=>`
-      <button class="plantao-action-tab ${state.category===cat?"active":""}" type="button" data-case-category="${esc(cat)}">${esc(CATEGORY_LABELS[cat]||cat)}</button>
+      <button class="plantao-action-tab ${state.category===cat?"active":""}" type="button" aria-pressed="${state.category===cat}" data-case-category="${esc(cat)}"><span aria-hidden="true">${{avaliar:"▤",investigar:"⌕",intervir:"✚",discutir:"☏"}[cat]}</span>${{avaliar:"Avaliar",investigar:"Investigar",intervir:"Intervir",discutir:"Discutir"}[cat]}</button>
     `).join("");
 
-    $("plantao-actions").innerHTML=actions.filter(x=>x.category===state.category).map(action=>{
+    $("plantao-actions").innerHTML=actions.filter(x=>groupOf(x.category)===state.category).map(action=>{
       const done=state.performed.includes(action.id);
       return `
         <button class="plantao-action" type="button" data-case-action="${esc(action.id)}" ${done?"disabled":""}>
           <strong>${esc(action.label)}</strong>
-          <small>${done ? "Já realizado" : "+"+Number(action.time_min||0)+" min"}</small>
+          <small>${esc(CATEGORY_LABELS[action.category]||action.category)} · ${done ? "Já realizado" : "+"+Number(action.time_min||0)+" min"}</small>
         </button>
       `;
-    }).join("");
+    }).join("") || '<p class="plantao-no-actions">Nenhuma ação deste grupo disponível neste caso.</p>';
   }
 
   function applyEffects(effects={}) {

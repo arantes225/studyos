@@ -17,7 +17,7 @@
   <link rel="icon" type="image/png" href="/assets/img/logos/logo-icone-original.png?v=favicon2">
   <link rel="stylesheet" href="assets/css/style.css?v=16.6">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
-  <link rel="stylesheet" href="assets/css/plantao.css?v=1.0">
+  <link rel="stylesheet" href="assets/css/plantao.css?v=2.0">
   <link rel="canonical" href="/plantao/">
   <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
   <script>(function(){try{if(location.pathname.endsWith("/plantao.html"))history.replaceState(null,"","/plantao/"+location.search+location.hash);}catch(e){}})();</script>
@@ -64,13 +64,23 @@
               <p id="plantao-opening"></p>
               <div class="plantao-patient-meta"><span id="plantao-age"></span><span id="plantao-sex"></span><span id="plantao-chief"></span></div>
             </div>
-            <div id="plantao-vitals" class="plantao-vitals"></div>
+
           </article>
 
+          <section class="plantao-scene" aria-label="Leito e monitor do paciente">
+            <img id="plantao-patient-image" src="assets/img/plantao/awake.webp" alt="Ilustração do paciente acordado no leito" width="1536" height="1024">
+            <span id="plantao-consciousness" class="plantao-consciousness"></span>
+            <div class="plantao-monitor" aria-label="Monitor de sinais vitais">
+              <div class="plantao-monitor-heading">MONITOR <span>● AO VIVO</span></div>
+              <canvas id="plantao-waveforms" width="600" height="220" aria-label="Traçados ilustrativos de ECG, pulso e respiração"></canvas>
+              <div id="plantao-vitals" class="plantao-vitals" aria-live="polite"></div>
+              <small>Traçados ilustrativos • valores do caso</small>
+            </div>
+          </section>
+          <div id="plantao-action-tabs" class="plantao-action-tabs" aria-label="Grupos de ações"></div>
           <div class="plantao-workspace">
             <section class="plantao-actions-panel panel">
               <div class="plantao-section-head"><div><span class="metric-label">Ações</span><h2>O que você quer fazer?</h2></div><span id="plantao-score-live" class="plantao-score-live">0 pts</span></div>
-              <div id="plantao-action-tabs" class="plantao-action-tabs"></div>
               <div id="plantao-actions" class="plantao-actions"></div>
             </section>
             <aside class="plantao-feed panel">
@@ -101,7 +111,8 @@
   <script src="/assets/vendor/supabase-2.110.6.js"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=17.4"></script>
-  <script src="assets/js/plantao.js?v=1.0"></script>
+  <script src="assets/js/plantao-monitor.js?v=2.0"></script>
+  <script src="assets/js/plantao.js?v=2.0"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
 </html>
