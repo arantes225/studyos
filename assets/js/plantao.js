@@ -521,6 +521,10 @@
   const groupOf = category => Object.keys(GROUPS).find(key=>GROUPS[key].categories.includes(category)) || "intervir";
   const done = id => E.done(state.current,state.performed,id);
   function openActions(category) {
+    if(category==="conduta" && !state.diagnosis) {
+      feed("Defina primeiro uma hipótese diagnóstica antes de escolher a conduta final.","warning");
+      return;
+    }
     state.category=category;
     $("plantao-action-search").value="";
     $("plantao-action-drawer").hidden=false;
@@ -616,7 +620,9 @@
   function renderActions() {
     const actions=mergedActions();
     if(!GROUPS[state.category])state.category="anamnese";
-    $("plantao-action-tabs").innerHTML=Object.entries(GROUPS).map(([key,g])=>`
+    $("plantao-action-tabs").innerHTML=Object.entries(GROUPS)
+      .filter(([key])=>key!=="conduta" || !!state.diagnosis)
+      .map(([key,g])=>`
       <button class="plantao-action-tab" type="button" data-case-category="${key}" aria-controls="plantao-action-drawer" aria-expanded="${!$("plantao-action-drawer").hidden&&key===state.category}">
         <span aria-hidden="true">${g.icon}</span><span>${g.label}</span>
       </button>`).join("");
