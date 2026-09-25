@@ -473,7 +473,24 @@
     `).join("");
   }
 
+  function liveSafeMessage(message) {
+    let text=String(message||"").trim();
+    if(!text || state.session?.status==="completed") return text;
+    const secrets=[state.current?.debrief?.diagnosis,state.current?.title]
+      .filter(Boolean)
+      .map(value=>String(value).trim())
+      .filter(value=>value.length>=5);
+    for(const secret of secrets){
+      const escaped=secret.replace(/[.*+?^$()|[\]\\]/g,"\\  function feed(message,type="event",time=state.elapsed) {
+    state.log.push({time,message,type});
+");
+      text=text.replace(new RegExp(escaped,"gi"),"achado clínico relevante");
+    }
+    return text || "Informação registrada no prontuário.";
+  }
+
   function feed(message,type="event",time=state.elapsed) {
+    message=liveSafeMessage(message);
     state.log.push({time,message,type});
     $("plantao-feed").innerHTML=state.log.slice().reverse().map(item=>`
       <div class="plantao-feed-item ${esc(item.type)}">
