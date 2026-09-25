@@ -1044,5 +1044,18 @@
   $("plantao-retry")?.addEventListener("click",()=>state.current && startCase(state.current.id));
   $("plantao-death-review")?.addEventListener("click",openDeathDebrief);
 
+  function updatePhonePreviewClock(){
+    const now=new Date();
+    const hh=String(now.getHours()).padStart(2,"0");
+    const mm=String(now.getMinutes()).padStart(2,"0");
+    const value=hh+":"+mm;
+    const status=$("plantao-phone-time");
+    const stamp=$("plantao-phone-chat-time");
+    if(status) status.textContent=value;
+    if(stamp) stamp.textContent=value;
+  }
+
+  updatePhonePreviewClock();
+  window.setInterval(updatePhonePreviewClock,30000);
   load().catch(error=>console.error("Plantão:",error));
 })();
