@@ -17,7 +17,7 @@
   function requiredActions(item){
     const configured=Array.isArray(item.completion_rules?.required_actions)?item.completion_rules.required_actions.filter(Boolean):[];
     if(configured.length) return [...new Set(configured)];
-    const t=String(item.title||item.debrief?.diagnosis||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase();
+    const t=String([item.title,item.debrief?.diagnosis,item.summary,item.presentation?.opening].filter(Boolean).join(" ")).normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase();
     const ids=["abcde","monitor"];
     const add=(...xs)=>ids.push(...xs);
     if(/anafilax/.test(t)) add("epi_im");
