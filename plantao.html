@@ -17,7 +17,7 @@
   <link rel="icon" type="image/png" href="/assets/img/logos/logo-icone-original.png?v=favicon2">
   <link rel="stylesheet" href="assets/css/style.css?v=16.6">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
-  <link rel="stylesheet" href="assets/css/plantao.css?v=2.1">
+  <link rel="stylesheet" href="assets/css/plantao.css?v=3.0">
   <link rel="canonical" href="/plantao/">
   <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
   <script>(function(){try{if(location.pathname.endsWith("/plantao.html"))history.replaceState(null,"","/plantao/"+location.search+location.hash);}catch(e){}})();</script>
@@ -54,7 +54,7 @@
           <div class="plantao-sim-top">
             <button id="plantao-back" class="button secondary" type="button">← Casos</button>
             <div class="plantao-clock"><span>Tempo do caso</span><strong id="plantao-time">00:00</strong></div>
-            <button id="plantao-finish" class="button primary" type="button">Encerrar caso</button>
+            <button id="plantao-finish" class="button primary" type="button">Definir destino</button>
           </div>
 
           <article class="plantao-patient-card panel">
@@ -67,6 +67,17 @@
 
           </article>
 
+          <div class="plantao-bedside">
+            <aside class="plantao-action-rail" aria-label="Menu clínico">
+              <div id="plantao-score-live" class="plantao-score-live" aria-live="polite">0/100</div>
+              <nav id="plantao-action-tabs" class="plantao-action-tabs" aria-label="Grupos de ações"></nav>
+              <section id="plantao-action-drawer" class="plantao-action-drawer" hidden aria-labelledby="plantao-action-title">
+                <div class="plantao-drawer-head"><button id="plantao-action-close" class="button secondary" type="button">← Voltar</button><h2 id="plantao-action-title">Ações</h2></div>
+                <label class="plantao-search-label" for="plantao-action-search">Buscar nesta lista</label>
+                <input id="plantao-action-search" class="plantao-action-search" type="search" placeholder="Medicamento, exame ou conduta…">
+                <div id="plantao-actions" class="plantao-actions"></div>
+              </section>
+            </aside>
           <section class="plantao-scene" aria-label="Leito e monitor do paciente">
             <img id="plantao-patient-image" src="assets/img/plantao/awake.webp" alt="Ilustração do paciente acordado no leito" width="1536" height="1024">
             <span id="plantao-consciousness" class="plantao-consciousness"></span>
@@ -77,17 +88,11 @@
               <small>Simulação de ritmo • janela de 6 segundos</small>
             </div>
           </section>
-          <div id="plantao-action-tabs" class="plantao-action-tabs" aria-label="Grupos de ações"></div>
-          <div class="plantao-workspace">
-            <section class="plantao-actions-panel panel">
-              <div class="plantao-section-head"><div><span class="metric-label">Ações</span><h2>O que você quer fazer?</h2></div><span id="plantao-score-live" class="plantao-score-live">0 pts</span></div>
-              <div id="plantao-actions" class="plantao-actions"></div>
-            </section>
+          </div>
             <aside class="plantao-feed panel">
               <div class="plantao-section-head"><div><span class="metric-label">Evolução</span><h2>Prontuário em tempo real</h2></div></div>
               <div id="plantao-feed" class="plantao-feed-list"></div>
             </aside>
-          </div>
         </section>
 
         <section id="plantao-debrief" class="plantao-debrief" hidden>
@@ -112,7 +117,8 @@
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=17.4"></script>
   <script src="assets/js/plantao-monitor.js?v=2.1"></script>
-  <script src="assets/js/plantao.js?v=2.1"></script>
+  <script src="assets/js/plantao-engine.js?v=3.0"></script>
+  <script src="assets/js/plantao.js?v=3.0"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
 </html>

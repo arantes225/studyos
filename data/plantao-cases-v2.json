@@ -1,0 +1,2849 @@
+[
+  {
+    "id": "f748c2de-6a50-476d-a226-8aa471120b32",
+    "slug": "af-unstable-ed",
+    "title": "Fibrilação atrial instável",
+    "presentation": {
+      "age": "71 anos",
+      "sex": "Masculino",
+      "goal": "Identificar instabilidade hemodinâmica atribuível à FA e realizar cardioversão sincronizada sem atrasos.",
+      "opening": "Paciente pálido, diaforético e confuso. Pulso rápido e irregular.",
+      "chief_complaint": "Palpitações, dor torácica e tontura.",
+      "display_title": "Palpitações, dor torácica e tontura"
+    },
+    "initial_vitals": {
+      "bp": "72/44",
+      "hr": 178,
+      "rr": 24,
+      "spo2": 94,
+      "temp": 36.5,
+      "mental": "Confuso",
+      "rhythm": "Irregular de QRS estreito"
+    },
+    "actions": [
+      {
+        "id": "monitor",
+        "label": "Monitor cardíaco + pressão + oximetria",
+        "points": 4,
+        "result": "Taquiarritmia irregular persistente, com hipotensão.",
+        "category": "iniciais",
+        "time_min": 1,
+        "essential": true,
+        "subgroup": "Suporte inicial"
+      },
+      {
+        "id": "iv_access",
+        "label": "Obter acesso venoso",
+        "points": 3,
+        "result": "Acesso venoso periférico obtido.",
+        "category": "iniciais",
+        "time_min": 2,
+        "subgroup": "Suporte inicial"
+      },
+      {
+        "id": "ecg",
+        "label": "ECG de 12 derivações",
+        "points": 8,
+        "result": "Fibrilação atrial com resposta ventricular rápida, QRS estreito.",
+        "category": "exames",
+        "time_min": 0.5,
+        "essential": true,
+        "subgroup": "Gerais"
+      },
+      {
+        "id": "ask_onset",
+        "label": "Perguntar início das palpitações",
+        "points": 1,
+        "result": "Início percebido há cerca de 1 hora.",
+        "category": "anamnese",
+        "time_min": 0.5,
+        "subgroup": "História dirigida"
+      },
+      {
+        "id": "cardioversion",
+        "label": "Cardioversão elétrica sincronizada",
+        "points": 32,
+        "result": "Choque sincronizado restaura ritmo sinusal e melhora perfusão.",
+        "effects": {
+          "vitals": {
+            "bp": "112/68",
+            "hr": 88,
+            "rr": 18,
+            "spo2": 96,
+            "mental": "Orientado",
+            "rhythm": "Ritmo sinusal"
+          },
+          "outcome": "converted"
+        },
+        "category": "procedimentos_terapeuticos",
+        "time_min": 0.5,
+        "essential": true,
+        "subgroup": "Terapia elétrica"
+      },
+      {
+        "id": "sedation",
+        "label": "Sedação breve se factível sem atrasar cardioversão",
+        "points": 5,
+        "result": "Sedação preparada rapidamente, mantendo prontidão para cardioversão.",
+        "category": "tratamento",
+        "time_min": 2,
+        "subgroup": "Medicamentos"
+      },
+      {
+        "id": "adenosine",
+        "label": "Adenosina IV",
+        "points": -10,
+        "result": "Ritmo é irregular; adenosina não é a estratégia de escolha para esta FA instável e atrasou a cardioversão.",
+        "category": "tratamento",
+        "time_min": 2,
+        "subgroup": "Medicamentos",
+        "penalty_kind": "conduta inadequada"
+      },
+      {
+        "id": "diltiazem",
+        "label": "Diltiazem IV para controle de frequência",
+        "points": -14,
+        "result": "Em instabilidade hemodinâmica atribuível à FA, controle farmacológico de frequência não deve atrasar cardioversão; pressão piora.",
+        "effects": {
+          "vitals": {
+            "bp": "62/38"
+          }
+        },
+        "category": "tratamento",
+        "time_min": 2,
+        "subgroup": "Medicamentos",
+        "penalty_kind": "conduta inadequada"
+      },
+      {
+        "id": "troponin",
+        "label": "Troponina",
+        "points": 1,
+        "result": "Pode integrar investigação da dor/isquemia, mas não deve atrasar estabilização elétrica.",
+        "category": "laboratorio",
+        "time_min": 2,
+        "subgroup": "Laboratoriais",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "cardioversion"
+              ]
+            },
+            "points": -3,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Pode integrar investigação da dor/isquemia, mas não deve atrasar estabilização elétrica."
+          }
+        ]
+      },
+      {
+        "id": "cxr",
+        "label": "Radiografia de tórax",
+        "points": -3,
+        "result": "Exame não muda a necessidade imediata de cardioversão.",
+        "category": "imagem",
+        "time_min": 2,
+        "subgroup": "Imagem",
+        "penalty_kind": "conduta inadequada"
+      },
+      {
+        "id": "call_team",
+        "label": "Acionar equipe de emergência",
+        "category": "iniciais",
+        "result": "Equipe acionada para dividir monitorização, acesso, avaliação e tratamento.",
+        "points": 1,
+        "time_min": 0.25
+      },
+      {
+        "id": "reassess",
+        "label": "Reavaliar ABCDE e perfusão",
+        "category": "iniciais",
+        "result": "Reavaliação: PA {{bp}} mmHg, FC {{hr}} bpm, FR {{rr}}, SpO₂ {{spo2}}%; estado mental: {{mental}}.",
+        "points": 1,
+        "time_min": 0.25,
+        "repeatable": true
+      },
+      {
+        "id": "glucose",
+        "label": "Glicemia capilar",
+        "category": "exames",
+        "result": "Glicemia capilar: 112 mg/dL.",
+        "points": 1,
+        "time_min": 0.25,
+        "subgroup": "Gerais"
+      },
+      {
+        "id": "exam_neuro",
+        "label": "Neurológico",
+        "category": "exame",
+        "result": "Estado mental atual: {{mental}}. Pupilas isocóricas e fotorreagentes; sem assimetria motora evidente na avaliação rápida. A confusão limita o exame detalhado enquanto há hipoperfusão.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Neurológico"
+      },
+      {
+        "id": "exam_limbs",
+        "label": "Extremidades e perfusão",
+        "category": "exame",
+        "result": "Extremidades frias e enchimento capilar lento durante a instabilidade; reavaliar com a pressão atual de {{bp}} mmHg.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Extremidades"
+      },
+      {
+        "id": "ask_anticoag",
+        "label": "Uso de anticoagulantes e sangramentos",
+        "category": "anamnese",
+        "result": "Familiar nega anticoagulação regular e sangramento ativo conhecido.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": ""
+      },
+      {
+        "id": "ask_cardiac",
+        "label": "Cardiopatias e arritmias prévias",
+        "category": "anamnese",
+        "result": "Tem hipertensão; não há registro disponível de FA prévia.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": ""
+      },
+      {
+        "id": "ask_syncope",
+        "label": "Síncope, dispneia e dor",
+        "category": "anamnese",
+        "result": "Apresentou pré-síncope, dispneia e pressão torácica junto às palpitações.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": ""
+      },
+      {
+        "id": "ask_drugs",
+        "label": "Medicamentos, álcool e estimulantes",
+        "category": "anamnese",
+        "result": "Usa losartana; nega estimulantes e consumo excessivo de álcool recente.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": ""
+      },
+      {
+        "id": "ask_infection",
+        "label": "Febre ou sintomas infecciosos",
+        "category": "anamnese",
+        "result": "Familiar nega febre, tosse produtiva ou outra queixa infecciosa recente.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": ""
+      },
+      {
+        "id": "exam_head",
+        "label": "Cabeça e pescoço",
+        "category": "exame",
+        "result": "Sem trauma, sem edema de língua e sem estridor.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Avaliação por segmento"
+      },
+      {
+        "id": "exam_chest",
+        "label": "Tórax — pulmonar",
+        "category": "exame",
+        "result": "Murmúrio vesicular bilateral, sem sibilos ou assimetria importante.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Avaliação por segmento"
+      },
+      {
+        "id": "exam_heart",
+        "label": "Cardiovascular",
+        "category": "exame",
+        "result": "Na apresentação, bulhas arrítmicas e pulso irregular de baixa amplitude. Reavaliar após conversão.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Avaliação por segmento"
+      },
+      {
+        "id": "exam_abdomen",
+        "label": "Abdominal",
+        "category": "exame",
+        "result": "Abdome flácido, indolor, sem sinais de irritação peritoneal.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Avaliação por segmento"
+      },
+      {
+        "id": "exam_skin",
+        "label": "Pele",
+        "category": "exame",
+        "result": "Palidez e sudorese fria durante a instabilidade.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Avaliação por segmento"
+      },
+      {
+        "id": "electrolytes",
+        "label": "Potássio, magnésio e função renal",
+        "category": "laboratorio",
+        "result": "K 4,2 mEq/L; Mg 1,9 mg/dL; creatinina 1,1 mg/dL.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Laboratoriais",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "cardioversion"
+              ]
+            },
+            "points": -3,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. K 4,2 mEq/L; Mg 1,9 mg/dL; creatinina 1,1 mg/dL."
+          }
+        ]
+      },
+      {
+        "id": "cbc",
+        "label": "Hemograma",
+        "category": "laboratorio",
+        "result": "Hemoglobina 13,6 g/dL; sem leucocitose importante.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Laboratoriais",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "cardioversion"
+              ]
+            },
+            "points": -3,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Hemoglobina 13,6 g/dL; sem leucocitose importante."
+          }
+        ]
+      },
+      {
+        "id": "tsh",
+        "label": "TSH e T4 livre",
+        "category": "laboratorio",
+        "result": "Sem alteração sugestiva de tireotoxicose. A coleta não deve atrasar estabilização.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Laboratoriais",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "cardioversion"
+              ]
+            },
+            "points": -3,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Sem alteração sugestiva de tireotoxicose. A coleta não deve atrasar estabilização."
+          }
+        ]
+      },
+      {
+        "id": "echo",
+        "label": "Ecocardiograma à beira-leito",
+        "category": "imagem",
+        "result": "Sem derrame pericárdico importante; avaliação estrutural completa fica para após estabilização.",
+        "points": 1,
+        "time_min": 1,
+        "subgroup": "Imagem",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "cardioversion"
+              ]
+            },
+            "points": -4,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Sem derrame pericárdico importante; avaliação estrutural completa fica para após estabilização."
+          }
+        ]
+      },
+      {
+        "id": "ct_brain",
+        "label": "Tomografia de crânio",
+        "category": "imagem",
+        "result": "Não há déficit focal ou trauma que justifique priorizar transporte antes de corrigir a hipoperfusão.",
+        "points": -6,
+        "time_min": 8,
+        "subgroup": "Imagem"
+      },
+      {
+        "id": "metoprolol",
+        "label": "Metoprolol IV",
+        "category": "tratamento",
+        "result": "Na instabilidade atual, betabloqueio pode agravar hipotensão; controle farmacológico não deve atrasar cardioversão.",
+        "points": -12,
+        "time_min": 1,
+        "subgroup": "Medicamentos"
+      },
+      {
+        "id": "digoxin",
+        "label": "Digoxina IV",
+        "category": "tratamento",
+        "result": "Início de ação não atende à necessidade imediata de reversão da instabilidade.",
+        "points": -6,
+        "time_min": 1,
+        "subgroup": "Medicamentos"
+      },
+      {
+        "id": "amiodarone",
+        "label": "Amiodarona IV como primeira medida",
+        "category": "tratamento",
+        "result": "Nesta FA profundamente hipotensa, infusão farmacológica como primeira medida atrasa cardioversão sincronizada.",
+        "points": -8,
+        "time_min": 1,
+        "subgroup": "Medicamentos"
+      },
+      {
+        "id": "verapamil",
+        "label": "Verapamil IV",
+        "category": "tratamento",
+        "result": "Bloqueio nodal pode agravar a hipotensão neste paciente instável.",
+        "points": -12,
+        "time_min": 1,
+        "subgroup": "Medicamentos"
+      },
+      {
+        "id": "nitroglycerin",
+        "label": "Nitroglicerina",
+        "category": "tratamento",
+        "result": "Vasodilatação com PA inicial de 72/44 mmHg pode agravar a hipoperfusão.",
+        "points": -12,
+        "time_min": 1,
+        "subgroup": "Medicamentos"
+      },
+      {
+        "id": "furosemide",
+        "label": "Furosemida IV",
+        "category": "tratamento",
+        "result": "Sem evidência de congestão e com hipotensão importante, a diurese pode piorar perfusão.",
+        "points": -10,
+        "time_min": 1,
+        "subgroup": "Medicamentos"
+      },
+      {
+        "id": "ceftriaxone",
+        "label": "Ceftriaxona IV",
+        "category": "tratamento",
+        "result": "Não há foco infeccioso que sustente o uso empírico nesta apresentação.",
+        "points": -4,
+        "time_min": 1,
+        "subgroup": "Medicamentos"
+      },
+      {
+        "id": "anticoag_plan",
+        "label": "Planejar anticoagulação e avaliar risco hemorrágico",
+        "category": "tratamento",
+        "result": "Após estabilização, avaliar duração da FA, risco tromboembólico e contraindicações; não atrasar cardioversão urgente.",
+        "points": 2,
+        "time_min": 1,
+        "subgroup": "Anticoagulação",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "cardioversion"
+              ]
+            },
+            "points": -4,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Após estabilização, avaliar duração da FA, risco tromboembólico e contraindicações; não atrasar cardioversão urgente."
+          }
+        ]
+      },
+      {
+        "id": "sync_check",
+        "label": "Conferir sincronização e segurança do choque",
+        "category": "iniciais",
+        "result": "Marcadores de sincronização conferidos sobre os complexos QRS; equipe afastada antes do choque.",
+        "points": 2,
+        "time_min": 0.25
+      },
+      {
+        "id": "unsync_shock",
+        "label": "Aplicar choque não sincronizado",
+        "category": "procedimentos_terapeuticos",
+        "result": "Neste caso com pulso e sincronização disponível, a escolha adequada é cardioversão sincronizada.",
+        "points": -15,
+        "time_min": 0.5,
+        "subgroup": "Terapia elétrica"
+      },
+      {
+        "id": "dx_0",
+        "label": "Fibrilação atrial com instabilidade",
+        "category": "hipoteses",
+        "result": "Taquiarritmia irregular de QRS estreito associada a hipoperfusão sustenta FA instável.",
+        "points": 0,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": true,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dx_1",
+        "label": "Taquicardia supraventricular regular",
+        "category": "hipoteses",
+        "result": "A irregularidade do ritmo não corresponde ao padrão regular proposto.",
+        "points": -6,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": false,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dx_2",
+        "label": "Taquicardia ventricular monomórfica",
+        "category": "hipoteses",
+        "result": "O traçado atual apresenta QRS estreito e irregularidade, sem padrão de TV monomórfica.",
+        "points": -6,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": false,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dx_3",
+        "label": "Taquicardia sinusal por ansiedade",
+        "category": "hipoteses",
+        "result": "O padrão irregular sem ondas P organizadas e a instabilidade não correspondem a taquicardia sinusal por ansiedade.",
+        "points": -6,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": false,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dx_4",
+        "label": "Choque séptico",
+        "category": "hipoteses",
+        "result": "Não há foco infeccioso; a instabilidade acompanha a taquiarritmia.",
+        "points": -6,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": false,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dest_discharge",
+        "label": "Alta domiciliar imediata",
+        "category": "destino",
+        "result": "Alta imediata é inadequada diante da gravidade e da necessidade de observação ou suporte hospitalar.",
+        "points": -20,
+        "time_min": 0.25,
+        "role": "disposition",
+        "correct": false,
+        "subgroup": "Conduta final",
+        "penalty_kind": "destino inseguro"
+      },
+      {
+        "id": "dest_ward",
+        "label": "Internação em unidade monitorizada",
+        "category": "destino",
+        "result": "Paciente necessita cuidados hospitalares e vigilância após estabilização.",
+        "points": 0,
+        "time_min": 0.25,
+        "role": "disposition",
+        "correct": true,
+        "subgroup": "Conduta final",
+        "penalty_kind": "destino inseguro",
+        "variants": [
+          {
+            "when": {
+              "outcomes_none": [
+                "converted"
+              ]
+            },
+            "correct": false,
+            "points": -15,
+            "result": "Antes da estabilização, este paciente precisa permanecer em sala de emergência/UTI com suporte; internação de menor complexidade agora é inadequada."
+          }
+        ]
+      },
+      {
+        "id": "dest_icu",
+        "label": "Internação em UTI com suporte contínuo",
+        "category": "destino",
+        "result": "Admissão em ambiente intensivo é apropriada se persistem instabilidade, necessidade de suporte ou risco elevado; continuidade da estabilização é indispensável.",
+        "points": 0,
+        "time_min": 0.25,
+        "role": "disposition",
+        "correct": true,
+        "subgroup": "Conduta final",
+        "penalty_kind": "destino inseguro"
+      },
+      {
+        "id": "dest_outpatient",
+        "label": "Encaminhamento ambulatorial como único destino",
+        "category": "destino",
+        "result": "Seguimento ambulatorial não substitui observação ou internação após esta emergência.",
+        "points": -20,
+        "time_min": 0.25,
+        "role": "disposition",
+        "correct": false,
+        "subgroup": "Conduta final",
+        "penalty_kind": "destino inseguro"
+      },
+      {
+        "id": "refer_cardio",
+        "label": "Cardiologia durante a internação",
+        "category": "encaminhamento",
+        "result": "Avaliação de anticoagulação, cardiopatia estrutural e prevenção de recorrência após a estabilização.",
+        "points": 2,
+        "time_min": 0.25,
+        "subgroup": "Especialidades"
+      },
+      {
+        "id": "refer_derm",
+        "label": "Dermatologia como prioridade imediata",
+        "category": "encaminhamento",
+        "result": "A especialidade não resolve o problema vital desta apresentação e não deve atrasar estabilização.",
+        "points": -5,
+        "time_min": 1,
+        "subgroup": "Especialidades"
+      }
+    ],
+    "deterioration": [
+      {
+        "effects": {
+          "vitals": {
+            "bp": "64/38",
+            "mental": "Mais confuso"
+          }
+        },
+        "message": "A taquiarritmia persiste e a perfusão piora.",
+        "once_key": "delay_cv_6",
+        "after_min": 6,
+        "unless_action": "cardioversion"
+      },
+      {
+        "effects": {
+          "vitals": {
+            "bp": "56/34",
+            "spo2": 91,
+            "mental": "Rebaixado"
+          }
+        },
+        "message": "Instabilidade progride, com rebaixamento de consciência.",
+        "once_key": "delay_cv_10",
+        "after_min": 10,
+        "unless_action": "cardioversion"
+      }
+    ],
+    "completion_rules": {
+      "max_minutes": 15,
+      "required_actions": [
+        "cardioversion"
+      ],
+      "success_outcomes": [
+        "converted"
+      ],
+      "recommended_actions": [
+        "monitor",
+        "ecg",
+        "iv_access",
+        "sedation"
+      ],
+      "scoring_version": 2,
+      "require_diagnosis": true,
+      "require_disposition": true
+    },
+    "debrief": {
+      "diagnosis": "Fibrilação atrial com resposta ventricular rápida e instabilidade hemodinâmica.",
+      "key_actions": [
+        "Reconhecer instabilidade",
+        "Monitorizar e obter ECG sem atrasar estabilização",
+        "Cardioversão sincronizada",
+        "Registrar a hipótese principal e justificar o destino final",
+        "Distinguir medidas urgentes de investigação que pode ser feita após estabilização"
+      ],
+      "pulo_do_gato": "FA causando hipotensão, choque, alteração mental, isquemia ou insuficiência cardíaca aguda exige cardioversão elétrica sincronizada imediata.",
+      "dangerous_actions": [
+        "Adiar cardioversão para exames",
+        "Priorizar bloqueador nodal em paciente profundamente hipotenso",
+        "Usar adenosina como estratégia principal em ritmo irregular"
+      ],
+      "scoring_note": "Nota: medidas essenciais 45, recomendadas 15, evolução 15, hipótese 10 e destino 15. Penalidades são descontadas depois, sem serem anuladas por ações extras. Tempos representam passos simulados de decisão, não a duração real dos exames."
+    },
+    "source_refs": [
+      {
+        "url": "https://cpr.heart.org/-/media/CPR-Files/CPR-Guidelines-Files/2025-Algorithms/Algorithm-ACLS-Tachycardia-250514.pdf",
+        "title": "2025 AHA Adult Tachycardia With a Pulse Algorithm"
+      },
+      {
+        "url": "https://www.ahajournals.org/doi/full/10.1161/CIR.0000000000001193",
+        "title": "2023 ACC/AHA/ACCP/HRS Atrial Fibrillation Guideline"
+      },
+      {
+        "title": "AHA 2025 — Adult Advanced Life Support",
+        "url": "https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines/adult-advanced-life-support"
+      }
+    ],
+    "version": 2
+  },
+  {
+    "id": "52f9fb26-2a3c-42be-9a45-41c8a637ffaa",
+    "slug": "anaphylaxis-ed",
+    "title": "Anafilaxia com choque",
+    "presentation": {
+      "age": "34 anos",
+      "sex": "Feminino",
+      "goal": "Reconhecer anafilaxia e priorizar adrenalina IM sem atrasar por exames.",
+      "opening": "Paciente chega consciente, muito ansiosa, com fala entrecortada, urticária difusa e sensação de garganta fechando.",
+      "chief_complaint": "Dispneia, prurido difuso e tontura poucos minutos após exposição alimentar.",
+      "display_title": "Dispneia e prurido após uma refeição"
+    },
+    "initial_vitals": {
+      "bp": "78/46",
+      "hr": 128,
+      "rr": 30,
+      "spo2": 89,
+      "temp": 36.7,
+      "mental": "Ansiosa, responsiva",
+      "rhythm": "Taquicardia sinusal"
+    },
+    "actions": [
+      {
+        "id": "monitor",
+        "label": "Monitorização + oximetria",
+        "points": 4,
+        "result": "Monitor revela taquicardia sinusal e hipoxemia.",
+        "category": "iniciais",
+        "time_min": 1,
+        "essential": true,
+        "subgroup": "Suporte inicial"
+      },
+      {
+        "id": "iv_access",
+        "label": "Obter acesso venoso calibroso",
+        "points": 4,
+        "result": "Acesso venoso obtido.",
+        "category": "iniciais",
+        "time_min": 2,
+        "essential": true,
+        "subgroup": "Suporte inicial"
+      },
+      {
+        "id": "ask_trigger",
+        "label": "Perguntar exposição e tempo de início",
+        "points": 2,
+        "result": "Início há cerca de 8 minutos, após ingerir alimento contendo castanhas.",
+        "category": "anamnese",
+        "time_min": 0.5,
+        "subgroup": "História dirigida"
+      },
+      {
+        "id": "airway_exam",
+        "label": "Avaliar via aérea e voz",
+        "points": 4,
+        "result": "Rouquidão discreta, edema labial e sensação de fechamento de garganta.",
+        "category": "exame",
+        "time_min": 0.5,
+        "subgroup": "Cabeça e pescoço"
+      },
+      {
+        "id": "lung_exam",
+        "label": "Tórax — ausculta pulmonar",
+        "points": 3,
+        "result": "Sibilos difusos bilateralmente.",
+        "category": "exame",
+        "time_min": 0.5,
+        "subgroup": "Tórax"
+      },
+      {
+        "id": "epi_im",
+        "label": "Adrenalina 0,5 mg IM — face anterolateral da coxa",
+        "points": 28,
+        "result": "Após adrenalina IM, melhora progressiva da dispneia e da perfusão.",
+        "effects": {
+          "vitals": {
+            "bp": "96/58",
+            "hr": 112,
+            "rr": 24,
+            "spo2": 94
+          },
+          "outcome": "responding"
+        },
+        "category": "tratamento",
+        "time_min": 0.25,
+        "essential": true,
+        "subgroup": "Medicamentos"
+      },
+      {
+        "id": "oxygen",
+        "label": "Oxigênio suplementar",
+        "points": 6,
+        "result": "Saturação melhora com oxigênio suplementar.",
+        "effects": {
+          "vitals": {
+            "spo2": 97
+          }
+        },
+        "category": "tratamento",
+        "time_min": 1,
+        "subgroup": "Medicamentos"
+      },
+      {
+        "id": "crystalloid",
+        "label": "Cristaloide IV em bolus com reavaliação",
+        "points": 8,
+        "result": "Expansão volêmica melhora a pressão arterial.",
+        "effects": {
+          "vitals": {
+            "bp": "108/66"
+          }
+        },
+        "category": "tratamento",
+        "time_min": 1,
+        "subgroup": "Medicamentos"
+      },
+      {
+        "id": "antihistamine",
+        "label": "Anti-histamínico H1",
+        "points": 1,
+        "result": "Pode ajudar sintomas cutâneos, mas é adjuvante e não substitui adrenalina.",
+        "category": "tratamento",
+        "time_min": 2,
+        "subgroup": "Medicamentos",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "epi_im"
+              ]
+            },
+            "points": -6,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Pode ajudar sintomas cutâneos, mas é adjuvante e não substitui adrenalina."
+          }
+        ]
+      },
+      {
+        "id": "steroid",
+        "label": "Corticoide IV",
+        "points": -2,
+        "result": "Corticoide não reverte a emergência e não é indicado rotineiramente para prevenir reação bifásica. Considerar apenas indicação adicional específica.",
+        "category": "tratamento",
+        "time_min": 2,
+        "subgroup": "Medicamentos",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "epi_im"
+              ]
+            },
+            "points": -6,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Não produz reversão imediata do choque; não deve atrasar adrenalina."
+          }
+        ]
+      },
+      {
+        "id": "tryptase",
+        "label": "Dosar triptase sérica",
+        "points": 0,
+        "result": "Pode ter utilidade diagnóstica posterior em contextos selecionados, sem papel em atrasar tratamento agudo.",
+        "category": "laboratorio",
+        "time_min": 2,
+        "subgroup": "Laboratoriais",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "epi_im"
+              ]
+            },
+            "points": -3,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Pode ter utilidade diagnóstica posterior em contextos selecionados, sem papel em atrasar tratamento agudo."
+          }
+        ]
+      },
+      {
+        "id": "cxr",
+        "label": "Solicitar radiografia de tórax",
+        "points": -4,
+        "result": "Sem achado que mude a conduta imediata; houve atraso desnecessário.",
+        "category": "imagem",
+        "time_min": 2,
+        "subgroup": "Imagem",
+        "penalty_kind": "conduta inadequada"
+      },
+      {
+        "id": "epi_iv_bolus",
+        "label": "Adrenalina IV em bolus",
+        "points": -18,
+        "result": "Conduta potencialmente perigosa fora de contexto de parada/monitorização avançada; causa taquicardia e risco arrítmico.",
+        "effects": {
+          "vitals": {
+            "hr": 156
+          }
+        },
+        "category": "tratamento",
+        "time_min": 1,
+        "subgroup": "Medicamentos",
+        "penalty_kind": "conduta inadequada"
+      },
+      {
+        "id": "call_team",
+        "label": "Acionar equipe de emergência",
+        "category": "iniciais",
+        "result": "Equipe acionada para dividir monitorização, acesso, avaliação e tratamento.",
+        "points": 1,
+        "time_min": 0.25
+      },
+      {
+        "id": "reassess",
+        "label": "Reavaliar ABCDE e perfusão",
+        "category": "iniciais",
+        "result": "Reavaliação: PA {{bp}} mmHg, FC {{hr}} bpm, FR {{rr}}, SpO₂ {{spo2}}%; estado mental: {{mental}}.",
+        "points": 1,
+        "time_min": 0.25,
+        "repeatable": true
+      },
+      {
+        "id": "glucose",
+        "label": "Glicemia capilar",
+        "category": "exames",
+        "result": "Glicemia capilar: 112 mg/dL.",
+        "points": 1,
+        "time_min": 0.25,
+        "subgroup": "Gerais"
+      },
+      {
+        "id": "exam_neuro",
+        "label": "Neurológico",
+        "category": "exame",
+        "result": "Estado mental atual: {{mental}}. Pupilas isocóricas; movimenta os quatro membros, sem déficit focal aparente. Rebaixamento durante piora do choque exige reavaliação imediata.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Neurológico"
+      },
+      {
+        "id": "exam_limbs",
+        "label": "Extremidades e perfusão",
+        "category": "exame",
+        "result": "Extremidades frias e enchimento capilar lento durante a instabilidade; reavaliar com a pressão atual de {{bp}} mmHg.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Extremidades"
+      },
+      {
+        "id": "ask_allergy",
+        "label": "Alergias e episódios anteriores",
+        "category": "anamnese",
+        "result": "Acompanhante relata alergia a castanhas e episódio prévio de urticária, sem choque.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": ""
+      },
+      {
+        "id": "ask_symptoms",
+        "label": "Sequência dos sintomas",
+        "category": "anamnese",
+        "result": "Prurido e placas cutâneas surgiram primeiro, seguidos de edema labial, dispneia e tontura.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": ""
+      },
+      {
+        "id": "ask_meds",
+        "label": "Medicamentos e tratamentos já usados",
+        "category": "anamnese",
+        "result": "Não usa betabloqueador. Não recebeu adrenalina antes da chegada.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": ""
+      },
+      {
+        "id": "ask_asthma",
+        "label": "Asma e doenças respiratórias",
+        "category": "anamnese",
+        "result": "História de asma leve; o episódio atual também inclui hipotensão e urticária.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": ""
+      },
+      {
+        "id": "ask_gi",
+        "label": "Sintomas digestivos",
+        "category": "anamnese",
+        "result": "Relata cólicas abdominais e náusea após a refeição.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": ""
+      },
+      {
+        "id": "exam_head",
+        "label": "Cabeça e pescoço",
+        "category": "exame",
+        "result": "Edema de lábios e língua, rouquidão e mucosas úmidas.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Avaliação por segmento"
+      },
+      {
+        "id": "exam_heart",
+        "label": "Cardiovascular",
+        "category": "exame",
+        "result": "Bulhas taquicárdicas; pulso fino durante o choque. FC atual: {{hr}} bpm.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Avaliação por segmento"
+      },
+      {
+        "id": "exam_abdomen",
+        "label": "Abdominal",
+        "category": "exame",
+        "result": "Abdome flácido, desconforto difuso leve, sem defesa ou rigidez.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Avaliação por segmento"
+      },
+      {
+        "id": "exam_skin",
+        "label": "Pele e mucosas",
+        "category": "exame",
+        "result": "Urticária difusa e eritema, associados a edema labial.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Avaliação por segmento"
+      },
+      {
+        "id": "cbc",
+        "label": "Hemograma",
+        "category": "laboratorio",
+        "result": "Sem anemia importante ou alteração que explique o choque. Não confirma nem exclui anafilaxia.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Laboratoriais",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "epi_im"
+              ]
+            },
+            "points": -3,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Sem anemia importante ou alteração que explique o choque. Não confirma nem exclui anafilaxia."
+          }
+        ]
+      },
+      {
+        "id": "electrolytes",
+        "label": "Sódio, potássio e função renal",
+        "category": "laboratorio",
+        "result": "Na 139 mEq/L, K 4,0 mEq/L; creatinina 0,9 mg/dL.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Laboratoriais",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "epi_im"
+              ]
+            },
+            "points": -3,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Na 139 mEq/L, K 4,0 mEq/L; creatinina 0,9 mg/dL."
+          }
+        ]
+      },
+      {
+        "id": "gas",
+        "label": "Gasometria e lactato",
+        "category": "laboratorio",
+        "result": "Na admissão: acidose metabólica leve e lactato 3,5 mmol/L, compatíveis com hipoperfusão.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Laboratoriais",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "epi_im"
+              ]
+            },
+            "points": -3,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Na admissão: acidose metabólica leve e lactato 3,5 mmol/L, compatíveis com hipoperfusão."
+          }
+        ]
+      },
+      {
+        "id": "ecg",
+        "label": "ECG de 12 derivações",
+        "category": "exames",
+        "result": "Taquicardia sinusal, sem supradesnivelamento de ST.",
+        "points": 0,
+        "time_min": 1,
+        "subgroup": "Gerais",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "epi_im"
+              ]
+            },
+            "points": -3,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Taquicardia sinusal, sem supradesnivelamento de ST."
+          }
+        ]
+      },
+      {
+        "id": "ct_chest",
+        "label": "Angiotomografia de tórax",
+        "category": "imagem",
+        "result": "O conjunto de exposição alimentar, urticária, edema e choque não justifica priorizar transporte para angiotomografia.",
+        "points": -8,
+        "time_min": 8,
+        "subgroup": "Imagem"
+      },
+      {
+        "id": "position",
+        "label": "Posicionar em decúbito e evitar levantar",
+        "category": "iniciais",
+        "result": "Paciente mantida deitada, ajustando a cabeceira à tolerância respiratória, sem fazê-la caminhar.",
+        "points": 2,
+        "time_min": 0.25
+      },
+      {
+        "id": "salbutamol",
+        "label": "Salbutamol inalatório",
+        "category": "tratamento",
+        "result": "Adjuvante para broncoespasmo persistente após adrenalina; não trata isoladamente o choque.",
+        "points": 1,
+        "time_min": 1,
+        "subgroup": "Broncodilatadores",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "epi_im"
+              ]
+            },
+            "points": -5,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Adjuvante para broncoespasmo persistente após adrenalina; não trata isoladamente o choque."
+          }
+        ]
+      },
+      {
+        "id": "ipratropium",
+        "label": "Ipratrópio inalatório",
+        "category": "tratamento",
+        "result": "Pode ser adjuvante no broncoespasmo; não substitui adrenalina nem reposição volêmica.",
+        "points": 0,
+        "time_min": 1,
+        "subgroup": "Broncodilatadores",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "epi_im"
+              ]
+            },
+            "points": -5,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Pode ser adjuvante no broncoespasmo; não substitui adrenalina nem reposição volêmica."
+          }
+        ]
+      },
+      {
+        "id": "furosemide",
+        "label": "Furosemida IV",
+        "category": "tratamento",
+        "result": "Diurese induzida neste choque sem congestão agrava a depleção intravascular.",
+        "points": -12,
+        "time_min": 1,
+        "subgroup": "Diuréticos"
+      },
+      {
+        "id": "metoprolol",
+        "label": "Metoprolol IV",
+        "category": "tratamento",
+        "result": "A taquicardia é compensatória; bloquear a resposta adrenérgica nesta hipotensão pode agravar o choque.",
+        "points": -15,
+        "time_min": 1,
+        "subgroup": "Cardiovasculares"
+      },
+      {
+        "id": "ceftriaxone",
+        "label": "Ceftriaxona IV",
+        "category": "tratamento",
+        "result": "Não há evidência de foco infeccioso que justifique antibiótico neste episódio de anafilaxia.",
+        "points": -4,
+        "time_min": 1,
+        "subgroup": "Antimicrobianos"
+      },
+      {
+        "id": "nebulized_epi",
+        "label": "Adrenalina nebulizada",
+        "category": "tratamento",
+        "result": "Pode auxiliar edema de via aérea superior, mas não substitui adrenalina IM e avaliação da via aérea.",
+        "points": 1,
+        "time_min": 1,
+        "subgroup": "Via aérea",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "epi_im"
+              ]
+            },
+            "points": -5,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Pode auxiliar edema de via aérea superior, mas não substitui adrenalina IM e avaliação da via aérea."
+          }
+        ]
+      },
+      {
+        "id": "airway_team",
+        "label": "Preparar via aérea difícil e chamar especialista",
+        "category": "procedimentos_terapeuticos",
+        "result": "Material e equipe experiente preparados diante do edema de via aérea; manter tratamento da anafilaxia.",
+        "points": 2,
+        "time_min": 0.5,
+        "subgroup": "Via aérea"
+      },
+      {
+        "id": "walk",
+        "label": "Fazer a paciente caminhar para outra sala",
+        "category": "procedimentos_terapeuticos",
+        "result": "Mudança abrupta para posição em pé durante choque anafilático pode precipitar colapso.",
+        "points": -15,
+        "time_min": 0.5,
+        "subgroup": "Mobilização"
+      },
+      {
+        "id": "dx_0",
+        "label": "Anafilaxia com choque",
+        "category": "hipoteses",
+        "result": "Exposição alimentar seguida de manifestações cutâneas, respiratórias e circulatórias sustenta anafilaxia.",
+        "points": 0,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": true,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dx_1",
+        "label": "Crise de asma isolada",
+        "category": "hipoteses",
+        "result": "Asma isolada não explica urticária, angioedema e choque após exposição alimentar.",
+        "points": -6,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": false,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dx_2",
+        "label": "Crise de ansiedade",
+        "category": "hipoteses",
+        "result": "Hipotensão, hipoxemia e edema de via aérea não são explicados por ansiedade.",
+        "points": -6,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": false,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dx_3",
+        "label": "Embolia pulmonar",
+        "category": "hipoteses",
+        "result": "É um diferencial de dispneia e choque, mas o conjunto temporal com urticária e angioedema favorece anafilaxia.",
+        "points": -6,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": false,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dx_4",
+        "label": "Choque séptico",
+        "category": "hipoteses",
+        "result": "Início em minutos após alimento com manifestações alérgicas não sustenta sepse como hipótese principal.",
+        "points": -6,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": false,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dest_discharge",
+        "label": "Alta domiciliar imediata",
+        "category": "destino",
+        "result": "Alta imediata é inadequada diante da gravidade e da necessidade de observação ou suporte hospitalar.",
+        "points": -20,
+        "time_min": 0.25,
+        "role": "disposition",
+        "correct": false,
+        "subgroup": "Conduta final",
+        "penalty_kind": "destino inseguro"
+      },
+      {
+        "id": "dest_ward",
+        "label": "Observação hospitalar monitorizada após estabilização",
+        "category": "destino",
+        "result": "Pelo comprometimento respiratório importante e choque, planejar observação prolongada após resolução, com alta posterior condicionada à reavaliação e plano de segurança.",
+        "points": 0,
+        "time_min": 0.25,
+        "role": "disposition",
+        "correct": true,
+        "subgroup": "Conduta final",
+        "penalty_kind": "destino inseguro",
+        "variants": [
+          {
+            "when": {
+              "outcomes_none": [
+                "responding"
+              ]
+            },
+            "correct": false,
+            "points": -15,
+            "result": "Antes da estabilização, este paciente precisa permanecer em sala de emergência/UTI com suporte; internação de menor complexidade agora é inadequada."
+          }
+        ]
+      },
+      {
+        "id": "dest_icu",
+        "label": "Internação em UTI com suporte contínuo",
+        "category": "destino",
+        "result": "Admissão em ambiente intensivo é apropriada se persistem instabilidade, necessidade de suporte ou risco elevado; continuidade da estabilização é indispensável.",
+        "points": 0,
+        "time_min": 0.25,
+        "role": "disposition",
+        "correct": true,
+        "subgroup": "Conduta final",
+        "penalty_kind": "destino inseguro"
+      },
+      {
+        "id": "dest_outpatient",
+        "label": "Encaminhamento ambulatorial como único destino",
+        "category": "destino",
+        "result": "Seguimento ambulatorial não substitui observação ou internação após esta emergência.",
+        "points": -20,
+        "time_min": 0.25,
+        "role": "disposition",
+        "correct": false,
+        "subgroup": "Conduta final",
+        "penalty_kind": "destino inseguro"
+      },
+      {
+        "id": "refer_allergy",
+        "label": "Alergologia após estabilização e observação",
+        "category": "encaminhamento",
+        "result": "Programar investigação do desencadeante, plano de emergência e orientação sobre adrenalina autoinjetável quando disponível.",
+        "points": 2,
+        "time_min": 0.25,
+        "subgroup": "Especialidades"
+      },
+      {
+        "id": "refer_derm",
+        "label": "Dermatologia como prioridade imediata",
+        "category": "encaminhamento",
+        "result": "A especialidade não resolve o problema vital desta apresentação e não deve atrasar estabilização.",
+        "points": -5,
+        "time_min": 1,
+        "subgroup": "Especialidades"
+      }
+    ],
+    "deterioration": [
+      {
+        "effects": {
+          "vitals": {
+            "bp": "68/38",
+            "spo2": 84,
+            "mental": "Sonolenta"
+          }
+        },
+        "message": "Atraso na adrenalina: piora da perfusão e da hipoxemia.",
+        "once_key": "delay_epi_5",
+        "after_min": 5,
+        "unless_action": "epi_im"
+      },
+      {
+        "effects": {
+          "vitals": {
+            "bp": "58/32",
+            "spo2": 80,
+            "mental": "Rebaixada"
+          }
+        },
+        "message": "Choque anafilático progride com rebaixamento do nível de consciência.",
+        "once_key": "delay_epi_10",
+        "after_min": 10,
+        "unless_action": "epi_im"
+      }
+    ],
+    "completion_rules": {
+      "max_minutes": 20,
+      "required_actions": [
+        "epi_im"
+      ],
+      "success_outcomes": [
+        "responding"
+      ],
+      "recommended_actions": [
+        "monitor",
+        "iv_access",
+        "oxygen",
+        "crystalloid"
+      ],
+      "scoring_version": 2,
+      "require_diagnosis": true,
+      "require_disposition": true
+    },
+    "debrief": {
+      "diagnosis": "Anafilaxia com choque distributivo e broncoespasmo.",
+      "key_actions": [
+        "Reconhecer rapidamente o quadro",
+        "Adrenalina IM precoce",
+        "Suporte de oxigenação e circulação",
+        "Reavaliação seriada",
+        "Registrar a hipótese principal e justificar o destino final",
+        "Distinguir medidas urgentes de investigação que pode ser feita após estabilização"
+      ],
+      "pulo_do_gato": "Anafilaxia com comprometimento respiratório ou circulatório pede adrenalina IM imediata; exames e adjuvantes não podem atrasá-la.",
+      "dangerous_actions": [
+        "Atrasar adrenalina para exames",
+        "Usar anti-histamínico ou corticoide como tratamento principal",
+        "Administrar adrenalina IV em bolus fora de indicação/monitorização apropriada"
+      ],
+      "scoring_note": "Nota: medidas essenciais 45, recomendadas 15, evolução 15, hipótese 10 e destino 15. Penalidades são descontadas depois, sem serem anuladas por ações extras. Tempos representam passos simulados de decisão, não a duração real dos exames."
+    },
+    "source_refs": [
+      {
+        "url": "https://www.aaaai.org/Aaaai/media/Media-Library-PDFs/Allergist%20Resources/Statements%20and%20Practice%20Parameters/Anaphylaxis-Practice-Paramaters-2023.pdf",
+        "title": "AAAAI/ACAAI Anaphylaxis Practice Parameter 2023"
+      },
+      {
+        "title": "RCUK — Emergency treatment of anaphylaxis",
+        "url": "https://www.resus.org.uk/sites/default/files/2021-05/Emergency%20Treatment%20of%20Anaphylaxis%20May%202021_0.pdf"
+      }
+    ],
+    "version": 2
+  },
+  {
+    "id": "6d427854-2d3c-4c4d-b812-7a4d9b17acc4",
+    "slug": "septic-shock-ed",
+    "title": "Choque séptico de foco pulmonar",
+    "presentation": {
+      "age": "68 anos",
+      "sex": "Feminino",
+      "goal": "Reconhecer sepse/choque, iniciar investigação essencial e ressuscitação sem atrasar antimicrobiano.",
+      "opening": "Paciente confusa, taquipneica, extremidades frias e enchimento capilar lento.",
+      "chief_complaint": "Febre, dispneia e prostração.",
+      "display_title": "Febre, falta de ar e confusão"
+    },
+    "initial_vitals": {
+      "bp": "82/48",
+      "hr": 122,
+      "rr": 30,
+      "spo2": 90,
+      "temp": 39.1,
+      "mental": "Confusa",
+      "rhythm": "Taquicardia sinusal"
+    },
+    "actions": [
+      {
+        "id": "monitor",
+        "label": "Monitorização contínua",
+        "points": 3,
+        "result": "Hipotensão persistente, taquicardia e hipoxemia.",
+        "category": "iniciais",
+        "time_min": 1,
+        "subgroup": "Suporte inicial"
+      },
+      {
+        "id": "iv_access",
+        "label": "Dois acessos venosos calibrosos",
+        "points": 4,
+        "result": "Acessos obtidos para ressuscitação e coleta.",
+        "category": "iniciais",
+        "time_min": 2,
+        "subgroup": "Suporte inicial"
+      },
+      {
+        "id": "cultures",
+        "label": "Hemoculturas antes do antibiótico, sem atrasá-lo",
+        "points": 6,
+        "result": "Duas amostras coletadas.",
+        "category": "laboratorio",
+        "time_min": 0.5,
+        "essential": true,
+        "subgroup": "Laboratoriais"
+      },
+      {
+        "id": "lactate",
+        "label": "Dosar lactato",
+        "points": 6,
+        "result": "Lactato: 4,6 mmol/L.",
+        "category": "laboratorio",
+        "time_min": 0.5,
+        "essential": true,
+        "subgroup": "Laboratoriais"
+      },
+      {
+        "id": "cbc",
+        "label": "Hemograma + função renal + eletrólitos",
+        "points": 3,
+        "result": "Leucocitose, creatinina elevada em relação ao basal.",
+        "category": "laboratorio",
+        "time_min": 0.5,
+        "subgroup": "Laboratoriais"
+      },
+      {
+        "id": "cxr",
+        "label": "Radiografia de tórax",
+        "points": 4,
+        "result": "Consolidação em base pulmonar direita.",
+        "category": "imagem",
+        "time_min": 2,
+        "subgroup": "Imagem"
+      },
+      {
+        "id": "antibiotic",
+        "label": "Ceftriaxona + azitromicina IV",
+        "points": 24,
+        "result": "Cobertura empírica iniciada para pneumonia comunitária grave, considerando ausência de fatores de risco para MRSA/Pseudomonas; ajustar a alergias, função orgânica, culturas e protocolo local.",
+        "effects": {
+          "outcome": "treated"
+        },
+        "category": "tratamento",
+        "time_min": 1,
+        "essential": true,
+        "subgroup": "Medicamentos"
+      },
+      {
+        "id": "crystalloid",
+        "label": "Cristaloide IV com reavaliação frequente",
+        "points": 16,
+        "result": "Após expansão inicial, há melhora parcial da perfusão, mas PAM permanece baixa.",
+        "effects": {
+          "vitals": {
+            "bp": "88/52",
+            "hr": 112
+          }
+        },
+        "category": "tratamento",
+        "time_min": 1,
+        "essential": true,
+        "subgroup": "Medicamentos",
+        "variants": [
+          {
+            "when": {
+              "performed_all": [
+                "norepi"
+              ]
+            },
+            "effects": {
+              "vitals": {
+                "hr": 104
+              }
+            },
+            "result": "Expansão e reavaliação realizadas em paralelo à noradrenalina; não interromper vasopressor e evitar sobrecarga."
+          }
+        ]
+      },
+      {
+        "id": "norepi",
+        "label": "Noradrenalina titulada para hipotensão",
+        "points": 14,
+        "result": "Vasopressor iniciado precocemente na hipotensão importante, em paralelo à ressuscitação e reavaliação; perfusão melhora.",
+        "effects": {
+          "vitals": {
+            "bp": "106/64",
+            "hr": 104,
+            "mental": "Mais alerta"
+          },
+          "outcome": "stabilized"
+        },
+        "category": "tratamento",
+        "time_min": 0.5,
+        "requires_all": [],
+        "result_if_blocked": "O caso exige registrar a estratégia inicial de fluido e reavaliação antes deste passo.",
+        "subgroup": "Medicamentos"
+      },
+      {
+        "id": "oxygen",
+        "label": "Oxigênio suplementar",
+        "points": 4,
+        "result": "SpO₂ sobe para 96%.",
+        "effects": {
+          "vitals": {
+            "spo2": 96
+          }
+        },
+        "category": "tratamento",
+        "time_min": 1,
+        "subgroup": "Medicamentos"
+      },
+      {
+        "id": "ct_chest",
+        "label": "TC de tórax antes da estabilização",
+        "points": -12,
+        "result": "Transporte e exame atrasam medidas prioritárias em paciente instável.",
+        "category": "imagem",
+        "time_min": 2,
+        "subgroup": "Imagem",
+        "penalty_kind": "conduta inadequada"
+      },
+      {
+        "id": "call_team",
+        "label": "Acionar equipe de emergência",
+        "category": "iniciais",
+        "result": "Equipe acionada para dividir monitorização, acesso, avaliação e tratamento.",
+        "points": 1,
+        "time_min": 0.25
+      },
+      {
+        "id": "reassess",
+        "label": "Reavaliar ABCDE e perfusão",
+        "category": "iniciais",
+        "result": "Reavaliação: PA {{bp}} mmHg, FC {{hr}} bpm, FR {{rr}}, SpO₂ {{spo2}}%; estado mental: {{mental}}.",
+        "points": 1,
+        "time_min": 0.25,
+        "repeatable": true
+      },
+      {
+        "id": "glucose",
+        "label": "Glicemia capilar",
+        "category": "exames",
+        "result": "Glicemia capilar: 112 mg/dL.",
+        "points": 1,
+        "time_min": 0.25,
+        "subgroup": "Gerais"
+      },
+      {
+        "id": "exam_neuro",
+        "label": "Neurológico",
+        "category": "exame",
+        "result": "Estado mental atual: {{mental}}. Pupilas isocóricas e fotorreagentes; sem déficit motor focal evidente. Avaliação detalhada limitada pela alteração da consciência.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Neurológico"
+      },
+      {
+        "id": "exam_limbs",
+        "label": "Extremidades e perfusão",
+        "category": "exame",
+        "result": "Extremidades frias e enchimento capilar lento durante a instabilidade; reavaliar com a pressão atual de {{bp}} mmHg.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Extremidades"
+      },
+      {
+        "id": "ask_course",
+        "label": "Tempo de febre e sintomas respiratórios",
+        "category": "anamnese",
+        "result": "Familiar relata febre e tosse produtiva há três dias, com piora da dispneia e confusão hoje.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": ""
+      },
+      {
+        "id": "ask_urine",
+        "label": "Diurese e sintomas urinários",
+        "category": "anamnese",
+        "result": "Diurese reduzida hoje; sem disúria ou dor lombar relatada.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": ""
+      },
+      {
+        "id": "ask_comorb",
+        "label": "Comorbidades e imunossupressão",
+        "category": "anamnese",
+        "result": "Diabetes tipo 2; sem imunossupressão medicamentosa conhecida.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": ""
+      },
+      {
+        "id": "ask_allergy",
+        "label": "Alergias a antimicrobianos",
+        "category": "anamnese",
+        "result": "Familiar nega alergia conhecida a betalactâmicos e macrolídeos.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": ""
+      },
+      {
+        "id": "ask_resistance",
+        "label": "Internações e antibióticos recentes",
+        "category": "anamnese",
+        "result": "Sem internação ou antibiótico IV recente e sem colonização conhecida por MRSA ou Pseudomonas.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": ""
+      },
+      {
+        "id": "ask_other_focus",
+        "label": "Outros possíveis focos",
+        "category": "anamnese",
+        "result": "Nega dor abdominal, feridas recentes e sintomas urinários; tosse produtiva é a queixa predominante.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": ""
+      },
+      {
+        "id": "exam_head",
+        "label": "Cabeça e pescoço",
+        "category": "exame",
+        "result": "Mucosas secas; sem rigidez de nuca evidente na avaliação dirigida.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Avaliação por segmento"
+      },
+      {
+        "id": "exam_chest",
+        "label": "Tórax — pulmonar",
+        "category": "exame",
+        "result": "Estertores e redução do murmúrio vesicular em base direita, com taquipneia.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Avaliação por segmento"
+      },
+      {
+        "id": "exam_heart",
+        "label": "Cardiovascular",
+        "category": "exame",
+        "result": "Taquicardia, pulsos finos e hipoperfusão periférica. PA atual: {{bp}} mmHg.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Avaliação por segmento"
+      },
+      {
+        "id": "exam_abdomen",
+        "label": "Abdominal",
+        "category": "exame",
+        "result": "Abdome flácido, sem defesa, dor focal ou sinais peritoneais.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Avaliação por segmento"
+      },
+      {
+        "id": "exam_skin",
+        "label": "Pele e partes moles",
+        "category": "exame",
+        "result": "Sem celulite, abscesso aparente ou lesão cutânea que sugira o foco.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Avaliação por segmento"
+      },
+      {
+        "id": "gas",
+        "label": "Gasometria arterial",
+        "category": "laboratorio",
+        "result": "Na admissão: acidose metabólica com compensação respiratória e hipoxemia.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Laboratoriais"
+      },
+      {
+        "id": "urinalysis",
+        "label": "Urina tipo 1",
+        "category": "laboratorio",
+        "result": "Sem piúria significativa; resultado não sustenta foco urinário.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Laboratoriais"
+      },
+      {
+        "id": "coag",
+        "label": "Coagulograma e plaquetas",
+        "category": "laboratorio",
+        "result": "Sem sangramento ativo ou coagulopatia grave na avaliação inicial.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Laboratoriais"
+      },
+      {
+        "id": "procalcitonin",
+        "label": "Procalcitonina",
+        "category": "laboratorio",
+        "result": "Não é necessário aguardar o resultado para iniciar antimicrobiano em choque provável.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Laboratoriais"
+      },
+      {
+        "id": "ecg",
+        "label": "ECG de 12 derivações",
+        "category": "exames",
+        "result": "Taquicardia sinusal sem padrão de arritmia primária.",
+        "points": 1,
+        "time_min": 0.5,
+        "subgroup": "Gerais"
+      },
+      {
+        "id": "pocus",
+        "label": "Ultrassom pulmonar à beira-leito",
+        "category": "imagem",
+        "result": "Consolidação subpleural em base direita; sem pneumotórax ou grande derrame.",
+        "points": 1,
+        "time_min": 1,
+        "subgroup": "Imagem"
+      },
+      {
+        "id": "amp_sulbactam",
+        "label": "Ampicilina-sulbactam + azitromicina IV",
+        "category": "tratamento",
+        "result": "Alternativa empírica para pneumonia comunitária grave neste perfil, conforme protocolo local e ajuste de doses.",
+        "points": 24,
+        "time_min": 1,
+        "equivalent_to": "antibiotic",
+        "effects": {
+          "outcome": "treated"
+        },
+        "subgroup": "Antimicrobianos"
+      },
+      {
+        "id": "amoxicillin",
+        "label": "Amoxicilina oral",
+        "category": "tratamento",
+        "result": "Monoterapia oral é inadequada para esta paciente com choque e necessidade de suporte hospitalar.",
+        "points": -10,
+        "time_min": 1,
+        "subgroup": "Antimicrobianos"
+      },
+      {
+        "id": "vancomycin",
+        "label": "Adicionar vancomicina empiricamente",
+        "category": "tratamento",
+        "result": "Neste caso sem risco identificado para MRSA, ampliar cobertura sem justificativa acrescenta toxicidade e deve ser revisto.",
+        "points": -3,
+        "time_min": 1,
+        "subgroup": "Antimicrobianos"
+      },
+      {
+        "id": "dopamine",
+        "label": "Dopamina como vasopressor inicial",
+        "category": "tratamento",
+        "result": "Noradrenalina é preferida; a taquicardia desta paciente torna o potencial arrítmico da dopamina especialmente desfavorável.",
+        "points": -7,
+        "time_min": 1,
+        "subgroup": "Vasoativos"
+      },
+      {
+        "id": "dobutamine",
+        "label": "Dobutamina isolada",
+        "category": "tratamento",
+        "result": "Não há disfunção cardíaca documentada; inotrópico isolado não é a primeira estratégia para a hipotensão vasodilatadora.",
+        "points": -6,
+        "time_min": 1,
+        "subgroup": "Vasoativos"
+      },
+      {
+        "id": "furosemide",
+        "label": "Furosemida durante a ressuscitação inicial",
+        "category": "tratamento",
+        "result": "Na hipoperfusão sem congestão demonstrada, diurese pode piorar o estado circulatório.",
+        "points": -10,
+        "time_min": 1,
+        "subgroup": "Diuréticos"
+      },
+      {
+        "id": "paracetamol",
+        "label": "Paracetamol para desconforto febril",
+        "category": "tratamento",
+        "result": "Medida sintomática; não trata infecção ou choque e não deve ocupar a prioridade da ressuscitação.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Sintomáticos",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "antibiotic"
+              ]
+            },
+            "points": -3,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Medida sintomática; não trata infecção ou choque e não deve ocupar a prioridade da ressuscitação."
+          }
+        ]
+      },
+      {
+        "id": "hydrocortisone",
+        "label": "Hidrocortisona com avaliação da necessidade de vasopressor",
+        "category": "tratamento",
+        "result": "Pode ser considerada em choque com necessidade persistente de vasopressores; não substitui antibiótico, volume ou noradrenalina.",
+        "points": 1,
+        "time_min": 0.5,
+        "requires_all": [
+          "norepi"
+        ],
+        "subgroup": "Adjuvantes"
+      },
+      {
+        "id": "urine_monitor",
+        "label": "Monitorar diurese e balanço hídrico",
+        "category": "procedimentos_terapeuticos",
+        "result": "Diurese horária monitorada, com cuidado para não atrasar ressuscitação.",
+        "points": 2,
+        "time_min": 0.5,
+        "subgroup": "Monitorização invasiva"
+      },
+      {
+        "id": "arterial_line",
+        "label": "Cateter arterial com equipe habilitada",
+        "category": "procedimentos_terapeuticos",
+        "result": "Monitorização invasiva pode auxiliar titulação e coletas; não é pré-requisito para começar vasopressor.",
+        "points": 1,
+        "time_min": 1,
+        "requires_all": [
+          "norepi"
+        ],
+        "subgroup": "Monitorização invasiva"
+      },
+      {
+        "id": "fluid_recheck",
+        "label": "Reavaliar responsividade a fluidos",
+        "category": "iniciais",
+        "result": "Reavaliar perfusão e sinais de congestão antes de novos bolus; evitar expansão sem reavaliação.",
+        "points": 2,
+        "time_min": 0.5,
+        "requires_all": [
+          "crystalloid"
+        ]
+      },
+      {
+        "id": "dx_0",
+        "label": "Sepse com choque de provável foco pulmonar",
+        "category": "hipoteses",
+        "result": "Síndrome infecciosa respiratória com hipoperfusão e disfunção orgânica sustenta esta hipótese.",
+        "points": 0,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": true,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dx_1",
+        "label": "Pneumonia sem disfunção orgânica",
+        "category": "hipoteses",
+        "result": "Hipotensão, alteração mental, oligúria e lactato elevado indicam gravidade além de pneumonia não complicada.",
+        "points": -6,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": false,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dx_2",
+        "label": "Choque anafilático",
+        "category": "hipoteses",
+        "result": "Não há exposição imediata, urticária ou angioedema; o quadro é febril e progressivo.",
+        "points": -6,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": false,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dx_3",
+        "label": "Choque cardiogênico como causa principal",
+        "category": "hipoteses",
+        "result": "A apresentação infecciosa e os achados pulmonares focais favorecem sepse; não há disfunção cardíaca documentada.",
+        "points": -6,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": false,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dx_4",
+        "label": "Hipoglicemia",
+        "category": "hipoteses",
+        "result": "Glicemia não está baixa e não explica a síndrome infecciosa com choque.",
+        "points": -6,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": false,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dest_discharge",
+        "label": "Alta domiciliar imediata",
+        "category": "destino",
+        "result": "Alta imediata é inadequada diante da gravidade e da necessidade de observação ou suporte hospitalar.",
+        "points": -20,
+        "time_min": 0.25,
+        "role": "disposition",
+        "correct": false,
+        "subgroup": "Conduta final",
+        "penalty_kind": "destino inseguro"
+      },
+      {
+        "id": "dest_ward",
+        "label": "Internação em unidade monitorizada",
+        "category": "destino",
+        "result": "Neste caso, a necessidade de suporte intensivo exige UTI, não unidade de menor complexidade.",
+        "points": -20,
+        "time_min": 0.25,
+        "role": "disposition",
+        "correct": false,
+        "subgroup": "Conduta final",
+        "penalty_kind": "destino inseguro"
+      },
+      {
+        "id": "dest_icu",
+        "label": "Internação em UTI com suporte contínuo",
+        "category": "destino",
+        "result": "Admissão em ambiente intensivo é apropriada se persistem instabilidade, necessidade de suporte ou risco elevado; continuidade da estabilização é indispensável.",
+        "points": 0,
+        "time_min": 0.25,
+        "role": "disposition",
+        "correct": true,
+        "subgroup": "Conduta final",
+        "penalty_kind": "destino inseguro"
+      },
+      {
+        "id": "dest_outpatient",
+        "label": "Encaminhamento ambulatorial como único destino",
+        "category": "destino",
+        "result": "Seguimento ambulatorial não substitui observação ou internação após esta emergência.",
+        "points": -20,
+        "time_min": 0.25,
+        "role": "disposition",
+        "correct": false,
+        "subgroup": "Conduta final",
+        "penalty_kind": "destino inseguro"
+      },
+      {
+        "id": "refer_icu",
+        "label": "Acionar intensivista",
+        "category": "encaminhamento",
+        "result": "Solicitada avaliação para cuidados intensivos e continuidade do suporte hemodinâmico e respiratório.",
+        "points": 2,
+        "time_min": 0.25,
+        "subgroup": "Especialidades"
+      },
+      {
+        "id": "refer_infect",
+        "label": "Infectologia para revisão de antimicrobianos",
+        "category": "encaminhamento",
+        "result": "Parecer auxilia ajuste conforme culturas e evolução, sem condicionar o início do antibiótico ao especialista.",
+        "points": 1,
+        "time_min": 0.25,
+        "subgroup": "Especialidades"
+      },
+      {
+        "id": "refer_derm",
+        "label": "Dermatologia como prioridade imediata",
+        "category": "encaminhamento",
+        "result": "A especialidade não resolve o problema vital desta apresentação e não deve atrasar estabilização.",
+        "points": -5,
+        "time_min": 1,
+        "subgroup": "Especialidades"
+      }
+    ],
+    "deterioration": [
+      {
+        "effects": {
+          "vitals": {
+            "bp": "74/40",
+            "mental": "Mais confusa"
+          }
+        },
+        "message": "Persistência do foco infeccioso sem antimicrobiano: perfusão piora.",
+        "once_key": "delay_abx_15",
+        "after_min": 15,
+        "unless_action": "antibiotic"
+      },
+      {
+        "effects": {
+          "vitals": {
+            "bp": "66/36",
+            "hr": 132,
+            "mental": "Rebaixada"
+          }
+        },
+        "message": "Choque sem ressuscitação adequada progride.",
+        "once_key": "delay_fluid_25",
+        "after_min": 25,
+        "unless_action": "crystalloid"
+      }
+    ],
+    "completion_rules": {
+      "max_minutes": 45,
+      "required_actions": [
+        "antibiotic",
+        "crystalloid"
+      ],
+      "success_outcomes": [
+        "stabilized"
+      ],
+      "recommended_actions": [
+        "cultures",
+        "lactate",
+        "monitor",
+        "iv_access",
+        "oxygen",
+        "norepi"
+      ],
+      "scoring_version": 2,
+      "require_diagnosis": true,
+      "require_disposition": true
+    },
+    "debrief": {
+      "diagnosis": "Sepse com choque circulatório provável de foco pulmonar.",
+      "key_actions": [
+        "Reconhecer hipoperfusão",
+        "Coletar culturas idealmente antes do antimicrobiano sem atrasá-lo",
+        "Dosar lactato",
+        "Cristaloide com reavaliação",
+        "Noradrenalina se hipotensão persistir",
+        "Registrar a hipótese principal e justificar o destino final",
+        "Distinguir medidas urgentes de investigação que pode ser feita após estabilização"
+      ],
+      "pulo_do_gato": "Sepse com hipoperfusão é emergência: culturas e lactato ajudam, mas ressuscitação e antimicrobiano não devem ser postergados.",
+      "dangerous_actions": [
+        "Atrasar antimicrobiano por investigação extensa",
+        "Enviar paciente instável para exame demorado antes de ressuscitação"
+      ],
+      "scoring_note": "Nota: medidas essenciais 45, recomendadas 15, evolução 15, hipótese 10 e destino 15. Penalidades são descontadas depois, sem serem anuladas por ações extras. Tempos representam passos simulados de decisão, não a duração real dos exames."
+    },
+    "source_refs": [
+      {
+        "title": "Surviving Sepsis Campaign 2026",
+        "url": "https://www.sccm.org/clinical-resources/guidelines/guidelines/surviving-sepsis-campaign-international-guidelines-for-management-of-sepsis-and-septic-shock-2026"
+      }
+    ],
+    "version": 2
+  },
+  {
+    "id": "9454e532-a412-47c7-bce3-8fefbe20833a",
+    "slug": "vf-arrest-ed",
+    "title": "PCR em fibrilação ventricular",
+    "presentation": {
+      "age": "59 anos",
+      "sex": "Masculino",
+      "goal": "Priorizar RCP de alta qualidade, desfibrilação precoce e sequência de drogas/causas reversíveis.",
+      "opening": "Paciente inconsciente, sem respiração normal e sem pulso central palpável.",
+      "chief_complaint": "Colapso súbito na sala de espera.",
+      "display_title": "Colapso súbito na sala de espera"
+    },
+    "initial_vitals": {
+      "bp": "—",
+      "hr": 0,
+      "rr": 0,
+      "spo2": "—",
+      "temp": 36.4,
+      "mental": "Inconsciente",
+      "rhythm": "Não analisado"
+    },
+    "actions": [
+      {
+        "id": "check_pulse",
+        "label": "Confirmar ausência de pulso e respiração normal",
+        "points": 4,
+        "result": "Ausência de pulso central e de respiração normal confirmada em até 10 segundos.",
+        "category": "iniciais",
+        "time_min": 0.1,
+        "subgroup": "Suporte inicial"
+      },
+      {
+        "id": "cpr",
+        "label": "Iniciar RCP de alta qualidade",
+        "points": 20,
+        "result": "Compressões iniciadas; manter frequência e profundidade adequadas, retorno completo do tórax e interrupções mínimas.",
+        "effects": {},
+        "category": "iniciais",
+        "time_min": 0.25,
+        "essential": true,
+        "subgroup": "Suporte inicial"
+      },
+      {
+        "id": "pads",
+        "label": "Conectar monitor/desfibrilador",
+        "points": 8,
+        "result": "Monitor mostra fibrilação ventricular.",
+        "category": "iniciais",
+        "time_min": 0.25,
+        "requires_all": [],
+        "subgroup": "Suporte inicial",
+        "effects": {
+          "vitals": {
+            "rhythm": "FV no monitor"
+          }
+        }
+      },
+      {
+        "id": "shock1",
+        "label": "Desfibrilar (1º choque)",
+        "points": 18,
+        "result": "Choque aplicado; FV persiste. Retomar RCP imediatamente.",
+        "effects": {
+          "vitals": {
+            "rhythm": "FV persistente"
+          }
+        },
+        "category": "procedimentos_terapeuticos",
+        "time_min": 0.25,
+        "requires_all": [
+          "pads"
+        ],
+        "subgroup": "Desfibrilação"
+      },
+      {
+        "id": "ivio",
+        "label": "Obter acesso IV/IO durante RCP",
+        "points": 5,
+        "result": "Acesso obtido sem interromper compressões.",
+        "category": "iniciais",
+        "time_min": 0.5,
+        "requires_all": [
+          "cpr"
+        ],
+        "subgroup": "Suporte inicial"
+      },
+      {
+        "id": "shock2",
+        "label": "Reavaliar ritmo e desfibrilar novamente",
+        "points": 10,
+        "result": "Segundo choque aplicado; FV persiste.",
+        "effects": {
+          "vitals": {
+            "rhythm": "FV persistente"
+          }
+        },
+        "category": "procedimentos_terapeuticos",
+        "time_min": 2,
+        "requires_all": [
+          "shock1"
+        ],
+        "subgroup": "Desfibrilação"
+      },
+      {
+        "id": "epi",
+        "label": "Adrenalina 1 mg IV/IO durante RCP",
+        "points": 8,
+        "result": "Adrenalina administrada durante ciclo de RCP.",
+        "category": "tratamento",
+        "time_min": 1,
+        "requires_all": [
+          "shock2",
+          "ivio"
+        ],
+        "subgroup": "Medicamentos"
+      },
+      {
+        "id": "shock3",
+        "label": "Novo choque após ciclo de RCP",
+        "points": 8,
+        "result": "Terceiro choque aplicado.",
+        "category": "procedimentos_terapeuticos",
+        "time_min": 2,
+        "requires_all": [
+          "shock2"
+        ],
+        "subgroup": "Desfibrilação"
+      },
+      {
+        "id": "amiodarone",
+        "label": "Amiodarona 300 mg IV/IO",
+        "points": 6,
+        "result": "Antiarrítmico administrado para FV refratária.",
+        "category": "tratamento",
+        "time_min": 1,
+        "requires_all": [
+          "shock3",
+          "ivio"
+        ],
+        "subgroup": "Medicamentos"
+      },
+      {
+        "id": "causes",
+        "label": "Buscar causas reversíveis (Hs e Ts)",
+        "points": 5,
+        "result": "Equipe revisa hipóxia, hipovolemia, distúrbios metabólicos, tamponamento, pneumotórax, toxinas e tromboses.",
+        "category": "raciocinio",
+        "time_min": 2,
+        "subgroup": "Raciocínio clínico"
+      },
+      {
+        "id": "rosc",
+        "label": "Reavaliar ritmo e pulso após novo ciclo",
+        "points": 8,
+        "result": "Ritmo organizado e pulso central presente: ROSC.",
+        "effects": {
+          "vitals": {
+            "bp": "104/66",
+            "hr": 92,
+            "rr": "Ventilado",
+            "spo2": 96,
+            "mental": "Inconsciente pós-PCR",
+            "rhythm": "Ritmo organizado"
+          },
+          "outcome": "rosc"
+        },
+        "category": "iniciais",
+        "time_min": 2,
+        "requires_all": [
+          "cpr",
+          "shock1",
+          "shock2",
+          "epi"
+        ],
+        "subgroup": "Suporte inicial"
+      },
+      {
+        "id": "bicarb",
+        "label": "Bicarbonato de sódio de rotina",
+        "points": -8,
+        "result": "Administração rotineira não é recomendada sem indicação específica.",
+        "category": "tratamento",
+        "time_min": 1,
+        "subgroup": "Medicamentos",
+        "penalty_kind": "conduta inadequada"
+      },
+      {
+        "id": "calcium",
+        "label": "Cálcio de rotina",
+        "points": -8,
+        "result": "Administração rotineira não é recomendada sem indicação específica.",
+        "category": "tratamento",
+        "time_min": 1,
+        "subgroup": "Medicamentos",
+        "penalty_kind": "conduta inadequada"
+      },
+      {
+        "id": "call_team",
+        "label": "Acionar equipe de emergência",
+        "category": "iniciais",
+        "result": "Equipe acionada para dividir monitorização, acesso, avaliação e tratamento.",
+        "points": 1,
+        "time_min": 0.25
+      },
+      {
+        "id": "reassess",
+        "label": "Reavaliar ABCDE e perfusão",
+        "category": "iniciais",
+        "result": "Reavaliação: PA {{bp}} mmHg, FC {{hr}} bpm, FR {{rr}}, SpO₂ {{spo2}}%; estado mental: {{mental}}.",
+        "points": 1,
+        "time_min": 0.25,
+        "repeatable": true
+      },
+      {
+        "id": "glucose",
+        "label": "Glicemia capilar",
+        "category": "exames",
+        "result": "Glicemia capilar: 112 mg/dL.",
+        "points": 1,
+        "time_min": 0.25,
+        "subgroup": "Gerais"
+      },
+      {
+        "id": "exam_neuro",
+        "label": "Neurológico",
+        "category": "exame",
+        "result": "Estado mental atual: {{mental}}. Sem resposta verbal durante a PCR; avaliação neurológica completa é adiada para após ressuscitação. Achados precoces isolados não definem prognóstico.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Neurológico"
+      },
+      {
+        "id": "exam_limbs",
+        "label": "Extremidades e perfusão",
+        "category": "exame",
+        "result": "Extremidades frias e enchimento capilar lento durante a instabilidade; reavaliar com a pressão atual de {{bp}} mmHg.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Extremidades"
+      },
+      {
+        "id": "ask_witness",
+        "label": "Perguntar ao acompanhante como ocorreu o colapso — sem interromper RCP",
+        "category": "anamnese",
+        "result": "Acompanhante relata queda súbita há poucos instantes, após queixa de mal-estar.",
+        "points": 0,
+        "time_min": 0.25,
+        "subgroup": "",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "cpr"
+              ]
+            },
+            "points": -8,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Acompanhante relata queda súbita há poucos instantes, após queixa de mal-estar."
+          }
+        ]
+      },
+      {
+        "id": "ask_chestpain",
+        "label": "Perguntar sobre dor torácica antes do evento — sem interromper RCP",
+        "category": "anamnese",
+        "result": "Acompanhante informa pressão torácica antes do colapso; a causa coronariana deve ser investigada após ressuscitação.",
+        "points": 0,
+        "time_min": 0.25,
+        "subgroup": "",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "cpr"
+              ]
+            },
+            "points": -8,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Acompanhante informa pressão torácica antes do colapso; a causa coronariana deve ser investigada após ressuscitação."
+          }
+        ]
+      },
+      {
+        "id": "ask_history",
+        "label": "Cardiopatias, medicamentos e alergias — sem interromper RCP",
+        "category": "anamnese",
+        "result": "Familiar informa hipertensão e tabagismo; não tem lista completa de medicamentos.",
+        "points": 0,
+        "time_min": 0.25,
+        "subgroup": "",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "cpr"
+              ]
+            },
+            "points": -8,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Familiar informa hipertensão e tabagismo; não tem lista completa de medicamentos."
+          }
+        ]
+      },
+      {
+        "id": "ask_drowning",
+        "label": "Trauma, intoxicação ou afogamento — sem interromper RCP",
+        "category": "anamnese",
+        "result": "Não há relato de trauma importante, afogamento ou intoxicação conhecida.",
+        "points": 0,
+        "time_min": 0.25,
+        "subgroup": "",
+        "variants": [
+          {
+            "when": {
+              "performed_none": [
+                "cpr"
+              ]
+            },
+            "points": -8,
+            "result": "Esta medida não substitui a intervenção urgente. Sua priorização atrasou o tratamento necessário neste paciente. Não há relato de trauma importante, afogamento ou intoxicação conhecida."
+          }
+        ]
+      },
+      {
+        "id": "exam_head",
+        "label": "Cabeça e pescoço",
+        "category": "exame",
+        "result": "Sem trauma evidente ou corpo estranho visível na boca; avaliar sem interromper compressões.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Avaliação por segmento"
+      },
+      {
+        "id": "exam_chest",
+        "label": "Tórax — ventilação",
+        "category": "exame",
+        "result": "Avaliar elevação bilateral durante ventilação; ausência de respiração espontânea normal na apresentação.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Avaliação por segmento"
+      },
+      {
+        "id": "exam_abdomen",
+        "label": "Abdominal",
+        "category": "exame",
+        "result": "Sem distensão abdominal importante ou trauma evidente; exame rápido, sem interromper RCP.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Avaliação por segmento"
+      },
+      {
+        "id": "exam_skin",
+        "label": "Pele",
+        "category": "exame",
+        "result": "Palidez e cianose periférica na apresentação, sem hemorragia externa importante.",
+        "points": 0,
+        "time_min": 0.5,
+        "subgroup": "Avaliação por segmento"
+      },
+      {
+        "id": "bvm",
+        "label": "Ventilar com bolsa-válvula-máscara e oxigênio",
+        "category": "iniciais",
+        "result": "Ventilação realizada sem hiperventilar e com interrupções mínimas das compressões.",
+        "points": 3,
+        "time_min": 0.25
+      },
+      {
+        "id": "airway",
+        "label": "Via aérea avançada por equipe experiente",
+        "category": "procedimentos_terapeuticos",
+        "result": "Via aérea avançada preparada sem atrasar choque ou interromper compressões; confirmar posição com capnografia.",
+        "points": 2,
+        "time_min": 0.5,
+        "requires_all": [
+          "cpr",
+          "shock1"
+        ],
+        "subgroup": "Via aérea"
+      },
+      {
+        "id": "capnography",
+        "label": "Capnografia durante a RCP",
+        "category": "exames",
+        "result": "Capnografia pode auxiliar avaliação da qualidade da RCP e suspeita de ROSC; não deve ser usada isoladamente para encerrar esforços.",
+        "points": 1,
+        "time_min": 0.25,
+        "subgroup": "Gerais"
+      },
+      {
+        "id": "ecg",
+        "label": "ECG de 12 derivações após ROSC",
+        "category": "exames",
+        "result": "ECG pós-ROSC obtido para investigar causa e orientar avaliação coronariana.",
+        "points": 2,
+        "time_min": 0.5,
+        "requires_all": [
+          "rosc"
+        ],
+        "subgroup": "Gerais"
+      },
+      {
+        "id": "electrolytes",
+        "label": "Potássio, magnésio e função renal",
+        "category": "laboratorio",
+        "result": "No cenário simulado, não há hipercalemia ou hipomagnesemia grave demonstradas. Coleta ocorre sem interromper ressuscitação.",
+        "points": 1,
+        "time_min": 0.25,
+        "subgroup": "Laboratoriais"
+      },
+      {
+        "id": "gas",
+        "label": "Gasometria e lactato",
+        "category": "laboratorio",
+        "result": "Acidose e hiperlactatemia no contexto de baixo fluxo; não justificam bicarbonato rotineiro sem indicação específica.",
+        "points": 1,
+        "time_min": 0.25,
+        "subgroup": "Laboratoriais"
+      },
+      {
+        "id": "troponin",
+        "label": "Troponina após ROSC",
+        "category": "laboratorio",
+        "result": "A interpretação deve considerar lesão miocárdica pós-PCR; valor isolado não determina a causa da parada.",
+        "points": 1,
+        "time_min": 0.5,
+        "requires_all": [
+          "rosc"
+        ],
+        "subgroup": "Laboratoriais"
+      },
+      {
+        "id": "pocus",
+        "label": "POCUS sem prolongar pausa das compressões",
+        "category": "imagem",
+        "result": "Equipe experiente pesquisa causas reversíveis durante janela já prevista, sem prolongar pausa; não observa tamponamento ou pneumotórax hipertensivo.",
+        "points": 1,
+        "time_min": 0.25,
+        "requires_all": [
+          "cpr",
+          "shock1"
+        ],
+        "subgroup": "Imagem"
+      },
+      {
+        "id": "ct_brain",
+        "label": "Transportar para TC de crânio durante PCR",
+        "category": "imagem",
+        "result": "Transporte para TC durante esta PCR atrasa RCP e desfibrilação; não é prioridade.",
+        "points": -20,
+        "time_min": 5,
+        "subgroup": "Imagem"
+      },
+      {
+        "id": "cxr",
+        "label": "Radiografia de tórax após ROSC",
+        "category": "imagem",
+        "result": "Solicitada após estabilização para avaliar pulmões e dispositivos, conforme necessidade clínica.",
+        "points": 1,
+        "time_min": 1,
+        "requires_all": [
+          "rosc"
+        ],
+        "subgroup": "Imagem"
+      },
+      {
+        "id": "lidocaine",
+        "label": "Lidocaína IV/IO para FV refratária",
+        "category": "tratamento",
+        "result": "Alternativa à amiodarona na FV refratária a choques; não associar rotineiramente ambas sem indicação.",
+        "points": 6,
+        "time_min": 0.5,
+        "requires_all": [
+          "shock3",
+          "ivio"
+        ],
+        "equivalent_to": "amiodarone",
+        "subgroup": "Antiarrítmicos"
+      },
+      {
+        "id": "atropine",
+        "label": "Atropina IV",
+        "category": "tratamento",
+        "result": "Atropina não é tratamento desta PCR em FV; atrasou medidas efetivas.",
+        "points": -8,
+        "time_min": 1,
+        "subgroup": "Medicamentos"
+      },
+      {
+        "id": "adenosine",
+        "label": "Adenosina IV",
+        "category": "tratamento",
+        "result": "Adenosina não trata FV sem pulso.",
+        "points": -10,
+        "time_min": 1,
+        "subgroup": "Medicamentos"
+      },
+      {
+        "id": "magnesium",
+        "label": "Magnésio IV de rotina",
+        "category": "tratamento",
+        "result": "Não há torsades ou deficiência específica identificada; magnésio não é tratamento rotineiro da FV.",
+        "points": -6,
+        "time_min": 1,
+        "subgroup": "Eletrólitos"
+      },
+      {
+        "id": "thrombolysis",
+        "label": "Trombólise empírica sem hipótese etiológica",
+        "category": "tratamento",
+        "result": "Não há suspeita fundamentada de embolia pulmonar que sustente trombólise nesta decisão.",
+        "points": -8,
+        "time_min": 1,
+        "subgroup": "Antitrombóticos"
+      },
+      {
+        "id": "sync_shock",
+        "label": "Cardioversão sincronizada",
+        "category": "procedimentos_terapeuticos",
+        "result": "FV exige desfibrilação não sincronizada; aguardar sincronização atrasa o choque.",
+        "points": -15,
+        "time_min": 1,
+        "subgroup": "Terapia elétrica"
+      },
+      {
+        "id": "pause_cpr",
+        "label": "Interromper RCP para exame físico completo",
+        "category": "procedimentos_terapeuticos",
+        "result": "Pausa desnecessária reduz perfusão coronariana e cerebral.",
+        "points": -20,
+        "time_min": 2,
+        "subgroup": "Ressuscitação"
+      },
+      {
+        "id": "dx_0",
+        "label": "PCR em fibrilação ventricular",
+        "category": "hipoteses",
+        "result": "Ausência de pulso com atividade elétrica caótica sustenta FV.",
+        "points": 0,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": true,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dx_1",
+        "label": "Assistolia",
+        "category": "hipoteses",
+        "result": "FV apresenta atividade elétrica caótica; assistolia não corresponde ao traçado mostrado após conexão.",
+        "points": -6,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": false,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dx_2",
+        "label": "Atividade elétrica sem pulso",
+        "category": "hipoteses",
+        "result": "AESP requer ritmo organizado sem pulso, diferente da FV observada.",
+        "points": -6,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": false,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dx_3",
+        "label": "Síncope vasovagal com pulso",
+        "category": "hipoteses",
+        "result": "O paciente está sem pulso e sem respiração normal.",
+        "points": -6,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": false,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dx_4",
+        "label": "FA com resposta ventricular rápida",
+        "category": "hipoteses",
+        "result": "O traçado caótico sem complexos QRS organizados corresponde à FV, não à FA.",
+        "points": -6,
+        "time_min": 0.25,
+        "role": "diagnosis",
+        "correct": false,
+        "subgroup": "Hipótese principal",
+        "penalty_kind": "hipótese incorreta"
+      },
+      {
+        "id": "dest_discharge",
+        "label": "Alta domiciliar imediata",
+        "category": "destino",
+        "result": "Alta imediata é inadequada diante da gravidade e da necessidade de observação ou suporte hospitalar.",
+        "points": -20,
+        "time_min": 0.25,
+        "role": "disposition",
+        "correct": false,
+        "subgroup": "Conduta final",
+        "penalty_kind": "destino inseguro"
+      },
+      {
+        "id": "dest_ward",
+        "label": "Internação em unidade monitorizada",
+        "category": "destino",
+        "result": "Neste caso, a necessidade de suporte intensivo exige UTI, não unidade de menor complexidade.",
+        "points": -20,
+        "time_min": 0.25,
+        "role": "disposition",
+        "correct": false,
+        "subgroup": "Conduta final",
+        "penalty_kind": "destino inseguro"
+      },
+      {
+        "id": "dest_icu",
+        "label": "Internação em UTI com suporte contínuo",
+        "category": "destino",
+        "result": "Admissão em ambiente intensivo é apropriada se persistem instabilidade, necessidade de suporte ou risco elevado; continuidade da estabilização é indispensável.",
+        "points": 0,
+        "time_min": 0.25,
+        "role": "disposition",
+        "correct": true,
+        "subgroup": "Conduta final",
+        "penalty_kind": "destino inseguro"
+      },
+      {
+        "id": "dest_outpatient",
+        "label": "Encaminhamento ambulatorial como único destino",
+        "category": "destino",
+        "result": "Seguimento ambulatorial não substitui observação ou internação após esta emergência.",
+        "points": -20,
+        "time_min": 0.25,
+        "role": "disposition",
+        "correct": false,
+        "subgroup": "Conduta final",
+        "penalty_kind": "destino inseguro"
+      },
+      {
+        "id": "refer_cardio",
+        "label": "Cardiologia e intensivista após ROSC",
+        "category": "encaminhamento",
+        "result": "Planejar cuidados pós-PCR e investigação etiológica, incluindo avaliação coronariana conforme achados.",
+        "points": 2,
+        "time_min": 0.25,
+        "subgroup": "Especialidades",
+        "requires_all": [
+          "rosc"
+        ]
+      },
+      {
+        "id": "refer_derm",
+        "label": "Dermatologia como prioridade imediata",
+        "category": "encaminhamento",
+        "result": "A especialidade não resolve o problema vital desta apresentação e não deve atrasar estabilização.",
+        "points": -5,
+        "time_min": 1,
+        "subgroup": "Especialidades"
+      }
+    ],
+    "deterioration": [
+      {
+        "effects": {},
+        "message": "Desfibrilação foi atrasada em ritmo chocável.",
+        "once_key": "delay_shock",
+        "after_min": 4,
+        "unless_action": "shock1"
+      }
+    ],
+    "completion_rules": {
+      "max_minutes": 20,
+      "required_actions": [
+        "cpr",
+        "shock1"
+      ],
+      "success_outcomes": [
+        "rosc"
+      ],
+      "recommended_actions": [
+        "pads",
+        "shock2",
+        "ivio",
+        "epi",
+        "shock3",
+        "amiodarone",
+        "causes",
+        "rosc"
+      ],
+      "scoring_version": 2,
+      "require_diagnosis": true,
+      "require_disposition": true
+    },
+    "debrief": {
+      "diagnosis": "Parada cardiorrespiratória em fibrilação ventricular.",
+      "key_actions": [
+        "RCP imediata",
+        "Desfibrilação precoce",
+        "Retomar RCP após cada choque",
+        "Acesso IV/IO",
+        "Adrenalina conforme algoritmo",
+        "Antiarrítmico em FV/pVT refratária",
+        "Buscar causas reversíveis",
+        "Registrar a hipótese principal e justificar o destino final",
+        "Distinguir medidas urgentes de investigação que pode ser feita após estabilização"
+      ],
+      "pulo_do_gato": "Na FV/TV sem pulso, desfibrilação precoce e RCP de alta qualidade vêm antes; adrenalina entra após choques iniciais e antiarrítmico na FV/pVT refratária.",
+      "dangerous_actions": [
+        "Atrasar desfibrilação",
+        "Interromper compressões desnecessariamente",
+        "Usar bicarbonato ou cálcio de rotina sem indicação específica"
+      ],
+      "scoring_note": "Nota: medidas essenciais 45, recomendadas 15, evolução 15, hipótese 10 e destino 15. Penalidades são descontadas depois, sem serem anuladas por ações extras. Tempos representam passos simulados de decisão, não a duração real dos exames."
+    },
+    "source_refs": [
+      {
+        "url": "https://www.heart.org/-/media/CPR-Files/CPR-Guidelines-Files/2025-Algorithms/Algorithm-ACLS-CA-250527.pdf",
+        "title": "2025 AHA Adult Cardiac Arrest Algorithm"
+      },
+      {
+        "title": "AHA 2025 — Adult Advanced Life Support",
+        "url": "https://cpr.heart.org/en/resuscitation-science/cpr-and-ecc-guidelines/adult-advanced-life-support"
+      }
+    ],
+    "version": 2
+  }
+]

@@ -1,6 +1,7 @@
 (() => {
   "use strict";
 
+  const E=window.PlantaoEngine;
   const sb = window.supabaseClient;
   if (!sb) return;
 
@@ -34,12 +35,13 @@
     outcomes:[],
     triggered:[],
     log:[],
-    category:null
+    category:null,
+    penalties:0, criticalElapsed:0, diagnosis:null, disposition:null, busy:false
   };
 
   function fmtTime(minutes) {
-    const total = Math.max(0, Number(minutes || 0));
-    return String(Math.floor(total/60)).padStart(2,"0") + ":" + String(total%60).padStart(2,"0");
+    const total = Math.max(0, Math.round(Number(minutes||0)*60));
+    return String(Math.floor(total/60)).padStart(2,"0")+":"+String(total%60).padStart(2,"0");
   }
 
   function show(section) {
@@ -100,7 +102,7 @@
         <article class="plantao-case-card">
           <div class="plantao-case-card-head">
             <div>
-              <h3>${esc(item.title)}</h3>
+              <h3>${esc(item.presentation?.display_title || item.title)}</h3>
               <div class="plantao-case-tags">
                 <span>${esc(item.specialty)}</span>
                 <span>${esc(item.difficulty)}</span>
@@ -116,8 +118,37 @@
     }).join("");
   }
 
-  const GROUPS = {avaliar:["anamnese","exame","monitorizacao"], investigar:["exames","laboratorio","imagem"], intervir:["procedimentos","tratamento"], discutir:["raciocinio"]};
-  const groupOf = category => Object.keys(GROUPS).find(key=>GROUPS[key].includes(category)) || "discutir";
+  const GROUPS = {
+    anamnese:{label:"Anamnese",icon:"◉",categories:["anamnese"]},
+    fisico:{label:"Exame físico",icon:"✚",categories:["exame"]},
+    iniciais:{label:"Procedimentos iniciais / emergência",icon:"ϟ",categories:["iniciais","monitorizacao"]},
+    exames:{label:"Exames",icon:"▤",categories:["exames","laboratorio","imagem"]},
+    intervir:{label:"Intervenções",icon:"✚",categories:["tratamento","procedimentos","procedimentos_terapeuticos"]},
+    hipoteses:{label:"Hipóteses e conduta final",icon:"◎",categories:["hipoteses","destino","encaminhamento","raciocinio"]}
+  };
+  const groupOf = category => Object.keys(GROUPS).find(key=>GROUPS[key].categories.includes(category)) || "intervir";
+  const done = id => E.done(state.current,state.performed,id);
+  function openActions(category) {
+    state.category=category;
+    $("plantao-action-search").value="";
+    $("plantao-action-drawer").hidden=false;
+    renderActions();
+    $("plantao-action-tabs").inert=true;
+    $("plantao-action-close").focus();
+  }
+  function closeActions() {
+    $("plantao-action-drawer").hidden=true;
+    $("plantao-action-tabs").inert=false;
+    renderActions();
+    $("plantao-action-tabs").querySelector(`[data-case-category="${state.category}"]`)?.focus();
+  }
+  function updateScore() {
+    const score=E.score(state.current,state);
+    $("plantao-score-live").textContent=score.total+"/100 · −"+score.penalties+" pts";
+  }
+  function contextual(text) {
+    return String(text||"").replace(/\{\{(\w+)\}\}/g,(_,key)=>String(state.vitals[key]??"não informado"));
+  }
 
   function renderVitals() {
     const v=state.vitals || {};
@@ -141,7 +172,7 @@
     state.log.push({time,message,type});
     $("plantao-feed").innerHTML=state.log.slice().reverse().map(item=>`
       <div class="plantao-feed-item ${esc(item.type)}">
-        <span>T+${esc(item.time)} min</span>
+        <span>T+${fmtTime(item.time)}</span>
         <p>${esc(item.message)}</p>
       </div>
     `).join("");
@@ -149,22 +180,22 @@
 
   function renderActions() {
     const actions=Array.isArray(state.current?.actions) ? state.current.actions : [];
-    const categories=Object.keys(GROUPS);
-    if (!state.category || !categories.includes(state.category)) state.category=categories[0] || null;
-
-    $("plantao-action-tabs").innerHTML=categories.map(cat=>`
-      <button class="plantao-action-tab ${state.category===cat?"active":""}" type="button" aria-pressed="${state.category===cat}" data-case-category="${esc(cat)}"><span aria-hidden="true">${{avaliar:"▤",investigar:"⌕",intervir:"✚",discutir:"☏"}[cat]}</span>${{avaliar:"Avaliar",investigar:"Investigar",intervir:"Intervir",discutir:"Discutir"}[cat]}</button>
-    `).join("");
-
-    $("plantao-actions").innerHTML=actions.filter(x=>groupOf(x.category)===state.category).map(action=>{
-      const done=state.performed.includes(action.id);
-      return `
-        <button class="plantao-action" type="button" data-case-action="${esc(action.id)}" ${done?"disabled":""}>
-          <strong>${esc(action.label)}</strong>
-          <small>${esc(CATEGORY_LABELS[action.category]||action.category)} · ${done ? "Já realizado" : "+"+Number(action.time_min||0)+" min"}</small>
-        </button>
-      `;
-    }).join("") || '<p class="plantao-no-actions">Nenhuma ação deste grupo disponível neste caso.</p>';
+    if(!GROUPS[state.category])state.category="anamnese";
+    $("plantao-action-tabs").innerHTML=Object.entries(GROUPS).map(([key,g])=>`
+      <button class="plantao-action-tab" type="button" data-case-category="${key}" aria-controls="plantao-action-drawer" aria-expanded="${!$("plantao-action-drawer").hidden&&key===state.category}">
+        <span aria-hidden="true">${g.icon}</span><span>${g.label}</span>
+      </button>`).join("");
+    $("plantao-action-title").textContent=GROUPS[state.category].label;
+    const search=$("plantao-action-search").value.trim().toLocaleLowerCase('pt-BR');
+    const available=actions.filter(a=>groupOf(a.category)===state.category && (!search||(a.label+" "+(a.subgroup||"")).toLocaleLowerCase('pt-BR').includes(search)));
+    const groups=[...new Set(available.map(a=>a.subgroup||CATEGORY_LABELS[a.category]||"Opções"))];
+    $("plantao-actions").innerHTML=groups.map(group=>`<section class="plantao-action-group"><h3>${esc(group)}</h3>${available.filter(a=>(a.subgroup||CATEGORY_LABELS[a.category]||"Opções")===group).map(action=>{
+      const completed=done(action.id);
+      return `<button class="plantao-action" type="button" data-case-action="${esc(action.id)}" ${state.busy||(completed&&!action.repeatable)?"disabled":""}>
+        <strong>${esc(action.label)}</strong>
+        <small>${completed&&!action.repeatable?"Realizado":"+"+fmtTime(action.time_min||0)}${action.role==='disposition'?" · Encerrar atendimento":""}</small>
+      </button>`;
+    }).join("")}</section>`).join("") || '<p class="plantao-no-actions">Nenhuma opção encontrada.</p>';
   }
 
   function applyEffects(effects={}) {
@@ -181,33 +212,38 @@
     for (const event of events) {
       if (state.triggered.includes(event.once_key)) continue;
       if (state.elapsed < Number(event.after_min||0)) continue;
-      if (event.unless_action && state.performed.includes(event.unless_action)) continue;
+      if (event.unless_action && done(event.unless_action)) continue;
       state.triggered.push(event.once_key);
       state.score-=6;
+      state.penalties+=6;
       applyEffects(event.effects||{});
-      feed(event.message||"O paciente apresentou piora clínica.","warning");
+      feed((event.message||"O paciente apresentou piora clínica.")+" (−6 pontos por atraso)","warning");
     }
   }
 
   async function persistSession(extra={}) {
     if (!state.session?.id) return;
     const payload={
-      elapsed_minutes:state.elapsed,
-      score:state.score,
+      elapsed_minutes:Math.ceil(state.elapsed),
+      score:finalScore(),
       state:{
         vitals:state.vitals,
         performed:state.performed,
         outcomes:state.outcomes,
-        triggered:state.triggered
+        triggered:state.triggered,
+        penalties:state.penalties, criticalElapsed:state.criticalElapsed, elapsed_seconds:Math.round(state.elapsed*60),
+        diagnosis:state.diagnosis, disposition:state.disposition, scoring_version:2
       },
       action_log:state.log,
       ...extra
     };
     const {error}=await sb.from("clinical_case_sessions").update(payload).eq("id",state.session.id);
-    if (error) console.warn("Plantão: não foi possível persistir a sessão",error);
+    if (error) { console.warn("Plantão: não foi possível persistir a sessão",error); return false; }
+    return true;
   }
 
   async function startCase(caseId) {
+    if(state.busy)return;
     const item=state.cases.find(x=>x.id===caseId);
     if (!item) return;
     state.current=item;
@@ -219,7 +255,12 @@
     state.triggered=[];
     state.log=[];
     state.category=null;
+    state.penalties=0; state.criticalElapsed=0; state.diagnosis=null; state.disposition=null; state.busy=false;
+    $("plantao-action-search").value="";
+    $("plantao-action-drawer").hidden=true;
+    $("plantao-action-tabs").inert=false;
 
+    state.busy=true;
     const {data,error}=await sb.from("clinical_case_sessions").insert({
       user_id:state.user.id,
       case_id:item.id,
@@ -231,20 +272,22 @@
     }).select("id,case_id,status,started_at").single();
 
     if (error) {
+      state.busy=false;
       console.error("Plantão: falha ao iniciar sessão",error);
       window.alert("Não foi possível iniciar o caso.");
       return;
     }
+    state.busy=false;
     state.session=data;
 
     $("plantao-setting").textContent=item.setting || "Sala de emergência";
-    $("plantao-case-title").textContent=item.title;
+    $("plantao-case-title").textContent=item.presentation?.display_title || item.title;
     $("plantao-opening").textContent=item.presentation?.opening || item.summary;
     $("plantao-age").textContent=item.presentation?.age || "";
     $("plantao-sex").textContent=item.presentation?.sex || "";
     $("plantao-chief").textContent=item.presentation?.chief_complaint ? "Queixa: "+item.presentation.chief_complaint : "";
     $("plantao-time").textContent=fmtTime(0);
-    $("plantao-score-live").textContent="0 pts";
+    updateScore();
     renderVitals();
     renderActions();
     feed(item.presentation?.opening || item.summary,"event",0);
@@ -252,82 +295,85 @@
   }
 
   async function runAction(actionId) {
-    if (!state.current || state.performed.includes(actionId)) return;
-    const action=(state.current.actions||[]).find(x=>x.id===actionId);
-    if (!action) return;
-
-    const missing=(action.requires_all||[]).filter(id=>!state.performed.includes(id));
-    if (missing.length) {
-      state.elapsed+=1;
-      state.score-=2;
-      feed(action.result_if_blocked || "Essa ação ainda não pode ser executada com segurança neste ponto do caso.","warning");
-      applyDeterioration();
-      $("plantao-time").textContent=fmtTime(state.elapsed);
-      $("plantao-score-live").textContent=state.score+" pts";
-      renderVitals();
-      await persistSession();
-      return;
+    if (!state.current || state.busy || state.session?.status==="completed") return;
+    const original=(state.current.actions||[]).find(x=>x.id===actionId);
+    if (!original || (done(actionId)&&!original.repeatable)) return;
+    const action=E.resolve(state.current,state,original);
+    if(action.role==='disposition') {
+      if(!state.diagnosis) { feed("Selecione uma hipótese principal antes de definir o destino final.","warning");return; }
+      if(!window.confirm(action.label+"? Esta decisão encerra o atendimento e abre a avaliação."))return;
     }
-
-    state.performed.push(action.id);
-    state.elapsed+=Number(action.time_min||0);
-    state.score+=Number(action.points||0);
-    applyEffects(action.effects||{});
-    feed(action.result || action.label, Number(action.points||0)<0 ? "warning" : "event");
-    applyDeterioration();
-
-    $("plantao-time").textContent=fmtTime(state.elapsed);
-    $("plantao-score-live").textContent=state.score+" pts";
-    renderVitals();
-    renderActions();
-    await persistSession();
+    state.busy=true;renderActions();
+    $("plantao-finish").disabled=true;$("plantao-back").disabled=true;
+    try {
+      const missing=(action.requires_all||[]).filter(id=>!done(id));
+      if(missing.length) {
+        state.elapsed+=.25;
+        if(!E.success(state.current,state))state.criticalElapsed+=.25;
+        state.penalties+=2;state.score-=2;
+        feed((action.result_if_blocked||"Antes desta medida, realize: "+missing.map(actionLabel).join(", "))+" (−2 pontos)","warning");
+        applyDeterioration();
+      } else {
+        const repeated=done(action.id);
+        const delta=Number(action.time_min||0);
+        if(!E.success(state.current,state))state.criticalElapsed+=delta;
+        state.elapsed+=delta;
+        // Do not let a late definitive action erase deterioration that occurred during its delay.
+        applyDeterioration();
+        if(!repeated)state.performed.push(action.id);
+        const points=repeated?0:Number(action.points||0);
+        state.score+=points;
+        if(points<0)state.penalties+=Math.abs(points);
+        applyEffects(action.effects||{});
+        if(action.role==='diagnosis')state.diagnosis={id:action.id,label:action.label,correct:action.correct===true};
+        if(action.role==='disposition')state.disposition={id:action.id,label:action.label,correct:action.correct===true};
+        feed(contextual(action.result||action.label)+(points<0?` (−${Math.abs(points)} pontos)`:""),points<0?"warning":"event");
+      }
+      $("plantao-time").textContent=fmtTime(state.elapsed);
+      updateScore();renderVitals();
+      const saved=await persistSession();
+      if(!saved)feed("Não foi possível salvar agora. Mantenha esta tela aberta; a próxima ação tentará novamente.","warning");
+      if(action.role==='disposition'&&state.disposition)await finishCase();
+    } finally {
+      state.busy=false;renderActions();
+      $("plantao-finish").disabled=false;$("plantao-back").disabled=false;
+    }
   }
 
-  function hasAnySuccessOutcome() {
-    const acceptable=state.current?.completion_rules?.success_outcomes || [];
-    return acceptable.some(x=>state.outcomes.includes(x));
-  }
-
-  function finalScore() {
-    const rules=state.current?.completion_rules || {};
-    const required=rules.required_actions || [];
-    const recommended=rules.recommended_actions || [];
-    const reqDone=required.filter(x=>state.performed.includes(x)).length;
-    const recDone=recommended.filter(x=>state.performed.includes(x)).length;
-    const reqRatio=required.length ? reqDone/required.length : 1;
-    const recRatio=recommended.length ? recDone/recommended.length : 1;
-    const outcomeBonus=hasAnySuccessOutcome()?15:0;
-    const timeLimit=Number(rules.max_minutes||30);
-    const timePenalty=Math.max(0,state.elapsed-timeLimit);
-    return Math.max(0,Math.min(100,Math.round(25 + state.score + reqRatio*25 + recRatio*15 + outcomeBonus - timePenalty)));
-  }
+  function hasAnySuccessOutcome() {return E.success(state.current,state);}
+  function finalScore() {return E.score(state.current,state).total;}
 
   async function finishCase() {
     if (!state.current || !state.session) return;
     const rules=state.current.completion_rules || {};
     const required=rules.required_actions || [];
     const recommended=rules.recommended_actions || [];
-    const missingRequired=required.filter(x=>!state.performed.includes(x));
-    const missingRecommended=recommended.filter(x=>!state.performed.includes(x));
+    const missingRequired=required.filter(x=>!done(x));
+    const missingRecommended=recommended.filter(x=>!done(x));
+    if(!state.diagnosis || !state.disposition) {openActions("hipoteses");return;}
     const score=finalScore();
 
     const result={
       final_score:score,
+      scoring_version:2, penalties:E.score(state.current,state).penalties,
+      diagnosis:state.diagnosis, disposition:state.disposition,
       missing_required:missingRequired,
       missing_recommended:missingRecommended,
       performed_count:state.performed.length,
-      elapsed_minutes:state.elapsed,
+      elapsed_minutes:Math.ceil(state.elapsed),
       outcomes:state.outcomes
     };
 
-    await persistSession({
+    const saved=await persistSession({
       status:"completed",
       completed_at:new Date().toISOString(),
       score,
       result
     });
 
+    if(!saved){feed("Não foi possível salvar o encerramento. Tente novamente em Definir destino.","warning");return;}
     state.sessions.unshift({id:state.session.id,case_id:state.current.id,status:"completed",score,result,started_at:state.session.started_at,completed_at:new Date().toISOString()});
+    state.session.status="completed";
     renderDebrief(score,missingRequired,missingRecommended);
     show("plantao-debrief");
   }
@@ -349,14 +395,17 @@
     const harmful=state.current.actions.filter(a=>state.performed.includes(a.id)&&Number(a.points||0)<0).length;
 
     $("plantao-performance").innerHTML=[
-      ["Tempo",state.elapsed+" min"],
+      ["Tempo",fmtTime(state.elapsed)],
+      ["Penalidades","−"+E.score(state.current,state).penalties+" pontos"],
+      ["Hipótese",state.diagnosis?.label||"Não definida"],
+      ["Destino",state.disposition?.label||"Não definido"],
       ["Ações realizadas",String(state.performed.length)],
       ["Essenciais",essentialDone+"/"+essentialTotal],
       ["Ações úteis",String(positive)],
       ["Ações prejudiciais",String(harmful)]
     ].map(([a,b])=>`<div class="plantao-performance-row"><span>${esc(a)}</span><strong>${esc(b)}</strong></div>`).join("");
 
-    const key=(d.key_actions||[]).map(text=>`<div class="plantao-review-item"><span>✓</span><span>${esc(text)}</span></div>`);
+    const key=[...(d.key_actions||[]),d.scoring_note].filter(Boolean).map(text=>`<div class="plantao-review-item"><span>✓</span><span>${esc(text)}</span></div>`);
     if (missingRequired.length) key.push(...missingRequired.map(id=>`<div class="plantao-review-item"><span>!</span><span>Você não realizou: ${esc(actionLabel(id))}</span></div>`));
     if (missingRecommended.length) key.push(...missingRecommended.slice(0,4).map(id=>`<div class="plantao-review-item"><span>–</span><span>Poderia acrescentar: ${esc(actionLabel(id))}</span></div>`));
     $("plantao-key-actions").innerHTML=key.join("");
@@ -371,6 +420,8 @@
     state.current=null;
     state.session=null;
     renderLibrary();
+    $("plantao-action-drawer").hidden=true;
+    $("plantao-action-tabs").inert=false;
     show("plantao-library");
   }
 
@@ -380,8 +431,8 @@
 
     const tab=event.target.closest("[data-case-category]");
     if (tab) {
-      state.category=tab.dataset.caseCategory;
-      renderActions();
+      $("plantao-action-search").value="";
+      openActions(tab.dataset.caseCategory);
       return;
     }
 
@@ -389,7 +440,10 @@
     if (action) return runAction(action.dataset.caseAction);
   });
 
-  $("plantao-finish")?.addEventListener("click",finishCase);
+  $("plantao-finish")?.addEventListener("click",()=>{if(state.disposition)finishCase();else openActions("hipoteses");});
+  $("plantao-action-close")?.addEventListener("click",closeActions);
+  $("plantao-action-search")?.addEventListener("input",renderActions);
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("plantao-action-drawer").hidden)closeActions();});
   $("plantao-back")?.addEventListener("click",async()=>{
     if (state.session?.id) await persistSession({status:"abandoned"});
     backToLibrary();
