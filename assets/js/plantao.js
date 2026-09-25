@@ -333,8 +333,32 @@
   const HIDDEN_CASE_ACTIONS = new Set(["shock1","shock2","shock3","electrolytes","cxr","ct_brain"]);
   function caseActions(){ return Array.isArray(state.current?.actions) ? state.current.actions : []; }
   function normalizeLabel(value){ return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase(); }
+
+  // V7: transforma os tópicos de anamnese importados da planilha em perguntas clicáveis.
+  // Cada caso pode ter quantas perguntas forem necessárias, sem depender de actions legadas.
+  function importedHistoryActions(){
+    const raw=String(state.current?.presentation?.history_topics||"").trim();
+    if(!raw) return [];
+    return raw.split(/\n+/).map(x=>x.replace(/^\s*[•*-]\s*/,"").trim()).filter(Boolean).map((line,i)=>{
+      const parts=line.split(/\s*(?:→|=>)\s*/);
+      const topic=(parts[0]||("Pergunta "+(i+1))).trim();
+      const question=(parts[1]||topic).replace(/^[“"']|[”"']$/g,"").trim();
+      const answer=(parts.slice(2).join(" → ")||"Informação não disponível neste caso.").trim();
+      return {
+        id:"history_v7_"+i,
+        label:question,
+        category:"anamnese",
+        subgroup:topic,
+        time_min:.25,
+        points:0,
+        result:answer
+      };
+    });
+  }
+
   function mergedActions(){
-    const caseList=caseActions();
+    const caseList=[...caseActions(),...importedHistoryActions()];
+
     const byId=new Map(caseList.map(a=>[a.id,a]));
     const generic=[...GENERIC_ACTIONS,...GENERAL_DIAGNOSES,...GENERAL_DISPOSITIONS].map(a=>{
       const exact=byId.get(a.id);
