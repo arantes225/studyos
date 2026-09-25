@@ -2658,10 +2658,17 @@
     const block = Number(button.dataset.qfAutoBlock);
     const row = button.closest(".admin-qf-tracker-row");
     const promptNode = row?.querySelector(".admin-qf-tracker-hidden-prompt");
-    const prompt = String(promptNode?.textContent || "").trim();
+    let prompt = String(promptNode?.textContent || "").trim();
 
     if (!prompt) {
-      window.alert("Prompt Perplexity não encontrado para este bloco.");
+      const trackerBlock = (state.qfBlockTracker || []).find(item =>
+        Number(item.batch_number) === batch && Number(item.block_number) === block
+      );
+      if (trackerBlock) prompt = String(questionFactoryBlockPrompt(trackerBlock) || "").trim();
+    }
+
+    if (!prompt) {
+      window.alert("Não foi possível gerar o prompt deste bloco. Recarregue o Admin; o botão permanece disponível nas etapas do Perplexity.");
       return;
     }
 
@@ -2872,22 +2879,21 @@
           <div><span>Confiabilidade</span><strong title="${esc(block.style_score_note || "")}">${esc(reliability)}</strong></div>
           <div class="admin-qf-tracker-next">
             <span>Próximo prompt</span>
-            ${prompt ? `
-              <div class="admin-qf-tracker-prompt-actions">
-                <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">${esc(meta.label)} · copiar</button>
-                ${["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(String(block.next_stage || "")) ? `
-                  <button
-                    class="button primary admin-qf-copy-perplexity-package"
-                    type="button"
-                    data-qf-personal-perplexity="1"
-                    data-qf-auto-batch="${Number(block.batch_number||0)}"
-                    data-qf-auto-block="${Number(block.block_number||0)}"
-                  >Copiar prompt para Perplexity pessoal</button>
-                ` : ""}
-                ${provider ? `<button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${esc(provider)}">Abrir ${provider === "gemini" ? "Gemini" : provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>` : ""}
-              </div>
-              <pre id="${esc(pid)}" class="admin-qf-prompt admin-qf-tracker-hidden-prompt">${esc(prompt)}</pre>
-            ` : '<strong class="admin-qf-tracker-no-prompt">Sem prompt automático nesta fase</strong>'}
+            <div class="admin-qf-tracker-prompt-actions">
+              ${prompt ? `<button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">${esc(meta.label)} · copiar</button>` : ""}
+              ${["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(String(block.next_stage || "")) ? `
+                <button
+                  class="button primary admin-qf-copy-perplexity-package"
+                  type="button"
+                  data-qf-personal-perplexity="1"
+                  data-qf-auto-batch="${Number(block.batch_number||0)}"
+                  data-qf-auto-block="${Number(block.block_number||0)}"
+                >Copiar prompt para Perplexity pessoal</button>
+              ` : ""}
+              ${provider && prompt ? `<button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${esc(provider)}">Abrir ${provider === "gemini" ? "Gemini" : provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>` : ""}
+            </div>
+            ${prompt ? `<pre id="${esc(pid)}" class="admin-qf-prompt admin-qf-tracker-hidden-prompt">${esc(prompt)}</pre>` : ""}
+            ${!prompt && !["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(String(block.next_stage || "")) ? '<strong class="admin-qf-tracker-no-prompt">Sem prompt automático nesta fase</strong>' : ""}
           </div>
         </article>
       `;
