@@ -14754,253 +14754,217 @@ function bindResolutionQuestionEvents(
 
 function renderQuestions() {
   const container =
-    document.getElementById(
-      "qs-question-list"
-    );
-
-  if (!container) {
-    return;
-  }
-
-  if (
-    !qsState.items.length
-  ) {
-    container.innerHTML =
-      '<div class="qs-empty">Este simulado ainda não possui questões importadas.</div>';
-
-    return;
-  }
-
-  qsResolutionState.currentIndex =
-    Math.max(
-      0,
-      Math.min(
-        qsResolutionState
-          .currentIndex,
-        qsState.items.length
-          - 1
-      )
-    );
-
-  const item =
-    qsState.items[
-      qsResolutionState
-        .currentIndex
-    ];
-
-  const presentation =
-    parsedQuestionPresentation(
-      item
-    );
-
-  const selected =
-    qsResolutionState
-      .selectedById
-      .get(
-        item.id
-      )
-      || "";
-
-  const confirmed =
-    qsResolutionState
-      .confirmedById
-      .has(
-        item.id
-      );
-
-  const correct =
-    normalizeResolutionLetter(
-      item.official_answer
-    );
-
-  const progress =
-    (
-      (
-        qsResolutionState
-          .currentIndex
-        + 1
-      )
-      / qsState.items.length
-    ) * 100;
-
-  const optionHtml =
-    presentation.options
-      .map(
-        (option) => `
-          <button
-            class="${resolutionOptionClass(
-              option.letter,
-              selected,
-              confirmed,
-              correct
-            )}"
-            type="button"
-            data-resolution-option="${option.letter}"
-            ${confirmed ? "disabled" : ""}
-          >
-            <span class="qs-resolution-letter">
-              ${option.letter}
-            </span>
-
-            <span>
-              ${qsEscape(
-                option.text
-              )}
-            </span>
-          </button>
-        `
-      )
-      .join("");
+    document.getElementById("qs-question-list");
 
   container.innerHTML =
-    `
-      <div class="qs-resolution-shell">
-        <div class="qs-resolution-topbar">
-          <div class="qs-resolution-progress-copy">
-            <strong>
-              Questão ${
-                qsResolutionState
-                  .currentIndex
-                + 1
-              } de ${qsState.items.length}
-            </strong>
-            <small>
-              ${qsEscape(
-                item.source_label
-                || "Simulado"
-              )}
-            </small>
-          </div>
+    qsState.items.map((item) => {
+      const attempt =
+        qsState.attempts.get(item.id);
 
-          <div class="qs-highlighter">
-            <button
-              id="qs-highlighter-toggle"
-              class="qs-highlighter-button ${qsResolutionState.highlighterEnabled ? "active" : ""}"
-              type="button"
-              aria-pressed="${qsResolutionState.highlighterEnabled ? "true" : "false"}"
-            >
-              ▰ Marca-texto
-            </button>
+      const wrong =
+        attempt?.result === "wrong";
 
-            <div
-              id="qs-highlighter-palette"
-              class="qs-highlighter-palette"
-              ${qsResolutionState.highlighterEnabled ? "" : "hidden"}
-              aria-label="Cor do marca-texto"
-            >
-              ${[
-                ["yellow", "Amarelo"],
-                ["green", "Verde"],
-                ["blue", "Azul"],
-                ["orange", "Laranja"]
-              ].map(
-                ([color, label]) => `
-                  <button
-                    class="qs-highlight-color ${qsResolutionState.highlightColor === color ? "active" : ""}"
-                    type="button"
-                    data-highlight-color="${color}"
-                    aria-label="${label}"
-                    title="${label}"
-                  ></button>
-                `
-              ).join("")}
-            </div>
-          </div>
-        </div>
+      const annulled =
+        attempt?.result === "annulled";
 
-        <div class="qs-resolution-progress" aria-hidden="true">
-          <span style="width:${progress}%"></span>
-        </div>
+      const sent =
+        attempt?.sent_to_error === true;
 
-        <article class="qs-resolution-card">
-          <div class="qs-resolution-question-head">
-            <div class="qs-number">
-              ${item.question_number}
+      const skipErrorNotebook =
+        !sent
+        && isErrorNotebookSkipped(
+          item.id
+        );
+
+      return `
+        <article
+          class="qs-question ${wrong ? "wrong" : ""} ${annulled ? "annulled" : ""} ${sent ? "sent" : ""} ${skipErrorNotebook ? "skip-error-notebook" : ""}"
+          data-question-id="${qsEscape(item.id)}"
+        >
+          <div class="qs-question-main">
+            <div class="qs-number">${item.question_number}</div>
+
+            <div class="qs-question-title">
+              <strong>${qsEscape(questionExcerpt(item))}</strong>
+              <small>${qsEscape(item.source_label || "Sem identificação de banca")}</small>
             </div>
 
-            <div class="qs-resolution-question-title">
-              <small>
-                Questão ${item.question_number}
-              </small>
-
-              <div
-                id="qs-resolution-text"
-                class="qs-resolution-text"
+            <label class="qs-wrong-toggle">
+              <input
+                type="checkbox"
+                data-wrong-toggle="${qsEscape(item.id)}"
+                ${wrong ? "checked" : ""}
+                ${annulled ? "disabled" : ""}
               >
-                <h3>
-                  ${qsEscape(
-                    presentation.stem
-                  )}
-                </h3>
-              </div>
-            </div>
+              <span>${annulled ? "Anulada" : "Errei"}</span>
+            </label>
           </div>
 
-          ${
-            item.image_url
-              ? `
-                <img
-                  class="qs-resolution-image"
-                  src="${qsEscape(
-                    item.image_url
-                  )}"
-                  alt="Imagem da questão ${item.question_number}"
-                >
-              `
-              : ""
-          }
+          <details>
+            <summary>Ver questão extraída</summary>
+            <pre class="qs-question-text">${qsEscape(item.raw_text)}</pre>
+          </details>
 
-          <div class="qs-resolution-alternatives">
-            ${optionHtml}
+          <div class="qs-error-fields">
+            <label class="qs-error-skip full">
+              <input
+                type="checkbox"
+                data-skip-error-notebook="${qsEscape(item.id)}"
+                ${skipErrorNotebook ? "checked" : ""}
+                ${sent ? "disabled" : ""}
+              >
+              <span>
+                <strong>Não enviar para o Caderno de Erros</strong>
+                <small>
+                  Esta questão continua contabilizada como erro, mas você não precisa preencher os campos abaixo.
+                </small>
+              </span>
+            </label>
+
+            <label class="qs-field">
+              <span>Área *</span>
+              <select data-error-area="${qsEscape(item.id)}">
+                ${areaOptionsHtml(attempt?.area || "")}
+              </select>
+            </label>
+
+            <label class="qs-field">
+              <span>Matéria <small>(opcional)</small></span>
+              <input
+                type="text"
+                data-error-materia="${qsEscape(item.id)}"
+                value="${qsEscape(attempt?.materia || "")}"
+                placeholder="Ex.: Cardiologia"
+              >
+            </label>
+
+            <label class="qs-field">
+              <span>Resposta correta *</span>
+              <select data-correct-option="${qsEscape(item.id)}">
+                ${correctOptionHtml(attempt?.correct_option || "")}
+              </select>
+            </label>
+
+            <label class="qs-field full">
+              <span>Pulo do Gato <small>(obrigatório para enviar ao Caderno de Erros)</small></span>
+              <input
+                type="text"
+                data-error-ccq="${qsEscape(item.id)}"
+                value="${qsEscape(attempt?.ccq || "")}"
+                placeholder="Ex.: Quando indicar sulfato de magnésio na eclâmpsia?"
+              >
+            </label>
+
+            <label class="qs-field full">
+              <span>O que pensei <small>(opcional)</small></span>
+              <textarea
+                data-thought="${qsEscape(item.id)}"
+                placeholder="Se quiser, registre rapidamente por que errou."
+              >${qsEscape(attempt?.what_i_thought || "")}</textarea>
+            </label>
+
+            ${renderErrorImagePicker(item)}
           </div>
 
-          <div class="qs-resolution-confirm">
-            <button
-              id="qs-resolution-confirm"
-              class="button primary"
-              type="button"
-              ${(
-                !selected
-                || confirmed
-              ) ? "disabled" : ""}
-            >
-              ${confirmed ? "Confirmada" : "Confirmar"}
-            </button>
-          </div>
-
-          ${renderResolutionFeedback(
-            item,
-            selected,
-            confirmed,
-            correct
-          )}
+          <span class="qs-sent-badge">
+            Já enviado ao Caderno de Erros
+          </span>
         </article>
+      `;
+    }).join("");
 
-        <div class="qs-resolution-footer">
-          <button
-            id="qs-resolution-prev"
-            class="qs-resolution-nav-button"
-            type="button"
-            ${qsResolutionState.currentIndex === 0 ? "disabled" : ""}
-          >
-            ← Anterior
-          </button>
+  document
+    .querySelectorAll("[data-wrong-toggle]")
+    .forEach((checkbox) => {
+      checkbox.addEventListener("change", () => {
+        const card =
+          checkbox.closest(".qs-question");
 
-          <button
-            id="qs-resolution-next"
-            class="qs-resolution-nav-button"
-            type="button"
-            ${qsResolutionState.currentIndex >= qsState.items.length - 1 ? "disabled" : ""}
-          >
-            Próxima →
-          </button>
-        </div>
-      </div>
-    `;
+        card.classList.toggle(
+          "wrong",
+          checkbox.checked
+        );
 
-  bindResolutionQuestionEvents(
-    item
+        if (
+          !checkbox.checked
+        ) {
+          const itemId =
+            checkbox.dataset
+              .wrongToggle;
+
+          setErrorNotebookSkipped(
+            itemId,
+            false
+          );
+
+          card.classList.remove(
+            "skip-error-notebook"
+          );
+
+          const skipInput =
+            card.querySelector(
+              "[data-skip-error-notebook]"
+            );
+
+          if (
+            skipInput
+          ) {
+            skipInput.checked =
+              false;
+          }
+        }
+
+        updateLiveSummary();
+      });
+    });
+
+  container
+    .querySelectorAll(
+      "[data-skip-error-notebook]"
+    )
+    .forEach(
+      checkbox => {
+        checkbox.addEventListener(
+          "change",
+          () => {
+            const itemId =
+              checkbox.dataset
+                .skipErrorNotebook;
+
+            setErrorNotebookSkipped(
+              itemId,
+              checkbox.checked
+            );
+
+            const card =
+              checkbox.closest(
+                ".qs-question"
+              );
+
+            card
+              ?.classList
+              .toggle(
+                "skip-error-notebook",
+                checkbox.checked
+              );
+
+            if (
+              checkbox.checked
+            ) {
+              refreshErrorImagePicker(
+                itemId
+              );
+            }
+          }
+        );
+      }
+    );
+
+  bindErrorImagePickerEvents(
+    container
   );
+
+  updateLiveSummary();
 }
 
 function currentWrongIds() {
