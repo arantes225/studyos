@@ -763,9 +763,10 @@
     state.busy=false;
     state.session=data;
 
+    const safeOpening=item.presentation?.opening || item.presentation?.chief_complaint || "Paciente admitido para avaliação na sala de emergência.";
     $("plantao-setting").textContent=item.setting || "Sala de emergência";
-    $("plantao-case-title").textContent=item.presentation?.chief_complaint || item.presentation?.display_title || item.summary || "Queixa não informada";
-    $("plantao-opening").textContent=item.presentation?.opening || item.summary;
+    $("plantao-case-title").textContent=item.presentation?.chief_complaint || item.presentation?.display_title || "Caso em avaliação";
+    $("plantao-opening").textContent=safeOpening;
     $("plantao-age").textContent=item.presentation?.age || "";
     $("plantao-sex").textContent=item.presentation?.sex || "";
     $("plantao-chief").textContent="";
@@ -773,7 +774,7 @@
     updateScore();
     renderVitals();
     renderActions();
-    feed(item.presentation?.opening || item.summary,"event",0);
+    feed(safeOpening,"event",0);
     show("plantao-simulator");
   }
 
