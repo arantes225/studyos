@@ -123,6 +123,7 @@
           <div class="plantao-sim-top">
             <button id="plantao-back" class="button secondary" type="button">← Casos</button>
             <div class="plantao-clock"><span>Tempo do caso</span><strong id="plantao-time">00:00</strong></div>
+            <div id="plantao-critical-window" class="plantao-critical-window" hidden aria-live="assertive"></div>
             <button id="plantao-finish" class="button primary" type="button" hidden aria-hidden="true" tabindex="-1">Definir destino</button>
           </div>
 
@@ -149,7 +150,6 @@
             </aside>
           <section class="plantao-scene" aria-label="Leito e monitor do paciente">
             <img id="plantao-patient-image" src="assets/img/plantao/awake.webp" alt="Ilustração do paciente acordado no leito" width="1536" height="1024">
-            <span id="plantao-consciousness" class="plantao-consciousness"></span>
             <div class="plantao-monitor-dock">
             <div class="plantao-monitor" aria-label="Monitor de sinais vitais. Toque para ampliar." role="button" tabindex="0" aria-expanded="false">
               <div class="plantao-monitor-heading">MONITOR <span>● AO VIVO</span></div>
@@ -198,7 +198,7 @@
   <script src="assets/js/app.js?v=17.5"></script>
   <script src="assets/js/plantao-monitor.js?v=2.5"></script>
   <script src="assets/js/plantao-engine.js?v=3.0"></script>
-  <script src="assets/js/plantao.js?v=5.4"></script>
+  <script src="assets/js/plantao.js?v=5.5"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
 </html>
