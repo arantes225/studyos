@@ -359,7 +359,7 @@ function getProfileTitle(gender) {
   return "";
 }
 
-function sidebarMarkup(user, profile = null) {
+function sidebarMarkup(user, profile = null, isAdmin = false) {
   const fallbackName = user.email
     ? user.email.split("@")[0]
     : "Usuário";
@@ -424,7 +424,7 @@ function sidebarMarkup(user, profile = null) {
           <a class="nav-sublink ${page === "flashcards" ? "active" : ""}" href="/flashcards/">Flashcards</a>
           <a class="nav-sublink ${page === "erros" ? "active" : ""}" href="/caderno-erros/">Caderno de erros</a>
           <a class="nav-sublink ${page === "questoes" ? "active" : ""}" href="/questoes-simulados/">Questões e Simulados</a>
-          ${profile?.is_admin === true ? `<a class="nav-sublink ${page === "plantao" ? "active" : ""}" href="/plantao/">Plantão</a>` : ""}
+          ${isAdmin === true ? `<a class="nav-sublink ${page === "plantao" ? "active" : ""}" href="/plantao/">Plantão</a>` : ""}
         </div>
       </div>
 
@@ -492,7 +492,7 @@ async function carregarPerfil(userId) {
 
   const { data, error } = await sb
     .from("profiles")
-    .select("display_name, gender, specialty, is_admin")
+    .select("display_name, gender, specialty")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -4302,10 +4302,10 @@ async function iniciarApp() {
 
   // As consultas independentes agora rodam em paralelo.
   // Antes elas eram aguardadas em série e somavam vários round-trips do Supabase.
-  const adminCheckPromise =
-    (page === "admin" || page === "plantao")
-      ? verificarAcessoAdmin()
-      : Promise.resolve(null);
+  // O RPC is_admin() é a fonte de verdade também para montar o menu.
+  // Antes ele só era chamado dentro de /admin e /plantao, então o link Plantão
+  // desaparecia do menu nas demais páginas.
+  const adminCheckPromise = verificarAcessoAdmin();
 
   const [
     entitlements,
@@ -4356,7 +4356,7 @@ async function iniciarApp() {
   }
 
   document.getElementById("sidebar").innerHTML =
-    sidebarMarkup(user, profile);
+    sidebarMarkup(user, profile, acessoAdmin === true);
 
   updateLuriaLogo(
     document.documentElement.dataset.theme
