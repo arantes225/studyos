@@ -812,3 +812,18 @@ body.plantao-phone-mode #plantao-emergency-panel{display:none!important}
 body.plantao-phone-mode #plantao-telefone{display:grid!important}
 body.plantao-emergency-mode #plantao-emergency-panel{display:block!important}
 body.plantao-emergency-mode #plantao-telefone{display:none!important}
+
+
+/* v3.5 — dose de referência junto às medicações. */
+.plantao-action-dose{
+  display:block;
+  margin-top:3px;
+  color:var(--accent);
+  font-size:11px;
+  font-weight:750;
+  line-height:1.25;
+}
+.plantao-action:disabled .plantao-action-dose{opacity:.72}
+@media(max-width:680px){
+  .plantao-action-dose{font-size:10px;line-height:1.2}
+}
