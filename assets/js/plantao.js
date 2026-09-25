@@ -2107,9 +2107,26 @@
         break;
       case "defibrillate":
         reactionType="defibrillation";
-        // O choque sempre produz artefato elétrico. A conversão sustentada do ritmo
-        // vem primeiro dos efeitos específicos do caso; sem efeito configurado,
-        // não inventamos ROSC apenas por o botão ter sido pressionado.
+        /*
+          PCR chocável: quando a desfibrilação é feita após RCP, o estado fisiológico
+          precisa sair de FV/TV sem pulso se a intervenção reverteu a parada.
+          Efeitos específicos do caso continuam tendo prioridade; este é o fallback
+          dos casos genéricos que ainda não trazem effects.vitals próprios.
+        */
+        if(
+          state.vitals?.pulse===false
+          && shockable
+          && done("cpr")
+          && !Object.keys(explicit).length
+        ){
+          setVitalIfNotExplicit(explicit,"pulse",true);
+          setVitalIfNotExplicit(explicit,"rhythm","Ritmo organizado pós-ROSC");
+          setVitalIfNotExplicit(explicit,"hr",88);
+          setVitalIfNotExplicit(explicit,"bp","96/62");
+          setVitalIfNotExplicit(explicit,"spo2",94);
+          setVitalIfNotExplicit(explicit,"rr",12);
+          if(!state.outcomes.includes("rosc")) state.outcomes.push("rosc");
+        }
         break;
       case "sync_cardioversion":
         reactionType="cardioversion";
@@ -2287,10 +2304,28 @@
         break;
     }
 
+    /*
+      Se qualquer ação do caso (medicamento, choque, procedimento etc.) trouxer
+      o pulso de volta por effects.vitals, completa os campos mínimos para que
+      o monitor mostre imediatamente a transição de PCR para circulação organizada.
+    */
+    const pulseReturned=beforeVitals?.pulse===false && state.vitals?.pulse===true;
+    if(pulseReturned){
+      const currentRhythm=normalizeLabel(state.vitals?.rhythm);
+      if(!state.vitals?.rhythm || /fibrilacao ventricular|assistolia|sem pulso/.test(currentRhythm))
+        state.vitals={...state.vitals,rhythm:"Ritmo organizado pós-ROSC"};
+      if(!(Number(state.vitals?.hr)>0)) state.vitals={...state.vitals,hr:88};
+      if(!parsedBP(state.vitals?.bp)) state.vitals={...state.vitals,bp:"96/62"};
+      if(!(Number(state.vitals?.spo2)>0)) state.vitals={...state.vitals,spo2:94};
+      if(!(Number(state.vitals?.rr)>0)) state.vitals={...state.vitals,rr:12};
+      if(!state.outcomes.includes("rosc")) state.outcomes.push("rosc");
+    }
+
     changed=before!==JSON.stringify(state.vitals);
     window.PlantaoMonitor?.react(reactionType,{
       actionId:originalId,
       changed,
+      rosc:pulseReturned || (beforeVitals?.pulse===false && state.vitals?.pulse===true),
       before:beforeVitals,
       after:{...state.vitals}
     });
