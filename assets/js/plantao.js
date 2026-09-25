@@ -1901,6 +1901,299 @@
     return false;
   }
 
+
+  function clampVital(value,min,max) {
+    const n=Number(value);
+    if(!Number.isFinite(n)) return null;
+    return Math.max(min,Math.min(max,Math.round(n)));
+  }
+
+  function parsedBP(bp) {
+    const match=String(bp||"").match(/(\d{2,3})\s*\/\s*(\d{2,3})/);
+    if(!match) return null;
+    return {sys:Number(match[1]),dia:Number(match[2])};
+  }
+
+  function setVitalIfNotExplicit(explicit,key,value) {
+    if(Object.prototype.hasOwnProperty.call(explicit,key)) return;
+    if(value===undefined || value===null || Number.isNaN(value)) return;
+    state.vitals={...state.vitals,[key]:value};
+  }
+
+  function adjustVital(explicit,key,delta,min,max) {
+    if(Object.prototype.hasOwnProperty.call(explicit,key)) return;
+    const current=Number(state.vitals?.[key]);
+    if(!Number.isFinite(current)) return;
+    setVitalIfNotExplicit(explicit,key,clampVital(current+delta,min,max));
+  }
+
+  function adjustBP(explicit,sysDelta=0,diaDelta=Math.round(sysDelta*.55)) {
+    if(Object.prototype.hasOwnProperty.call(explicit,"bp")) return;
+    const bp=parsedBP(state.vitals?.bp);
+    if(!bp) return;
+    const sys=clampVital(bp.sys+sysDelta,45,260);
+    const dia=clampVital(bp.dia+diaDelta,25,160);
+    state.vitals={...state.vitals,bp:sys+"/"+dia};
+  }
+
+  function physiologicTargetText() {
+    return normalizeLabel([
+      state.current?.title,
+      state.current?.debrief?.diagnosis,
+      state.current?.summary,
+      state.current?.initial_vitals?.rhythm,
+      state.vitals?.rhythm
+    ].filter(Boolean).join(" "));
+  }
+
+  function applyPhysiologicReaction(action,original,beforeVitals={}) {
+    if(!action) return;
+    const id=action.id;
+    const originalId=original?.id||id;
+    const category=action.category||original?.category||"";
+    const isIntervention=["iniciais","tratamento","procedimentos_terapeuticos"].includes(category);
+    if(!isIntervention) return;
+
+    const explicit=(action.effects && typeof action.effects.vitals==="object") ? action.effects.vitals : {};
+    const target=physiologicTargetText();
+    const shockable=/fibrilacao ventricular|\bfv\b|tv sem pulso|taquicardia ventricular sem pulso/.test(target);
+    const bronchospasm=/asma|broncoespasmo|anafilax/.test(target);
+    const hypoxemic=Number(state.vitals?.spo2)<94;
+    const hypotensive=(parsedBP(state.vitals?.bp)?.sys||999)<90;
+    const tachy=Number(state.vitals?.hr)>110;
+    const brady=Number(state.vitals?.hr)>0 && Number(state.vitals?.hr)<55;
+    let reactionType="procedure";
+    let changed=false;
+
+    const before=JSON.stringify(state.vitals);
+    const upSpo2=(n=3)=>adjustVital(explicit,"spo2",n,0,100);
+    const downRR=(n=2)=>adjustVital(explicit,"rr",-n,0,60);
+
+    switch(originalId){
+      case "monitor":
+      case "check_pulse":
+      case "check_rhythm":
+      case "abcde":
+      case "iv_access":
+      case "iv_access_2":
+      case "io_access":
+      case "call_team":
+      case "glucose":
+      case "central_line":
+      case "arterial_line_generic":
+      case "urinary_catheter":
+      case "ng_tube":
+        break;
+
+      case "oxygen":
+        reactionType="oxygen";
+        if(hypoxemic){ upSpo2(4); downRR(1); }
+        break;
+      case "bvm":
+        reactionType="ventilation";
+        upSpo2(8);
+        if(!Object.prototype.hasOwnProperty.call(explicit,"rr")) setVitalIfNotExplicit(explicit,"rr",12);
+        break;
+      case "airway":
+      case "cricothyrotomy":
+        reactionType="ventilation";
+        if(hypoxemic) upSpo2(6);
+        if(!Object.prototype.hasOwnProperty.call(explicit,"rr")) setVitalIfNotExplicit(explicit,"rr",14);
+        break;
+      case "cpr":
+        reactionType="cpr";
+        break;
+      case "defibrillate":
+        reactionType="defibrillation";
+        // O choque sempre produz artefato elétrico. A conversão sustentada do ritmo
+        // vem primeiro dos efeitos específicos do caso; sem efeito configurado,
+        // não inventamos ROSC apenas por o botão ter sido pressionado.
+        break;
+      case "sync_cardioversion":
+        reactionType="cardioversion";
+        if(!Object.keys(explicit).length && /fibrilacao atrial|flutter|taquicardia supraventricular|taquicardia ventricular com pulso/.test(target)){
+          setVitalIfNotExplicit(explicit,"rhythm","Ritmo sinusal");
+          setVitalIfNotExplicit(explicit,"hr",82);
+          setVitalIfNotExplicit(explicit,"pulse",true);
+          if(hypotensive) adjustBP(explicit,12,7);
+        }
+        break;
+      case "transcutaneous_pacing":
+        reactionType="pacing";
+        if(brady){
+          setVitalIfNotExplicit(explicit,"rhythm","Ritmo estimulado por marcapasso");
+          setVitalIfNotExplicit(explicit,"hr",70);
+          setVitalIfNotExplicit(explicit,"pulse",true);
+          adjustBP(explicit,10,6);
+        }
+        break;
+      case "needle_decompression":
+      case "chest_tube":
+      case "thoracentesis":
+        if(/pneumotorax|hemotorax|derrame pleural/.test(target)){
+          upSpo2(originalId==="needle_decompression"?7:5);
+          downRR(originalId==="needle_decompression"?4:2);
+          if(hypotensive) adjustBP(explicit,12,7);
+          adjustVital(explicit,"hr",-8,0,220);
+        }
+        break;
+      case "pericardiocentesis":
+        if(/tamponamento|derrame pericardico/.test(target)){
+          adjustBP(explicit,18,10);
+          adjustVital(explicit,"hr",-10,0,220);
+        }
+        break;
+      case "pelvic_binder":
+      case "tourniquet":
+      case "direct_pressure":
+        if(/hemorrag|sangramento|choque hemorr/.test(target)){
+          adjustBP(explicit,8,4);
+          adjustVital(explicit,"hr",-6,0,220);
+        }
+        break;
+
+      case "epi_im":
+        reactionType="medication";
+        adjustVital(explicit,"hr",10,0,220);
+        adjustBP(explicit,16,9);
+        if(/anafilax/.test(target)){ upSpo2(3); downRR(2); }
+        break;
+      case "epi":
+        reactionType="medication";
+        if(state.vitals?.pulse!==false && !shockable){
+          adjustVital(explicit,"hr",18,0,220);
+          adjustBP(explicit,18,10);
+        }
+        break;
+      case "norepi":
+      case "phenylephrine":
+      case "vasopressin":
+        reactionType="medication";
+        adjustBP(explicit,18,10);
+        if(originalId==="phenylephrine") adjustVital(explicit,"hr",-4,0,220);
+        break;
+      case "dopamine":
+        reactionType="medication";
+        adjustBP(explicit,12,7); adjustVital(explicit,"hr",10,0,220);
+        break;
+      case "dobutamine":
+        reactionType="medication";
+        adjustBP(explicit,8,4); adjustVital(explicit,"hr",8,0,220);
+        break;
+      case "nitroglycerin":
+      case "nitroprusside":
+      case "hydralazine":
+      case "nicardipine":
+      case "nifedipine":
+        reactionType="medication";
+        adjustBP(explicit,originalId==="nitroprusside"?-22:-14,originalId==="nitroprusside"?-12:-8);
+        if(originalId==="hydralazine"||originalId==="nifedipine") adjustVital(explicit,"hr",5,0,220);
+        break;
+      case "metoprolol":
+      case "propranolol":
+      case "esmolol":
+      case "diltiazem":
+      case "verapamil":
+      case "labetalol":
+        reactionType="medication";
+        adjustVital(explicit,"hr",tachy?-18:-10,0,220);
+        adjustBP(explicit,-10,-6);
+        break;
+      case "atropine":
+        reactionType="medication";
+        adjustVital(explicit,"hr",brady?22:12,0,220);
+        if(brady) adjustBP(explicit,8,4);
+        break;
+      case "adenosine":
+        reactionType="cardioversion";
+        if(/taquicardia supraventricular|qrs estreito/.test(target) && tachy){
+          setVitalIfNotExplicit(explicit,"rhythm","Ritmo sinusal");
+          setVitalIfNotExplicit(explicit,"hr",82);
+        }
+        break;
+      case "amiodarone":
+      case "lidocaine":
+        reactionType="medication";
+        if(/taquicardia ventricular|arritmia ventricular/.test(target)) adjustVital(explicit,"hr",-18,0,220);
+        break;
+      case "salbutamol":
+      case "terbutaline":
+      case "racemic_epinephrine":
+        reactionType="medication";
+        adjustVital(explicit,"hr",8,0,220);
+        if(bronchospasm){ upSpo2(3); downRR(3); }
+        break;
+      case "ipratropium":
+      case "budesonide":
+        reactionType="medication";
+        if(bronchospasm){ upSpo2(2); downRR(2); }
+        break;
+      case "morphine":
+      case "fentanyl":
+        reactionType="medication";
+        adjustVital(explicit,"rr",-3,0,60);
+        adjustVital(explicit,"hr",-4,0,220);
+        adjustBP(explicit,-6,-3);
+        break;
+      case "midazolam":
+      case "diazepam":
+      case "propofol":
+      case "phenobarbital":
+        reactionType="medication";
+        adjustVital(explicit,"rr",originalId==="propofol"?-5:-3,0,60);
+        adjustBP(explicit,originalId==="propofol"?-10:-5,originalId==="propofol"?-6:-3);
+        break;
+      case "ketamine":
+        reactionType="medication";
+        adjustVital(explicit,"hr",6,0,220); adjustBP(explicit,6,3);
+        break;
+      case "naloxone":
+        reactionType="medication";
+        if(/opioide|depressao respiratoria/.test(target)){
+          adjustVital(explicit,"rr",6,0,60); upSpo2(4);
+          if(!Object.prototype.hasOwnProperty.call(explicit,"mental")) setVitalIfNotExplicit(explicit,"mental","Mais responsivo");
+        }
+        break;
+      case "crystalloid":
+        reactionType="medication";
+        if(hypotensive){adjustBP(explicit,10,6);adjustVital(explicit,"hr",-5,0,220);}
+        break;
+      case "blood":
+      case "plasma":
+      case "platelets_tx":
+        reactionType="medication";
+        if(/hemorrag|sangramento|anemia|choque hemorr/.test(target) && hypotensive){
+          adjustBP(explicit,originalId==="blood"?14:8,originalId==="blood"?8:4);
+          adjustVital(explicit,"hr",-6,0,220);
+        }
+        break;
+      case "methylergometrine":
+        reactionType="medication";
+        adjustBP(explicit,10,6);
+        break;
+      case "succinylcholine":
+      case "rocuronium":
+        reactionType="medication";
+        // Bloqueio neuromuscular não melhora o monitor por si só; sem ventilação,
+        // o dano é tratado pelas regras de segurança do caso.
+        break;
+      default:
+        // Antibióticos, analgésicos simples (ex.: dipirona/paracetamol),
+        // antieméticos, antiagregantes, anticoagulantes, corticoides e outros
+        // fármacos sem efeito monitorizável imediato não alteram sinais vitais.
+        if(category==="tratamento") reactionType="medication";
+        break;
+    }
+
+    changed=before!==JSON.stringify(state.vitals);
+    window.PlantaoMonitor?.react(reactionType,{
+      actionId:originalId,
+      changed,
+      before:beforeVitals,
+      after:{...state.vitals}
+    });
+  }
+
   function applyEffects(effects={}) {
     if (effects.vitals && typeof effects.vitals==="object") {
       state.vitals={...state.vitals,...effects.vitals};
@@ -2109,7 +2402,9 @@
         const points=repeated?0:Number(action.points||0);
         state.score+=points;
         if(points<0)state.penalties+=Math.abs(points);
+        const vitalsBeforeAction={...state.vitals};
         applyEffects(action.effects||{});
+        applyPhysiologicReaction(action,original,vitalsBeforeAction);
         if(action.role==='diagnosis'){
           const correct=action.genericDiagnosis===true ? isCorrectGenericDiagnosis(action.label) : action.correct===true;
           state.diagnosis={id:action.id,label:action.label,correct};
