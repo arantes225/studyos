@@ -265,3 +265,11 @@
 .plantao-monitor-dock .plantao-feed-item{flex:0 0 auto;height:auto;min-height:0;padding:10px 11px}
 .plantao-monitor-dock .plantao-feed-item p{flex:none}
 @media(max-width:680px){.plantao-monitor-dock .plantao-feed-item{min-height:0;height:auto;padding:10px}}
+
+/* v4.3 — prontuário: lista compacta, sem sobreposição entre mensagens */
+.plantao-monitor-dock .plantao-feed-list{display:block;overflow-y:auto;overflow-x:hidden;padding-right:4px}
+.plantao-monitor-dock .plantao-feed-item{display:block;position:relative;min-height:unset!important;height:auto!important;margin:0 0 8px;padding:9px 10px;overflow:visible;box-sizing:border-box}
+.plantao-monitor-dock .plantao-feed-item:last-child{margin-bottom:0}
+.plantao-monitor-dock .plantao-feed-item span{display:block;position:static;line-height:1.2;margin:0 0 4px}
+.plantao-monitor-dock .plantao-feed-item p{display:block;position:static;margin:0!important;line-height:1.38;height:auto;min-height:0;overflow:visible}
+@media(max-width:680px){.plantao-monitor-dock .plantao-feed-item{margin-bottom:7px;padding:9px 10px}}
