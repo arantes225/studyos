@@ -2337,7 +2337,7 @@
     if (state.qfAutoRefreshTimer) {
       clearInterval(state.qfAutoRefreshTimer);
     }
-    state.qfAutoRefreshTimer = setInterval(refreshQuestionFactoryLive, 5000);
+    state.qfAutoRefreshTimer = setInterval(refreshQuestionFactoryLive, 30000);
   }
 
   async function loadQuestionFactory() {
@@ -4414,10 +4414,11 @@
           "is_admin"
         );
 
-      if (
-        error
-        || data !== true
-      ) {
+      if (error) {
+        setPinMessage("Não foi possível verificar seu acesso. Tente recarregar em alguns instantes.", "error");
+        return false;
+      }
+      if (data !== true) {
         window.location.replace(
           "/dashboard/"
         );
@@ -4438,9 +4439,7 @@
         error
       );
 
-      window.location.replace(
-        "/dashboard/"
-      );
+      setPinMessage("Não foi possível verificar seu acesso. Tente recarregar em alguns instantes.", "error");
 
       return false;
     }

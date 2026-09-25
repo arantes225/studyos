@@ -62,13 +62,8 @@ async function entrar(event) {
 
   let result = await tentarLogin(email, password);
 
-  // Se houver uma sessão local antiga/corrompida ou uma falha transitória de rede,
-  // limpa somente o estado local e tenta uma única vez de novo.
-  if (result.error && isNetworkError(result.error)) {
-    limparSessaoLocalCorrompida();
-    await new Promise((resolve) => setTimeout(resolve, 350));
-    result = await tentarLogin(email, password);
-  }
+  // Uma falha de rede não comprova corrupção da sessão. Preserve o estado local
+  // e deixe uma nova tentativa explícita a cargo do usuário.
 
   if (result.error) {
     const message = isNetworkError(result.error)
