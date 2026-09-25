@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  let vitals = {}, context = {}, enabled = false, frame = 0;
+  let vitals = {}, context = {}, enabled = false, frame = 0, reaction = null;
   const normalize = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const number = value => value === null || value === undefined || value === '' ? NaN : parseFloat(value);
   // Educational rhythm strip: fixed time scale and durations in seconds, not a 12-lead ECG.
@@ -17,6 +17,7 @@
     else if (/polimorfic|torsades/.test(rhythm)) type='unknown';
     else if (/taquicardia ventricular|\btv\b/.test(rhythm)) type='vt';
     else if (/fibrilacao atrial|\bfa\b/.test(rhythm) || (context.slug==='af-unstable-ed' && /irregular.*qrs estreito/.test(rhythm))) type='af';
+    else if (/estimulado|marcapasso|paced/.test(rhythm)) type='paced';
     else if (/sinusal/.test(rhythm)) type='sinus';
     else if (/ritmo organizado/.test(rhythm)) type='organized';
     return {type,hr:number(v.hr)};
@@ -54,6 +55,8 @@
       } else {
         // AF has no discrete P wave. Organized post-ROSC does not assert sinus origin.
         if(p.type==='sinus') value+=3.2*gaussian(d,-.17,.035);
+        // Marcapasso: espícula curta antes do QRS, seguida de complexo capturado.
+        if(p.type==='paced') value+=24*gaussian(d,-.055,.004);
         // QRS de monitor: menos "agulha", largura visual mais uniforme e ganho controlado.
         value+=-3.2*gaussian(d,-.035,.018)+18*gaussian(d,0,.021)-5.2*gaussian(d,.045,.022);
         value+=4.8*gaussian(d,Math.min(.28,60/p.hr*.43),.065);
@@ -88,6 +91,83 @@
     if (badge) badge.textContent = vitals.mental || 'Estado neurológico não informado';
     if (!frame) frame = requestAnimationFrame(draw);
   }
+
+  function react(type, details={}) {
+    const durationByType = {
+      defibrillation: 1150,
+      cardioversion: 900,
+      pacing: 1400,
+      cpr: 1400,
+      ventilation: 900,
+      oxygen: 700,
+      procedure: 700,
+      medication: 550
+    };
+    reaction = {
+      type: String(type || 'procedure'),
+      details: {...details},
+      start: performance.now(),
+      duration: Number(details.duration || durationByType[type] || 650)
+    };
+    if (!frame) frame = requestAnimationFrame(draw);
+  }
+
+  function drawReaction(ctx,w,h,time) {
+    if(!reaction) return;
+    const elapsed=time-reaction.start;
+    if(elapsed<0 || elapsed>reaction.duration){reaction=null;return;}
+    const progress=Math.max(0,Math.min(1,elapsed/reaction.duration));
+    const type=reaction.type;
+
+    if(type==='defibrillation' || type==='cardioversion'){
+      const alpha=Math.max(0,1-progress*3);
+      if(alpha>0){
+        ctx.save();
+        ctx.fillStyle='rgba(255,255,255,'+(alpha*.36)+')';
+        ctx.fillRect(0,0,w,h);
+        ctx.restore();
+      }
+      const x=w*(.58+Math.min(.08,progress*.08));
+      ctx.save();
+      ctx.strokeStyle=type==='defibrillation'?'#ffffff':'#ffe66d';
+      ctx.lineWidth=3;
+      ctx.beginPath();
+      ctx.moveTo(x,8);ctx.lineTo(x-7,45);ctx.lineTo(x+11,67);ctx.lineTo(x-5,105);ctx.lineTo(x+6,118);
+      ctx.stroke();
+      ctx.font='bold 13px sans-serif';
+      ctx.fillStyle=type==='defibrillation'?'#ffffff':'#ffe66d';
+      ctx.fillText(type==='defibrillation'?'CHOQUE':'SYNC',Math.max(8,x-28),18);
+      ctx.restore();
+      return;
+    }
+
+    if(type==='cpr'){
+      ctx.save();
+      ctx.strokeStyle='rgba(255,255,255,.72)';
+      ctx.lineWidth=1.6;
+      ctx.beginPath();
+      const offset=(elapsed/1000)*120;
+      for(let x=-40;x<w+40;x+=34){
+        const xx=x+(offset%34);
+        ctx.moveTo(xx,88);ctx.lineTo(xx+9,60);ctx.lineTo(xx+18,92);
+      }
+      ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,.85)';
+      ctx.font='bold 12px sans-serif';
+      ctx.fillText('RCP',8,112);
+      ctx.restore();
+      return;
+    }
+
+    if(type==='pacing'){
+      ctx.save();
+      ctx.fillStyle='#ffe66d';
+      ctx.font='bold 12px sans-serif';
+      ctx.fillText('PACING',8,112);
+      ctx.restore();
+    }
+  }
+
   function draw(time) {
     frame = 0;
     const canvas = document.getElementById('plantao-waveforms');
@@ -145,7 +225,8 @@
       ctx.stroke();
       ctx.restore();
     });
-    if(!reduced.matches) frame=requestAnimationFrame(draw);
+    drawReaction(ctx,w,h,time);
+    if(!reduced.matches || reaction) frame=requestAnimationFrame(draw);
   }
   function setupMonitorExpansion() {
     const monitor = document.querySelector('.plantao-monitor');
@@ -198,5 +279,5 @@
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!frame)frame=requestAnimationFrame(draw);});
   new MutationObserver(()=>{if(!frame)frame=requestAnimationFrame(draw);}).observe(document.getElementById('plantao-simulator'),{attributes:true,attributeFilter:['hidden']});
   reduced.addEventListener('change',()=>{if(!frame)frame=requestAnimationFrame(draw);});
-  window.PlantaoMonitor={update};
+  window.PlantaoMonitor={update,react};
 })();
