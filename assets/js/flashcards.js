@@ -733,6 +733,10 @@ async function signedFlashImage(path) {
     return null;
   }
 
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
+
   const {
     data,
     error
