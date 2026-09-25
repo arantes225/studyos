@@ -256,8 +256,8 @@
     if(msgError) console.warn("Telefone: falha ao registrar abertura",msgError);
     $("plantao-phone-inbox").hidden=true;
     $("plantao-phone-station").hidden=false;
-    $("plantao-phone-requester").textContent=item.requester_role||"Solicitante";
-    $("plantao-phone-context").textContent=(item.specialty||"Interconsulta")+" · "+new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+    $("plantao-phone-requester").textContent=item.requester_role||"R1 de Clínica Médica";
+    $("plantao-phone-context").textContent=item.title||item.specialty||"Caso clínico";
     renderPhoneMessages([{sender:"requester",content:item.opening_message}]);
     renderPhoneChoices();
   }
