@@ -2109,3 +2109,259 @@ body[data-page="plantao"] .plantao-phone-brand-name{
     font-size:17px!important;
   }
 }
+
+/* v6.9 — LuriaZap com acabamento de smartphone realista */
+body.plantao-phone-mode{
+  --luria-phone-frame:#07111d;
+  --luria-phone-metal:#9ba9b8;
+  --luria-phone-glass:#07182d;
+}
+body.plantao-phone-mode #plantao-library{
+  align-items:start;
+  padding-top:10px;
+}
+body.plantao-phone-mode #plantao-telefone.plantao-phone-preview{
+  min-height:calc(100dvh - 110px);
+  align-content:start;
+}
+body.plantao-phone-mode .plantao-phone-layout{
+  width:min(100%,476px);
+  gap:12px;
+}
+body.plantao-phone-mode .plantao-phone-layout>.plantao-phone-station{
+  position:relative;
+  width:100%;
+  padding:7px;
+  border-radius:56px;
+  background:
+    linear-gradient(145deg,#c9d3dd 0%,#66778a 16%,#101923 33%,#738395 54%,#d5dde5 71%,#394959 88%,#aab6c3 100%);
+  box-shadow:
+    0 34px 78px rgba(1,16,31,.30),
+    0 8px 20px rgba(1,16,31,.20),
+    inset 0 0 0 1px rgba(255,255,255,.55);
+}
+body.plantao-phone-mode .plantao-phone-layout>.plantao-phone-station::before{
+  content:"";
+  position:absolute;
+  inset:3px;
+  pointer-events:none;
+  border-radius:53px;
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.55),
+    inset 0 0 0 3px rgba(255,255,255,.16);
+}
+body.plantao-phone-mode .plantao-phone-layout>.plantao-phone-station::after{
+  content:"";
+  position:absolute;
+  right:-3px;
+  top:155px;
+  width:3px;
+  height:94px;
+  border-radius:0 3px 3px 0;
+  background:linear-gradient(#5d6d7f,#d5dde4 46%,#516172);
+  box-shadow:0 1px 1px rgba(0,0,0,.35);
+}
+body.plantao-phone-mode .plantao-phone-device{
+  width:100%;
+  max-width:none;
+  aspect-ratio:10/18.25;
+  border:5px solid var(--luria-phone-frame)!important;
+  border-radius:49px;
+  background:#020811!important;
+  padding:4px;
+  overflow:hidden;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.16),
+    inset 0 0 0 3px rgba(0,0,0,.72)!important;
+}
+body.plantao-phone-mode .plantao-phone-screen{
+  position:relative;
+  border-radius:40px;
+  overflow:hidden;
+  background:var(--surface)!important;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb,#fff 14%,transparent),
+    inset 0 14px 30px rgba(255,255,255,.035);
+}
+body.plantao-phone-mode .plantao-phone-notch{
+  top:14px;
+  width:114px;
+  height:30px;
+  border-radius:999px;
+  background:#020407!important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.055),
+    0 1px 4px rgba(0,0,0,.6);
+}
+body.plantao-phone-mode .plantao-phone-notch::after{
+  content:"";
+  position:absolute;
+  right:10px;
+  top:50%;
+  width:7px;
+  height:7px;
+  transform:translateY(-50%);
+  border-radius:50%;
+  background:#071a2d;
+  box-shadow:inset 0 0 0 1px #133e62,0 0 3px #0a426e88;
+}
+body.plantao-phone-mode .plantao-phone-statusbar{
+  top:15px;
+  left:27px;
+  right:24px;
+  z-index:8;
+  height:30px;
+  padding:0 2px;
+  font-size:11px;
+  line-height:30px;
+  text-shadow:0 1px 3px rgba(0,0,0,.35);
+}
+body.plantao-phone-mode .plantao-phone-status-icons{
+  gap:7px;
+  transform:scale(.9);
+  transform-origin:right center;
+}
+body.plantao-phone-mode .plantao-phone-chat-head,
+body.plantao-phone-mode .plantao-phone-inbox-head{
+  min-height:88px;
+  padding:43px 16px 12px;
+  border-bottom:1px solid color-mix(in srgb,#fff 16%,transparent);
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+}
+body.plantao-phone-mode .plantao-phone-inbox-head{
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb,var(--accent) 93%,#46a8ff 7%) 0%,
+      var(--accent) 58%,
+      color-mix(in srgb,var(--accent) 84%,#001b38 16%) 100%)!important;
+  color:#fff!important;
+}
+body.plantao-phone-mode .plantao-phone-inbox-head>button,
+body.plantao-phone-mode .plantao-phone-inbox-head>span,
+body.plantao-phone-mode .plantao-phone-inbox-head .plantao-phone-brand-name{
+  color:#fff!important;
+}
+body.plantao-phone-mode .plantao-phone-brand{
+  gap:9px;
+}
+body.plantao-phone-mode .plantao-phone-brand-symbol{
+  width:34px;
+  height:34px;
+  flex-basis:34px;
+  border-radius:50%;
+  background:rgba(255,255,255,.13);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.32);
+}
+body.plantao-phone-mode .plantao-phone-brand-logo{
+  width:34px;
+  height:34px;
+  padding:4px;
+  filter:brightness(0) invert(1);
+}
+body.plantao-phone-mode .plantao-phone-brand-name{
+  font-size:17px!important;
+  letter-spacing:-.02em;
+}
+body.plantao-phone-mode .plantao-phone-chat-body{
+  padding:18px 15px 12px;
+  background:
+    radial-gradient(circle at 20px 20px,color-mix(in srgb,var(--accent) 9%,transparent) 1.25px,transparent 1.4px) 0 0/40px 40px,
+    linear-gradient(180deg,color-mix(in srgb,var(--surface) 96%,var(--accent-soft) 4%),var(--bg))!important;
+}
+body.plantao-phone-mode .plantao-phone-bubble{
+  border-radius:17px;
+  padding:11px 12px;
+  box-shadow:0 3px 10px rgba(4,30,58,.08);
+}
+body.plantao-phone-mode .plantao-phone-bubble.incoming{
+  border-top-left-radius:7px;
+}
+body.plantao-phone-mode .plantao-phone-bubble.outgoing{
+  border-top-right-radius:7px;
+}
+body.plantao-phone-mode .plantao-phone-choices{
+  margin:0 10px 10px;
+  padding:10px;
+  border:1px solid var(--border);
+  border-radius:18px;
+  box-shadow:0 8px 22px rgba(4,30,58,.08);
+}
+body.plantao-phone-mode .plantao-phone-choice-group button{
+  border-radius:999px!important;
+  min-height:34px;
+  padding:7px 11px;
+  box-shadow:0 2px 6px rgba(4,30,58,.05);
+}
+body.plantao-phone-mode .plantao-phone-conversation{
+  padding:13px 14px;
+}
+body.plantao-phone-mode .plantao-phone-conversation-avatar,
+body.plantao-phone-mode .plantao-phone-contact-avatar{
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb,var(--accent) 36%,transparent),
+    0 3px 8px rgba(4,30,58,.08);
+}
+body.plantao-phone-mode .plantao-phone-page-back{
+  border-radius:999px;
+  min-height:38px;
+  padding:0 15px;
+  box-shadow:0 4px 14px color-mix(in srgb,var(--text) 10%,transparent);
+}
+:root[data-theme="dark"] body.plantao-phone-mode .plantao-phone-layout>.plantao-phone-station{
+  background:linear-gradient(145deg,#728294 0%,#263240 22%,#080d13 42%,#344352 64%,#8794a1 82%,#1b2630 100%);
+}
+:root[data-theme="leila-mood"] body.plantao-phone-mode .plantao-phone-layout>.plantao-phone-station{
+  background:linear-gradient(145deg,#f2c4d8 0%,#b8678c 17%,#4d2738 38%,#c67c9d 62%,#f1c9da 80%,#6c3850 100%);
+}
+@media(max-width:680px){
+  body.plantao-phone-mode #plantao-library{
+    padding:0;
+  }
+  body.plantao-phone-mode #plantao-telefone.plantao-phone-preview{
+    min-height:100dvh;
+  }
+  body.plantao-phone-mode .plantao-phone-layout{
+    width:100%;
+    min-height:100dvh;
+    align-content:center;
+    justify-items:center;
+    padding:10px 8px max(10px,env(safe-area-inset-bottom));
+  }
+  body.plantao-phone-mode .plantao-phone-layout>.plantao-phone-station{
+    width:min(100%,430px);
+    height:auto;
+    padding:5px;
+    border-radius:48px;
+  }
+  body.plantao-phone-mode .plantao-phone-device{
+    border-width:4px!important;
+    border-radius:43px;
+  }
+  body.plantao-phone-mode .plantao-phone-screen{
+    border-radius:35px;
+  }
+  body.plantao-phone-mode .plantao-phone-page-back{
+    top:max(12px,env(safe-area-inset-top));
+    left:max(12px,env(safe-area-inset-left));
+  }
+}
+@media(max-width:430px){
+  body.plantao-phone-mode .plantao-phone-layout{
+    padding-left:4px;
+    padding-right:4px;
+  }
+  body.plantao-phone-mode .plantao-phone-layout>.plantao-phone-station{
+    width:min(100%,395px);
+    border-radius:44px;
+  }
+  body.plantao-phone-mode .plantao-phone-device{
+    border-radius:39px;
+  }
+  body.plantao-phone-mode .plantao-phone-screen{
+    border-radius:32px;
+  }
+  body.plantao-phone-mode .plantao-phone-notch{
+    width:104px;
+    height:28px;
+  }
+}
