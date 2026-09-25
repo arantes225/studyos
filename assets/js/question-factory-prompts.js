@@ -44,7 +44,7 @@ Usar fonte atual aplicável à pergunta e ao cenário brasileiro. Fonte internac
 CALIBRAÇÃO DO PROMPT: FINAL_PROMPT_SCORE >=84/100 na saída bruta inédita, antes de correções; não confundir com style_score.
 QUESTÃO FINAL: quality_score >=97/100, style >=9.7/10, rubrica completa, fontes verificadas, sem hard fail, sem ambiguidade e com única melhor resposta. Nota alta não compensa falha eliminatória.
 Feedback sobre distratores, clareza e segurança pode melhorar regras gerais; só alterar a identidade da banca com evidência primária documentada.
-PERSISTÊNCIA QUESTÃO A QUESTÃO OBRIGATÓRIA — RESULTADO DA ETAPA: o resultado NÃO pode subir apenas ao final como lote, resumo, stage_metrics ou contagem agregada. CADA questão processada deve ter seu resultado persistido individualmente, questão por questão, com question_id + item_version + review_stage + reviewer + status e todos os campos do parecer correspondentes. Nas etapas perplexity_initial e perplexity_reaudit, cada questão deve gerar seu próprio registro válido em question_factory_reviews da versão atual. A cada item concluído, grave o review individual pelo importador controlado da etapa; somente depois siga para o próximo item. Se a gravação de uma questão falhar, NÃO pule silenciosamente: registre o ID em pending_ids, mantenha coverage.complete=false e tente corrigir a persistência antes de declarar a etapa concluída. stage_metrics, totais agregados, notas globais, relatório textual, telemetria ou um JSON com 200 resultados ainda não persistidos NÃO contam como gravação. Para bloco de 200 questões, complete=true exige exatamente 200 question_id distintos da etapa, cada um com review individual persistido na item_version atual. A etapa só pode avançar após reconsulta ao banco confirmar 200/200. Nunca marcar bloco como concluído, nunca liberar próxima fase e nunca declarar sucesso com 199/200 ou menos. A gravação oficial deve ocorrer pelo importador controlado da etapa (preferencialmente public.admin_import_question_factory_stage(...) roteando para blind_resolution/perplexity_initial/perplexity_reaudit), nunca por INSERT/UPDATE direto nas tabelas.
+PERSISTÊNCIA CONTROLADA POR FAIXA — RESULTADO DA ETAPA: nas etapas perplexity_initial e perplexity_reaudit, o bloco de 200 deve ser processado em QUATRO FAIXAS SEQUENCIAIS DE 50: Q001–Q050, Q051–Q100, Q101–Q150 e Q151–Q200. Em cada faixa, primeiro gerar e validar exatamente 50 reviews completos em memória; NÃO chamar o importador com 49 ou menos. Somente quando os 50 reviews estiverem completos e sem IDs duplicados, chamar o importador controlado da etapa UMA VEZ com os 50 objetos reviews[]. Depois, RECONSULTAR o banco e confirmar exatamente 50/50 reviews persistidos da versão atual para aquela faixa. Se houver 49/50 ou qualquer divergência, coverage.complete=false, NÃO iniciar a faixa seguinte e corrigir a persistência. stage_metrics, totais agregados, relatório textual ou telemetria NÃO substituem reviews individuais. Ao final das quatro faixas, o bloco só pode avançar se a reconsulta confirmar exatamente 200 question_id distintos da etapa, todos na item_version atual. Nunca usar INSERT/UPDATE/DELETE direto nas tabelas; usar exclusivamente o importador controlado da etapa.
 CONFIRMAÇÃO APÓS GRAVAÇÃO: depois de importar a etapa, reconsultar o bloco e conferir que a contagem de revisões individuais da etapa para item_version atual corresponde exatamente ao total processado. Só então informar que a etapa foi persistida e permitir transição de fluxo.
 TELEMETRIA OBRIGATÓRIA POR ETAPA: toda saída JSON deve incluir um objeto top-level stage_metrics. Ele é lido pelo Admin e persistido no Supabase para atualizar o dashboard automaticamente. Preencher com dados REAIS da etapa; nunca estimar contagens. Estrutura obrigatória:
 stage_metrics = {
@@ -460,35 +460,70 @@ REGRA DE SAÍDA:
 - Se existir qualquer achado, persistir o parecer e retornar obrigatoriamente ao ChatGPT · julgar + corrigir. O ciclo 4↔5 se repete até zerar pendências.`;
     }
 
-    return `FLUXO OPERACIONAL ÚNICO — PERPLEXITY · AUDITORIA INDEPENDENTE
-Este é UM envio operacional. Audite diretamente as 200 versões atuais do MESMO bloco; NÃO existe subetapa separada de blind_resolution.
+    return `FLUXO OPERACIONAL — PERPLEXITY · AUDITORIA INDEPENDENTE
+Este bloco possui 200 questões, mas esta etapa DEVE ser executada em 4 FAIXAS SEQUENCIAIS DE 50:
+1) Q001–Q050
+2) Q051–Q100
+3) Q101–Q150
+4) Q151–Q200
 
-1. Trabalhe EXCLUSIVAMENTE no bloco operacional recebido; não misture outro lote/bloco.
-2. Para CADA questão, antes de confrontar o gabarito armazenado, resolva-a de forma independente e registre independent_answer no PRÓPRIO review perplexity_initial.
-3. Depois faça a auditoria científica e editorial completa da MESMA versão, sem alterar a resposta independente para coincidir com o gabarito.
-4. Audite TODAS as 200 questões individualmente. NÃO usar amostra, NÃO estimar taxa de aprovação e NÃO preencher totais sem que existam exatamente esses status em reviews individuais.
-5. Para CADA questão, registrar status real: approved | needs_revision | rejected, quality_score real, hard_fail e razões, ambiguidade, single_best_answer, fontes verificadas, surface guess, assimetria, dependência da vinheta, functional_killer_1/2, problemas de distratores/estilo/explicações e proposed_change.exact_replacement quando houver correção sugerida.
-6. Se uma questão precisar correção, ela NÃO pode ser gravada como approved apenas para completar o bloco. Persistir o status real e o motivo específico.
-7. Persista o parecer como perplexity_initial POR QUESTÃO pelo importador oficial. stage_metrics é apenas consequência agregada dos reviews reais; nunca fonte de verdade.
-8. Depois da gravação, RECONSULTE question_factory_reviews para a versão atual e confirme exatamente 200/200 reviews perplexity_initial.
-9. Recalcule approved_count, needs_revision_count, rejected_count e hard_reject_count A PARTIR DOS 200 REVIEWS PERSISTIDOS. Esses totais devem fechar exatamente 200 e coincidir com o relatório questão por questão.
-10. Se qualquer contagem divergir, se faltar um ID, ou se stage_metrics não bater com os reviews individuais: status operacional = PERSISTENCE_MISMATCH, coverage.complete=false, NÃO liberar a etapa seguinte e corrigir a persistência antes de encerrar.
-11. Não modifique a questão principal nesta etapa.
+REGRA CENTRAL:
+- Trabalhe SOMENTE com a faixa operacional recebida nesta execução.
+- Cada execução deve conter EXATAMENTE 50 questões atuais do mesmo bloco.
+- Primeiro gere e valide os 50 reviews completos.
+- Somente depois chame o importador oficial UMA VEZ com reviews[] contendo exatamente os 50 pareceres.
+- Depois reconsulte o banco e confirme 50/50 persistidos antes de iniciar a próxima faixa.
+- Se houver 49/50 ou qualquer divergência, coverage.complete=false e a próxima faixa fica BLOQUEADA.
+
+1. Trabalhe EXCLUSIVAMENTE no lote/bloco/faixa recebidos; não misture outro lote, bloco, faixa ou versão antiga.
+2. Use apenas a item_version atual de cada questão. Não altere a questão principal e não incremente versão nesta etapa.
+3. Para CADA questão, antes de confrontar o gabarito armazenado, faça uma resolução independente usando enunciado + alternativas A-D e registre independent_answer no PRÓPRIO review perplexity_initial. Não ajuste a resposta independente para coincidir com o gabarito.
+4. Depois faça a auditoria científica e editorial completa da MESMA versão.
+5. Para cada questão, avalie obrigatoriamente: ciência; gabarito; single-best-answer; ambiguidade; dependência da vinheta; surface_guess_without_vignette; surface_guess_confidence; lexical_asymmetry; melhor distrator; best_distractor_rationale; counterfactual_change; functional_killer_1; functional_killer_2; qualidade dos distratores; explicações A-D; mensagem_chave/Pulo do Gato; dificuldade; estilo; fontes; proposed_change.
+6. Fonte só pode ser VERIFIED se instituição, documento, ano, URL, seção e recomendação aplicável estiverem realmente confirmados. Sem confirmação suficiente, usar SOURCE_VERIFICATION_PENDING ou SOURCE_VERIFICATION_FAILED; nesse caso, o item NÃO pode ser approved.
+7. Status permitido por item: approved | needs_revision | rejected. Nunca aprovar apenas para completar a faixa.
+8. Cada review deve conter question_id, item_version, review_stage='perplexity_initial', reviewer='Perplexity', original_answer, independent_answer, answer_agreement, review_status/status, confidence, ambiguity, single_best_answer, hard_fail, hard_fail_reasons, quality_score, component_scores, verified_sources, source_checks, proposed_change, explanation_checks, message_key_check, surface_guess_without_vignette, surface_guess_confidence, lexical_asymmetry, best_distractor, best_distractor_rationale, counterfactual_change, vignette_dependency, functional_killer_1 e functional_killer_2.
+9. Antes do importador, valide a FAIXA INTEIRA:
+   - items.length = 50
+   - reviews.length = 50
+   - 50 question_id únicos
+   - nenhuma questão fora da faixa
+   - item_version igual à versão atual
+   - nenhum review incompleto
+   - coverage.reviewed_ids contém exatamente os 50 IDs
+   - coverage.pending_ids = []
+   - coverage.complete = true
+10. Se qualquer validação falhar, NÃO chame o importador. Corrija/regere o review faltante primeiro.
+11. Importar exclusivamente por public.admin_import_question_factory_perplexity_initial(p_payload jsonb). É proibido INSERT/UPDATE/DELETE direto em question_factory_reviews ou question_factory_items.
+12. Após a importação, RECONSULTE a mesma faixa e confirme exatamente:
+   current_items = 50
+   persisted_reviews = 50
+   pending = 0
+13. Somente com 50/50 persistidos a faixa é concluída e a próxima pode começar.
+14. Repita exatamente a mesma rotina para Q051–Q100, Q101–Q150 e Q151–Q200.
+15. O bloco inteiro só pode ser considerado concluído após confirmar:
+   200 itens atuais
+   200 reviews perplexity_initial persistidos
+   pending = 0
+   complete = true
 
 ${segment(item,'perplexity_initial',ctx)}
 
-REGRA ANTI-FALSO-SUCESSO — PERPLEXITY:
-- É proibido registrar uma auditoria agregada que contradiga os reviews individuais.
-- É proibido marcar 200/200 approved quando houver qualquer sinalização de needs_revision/rejected no relatório humano, métricas, notas ou findings.
-- É proibido usar amostra para inferir status das questões não auditadas.
-- A única fonte de verdade para avanço é question_factory_reviews da versão atual, um registro por questão.
-- Antes de devolver sucesso, compare: total de reviews individuais = 200; approved + needs_revision + rejected = 200; IDs do relatório humano = IDs persistidos; stage_metrics = agregação exata desses 200 registros.
-- Havendo divergência, NÃO avance e NÃO escreva status de conclusão.
+REGRA ANTI-FALSO-SUCESSO — PERPLEXITY INITIAL:
+- É proibido processar as 200 em uma única execução.
+- É proibido importar menos de 50 reviews numa faixa.
+- É proibido iniciar a próxima faixa sem confirmar 50/50 da anterior.
+- É proibido usar reviews de versões antigas.
+- É proibido copiar o gabarito como resposta independente.
+- É proibido marcar fonte como verificada sem checagem real.
+- É proibido substituir reviews individuais por stage_metrics ou totais.
+- É proibido marcar complete=true antes da reconsulta ao banco.
+- É proibido alterar question_factory_items nesta etapa.
 
 REGRA DE SAÍDA:
-- Se os 200 pareceres estiverem completos e sem achados, o próximo passo é ChatGPT · julgar o parecer; agree sem patch poderá liberar a validação para aprovação humana.
-- Se houver needs_revision/rejected, o próximo passo obrigatório é ChatGPT · julgar + corrigir.`;
-  }
+- Para cada faixa, só declarar sucesso quando 50/50 estiverem persistidos.
+- Depois da quarta faixa, só avançar para ChatGPT quando 200/200 perplexity_initial estiverem persistidos na versão atual.
+- Se houver needs_revision/rejected, o próximo passo é ChatGPT · julgar + corrigir após a etapa Perplexity Initial estar integralmente persistida.`  }
 
   function chatgptCorrectionCycle(item={},ctx={}) {
     return `FLUXO OPERACIONAL ÚNICO — CHATGPT · JULGAR PARECER + CORRIGIR
