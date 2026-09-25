@@ -2090,8 +2090,44 @@
     ].filter(Boolean).join(" "));
   }
 
+  function applyCaseMonitorDirective(action,original,beforeVitals={}) {
+    const actionId=original?.id||action?.id;
+    const plan=state.current?.monitor?.[actionId];
+    if(!plan || typeof plan!=="object") return false;
+
+    const before={...state.vitals};
+    if(plan.vitals && typeof plan.vitals==="object"){
+      state.vitals={...state.vitals,...plan.vitals};
+    }
+    if(plan.outcome && !state.outcomes.includes(plan.outcome)) state.outcomes.push(plan.outcome);
+
+    const pulseReturned=beforeVitals?.pulse===false && state.vitals?.pulse===true;
+    const type=actionId==="defibrillate" ? "defibrillation"
+      : actionId==="sync_cardioversion" ? "cardioversion"
+      : actionId==="transcutaneous_pacing" ? "pacing"
+      : actionId==="cpr" ? "cpr"
+      : ["bvm","airway","cricothyrotomy"].includes(actionId) ? "ventilation"
+      : actionId==="oxygen" ? "oxygen"
+      : (action?.category==="tratamento" ? "medication" : "procedure");
+
+    const changed=JSON.stringify(before)!==JSON.stringify(state.vitals);
+    window.PlantaoMonitor?.react(type,{
+      actionId,
+      changed,
+      rosc:pulseReturned || plan.outcome==="rosc",
+      before:beforeVitals,
+      after:{...state.vitals},
+      monitorEffect:plan.effect||"",
+      note:plan.note||""
+    });
+
+    if(plan.note) feed("Monitor: "+plan.note, changed?"event":"event");
+    return true;
+  }
+
   function applyPhysiologicReaction(action,original,beforeVitals={}) {
     if(!action) return;
+    if(applyCaseMonitorDirective(action,original,beforeVitals)) return;
     const id=action.id;
     const originalId=original?.id||id;
     const category=action.category||original?.category||"";
@@ -2398,6 +2434,8 @@
 
   function criticalWindow() {
     const t=normalizeLabel(state.current?.title||"");
+    if(state.vitals?.pulse===false || Number(state.vitals?.hr)===0)
+      return {actionIds:["cpr"],label:"Iniciar RCP",deadline:state.elapsed+.5,fatal:"O paciente permaneceu sem pulso e a RCP não foi iniciada em até 30 segundos."};
     if(state.current?.slug==="vf-arrest-ed" || /pcr pediatrica em fibrilacao ventricular|parada cardiorrespiratoria/.test(t))
       return {actionIds:["cpr"],label:"Iniciar RCP",deadline:.5,fatal:"A parada cardiorrespiratória permaneceu sem RCP por mais de 30 segundos."};
     if(t.includes("pneumotorax hipertensivo"))
