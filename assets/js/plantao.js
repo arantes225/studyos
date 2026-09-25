@@ -220,8 +220,8 @@
     {id:"ct_spine",label:"Tomografia de coluna",category:"imagem",subgroup:"Tomografia",time_min:6,points:0,result:"Tomografia de coluna realizada."},
     {id:"defibrillate",label:"Desfibrilar",category:"iniciais",subgroup:"Ressuscitação",time_min:.25,points:0,result:"Desfibrilação executada conforme o estágio atual do caso.",repeatable:true},
     {id:"sync_cardioversion",label:"Cardioversão sincronizada",category:"procedimentos_terapeuticos",subgroup:"Terapia elétrica",time_min:.25,points:0,result:"Cardioversão sincronizada realizada."},
-    {id:"airway",label:"Via aérea definitiva / intubação",category:"procedimentos_terapeuticos",subgroup:"Via aérea",time_min:.5,points:0,result:"Via aérea definitiva realizada; confirmar posicionamento e ventilação."},
-    {id:"cricothyrotomy",label:"Cricotireoidostomia",category:"procedimentos_terapeuticos",subgroup:"Via aérea",time_min:1,points:0,result:"Via aérea cirúrgica realizada."},
+    {id:"airway",label:"Via aérea definitiva / intubação",category:"iniciais",subgroup:"Via aérea / emergência",time_min:.5,points:0,result:"Via aérea definitiva realizada; confirmar posicionamento e ventilação."},
+    {id:"cricothyrotomy",label:"Cricotireoidostomia",category:"iniciais",subgroup:"Via aérea / emergência",time_min:1,points:0,result:"Via aérea cirúrgica realizada."},
     {id:"needle_decompression",label:"Descompressão torácica imediata",category:"procedimentos_terapeuticos",subgroup:"Tórax",time_min:.5,points:0,result:"Descompressão torácica realizada."},
     {id:"chest_tube",label:"Drenagem torácica",category:"procedimentos_terapeuticos",subgroup:"Tórax",time_min:2,points:0,result:"Dreno torácico instalado."},
     {id:"pelvic_binder",label:"Cinta pélvica",category:"procedimentos_terapeuticos",subgroup:"Trauma",time_min:.5,points:0,result:"Cinta pélvica aplicada."},
@@ -404,6 +404,9 @@
     `).join("");
   }
 
+  function interventionSection(action){
+    return action.category==="tratamento" ? "medicamentos" : "gerais";
+  }
   function renderActions() {
     const actions=mergedActions();
     if(!GROUPS[state.category])state.category="anamnese";
@@ -413,9 +416,15 @@
       </button>`).join("");
     $("plantao-action-title").textContent=GROUPS[state.category].label;
     const search=$("plantao-action-search").value.trim().toLocaleLowerCase('pt-BR');
-    const available=actions.filter(a=>groupOf(a.category)===state.category && (!search||(a.label+" "+(a.subgroup||"")).toLocaleLowerCase('pt-BR').includes(search)));
+    let available=actions.filter(a=>groupOf(a.category)===state.category && (!search||(a.label+" "+(a.subgroup||"")).toLocaleLowerCase('pt-BR').includes(search)));
+    if(state.category==="intervir"){
+      state.interventionTab=state.interventionTab||"gerais";
+      const tabHtml='<div class="plantao-intervention-tabs"><button type="button" data-intervention-tab="gerais" class="'+(state.interventionTab==="gerais"?"active":"")+'">Gerais</button><button type="button" data-intervention-tab="medicamentos" class="'+(state.interventionTab==="medicamentos"?"active":"")+'">Medicamentos</button></div>';
+      available=available.filter(a=>interventionSection(a)===state.interventionTab);
+      $("plantao-actions").dataset.tabs=tabHtml;
+    } else $("plantao-actions").dataset.tabs="";
     const groups=[...new Set(available.map(a=>a.subgroup||CATEGORY_LABELS[a.category]||"Opções"))];
-    $("plantao-actions").innerHTML=groups.map(group=>`<section class="plantao-action-group"><h3>${esc(group)}</h3>${available.filter(a=>(a.subgroup||CATEGORY_LABELS[a.category]||"Opções")===group).map(action=>{
+    $("plantao-actions").innerHTML=($("plantao-actions").dataset.tabs||"")+groups.map(group=>`<section class="plantao-action-group"><h3>${esc(group)}</h3>${available.filter(a=>(a.subgroup||CATEGORY_LABELS[a.category]||"Opções")===group).map(action=>{
       const completed=done(action.id);
       const specialRepeat=action.id==="defibrillate";
       return `<button class="plantao-action" type="button" data-case-action="${esc(action.id)}" ${state.busy||(completed&&!action.repeatable&&!specialRepeat)?"disabled":""}>
