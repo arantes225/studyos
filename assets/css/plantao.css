@@ -123,3 +123,8 @@
  .plantao-monitor-dock .plantao-vital:nth-child(2),
  .plantao-monitor-dock .plantao-vital:nth-child(3){padding-left:4px}
 }
+
+/* v3.5 — subabas de Intervenções */
+.plantao-intervention-tabs{display:flex;gap:6px;padding:2px 0 10px;position:sticky;top:0;z-index:2;background:inherit}
+.plantao-intervention-tabs button{flex:1;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface);font-weight:800;cursor:pointer}
+.plantao-intervention-tabs button.active{background:var(--ink);color:var(--surface);border-color:var(--ink)}
