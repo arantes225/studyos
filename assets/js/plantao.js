@@ -43,7 +43,8 @@
     clinicalEvents:[],
     category:null,
     penalties:0, criticalElapsed:0, diagnosis:null, disposition:null, busy:false,
-    phoneCases:[], phoneCase:null, phoneSession:null, phoneTurn:0, phoneMode:false
+    phoneCases:[], phoneCase:null, phoneSession:null, phoneTurn:0, phoneMode:false,
+    filters:{specialty:"",difficulty:""}
   };
 
   function fmtTime(minutes) {
@@ -119,8 +120,8 @@
     if(cleanup.error) console.warn("Plantão: limpeza de sessões incompletas pendente",cleanup.error);
     const specialties=[...new Set(state.cases.map(x=>x.specialty).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"pt-BR"));
     const difficulties=[...new Set(state.cases.map(x=>x.difficulty).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"pt-BR"));
-    if($("plantao-filter-specialty")) $("plantao-filter-specialty").innerHTML='<option value="">Todas</option>'+specialties.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
-    if($("plantao-filter-difficulty")) $("plantao-filter-difficulty").innerHTML='<option value="">Todas</option>'+difficulties.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
+    buildSiteFilter("specialty",specialties);
+    buildSiteFilter("difficulty",difficulties);
     renderLibrary();
   }
 
@@ -130,8 +131,8 @@
   }
 
   function renderLibrary() {
-    const specialty=$("plantao-filter-specialty")?.value || "";
-    const difficulty=$("plantao-filter-difficulty")?.value || "";
+    const specialty=state.filters.specialty || "";
+    const difficulty=state.filters.difficulty || "";
     const visibleCases=state.cases.filter(item=>(!specialty || item.specialty===specialty) && (!difficulty || item.difficulty===difficulty));
     $("plantao-case-count").textContent=visibleCases.length;
     $("plantao-session-count").textContent=state.sessions.length;
@@ -306,12 +307,66 @@
     renderPhoneCases();
   });
 
-  ["plantao-filter-specialty","plantao-filter-difficulty"].forEach(id=>{
-    $(id)?.addEventListener("change",renderLibrary);
+  function closeSiteFilters(except=null){
+    document.querySelectorAll(".plantao-site-select-list").forEach(list=>{
+      if(list===except) return;
+      list.hidden=true;
+      const trigger=list.parentElement?.querySelector(".plantao-site-select-trigger");
+      trigger?.setAttribute("aria-expanded","false");
+    });
+  }
+
+  function buildSiteFilter(kind,values){
+    const list=$("plantao-filter-"+kind+"-list");
+    if(!list) return;
+    const current=state.filters[kind]||"";
+    const items=["",...values];
+    list.innerHTML=items.map(value=>`
+      <button type="button" role="option" class="plantao-site-select-option${value===current?" selected":""}"
+        data-filter-kind="${esc(kind)}" data-filter-value="${esc(value)}"
+        aria-selected="${value===current?"true":"false"}">
+        <span>${esc(value||"Todas")}</span>
+        <span class="plantao-site-select-check" aria-hidden="true">✓</span>
+      </button>
+    `).join("");
+  }
+
+  function setSiteFilter(kind,value){
+    state.filters[kind]=value||"";
+    const label=$("plantao-filter-"+kind+"-label");
+    if(label) label.textContent=value||"Todas";
+    const values=[...new Set(state.cases.map(x=>x[kind]).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"pt-BR"));
+    buildSiteFilter(kind,values);
+    renderLibrary();
+    closeSiteFilters();
+  }
+
+  ["specialty","difficulty"].forEach(kind=>{
+    $("plantao-filter-"+kind+"-button")?.addEventListener("click",event=>{
+      event.stopPropagation();
+      const list=$("plantao-filter-"+kind+"-list");
+      if(!list) return;
+      const willOpen=list.hidden;
+      closeSiteFilters(list);
+      list.hidden=!willOpen;
+      event.currentTarget.setAttribute("aria-expanded",willOpen?"true":"false");
+    });
+    $("plantao-filter-"+kind+"-list")?.addEventListener("click",event=>{
+      const option=event.target.closest("[data-filter-value]");
+      if(option) setSiteFilter(kind,option.dataset.filterValue||"");
+    });
   });
+  document.addEventListener("click",()=>closeSiteFilters());
+  document.addEventListener("keydown",event=>{if(event.key==="Escape") closeSiteFilters();});
   $("plantao-filter-clear")?.addEventListener("click",()=>{
-    $("plantao-filter-specialty").value="";
-    $("plantao-filter-difficulty").value="";
+    state.filters.specialty="";
+    state.filters.difficulty="";
+    ["specialty","difficulty"].forEach(kind=>{
+      const label=$("plantao-filter-"+kind+"-label");
+      if(label) label.textContent="Todas";
+      const values=[...new Set(state.cases.map(x=>x[kind]).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"pt-BR"));
+      buildSiteFilter(kind,values);
+    });
     renderLibrary();
   });
 
