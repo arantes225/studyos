@@ -165,20 +165,30 @@
     conduta:{label:"Conduta final",icon:"✓",categories:["destino","encaminhamento"]}
   };
   const GENERIC_ACTIONS = [
-    {id:"exam_ectoscopy",label:"Ectoscopia",category:"exame",subgroup:"01 · Ectoscopia",time_min:.5,points:0,result:"Ectoscopia realizada: estado geral, nível de consciência, coloração, hidratação, padrão respiratório, fácies, postura e sinais externos de sofrimento avaliados conforme o contexto clínico do caso."},
-    {id:"exam_neuro",label:"Exame neurológico",category:"exame",subgroup:"02 · Neurológico",time_min:.5,points:0,result:"Consciente e orientado, Glasgow 15, fala clara, pupilas isocóricas e fotorreagentes, força preservada e simétrica nos quatro membros, sem déficit focal aparente."},
-    {id:"exam_head",label:"Cabeça e pescoço",category:"exame",subgroup:"03 · Cabeça e pescoço",time_min:.5,points:0,result:"Cabeça e pescoço examinados: crânio e face, cavidade oral e orofaringe, linfonodos cervicais, mobilidade cervical, rigidez de nuca, turgência jugular, massas e sinais externos de trauma avaliados conforme o contexto clínico."},
-    {id:"exam_thyroid",label:"Tireoide",category:"exame",subgroup:"04 · Tireoide",time_min:.5,points:0,result:"Tireoide inspecionada e palpada: volume, simetria, consistência, dor, presença de nódulos e mobilidade à deglutição avaliados conforme o contexto clínico. Também são observados sinais associados, como tremor fino, pele quente, hiperreflexia e alterações oculares quando pertinentes ao caso."},
-    {id:"exam_airway",label:"Vias aéreas",category:"exame",subgroup:"05 · Vias aéreas",time_min:.5,points:0,result:"Vias aéreas patentes, sem secreções, edema ou trauma aparente; sem estridor ou sinais de obstrução."},
-    {id:"exam_eyes",label:"Olhos e pupilas",category:"exame",subgroup:"06 · Olhos",time_min:.5,points:0,result:"Olhos sem hiperemia ou lesões aparentes; pupilas isocóricas e fotorreagentes, motilidade ocular extrínseca preservada."},
-    {id:"exam_chest",label:"Tórax",category:"exame",subgroup:"07 · Tórax",time_min:.5,points:0,result:"Tórax simétrico, expansibilidade preservada bilateralmente, sem deformidades aparentes; murmúrio vesicular presente bilateralmente, sem ruídos adventícios."},
-    {id:"exam_upper",label:"Membros superiores",category:"exame",subgroup:"08 · Membros superiores",time_min:.5,points:0,result:"Membros superiores simétricos, sem deformidades ou edema; pulsos periféricos palpáveis e simétricos, perfusão preservada."},
-    {id:"exam_abdomen",label:"Abdômen",category:"exame",subgroup:"09 · Abdômen",time_min:.5,points:0,result:"Abdômen plano, flácido, ruídos hidroaéreos presentes, indolor à palpação superficial e profunda, sem defesa, rigidez ou massas palpáveis."},
-    {id:"exam_lower",label:"Membros inferiores",category:"exame",subgroup:"10 · Membros inferiores",time_min:.5,points:0,result:"Membros inferiores simétricos, sem deformidades ou edema; panturrilhas livres, pulsos periféricos palpáveis e simétricos."},
-    {id:"exam_extremities",label:"Extremidades e perfusão",category:"exame",subgroup:"11 · Extremidades",time_min:.5,points:0,result:"Extremidades aquecidas, perfundidas, pulsos periféricos palpáveis e simétricos, enchimento capilar inferior a 2 segundos."},
-    {id:"exam_skin",label:"Pele e mucosas",category:"exame",subgroup:"12 · Pele",time_min:.5,points:0,result:"Pele íntegra, normocorada e sem lesões aparentes; mucosas úmidas e coradas, sem cianose ou icterícia."},
-    {id:"exam_gyne",label:"Exame ginecológico",category:"exame",subgroup:"13 · Ginecológico",time_min:1,points:0,result:"Exame ginecológico realizado. Inspeção vulvovaginal, exame especular e toque bimanual avaliados conforme o contexto clínico do caso."},
-    {id:"exam_gu",label:"Exame genitourinário",category:"exame",subgroup:"14 · Genitourinário",time_min:1,points:0,result:"Exame genitourinário realizado. Genitais externos, região inguinal e achados urinários/genitais pertinentes avaliados conforme o contexto clínico do caso."},
+    {id:"exam_ectoscopy",label:"Ectoscopia / estado geral",category:"exame",subgroup:"01 · Ectoscopia",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_head",label:"Crânio e face",category:"exame",subgroup:"02 · Crânio e face",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_eyes",label:"Olhos e pupilas",category:"exame",subgroup:"03 · Olhos",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_ears",label:"Otoscopia / orelhas",category:"exame",subgroup:"04 · Orelhas",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_nose",label:"Nariz e seios da face",category:"exame",subgroup:"05 · Nariz e seios da face",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_mouth",label:"Boca e orofaringe",category:"exame",subgroup:"06 · Boca e orofaringe",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_airway",label:"Vias aéreas",category:"exame",subgroup:"07 · Vias aéreas",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_neck",label:"Pescoço e linfonodos",category:"exame",subgroup:"08 · Pescoço",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_thyroid",label:"Tireoide",category:"exame",subgroup:"09 · Tireoide",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_neuro",label:"Exame neurológico",category:"exame",subgroup:"10 · Neurológico",time_min:.75,points:0,result:"__PHYSICAL__"},
+    {id:"exam_chest",label:"Aparelho respiratório",category:"exame",subgroup:"11 · Tórax · Respiratório",time_min:.75,points:0,result:"__PHYSICAL__"},
+    {id:"exam_cardio",label:"Aparelho cardiovascular",category:"exame",subgroup:"12 · Tórax · Cardiovascular",time_min:.75,points:0,result:"__PHYSICAL__"},
+    {id:"exam_breast",label:"Mamas",category:"exame",subgroup:"13 · Mamas",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_abdomen",label:"Abdômen",category:"exame",subgroup:"14 · Abdômen",time_min:.75,points:0,result:"__PHYSICAL__"},
+    {id:"exam_back",label:"Dorso e região lombar",category:"exame",subgroup:"15 · Dorso e lombar",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_spine",label:"Coluna vertebral",category:"exame",subgroup:"16 · Coluna",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_gyne",label:"Exame ginecológico",category:"exame",subgroup:"17 · Ginecológico",time_min:1,points:0,result:"__PHYSICAL__"},
+    {id:"exam_gu",label:"Exame genitourinário",category:"exame",subgroup:"18 · Genitourinário",time_min:1,points:0,result:"__PHYSICAL__"},
+    {id:"exam_rectal",label:"Exame anorretal / toque retal",category:"exame",subgroup:"19 · Anorretal",time_min:.75,points:0,result:"__PHYSICAL__"},
+    {id:"exam_upper",label:"Membros superiores",category:"exame",subgroup:"20 · Membros superiores",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_lower",label:"Membros inferiores",category:"exame",subgroup:"21 · Membros inferiores",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_msk",label:"Musculoesquelético",category:"exame",subgroup:"22 · Musculoesquelético",time_min:.75,points:0,result:"__PHYSICAL__"},
+    {id:"exam_extremities",label:"Extremidades e perfusão",category:"exame",subgroup:"23 · Perfusão periférica",time_min:.5,points:0,result:"__PHYSICAL__"},
+    {id:"exam_skin",label:"Pele e mucosas",category:"exame",subgroup:"24 · Pele e mucosas",time_min:.5,points:0,result:"__PHYSICAL__"},
     {id:"monitor",label:"Ligar monitor multiparamétrico",category:"iniciais",subgroup:"Monitorização",time_min:.25,points:0,result:"Monitor conectado; sinais vitais e traçados passam a ser exibidos."},
     {id:"check_pulse",label:"Checar pulso e respiração",category:"iniciais",subgroup:"Avaliação imediata",time_min:.25,points:0,result:"Pulso e padrão respiratório avaliados."},
     {id:"check_rhythm",label:"Avaliar ritmo no monitor",category:"iniciais",subgroup:"Avaliação imediata",time_min:.25,points:0,result:"Ritmo avaliado no monitor.",requires_all:["monitor"],requires_penalty:2},
@@ -460,6 +470,131 @@
   function caseActions(){ return Array.isArray(state.current?.actions) ? state.current.actions : []; }
   function normalizeLabel(value){ return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase(); }
 
+  function physicalExamResult(action) {
+    if(!action || action.category!=="exame") return action?.result || "";
+    const custom=state.current?.presentation?.physical_exam;
+    if(custom && typeof custom==="object" && custom[action.id]) return String(custom[action.id]);
+
+    const title=normalizeLabel(state.current?.title);
+    const opening=normalizeLabel([state.current?.presentation?.opening,state.current?.presentation?.chief_complaint].filter(Boolean).join(" "));
+    const text=title+" "+opening;
+    const v=state.vitals||state.current?.initial_vitals||{};
+    const hr=Number(v.hr), rr=Number(v.rr), spo2=Number(v.spo2), temp=Number(v.temp);
+    const mental=String(v.mental||"").trim();
+    const bp=String(v.bp||"").trim();
+    const hypotensive=/^\s*(?:[0-8]?\d|9[0-2])\s*\//.test(bp);
+    const febrile=Number.isFinite(temp)&&temp>=38;
+    const hypox=Number.isFinite(spo2)&&spo2<92;
+
+    switch(action.id){
+      case "exam_ectoscopy":{
+        const parts=[];
+        parts.push(mental ? "Estado geral: "+mental+"." : "Paciente responsivo durante a avaliação.");
+        if(hypotensive) parts.push("Aspecto de hipoperfusão, com palidez e prostração.");
+        else if(/choque|sepse|anafilax|hemorrag|sangramento/.test(text)) parts.push("Paciente com aspecto de doença aguda e desconforto evidente.");
+        else parts.push("Sem sinais externos de choque à inspeção.");
+        if(febrile) parts.push("Pele quente ao toque, compatível com febre.");
+        if(hypox || /dispne|asma|edema agudo|pneumotorax|embolia pulmonar|bronquiolite|pneumonia/.test(text)) parts.push("Padrão respiratório aumentado, com desconforto respiratório perceptível.");
+        else if(Number.isFinite(rr)) parts.push("Padrão respiratório sem esforço importante visível.");
+        return parts.join(" ");
+      }
+      case "exam_head":
+        if(/trauma cran|tce|hematoma epidural|hematoma subdural/.test(text)) return "Crânio e face examinados em busca de ferimentos, hematomas, deformidades, dor à palpação, sinais de fratura de base e assimetrias; há achados traumáticos compatíveis com o mecanismo descrito no caso.";
+        if(/celulite|erisipela.*face|angioedema/.test(text)) return "Face inspecionada: edema e alterações de partes moles são avaliados quanto a extensão, simetria, calor, hiperemia e progressão.";
+        return "Crânio normocefálico, face simétrica, sem deformidades, hematomas, dor focal ou sinais externos de trauma.";
+      case "exam_eyes":
+        if(/avc|hemorragia subaracnoidea|meningite|encefal|intoxic|coma|convuls|trauma cran/.test(text)) return "Pupilas avaliadas quanto a diâmetro, simetria e fotorreação; motilidade ocular e presença de desvio do olhar pesquisadas. Os achados devem ser correlacionados ao estado neurológico do caso.";
+        if(/tireotoxic|hipertireoid/.test(text)) return "Olhos com pesquisa dirigida de retração palpebral, olhar fixo, hiperemia, proptose e alterações de motilidade ocular; há sinais oculares compatíveis com hiperatividade adrenérgica quando presentes no caso.";
+        return "Conjuntivas sem hiperemia importante; pupilas isocóricas e fotorreagentes; motilidade ocular extrínseca preservada, sem desvio do olhar.";
+      case "exam_ears":
+        if(/otite externa|dor de ouvido|otalgia/.test(text)) return "Otoscopia: conduto auditivo externo inspecionado quanto a edema, hiperemia, secreção e dor à mobilização do trago/pavilhão; membrana timpânica visualizada quando possível.";
+        if(/otite media|mastoidite/.test(text)) return "Otoscopia: membrana timpânica avaliada quanto a hiperemia, abaulamento, opacidade, nível líquido e perfuração; região mastoidea examinada para dor, edema e hiperemia.";
+        return "Pavilhões e condutos auditivos sem edema ou secreção; membranas timpânicas íntegras, translúcidas, sem abaulamento ou hiperemia relevante.";
+      case "exam_nose":
+        if(/sinusite|rinossinus|epistaxe/.test(text)) return "Cavidades nasais inspecionadas quanto a secreção, sangramento, edema de mucosa e obstrução; seios da face avaliados por dor à palpação/percussão.";
+        return "Mucosa nasal sem sangramento ativo ou secreção purulenta; sem dor significativa à palpação dos seios da face.";
+      case "exam_mouth":
+        if(/faring|amigdal|odinofagia|abscesso peritonsilar/.test(text)) return "Cavidade oral e orofaringe inspecionadas com atenção a hiperemia, exsudato, hipertrofia/amigdalas, assimetria, desvio de úvula, trismo, lesões de mucosa e condição dentária.";
+        if(/desidrat|cetoacid|hiperosmolar/.test(text)) return "Mucosa oral seca, com avaliação de hidratação, língua e presença de lesões; orofaringe sem obstrução mecânica evidente.";
+        return "Mucosa oral úmida, sem lesões relevantes; orofaringe sem exsudato, edema importante ou assimetria.";
+      case "exam_airway":
+        if(/anafilax|angioedema|epiglot|obstrucao de via aerea/.test(text)) return "Via aérea examinada imediatamente: voz, estridor, sialorreia, edema de lábios/língua/orofaringe e capacidade de manejar secreções avaliados; há risco de comprometimento de via aérea compatível com o caso.";
+        return "Via aérea pérvia; paciente consegue vocalizar, sem estridor, sialorreia, secreções obstrutivas ou edema orofaríngeo importante.";
+      case "exam_neck":
+        if(/meningite|hemorragia subaracnoidea/.test(text)) return "Pescoço avaliado quanto a rigidez de nuca e sinais meníngeos; linfonodos, massas e mobilidade cervical também examinados.";
+        if(/insuficiencia cardiaca|edema agudo|tamponamento/.test(text)) return "Pescoço examinado com atenção à pressão venosa jugular, refluxo hepatojugular, mobilidade cervical, massas e linfonodos.";
+        return "Pescoço móvel, sem rigidez de nuca; sem linfonodomegalias ou massas cervicais evidentes; jugulares sem turgência importante em repouso.";
+      case "exam_thyroid":
+        if(/tireotoxic|hipertireoid|tempestade tireoid/.test(text)) return "Tireoide inspecionada e palpada quanto a bócio, nódulos, dor, sopro e mobilidade; tremor fino, pele quente/úmida e sinais oculares são pesquisados em conjunto.";
+        return "Tireoide sem aumento evidente, nódulo dominante ou dor à palpação; mobilidade à deglutição preservada.";
+      case "exam_neuro":
+        if(/avc|hemorragia|subaracnoidea|convuls|meningite|encefal|coma|tce|trauma cran/.test(text)) return "Exame neurológico completo: Glasgow/nível de consciência, fala e linguagem, pares cranianos, pupilas, força, sensibilidade, coordenação, reflexos e sinais focais avaliados de forma dirigida ao quadro.";
+        return "Consciente e orientado; fala clara; pupilas isocóricas e fotorreagentes; pares cranianos sem déficit grosseiro; força e sensibilidade preservadas e simétricas, sem déficit focal aparente.";
+      case "exam_chest":
+        if(/asma|broncoespasmo/.test(text)) return "Tórax com aumento do trabalho respiratório e expiração prolongada; ausculta dirigida à presença e intensidade de sibilos e à redução do murmúrio vesicular.";
+        if(/edema agudo|insuficiencia cardiaca/.test(text)) return "Ausculta pulmonar com estertores crepitantes, predominando em bases, em contexto de dispneia/ortopneia; expansibilidade avaliada bilateralmente.";
+        if(/pneumotorax hipertensivo/.test(text)) return "Assimetria ventilatória com redução acentuada do murmúrio vesicular no hemitórax acometido; expansibilidade, percussão e sinais de esforço respiratório são avaliados imediatamente.";
+        if(/pneumonia|choque septico pulmonar/.test(text)) return "Ausculta com achados focais compatíveis com acometimento pulmonar, pesquisando crepitações, sopro tubário e redução localizada do murmúrio vesicular.";
+        if(/embolia pulmonar/.test(text)) return "Taquipneia e esforço respiratório podem estar presentes; ausculta pode ser pouco específica, sem achado focal obrigatório apesar da hipoxemia.";
+        return "Tórax simétrico, expansibilidade bilateral preservada; murmúrio vesicular presente nos dois hemitórax, sem sibilos, roncos ou crepitações relevantes.";
+      case "exam_cardio":{
+        const arr=[];
+        if(Number.isFinite(hr)) arr.push("Frequência cardíaca de aproximadamente "+Math.round(hr)+" bpm.");
+        if(/fibrilacao atrial/.test(text)) arr.push("Ritmo irregular à palpação/ausculta.");
+        else if(/taquicardia ventricular|taquicardia supraventricular/.test(text)) arr.push("Ritmo taquicárdico.");
+        else if(/bradicardia/.test(text)) arr.push("Ritmo bradicárdico.");
+        else arr.push("Bulhas cardíacas audíveis, sem sopro evidente ao exame inicial.");
+        if(/tamponamento/.test(text)) arr.push("Avaliam-se abafamento de bulhas, turgência jugular e sinais de baixo débito.");
+        if(hypotensive) arr.push("Perfusão periférica reduzida em contexto de hipotensão.");
+        return arr.join(" ");
+      }
+      case "exam_breast":
+        if(/mastite|abscesso mamario|puerperal/.test(text)) return "Mamas inspecionadas e palpadas: pesquisa de hiperemia, calor, dor, endurecimento, flutuação, fissuras mamilares e drenagem. Há alteração focal compatível com o quadro mamário descrito.";
+        return "Mamas sem hiperemia, calor, massa dolorosa, flutuação ou secreção anormal evidente ao exame.";
+      case "exam_abdomen":
+        if(/apendic|colecist|pancreat|abdome agudo|periton|obstrucao intestinal|isquemia mesenterica|gravidez ectopica/.test(text)) return "Abdômen examinado por inspeção, ausculta, percussão e palpação superficial/profunda, com pesquisa dirigida de dor localizada, defesa, rigidez, descompressão dolorosa, massas e sinais específicos conforme a hipótese.";
+        if(/cetoacid|hiperosmolar/.test(text)) return "Abdômen sem sinais de irritação peritoneal; dor difusa pode acompanhar o distúrbio metabólico, devendo ser reavaliada após estabilização.";
+        return "Abdômen plano, flácido, ruídos hidroaéreos presentes; indolor à palpação superficial e profunda, sem defesa, rigidez ou massa palpável.";
+      case "exam_back":
+        if(/pielonefr|colica renal|litia|uropatia/.test(text)) return "Dorso e região lombar examinados com pesquisa de dor à punho-percussão lombar e dor paravertebral; achados são comparados bilateralmente.";
+        if(/aneurisma de aorta|sindrome aortica/.test(text)) return "Dorso examinado em busca de dor intensa, assimetria, sinais de hipoperfusão e outras pistas vasculares associadas ao quadro.";
+        return "Dorso sem lesões ou deformidades aparentes; punho-percussão lombar sem dor significativa bilateralmente.";
+      case "exam_spine":
+        if(/trauma|queda|acidente/.test(text)) return "Coluna cervical, torácica e lombar avaliadas quanto a dor em linha média, deformidade, degrau, déficit neurológico e necessidade de manutenção de imobilização.";
+        return "Coluna sem deformidade ou dor importante à palpação da linha média; mobilidade preservada quando clinicamente segura.";
+      case "exam_gyne":
+        if(/ectopica|aborto|sangramento vaginal|doenca inflamatoria pelvica|torcao ovariana|eclampsia|pre-eclampsia/.test(text)) return "Exame ginecológico dirigido: inspeção vulvar, exame especular quando indicado e toque bimanual, avaliando sangramento, corrimento, colo, dor à mobilização cervical, dor anexial, massas e características uterinas.";
+        return "Genitália externa sem lesões evidentes; exame especular/toque bimanual sem sangramento significativo, corrimento patológico, dor cervical ou massa anexial ao exame inicial.";
+      case "exam_gu":
+        if(/torcao testicular|epididim|orquite|retencao urinaria|priapismo/.test(text)) return "Genitália externa e regiões inguinais examinadas com atenção a posição testicular, edema, hiperemia, dor, reflexo cremastérico, hérnias, distensão vesical e demais achados pertinentes.";
+        return "Genitália externa sem edema, lesão ou secreção relevante; regiões inguinais sem hérnia evidente; sem distensão suprapúbica importante.";
+      case "exam_rectal":
+        if(/hemorragia digestiva|sangramento retal|melena|hematoquezia|abscesso perianal/.test(text)) return "Região perianal inspecionada e toque retal realizado quando indicado, avaliando sangue, melena, massa, dor, flutuação, fissura e tônus esfincteriano.";
+        return "Região perianal sem lesão evidente; toque retal sem sangue macroscópico, massa ou dor importante quando clinicamente indicado.";
+      case "exam_upper":
+        if(/avc|neurolog/.test(text)) return "Membros superiores avaliados quanto a força, sensibilidade, simetria, pulsos e sinais de déficit focal.";
+        return "Membros superiores simétricos, sem edema ou deformidade; pulsos radiais palpáveis e simétricos, perfusão distal preservada.";
+      case "exam_lower":
+        if(/embolia pulmonar|trombose venosa|tvp/.test(text)) return "Membros inferiores avaliados comparativamente: edema unilateral, dor, empastamento, assimetria de panturrilhas, temperatura, coloração e pulsos periféricos.";
+        if(/isquemia aguda|arterial/.test(text)) return "Membros inferiores avaliados quanto aos 6 Ps de isquemia, temperatura, coloração, enchimento capilar e pulsos em diferentes níveis.";
+        return "Membros inferiores simétricos, sem edema importante; panturrilhas sem empastamento; pulsos periféricos palpáveis e simétricos.";
+      case "exam_msk":
+        if(/luxacao|fratura|trauma|artrite septica/.test(text)) return "Sistema musculoesquelético examinado com inspeção, palpação, amplitude de movimento, estabilidade, dor, deformidade e avaliação neurovascular distal da região acometida.";
+        return "Sem deformidades musculoesqueléticas evidentes; amplitude de movimento global preservada nas articulações não dolorosas, sem edema articular importante.";
+      case "exam_extremities":
+        return hypotensive || /choque|sepse|hemorrag|anafilax/.test(text)
+          ? "Extremidades avaliadas quanto a temperatura, coloração, pulsos e enchimento capilar; há sinais de perfusão periférica reduzida compatíveis com instabilidade hemodinâmica."
+          : "Extremidades aquecidas e bem perfundidas; pulsos periféricos palpáveis e simétricos; enchimento capilar inferior a 2 segundos.";
+      case "exam_skin":
+        if(/anafilax|urticaria/.test(text)) return "Pele examinada integralmente em busca de urticária, eritema, angioedema e progressão das lesões; mucosas também avaliadas.";
+        if(/meningococcemia|purpura|petéquias/.test(text)) return "Pele examinada em busca de petéquias, púrpura, equimoses e lesões não desaparecendo à digitopressão, além de coloração e perfusão.";
+        if(/celulite|erisipela|fasceite/.test(text)) return "Pele examinada quanto a hiperemia, calor, edema, dor, crepitação, bolhas, necrose e extensão das margens da lesão.";
+        return "Pele íntegra, sem exantema, petéquias ou lesões agudas relevantes; mucosas coradas e sem cianose ou icterícia.";
+      default:
+        return "Exame realizado de forma sistemática, com descrição dos achados pertinentes ao caso.";
+    }
+  }
+
   // V7: transforma os tópicos de anamnese importados da planilha em perguntas clicáveis.
   // Cada caso pode ter quantas perguntas forem necessárias, sem depender de actions legadas.
   function importedHistoryActions(){
@@ -708,7 +843,7 @@
       if(id==="cricothyrotomy") return {level:"mortal",reason:"Cricotireoidostomia realizada em um paciente em parada cardiorrespiratória antes das medidas imediatas de ressuscitação."};
       if(["ct_head","ct_chest","ct_abdomen","mri_brain","mri_spine","xray_chest","xray_abdomen"].includes(id))
         return {level:"mortal",reason:"Você priorizou um exame demorado durante uma PCR antes de iniciar RCP."};
-      if(["exam_neuro","exam_head","exam_airway","exam_eyes","exam_chest","exam_upper","exam_abdomen","exam_lower","exam_extremities","exam_skin"].includes(id))
+      if(action.category==="exame")
         return {level:"malefica",reason:"Você atrasou RCP para realizar exame físico durante uma PCR."};
     }
     const rules=state.current?.completion_rules||{};
@@ -985,7 +1120,8 @@
             return;
           }
         }
-        feed(contextual(action.result||action.label)+(points<0?` (−${Math.abs(points)} pontos)`:""),points<0?"warning":"event");
+        const actionResult=action.category==="exame" ? physicalExamResult(action) : contextual(action.result||action.label);
+        feed(actionResult+(points<0?` (−${Math.abs(points)} pontos)`:""),points<0?"warning":"event");
         const diedFromAction=await applyClinicalClass(action,original);
         if(diedFromAction)return;
       }
