@@ -461,6 +461,36 @@ REGRA DE SAÍDA:
     }
 
     return `FLUXO OPERACIONAL — PERPLEXITY · AUDITORIA INDEPENDENTE
+EXECUÇÃO OBRIGATÓRIA — NÃO ENTREGUE APENAS ORIENTAÇÕES, DIAGNÓSTICO DO PIPELINE OU EXEMPLO DE PAYLOAD.
+
+OBJETIVO DESTA ETAPA:
+Você deve efetivamente ler as questões reais da faixa atual, auditá-las individualmente, produzir os reviews completos, validar o conjunto, chamar o importador oficial e reler o banco para comprovar a persistência.
+
+NÃO encerre esta tarefa dizendo apenas que:
+- o importador existe;
+- o worker precisa ser chamado;
+- falta um programador;
+- segue um JSON de exemplo;
+- o pipeline deveria fazer determinada operação.
+Se houver acesso ao bloco e ao RPC, EXECUTE o fluxo. Só interrompa por erro real e identificável de acesso, validação ou persistência.
+
+ORDEM OBRIGATÓRIA DA EXECUÇÃO:
+1. Abrir o endereço operacional informado neste prompt.
+2. Selecionar a PRIMEIRA faixa de 50 ainda incompleta.
+3. Buscar exatamente as 50 questões atuais dessa faixa.
+4. Confirmar que há exatamente 50 itens e registrar os 50 question_id + item_version atuais.
+5. Buscar o chatgpt_initial da MESMA item_version quando existir; tratá-lo apenas como contexto editorial, nunca como resposta clínica.
+6. Para cada questão, resolver primeiro de forma independente usando somente enunciado + alternativas A-D.
+7. Só depois abrir gabarito, explicações, Pulo do Gato, fontes e revisão anterior.
+8. Fazer auditoria científica/editorial completa de cada item.
+9. Produzir exatamente 50 objetos reviews[] completos.
+10. Validar cobertura, IDs, versões e campos obrigatórios.
+11. Se qualquer review estiver incompleto, corrigir esse review ANTES de importar.
+12. Chamar public.admin_import_question_factory_perplexity_initial UMA ÚNICA VEZ com os 50 reviews.
+13. Reconsultar a mesma faixa no banco.
+14. Confirmar current_items=50, persisted_reviews=50 e pending=0.
+15. Só então declarar a faixa concluída e passar à próxima.
+
 Este bloco possui 200 questões, mas esta etapa DEVE ser executada em 4 FAIXAS SEQUENCIAIS DE 50:
 1) Q001–Q050
 2) Q051–Q100
@@ -508,6 +538,42 @@ REGRA CENTRAL:
    complete = true
 
 ${segment(item,'perplexity_initial',ctx)}
+
+VALIDAÇÃO OBRIGATÓRIA ANTES DO RPC:
+- reviews.length deve ser EXATAMENTE 50.
+- Os 50 question_id devem ser únicos.
+- Cada question_id deve pertencer à faixa atual.
+- item_version deve coincidir com a versão corrente no banco.
+- original_answer deve existir.
+- independent_answer deve existir; se irresolúvel, registrar explicitamente null + ambiguity=true + single_best_answer=false.
+- review_status/status deve existir e ser approved | needs_revision | rejected.
+- Deve haver justificativa clínica/editorial específica.
+- explanation_checks deve conter A, B, C e D, cada uma com PASS/FAIL + reason.
+- message_key_check deve existir com status, reason e decisive_feature.
+- functional_killer_1 e functional_killer_2 devem existir e eliminar distratores diferentes.
+- source_checks deve existir e refletir verificação real.
+- verified_sources não pode ser inventado; se a fonte não puder ser confirmada, usar SOURCE_VERIFICATION_PENDING/FAILED.
+- proposed_change deve existir, mesmo quando change_required=false.
+- coverage.reviewed_ids deve conter exatamente os mesmos 50 IDs.
+- coverage.pending_ids deve ser [].
+- coverage.complete só pode ser true se os 50 reviews estiverem completos e válidos.
+
+IMPORTAÇÃO OBRIGATÓRIA:
+Usar EXCLUSIVAMENTE:
+select public.admin_import_question_factory_perplexity_initial('<PAYLOAD_JSON>'::jsonb);
+Nunca usar INSERT/UPDATE/DELETE direto em question_factory_reviews ou question_factory_items.
+
+CONFIRMAÇÃO PÓS-IMPORTAÇÃO:
+Depois do RPC, execute uma leitura separada da mesma faixa e só aceite sucesso quando:
+current_items = 50
+persisted_reviews = 50
+pending = 0
+
+Se der 49/50, 48/50 ou qualquer divergência:
+- coverage.complete=false;
+- a faixa NÃO está concluída;
+- a próxima faixa NÃO pode começar;
+- não informe sucesso.
 
 REGRA ANTI-FALSO-SUCESSO — PERPLEXITY INITIAL:
 - É proibido processar as 200 em uma única execução.
