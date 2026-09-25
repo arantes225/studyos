@@ -2222,7 +2222,8 @@
             ${!lotInFinalReview && blockAction.provider ? `
               <div class="admin-qf-block-ai-action">
                 <small>${esc(blockAction.phase)}</small>
-                <button class="button primary" type="button" data-qf-block-ai="${Number(batch.batch_number)}:${n}">${esc("Copiar + abrir " + blockAction.providerLabel)}</button>
+                <button class="button primary" type="button" data-qf-copy-block-stage="${Number(batch.batch_number)}:${n}">${esc("Copiar prompt · " + blockAction.phase)}</button>
+                <button class="button secondary" type="button" data-qf-block-ai="${Number(batch.batch_number)}:${n}">${esc("Copiar + abrir " + blockAction.providerLabel)}</button>
               </div>
             ` : ""}
 
@@ -3436,6 +3437,48 @@
     await copyAndOpenAI(prompt, action.provider, button);
   }
 
+  async function copyQuestionFactoryBlockStagePrompt(batchNumber, blockNumber, button) {
+    const action = questionFactoryBlockAction(batchNumber, blockNumber);
+    const next = action.next;
+
+    if (!next) {
+      window.alert("A etapa deste bloco ainda não foi carregada. Atualize a página e tente novamente.");
+      return;
+    }
+
+    if (!action.provider) {
+      window.alert(action.label);
+      return;
+    }
+
+    const prompt = questionFactoryBlockPrompt(next);
+    if (!prompt) {
+      window.alert("Não foi possível montar o prompt desta etapa.");
+      return;
+    }
+
+    const original = button?.textContent || "Copiar prompt da etapa";
+    try {
+      await writePromptClipboard(prompt);
+      if (button) {
+        button.textContent = "Prompt da etapa copiado";
+        button.classList.add("success");
+        setTimeout(() => {
+          button.textContent = original;
+          button.classList.remove("success");
+        }, 1600);
+      }
+    } catch (error) {
+      console.warn("Falha ao copiar prompt da etapa do bloco:", error);
+      if (button) {
+        button.textContent = "Falha ao copiar";
+        setTimeout(() => {
+          button.textContent = original;
+        }, 1600);
+      }
+    }
+  }
+
   function questionFactoryNextAction(batchNumber) {
     const batch = Number(batchNumber);
     const rows = (state.qfBlockTracker || [])
@@ -3881,6 +3924,13 @@
     $("admin-qf-import-stage-metrics")?.addEventListener("click", () => openReviewImportDialog(null, null, "metrics"));
     $("admin-qf-start-lot")?.addEventListener("click", startQuestionFactoryLot);
     $("admin-qf-batches")?.addEventListener("click", async event => {
+      const blockStagePromptButton = event.target.closest("[data-qf-copy-block-stage]");
+      if (blockStagePromptButton) {
+        const [batch, block] = blockStagePromptButton.dataset.qfCopyBlockStage.split(":");
+        await copyQuestionFactoryBlockStagePrompt(batch, block, blockStagePromptButton);
+        return;
+      }
+
       const blockAiButton = event.target.closest("[data-qf-block-ai]");
       if (blockAiButton) {
         const [batch, block] = blockAiButton.dataset.qfBlockAi.split(":");
