@@ -340,3 +340,12 @@ radial-gradient(circle at 20px 20px,#d8ebf744 1.5px,transparent 1.6px) 0 0/42px 
 .plantao-phone-art{margin:0;justify-self:end;width:min(100%,320px)}
 .plantao-phone-art img{display:block;width:100%;height:auto;border-radius:28px}
 @media(max-width:820px){.plantao-phone-art{justify-self:center;width:min(100%,300px)}}
+
+
+/* v4.3 — cronômetro do caso em destaque */
+.plantao-simulator:not(.plantao-hidden) .plantao-clock span{font-size:18px;line-height:1.1}
+.plantao-simulator:not(.plantao-hidden) .plantao-clock strong{margin-top:7px;font-size:63px;line-height:1;font-variant-numeric:tabular-nums}
+@media(max-width:680px){
+  .plantao-simulator:not(.plantao-hidden) .plantao-clock span{font-size:15px}
+  .plantao-simulator:not(.plantao-hidden) .plantao-clock strong{font-size:54px}
+}
