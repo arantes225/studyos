@@ -1006,7 +1006,7 @@
   async function finishCase() {
     if (!state.current || !state.session) return;
     const rules=state.current.completion_rules || {};
-    const required=rules.required_actions || [];
+    const required=E.requiredActions ? E.requiredActions(state.current) : (rules.required_actions || []);
     const recommended=rules.recommended_actions || [];
     const missingRequired=required.filter(x=>!done(x));
     const missingRecommended=recommended.filter(x=>!done(x));
@@ -1047,7 +1047,8 @@
   async function openDeathDebrief(){
     $("plantao-death-overlay").hidden=true;
     const rules=state.current?.completion_rules||{};
-    const missingRequired=(rules.required_actions||[]).filter(x=>!done(x));
+    const required=E.requiredActions ? E.requiredActions(state.current) : (rules.required_actions||[]);
+    const missingRequired=required.filter(x=>!done(x));
     const missingRecommended=(rules.recommended_actions||[]).filter(x=>!done(x));
     renderDebrief(0,missingRequired,missingRecommended);
     $("plantao-diagnosis").textContent="Óbito durante a simulação — "+state.deathReason;
@@ -1067,7 +1068,7 @@
       ["Como faço o fechamento diagnóstico?",d.fechamento_diagnostico||d.diagnostico||d.diagnosis||""]
     ].map(x=>'<section class="plantao-understand-topic"><h3>'+esc(x[0])+'</h3><p>'+esc(x[1]||"Conteúdo ainda não cadastrado para este tópico.")+'</p></section>').join("");
 
-    const essentialTotal=(state.current.completion_rules?.required_actions||[]).length;
+    const essentialTotal=(E.requiredActions ? E.requiredActions(state.current) : (state.current.completion_rules?.required_actions||[])).length;
     const essentialDone=essentialTotal-missingRequired.length;
     const eventCount=level=>state.clinicalEvents.filter(x=>x.level===level).length;
     const positive=eventCount("essencial")+eventCount("benefica");
