@@ -83,6 +83,10 @@
     }
     state.cases=casesRes.data || [];
     state.sessions=sessionsRes.error ? [] : (sessionsRes.data || []);
+    const specialties=[...new Set(state.cases.map(x=>x.specialty).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"pt-BR"));
+    const difficulties=[...new Set(state.cases.map(x=>x.difficulty).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"pt-BR"));
+    $("plantao-filter-specialty").innerHTML='<option value="">Todas</option>'+specialties.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
+    $("plantao-filter-difficulty").innerHTML='<option value="">Todas</option>'+difficulties.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
     renderLibrary();
   }
 
@@ -92,17 +96,20 @@
   }
 
   function renderLibrary() {
-    $("plantao-case-count").textContent=state.cases.length;
+    const specialty=$("plantao-filter-specialty")?.value || "";
+    const difficulty=$("plantao-filter-difficulty")?.value || "";
+    const visibleCases=state.cases.filter(item=>(!specialty || item.specialty===specialty) && (!difficulty || item.difficulty===difficulty));
+    $("plantao-case-count").textContent=visibleCases.length;
     $("plantao-session-count").textContent=state.sessions.length;
     const grid=$("plantao-case-grid");
     const empty=$("plantao-empty");
-    if (!state.cases.length) {
+    if (!visibleCases.length) {
       grid.innerHTML="";
       empty.hidden=false;
       return;
     }
     empty.hidden=true;
-    grid.innerHTML=state.cases.map(item=>{
+    grid.innerHTML=visibleCases.map(item=>{
       const best=bestScore(item.id);
       return `
         <article class="plantao-case-card">
@@ -123,6 +130,15 @@
       `;
     }).join("");
   }
+
+  ["plantao-filter-specialty","plantao-filter-difficulty"].forEach(id=>{
+    $(id)?.addEventListener("change",renderLibrary);
+  });
+  $("plantao-filter-clear")?.addEventListener("click",()=>{
+    $("plantao-filter-specialty").value="";
+    $("plantao-filter-difficulty").value="";
+    renderLibrary();
+  });
 
   const GROUPS = {
     anamnese:{label:"Anamnese",icon:"◉",categories:["anamnese"]},
