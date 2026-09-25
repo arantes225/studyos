@@ -35,6 +35,7 @@
     outcomes:[],
     triggered:[],
     log:[],
+    examReports:{},
     sequenceViolations:[],
     monitorOn:false,
     harmfulCount:0,
@@ -454,6 +455,12 @@
   $("plantao-report-ok")?.addEventListener("click",closeExamReport);
   $("plantao-report-overlay")?.addEventListener("click",event=>{
     if(event.target===event.currentTarget) closeExamReport();
+  });
+  $("plantao-feed")?.addEventListener("click",event=>{
+    const button=event.target.closest("[data-open-exam-report]");
+    if(!button) return;
+    const report=state.examReports?.[button.dataset.openExamReport];
+    if(report) openExamReport(report.action,report.result);
   });
   document.addEventListener("keydown",event=>{
     if(event.key==="Escape" && !$("plantao-report-overlay")?.hidden) closeExamReport();
@@ -1519,13 +1526,19 @@
     return text || "Informação registrada no prontuário.";
   }
 
-  function feed(message,type="event",time=state.elapsed) {
+  function feed(message,type="event",time=state.elapsed,meta={}) {
     message=liveSafeMessage(message);
-    state.log.push({time,message,type});
+    state.log.push({
+      time,
+      message,
+      type,
+      reportKey:meta?.reportKey||null
+    });
     $("plantao-feed").innerHTML=state.log.slice().reverse().map(item=>`
       <div class="plantao-feed-item ${esc(item.type)}">
         <span>T+${fmtTime(item.time)}</span>
         <p>${esc(item.message)}</p>
+        ${item.reportKey ? `<button class="plantao-feed-report-button" type="button" data-open-exam-report="${esc(item.reportKey)}">Abrir laudo</button>` : ""}
       </div>
     `).join("");
   }
@@ -2525,6 +2538,7 @@
     state.outcomes=[];
     state.triggered=[];
     state.log=[];
+    state.examReports={};
     state.sequenceViolations=[];
     state.monitorOn=false;
     state.harmfulCount=0; state.dead=false; state.deathReason=""; state.fetalHarmCount=0; state.fetalDeath=false; state.fetalStatus=""; state.clinicalEvents=[];
@@ -2699,7 +2713,17 @@
                   : interventionResult(action,vitalsBeforeAction)));
         const isDiagnosticExam=["exames","laboratorio","imagem"].includes(action.category);
         if(isDiagnosticExam){
-          feed((action.label||"Exame")+" realizado. Laudo disponível.","event");
+          const reportKey="exam-"+String(action.id||"result")+"-"+String(Date.now());
+          state.examReports[reportKey]={
+            action:{id:action.id,label:action.label,category:action.category},
+            result:actionResult
+          };
+          feed(
+            (action.label||"Exame")+" realizado. Laudo disponível.",
+            "event",
+            state.elapsed,
+            {reportKey}
+          );
           openExamReport(action,actionResult);
         } else {
           feed(actionResult+(points<0?` (−${Math.abs(points)} pontos)`:""),points<0?"warning":"event");
