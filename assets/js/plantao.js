@@ -40,6 +40,9 @@
     harmfulCount:0,
     dead:false,
     deathReason:"",
+    fetalHarmCount:0,
+    fetalDeath:false,
+    fetalStatus:"",
     clinicalEvents:[],
     category:null,
     penalties:0, criticalElapsed:0, diagnosis:null, disposition:null, busy:false,
@@ -1077,6 +1080,142 @@
     return null;
   }
 
+  function ongoingPregnancyCase() {
+    const text=normalizeLabel([
+      state.current?.title,
+      state.current?.summary,
+      state.current?.presentation?.opening,
+      state.current?.presentation?.chief_complaint
+    ].filter(Boolean).join(" "));
+
+    const pregnancy=/gravidez|gestante|gestacao|eclampsia|pre-eclampsia/.test(text);
+    const noOngoingFetus=/abortamento|aborto|ectopica|mola|pos-parto|puerper/.test(text);
+    return pregnancy && !noOngoingFetus;
+  }
+
+  function currentSystolic() {
+    const raw=String(state.vitals?.bp||"");
+    const n=Number(raw.split("/")[0]);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function isHighImpactMedication(id) {
+    return new Set([
+      "epi_im","epi","norepi","vasopressin","dopamine","dobutamine","phenylephrine",
+      "nitroglycerin","nitroprusside","metoprolol","propranolol","esmolol","diltiazem","verapamil",
+      "adenosine","atropine","amiodarone","lidocaine","magnesium",
+      "thrombolytic","heparin","enoxaparin","insulin","dextrose","potassium_chloride",
+      "midazolam","diazepam","propofol","ketamine","morphine","fentanyl",
+      "rocuronium","succinylcholine","methotrexate","oxytocin","misoprostol",
+      "methylergometrine","carboprost","terbutaline"
+    ]).has(id);
+  }
+
+  function medicationIndicated(id,target,rules) {
+    const required=rules.required_actions||[];
+    const recommended=rules.recommended_actions||[];
+    if(required.includes(id)||recommended.includes(id)) return true;
+
+    const specific=caseActions().find(a=>a.id===id);
+    if(specific && (
+      Number(specific.points||0)>0
+      || specific.essential===true
+      || specific.clinical_class==="essencial"
+      || specific.clinical_class==="benefica"
+    )) return true;
+
+    const patterns={
+      epi_im:/anafilax/,
+      epi:/parada cardiorrespiratoria|fibrilacao ventricular|tv sem pulso|anafilax/,
+      norepi:/choque|hipotens|sepse/,
+      vasopressin:/choque|vasopleg|parada cardiorrespiratoria/,
+      dopamine:/bradicardia.*instavel|choque/,
+      dobutamine:/choque cardiogenico|baixo debito|insuficiencia cardiaca.*choque/,
+      phenylephrine:/hipotens/,
+      nitroglycerin:/edema agudo de pulmao.*hipertens|sindrome coronariana|angina|iam/,
+      nitroprusside:/emergencia hipertensiva|disseccao aortica|sindrome aortica/,
+      metoprolol:/taquic|fibrilacao atrial|flutter|sindrome coronariana|hipertireoid/,
+      propranolol:/hipertireoid|tempestade tireoid|taquic/,
+      esmolol:/taquic|sindrome aortica/,
+      diltiazem:/fibrilacao atrial.*estavel|flutter.*estavel|taquicardia supraventricular/,
+      verapamil:/taquicardia supraventricular|fibrilacao atrial.*estavel/,
+      adenosine:/taquicardia supraventricular|taquicardia regular.*qrs estreito/,
+      atropine:/bradicardia.*sintomat|bradicardia.*instavel/,
+      amiodarone:/fibrilacao ventricular|taquicardia ventricular|arritmia ventricular/,
+      lidocaine:/fibrilacao ventricular|taquicardia ventricular|arritmia ventricular/,
+      magnesium:/eclampsia|pre-eclampsia|torsades|asma grave/,
+      thrombolytic:/avc isquemico|embolia pulmonar.*alto risco|iam/,
+      heparin:/embolia pulmonar|trombose|sindrome coronariana|iam/,
+      enoxaparin:/embolia pulmonar|trombose|sindrome coronariana|iam/,
+      insulin:/cetoacidose|hiperosmolar|hiperglicemia|hipercalemia/,
+      dextrose:/hipoglicemia/,
+      potassium_chloride:/hipocalemia/,
+      midazolam:/convuls|estado de mal|sedacao/,
+      diazepam:/convuls|estado de mal|abstinencia alcoolica/,
+      propofol:/sedacao|intubacao|estado de mal/,
+      ketamine:/sedacao|intubacao|broncoespasmo/,
+      morphine:/dor intensa|analgesia|iam/,
+      fentanyl:/dor intensa|analgesia|intubacao/,
+      rocuronium:/intubacao|via aerea definitiva/,
+      succinylcholine:/intubacao|via aerea definitiva/,
+      methotrexate:/gravidez ectopica/,
+      oxytocin:/hemorragia pos-parto|atonia uterina/,
+      misoprostol:/hemorragia pos-parto|atonia uterina|abortamento/,
+      methylergometrine:/hemorragia pos-parto|atonia uterina/,
+      carboprost:/hemorragia pos-parto|atonia uterina/,
+      terbutaline:/taquissistolia|hiperestimulacao uterina/
+    };
+    return patterns[id]?.test(target)===true;
+  }
+
+  function medicationHarmClassification(id,target,rules) {
+    if(!isHighImpactMedication(id) || medicationIndicated(id,target,rules)) return null;
+
+    const sbp=currentSystolic();
+    const hr=Number(state.vitals?.hr);
+    const hypotensive=Number.isFinite(sbp) && sbp<90;
+    const brady=Number.isFinite(hr) && hr<50;
+
+    if(id==="epi")
+      return {level:"mortal",reason:"Adrenalina IV/IO foi administrada sem indicação de parada, choque refratário ou anafilaxia. A descarga adrenérgica provocou arritmia e deterioração hemodinâmica grave."};
+
+    if(["nitroglycerin","nitroprusside"].includes(id) && hypotensive)
+      return {level:"mortal",reason:"Vasodilatador foi administrado em paciente hipotenso, provocando colapso circulatório grave."};
+
+    if(["metoprolol","propranolol","esmolol","diltiazem","verapamil"].includes(id) && (hypotensive||brady))
+      return {level:"mortal",reason:"Bloqueio cronotrópico/inotrópico foi administrado em paciente já bradicárdico ou hipotenso, precipitando instabilidade grave."};
+
+    if(["rocuronium","succinylcholine"].includes(id) && !/intubacao|via aerea definitiva/.test(target))
+      return {level:"mortal",reason:"Bloqueador neuromuscular foi administrado sem uma sequência de controle de via aérea, causando paralisia respiratória."};
+
+    if(id==="methotrexate" && ongoingPregnancyCase())
+      return {level:"mortal_fetal",reason:"Metotrexato foi administrado em gestação intrauterina em curso sem indicação, causando dano embriofetal catastrófico."};
+
+    return {level:"malefica",reason:"Medicamento de alto impacto foi administrado sem indicação clínica para este caso, com risco real de deterioração hemodinâmica, respiratória ou metabólica."};
+  }
+
+  function registerFetalHarm(action,reason,{fatal=false}={}) {
+    if(!ongoingPregnancyCase()) return false;
+
+    state.fetalHarmCount+=1;
+
+    if(fatal || state.fetalHarmCount>=2) {
+      if(!state.fetalDeath) {
+        state.fetalDeath=true;
+        state.fetalStatus="Óbito fetal";
+        state.penalties+=25;
+        state.score=Math.min(state.score,-50);
+        recordClinicalEvent("mortal",action,"Óbito fetal relacionado à conduta: "+reason);
+        feed("ÓBITO FETAL: a conduta comprometeu de forma crítica a perfusão/segurança fetal.","warning");
+      }
+      return true;
+    }
+
+    state.fetalStatus="Sofrimento fetal agudo";
+    feed("ALERTA FETAL: surgiram sinais de sofrimento fetal após a conduta inadequada.","warning");
+    return false;
+  }
+
   function classifyAction(action,original) {
     const slug=state.current?.slug||"";
     const id=original?.id||action.id;
@@ -1192,6 +1331,9 @@
     if(id==="cricothyrotomy" && !cricothyrotomyIndicated)
       return {level:"malefica",reason:"Cricotireoidostomia foi realizada sem uma emergência de via aérea que justificasse acesso cirúrgico."};
 
+    const medicationHarm=medicationHarmClassification(id,target,rules);
+    if(medicationHarm) return medicationHarm;
+
     const pts=Number(action.points||0);
     if(action.clinical_class) return {level:action.clinical_class,reason:action.clinical_reason||""};
     const required=configuredRequired;
@@ -1230,14 +1372,20 @@
     $("plantao-action-search").value="";
     renderActions();
     $("plantao-finish").disabled=true;
-    await persistSession({status:"completed",completed_at:new Date().toISOString(),score:0,result:{death:true,death_reason:state.deathReason,clinical_events:state.clinicalEvents, harmful_count:state.harmfulCount,scoring_version:4}});
+    await persistSession({status:"completed",completed_at:new Date().toISOString(),score:0,result:{death:true,death_reason:state.deathReason,clinical_events:state.clinicalEvents, harmful_count:state.harmfulCount,fetal_death:state.fetalDeath,fetal_status:state.fetalStatus,fetal_harm_count:state.fetalHarmCount,scoring_version:5}});
   }
 
   async function applyClinicalClass(action,original) {
     const cls=classifyAction(action,original);
     if(cls.level==="mortal"){await killPatient(cls.reason,action);return true;}
+    if(cls.level==="mortal_fetal"){
+      registerFetalHarm(action,cls.reason,{fatal:true});
+      state.harmfulCount+=1;
+      return false;
+    }
     if(cls.level==="malefica"){
       state.harmfulCount+=1;
+      if(isHighImpactMedication(action.id)) registerFetalHarm(action,cls.reason);
       const penalty=Number(action.harmful_penalty??4);
       state.penalties+=penalty; state.score-=penalty;
       recordClinicalEvent("malefica",action,cls.reason);
@@ -1326,7 +1474,7 @@
         penalties:state.penalties, criticalElapsed:state.criticalElapsed, elapsed_seconds:Math.round(state.elapsed*60),
         sequenceViolations:state.sequenceViolations,
         harmfulCount:state.harmfulCount, dead:state.dead, deathReason:state.deathReason, clinicalEvents:state.clinicalEvents,
-        diagnosis:state.diagnosis, disposition:state.disposition, scoring_version:4
+        diagnosis:state.diagnosis, disposition:state.disposition, scoring_version:5
       },
       action_log:state.log,
       ...extra
@@ -1359,7 +1507,7 @@
     state.log=[];
     state.sequenceViolations=[];
     state.monitorOn=false;
-    state.harmfulCount=0; state.dead=false; state.deathReason=""; state.clinicalEvents=[];
+    state.harmfulCount=0; state.dead=false; state.deathReason=""; state.fetalHarmCount=0; state.fetalDeath=false; state.fetalStatus=""; state.clinicalEvents=[];
     $("plantao-death-overlay").hidden=true;
     $("plantao-simulator").classList.remove("patient-dead");
     state.category=null;
@@ -1375,7 +1523,7 @@
       status:"in_progress",
       elapsed_minutes:0,
       score:0,
-      state:{vitals:state.vitals,performed:[],outcomes:[],triggered:[],sequenceViolations:[],harmfulCount:0,dead:false,clinicalEvents:[],scoring_version:4},
+      state:{vitals:state.vitals,performed:[],outcomes:[],triggered:[],sequenceViolations:[],harmfulCount:0,dead:false,fetalHarmCount:0,fetalDeath:false,fetalStatus:"",clinicalEvents:[],scoring_version:5},
       action_log:[]
     }).select("id,case_id,status,started_at").single();
 
@@ -1505,8 +1653,8 @@
 
     const result={
       final_score:score,
-      scoring_version:4, penalties:E.score(state.current,state).penalties,
-      death:state.dead, death_reason:state.deathReason, harmful_count:state.harmfulCount, clinical_events:state.clinicalEvents,
+      scoring_version:5, penalties:E.score(state.current,state).penalties,
+      death:state.dead, death_reason:state.deathReason, fetal_death:state.fetalDeath, fetal_status:state.fetalStatus, fetal_harm_count:state.fetalHarmCount, harmful_count:state.harmfulCount, clinical_events:state.clinicalEvents,
       sequence_violations:state.sequenceViolations,
       diagnosis:state.diagnosis, disposition:state.disposition,
       missing_required:missingRequired,
@@ -1580,7 +1728,8 @@
       ["Erros de sequência",String(state.sequenceViolations.length)],
       ["Condutas maléficas",String(state.clinicalEvents.filter(x=>x.level==="malefica").length)],
       ["Condutas mortais",String(state.clinicalEvents.filter(x=>x.level==="mortal").length)],
-      ["Desfecho",state.dead?"Óbito":"Paciente vivo"]
+      ["Desfecho",state.dead?"Óbito materno":(state.fetalDeath?"Paciente viva · óbito fetal":"Paciente vivo")],
+      ...(ongoingPregnancyCase() ? [["Desfecho fetal",state.fetalDeath?"Óbito fetal":(state.fetalStatus||"Sem deterioração fetal registrada")]] : [])
     ].map(([a,b])=>`<div class="plantao-performance-row"><span>${esc(a)}</span><strong>${esc(b)}</strong></div>`).join("");
 
     const key=[...(d.key_actions||[]),d.scoring_note].filter(Boolean).map(text=>`<div class="plantao-review-item"><span>✓</span><span>${esc(text)}</span></div>`);
