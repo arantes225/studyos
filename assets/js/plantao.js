@@ -170,21 +170,27 @@
   function setPlantaoMode(mode){
     const phone=mode==="phone";
     state.phoneMode=phone;
-    const emergencyIds=["plantao-emergencia","plantao-emergency-filters","plantao-case-grid","plantao-empty"];
-    emergencyIds.forEach(id=>{const el=$(id); if(el) el.hidden=phone;});
+
+    const emergencyPanel=$("plantao-emergency-panel");
     const phoneSection=$("plantao-telefone");
+    if(emergencyPanel) emergencyPanel.hidden=phone;
     if(phoneSection) phoneSection.hidden=!phone;
-    document.querySelectorAll(".plantao-mode-card").forEach(card=>{
-      const isPhone=card.id==="plantao-phone-mode-card";
+
+    const emergencyCard=$("plantao-emergency-mode-card");
+    const phoneCard=$("plantao-phone-mode-card");
+    [emergencyCard,phoneCard].forEach(card=>{
+      if(!card) return;
+      const isPhone=card===phoneCard;
       const active=phone ? isPhone : !isPhone;
       card.classList.toggle("active",active);
       if(active) card.setAttribute("aria-current","page"); else card.removeAttribute("aria-current");
     });
+
     if(phone){
       renderPhoneCases();
-      phoneSection?.scrollIntoView({behavior:"smooth",block:"start"});
+      requestAnimationFrame(()=>phoneSection?.scrollIntoView({behavior:"smooth",block:"start"}));
     }else{
-      $("plantao-emergencia")?.scrollIntoView({behavior:"smooth",block:"start"});
+      requestAnimationFrame(()=>$("plantao-emergencia")?.scrollIntoView({behavior:"smooth",block:"start"}));
     }
   }
 
@@ -283,9 +289,7 @@
     }).eq("id",state.phoneSession.id);
   }
 
-  document.querySelector('.plantao-mode-card[href="#plantao-emergencia"]')?.addEventListener("click",event=>{
-    event.preventDefault(); setPlantaoMode("emergency");
-  });
+  $("plantao-emergency-mode-card")?.addEventListener("click",()=>setPlantaoMode("emergency"));
   $("plantao-phone-mode-card")?.addEventListener("click",event=>{
     event.preventDefault(); setPlantaoMode("phone");
   });
