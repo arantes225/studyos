@@ -481,9 +481,7 @@
       .map(value=>String(value).trim())
       .filter(value=>value.length>=5);
     for(const secret of secrets){
-      const escaped=secret.replace(/[.*+?^$()|[\]\\]/g,"\\  function feed(message,type="event",time=state.elapsed) {
-    state.log.push({time,message,type});
-");
+      const escaped=secret.replace(/[.*+?^$()|[\]\\]/g,match=>"\\\\"+match);
       text=text.replace(new RegExp(escaped,"gi"),"achado clínico relevante");
     }
     return text || "Informação registrada no prontuário.";
