@@ -51,7 +51,14 @@ const qsState = {
   */
   answerScreenshotFiles: [],
   answerScreenshotUrls: [],
-  answerImportRows: []
+  answerImportRows: [],
+
+  /*
+    Simulado recém-adicionado que está em correção.
+    Enquanto este ID estiver preenchido, ele não aparece
+    em "Meus simulados" até o usuário fechar o leitor.
+  */
+  pendingNewSetId: null
 };
 
 const qsResolutionState = {
@@ -135,6 +142,32 @@ function applyExamContext() {
 }
 
 
+
+
+function placeAnswerPanelBelowPerformance() {
+  const panel =
+    document.getElementById("qs-answer-panel");
+
+  const dashboard =
+    document.querySelector(".qs-compact-dashboard");
+
+  if (
+    !panel
+    || !dashboard
+  ) {
+    return;
+  }
+
+  if (
+    dashboard.nextElementSibling
+    !== panel
+  ) {
+    dashboard.insertAdjacentElement(
+      "afterend",
+      panel
+    );
+  }
+}
 
 
 function switchQsMode(
@@ -4851,6 +4884,12 @@ async function createManualSimulation() {
     );
 
 
+    qsState.pendingNewSetId =
+      setRecord.id;
+
+    qsState.pendingNewSetId =
+      setRecord.id;
+
     await loadSets();
 
 
@@ -8637,10 +8676,18 @@ function renderSetHistory() {
   }
 
 
+  const historySets =
+    qsState.sets.filter(
+      (set) =>
+        set.id
+        !== qsState.pendingNewSetId
+    );
+
+
   if (count) {
     count.textContent =
-      `${qsState.sets.length} ${
-        qsState.sets.length === 1
+      `${historySets.length} ${
+        historySets.length === 1
           ? "simulado"
           : "simulados"
       }`;
@@ -8648,7 +8695,7 @@ function renderSetHistory() {
 
 
   if (
-    !qsState.sets.length
+    !historySets.length
   ) {
     container.innerHTML =
       '<div class="qs-empty">Nenhum simulado cadastrado ainda.</div>';
@@ -8658,7 +8705,7 @@ function renderSetHistory() {
 
 
   container.innerHTML =
-    qsState.sets.map(
+    historySets.map(
       (set) => {
         const m =
           set.metrics;
@@ -9180,6 +9227,8 @@ async function openSet(setId) {
 
   document.getElementById("qs-current-title").textContent =
     set.title;
+
+  placeAnswerPanelBelowPerformance();
 
   document.getElementById("qs-answer-panel").hidden =
     false;
@@ -16302,6 +16351,7 @@ async function deleteSet(setId) {
 function closeCurrentSet() {
   clearAnswerScreenshotMemory();
 
+  qsState.pendingNewSetId = null;
   qsState.currentSet = null;
   qsState.items = [];
   qsState.imageGallery = [];
@@ -16536,6 +16586,7 @@ function wireSimulationNavigation() {
 
 
 async function initQuestionSets() {
+  placeAnswerPanelBelowPerformance();
   wireSetBulkActions();
   wireSimulationNavigation();
   wireAnswerScreenshotImporter();
