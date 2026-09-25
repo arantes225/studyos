@@ -514,7 +514,7 @@
     $("plantao-action-search").value="";
     renderActions();
     $("plantao-finish").disabled=true;
-    await persistSession({status:"completed",completed_at:new Date().toISOString(),score:0,result:{death:true,death_reason:state.deathReason,clinical_events:state.clinicalEvents,scoring_version:4}});
+    await persistSession({status:"completed",completed_at:new Date().toISOString(),score:0,result:{death:true,death_reason:state.deathReason,clinical_events:state.clinicalEvents, harmful_count:state.harmfulCount,scoring_version:4}});
   }
 
   async function applyClinicalClass(action,original) {
@@ -522,8 +522,14 @@
     if(cls.level==="mortal"){await killPatient(cls.reason,action);return true;}
     if(cls.level==="malefica"){
       state.harmfulCount+=1;
+      const penalty=Number(action.harmful_penalty??4);
+      state.penalties+=penalty; state.score-=penalty;
       recordClinicalEvent("malefica",action,cls.reason);
-      if(state.harmfulCount>=2){await killPatient("Duas condutas prejudiciais consecutivas/ acumuladas levaram à deterioração fatal. Última: "+(cls.reason||action.label),action);return true;}
+      if(state.harmfulCount>=3){await killPatient("Três condutas prejudiciais acumuladas levaram à deterioração fatal. Última: "+(cls.reason||action.label),action);return true;}
+    } else if(cls.level==="essencial"){
+      const bonus=Number(action.essential_points??8); state.score+=bonus; recordClinicalEvent("essencial",action,cls.reason);
+    } else if(cls.level==="benefica"){
+      const bonus=Number(action.beneficial_points??3); state.score+=bonus; recordClinicalEvent("benefica",action,cls.reason);
     } else recordClinicalEvent(cls.level,action,cls.reason);
     return false;
   }
