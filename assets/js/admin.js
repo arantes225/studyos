@@ -2629,7 +2629,7 @@
     const map = {
       generation: { label: "1 · Gerar 200 questões", provider: "chatgpt" },
       chatgpt_initial: { label: "2 · ChatGPT · revisão adversarial + autocorreção", provider: "chatgpt" },
-      blind_resolution: { label: "3 · Perplexity · resolução cega + auditoria", provider: "perplexity" },
+      blind_resolution: { label: "3 · Perplexity · auditoria pessoal", provider: "perplexity" },
       perplexity_initial: { label: "3 · Perplexity · concluir auditoria", provider: "perplexity" },
       chatgpt_adjudication: { label: "4 · ChatGPT · julgar + corrigir", provider: "chatgpt" },
       chatgpt_correction: { label: "4 · ChatGPT · aplicar correções", provider: "chatgpt" },
@@ -2642,106 +2642,14 @@
 
 
   async function maybeAutoRunQuestionFactoryPerplexity(root) {
-    if (!root || state.qfPerplexityAutoRunBusy) return;
-
-    const rows = [...root.querySelectorAll(".admin-qf-tracker-row[data-qf-auto-stage]")];
-    for (const row of rows) {
-      const mode = String(row.dataset.qfAutoMode || "");
-      const stage = String(row.dataset.qfAutoStage || "");
-      if (mode !== "guided_1000") continue;
-      if (!["perplexity_initial","perplexity_reaudit"].includes(stage)) continue;
-
-      const buttons = [...row.querySelectorAll("[data-qf-perplexity-range]")];
-      for (const button of buttons) {
-        const batch = Number(button.dataset.qfAutoBatch);
-        const block = Number(button.dataset.qfAutoBlock);
-        const start = Number(button.dataset.qfAutoStart);
-        const end = Number(button.dataset.qfAutoEnd);
-        const reviewStage = String(button.dataset.qfAutoStage || "perplexity_initial");
-
-        const { data: coverage, error } = await sb.rpc("admin_question_factory_review_coverage", {
-          p_batch_number: batch,
-          p_block_number: block,
-          p_stage: reviewStage,
-          p_reviewer: "Perplexity",
-          p_start: start,
-          p_end: end
-        });
-
-        if (error) {
-          console.warn("Não foi possível verificar cobertura automática Perplexity:", error);
-          return;
-        }
-
-        const persisted = Number(coverage?.persisted || 0);
-        const expected = Number(coverage?.range?.expected || (end-start+1));
-        if (coverage?.complete) {
-          button.dataset.qfAutoComplete = "1";
-          button.textContent = "Q" + String(start).padStart(3,"0") + "–Q" + String(end).padStart(3,"0") + " ✓";
-          continue;
-        }
-
-        button.textContent = persisted + "/" + expected + " · iniciar";
-        state.qfPerplexityAutoRunBusy = true;
-        try {
-          await runQuestionFactoryPerplexityRange(button);
-        } finally {
-          state.qfPerplexityAutoRunBusy = false;
-        }
-
-        window.setTimeout(() => {
-          const tracker = $("admin-qf-block-tracker");
-          if (tracker) maybeAutoRunQuestionFactoryPerplexity(tracker);
-        }, 800);
-        return;
-      }
-    }
+    // Desativado de propósito: o Perplexity é executado na conta pessoal do usuário,
+    // com acesso autenticado ao Supabase. O Admin nunca chama a API do Perplexity.
+    return;
   }
 
   async function autoRunPerplexityInitialFromTrackerRows(rows) {
-    if (state.qfPerplexityAutoRunBusy) return;
-    const blocks = Array.isArray(rows) ? rows : [];
-
-    for (const block of blocks) {
-      if (String(block.automation_mode || "") !== "guided_1000") continue;
-      if (String(block.next_stage || "") !== "perplexity_initial") continue;
-
-      const batch = Number(block.batch_number);
-      const blockNumber = Number(block.block_number);
-      if (!Number.isInteger(batch) || !Number.isInteger(blockNumber)) continue;
-
-      for (const [start,end] of [[1,50],[51,100],[101,150],[151,200]]) {
-        const { data:coverage, error } = await sb.rpc("admin_question_factory_review_coverage", {
-          p_batch_number:batch,
-          p_block_number:blockNumber,
-          p_stage:"perplexity_initial",
-          p_reviewer:"Perplexity",
-          p_start:start,
-          p_end:end
-        });
-
-        if (error) {
-          console.warn("Falha ao verificar cobertura direta do Perplexity Initial:", error);
-          return;
-        }
-        if (coverage?.complete === true) continue;
-
-        const syntheticButton = document.createElement("button");
-        syntheticButton.dataset.qfAutoBatch = String(batch);
-        syntheticButton.dataset.qfAutoBlock = String(blockNumber);
-        syntheticButton.dataset.qfAutoStart = String(start);
-        syntheticButton.dataset.qfAutoEnd = String(end);
-        syntheticButton.dataset.qfAutoStage = "perplexity_initial";
-
-        state.qfPerplexityAutoRunBusy = true;
-        try {
-          await runQuestionFactoryPerplexityRange(syntheticButton);
-        } finally {
-          state.qfPerplexityAutoRunBusy = false;
-        }
-        return;
-      }
-    }
+    // Compatibilidade interna apenas. Nenhum worker/Edge Function do Perplexity é disparado.
+    return;
   }
 
   async function copyPerplexityManualPackage(button) {
@@ -2778,6 +2686,8 @@
         "PACOTE DE DADOS DO BLOCO — 200 QUESTÕES ATUAIS",
         "============================================================",
         "Use EXCLUSIVAMENTE as questões abaixo. Elas pertencem ao endereço operacional do prompt.",
+        "IMPORTANTE: este fluxo NÃO usa Perplexity API key nem Edge Function para gerar pareceres. Execute na sua conta pessoal do Perplexity, usando o acesso autenticado ao Supabase conectado à sessão.",
+        "A própria sessão do Perplexity deve reler o bloco no Supabase antes de escrever, persistir cada review pelo RPC controlado da etapa e reconsultar coverage antes de declarar conclusão.",
         "Embora as 200 questões estejam disponíveis neste pacote, execute a auditoria em 4 faixas sequenciais de 50:",
         "Q001–Q050 → confirmar 50/50; Q051–Q100 → confirmar 50/50; Q101–Q150 → confirmar 50/50; Q151–Q200 → confirmar 50/50.",
         "",
@@ -2817,7 +2727,7 @@
 
       const label = document.createElement("small");
       label.className = "admin-qf-auto-label";
-      label.textContent = "Manual · copie o prompt com as 200 questões e envie ao Perplexity";
+      label.textContent = "Conta pessoal · Perplexity acessa o Supabase diretamente; sem API key";
       wrap.appendChild(label);
 
       const buttons = document.createElement("div");
@@ -2828,7 +2738,7 @@
       copyPackage.type = "button";
       copyPackage.dataset.qfAutoBatch = String(batch);
       copyPackage.dataset.qfAutoBlock = String(block);
-      copyPackage.textContent = "Copiar prompt + 200 questões";
+      copyPackage.textContent = "Copiar prompt operacional + 200 questões";
       copyPackage.addEventListener("click", () => copyPerplexityManualPackage(copyPackage));
       buttons.appendChild(copyPackage);
 
@@ -2840,113 +2750,13 @@
   }
 
   async function runQuestionFactoryPerplexityRange(button) {
-    if (!button || button.dataset.qfAutoRunning === "1") return;
-
-    const batch = Number(button.dataset.qfAutoBatch);
-    const block = Number(button.dataset.qfAutoBlock);
-    const start = Number(button.dataset.qfAutoStart);
-    const end = Number(button.dataset.qfAutoEnd);
-    const expected = end-start+1;
-
-    if (expected !== 50) {
-      window.alert("Perplexity Initial deve processar exatamente 50 questões por faixa.");
-      return;
-    }
-
-    const edgeErrorMessage = async error => {
-      try {
-        const response = error && error.context;
-        if (response && typeof response.clone === "function") {
-          const payload = await response.clone().json();
-          return payload && (payload.message || payload.error) || error.message || "Falha na Edge Function.";
-        }
-      } catch (_) {}
-      return error && error.message || "Falha na Edge Function.";
-    };
-
-    button.dataset.qfAutoRunning = "1";
-    button.disabled = true;
-    let jobId = button.dataset.qfJobId || null;
-
-    try {
-      const batchCode = "L" + String(batch).padStart(3,"0");
-      const blockCode = batchCode + "-B" + String(block).padStart(2,"0");
-      let complete = false;
-      let safety = 0;
-
-      while (!complete && safety < 80) {
-        safety += 1;
-        const result = await sb.functions.invoke("question-factory-perplexity-initial-batch", {
-          body: {
-            batch_code:batchCode,
-            block_code:blockCode,
-            start,
-            end,
-            job_id:jobId
-          }
-        });
-
-        if (result.error) throw new Error(await edgeErrorMessage(result.error));
-        const data = result.data;
-        if (!data || data.ok !== true) {
-          throw new Error(data && (data.message || data.error) || "A auditoria Perplexity Initial falhou.");
-        }
-
-        if (data.job_id) {
-          jobId = String(data.job_id);
-          button.dataset.qfJobId = jobId;
-        }
-
-        if (data.phase === "staging") {
-          const validated = Number(data.validated_count || 0);
-          const pending = Number(data.pending_count ?? Math.max(0,expected-validated));
-          button.textContent = validated + "/" + expected + " · " + pending + " pend.";
-          continue;
-        }
-
-        if (data.phase === "completed") {
-          const coverage = data.coverage || {};
-          const persisted = Number(coverage.persisted || 0);
-          const pending = Array.isArray(coverage.pending_ids)
-            ? coverage.pending_ids.length
-            : Math.max(0,expected-persisted);
-
-          if (persisted !== expected || pending !== 0 || coverage.complete !== true) {
-            throw new Error("PERSISTENCE_COVERAGE_MISMATCH: " + persisted + "/" + expected + " persistidos; " + pending + " pendentes.");
-          }
-
-          complete = true;
-          button.dataset.qfAutoComplete = "1";
-          button.textContent = "Q" + String(start).padStart(3,"0") + "–Q" + String(end).padStart(3,"0") + " ✓";
-          button.title = expected + " reviews Perplexity Initial confirmados na versão atual.";
-          break;
-        }
-      }
-
-      if (!complete) {
-        throw new Error("Worker interrompido pelo limite de segurança antes de 50/50.");
-      }
-
-      await Promise.all([
-        loadQuestionFactory(),
-        loadQuestionFactoryStyles(),
-        loadQuestionFactoryBlockTracker(),
-        loadQuestionFactoryQuality()
-      ]);
-    } catch (error) {
-      console.error("Falha no worker Perplexity Initial:", error);
-      button.textContent = "Erro · retomar";
-      button.title = error && error.message || String(error);
-      window.alert(
-        "Perplexity Initial foi interrompido. O staging do job foi preservado e será retomado da próxima questão pendente.\n\n"
-        + (error && error.message || String(error))
-      );
-    } finally {
-      button.dataset.qfAutoRunning = "0";
-      button.disabled = false;
-    }
+    if (!button) return;
+    window.alert(
+      "Fluxo Perplexity pessoal ativo. Não existe mais execução automática por API key.\n\n" +
+      "Use o botão “Copiar prompt + 200 questões” ou “Abrir Perplexity”, execute a etapa na sua conta pessoal conectada ao Supabase e deixe o próprio Perplexity persistir os reviews questão por questão pelos RPCs controlados.\n\n" +
+      "Depois volte ao Admin: a cobertura é lida diretamente do Supabase."
+    );
   }
-
 
   function defaultQuestionFactoryWorkspaceUrl() {
     try {
