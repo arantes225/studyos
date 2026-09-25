@@ -318,54 +318,7 @@
   }
 
   async function load() {
-    const user =
-      window.docmapUser;
-
-    if (!user) {
-      return apply(
-        "medicine"
-      );
-    }
-
-    try {
-      const {
-        data,
-        error
-      } =
-        await window
-          .supabaseClient
-          .from(
-            "user_settings"
-          )
-          .select(
-            "study_mode"
-          )
-          .eq(
-            "user_id",
-            user.id
-          )
-          .maybeSingle();
-
-      if (error) {
-        console.warn(
-          "Não foi possível carregar o modo de estudo:",
-          error.message
-        );
-      }
-
-      return apply(
-        "medicine"
-      );
-
-    } catch (error) {
-      console.warn(
-        error
-      );
-
-      return apply(
-        "medicine"
-      );
-    }
+    return apply("medicine");
   }
 
   window.LuriaStudyMode = {
