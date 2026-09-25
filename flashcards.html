@@ -19,7 +19,7 @@
 
   <link rel="stylesheet" href="assets/css/style.css?v=16.6">
   <link rel="stylesheet" href="assets/css/image-lightbox.css?v=1">
-  <link rel="stylesheet" href="assets/css/flashcards.css?v=14.8">
+  <link rel="stylesheet" href="assets/css/flashcards.css?v=14.9">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
   <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
   <link rel="canonical" href="/flashcards/">
@@ -248,6 +248,62 @@
                 </small>
               </div>
 
+            </div>
+
+            <div
+              id="review-launcher"
+              class="review-launcher"
+            >
+              <div class="review-launcher-copy">
+                <span class="eyebrow">Pronto para revisar</span>
+                <h3 id="review-launcher-title">Revisões do dia</h3>
+                <p id="review-launcher-copy">
+                  Carregando suas revisões...
+                </p>
+              </div>
+
+              <div class="review-launcher-action">
+                <strong id="review-launcher-count">0 flashcards</strong>
+                <button
+                  id="start-review-session"
+                  class="button primary"
+                  type="button"
+                  disabled
+                >
+                  Iniciar revisão
+                </button>
+              </div>
+            </div>
+
+            <div
+              id="review-focus-toolbar"
+              class="review-focus-toolbar"
+              hidden
+            >
+              <div class="review-focus-time">
+                <small>Tempo de revisão</small>
+                <strong id="review-elapsed">0:00</strong>
+              </div>
+
+              <div class="review-focus-pomodoro">
+                <small>Pomodoro opcional</small>
+                <strong id="review-pomodoro-clock">25:00</strong>
+                <button
+                  id="review-pomodoro-toggle"
+                  class="button secondary"
+                  type="button"
+                >
+                  Iniciar Pomodoro
+                </button>
+              </div>
+
+              <button
+                id="finish-review-session"
+                class="button secondary review-finish-button"
+                type="button"
+              >
+                Terminar revisão
+              </button>
             </div>
 
             <div
@@ -1077,7 +1133,7 @@
   <script src="assets/js/app.js?v=17.3"></script>
   <script src="assets/js/study-mode.js?v=13.0"></script>
   <script src="assets/js/sharing.js?v=3"></script>
-  <script src="assets/js/flashcards.js?v=17.2"></script>
+  <script src="assets/js/flashcards.js?v=17.3"></script>
 
     <script src="assets/js/image-lightbox.js?v=1"></script>
 <script defer src="assets/js/pwa.js?v=3"></script>
