@@ -811,8 +811,8 @@
 .dashboard-cat-symbol img {
   display: none;
   width: auto;
-  height: 86px;
-  max-width: min(331px, 100%);
+  height: 68.8px;
+  max-width: min(264.8px, 100%);
   object-fit: contain;
   margin: 0 auto;
 }
@@ -840,6 +840,13 @@
   }
   :root:not([data-theme]) .dashboard-cat-symbol .cat-symbol-dark {
     display: block;
+  }
+}
+
+@media (max-width: 680px), (display-mode: standalone) {
+  .dashboard-cat-symbol img {
+    height: 44.72px;
+    max-width: min(172.12px, 100%);
   }
 }
 
