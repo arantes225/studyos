@@ -180,3 +180,21 @@
 .plantao-filters label{display:flex;flex-direction:column;gap:6px;font-size:.82rem;font-weight:700;color:var(--muted,#667085)}
 .plantao-filters select{min-width:190px;padding:10px 34px 10px 12px;border:1px solid var(--border,#d9e2ec);border-radius:10px;background:#fff;color:inherit;font:inherit}
 @media(max-width:640px){.plantao-filters{display:grid;grid-template-columns:1fr 1fr}.plantao-filters select{min-width:0;width:100%}.plantao-filters .button{grid-column:1/-1}}
+
+
+/* v3.9 — PWA mobile: monitor full-bleed */
+@media (max-width:680px){
+  .plantao-bedside .plantao-monitor-dock{
+    width:100%;
+    padding-left:0;
+    padding-right:0;
+  }
+  .plantao-bedside .plantao-monitor-dock .plantao-monitor{
+    width:100%;
+    max-width:none;
+    align-self:stretch;
+    box-sizing:border-box;
+    margin-left:0;
+    margin-right:0;
+  }
+}
