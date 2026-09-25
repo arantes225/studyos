@@ -136,3 +136,18 @@
 .plantao-explanation p{margin:9px 0 0;line-height:1.55}
 .plantao-pulo-panel .plantao-pulo{font-weight:750}
 @media(max-width:680px){.plantao-debrief-grid .plantao-wide{grid-column:auto}}
+
+/* v3.7 — debriefing com leitura mais confortável */
+.plantao-debrief{font-size:16px}
+.plantao-debrief .metric-label{font-size:13px}
+.plantao-debrief .plantao-pulo{font-size:17px;line-height:1.6}
+.plantao-debrief .plantao-performance-row{font-size:15px;line-height:1.45}
+.plantao-debrief .plantao-review-item{font-size:15px;line-height:1.55}
+.plantao-debrief .plantao-explanation summary{font-size:15px}
+.plantao-debrief .plantao-explanation p{font-size:15px;line-height:1.65}
+.plantao-debrief .plantao-sources a{font-size:14px;line-height:1.5}
+@media(max-width:680px){
+ .plantao-debrief{font-size:16px}
+ .plantao-debrief .plantao-pulo{font-size:16px}
+ .plantao-debrief .plantao-review-item,.plantao-debrief .plantao-performance-row,.plantao-debrief .plantao-explanation p{font-size:15px}
+}
