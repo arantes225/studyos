@@ -917,6 +917,261 @@
 
   // V7: transforma os tópicos de anamnese importados da planilha em perguntas clicáveis.
   // Cada caso pode ter quantas perguntas forem necessárias, sem depender de actions legadas.
+
+  function clinicalContextText(){
+    return normalizeLabel([
+      state.current?.title,
+      state.current?.summary,
+      state.current?.presentation?.opening,
+      state.current?.presentation?.chief_complaint
+    ].filter(Boolean).join(" "));
+  }
+
+  function isGenericHistoryAnswer(answer){
+    const a=normalizeLabel(answer);
+    return !a
+      || a.includes("informacao nao disponivel")
+      || a.includes("alem desses sintomas")
+      || a.includes("alem dessas queixas")
+      || a.includes("nao percebi nenhum outro")
+      || a.includes("nao houve trauma")
+      || a.includes("nao identifiquei um gatilho")
+      || a.includes("nao consigo apontar")
+      || a.includes("nao tenho doenca cronica importante")
+      || a.includes("nao ha antecedente medico relevante")
+      || a.includes("nao uso medicacao continua")
+      || a.includes("nao tenho remedios de uso habitual")
+      || a.includes("os sintomas comecaram antes da chegada")
+      || a.includes("o quadro apareceu sem um fator")
+      || a.includes("ate entao eu seguia minha rotina habitual");
+  }
+
+  function contextualHistoryAnswer(topic,answer){
+    if(!isGenericHistoryAnswer(answer)) return answer;
+    const t=clinicalContextText();
+    const k=normalizeLabel(topic);
+
+    if(k.includes("sintomas associados")){
+      if(/iam|sindrome coronariana|angina/.test(t)) return "Junto com a dor vieram suor frio, náusea e sensação de fraqueza; não notei piora da dor apenas ao apertar o peito.";
+      if(/embolia pulmonar/.test(t)) return "A falta de ar veio acompanhada de dor que piora ao respirar e sensação de coração acelerado; não tive tosse com secreção.";
+      if(/asma|broncoespasmo/.test(t)) return "Além da falta de ar, estou com chiado e aperto no peito; falar frases longas e caminhar pioram bastante.";
+      if(/pneumonia/.test(t)) return "Tenho tosse, febre e cansaço para respirar; em alguns momentos sinto dor no peito ao inspirar fundo.";
+      if(/sepse|pielonefrite/.test(t)) return "Além da febre, fiquei muito fraco, com calafrios e menos disposto; nas últimas horas comecei a ficar mais sonolento/tonto.";
+      if(/cetoacidose/.test(t)) return "Além dos vômitos e da sede, estou urinando muito, com dor abdominal e respirando de forma mais funda e rápida.";
+      if(/hipoglicemia/.test(t)) return "Tive suor frio, tremores, fome e depois comecei a ficar confuso e sonolento.";
+      if(/avc|acidente vascular/.test(t)) return "A fraqueza veio de repente, acompanhada de alteração da fala; não senti dor importante antes do início.";
+      if(/meningite/.test(t)) return "Tenho dor de cabeça forte, febre, náusea e incômodo com a luz; mexer o pescoço piora a dor.";
+      if(/hemorragia digestiva/.test(t)) return "Depois de vomitar sangue fiquei muito tonto, fraco e suando frio, principalmente quando tento sentar ou levantar.";
+      if(/pancreatite/.test(t)) return "A dor é forte na parte alta da barriga, vai para as costas e vem acompanhada de náuseas e vômitos.";
+      if(/colecistite/.test(t)) return "Tenho náusea, falta de apetite e febre; a dor fica concentrada do lado direito, principalmente depois de comer.";
+      if(/apendicite/.test(t)) return "Perdi o apetite, fiquei enjoado e a dor, que começou mais difusa, passou a se concentrar no lado direito inferior da barriga.";
+      if(/gravidez ectopica|abortamento|sangramento.*gravidez/.test(t)) return "Além do sangramento, tenho cólicas ou dor pélvica e sensação de fraqueza conforme a perda aumenta.";
+      if(/eclampsia|pre-eclampsia/.test(t)) return "Estou com dor de cabeça forte, visão embaçada e náusea; também percebi inchaço maior nos últimos dias.";
+      if(/panico/.test(t)) return "Senti coração muito acelerado, falta de ar, tremores, formigamento nas mãos e uma sensação súbita de que algo muito ruim ia acontecer.";
+      if(/conjuntivite|blefarite|ceratite|hordeolo/.test(t)) return "O incômodo fica principalmente no olho/pálpebra afetado, com vermelhidão, lacrimejamento ou secreção; não tive sintomas gerais importantes.";
+      return "Não percebi outro sintoma marcante além dos que fazem parte deste episódio.";
+    }
+
+    if(k.includes("antecedentes")){
+      if(/asma/.test(t)) return "Tenho asma e já tive crises antes, mas esta está mais intensa e respondeu pouco à medicação de resgate.";
+      if(/dpoc/.test(t)) return "Tenho DPOC e histórico de tabagismo; já tive pioras antes, mas esta veio com mais falta de ar que o habitual.";
+      if(/diabet|cetoacid|hipoglic|hiperglic/.test(t)) return "Tenho diabetes e faço tratamento regular; já tive alterações da glicose antes, mas não costumo ficar assim.";
+      if(/fibrilacao atrial|arritm/.test(t)) return "Já fui diagnosticado com arritmia e faço acompanhamento cardiológico.";
+      if(/insuficiencia cardiaca|edema agudo/.test(t)) return "Tenho hipertensão e problema cardíaco em acompanhamento, com episódios prévios de inchaço e falta de ar.";
+      if(/doenca renal|renal|dialise|hipercalemia/.test(t)) return "Tenho doença renal crônica e faço acompanhamento; quando indicado, realizo diálise regularmente.";
+      if(/gesta|gravidez|eclamps|placenta|abort/.test(t)) return "Estou em acompanhamento obstétrico e sei aproximadamente a idade gestacional; até este episódio, a evolução vinha sem intercorrência semelhante.";
+      return "Não tenho antecedente diretamente relacionado a este quadro e nunca tive um episódio exatamente igual.";
+    }
+
+    if(k.includes("medicamentos")){
+      if(/bradicardia.*betabloqueador/.test(t)) return "Uso betabloqueador diariamente e houve erro/duplicação recente da dose antes do início da tontura.";
+      if(/asma|dpoc/.test(t)) return "Uso medicação inalatória habitual e tentei a medicação de resgate antes de vir, sem melhora suficiente.";
+      if(/diabet|cetoacid|hiperglic|hipoglic/.test(t)) return "Uso medicação para diabetes; houve dificuldade recente para manter alimentação, hidratação ou tratamento como de costume.";
+      if(/fibrilacao atrial/.test(t)) return "Uso os medicamentos prescritos para o coração; não comecei nenhuma droga nova nas últimas horas.";
+      if(/hipertens/.test(t)) return "Uso anti-hipertensivos diariamente e não fiz mudança intencional recente na prescrição.";
+      return "Não tomei nenhuma medicação nova especificamente para este episódio antes de chegar.";
+    }
+
+    if(k.includes("contexto") || k.includes("fatores de risco")){
+      if(/embolia pulmonar|trombose/.test(t)) return "Houve imobilização/viagem prolongada ou outro fator trombótico recente antes do início dos sintomas.";
+      if(/anafilax/.test(t)) return "Os sintomas começaram minutos depois de uma exposição alimentar, medicamentosa ou outro possível alérgeno.";
+      if(/sindrome coronariana associada a cocaina|cocaina/.test(t)) return "Houve uso recente de cocaína antes do início da dor e das palpitações.";
+      if(/trauma|fratura|hemotorax|pneumotorax/.test(t)) return "O quadro começou logo após o mecanismo de trauma descrito, sem intervalo assintomático importante.";
+      if(/calor|exaustao/.test(t)) return "Passei bastante tempo exposto ao calor, com hidratação inadequada, antes de começar a me sentir mal.";
+      if(/reacao medicamentosa/.test(t)) return "As lesões começaram após o início recente de um medicamento que eu ainda não costumava usar.";
+      return "Não identifiquei um gatilho único, mas o início e a evolução foram diferentes do meu estado habitual.";
+    }
+
+    if(k.includes("alerg")){
+      return "Não tenho alergia medicamentosa conhecida.";
+    }
+
+    if(k.includes("inicio") || k.includes("evolucao")){
+      return String(state.current?.presentation?.opening||answer||state.current?.summary||"O quadro começou antes da chegada e evoluiu até motivar atendimento.");
+    }
+
+    return answer;
+  }
+
+  function diagnosticTestResult(action){
+    if(!action) return "";
+    const custom=state.current?.presentation?.test_results;
+    if(custom && typeof custom==="object" && custom[action.id]) return String(custom[action.id]);
+
+    const t=clinicalContextText();
+    const v=state.vitals||state.current?.initial_vitals||{};
+    const hr=Number(v.hr), spo2=Number(v.spo2), temp=Number(v.temp);
+    const id=action.id;
+
+    if(id==="ecg"){
+      if(/iam com supra|infarto.*supra/.test(t)) return "ECG: supradesnivelamento do segmento ST em derivações contíguas compatíveis com o território acometido, com alterações recíprocas.";
+      if(/fibrilacao atrial/.test(t)) return "ECG: ritmo irregularmente irregular, ausência de ondas P organizadas e resposta ventricular rápida.";
+      if(/taquicardia ventricular/.test(t)) return "ECG: taquicardia regular de QRS largo, compatível com taquicardia ventricular.";
+      if(/taquicardia supraventricular/.test(t)) return "ECG: taquicardia regular de QRS estreito, sem ondas P claramente discerníveis durante a crise.";
+      if(/bradicardia/.test(t)) return "ECG: bradicardia sinusal, sem taquiarritmia; avaliar intervalo PR e presença de bloqueios conforme o caso.";
+      if(/hipercalemia/.test(t)) return "ECG: ondas T apiculadas e simétricas, com alterações progressivas de condução compatíveis com hipercalemia.";
+      if(/pericardite/.test(t)) return "ECG: supradesnivelamento difuso de ST com depressão de PR, sem padrão territorial típico de IAM.";
+      if(/hipocalemia/.test(t)) return "ECG: achatamento de onda T, depressão de ST e ondas U mais evidentes.";
+      return "ECG: ritmo "+String(v.rhythm||"sinusal")+", FC aproximada de "+(Number.isFinite(hr)?hr:"—")+" bpm, sem alteração aguda específica adicional.";
+    }
+
+    if(id==="pulse_ox") return "SpO₂: "+(Number.isFinite(spo2)?spo2+"%":"não mensurável")+".";
+    if(id==="temperature") return "Temperatura: "+(Number.isFinite(temp)?String(temp).replace(".",",")+" °C":"não mensurável")+".";
+    if(id==="capnography"){
+      if(/cetoacidose|hiperventil|panico/.test(t)) return "Capnografia: ETCO₂ reduzido, compatível com hiperventilação.";
+      if(/opioide|depressao respiratoria/.test(t)) return "Capnografia: hipoventilação com ETCO₂ elevado.";
+      return "Capnografia com curva presente e ETCO₂ sem alteração crítica.";
+    }
+
+    if(id==="cbc"||id==="wbc"){
+      if(/sepse|pneumonia|pielonefrite|colecistite|apendicite|meningite|celulite|erisipela|abscesso|artrite septica/.test(t)) return "Hemograma: leucocitose neutrofílica com desvio à esquerda.";
+      if(/neutropenia febril/.test(t)) return "Hemograma: neutropenia importante, com contagem absoluta de neutrófilos <500/mm³.";
+      if(/anemia|hemorrag|sangramento/.test(t)) return "Hemograma: hemoglobina reduzida, compatível com perda sanguínea/anemia no contexto.";
+      return "Hemograma sem anemia, leucocitose ou plaquetopenia clinicamente relevantes.";
+    }
+    if(id==="platelets"){
+      if(/eclampsia|pre-eclampsia|hellp/.test(t)) return "Plaquetas reduzidas, achado compatível com doença hipertensiva gestacional grave/HELLP quando presente.";
+      if(/dengue/.test(t)) return "Plaquetopenia presente.";
+      return "Plaquetas em faixa preservada.";
+    }
+    if(id==="sodium"){
+      if(/hiponatremia/.test(t)) return "Sódio sérico reduzido, compatível com hiponatremia significativa.";
+      if(/hiperosmolar|desidratacao/.test(t)) return "Sódio normal-alto, compatível com perda de água livre/desidratação.";
+      return "Sódio dentro da faixa de referência.";
+    }
+    if(id==="potassium"){
+      if(/hipercalemia/.test(t)) return "Potássio sérico acentuadamente elevado.";
+      if(/hipocalemia/.test(t)) return "Potássio sérico reduzido.";
+      if(/cetoacidose/.test(t)) return "Potássio sérico pode estar normal ou elevado inicialmente, apesar do déficit corporal total.";
+      return "Potássio dentro da faixa de referência.";
+    }
+    if(id==="urea"||id==="creatinine"){
+      if(/lesao renal|renal aguda|desidratacao|hiperosmolar/.test(t)) return (id==="creatinine"?"Creatinina":"Ureia")+" elevada, compatível com redução da função renal/perfusão.";
+      return (id==="creatinine"?"Creatinina":"Ureia")+" sem elevação significativa.";
+    }
+    if(id==="gas"){
+      if(/cetoacidose/.test(t)) return "Gasometria: acidose metabólica com bicarbonato reduzido e ânion gap aumentado, com compensação respiratória.";
+      if(/asma grave|dpoc/.test(t)) return /dpoc/.test(t) ? "Gasometria: hipercapnia e hipoxemia, podendo haver acidose respiratória na exacerbação grave." : "Gasometria: hipoxemia; PaCO₂ normalizando ou elevando em crise grave sugere fadiga ventilatória.";
+      if(/choque|sepse|hemorrag/.test(t)) return "Gasometria: acidose metabólica com hiperlactatemia, compatível com hipoperfusão.";
+      if(/panico/.test(t)) return "Gasometria: alcalose respiratória aguda por hiperventilação.";
+      return "Gasometria sem distúrbio ácido-básico grave.";
+    }
+    if(id==="lactate"){
+      if(/choque|sepse|hipoperfus|hemorrag/.test(t)) return "Lactato elevado, compatível com hipoperfusão tecidual.";
+      return "Lactato sem elevação clinicamente significativa.";
+    }
+    if(id==="troponin"){
+      if(/iam|sindrome coronariana|miocardite/.test(t)) return "Troponina elevada acima do percentil 99, com dinâmica compatível com lesão miocárdica aguda.";
+      return "Troponina sem elevação significativa.";
+    }
+    if(id==="bnp"){
+      if(/insuficiencia cardiaca|edema agudo de pulmao/.test(t)) return "BNP/NT-proBNP elevado, apoiando congestão/insuficiência cardíaca no contexto clínico.";
+      return "BNP/NT-proBNP sem elevação expressiva.";
+    }
+    if(id==="lipase"||id==="amylase"){
+      if(/pancreatite/.test(t)) return (id==="lipase"?"Lipase":"Amilase")+" elevada, com lipase >3 vezes o limite superior da normalidade.";
+      return (id==="lipase"?"Lipase":"Amilase")+" sem elevação significativa.";
+    }
+    if(["ast","alt","ggt","alp","bilirubin_total","bilirubin_direct"].includes(id)){
+      if(/colangite|coledocolitiase|obstrucao biliar/.test(t)) return "Perfil hepático com padrão colestático: fosfatase alcalina/GGT e bilirrubinas elevadas.";
+      if(/hepatite/.test(t)) return "Transaminases marcadamente elevadas, com padrão hepatocelular.";
+      return action.label+" sem alteração relevante.";
+    }
+    if(id==="crp"||id==="procalcitonin"){
+      if(/sepse|pneumonia|pielonefrite|infec|abscesso|colecistite|apendicite/.test(t)) return action.label+" elevada, compatível com processo inflamatório/infeccioso.";
+      return action.label+" sem elevação importante.";
+    }
+    if(id==="ddimer"){
+      if(/embolia pulmonar|trombose/.test(t)) return "D-dímero elevado; resultado não específico, porém compatível com o contexto tromboembólico.";
+      return "D-dímero não elevado.";
+    }
+    if(id==="pregnancy"){
+      if(/gravidez|gesta|ectopica|abortamento|hiperemese/.test(t)) return "β-hCG positivo, em nível compatível com gestação; correlacionar com idade gestacional e ultrassonografia.";
+      return "β-hCG negativo.";
+    }
+    if(id==="urinalysis"){
+      if(/pielonefrite|cistite|itu/.test(t)) return "Urina tipo 1: leucocitúria, bacteriúria e teste de nitrito/esterase leucocitária sugestivo de infecção urinária.";
+      if(/colica renal|litíase|litíase renal/.test(t)) return "Urina tipo 1: hematúria microscópica, sem padrão infeccioso exuberante.";
+      return "Urina tipo 1 sem leucocitúria, hematúria ou proteinúria relevantes.";
+    }
+
+    if(id==="xray_chest"){
+      if(/pneumonia lobar/.test(t)) return "Radiografia: consolidação alveolar lobar com broncograma aéreo.";
+      if(/pneumonia/.test(t)) return "Radiografia: infiltrado/consolidação pulmonar focal compatível com pneumonia.";
+      if(/edema agudo|insuficiencia cardiaca/.test(t)) return "Radiografia: congestão vascular pulmonar, opacidades alveolares bilaterais e possível cardiomegalia.";
+      if(/pneumotorax/.test(t)) return "Radiografia: linha pleural visceral com ausência de trama vascular periférica; no quadro hipertensivo pode haver desvio mediastinal.";
+      if(/derrame pleural/.test(t)) return "Radiografia: velamento do seio costofrênico com opacidade basal compatível com derrame pleural.";
+      return "Radiografia de tórax sem consolidação, pneumotórax, derrame ou edema agudo.";
+    }
+    if(id==="ct_head"){
+      if(/avc hemorr|hemorragia subaracnoidea|hematoma epidural|hematoma subdural/.test(t)) return "TC de crânio sem contraste: hemorragia intracraniana visível, com localização compatível com o quadro.";
+      if(/avc isquemico/.test(t)) return "TC de crânio sem contraste: sem hemorragia; pode haver sinais isquêmicos precoces discretos.";
+      return "TC de crânio sem hemorragia, efeito de massa ou lesão aguda evidente.";
+    }
+    if(id==="cta_head_neck"){
+      if(/avc isquemico|circulacao posterior/.test(t)) return "Angio-TC: oclusão arterial compatível com o território neurológico acometido.";
+      return "Angio-TC sem oclusão arterial de grande vaso ou dissecção evidente.";
+    }
+    if(id==="cta_chest"){
+      if(/embolia pulmonar/.test(t)) return "Angio-TC: defeitos de enchimento em artérias pulmonares, compatíveis com tromboembolismo pulmonar.";
+      if(/sindrome aortica|disseccao/.test(t)) return "Angio-TC: flap intimal com duplo lúmen, compatível com dissecção aórtica.";
+      return "Angio-TC de tórax sem tromboembolismo pulmonar ou síndrome aórtica aguda.";
+    }
+    if(id==="ct_abdomen"){
+      if(/apendicite/.test(t)) return "TC: apêndice dilatado e espessado, com densificação da gordura adjacente.";
+      if(/diverticulite/.test(t)) return "TC: divertículos com espessamento parietal e densificação da gordura pericólica.";
+      if(/pancreatite/.test(t)) return "TC: edema/inflamação pancreática e alterações da gordura peripancreática, conforme gravidade.";
+      if(/obstrucao intestinal/.test(t)) return "TC: alças dilatadas com ponto de transição, compatível com obstrução intestinal.";
+      return "TC de abdômen/pelve sem achado agudo específico relevante.";
+    }
+    if(id==="us_abdomen"){
+      if(/colecistite/.test(t)) return "Ultrassom: cálculos, espessamento da parede vesicular, distensão e sinal de Murphy ultrassonográfico.";
+      if(/colelitiase/.test(t)) return "Ultrassom: cálculos móveis na vesícula, sem sinais inflamatórios de colecistite.";
+      return "Ultrassonografia abdominal sem alteração focal aguda relevante.";
+    }
+    if(id==="echo"){
+      if(/tamponamento/.test(t)) return "Ecocardiograma: derrame pericárdico com sinais de comprometimento hemodinâmico/tamponamento.";
+      if(/choque cardiogenico|insuficiencia cardiaca/.test(t)) return "Ecocardiograma: disfunção ventricular significativa, compatível com baixo débito/congestão.";
+      return "Ecocardiograma sem disfunção ventricular grave ou derrame pericárdico significativo.";
+    }
+    if(id==="fast"){
+      if(/hemorragia intra-abdominal|trauma abdominal|hemoperitonio/.test(t)) return "FAST/eFAST positivo para líquido livre intraperitoneal no contexto de trauma/hemorragia.";
+      if(/pneumotorax/.test(t)) return "eFAST com ausência de deslizamento pleural no hemitórax acometido.";
+      return "FAST/eFAST sem líquido livre e com deslizamento pleural bilateral.";
+    }
+    if(id==="pocus"){
+      if(/choque|insuficiencia cardiaca|edema agudo/.test(t)) return "POCUS com achados hemodinâmicos compatíveis com o mecanismo de choque/congestão do caso.";
+      return "POCUS sem achado crítico adicional.";
+    }
+    if(id==="vascular_doppler"){
+      if(/trombose venosa|tvp/.test(t)) return "Doppler: veia não compressível com trombo intraluminal, compatível com TVP.";
+      if(/isquemia aguda/.test(t)) return "Doppler com redução/ausência de fluxo arterial distal no membro acometido.";
+      return "Doppler sem trombose ou redução arterial significativa.";
+    }
+
+    return String(action.result||"Resultado sem alteração específica relevante.");
+  }
+
   function importedHistoryActions(){
     const raw=String(state.current?.presentation?.history_topics||"").trim();
     if(!raw) return [];
@@ -924,7 +1179,8 @@
       const parts=line.split(/\s*(?:→|=>)\s*/);
       const topic=(parts[0]||("Pergunta "+(i+1))).trim();
       const question=(parts[1]||topic).replace(/^[“"']|[”"']$/g,"").trim();
-      const answer=(parts.slice(2).join(" → ")||"Informação não disponível neste caso.").trim();
+      const rawAnswer=(parts.slice(2).join(" → ")||"Informação não disponível neste caso.").trim();
+      const answer=contextualHistoryAnswer(topic,rawAnswer);
       return {
         id:"history_v7_"+i,
         label:question,
@@ -1798,7 +2054,11 @@
             return;
           }
         }
-        const actionResult=action.category==="exame" ? physicalExamResult(action) : contextual(action.result||action.label);
+        const actionResult=action.category==="exame"
+          ? physicalExamResult(action)
+          : (["exames","laboratorio","imagem"].includes(action.category)
+              ? diagnosticTestResult(action)
+              : contextual(action.result||action.label));
         feed(actionResult+(points<0?` (−${Math.abs(points)} pontos)`:""),points<0?"warning":"event");
         const diedFromAction=await applyClinicalClass(action,original);
         if(diedFromAction)return;
