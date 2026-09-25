@@ -1,7 +1,7 @@
 /* Contrato único da fábrica. Não inserir resultados históricos como identidade editorial. */
 (function (root) {
   'use strict';
-  const VERSION = '3.6';
+  const VERSION = '3.7';
   const SCHEMA_VERSION = '2.0';
   const rubric = { scientific:25, answer_key:20, answer_source:15, distractors:10, explanations:10, style:10, writing:5, difficulty:5 };
   const editable = ['enunciado','alternativa_a','alternativa_b','alternativa_c','alternativa_d','gabarito','explicacao_a','explicacao_b','explicacao_c','explicacao_d','mensagem_chave','area','tema','subtema','dificuldade','fonte_instituicao','fonte_documento','fonte_ano','fonte_url','answer_source_institution','answer_source_document','answer_source_year','answer_source_url','answer_source_section','answer_source_note'];
@@ -126,13 +126,14 @@ Somente perfis ainda não aprovados devem registrar edição, URL oficial, IDs/p
     const blockCode = ctx.block_code || (batchCode && blockNumber != null ? batchCode+'-B'+String(Number(blockNumber)).padStart(2,'0') : null);
     const operationalAddress = blockCode || batchCode || null;
     const isPerplexityBridgeStage = ['perplexity_initial','perplexity_reaudit'].includes(stage);
-    const bridgeBase = 'https://www.resibulando.online/qf-r8K2mV7qL4x9P1cF/';
+    const bridgeBase = 'https://raw.githubusercontent.com/arantes225/studyos/main/qf-r8K2mV7qL4x9P1cF/';
     const bridgeUrl = blockCode ? bridgeBase + blockCode + '.json' : bridgeBase;
-    const bridgeSubmitUrl = blockCode ? bridgeBase + '?block=' + encodeURIComponent(blockCode) : bridgeBase;
+    const bridgeSubmitBase = 'https://www.resibulando.online/qf-r8K2mV7qL4x9P1cF/';
+    const bridgeSubmitUrl = blockCode ? bridgeSubmitBase + '?block=' + encodeURIComponent(blockCode) : bridgeSubmitBase;
     const workspace = ctx.prompt_workspace_url || ctx.workspace_url || (isPerplexityBridgeStage ? bridgeUrl : 'https://www.resibulando.online/admin/');
     const source = ctx.prompt_source_instruction || (isPerplexityBridgeStage
       ? (blockCode
-          ? `Abra EXATAMENTE ${bridgeUrl}. Esse endereço retorna JSON público direto do bloco ${blockCode}, sem depender de JavaScript, login ou sessão autenticada. Use EXCLUSIVAMENTE esse JSON como fonte de leitura. NÃO use anexos, arquivos enviados no chat, pasted_text, exportações anteriores ou histórico da conversa como substituto.`
+          ? `Abra EXATAMENTE ${bridgeUrl}. Esse endereço é o arquivo RAW público do GitHub e retorna JSON direto do bloco ${blockCode}, sem depender de JavaScript, login, GitHub UI ou sessão autenticada. Use EXCLUSIVAMENTE esse JSON como fonte de leitura. NÃO use anexos, arquivos enviados no chat, pasted_text, exportações anteriores ou histórico da conversa como substituto.`
           : 'Este prompt do Perplexity está sem block_code concreto. NÃO executar até receber um bloco L001-B01 a L001-B05.')
       : (blockCode
           ? `Entre no Admin da LURIA/Resibulando → Fábrica de questões → Produção em tempo real → lote ${batchCode} → bloco ${blockCode}. Leia exclusivamente as questões e versões atuais desse bloco.`
@@ -483,9 +484,10 @@ Após as três aprovações da versão atual, aguardar aprovação humana final 
     const batchNumber = ctx.batch_number ?? null;
     const batchCode = ctx.batch_code || (batchNumber == null ? null : 'L'+String(Number(batchNumber)).padStart(3,'0'));
     const blockCode = ctx.block_code || (batchCode && blockNumber != null ? batchCode+'-B'+String(Number(blockNumber)).padStart(2,'0') : null);
-    const bridgeBase = 'https://www.resibulando.online/qf-r8K2mV7qL4x9P1cF/';
+    const bridgeBase = 'https://raw.githubusercontent.com/arantes225/studyos/main/qf-r8K2mV7qL4x9P1cF/';
     const bridgeUrl = blockCode ? bridgeBase + blockCode + '.json' : bridgeBase;
-    const bridgeSubmitUrl = blockCode ? bridgeBase + '?block=' + encodeURIComponent(blockCode) : bridgeBase;
+    const bridgeSubmitBase = 'https://www.resibulando.online/qf-r8K2mV7qL4x9P1cF/';
+    const bridgeSubmitUrl = blockCode ? bridgeSubmitBase + '?block=' + encodeURIComponent(blockCode) : bridgeSubmitBase;
     const stage = isReaudit ? 'perplexity_reaudit' : 'perplexity_initial';
 
     return `FLUXO OPERACIONAL — PERPLEXITY · ${isReaudit ? 'REAUDITORIA' : 'AUDITORIA INDEPENDENTE'}
@@ -501,7 +503,7 @@ block_code=${blockCode || 'NÃO VINCULADO'}
 review_stage=${stage}
 
 PASSO A PASSO:
-1. Abra a URL exata acima no navegador. Ela termina em .json e deve abrir diretamente o conteúdo do bloco, sem login e sem JavaScript.
+1. Abra a URL exata acima no navegador. Ela é um endereço raw.githubusercontent.com e termina em .json; deve abrir diretamente o conteúdo bruto do bloco, sem login e sem JavaScript. NÃO troque esse URL por www.resibulando.online para a leitura.
 2. Confirme dentro do JSON que block_code=${blockCode || 'esperado'}. Se não coincidir, PARE e retorne ADDRESS_MISMATCH.
 3. NÃO use arquivo anexado, pasted_text, export, PDF, texto colado ou memória da conversa. Mesmo que exista um anexo, ignore-o para execução.
 4. NÃO peça runner autenticado, sessão Supabase, connector, RPC signature ou acesso ao banco. Nesta etapa, o JSON público é deliberadamente a fonte operacional fornecida pela LURIA.
@@ -531,7 +533,7 @@ ${segment(item,stage,ctx)}
 TRAVA CONTRA RESPOSTA ERRADA:
 - É INCORRETO responder SOURCE_NOT_AUTHORITATIVE_FOR_EXECUTION apenas porque existe um arquivo/anexo no chat.
 - É INCORRETO exigir leitura direta do Supabase, sessão autenticada, runner ou confirmação de RPC para iniciar esta etapa.
-- A fonte operacional desta etapa é exatamente o JSON público em ${bridgeUrl}.
+- A fonte operacional desta etapa é exatamente o JSON RAW público em ${bridgeUrl}. Se o domínio resibulando.online falhar, isso NÃO bloqueia a leitura: use este raw.githubusercontent.com como origem canônica de leitura.
 - Se esse URL abrir e o block_code estiver correto, execute a auditoria normalmente.
 
 SAÍDA HUMANA OBRIGATÓRIA:
