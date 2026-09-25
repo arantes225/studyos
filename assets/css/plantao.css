@@ -1584,7 +1584,7 @@ body.plantao-phone-mode .topbar{
     var(--bg);
 }
 
-/* Leila Mood: todo o telefone acompanha a paleta rosa do site. */
+/* Pink Mood: todo o telefone acompanha a paleta rosa do site. */
 :root[data-theme="leila-mood"] .plantao-phone-device,
 :root[data-theme="leila-mood"] .plantao-phone-shell{
   border-color:color-mix(in srgb,var(--accent-strong) 72%,var(--text) 28%);
