@@ -1449,3 +1449,144 @@ body.plantao-phone-mode .topbar{
   }
   .plantao-report-footer .button{width:100%}
 }
+
+
+/* v6.3 — Telefone do Plantão integrado aos temas LURIA */
+.plantao-phone-device,
+.plantao-phone-shell{
+  border-color:color-mix(in srgb,var(--text) 82%,var(--accent) 18%);
+  background:var(--surface);
+  box-shadow:0 24px 62px color-mix(in srgb,var(--text) 18%,transparent);
+}
+.plantao-phone-screen,
+.plantao-phone-inbox-toolbar{
+  background:var(--surface);
+  color:var(--text);
+}
+.plantao-phone-inbox-toolbar{
+  border-bottom-color:var(--border);
+}
+.plantao-phone-inbox-toolbar strong{color:var(--text)}
+.plantao-phone-inbox-toolbar small{color:var(--muted)}
+.plantao-phone-case-list{background:var(--surface)}
+.plantao-phone-conversation{
+  background:var(--surface);
+  color:var(--text);
+  border-bottom-color:var(--border);
+}
+.plantao-phone-conversation:hover{background:var(--surface-2)}
+.plantao-phone-conversation:active{background:var(--accent-soft)}
+.plantao-phone-conversation-avatar{
+  background:var(--accent-soft);
+  color:var(--accent);
+}
+.plantao-phone-conversation-top small,
+.plantao-phone-conversation-preview,
+.plantao-phone-conversation-chevron,
+.plantao-phone-empty{color:var(--muted)}
+.plantao-phone-conversation-title{color:var(--text)}
+
+.plantao-phone-header,
+.plantao-phone-inbox-head,
+.plantao-phone-chat-head{
+  background:linear-gradient(180deg,var(--accent),var(--accent-strong));
+  color:#fff;
+}
+.plantao-phone-chat-head button,
+.plantao-phone-back,
+#plantao-phone-exit,
+#plantao-phone-back{color:#fff}
+.plantao-phone-chat-head small,
+.plantao-phone-contact small{
+  color:color-mix(in srgb,#fff 78%,var(--accent-soft) 22%);
+}
+.plantao-phone-statusbar,
+.plantao-phone-status{color:#fff}
+.plantao-phone-notch{
+  background:color-mix(in srgb,var(--text) 92%,#000 8%);
+}
+
+.plantao-phone-chat-body{
+  color:var(--text);
+  background:
+    radial-gradient(circle at 20px 20px,color-mix(in srgb,var(--accent) 12%,transparent) 1.5px,transparent 1.6px) 0 0/42px 42px,
+    var(--bg);
+}
+.plantao-phone-bubble{color:var(--text)}
+.plantao-phone-bubble.incoming{
+  background:var(--surface);
+  border-color:var(--border);
+  color:var(--text);
+}
+.plantao-phone-bubble.outgoing{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#fff;
+}
+.plantao-phone-bubble strong{color:var(--muted)}
+.plantao-phone-bubble.outgoing strong{color:color-mix(in srgb,#fff 82%,var(--accent-soft) 18%)}
+
+.plantao-phone-compose,
+.plantao-phone-compose-form,
+.plantao-phone-choices{
+  background:var(--surface-2);
+  border-color:var(--border);
+  color:var(--text);
+}
+.plantao-phone-compose-form input{
+  background:var(--surface);
+  color:var(--text);
+  border-color:var(--border);
+}
+.plantao-phone-compose-form input::placeholder{color:var(--muted)}
+.plantao-phone-compose-form input:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent);
+}
+.plantao-phone-compose-form button,
+.plantao-phone-compose button{
+  background:var(--accent);
+  color:#fff;
+}
+.plantao-phone-placeholder,
+.plantao-phone-choice-done{color:var(--muted)}
+.plantao-phone-choice-group>strong{color:var(--muted)}
+.plantao-phone-choice-group button{
+  background:var(--surface);
+  color:var(--text);
+  border-color:var(--border);
+}
+.plantao-phone-choice-group button:hover{
+  border-color:var(--accent);
+  background:var(--accent-soft);
+  color:var(--accent);
+}
+.plantao-phone-case-label{
+  background:var(--surface-2);
+  color:var(--muted);
+}
+.plantao-phone-typing{background:var(--surface)}
+.plantao-phone-typing i{background:var(--muted)}
+.plantao-phone-avatar{
+  background:color-mix(in srgb,#fff 92%,var(--accent-soft) 8%);
+  color:var(--accent);
+}
+
+/* No tema escuro, o aparelho não pode desaparecer contra o fundo. */
+:root[data-theme="dark"] .plantao-phone-device,
+:root[data-theme="dark"] .plantao-phone-shell{
+  border-color:color-mix(in srgb,var(--accent-strong) 50%,var(--border) 50%);
+  box-shadow:0 24px 62px rgba(0,0,0,.42),inset 0 0 0 1px var(--border);
+}
+:root[data-theme="dark"] .plantao-phone-chat-body{
+  background:
+    radial-gradient(circle at 20px 20px,color-mix(in srgb,var(--accent) 18%,transparent) 1.5px,transparent 1.6px) 0 0/42px 42px,
+    var(--bg);
+}
+
+/* Leila Mood: todo o telefone acompanha a paleta rosa do site. */
+:root[data-theme="leila-mood"] .plantao-phone-device,
+:root[data-theme="leila-mood"] .plantao-phone-shell{
+  border-color:color-mix(in srgb,var(--accent-strong) 72%,var(--text) 28%);
+  box-shadow:0 24px 62px rgba(193,75,128,.18),inset 0 0 0 1px var(--border);
+}
