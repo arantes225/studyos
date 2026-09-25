@@ -2185,6 +2185,14 @@
     }
   }
 
+
+  .base-schedule-priority-summary { margin-top:10px; color:var(--muted); font-size:10px; font-weight:750; }
+  .base-schedule-card-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .exam-priority-badge { display:inline-flex; align-items:center; width:max-content; margin-top:6px; padding:3px 7px; border-radius:999px; font-size:8px; line-height:1; font-style:normal; font-weight:850; letter-spacing:.02em; white-space:nowrap; }
+  .exam-priority-badge.high { background:color-mix(in srgb,var(--success) 14%,transparent); color:var(--success); }
+  .exam-priority-badge.medium { background:color-mix(in srgb,var(--warning) 14%,transparent); color:var(--warning); }
+  .exam-priority-badge.low { background:var(--surface-2); color:var(--muted); border:1px solid var(--border); }
+
 </style>
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
   <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
@@ -2501,6 +2509,7 @@
               </button>
             </div>
 
+            <div id="base-schedule-priority-summary" class="base-schedule-priority-summary"></div>
             <div id="base-schedule-status" class="manual-status" aria-live="polite"></div>
             <div id="base-schedule-deck" class="base-schedule-deck"></div>
           </section>
@@ -2994,8 +3003,10 @@
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=17.3"></script>
   <script src="assets/js/study-mode.js?v=12.1"></script>
+  <script src="assets/js/exam-priority-data.js?v=1"></script>
+  <script src="assets/js/exam-priority.js?v=1"></script>
   <script src="assets/js/cronograma-base-data.js?v=12.6"></script>
-  <script src="assets/js/cronograma.js?v=17.4"></script>
+  <script src="assets/js/cronograma.js?v=17.5"></script>
   <script defer src="assets/js/pwa.js?v=4"></script>
 </body>
 </html>
