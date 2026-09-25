@@ -145,7 +145,16 @@
     backdrop.hidden = true;
     document.body.appendChild(backdrop);
 
+    const monitorHome = monitor.parentNode;
+    const monitorNextSibling = monitor.nextSibling;
+
     const setExpanded = expanded => {
+      if (expanded) {
+        document.body.appendChild(monitor);
+      } else if (monitorHome) {
+        if (monitorNextSibling && monitorNextSibling.parentNode === monitorHome) monitorHome.insertBefore(monitor, monitorNextSibling);
+        else monitorHome.appendChild(monitor);
+      }
       monitor.classList.toggle('is-expanded', expanded);
       backdrop.hidden = !expanded;
       document.body.classList.toggle('plantao-monitor-open', expanded);
