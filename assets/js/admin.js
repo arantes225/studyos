@@ -2711,7 +2711,7 @@
     root.querySelectorAll(".admin-qf-tracker-row[data-qf-auto-stage]").forEach(row => {
       const stage = String(row.dataset.qfAutoStage || "");
       if (!["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(stage)) return;
-      if (row.querySelector(".admin-qf-auto-ranges")) return;
+      if (row.querySelector("[data-qf-personal-perplexity]")) return;
 
       const batch = Number(row.dataset.qfAutoBatch);
       const block = Number(row.dataset.qfAutoBlock);
@@ -2751,7 +2751,7 @@
     if (!button) return;
     window.alert(
       "Fluxo Perplexity pessoal ativo. Não existe mais execução automática por API key.\n\n" +
-      "Use o botão “Copiar prompt + 200 questões” ou “Abrir Perplexity”, execute a etapa na sua conta pessoal conectada ao Supabase e deixe o próprio Perplexity persistir os reviews questão por questão pelos RPCs controlados.\n\n" +
+      "Use o botão “Copiar prompt para Perplexity pessoal” ou “Abrir Perplexity”, execute a etapa na sua conta pessoal conectada ao Supabase e deixe o próprio Perplexity persistir os reviews pelos RPCs controlados, em qualquer quantidade conveniente por chamada.\n\n" +
       "Depois volte ao Admin: a cobertura é lida diretamente do Supabase."
     );
   }
@@ -2875,6 +2875,15 @@
             ${prompt ? `
               <div class="admin-qf-tracker-prompt-actions">
                 <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">${esc(meta.label)} · copiar</button>
+                ${["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(String(block.next_stage || "")) ? `
+                  <button
+                    class="button primary admin-qf-copy-perplexity-package"
+                    type="button"
+                    data-qf-personal-perplexity="1"
+                    data-qf-auto-batch="${Number(block.batch_number||0)}"
+                    data-qf-auto-block="${Number(block.block_number||0)}"
+                  >Copiar prompt para Perplexity pessoal</button>
+                ` : ""}
                 ${provider ? `<button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${esc(provider)}">Abrir ${provider === "gemini" ? "Gemini" : provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>` : ""}
               </div>
               <pre id="${esc(pid)}" class="admin-qf-prompt admin-qf-tracker-hidden-prompt">${esc(prompt)}</pre>
@@ -3826,6 +3835,14 @@
 
     ["admin-qf-style-dashboard","admin-qf-style-manual","admin-qf-block-tracker"].forEach(containerId => {
       $(containerId)?.addEventListener("click", async event => {
+        const personalPerplexity = event.target.closest("[data-qf-personal-perplexity]");
+        if (personalPerplexity) {
+          event.preventDefault();
+          event.stopPropagation();
+          await copyPerplexityManualPackage(personalPerplexity);
+          return;
+        }
+
         const autoRange = event.target.closest("[data-qf-perplexity-range]");
         if (autoRange) {
           await runQuestionFactoryPerplexityRange(autoRange);
