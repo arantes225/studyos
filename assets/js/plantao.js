@@ -1136,10 +1136,66 @@
     if(caseTitle.includes("intoxicacao por benzodiazepinico") && id==="flumazenil") return {level:"malefica",reason:"Flumazenil indiscriminado é maléfico neste caso."};
     if(caseTitle.includes("pneumotorax hipertensivo") && isImaging && !done("needle_decompression")) return {level:"malefica",reason:"Imagem antes da descompressão no paciente instável é maléfica."};
 
+    /*
+      Procedimentos invasivos/elétricos do catálogo global não podem ser neutros
+      quando executados sem indicação. Isso evita que casos simples tolerem
+      cardioversão, marcapasso, descompressão torácica etc. como se nada tivesse
+      acontecido. Três condutas maléficas acumuladas já acionam óbito no motor.
+    */
+    const configuredRequired=(rules.required_actions||[]);
+    const configuredRecommended=(rules.recommended_actions||[]);
+    const explicitlyIndicated=
+      configuredRequired.includes(id)
+      || configuredRecommended.includes(id)
+      || action.clinical_class==="essencial"
+      || action.clinical_class==="benefica";
+
+    const syncCardioversionIndicated =
+      explicitlyIndicated
+      || /fibrilacao atrial.*instavel|flutter atrial.*instavel|taquicardia supraventricular.*instavel|taquicardia ventricular com pulso.*instavel|taquiarritmia.*instavel/.test(target);
+
+    const pacingIndicated =
+      explicitlyIndicated
+      || /bradicardia.*sintomat|bradicardia.*instavel|bloqueio atrioventricular.*(alto grau|total|instavel)|bav.*(2|3|total|alto grau)/.test(target);
+
+    const needleDecompressionIndicated =
+      explicitlyIndicated
+      || /pneumotorax hipertensivo/.test(target);
+
+    const chestTubeIndicated =
+      explicitlyIndicated
+      || /pneumotorax|hemotorax/.test(target);
+
+    const pericardiocentesisIndicated =
+      explicitlyIndicated
+      || /tamponamento cardiaco|derrame pericardico.*instavel/.test(target);
+
+    const cricothyrotomyIndicated =
+      explicitlyIndicated
+      || /obstrucao de via aerea|via aerea impossivel|nao intuba.*nao ventila|cricotireoid/.test(target);
+
+    if(id==="sync_cardioversion" && !syncCardioversionIndicated)
+      return {level:"malefica",reason:"Cardioversão sincronizada foi realizada sem uma taquiarritmia com indicação de terapia elétrica. A intervenção desnecessária expôs a paciente a deterioração hemodinâmica e arritmia."};
+
+    if(id==="transcutaneous_pacing" && !pacingIndicated)
+      return {level:"malefica",reason:"Marcapasso transcutâneo foi iniciado sem bradicardia sintomática ou bloqueio de alto grau que justificasse estimulação elétrica."};
+
+    if(id==="needle_decompression" && !needleDecompressionIndicated)
+      return {level:"malefica",reason:"Descompressão torácica foi realizada sem evidência de pneumotórax hipertensivo, criando risco de lesão pulmonar, vascular e deterioração respiratória."};
+
+    if(id==="chest_tube" && !chestTubeIndicated)
+      return {level:"malefica",reason:"Drenagem torácica foi realizada sem indicação de pneumotórax ou hemotórax, expondo o paciente a lesão pleuropulmonar desnecessária."};
+
+    if(id==="pericardiocentesis" && !pericardiocentesisIndicated)
+      return {level:"malefica",reason:"Pericardiocentese foi realizada sem evidência de tamponamento ou derrame pericárdico instável."};
+
+    if(id==="cricothyrotomy" && !cricothyrotomyIndicated)
+      return {level:"malefica",reason:"Cricotireoidostomia foi realizada sem uma emergência de via aérea que justificasse acesso cirúrgico."};
+
     const pts=Number(action.points||0);
     if(action.clinical_class) return {level:action.clinical_class,reason:action.clinical_reason||""};
-    const required=(rules.required_actions||[]);
-    const recommended=(rules.recommended_actions||[]);
+    const required=configuredRequired;
+    const recommended=configuredRecommended;
     if(required.some(x=>x===id||x===action.id)) return {level:"essencial",reason:action.clinical_reason||"Conduta essencial para o manejo deste caso."};
     if(recommended.some(x=>x===id||x===action.id)) return {level:"benefica",reason:action.clinical_reason||"Conduta útil e apropriada neste caso."};
     if(pts<=-15) return {level:"mortal",reason:action.result||"A conduta provocou deterioração crítica."};
