@@ -917,6 +917,7 @@ async function generateOneInitialReview(apiKey:string,item:any,styleProfile:any)
   return review;
 }
 
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok",{headers:CORS});
   if (req.method !== "POST") return json({ok:false,error:"METHOD_NOT_ALLOWED"},405);
@@ -945,6 +946,7 @@ Deno.serve(async (req) => {
     const start = Number(body?.start);
     const end = Number(body?.end);
     const expected = end-start+1;
+    let jobId = body?.job_id ? String(body.job_id) : null;
 
     if (!/^L\d{3}$/.test(batchCode) || !/^L\d{3}-B\d{2}$/.test(blockCode)) {
       return json({ok:false,error:"INVALID_OPERATIONAL_ADDRESS"},400);
@@ -962,88 +964,156 @@ Deno.serve(async (req) => {
       auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},
     });
 
-    const {data:input,error:inputError} = await sb.rpc(
-      "admin_question_factory_perplexity_initial_input",
-      {
+    let job:any = null;
+    if (!jobId) {
+      const {data,error} = await sb.rpc("admin_start_perplexity_initial_job",{
         p_batch_code:batchCode,
         p_block_code:blockCode,
         p_start:start,
         p_end:end,
+      });
+      if (error) return json({ok:false,error:"JOB_START_FAILED",message:error.message},422);
+      job = data;
+      jobId = String(job?.job_id || "");
+    } else {
+      const {data,error} = await sb.rpc("admin_perplexity_initial_job_status",{p_job_id:jobId});
+      if (error) return json({ok:false,error:"JOB_STATUS_FAILED",message:error.message},422);
+      job = data;
+    }
+
+    if (!jobId) return json({ok:false,error:"JOB_ID_MISSING"},500);
+
+    if (job?.complete === true || job?.status === "completed") {
+      const {data:coverage,error:coverageError} = await sb.rpc(
+        "admin_question_factory_review_coverage",
+        {
+          p_batch_number:batchNumber,
+          p_block_number:blockNumber,
+          p_stage:"perplexity_initial",
+          p_reviewer:"Perplexity",
+          p_start:start,
+          p_end:end,
+        }
+      );
+      if (coverageError) return json({ok:false,error:"COVERAGE_VERIFY_FAILED",message:coverageError.message},500);
+      return json({ok:true,phase:"completed",job_id:jobId,job,coverage});
+    }
+
+    const pending = Array.isArray(job?.pending_sequences) ? job.pending_sequences.map(Number) : [];
+    if (pending.length === 0 && Number(job?.validated_count || 0) < expected) {
+      return json({
+        ok:false,
+        error:"JOB_PENDING_STATE_INVALID",
+        job_id:jobId,
+        job
+      },500);
+    }
+
+    if (Number(job?.validated_count || 0) < expected) {
+      const sequence = pending[0];
+
+      const {data:input,error:inputError} = await sb.rpc(
+        "admin_question_factory_perplexity_initial_input",
+        {
+          p_batch_code:batchCode,
+          p_block_code:blockCode,
+          p_start:start,
+          p_end:end,
+        }
+      );
+      if (inputError) return json({ok:false,error:"LOAD_CURRENT_ITEMS_FAILED",message:inputError.message},422);
+
+      const items = Array.isArray(input?.items) ? input.items : [];
+      if (items.length !== expected) {
+        return json({ok:false,error:"ITEM_COVERAGE_MISMATCH",expected,found:items.length},422);
       }
+
+      const item = items.find((x:any) => Number(x.block_sequence_no) === Number(sequence));
+      if (!item) {
+        return json({ok:false,error:"PENDING_ITEM_NOT_FOUND",sequence,job_id:jobId},422);
+      }
+
+      const examStyle = String(item.exam_style || "ENAMED");
+      let styleProfile:any = {};
+      const {data:profile} = await sb
+        .from("question_exam_style_profiles")
+        .select("*")
+        .eq("exam_style",examStyle)
+        .maybeSingle();
+      if (profile) styleProfile = profile;
+
+      const review = await generateOneInitialReview(apiKey,item,styleProfile);
+      validateReviewBeforeImport(review,item);
+
+      const {data:stage,error:stageError} = await sb.rpc(
+        "admin_stage_perplexity_initial_review",
+        {
+          p_job_id:jobId,
+          p_sequence:sequence,
+          p_review:review,
+        }
+      );
+      if (stageError) {
+        return json({
+          ok:false,
+          error:"STAGING_FAILED",
+          sequence,
+          job_id:jobId,
+          message:stageError.message
+        },422);
+      }
+
+      if (stage?.validated !== true) {
+        return json({
+          ok:false,
+          error:"STAGED_REVIEW_INVALID",
+          sequence,
+          job_id:jobId,
+          stage
+        },422);
+      }
+
+      const {data:updatedJob,error:statusError} = await sb.rpc(
+        "admin_perplexity_initial_job_status",
+        {p_job_id:jobId}
+      );
+      if (statusError) return json({ok:false,error:"JOB_STATUS_FAILED",message:statusError.message},500);
+      job = updatedJob;
+
+      if (Number(job?.validated_count || 0) < expected) {
+        return json({
+          ok:true,
+          phase:"staging",
+          job_id:jobId,
+          sequence,
+          generated_count:Number(job?.generated_count || 0),
+          validated_count:Number(job?.validated_count || 0),
+          expected_count:expected,
+          pending_count:Array.isArray(job?.pending_sequences) ? job.pending_sequences.length : null,
+          job
+        });
+      }
+    }
+
+    const {data:payload,error:payloadError} = await sb.rpc(
+      "admin_perplexity_initial_job_payload",
+      {p_job_id:jobId}
     );
-    if (inputError) {
-      return json({ok:false,error:"LOAD_CURRENT_ITEMS_FAILED",message:inputError.message},422);
+    if (payloadError) {
+      return json({ok:false,error:"JOB_PAYLOAD_FAILED",job_id:jobId,message:payloadError.message},422);
     }
 
-    const items = Array.isArray(input?.items) ? input.items : [];
-    if (items.length !== expected) {
-      return json({ok:false,error:"ITEM_COVERAGE_MISMATCH",expected,found:items.length},422);
+    const reviews = Array.isArray(payload?.reviews) ? payload.reviews : [];
+    if (reviews.length !== expected) {
+      return json({
+        ok:false,error:"REVIEW_COVERAGE_MISMATCH",
+        job_id:jobId,expected,found:reviews.length
+      },422);
     }
-    if (items.some((i:any) => Number(i.version)!==2 && batchCode==="L001" && blockCode==="L001-B03")) {
-      return json({ok:false,error:"CURRENT_VERSION_MISMATCH"},422);
-    }
 
-    const examStyle = String(items[0]?.exam_style || "ENAMED");
-    let styleProfile:any = {};
-    const {data:profile} = await sb
-      .from("question_exam_style_profiles")
-      .select("*")
-      .eq("exam_style",examStyle)
-      .maybeSingle();
-    if (profile) styleProfile = profile;
-
-    const reviews = await mapWithConcurrency(items,5,async (item:any) => {
-      return await generateOneInitialReview(apiKey,item,styleProfile);
-    });
-
-    validateBatchBeforeImport(items,reviews,expected);
-
-    const reviewedIds = reviews.map((r:any) => r.question_id);
-    const payload = {
-      schema_version:"2.0",
-      batch_number:batchNumber,
-      batch_code:batchCode,
-      block_number:blockNumber,
-      block_code:blockCode,
-      operational_address:blockCode,
-      exam_style:examStyle,
-      review_stage:"perplexity_initial",
-      reviewer:"Perplexity",
-      reviews,
-      coverage:{
-        reviewed_ids:reviewedIds,
-        pending_ids:[],
-        complete:true,
-      },
-      stage_metrics:{
-        exam_style:examStyle,
-        batch_number:batchNumber,
-        batch_code:batchCode,
-        block_number:blockNumber,
-        block_code:blockCode,
-        stage:"perplexity_initial",
-        provider:"Perplexity",
-        run_label:blockCode + "-perplexity-initial-Q" + padQ(start) + "-Q" + padQ(end),
-        total_count:expected,
-        approved_count:reviews.filter((r:any)=>r.review_status==="approved").length,
-        needs_revision_count:reviews.filter((r:any)=>r.review_status==="needs_revision").length,
-        rejected_count:reviews.filter((r:any)=>r.review_status==="rejected").length,
-        hard_reject_count:reviews.filter((r:any)=>r.hard_fail===true).length,
-        agreement_count:reviews.filter((r:any)=>r.answer_agreement==="agree").length,
-        score:null,
-        status:"completed",
-        metrics:{
-          range_start:start,
-          range_end:end,
-          generated_reviews:reviews.length,
-          validated_reviews:reviews.length,
-        },
-        notes:"Faixa de 50 pareceres gerada integralmente antes do RPC de importação.",
-      }
-    };
-
-    if (payload.coverage.complete !== (payload.reviews.length===expected && payload.coverage.pending_ids.length===0)) {
-      throw new Error("INVALID_COVERAGE_COMPLETE");
+    const ids = reviews.map((r:any)=>String(r.question_id));
+    if (new Set(ids).size !== expected) {
+      return json({ok:false,error:"DUPLICATE_QUESTION_ID",job_id:jobId},422);
     }
 
     const {data:imported,error:importError} = await sb.rpc(
@@ -1052,10 +1122,11 @@ Deno.serve(async (req) => {
     );
     if (importError) {
       return json({
-        ok:false,error:"PERPLEXITY_INITIAL_IMPORT_FAILED",
-        message:importError.message,
+        ok:false,
+        error:"PERPLEXITY_INITIAL_IMPORT_FAILED",
+        job_id:jobId,
         generated_reviews:reviews.length,
-        imported:false,
+        message:importError.message
       },422);
     }
 
@@ -1071,33 +1142,46 @@ Deno.serve(async (req) => {
       }
     );
     if (coverageError) {
-      return json({ok:false,error:"COVERAGE_VERIFY_FAILED",message:coverageError.message},500);
+      return json({ok:false,error:"COVERAGE_VERIFY_FAILED",job_id:jobId,message:coverageError.message},500);
     }
 
-    if (Number(coverage?.persisted)!==expected || coverage?.complete!==true
-        || (Array.isArray(coverage?.pending_ids) && coverage.pending_ids.length!==0)) {
+    const persisted = Number(coverage?.persisted || 0);
+    const pendingCount = Array.isArray(coverage?.pending_ids) ? coverage.pending_ids.length : expected-persisted;
+    if (persisted !== expected || pendingCount !== 0 || coverage?.complete !== true) {
       return json({
         ok:false,
         error:"PERSISTENCE_COVERAGE_MISMATCH",
-        import_result:imported,
-        coverage,
+        job_id:jobId,
+        coverage
       },500);
     }
 
+    const {data:completed,error:completeError} = await sb.rpc(
+      "admin_complete_perplexity_initial_job",
+      {p_job_id:jobId,p_persisted:persisted}
+    );
+    if (completeError) return json({ok:false,error:"JOB_COMPLETE_FAILED",message:completeError.message},500);
+
     const metricsResult = await recordMetrics(sb,{
-      examStyle,batch:batchNumber,block:blockNumber,stage:"perplexity_initial",
+      examStyle:"ENAMED",
+      batch:batchNumber,
+      block:blockNumber,
+      stage:"perplexity_initial",
       start,end,coverage
     });
 
     return json({
       ok:true,
+      phase:"completed",
       review_stage:"perplexity_initial",
       operational_address:blockCode,
+      job_id:jobId,
       range:{start,end,expected},
       generated_reviews:reviews.length,
       validated_reviews:reviews.length,
       import_result:imported,
       coverage,
+      job:completed,
       ...metricsResult,
     });
   } catch (error) {
