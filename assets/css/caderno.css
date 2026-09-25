@@ -3250,3 +3250,24 @@
   background:color-mix(in srgb,var(--danger) 86%,#000)!important;
   border-color:color-mix(in srgb,var(--danger) 86%,#000)!important;
 }
+
+/* =========================================================
+   CADERNO PWA — HIERARQUIA COM O MENU GLOBAL
+   O drawer global usa backdrop 250 e sidebar 260.
+   A toolbar do caderno não pode ultrapassar essas camadas.
+   ========================================================= */
+@media (max-width: 980px) {
+  html.pwa-standalone body[data-page="caderno"] .notebook-toolbar {
+    z-index: 200 !important;
+  }
+
+  html.pwa-standalone body[data-page="caderno"].sidebar-open .notebook-toolbar,
+  html.pwa-standalone body[data-page="caderno"].sidebar-open .notebook-tool-menu-wrap,
+  html.pwa-standalone body[data-page="caderno"].sidebar-open .notebook-emoji-wrap,
+  html.pwa-standalone body[data-page="caderno"].sidebar-open .notebook-tool-menu,
+  html.pwa-standalone body[data-page="caderno"].sidebar-open .notebook-emoji-menu,
+  html.pwa-standalone body[data-page="caderno"].sidebar-open #notebook-callout-menu {
+    pointer-events: none !important;
+  }
+}
+
