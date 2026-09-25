@@ -1459,6 +1459,113 @@ async function saveStudySettings() {
 }
 
 
+
+function setTargetExamsStatus(text, type = "") {
+  const el = document.getElementById("target-exams-status");
+  if (!el) return;
+  el.textContent = text;
+  el.className = `settings-save-status ${type}`.trim();
+}
+
+function selectedTargetExams() {
+  return Array.from(
+    document.querySelectorAll('#target-exam-grid input[type="checkbox"]:checked')
+  ).map((input) => input.value);
+}
+
+function updateTargetExamCount() {
+  const count = document.getElementById("target-exam-count");
+  if (count) count.textContent = `${selectedTargetExams().length}/3`;
+}
+
+function renderTargetExamOptions() {
+  const grid = document.getElementById("target-exam-grid");
+  const exams = window.LuriaExamPriority?.exams || [];
+  if (!grid) return;
+
+  grid.innerHTML = exams.map((exam) => `
+    <label class="target-exam-option">
+      <input type="checkbox" value="${exam}">
+      <span>${exam}</span>
+    </label>
+  `).join("");
+
+  grid.addEventListener("change", (event) => {
+    const input = event.target.closest('input[type="checkbox"]');
+    if (!input) return;
+
+    const selected = selectedTargetExams();
+    if (selected.length > 3) {
+      input.checked = false;
+      setTargetExamsStatus("Você pode escolher no máximo 3 provas.", "error");
+    } else {
+      setTargetExamsStatus("");
+    }
+    updateTargetExamCount();
+  });
+
+  updateTargetExamCount();
+}
+
+async function loadTargetExams() {
+  const grid = document.getElementById("target-exam-grid");
+  if (!grid || !settingsUser) return;
+
+  const { data, error } = await settingsSb
+    .from("user_settings")
+    .select("target_exams")
+    .eq("user_id", settingsUser.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error(error);
+    setTargetExamsStatus(`Não foi possível carregar: ${error.message}`, "error");
+    return;
+  }
+
+  const selected = window.LuriaExamPriority?.sanitizeExams(data?.target_exams || []) || [];
+  grid.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+    input.checked = selected.includes(input.value);
+  });
+  updateTargetExamCount();
+}
+
+async function saveTargetExams() {
+  if (!settingsUser) return;
+
+  const targetExams = window.LuriaExamPriority?.sanitizeExams(selectedTargetExams()) || [];
+  if (targetExams.length > 3) {
+    setTargetExamsStatus("Você pode escolher no máximo 3 provas.", "error");
+    return;
+  }
+
+  const button = document.getElementById("save-target-exams");
+  if (button) button.disabled = true;
+  setTargetExamsStatus("Salvando...");
+
+  const { error } = await settingsSb
+    .from("user_settings")
+    .upsert(
+      { user_id: settingsUser.id, target_exams: targetExams },
+      { onConflict: "user_id" }
+    );
+
+  if (button) button.disabled = false;
+
+  if (error) {
+    console.error(error);
+    setTargetExamsStatus(`Não foi possível salvar: ${error.message}`, "error");
+    return;
+  }
+
+  setTargetExamsStatus(
+    targetExams.length
+      ? `${targetExams.length} prova${targetExams.length === 1 ? "" : "s"} salva${targetExams.length === 1 ? "" : "s"}. O Cronograma Base usará essa prioridade.`
+      : "Seleção limpa. O Cronograma Base volta à ordem padrão.",
+    "success"
+  );
+}
+
 const STUDY_DEFAULTS = Object.freeze({
   pomodoro: { focus: 25, pause: 5 },
   flashcards: {
@@ -1497,6 +1604,7 @@ async function initStudySettings() {
   settingsUser = window.docmapUser;
 
   renderWeekdayGroups();
+  renderTargetExamOptions();
   wireProfileSettings();
 
   document
@@ -1559,6 +1667,7 @@ async function initStudySettings() {
   await Promise.all([
     loadProfileSettings(),
     loadStudySettings(),
+    loadTargetExams(),
     loadPasskeys()
   ]);
 }
