@@ -35,6 +35,7 @@
     outcomes:[],
     triggered:[],
     log:[],
+    sequenceViolations:[],
     category:null,
     penalties:0, criticalElapsed:0, diagnosis:null, disposition:null, busy:false
   };
@@ -198,6 +199,50 @@
     }).join("")}</section>`).join("") || '<p class="plantao-no-actions">Nenhuma opção encontrada.</p>';
   }
 
+  function recordSequenceViolation(action,{missing=[],penalty=2,blocked=true,message=""}={}) {
+    const missingLabels=missing.map(actionLabel);
+    const text=message || (blocked
+      ? "Você tentou "+action.label+" antes de "+missingLabels.join(", ")+"."
+      : "Você realizou "+action.label+" antes de "+missingLabels.join(", ")+".");
+    state.sequenceViolations.push({
+      action_id:action.id,
+      action_label:action.label,
+      missing_ids:[...missing],
+      missing_labels:missingLabels,
+      penalty:Number(penalty||0),
+      blocked:blocked===true,
+      message:text,
+      time:state.elapsed
+    });
+    return text;
+  }
+
+  function sequenceCheck(action) {
+    const hardMissing=(action.requires_all||[]).filter(id=>!done(id));
+    if(hardMissing.length) {
+      return {
+        blocked:true,
+        missing:hardMissing,
+        penalty:Number(action.requires_penalty??2),
+        message:action.result_if_blocked||""
+      };
+    }
+
+    const softMissing=(action.order_after_all||[]).filter(id=>!done(id));
+    const anyIds=action.order_after_any||[];
+    const anySatisfied=!anyIds.length || anyIds.some(id=>done(id));
+    if(softMissing.length || !anySatisfied) {
+      const missing=[...softMissing,...(!anySatisfied?anyIds:[])];
+      return {
+        blocked:false,
+        missing:[...new Set(missing)],
+        penalty:Number(action.order_penalty??3),
+        message:action.order_message||""
+      };
+    }
+    return null;
+  }
+
   function applyEffects(effects={}) {
     if (effects.vitals && typeof effects.vitals==="object") {
       state.vitals={...state.vitals,...effects.vitals};
@@ -232,7 +277,8 @@
         outcomes:state.outcomes,
         triggered:state.triggered,
         penalties:state.penalties, criticalElapsed:state.criticalElapsed, elapsed_seconds:Math.round(state.elapsed*60),
-        diagnosis:state.diagnosis, disposition:state.disposition, scoring_version:2
+        sequenceViolations:state.sequenceViolations,
+        diagnosis:state.diagnosis, disposition:state.disposition, scoring_version:3
       },
       action_log:state.log,
       ...extra
@@ -254,6 +300,7 @@
     state.outcomes=[];
     state.triggered=[];
     state.log=[];
+    state.sequenceViolations=[];
     state.category=null;
     state.penalties=0; state.criticalElapsed=0; state.diagnosis=null; state.disposition=null; state.busy=false;
     $("plantao-action-search").value="";
@@ -267,7 +314,7 @@
       status:"in_progress",
       elapsed_minutes:0,
       score:0,
-      state:{vitals:state.vitals,performed:[],outcomes:[],triggered:[]},
+      state:{vitals:state.vitals,performed:[],outcomes:[],triggered:[],sequenceViolations:[],scoring_version:3},
       action_log:[]
     }).select("id,case_id,status,started_at").single();
 
@@ -306,14 +353,22 @@
     state.busy=true;renderActions();
     $("plantao-finish").disabled=true;$("plantao-back").disabled=true;
     try {
-      const missing=(action.requires_all||[]).filter(id=>!done(id));
-      if(missing.length) {
+      const sequenceIssue=sequenceCheck(action);
+      if(sequenceIssue?.blocked) {
         state.elapsed+=.25;
         if(!E.success(state.current,state))state.criticalElapsed+=.25;
-        state.penalties+=2;state.score-=2;
-        feed((action.result_if_blocked||"Antes desta medida, realize: "+missing.map(actionLabel).join(", "))+" (−2 pontos)","warning");
+        const penalty=Number(sequenceIssue.penalty||0);
+        state.penalties+=penalty;state.score-=penalty;
+        const message=recordSequenceViolation(action,sequenceIssue);
+        feed((sequenceIssue.message||message)+" (−"+penalty+" pontos por sequência)","warning");
         applyDeterioration();
       } else {
+        if(sequenceIssue) {
+          const penalty=Number(sequenceIssue.penalty||0);
+          state.penalties+=penalty;state.score-=penalty;
+          const message=recordSequenceViolation(action,sequenceIssue);
+          feed((sequenceIssue.message||message)+" (−"+penalty+" pontos por sequência)","warning");
+        }
         const repeated=done(action.id);
         const delta=Number(action.time_min||0);
         if(!E.success(state.current,state))state.criticalElapsed+=delta;
@@ -355,7 +410,8 @@
 
     const result={
       final_score:score,
-      scoring_version:2, penalties:E.score(state.current,state).penalties,
+      scoring_version:3, penalties:E.score(state.current,state).penalties,
+      sequence_violations:state.sequenceViolations,
       diagnosis:state.diagnosis, disposition:state.disposition,
       missing_required:missingRequired,
       missing_recommended:missingRecommended,
@@ -402,13 +458,21 @@
       ["Ações realizadas",String(state.performed.length)],
       ["Essenciais",essentialDone+"/"+essentialTotal],
       ["Ações úteis",String(positive)],
-      ["Ações prejudiciais",String(harmful)]
+      ["Ações prejudiciais",String(harmful)],
+      ["Erros de sequência",String(state.sequenceViolations.length)]
     ].map(([a,b])=>`<div class="plantao-performance-row"><span>${esc(a)}</span><strong>${esc(b)}</strong></div>`).join("");
 
     const key=[...(d.key_actions||[]),d.scoring_note].filter(Boolean).map(text=>`<div class="plantao-review-item"><span>✓</span><span>${esc(text)}</span></div>`);
     if (missingRequired.length) key.push(...missingRequired.map(id=>`<div class="plantao-review-item"><span>!</span><span>Você não realizou: ${esc(actionLabel(id))}</span></div>`));
     if (missingRecommended.length) key.push(...missingRecommended.slice(0,4).map(id=>`<div class="plantao-review-item"><span>–</span><span>Poderia acrescentar: ${esc(actionLabel(id))}</span></div>`));
     $("plantao-key-actions").innerHTML=key.join("");
+
+    const sequence=state.sequenceViolations.map(item=>
+      '<div class="plantao-review-item plantao-sequence-item"><span>↳</span><span><strong>'+
+      esc(item.blocked?"Ação antecipada bloqueada":"Ação fora de sequência")+
+      ':</strong> '+esc(item.message)+(item.penalty?' (−'+esc(item.penalty)+' pts)':'')+'</span></div>'
+    );
+    $("plantao-sequence-errors").innerHTML=sequence.length?sequence.join(""):'<div class="plantao-review-item"><span>✓</span><span>Nenhum erro de sequência registrado.</span></div>';
 
     const danger=(d.dangerous_actions||[]).map(text=>`<div class="plantao-review-item"><span>!</span><span>${esc(text)}</span></div>`);
     $("plantao-danger-actions").innerHTML=danger.join("");
