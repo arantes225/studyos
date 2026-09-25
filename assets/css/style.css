@@ -1018,7 +1018,7 @@ body.app-ready .app-shell .main { opacity: 1; }
     );
 }
 
-/* Rosa / Leila Mood */
+/* Rosa / Pink Mood */
 :root[data-theme="leila-mood"] .brand-logo-light,
 :root[data-theme="leila-mood"] .brand-logo-dark {
   display: none;
