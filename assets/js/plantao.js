@@ -37,6 +37,10 @@
     log:[],
     sequenceViolations:[],
     monitorOn:false,
+    harmfulCount:0,
+    dead:false,
+    deathReason:"",
+    clinicalEvents:[],
     category:null,
     penalties:0, criticalElapsed:0, diagnosis:null, disposition:null, busy:false
   };
@@ -466,6 +470,55 @@
     return null;
   }
 
+  function classifyAction(action,original) {
+    const slug=state.current?.slug||"";
+    const id=original?.id||action.id;
+    if(slug==="vf-arrest-ed" && !done("cpr")) {
+      if(["ct_head","ct_chest","ct_abdomen","mri_brain","mri_spine","xray_chest","xray_abdomen"].includes(id))
+        return {level:"mortal",reason:"Você priorizou um exame demorado durante uma PCR antes de iniciar RCP."};
+      if(["exam_neuro","exam_head","exam_airway","exam_eyes","exam_chest","exam_upper","exam_abdomen","exam_lower","exam_extremities","exam_skin"].includes(id))
+        return {level:"malefica",reason:"Você atrasou RCP para realizar exame físico durante uma PCR."};
+    }
+    const pts=Number(action.points||0);
+    if(action.clinical_class) return {level:action.clinical_class,reason:action.clinical_reason||""};
+    if(pts<=-15) return {level:"mortal",reason:action.result||"A conduta provocou deterioração crítica."};
+    if(pts<0) return {level:"malefica",reason:action.result||"A conduta foi prejudicial."};
+    if(pts>0) return {level:"benefica",reason:""};
+    return {level:"neutra",reason:""};
+  }
+
+  function recordClinicalEvent(level,action,reason) {
+    state.clinicalEvents.push({level,action_id:action.id,action_label:action.label,reason:reason||"",time:state.elapsed});
+  }
+
+  async function killPatient(reason,action=null) {
+    if(state.dead)return;
+    state.dead=true;
+    state.deathReason=reason||"O paciente evoluiu a óbito.";
+    state.score=Math.min(state.score,-50);
+    state.penalties+=25;
+    recordClinicalEvent("mortal",action||{id:"death",label:"Óbito"},state.deathReason);
+    feed("ÓBITO: "+state.deathReason,"warning");
+    $("plantao-death-reason").textContent=state.deathReason;
+    $("plantao-death-overlay").hidden=false;
+    $("plantao-simulator").classList.add("patient-dead");
+    $("plantao-action-tabs").inert=true;
+    $("plantao-action-drawer").hidden=true;
+    $("plantao-finish").disabled=true;
+    await persistSession({status:"completed",completed_at:new Date().toISOString(),score:0,result:{death:true,death_reason:state.deathReason,clinical_events:state.clinicalEvents,scoring_version:4}});
+  }
+
+  async function applyClinicalClass(action,original) {
+    const cls=classifyAction(action,original);
+    if(cls.level==="mortal"){await killPatient(cls.reason,action);return true;}
+    if(cls.level==="malefica"){
+      state.harmfulCount+=1;
+      recordClinicalEvent("malefica",action,cls.reason);
+      if(state.harmfulCount>=2){await killPatient("Duas condutas prejudiciais consecutivas/ acumuladas levaram à deterioração fatal. Última: "+(cls.reason||action.label),action);return true;}
+    } else recordClinicalEvent(cls.level,action,cls.reason);
+    return false;
+  }
+
   function applyEffects(effects={}) {
     if (effects.vitals && typeof effects.vitals==="object") {
       state.vitals={...state.vitals,...effects.vitals};
@@ -501,7 +554,8 @@
         triggered:state.triggered,
         penalties:state.penalties, criticalElapsed:state.criticalElapsed, elapsed_seconds:Math.round(state.elapsed*60),
         sequenceViolations:state.sequenceViolations,
-        diagnosis:state.diagnosis, disposition:state.disposition, scoring_version:3
+        harmfulCount:state.harmfulCount, dead:state.dead, deathReason:state.deathReason, clinicalEvents:state.clinicalEvents,
+        diagnosis:state.diagnosis, disposition:state.disposition, scoring_version:4
       },
       action_log:state.log,
       ...extra
@@ -525,6 +579,9 @@
     state.log=[];
     state.sequenceViolations=[];
     state.monitorOn=false;
+    state.harmfulCount=0; state.dead=false; state.deathReason=""; state.clinicalEvents=[];
+    $("plantao-death-overlay").hidden=true;
+    $("plantao-simulator").classList.remove("patient-dead");
     state.category=null;
     state.penalties=0; state.criticalElapsed=0; state.diagnosis=null; state.disposition=null; state.busy=false;
     $("plantao-action-search").value="";
@@ -538,7 +595,7 @@
       status:"in_progress",
       elapsed_minutes:0,
       score:0,
-      state:{vitals:state.vitals,performed:[],outcomes:[],triggered:[],sequenceViolations:[],scoring_version:3},
+      state:{vitals:state.vitals,performed:[],outcomes:[],triggered:[],sequenceViolations:[],harmfulCount:0,dead:false,clinicalEvents:[],scoring_version:4},
       action_log:[]
     }).select("id,case_id,status,started_at").single();
 
@@ -617,8 +674,14 @@
           const correct=action.genericDisposition===true ? inferGenericDisposition(action) : action.correct===true;
           state.disposition={id:action.id,label:action.label,correct};
           if(action.genericDisposition===true && !correct){state.penalties+=8;state.score-=8;}
+          if(action.genericDisposition===true && normalizeLabel(action.label).includes("alta") && !correct && ["septic-shock-ed","vf-arrest-ed","af-unstable-ed","anaphylaxis-ed"].includes(state.current?.slug)){
+            await killPatient("Você deu alta a um paciente que necessitava tratamento e monitorização hospitalar imediatos.",action);
+            return;
+          }
         }
         feed(contextual(action.result||action.label)+(points<0?` (−${Math.abs(points)} pontos)`:""),points<0?"warning":"event");
+        const diedFromAction=await applyClinicalClass(action,original);
+        if(diedFromAction)return;
       }
       $("plantao-time").textContent=fmtTime(state.elapsed);
       updateScore();renderVitals();
@@ -646,7 +709,8 @@
 
     const result={
       final_score:score,
-      scoring_version:3, penalties:E.score(state.current,state).penalties,
+      scoring_version:4, penalties:E.score(state.current,state).penalties,
+      death:state.dead, death_reason:state.deathReason, harmful_count:state.harmfulCount, clinical_events:state.clinicalEvents,
       sequence_violations:state.sequenceViolations,
       diagnosis:state.diagnosis, disposition:state.disposition,
       missing_required:missingRequired,
@@ -671,7 +735,17 @@
   }
 
   function actionLabel(id) {
-    return state.current?.actions?.find(x=>x.id===id)?.label || id;
+    return mergedActions().find(x=>x.id===id)?.label || id;
+  }
+
+  async function openDeathDebrief(){
+    $("plantao-death-overlay").hidden=true;
+    const rules=state.current?.completion_rules||{};
+    const missingRequired=(rules.required_actions||[]).filter(x=>!done(x));
+    const missingRecommended=(rules.recommended_actions||[]).filter(x=>!done(x));
+    renderDebrief(0,missingRequired,missingRecommended);
+    $("plantao-diagnosis").textContent="Óbito durante a simulação — "+state.deathReason;
+    show("plantao-debrief");
   }
 
   function renderDebrief(score,missingRequired,missingRecommended) {
@@ -750,6 +824,7 @@
   });
   $("plantao-all-cases")?.addEventListener("click",backToLibrary);
   $("plantao-retry")?.addEventListener("click",()=>state.current && startCase(state.current.id));
+  $("plantao-death-review")?.addEventListener("click",openDeathDebrief);
 
   load().catch(error=>console.error("Plantão:",error));
 })();
