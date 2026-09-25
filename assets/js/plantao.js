@@ -1007,6 +1007,116 @@
   function interventionSection(action){
     return action.category==="tratamento" ? "medicamentos" : "gerais";
   }
+  function isPediatricCase() {
+    const specialty=normalizeLabel(state.current?.specialty||"");
+    const rawAge=String(state.current?.presentation?.age||"");
+    const age=Number((rawAge.match(/\d+(?:[.,]\d+)?/)||[])[0]?.replace(",","."));
+    return specialty.includes("pediatr") || (Number.isFinite(age) && age<18);
+  }
+
+  function medicationDoseHint(action) {
+    if(action.category!=="tratamento") return "";
+
+    const explicit=action.dose_hint||action.dose||action.dosage;
+    if(explicit) return String(explicit);
+
+    const peds=isPediatricCase();
+    const target=normalizeLabel([
+      state.current?.title,
+      state.current?.debrief?.diagnosis,
+      state.current?.summary,
+      state.current?.initial_vitals?.rhythm
+    ].filter(Boolean).join(" "));
+
+    const id=action.id;
+
+    if(id==="epi_im") return peds ? "0,01 mg/kg IM (1 mg/mL), máx. 0,5 mg" : "0,3–0,5 mg IM (1 mg/mL)";
+    if(id==="epi") return peds ? "0,01 mg/kg IV/IO (0,1 mg/mL) a cada 3–5 min" : "1 mg IV/IO a cada 3–5 min";
+    if(id==="amiodarone") return peds ? "5 mg/kg IV/IO" : (/fibrilacao ventricular|tv sem pulso/.test(target) ? "300 mg IV/IO; depois 150 mg" : "150 mg IV em 10 min");
+    if(id==="lidocaine") return peds ? "1 mg/kg IV/IO" : "1–1,5 mg/kg IV/IO";
+    if(id==="atropine") return peds ? "0,02 mg/kg IV/IO; mín. 0,1 mg, máx. 0,5 mg" : "1 mg IV a cada 3–5 min; máx. 3 mg";
+    if(id==="adenosine") return peds ? "0,1 mg/kg IV rápido; depois 0,2 mg/kg" : "6 mg IV rápido; depois 12 mg";
+    if(id==="magnesium") return /eclamps|pre-eclamps/.test(target) ? "4–6 g IV ataque; manutenção 1–2 g/h" : (peds ? "25–50 mg/kg IV" : "1–2 g IV");
+    if(id==="norepi") return "0,05–0,1 mcg/kg/min IV, titular";
+    if(id==="vasopressin") return "0,03 U/min IV";
+    if(id==="dopamine") return "5–20 mcg/kg/min IV, titular";
+    if(id==="dobutamine") return "2–20 mcg/kg/min IV, titular";
+    if(id==="phenylephrine") return "50–200 mcg IV em bolus ou 0,2–2 mcg/kg/min";
+    if(id==="nitroglycerin") return "5–10 mcg/min IV, titular";
+    if(id==="nitroprusside") return "0,3–0,5 mcg/kg/min IV, titular";
+    if(id==="metoprolol") return "5 mg IV a cada 5 min, até 15 mg";
+    if(id==="propranolol") return "1 mg IV lento; repetir conforme resposta";
+    if(id==="esmolol") return "500 mcg/kg ataque; 50–200 mcg/kg/min";
+    if(id==="diltiazem") return "0,25 mg/kg IV; pode repetir 0,35 mg/kg";
+    if(id==="verapamil") return "2,5–5 mg IV lento; repetir 5–10 mg";
+    if(id==="labetalol") return "20 mg IV; depois 40–80 mg a cada 10 min";
+    if(id==="hydralazine") return "5–10 mg IV";
+    if(id==="nicardipine") return "5 mg/h IV; aumentar 2,5 mg/h";
+    if(id==="nifedipine") return "10 mg VO; repetir conforme indicação";
+    if(id==="furosemide") return peds ? "1 mg/kg IV" : "20–40 mg IV";
+    if(id==="salbutamol") return peds ? "2,5–5 mg nebulizado" : "2,5–5 mg nebulizado";
+    if(id==="ipratropium") return peds ? "250–500 mcg nebulizado" : "500 mcg nebulizado";
+    if(id==="hydrocortisone") return peds ? "2–4 mg/kg IV" : "100–200 mg IV";
+    if(id==="ceftriaxone") return peds ? "50–100 mg/kg IV" : "1–2 g IV";
+    if(id==="azithromycin") return peds ? "10 mg/kg VO/IV" : "500 mg VO/IV";
+    if(id==="piperacillin_tazo") return peds ? "80–100 mg/kg/dose IV (piperacilina)" : "4,5 g IV";
+    if(id==="vancomycin") return peds ? "15 mg/kg IV" : "15–20 mg/kg IV";
+    if(id==="cefepime") return peds ? "50 mg/kg IV" : "2 g IV";
+    if(id==="meropenem") return peds ? "20–40 mg/kg IV" : "1 g IV";
+    if(id==="metronidazole") return peds ? "7,5–10 mg/kg IV/VO" : "500 mg IV/VO";
+    if(id==="clindamycin") return peds ? "10 mg/kg IV/VO" : "600–900 mg IV";
+    if(id==="doxycycline") return peds ? "2,2 mg/kg por dose (≥8 anos)" : "100 mg VO/IV";
+    if(id==="amoxicillin") return peds ? "40–50 mg/kg por dose VO" : "500–875 mg VO";
+    if(id==="amox_clav") return peds ? "45 mg/kg/dia de amoxicilina, dividido" : "875/125 mg VO";
+    if(id==="cefazolin") return peds ? "25–50 mg/kg IV" : "1–2 g IV";
+    if(id==="cephalexin") return peds ? "25–50 mg/kg/dia VO, dividido" : "500 mg VO";
+    if(id==="morphine") return peds ? "0,05–0,1 mg/kg IV" : "2–4 mg IV, titular";
+    if(id==="fentanyl") return peds ? "1–2 mcg/kg IV" : "25–50 mcg IV, titular";
+    if(id==="dipyrone") return peds ? "10–20 mg/kg" : "500–1.000 mg";
+    if(id==="paracetamol") return peds ? "10–15 mg/kg" : "500–1.000 mg";
+    if(id==="ondansetron") return peds ? "0,15 mg/kg IV" : "4 mg IV/VO";
+    if(id==="midazolam") return peds ? "0,1 mg/kg IV ou 0,2 mg/kg IN/IM" : "2–5 mg IV/IM, titular";
+    if(id==="diazepam") return peds ? "0,15–0,2 mg/kg IV" : "5–10 mg IV";
+    if(id==="ketamine") return peds ? "1–2 mg/kg IV" : "1–2 mg/kg IV";
+    if(id==="propofol") return "0,5–1 mg/kg IV, titular";
+    if(id==="rocuronium") return "1,2 mg/kg IV";
+    if(id==="succinylcholine") return peds ? "1–2 mg/kg IV" : "1–1,5 mg/kg IV";
+    if(id==="tranexamic") return peds ? "10–15 mg/kg IV" : "1 g IV em 10 min";
+    if(id==="aspirin") return "160–325 mg VO mastigável";
+    if(id==="clopidogrel") return "300–600 mg VO ataque";
+    if(id==="heparin") return "60–80 U/kg IV em bolus, conforme indicação";
+    if(id==="enoxaparin") return "1 mg/kg SC a cada 12 h";
+    if(id==="insulin") return /hipercalemia/.test(target) ? "10 U regular IV + glicose" : "0,1 U/kg/h IV";
+    if(id==="dextrose") return peds ? "0,25 g/kg IV" : "25 g IV";
+    if(id==="glucagon") return peds ? "0,5–1 mg IM" : "1 mg IM";
+    if(id==="naloxone") return peds ? "0,1 mg/kg IV/IM/IN" : "0,4–2 mg IV/IM/IN, titular";
+    if(id==="levetiracetam") return peds ? "40–60 mg/kg IV" : "60 mg/kg IV, máx. 4,5 g";
+    if(id==="phenobarbital") return peds ? "20 mg/kg IV" : "15–20 mg/kg IV";
+    if(id==="phenytoin") return "20 mg/kg IV";
+    if(id==="valproate") return "20–40 mg/kg IV";
+    if(id==="dexamethasone") return peds ? "0,6 mg/kg" : "6–10 mg IV/VO";
+    if(id==="prednisone") return peds ? "1–2 mg/kg VO" : "40–60 mg VO";
+    if(id==="racemic_epinephrine") return peds ? "0,5 mL de solução 2,25% nebulizada" : "0,5 mL de solução 2,25% nebulizada";
+    if(id==="pantoprazole") return /hemorragia digestiva/.test(target) ? "80 mg IV ataque + 8 mg/h" : "40 mg IV";
+    if(id==="omeprazole") return "20–40 mg VO";
+    if(id==="metoclopramide") return peds ? "0,1–0,15 mg/kg" : "10 mg IV/VO";
+    if(id==="ibuprofen") return peds ? "10 mg/kg VO" : "400–600 mg VO";
+    if(id==="ketorolac") return "15–30 mg IV/IM";
+    if(id==="colchicine") return "1,2 mg VO + 0,6 mg após 1 h";
+    if(id==="oxytocin") return "10 U IM ou 20–40 U em infusão IV";
+    if(id==="misoprostol") return /hemorragia pos-parto|atonia/.test(target) ? "800–1.000 mcg retal/sublingual" : "conforme protocolo obstétrico";
+    if(id==="methylergometrine") return "0,2 mg IM";
+    if(id==="carboprost") return "250 mcg IM; repetir a cada 15–90 min";
+    if(id==="methotrexate") return "50 mg/m² IM (esquema de dose única)";
+    if(id==="terbutaline") return "0,25 mg SC";
+    if(id==="thiamine") return "100–500 mg IV";
+    if(id==="fomepizole") return "15 mg/kg IV ataque";
+    if(id==="activated_charcoal") return peds ? "1 g/kg VO" : "50 g VO";
+    if(id==="acetylcysteine") return "150 mg/kg IV ataque";
+
+    return "conforme indicação, peso e protocolo";
+  }
+
   function renderActions() {
     const actions=mergedActions();
     if(!GROUPS[state.category])state.category="anamnese";
@@ -1018,7 +1128,7 @@
       </button>`).join("");
     $("plantao-action-title").textContent=GROUPS[state.category].label;
     const search=$("plantao-action-search").value.trim().toLocaleLowerCase('pt-BR');
-    let available=actions.filter(a=>groupOf(a.category)===state.category && (!search||(a.label+" "+(a.subgroup||"")).toLocaleLowerCase('pt-BR').includes(search)));
+    let available=actions.filter(a=>groupOf(a.category)===state.category && (!search||(a.label+" "+(a.subgroup||"")+" "+medicationDoseHint(a)).toLocaleLowerCase('pt-BR').includes(search)));
     if(state.category==="intervir"){
       state.interventionTab=state.interventionTab||"gerais";
       const tabHtml='<div class="plantao-intervention-tabs"><button type="button" data-intervention-tab="gerais" class="'+(state.interventionTab==="gerais"?"active":"")+'">Gerais</button><button type="button" data-intervention-tab="medicamentos" class="'+(state.interventionTab==="medicamentos"?"active":"")+'">Medicamentos</button></div>';
@@ -1029,8 +1139,10 @@
     $("plantao-actions").innerHTML=($("plantao-actions").dataset.tabs||"")+groups.map(group=>`<section class="plantao-action-group"><h3>${esc(group)}</h3>${available.filter(a=>(a.subgroup||CATEGORY_LABELS[a.category]||"Opções")===group).map(action=>{
       const completed=done(action.id);
       const specialRepeat=action.id==="defibrillate";
+      const dose=medicationDoseHint(action);
       return `<button class="plantao-action" type="button" data-case-action="${esc(action.id)}" ${state.busy||(completed&&!action.repeatable&&!specialRepeat)?"disabled":""}>
         <strong>${esc(action.label)}</strong>
+        ${dose?`<span class="plantao-action-dose">Dose: ${esc(dose)}</span>`:""}
         <small>${completed&&!action.repeatable?"Realizado":"+"+fmtTime(action.time_min||0)}${action.role==='disposition'?" · Encerrar atendimento":""}</small>
       </button>`;
     }).join("")}</section>`).join("") || '<p class="plantao-no-actions">Nenhuma opção encontrada.</p>';
