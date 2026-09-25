@@ -422,3 +422,65 @@ body.plantao-monitor-open{overflow:hidden}
   .plantao-monitor.is-expanded .plantao-vital strong{font-size:28px!important}
   .plantao-monitor.is-expanded .plantao-vital:nth-child(5) strong{font-size:19px!important}
 }
+
+
+/* v4.5 — filtros da Sala de Emergência no padrão visual LURIA */
+.plantao-filters{
+  display:flex;
+  gap:10px;
+  align-items:end;
+  flex-wrap:wrap;
+  margin:0 0 18px;
+}
+.plantao-filters label{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:800;
+}
+.plantao-filters select{
+  min-width:205px;
+  height:44px;
+  box-sizing:border-box;
+  padding:0 42px 0 14px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background-color:var(--surface);
+  color:var(--text);
+  font:inherit;
+  font-size:13px;
+  font-weight:750;
+  cursor:pointer;
+  appearance:none;
+  -webkit-appearance:none;
+  background-image:
+    linear-gradient(45deg,transparent 50%,var(--muted) 50%),
+    linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:
+    calc(100% - 18px) 19px,
+    calc(100% - 13px) 19px;
+  background-size:5px 5px,5px 5px;
+  background-repeat:no-repeat;
+  transition:border-color .18s ease,box-shadow .18s ease,background-color .18s ease;
+}
+.plantao-filters select:hover{
+  border-color:var(--accent);
+  background-color:var(--surface-2);
+}
+.plantao-filters select:focus{
+  outline:0;
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--accent-soft);
+}
+.plantao-filters .button{
+  min-height:44px;
+  border-radius:12px;
+}
+@media(max-width:640px){
+  .plantao-filters{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .plantao-filters label{min-width:0}
+  .plantao-filters select{min-width:0;width:100%}
+  .plantao-filters .button{grid-column:1/-1;width:100%}
+}
