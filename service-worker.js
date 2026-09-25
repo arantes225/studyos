@@ -1,4 +1,4 @@
-const CACHE_VERSION = "luria-pwa-v104-admin-callouts-grid";
+const CACHE_VERSION = "luria-pwa-v105-plantao-clinical-cases";
 const STATIC_CACHE = CACHE_VERSION + "-static";
 const RUNTIME_CACHE = CACHE_VERSION + "-runtime";
 
@@ -14,6 +14,7 @@ const APP_SHELL = [
   "/login/",
   "/configuracoes/",
   "/dashboard/",
+  "/plantao/",
   "/assets/css/style.css?v=16.6",
   "/assets/css/landing.css",
   "/assets/css/pwa-mobile.css?v=18",
