@@ -445,6 +445,15 @@
   });
   document.addEventListener("click",()=>closeSiteFilters());
   document.addEventListener("keydown",event=>{if(event.key==="Escape") closeSiteFilters();});
+  $("plantao-report-close")?.addEventListener("click",closeExamReport);
+  $("plantao-report-ok")?.addEventListener("click",closeExamReport);
+  $("plantao-report-overlay")?.addEventListener("click",event=>{
+    if(event.target===event.currentTarget) closeExamReport();
+  });
+  document.addEventListener("keydown",event=>{
+    if(event.key==="Escape" && !$("plantao-report-overlay")?.hidden) closeExamReport();
+  });
+
   $("plantao-filter-clear")?.addEventListener("click",()=>{
     state.filters.specialty="";
     state.filters.difficulty="";
@@ -2366,6 +2375,52 @@
     show("plantao-simulator");
   }
 
+  function patientReportName(){
+    const explicit=String(state.current?.presentation?.patient_name||state.current?.presentation?.name||"").trim();
+    if(explicit) return explicit;
+
+    const female=["Ana Martins","Mariana Alves","Camila Rocha","Juliana Ribeiro","Fernanda Costa","Larissa Gomes","Patrícia Lima","Beatriz Souza"];
+    const male=["Carlos Martins","Rafael Alves","Bruno Rocha","Lucas Ribeiro","Felipe Costa","Gustavo Gomes","Eduardo Lima","André Souza"];
+    const source=String(state.current?.slug||state.current?.id||state.current?.title||"paciente");
+    let hash=0;
+    for(let i=0;i<source.length;i++) hash=(hash*31+source.charCodeAt(i))>>>0;
+    const list=patientSex()==="F"?female:male;
+    return list[hash%list.length];
+  }
+
+  function reportAgeLabel(){
+    const raw=String(state.current?.presentation?.age||"").trim();
+    if(!raw) return "—";
+    if(/ano|mes|mês|dia/i.test(raw)) return raw;
+    const n=Number(raw);
+    return Number.isFinite(n) ? n+" "+(n===1?"ano":"anos") : raw;
+  }
+
+  function reportSexLabel(){
+    return patientSex()==="F" ? "Feminino" : "Masculino";
+  }
+
+  function closeExamReport(){
+    const overlay=$("plantao-report-overlay");
+    if(!overlay) return;
+    overlay.hidden=true;
+    overlay.setAttribute("aria-hidden","true");
+  }
+
+  function openExamReport(action,result){
+    const overlay=$("plantao-report-overlay");
+    if(!overlay) return;
+    $("plantao-report-name").textContent=patientReportName();
+    $("plantao-report-age").textContent=reportAgeLabel();
+    $("plantao-report-sex").textContent=reportSexLabel();
+    $("plantao-report-time").textContent="T+"+fmtTime(state.elapsed);
+    $("plantao-report-exam").textContent=action.label||"Exame";
+    $("plantao-report-text").textContent=String(result||"Sem laudo disponível.");
+    overlay.hidden=false;
+    overlay.setAttribute("aria-hidden","false");
+    requestAnimationFrame(()=>$("plantao-report-close")?.focus());
+  }
+
   async function runAction(actionId) {
     if (!state.current || state.busy || state.session?.status==="completed") return;
     const original=mergedActions().find(x=>x.id===actionId);
@@ -2435,7 +2490,13 @@
           : (["exames","laboratorio","imagem"].includes(action.category)
               ? diagnosticTestResult(action)
               : contextual(action.result||action.label));
-        feed(actionResult+(points<0?` (−${Math.abs(points)} pontos)`:""),points<0?"warning":"event");
+        const isDiagnosticExam=["exames","laboratorio","imagem"].includes(action.category);
+        if(isDiagnosticExam){
+          feed((action.label||"Exame")+" realizado. Laudo disponível.","event");
+          openExamReport(action,actionResult);
+        } else {
+          feed(actionResult+(points<0?` (−${Math.abs(points)} pontos)`:""),points<0?"warning":"event");
+        }
         const diedFromAction=await applyClinicalClass(action,original);
         if(diedFromAction)return;
       }
