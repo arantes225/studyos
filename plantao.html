@@ -17,7 +17,7 @@
   <link rel="icon" type="image/png" href="/assets/img/logos/logo-icone-original.png?v=favicon2">
   <link rel="stylesheet" href="assets/css/style.css?v=16.6">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
-  <link rel="stylesheet" href="assets/css/plantao.css?v=4.9">
+  <link rel="stylesheet" href="assets/css/plantao.css?v=5.0">
   <link rel="canonical" href="/plantao/">
   <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
   <script>(function(){try{if(location.pathname.endsWith("/plantao.html"))history.replaceState(null,"","/plantao/"+location.search+location.hash);}catch(e){}})();</script>
@@ -90,7 +90,9 @@
           <div id="plantao-empty" class="placeholder" hidden>Nenhum caso clínico disponível.</div>
           </div>
           <article id="plantao-telefone" class="plantao-phone-preview" hidden aria-labelledby="plantao-phone-title">
-            <div class="plantao-phone-station">
+            <div class="plantao-phone-layout">
+              <button id="plantao-phone-page-back" class="plantao-phone-page-back" type="button" aria-label="Voltar para o Plantão">← Voltar</button>
+              <div class="plantao-phone-station">
               <div class="plantao-phone-device" aria-label="Telefone de interconsultas">
                 <div class="plantao-phone-notch" aria-hidden="true"></div>
                 <div class="plantao-phone-statusbar" aria-hidden="true">
@@ -129,6 +131,7 @@
                   </section>
                 </div>
               </div>
+            </div>
             </div>
           </article>
         </section>
@@ -232,7 +235,7 @@
   <script src="assets/js/app.js?v=17.8-streak"></script>
   <script src="assets/js/plantao-monitor.js?v=2.3"></script>
   <script src="assets/js/plantao-engine.js?v=3.1"></script>
-  <script src="assets/js/plantao.js?v=6.5"></script>
+  <script src="assets/js/plantao.js?v=6.6"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
 </html>
