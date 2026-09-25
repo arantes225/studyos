@@ -412,8 +412,31 @@
     const score=E.score(state.current,state);
     $("plantao-score-live").textContent=score.total+"/100 · −"+score.penalties+" pts";
   }
+  function patientSex(){
+    const raw=normalizeLabel(state.current?.presentation?.sex||"");
+    return raw==="f" || raw.startsWith("fem") ? "F" : "M";
+  }
+  function genderText(text){
+    let value=String(text||"");
+    if(patientSex()!=="F") return value;
+    const pairs=[
+      ["orientado","orientada"],["consciente","consciente"],["sonolento","sonolenta"],
+      ["confuso","confusa"],["agitado","agitada"],["pálido","pálida"],["corado","corada"],
+      ["normocorado","normocorada"],["desidratado","desidratada"],["hidratado","hidratada"],
+      ["ictérico","ictérica"],["cianótico","cianótica"],["afebril","afebril"],
+      ["acordado","acordada"],["desacordado","desacordada"],["inconsciente","inconsciente"]
+    ];
+    for(const [m,f] of pairs){
+      value=value.replace(new RegExp("\\b"+m+"\\b","gi"),match=>{
+        const out=f;
+        return match[0]===match[0].toUpperCase()?out.toUpperCase():match[0]===match[0].toUpperCase()?"":match[0][0]===match[0][0].toUpperCase()?out[0].toUpperCase()+out.slice(1):out;
+      });
+    }
+    return value;
+  }
   function contextual(text) {
-    return String(text||"").replace(/\{\{(\w+)\}\}/g,(_,key)=>String(state.vitals[key]??"não informado"));
+    const filled=String(text||"").replace(/\{\{(\w+)\}\}/g,(_,key)=>String(state.vitals[key]??"não informado"));
+    return genderText(filled);
   }
 
   function renderVitals() {
