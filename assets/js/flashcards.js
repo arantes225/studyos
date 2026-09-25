@@ -28,9 +28,6 @@ let ankiDeckAreaMap =
 let ankiDeckSubjectMap =
   new Map();
 
-let ankiDeckThemeMap =
-  new Map();
-
 let ankiImportStats = {
   packageFormat: null,
   sourceDecks: [],
@@ -1404,11 +1401,6 @@ async function renderCurrentReview() {
     card.materia
   );
 
-  setTaxonomyChip(
-    "review-theme",
-    card.theme
-  );
-
   document
     .getElementById(
       "review-front"
@@ -2569,7 +2561,6 @@ function clearCreateForm() {
   [
     "create-area",
     "create-materia",
-    "create-theme",
     "create-front",
     "create-back"
   ].forEach((id) => {
@@ -2635,10 +2626,7 @@ function wireCreate() {
             "create-materia"
           ).value.trim();
 
-        const theme =
-          document.getElementById(
-            "create-theme"
-          ).value.trim();
+        const theme = null;
 
         const front =
           document.getElementById(
@@ -2868,15 +2856,7 @@ function normalizeImportedRow(row) {
         ]
       ),
 
-    theme:
-      valueFromRow(
-        row,
-        [
-          "tema",
-          "theme",
-          "assunto"
-        ]
-      ),
+    theme: null,
 
     front_text:
       valueFromRow(
@@ -3662,11 +3642,7 @@ async function parseAnkiPackage(
           )
           || "",
 
-        theme:
-          ankiDeckThemeMap.get(
-            sourceDeck
-          )
-          || "",
+        theme: null,
 
         front_text:
           converted.front,
@@ -4026,67 +4002,7 @@ function renderAnkiDeckMap() {
     );
 
 
-  document
-    .querySelectorAll(
-      "[data-anki-deck-theme]"
-    )
-    .forEach(
-      (input) => {
-        const updateTheme =
-          () => {
-            const index =
-              Number(
-                input.dataset
-                  .ankiDeckTheme
-              );
 
-            const deck =
-              ankiImportStats
-                .sourceDecks[
-                  index
-                ];
-
-            if (!deck) {
-              return;
-            }
-
-            const theme =
-              input.value
-                .trim();
-
-            ankiDeckThemeMap.set(
-              deck,
-              theme
-            );
-
-            importRows =
-              importRows.map(
-                (row) =>
-                  row.source_deck
-                    === deck
-                      ? {
-                          ...row,
-                          theme
-                        }
-                      : row
-              );
-
-            renderImportPreview(
-              false
-            );
-          };
-
-        input.addEventListener(
-          "input",
-          updateTheme
-        );
-
-        input.addEventListener(
-          "change",
-          updateTheme
-        );
-      }
-    );
 
   if (mediaNote) {
     const media =
@@ -4225,13 +4141,6 @@ function renderImportPreview(
 
             <td>
               ${escapeFlashHtml(
-                row.theme
-                || "—"
-              )}
-            </td>
-
-            <td>
-              ${escapeFlashHtml(
                 truncateText(
                   row.front_text,
                   100
@@ -4339,9 +4248,6 @@ async function parseSpreadsheetImport(
   ankiDeckSubjectMap =
     new Map();
 
-  ankiDeckThemeMap =
-    new Map();
-
   ankiImportStats = {
     packageFormat:
       null,
@@ -4413,9 +4319,6 @@ function resetImportUi() {
     new Map();
 
   ankiDeckSubjectMap =
-    new Map();
-
-  ankiDeckThemeMap =
     new Map();
 
   ankiImportStats = {
@@ -4725,21 +4628,7 @@ function wireImport() {
                         || null
                       ),
 
-              theme:
-                importFileKind ===
-                  "anki"
-                    ? (
-                        ankiDeckThemeMap
-                          .get(
-                            row.source_deck
-                          )
-                        || row.theme
-                        || null
-                      )
-                    : (
-                        row.theme
-                        || null
-                      ),
+              theme: null,
 
               front_text:
                 row.front_text,
@@ -4944,7 +4833,6 @@ function refreshLibraryFilterPickers() {
   [
     "library-area",
     "library-materia",
-    "library-theme",
     "library-active"
   ].forEach(
     renderLibraryFilterPicker
@@ -4955,7 +4843,6 @@ function wireLibraryFilterPickers() {
   [
     "library-area",
     "library-materia",
-    "library-theme",
     "library-active"
   ].forEach(selectId => {
     const toggle =
@@ -5091,14 +4978,6 @@ function filteredLibraryCards() {
       ?.value
     || "";
 
-  const theme =
-    document
-      .getElementById(
-        "library-theme"
-      )
-      ?.value
-    || "";
-
   const activeFilter =
     document
       .getElementById(
@@ -5120,13 +4999,6 @@ function filteredLibraryCards() {
       if (
         materia
         && card.materia !== materia
-      ) {
-        return false;
-      }
-
-      if (
-        theme
-        && card.theme !== theme
       ) {
         return false;
       }
@@ -5155,7 +5027,6 @@ function filteredLibraryCards() {
         [
           card.area,
           card.materia,
-          card.theme,
           card.front_text,
           card.back_text
         ]
@@ -5275,14 +5146,6 @@ function openFlashEditDialog(
       card.materia
       || "";
 
-
-  document
-    .getElementById(
-      "flash-edit-theme"
-    )
-    .value =
-      card.theme
-      || "";
 
 
   document
@@ -5440,14 +5303,7 @@ async function saveEditedFlashcard() {
             .trim()
           || null,
 
-        theme:
-          document
-            .getElementById(
-              "flash-edit-theme"
-            )
-            .value
-            .trim()
-          || null,
+        theme: null,
 
         front_text:
           front,
@@ -6141,14 +5997,6 @@ async function exportSelectedFlashcardsPdf() {
       state =
         flashPdfAddBlock(
           doc,
-          "Tema",
-          card.theme,
-          state
-        );
-
-      state =
-        flashPdfAddBlock(
-          doc,
           "Frente",
           card.front_text,
           state
@@ -6534,14 +6382,7 @@ function renderLibrary() {
                     ? `<span class="taxonomy-chip">${escapeFlashHtml(card.materia)}</span>`
                     : ""
                 }
-
-                ${
-                  card.theme
-                    ? `<span class="taxonomy-chip accent">${escapeFlashHtml(card.theme)}</span>`
-                    : ""
-                }
-
-                ${
+${
                   card.shared
                     ? '<span class="flash-shared-badge">Compartilhado</span>'
                     : ""
@@ -6796,15 +6637,12 @@ function populateLibraryTaxonomyFilters() {
   const materiaSelect =
     document.getElementById("library-materia");
 
-  const themeSelect =
-    document.getElementById("library-theme");
-
-  if (!materiaSelect || !themeSelect) {
+  if (!materiaSelect) {
     return;
   }
 
-  const previousMateria = materiaSelect.value;
-  const previousTheme = themeSelect.value;
+  const previousMateria =
+    materiaSelect.value;
 
   const areaCards =
     libraryCards.filter(
@@ -6828,33 +6666,8 @@ function populateLibraryTaxonomyFilters() {
     materiaSelect.value = previousMateria;
   }
 
-  const materia =
-    materiaSelect.value;
-
-  const themes =
-    [...new Set(
-      areaCards
-        .filter(card => !materia || card.materia === materia)
-        .map(card => card.theme)
-        .filter(Boolean)
-    )].sort((a,b) => a.localeCompare(b,"pt-BR"));
-
-  themeSelect.innerHTML =
-    '<option value="">Todos os temas</option>'
-    + themes.map(
-        value => `<option value="${escapeFlashHtml(value)}">${escapeFlashHtml(value)}</option>`
-      ).join("");
-
-  if (themes.includes(previousTheme)) {
-    themeSelect.value = previousTheme;
-  }
-
   renderLibraryFilterPicker(
     "library-materia"
-  );
-
-  renderLibraryFilterPicker(
-    "library-theme"
   );
 }
 
@@ -6921,14 +6734,6 @@ function renderLibraryDecks() {
       ?.value
     || "";
 
-  const selectedTheme =
-    document
-      .getElementById(
-        "library-theme"
-      )
-      ?.value
-    || "";
-
   const selectedArea =
     document
       .getElementById(
@@ -6954,13 +6759,6 @@ function renderLibraryDecks() {
       }
 
       if (
-        selectedTheme
-        && card.theme !== selectedTheme
-      ) {
-        return false;
-      }
-
-      if (
         activeFilter === "active"
         && !card.active
       ) {
@@ -6981,7 +6779,6 @@ function renderLibraryDecks() {
       return [
         card.area,
         card.materia,
-        card.theme,
         card.front_text,
         card.back_text
       ]
@@ -7628,15 +7425,6 @@ function wireLibrary() {
 
   document
     .getElementById(
-      "library-theme"
-    )
-    ?.addEventListener(
-      "change",
-      renderLibrary
-    );
-
-  document
-    .getElementById(
       "library-active"
     )
     ?.addEventListener(
@@ -7654,11 +7442,9 @@ function wireLibrary() {
         const cards = filteredLibraryCards();
         const area = document.getElementById("library-area")?.value;
         const materia = document.getElementById("library-materia")?.value;
-        const theme = document.getElementById("library-theme")?.value;
-
         startExtraReview(
           cards,
-          [area,materia,theme].filter(Boolean).join(" · ") || "Biblioteca"
+          [area,materia].filter(Boolean).join(" · ") || "Biblioteca"
         );
       }
     );
@@ -7676,11 +7462,9 @@ function wireLibrary() {
 
         const area = document.getElementById("library-area")?.value;
         const materia = document.getElementById("library-materia")?.value;
-        const theme = document.getElementById("library-theme")?.value;
-
         await shareFlashcardDeck(
           cards,
-          [area,materia,theme].filter(Boolean).join(" · ") || "Deck LURIA"
+          [area,materia].filter(Boolean).join(" · ") || "Deck LURIA"
         );
       }
     );
