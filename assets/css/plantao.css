@@ -692,3 +692,42 @@ body.plantao-monitor-open{overflow:hidden}
     gap:4px;
   }
 }
+
+
+/* Filtros da Sala de Emergência no padrão visual da LURIA */
+.plantao-filters{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:0 0 18px}
+.plantao-site-filter{display:flex;flex-direction:column;gap:6px;min-width:210px}
+.plantao-filter-label{font-size:.82rem;font-weight:700;color:var(--muted,#667085)}
+.plantao-site-select{position:relative}
+.plantao-site-select-trigger{
+  width:100%;min-height:42px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:10px 12px;border:1px solid var(--border,#d9e2ec);border-radius:12px;
+  background:var(--surface,#fff);color:var(--text,#1d2939);font:inherit;font-weight:700;
+  cursor:pointer;box-shadow:0 1px 2px #0f172a0a;transition:border-color .16s ease,box-shadow .16s ease,background .16s ease
+}
+.plantao-site-select-trigger:hover{background:var(--surface-2,#f8fafc)}
+.plantao-site-select-trigger[aria-expanded="true"]{border-color:var(--primary,#184888);box-shadow:0 0 0 3px #18488818}
+.plantao-site-select-list{
+  position:absolute;z-index:50;top:calc(100% + 7px);left:0;right:0;max-height:280px;overflow:auto;
+  padding:6px;border:1px solid var(--border,#d9e2ec);border-radius:14px;background:var(--surface,#fff);
+  box-shadow:0 16px 38px #0f172a20
+}
+.plantao-site-select-option{
+  width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 11px;border:0;border-radius:10px;background:transparent;color:var(--text,#1d2939);
+  font:inherit;font-size:13px;text-align:left;cursor:pointer
+}
+.plantao-site-select-option:hover{background:var(--surface-2,#f4f7fb)}
+.plantao-site-select-option.selected{background:#18488812;color:var(--primary,#184888);font-weight:800}
+.plantao-site-select-check{opacity:0;font-weight:900}
+.plantao-site-select-option.selected .plantao-site-select-check{opacity:1}
+@media(max-width:640px){
+  .plantao-filters{display:grid;grid-template-columns:1fr 1fr}
+  .plantao-site-filter{min-width:0}
+  .plantao-filters .button{grid-column:1/-1}
+}
+@media(max-width:430px){
+  .plantao-filters{grid-template-columns:1fr}
+  .plantao-filters .button{grid-column:auto}
+  .plantao-site-select-list{max-height:240px}
+}
