@@ -123,6 +123,7 @@
     buildSiteFilter("specialty",specialties);
     buildSiteFilter("difficulty",difficulties);
     renderLibrary();
+    setPlantaoMode("emergency");
   }
 
   function bestScore(caseId) {
@@ -173,8 +174,18 @@
 
     const emergencyPanel=$("plantao-emergency-panel");
     const phoneSection=$("plantao-telefone");
-    if(emergencyPanel) emergencyPanel.hidden=phone;
-    if(phoneSection) phoneSection.hidden=!phone;
+    const hero=$("plantao-hero");
+
+    if(emergencyPanel){
+      emergencyPanel.hidden=phone;
+      emergencyPanel.style.display=phone ? "none" : "";
+      emergencyPanel.setAttribute("aria-hidden",phone ? "true" : "false");
+    }
+    if(phoneSection){
+      phoneSection.hidden=!phone;
+      phoneSection.style.display=phone ? "grid" : "none";
+      phoneSection.setAttribute("aria-hidden",phone ? "false" : "true");
+    }
 
     const emergencyCard=$("plantao-emergency-mode-card");
     const phoneCard=$("plantao-phone-mode-card");
@@ -186,11 +197,14 @@
       if(active) card.setAttribute("aria-current","page"); else card.removeAttribute("aria-current");
     });
 
+    document.body.classList.toggle("plantao-phone-mode",phone);
+    document.body.classList.toggle("plantao-emergency-mode",!phone);
+
     if(phone){
       renderPhoneCases();
-      requestAnimationFrame(()=>phoneSection?.scrollIntoView({behavior:"smooth",block:"start"}));
+      window.scrollTo({top:0,behavior:"instant"});
     }else{
-      requestAnimationFrame(()=>$("plantao-emergencia")?.scrollIntoView({behavior:"smooth",block:"start"}));
+      window.scrollTo({top:0,behavior:"instant"});
     }
   }
 
