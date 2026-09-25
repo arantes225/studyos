@@ -111,11 +111,12 @@
             <div class="plantao-final-score"><strong id="plantao-final-score">0</strong><span>/100</span></div>
           </div>
           <div class="plantao-debrief-grid">
-            <article class="panel"><span class="metric-label">Pulo do Gato</span><p id="plantao-pulo" class="plantao-pulo"></p></article>
+            <article class="panel plantao-pulo-panel"><span class="metric-label">Pulo do Gato</span><p id="plantao-pulo" class="plantao-pulo"></p><details class="plantao-explanation"><summary>Entenda o caso</summary><p id="plantao-case-explanation"></p></details></article>
             <article class="panel"><span class="metric-label">Seu desempenho</span><div id="plantao-performance" class="plantao-performance"></div></article>
-            <article class="panel"><span class="metric-label">Condutas-chave</span><div id="plantao-key-actions" class="plantao-review-list"></div></article>
-            <article class="panel"><span class="metric-label">Erros de sequência</span><div id="plantao-sequence-errors" class="plantao-review-list"></div></article>
+            <article class="panel plantao-wide"><span class="metric-label">Condutas-chave</span><div id="plantao-key-actions" class="plantao-review-list"></div></article>
+            <article class="panel plantao-wide"><span class="metric-label">Condutas erradas</span><div id="plantao-wrong-actions" class="plantao-review-list"></div></article>
             <article class="panel"><span class="metric-label">Erros de alto impacto</span><div id="plantao-danger-actions" class="plantao-review-list"></div></article>
+            <article class="panel"><span class="metric-label">Erros de sequência</span><div id="plantao-sequence-errors" class="plantao-review-list"></div></article>
           </div>
           <article class="panel plantao-sources"><span class="metric-label">Fontes do caso</span><div id="plantao-sources"></div></article>
           <div class="plantao-debrief-actions"><button id="plantao-retry" class="button primary" type="button">Refazer este caso</button><button id="plantao-all-cases" class="button secondary" type="button">Voltar aos casos</button></div>
@@ -129,7 +130,7 @@
   <script src="assets/js/app.js?v=17.4"></script>
   <script src="assets/js/plantao-monitor.js?v=2.2"></script>
   <script src="assets/js/plantao-engine.js?v=3.0"></script>
-  <script src="assets/js/plantao.js?v=3.7"></script>
+  <script src="assets/js/plantao.js?v=3.8"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
 </html>
