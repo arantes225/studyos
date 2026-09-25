@@ -378,7 +378,7 @@
 
   function renderVitals() {
     const v=state.vitals || {};
-    window.PlantaoMonitor?.update(v, {slug:state.current?.slug,enabled:state.monitorOn});
+    window.PlantaoMonitor?.update(v, {slug:state.current?.slug,enabled:state.monitorOn,patient_image:state.current?.presentation?.patient_image,unconscious_image:state.current?.presentation?.unconscious_image});
     const items=[
       ["FC",v.hr,"bpm"],
       ["SpO₂",v.spo2,"%"],
