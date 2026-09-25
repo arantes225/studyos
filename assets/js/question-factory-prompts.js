@@ -1,7 +1,7 @@
 /* Contrato único da fábrica. Não inserir resultados históricos como identidade editorial. */
 (function (root) {
   'use strict';
-  const VERSION = '3.5';
+  const VERSION = '3.6';
   const SCHEMA_VERSION = '2.0';
   const rubric = { scientific:25, answer_key:20, answer_source:15, distractors:10, explanations:10, style:10, writing:5, difficulty:5 };
   const editable = ['enunciado','alternativa_a','alternativa_b','alternativa_c','alternativa_d','gabarito','explicacao_a','explicacao_b','explicacao_c','explicacao_d','mensagem_chave','area','tema','subtema','dificuldade','fonte_instituicao','fonte_documento','fonte_ano','fonte_url','answer_source_institution','answer_source_document','answer_source_year','answer_source_url','answer_source_section','answer_source_note'];
@@ -127,11 +127,12 @@ Somente perfis ainda não aprovados devem registrar edição, URL oficial, IDs/p
     const operationalAddress = blockCode || batchCode || null;
     const isPerplexityBridgeStage = ['perplexity_initial','perplexity_reaudit'].includes(stage);
     const bridgeBase = 'https://www.resibulando.online/qf-r8K2mV7qL4x9P1cF/';
-    const bridgeUrl = blockCode ? bridgeBase + '?block=' + encodeURIComponent(blockCode) : bridgeBase;
+    const bridgeUrl = blockCode ? bridgeBase + blockCode + '.json' : bridgeBase;
+    const bridgeSubmitUrl = blockCode ? bridgeBase + '?block=' + encodeURIComponent(blockCode) : bridgeBase;
     const workspace = ctx.prompt_workspace_url || ctx.workspace_url || (isPerplexityBridgeStage ? bridgeUrl : 'https://www.resibulando.online/admin/');
     const source = ctx.prompt_source_instruction || (isPerplexityBridgeStage
       ? (blockCode
-          ? `Abra EXATAMENTE ${bridgeUrl}. Confirme na própria página que block_code=${blockCode}, selecione a etapa ${stage}, clique em "Carregar bloco" e use exclusivamente o JSON exibido em "Dados publicados do bloco". Essa página consulta as versões atuais da Fábrica; não use cópia antiga nem o histórico da conversa.`
+          ? `Abra EXATAMENTE ${bridgeUrl}. Esse endereço retorna JSON público direto do bloco ${blockCode}, sem depender de JavaScript, login ou sessão autenticada. Use EXCLUSIVAMENTE esse JSON como fonte de leitura. NÃO use anexos, arquivos enviados no chat, pasted_text, exportações anteriores ou histórico da conversa como substituto.`
           : 'Este prompt do Perplexity está sem block_code concreto. NÃO executar até receber um bloco L001-B01 a L001-B05.')
       : (blockCode
           ? `Entre no Admin da LURIA/Resibulando → Fábrica de questões → Produção em tempo real → lote ${batchCode} → bloco ${blockCode}. Leia exclusivamente as questões e versões atuais desse bloco.`
@@ -140,7 +141,7 @@ Somente perfis ainda não aprovados devem registrar edição, URL oficial, IDs/p
             : 'Este é um prompt-modelo sem lote/bloco vinculado. NÃO executar nem persistir até receber um endereço operacional concreto.'));
     const destination = ctx.prompt_return_instruction || (isPerplexityBridgeStage
       ? (blockCode
-          ? `Na MESMA página ${bridgeUrl}, use o formulário "Enviar resultado". Cole o JSON completo desta etapa e clique em "Enviar parecer". Só considere recebido se a página retornar um protocolo/receipt_id. O formulário é uma caixa de entrada isolada e NÃO modifica diretamente a questão principal.`
+          ? `Depois de auditar a partir de ${bridgeUrl}, abra EXATAMENTE ${bridgeSubmitUrl} e use o formulário "Enviar resultado". Cole o JSON completo desta etapa e clique em "Enviar parecer". Só considere recebido se a página retornar um protocolo/receipt_id. O formulário é uma caixa de entrada isolada e NÃO modifica diretamente a questão principal.`
           : 'Sem bloco concreto: não enviar nada.')
       : (blockCode
           ? `Grave o resultado exclusivamente no lote ${batchCode}, bloco ${blockCode}, na etapa indicada. Nunca escrever em outro bloco.`
@@ -220,11 +221,12 @@ ${destination}
 ${stagePersistence}
 
 REGRA DE ACESSO E PERSISTÊNCIA:
-${isPerplexityBridgeStage ? `- PERPLEXITY: use o NAVEGADOR para abrir a página pública exata acima. Ela é a única fonte operacional desta etapa.
-- Confirme visualmente/estruturalmente block_code=${blockCode || 'NÃO VINCULADO'} e review_stage=${stage}.
-- Clique em "Carregar bloco" antes de iniciar; leia somente "Dados publicados do bloco".
-- Não tente acessar /admin/, Supabase, SQL, RPC, connector, API key ou secrets para obter ou devolver os itens.
-- Depois de produzir o JSON, cole-o no formulário "Enviar resultado" da mesma página e envie.
+${isPerplexityBridgeStage ? `- PERPLEXITY: use o NAVEGADOR para abrir o JSON público exato acima. Ele é a única fonte operacional desta etapa.
+- Confirme dentro do próprio JSON block_code=${blockCode || 'NÃO VINCULADO'}.
+- NÃO use anexos, pasted_text, arquivos recebidos, exportações, PDFs, histórico da conversa ou cópias locais como fonte de execução.
+- NÃO exija sessão autenticada, runner, conector Supabase, RPC signature ou leitura direta do banco. Para esta etapa, o JSON público foi criado justamente para substituir essa dependência operacional.
+- Não tente acessar /admin/, Supabase, SQL, RPC, connector, API key ou secrets para obter os itens.
+- Depois de produzir o JSON, abra a página de envio indicada em ONDE DEVOLVER e use o formulário.
 - Só marque bridge_write.received=true se a página retornar receipt_id; copie o receipt_id para a saída final.
 - receipt_id = recebimento no bridge, NÃO importação definitiva, NÃO coverage e NÃO aprovação da etapa.
 - Se o navegador não conseguir abrir a página ou o formulário falhar, responda ACCESS_REQUIRED ou WRITE_FAILED com o erro real e devolva o JSON completo no chat para contingência.` : `- Use o site/admin e os conectores autorizados definidos para esta etapa interna.
@@ -482,7 +484,8 @@ Após as três aprovações da versão atual, aguardar aprovação humana final 
     const batchCode = ctx.batch_code || (batchNumber == null ? null : 'L'+String(Number(batchNumber)).padStart(3,'0'));
     const blockCode = ctx.block_code || (batchCode && blockNumber != null ? batchCode+'-B'+String(Number(blockNumber)).padStart(2,'0') : null);
     const bridgeBase = 'https://www.resibulando.online/qf-r8K2mV7qL4x9P1cF/';
-    const bridgeUrl = blockCode ? bridgeBase + '?block=' + encodeURIComponent(blockCode) : bridgeBase;
+    const bridgeUrl = blockCode ? bridgeBase + blockCode + '.json' : bridgeBase;
+    const bridgeSubmitUrl = blockCode ? bridgeBase + '?block=' + encodeURIComponent(blockCode) : bridgeBase;
     const stage = isReaudit ? 'perplexity_reaudit' : 'perplexity_initial';
 
     return `FLUXO OPERACIONAL — PERPLEXITY · ${isReaudit ? 'REAUDITORIA' : 'AUDITORIA INDEPENDENTE'}
@@ -498,11 +501,11 @@ block_code=${blockCode || 'NÃO VINCULADO'}
 review_stage=${stage}
 
 PASSO A PASSO:
-1. Abra a URL exata acima no navegador.
-2. Confirme que a página mostra o bloco ${blockCode || 'esperado'}. Se não coincidir, PARE e retorne ADDRESS_MISMATCH.
-3. No seletor "Etapa", escolha ${stage}.
-4. Defina a faixa desejada (1–200 ou subconjunto) e clique em "Carregar bloco".
-5. Use EXCLUSIVAMENTE o JSON exibido em "Dados publicados do bloco". Essa é a fonte de verdade operacional desta execução.
+1. Abra a URL exata acima no navegador. Ela termina em .json e deve abrir diretamente o conteúdo do bloco, sem login e sem JavaScript.
+2. Confirme dentro do JSON que block_code=${blockCode || 'esperado'}. Se não coincidir, PARE e retorne ADDRESS_MISMATCH.
+3. NÃO use arquivo anexado, pasted_text, export, PDF, texto colado ou memória da conversa. Mesmo que exista um anexo, ignore-o para execução.
+4. NÃO peça runner autenticado, sessão Supabase, connector, RPC signature ou acesso ao banco. Nesta etapa, o JSON público é deliberadamente a fonte operacional fornecida pela LURIA.
+5. Use EXCLUSIVAMENTE os itens presentes nesse JSON público.
 6. Para cada questão, preserve exatamente question_id e item_version.
 7. ${isReaudit ? 'Reavalie a versão atual exibida. Se a pendência veio de discordância sem patch, mantenha a mesma item_version; não crie versão artificial.' : 'Antes de confrontar o gabarito, resolva independentemente o item usando enunciado + alternativas e registre independent_answer no próprio review.'}
 8. Faça a auditoria completa: ciência; gabarito; SBA; ambiguidade; dependência da vinheta; surface_guess_without_vignette; surface_guess_confidence; lexical_asymmetry; melhor distrator; best_distractor_rationale; counterfactual_change; functional_killer_1/2; qualidade dos distratores; explicações A-D; Pulo do Gato; dificuldade; estilo; fontes e proposed_change.
@@ -510,8 +513,8 @@ PASSO A PASSO:
 10. Status por item: approved | needs_revision | rejected.
 11. Monte um JSON válido com schema_version, review_stage="${stage}", reviewer="Perplexity", batch_number, block_number, reviews[] e stage_metrics.
 12. Não altere a questão principal. proposed_change é recomendação, não edição.
-13. Vá ao formulário "Enviar resultado" da MESMA página.
-14. Cole o JSON completo e clique em "Enviar parecer".
+13. Abra a página de envio: ${bridgeSubmitUrl}
+14. No formulário "Enviar resultado", cole o JSON completo e clique em "Enviar parecer".
 15. Se a página retornar protocolo/receipt_id, registre bridge_write={attempted:true,received:true,receipt_id:"..."}.
 16. Se o envio falhar, registre bridge_write={attempted:true,received:false,error:"ERRO REAL"} e devolva também o JSON completo no chat.
 17. NÃO declare "persistido no Supabase", "coverage completo", "200/200 no banco" ou "etapa finalizada" apenas porque recebeu receipt_id. O formulário é uma caixa de entrada isolada para validação/importação posterior.
@@ -524,6 +527,12 @@ REGRAS DE ESCOPO:
 - Pode enviar 1 questão ou qualquer quantidade conveniente por formulário; todos os reviews do envio devem pertencer ao mesmo bloco e à mesma etapa.
 
 ${segment(item,stage,ctx)}
+
+TRAVA CONTRA RESPOSTA ERRADA:
+- É INCORRETO responder SOURCE_NOT_AUTHORITATIVE_FOR_EXECUTION apenas porque existe um arquivo/anexo no chat.
+- É INCORRETO exigir leitura direta do Supabase, sessão autenticada, runner ou confirmação de RPC para iniciar esta etapa.
+- A fonte operacional desta etapa é exatamente o JSON público em ${bridgeUrl}.
+- Se esse URL abrir e o block_code estiver correto, execute a auditoria normalmente.
 
 SAÍDA HUMANA OBRIGATÓRIA:
 Além do JSON, produza relatório questão por questão: "ID — APROVADA/REVISAR/REJEITADA — motivo: ...".
