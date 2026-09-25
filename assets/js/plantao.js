@@ -551,8 +551,17 @@
   function classifyAction(action,original) {
     const slug=state.current?.slug||"";
     const id=original?.id||action.id;
-    if(slug==="af-unstable-ed" && ["defibrillate","shock1","shock2","shock3","unsync_shock"].includes(id))
-      return {level:"mortal",reason:"Você aplicou desfibrilação não sincronizada em um paciente com taquiarritmia com pulso. O paciente deteriorou para assistolia."};
+    const target=normalizeLabel([state.current?.title,state.current?.debrief?.diagnosis,state.current?.initial_vitals?.rhythm].filter(Boolean).join(" "));
+    const shockAction=["defibrillate","shock1","shock2","shock3","unsync_shock"].includes(id);
+    const shockableArrest =
+      target.includes("fibrilacao ventricular") ||
+      target.includes("fv") ||
+      target.includes("taquicardia ventricular sem pulso") ||
+      target.includes("tv sem pulso");
+    // Regra do simulador: choque NÃO sincronizado fora de FV/TV sem pulso é uma conduta mortal.
+    // Cardioversão sincronizada continua sendo uma ação distinta para taquiarritmias com pulso.
+    if(shockAction && !shockableArrest)
+      return {level:"mortal",reason:"Você aplicou desfibrilação não sincronizada em um paciente sem ritmo chocável de parada. A conduta provocou deterioração fatal no caso simulado."};
     if(slug==="vf-arrest-ed" && !done("cpr")) {
       if(id==="cricothyrotomy") return {level:"mortal",reason:"Cricotireoidostomia realizada em um paciente em parada cardiorrespiratória antes das medidas imediatas de ressuscitação."};
       if(["ct_head","ct_chest","ct_abdomen","mri_brain","mri_spine","xray_chest","xray_abdomen"].includes(id))
