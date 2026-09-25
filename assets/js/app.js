@@ -4402,16 +4402,38 @@ async function iniciarApp() {
         info.eyebrow;
     });
 
-  document.getElementById("logout")
-    ?.addEventListener(
-      "click",
-      async () => {
-        await sb.auth.signOut();
-        window.location.replace(
-          "/login/"
-        );
+  // Logout resiliente a re-renderizações da sidebar.
+  // A sidebar é substituída após carregar perfil/permissões; por isso o listener
+  // precisa ficar em um ancestral estável, não no botão que é recriado.
+  if (!document.documentElement.dataset.logoutBound) {
+    document.documentElement.dataset.logoutBound = "1";
+    document.addEventListener("click", async (event) => {
+      const button = event.target.closest?.("#logout");
+      if (!button) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      if (button.dataset.busy === "1") return;
+
+      button.dataset.busy = "1";
+      button.setAttribute("aria-busy", "true");
+
+      try {
+        const { error } = await sb.auth.signOut({ scope: "local" });
+        if (error) console.warn("Logout remoto/local retornou erro; limpando sessão local.", error);
+      } catch (error) {
+        console.warn("Falha ao encerrar sessão pelo Supabase; limpando sessão local.", error);
+      } finally {
+        try {
+          localStorage.removeItem("sb-sxdsfklllilhdyuamvvg-auth-token");
+          sessionStorage.clear();
+        } catch (_) {}
+
+        // Landing pública é a saída mais previsível no navegador e no PWA.
+        window.location.replace("/");
       }
-    );
+    });
+  }
 
   prepararMobileMenu();
   prepararSidebarDesktop(
