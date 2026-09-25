@@ -33,6 +33,9 @@ const scheduleState = {
   maxLessonsPerDay:
     1,
 
+  targetExams:
+    [],
+
   addMode:
     "automatic",
 
@@ -5229,7 +5232,7 @@ function setBaseScheduleStatus(text, type = "") {
 async function loadSchedulePreferences() {
   const { data, error } = await scheduleSb
     .from("user_settings")
-    .select("theory_study_weekdays,max_lessons_per_day")
+    .select("theory_study_weekdays,max_lessons_per_day,target_exams")
     .eq("user_id", scheduleState.user.id)
     .maybeSingle();
 
@@ -5259,13 +5262,27 @@ async function loadSchedulePreferences() {
       )
     );
 
+  scheduleState.targetExams =
+    window.LuriaExamPriority?.sanitizeExams(
+      data?.target_exams || []
+    ) || [];
+
   window.LuriaStudyMode?.apply("medicine");
   renderBaseSchedulePreview();
 }
 
 function currentBaseScheduleRows() {
   const data = window.LURIA_BASE_SCHEDULES || {};
-  return data.medicine || [];
+  const rows = data.medicine || [];
+
+  if (!scheduleState.targetExams.length || !window.LuriaExamPriority) {
+    return rows;
+  }
+
+  return window.LuriaExamPriority.sortRows(
+    rows,
+    scheduleState.targetExams
+  );
 }
 
 function currentBaseStudyDays() {
@@ -5331,19 +5348,45 @@ function renderBaseSchedulePreview() {
   const container = document.getElementById("base-schedule-deck");
   const count = document.getElementById("base-schedule-count");
   const daysLabel = document.getElementById("base-schedule-days-label");
+  const prioritySummary = document.getElementById("base-schedule-priority-summary");
   if (!container || !count) return;
 
   const rows = currentBaseScheduleRows();
   count.textContent = `${rows.length} aulas`;
   if (daysLabel) daysLabel.textContent = currentBaseStudyDays().map((day) => BASE_WEEKDAY_LABELS[day]).join(" · ");
 
-  container.innerHTML = rows.map((row) => `
-    <article class="base-schedule-card">
-      <span>Aula ${Number(row.aula || 0)}</span>
-      <strong>${escapeScheduleHtml(row.theme)}</strong>
-      <small>${escapeScheduleHtml(row.area)}</small>
-    </article>
-  `).join("");
+  if (prioritySummary) {
+    prioritySummary.textContent = scheduleState.targetExams.length
+      ? `Prioridade cruzada: ${scheduleState.targetExams.join(" · ")}`
+      : "Sem provas-alvo: ordem padrão do Cronograma Base";
+  }
+
+  container.innerHTML = rows.map((row, index) => {
+    const priority = row.examPriority
+      || window.LuriaExamPriority?.evaluate(
+        row.theme,
+        row.area,
+        scheduleState.targetExams
+      );
+
+    const priorityLabel =
+      window.LuriaExamPriority?.label(priority) || "";
+
+    const priorityBadge = priorityLabel
+      ? `<em class="exam-priority-badge ${priority.tier}">${priorityLabel} · ${priority.coverage}/${priority.total}</em>`
+      : "";
+
+    return `
+      <article class="base-schedule-card">
+        <div class="base-schedule-card-top">
+          <span>Prioridade ${index + 1}</span>
+          ${priorityBadge}
+        </div>
+        <strong>${escapeScheduleHtml(row.theme)}</strong>
+        <small>${escapeScheduleHtml(row.area)}</small>
+      </article>
+    `;
+  }).join("");
 }
 
 function isoWeekdayForBase(date) {
@@ -7138,6 +7181,15 @@ function renderThemeLibrary() {
           ? `Concluída · ${formatTopicDate(topic)}`
           : formatTopicDate(topic);
 
+      const examPriority = window.LuriaExamPriority?.evaluate(
+        topic.theme,
+        topic.area,
+        scheduleState.targetExams
+      );
+
+      const examPriorityLabel =
+        window.LuriaExamPriority?.label(examPriority) || "";
+
       return `
         <article class="theme-library-row with-selection ${isCompleted ? "completed" : ""}">
 
@@ -7163,6 +7215,11 @@ function renderThemeLibrary() {
                 || "Sem matéria"
               )}
             </small>
+            ${examPriorityLabel ? `
+              <em class="exam-priority-badge ${examPriority.tier}">
+                ${examPriorityLabel} · ${examPriority.coverage}/${examPriority.total}
+              </em>
+            ` : ""}
           </div>
 
           <div class="theme-library-cell hide-medium">
