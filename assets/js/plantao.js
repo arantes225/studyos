@@ -63,15 +63,13 @@
     if (!user) return;
     state.user=user;
 
-    // Carrega os casos primeiro. Sessões são secundárias e nunca podem zerar a biblioteca.
-    let casesRes = await sb.from("clinical_cases")
-      .select("id,slug,title,setting,specialty,difficulty,summary,presentation,initial_vitals,actions,deterioration,completion_rules,debrief,source_refs,version")
-      .eq("active",true)
-      .order("title");
+    // Plantão é restrito ao admin; busca os casos por RPC administrativo.
+    // Isso evita depender da combinação de RLS/cache de sessão para montar a biblioteca.
+    let casesRes = await sb.rpc("admin_list_active_clinical_cases");
 
-    // Retry explícito para sessão recém-restaurada/PWA retomado.
+    // Fallback defensivo para instalações antigas enquanto a migration propaga.
     if (casesRes.error) {
-      await new Promise(resolve=>setTimeout(resolve,350));
+      console.warn("Plantão: RPC de casos falhou; tentando leitura direta.", casesRes.error);
       casesRes = await sb.from("clinical_cases")
         .select("id,slug,title,setting,specialty,difficulty,summary,presentation,initial_vitals,actions,deterioration,completion_rules,debrief,source_refs,version")
         .eq("active",true)
@@ -81,10 +79,10 @@
     if (casesRes.error) {
       console.error("Plantão: falha ao carregar casos",casesRes.error);
       $("plantao-empty").hidden=false;
-      $("plantao-empty").textContent="Não foi possível carregar os casos clínicos. Recarregue a página.";
+      $("plantao-empty").textContent="Não foi possível carregar os casos clínicos.";
       return;
     }
-    state.cases=casesRes.data || [];
+    state.cases=Array.isArray(casesRes.data) ? casesRes.data : [];
 
     const sessionsRes = await sb.from("clinical_case_sessions")
       .select("id,case_id,status,started_at,completed_at,score,result")
