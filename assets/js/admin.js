@@ -2754,10 +2754,10 @@
     const block = Number(button.dataset.qfAutoBlock);
     const start = Number(button.dataset.qfAutoStart);
     const end = Number(button.dataset.qfAutoEnd);
-    const expected = end - start + 1;
+    const expected = end-start+1;
 
     if (expected !== 50) {
-      window.alert("Perplexity Initial deve processar exatamente 50 questões por vez.");
+      window.alert("Perplexity Initial deve processar exatamente 50 questões por faixa.");
       return;
     }
 
@@ -2774,35 +2774,66 @@
 
     button.dataset.qfAutoRunning = "1";
     button.disabled = true;
-    button.textContent = "Gerando 50 pareceres...";
+    let jobId = button.dataset.qfJobId || null;
 
     try {
       const batchCode = "L" + String(batch).padStart(3,"0");
       const blockCode = batchCode + "-B" + String(block).padStart(2,"0");
+      let complete = false;
+      let safety = 0;
 
-      const result = await sb.functions.invoke("question-factory-perplexity-initial-batch", {
-        body: { batch_code:batchCode, block_code:blockCode, start, end }
-      });
+      while (!complete && safety < 80) {
+        safety += 1;
+        const result = await sb.functions.invoke("question-factory-perplexity-initial-batch", {
+          body: {
+            batch_code:batchCode,
+            block_code:blockCode,
+            start,
+            end,
+            job_id:jobId
+          }
+        });
 
-      if (result.error) throw new Error(await edgeErrorMessage(result.error));
-      const data = result.data;
-      if (!data || data.ok !== true) {
-        throw new Error(data && (data.message || data.error) || "A auditoria Perplexity Initial falhou.");
+        if (result.error) throw new Error(await edgeErrorMessage(result.error));
+        const data = result.data;
+        if (!data || data.ok !== true) {
+          throw new Error(data && (data.message || data.error) || "A auditoria Perplexity Initial falhou.");
+        }
+
+        if (data.job_id) {
+          jobId = String(data.job_id);
+          button.dataset.qfJobId = jobId;
+        }
+
+        if (data.phase === "staging") {
+          const validated = Number(data.validated_count || 0);
+          const pending = Number(data.pending_count ?? Math.max(0,expected-validated));
+          button.textContent = validated + "/" + expected + " · " + pending + " pend.";
+          continue;
+        }
+
+        if (data.phase === "completed") {
+          const coverage = data.coverage || {};
+          const persisted = Number(coverage.persisted || 0);
+          const pending = Array.isArray(coverage.pending_ids)
+            ? coverage.pending_ids.length
+            : Math.max(0,expected-persisted);
+
+          if (persisted !== expected || pending !== 0 || coverage.complete !== true) {
+            throw new Error("PERSISTENCE_COVERAGE_MISMATCH: " + persisted + "/" + expected + " persistidos; " + pending + " pendentes.");
+          }
+
+          complete = true;
+          button.dataset.qfAutoComplete = "1";
+          button.textContent = "Q" + String(start).padStart(3,"0") + "–Q" + String(end).padStart(3,"0") + " ✓";
+          button.title = expected + " reviews Perplexity Initial confirmados na versão atual.";
+          break;
+        }
       }
 
-      const coverage = data.coverage || {};
-      const persisted = Number(coverage.persisted || 0);
-      const pending = Array.isArray(coverage.pending_ids)
-        ? coverage.pending_ids.length
-        : Math.max(0, expected - persisted);
-
-      if (persisted !== expected || pending !== 0 || coverage.complete !== true) {
-        throw new Error("PERSISTENCE_COVERAGE_MISMATCH: " + persisted + "/" + expected + " persistidos; " + pending + " pendentes.");
+      if (!complete) {
+        throw new Error("Worker interrompido pelo limite de segurança antes de 50/50.");
       }
-
-      button.dataset.qfAutoComplete = "1";
-      button.textContent = "Q" + String(start).padStart(3,"0") + "–Q" + String(end).padStart(3,"0") + " ✓";
-      button.title = expected + " reviews Perplexity Initial confirmados na versão atual.";
 
       await Promise.all([
         loadQuestionFactory(),
@@ -2811,11 +2842,11 @@
         loadQuestionFactoryQuality()
       ]);
     } catch (error) {
-      console.error("Falha na auditoria Perplexity Initial de 50 itens:", error);
+      console.error("Falha no worker Perplexity Initial:", error);
       button.textContent = "Erro · retomar";
       button.title = error && error.message || String(error);
       window.alert(
-        "Perplexity Initial não foi concluído. Nenhum sucesso será declarado sem 50/50 persistidos.\n\n"
+        "Perplexity Initial foi interrompido. O staging do job foi preservado e será retomado da próxima questão pendente.\n\n"
         + (error && error.message || String(error))
       );
     } finally {
