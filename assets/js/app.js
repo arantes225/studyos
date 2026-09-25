@@ -424,7 +424,7 @@ function sidebarMarkup(user, profile = null, isAdmin = false) {
           <a class="nav-sublink ${page === "flashcards" ? "active" : ""}" href="/flashcards/">Flashcards</a>
           <a class="nav-sublink ${page === "erros" ? "active" : ""}" href="/caderno-erros/">Caderno de erros</a>
           <a class="nav-sublink ${page === "questoes" ? "active" : ""}" href="/questoes-simulados/">Questões e Simulados</a>
-          ${isAdmin === true ? `<a class="nav-sublink ${page === "plantao" ? "active" : ""}" href="/plantao/">Plantão</a>` : ""}
+          <a class="nav-sublink ${page === "plantao" ? "active" : ""}" href="/plantao/">Plantão</a>
         </div>
       </div>
 
@@ -4322,8 +4322,10 @@ async function iniciarApp() {
   let acessoAdmin =
     acessoAdminInicial;
 
+  // O Plantão é um módulo do produto e não deve redirecionar o usuário para o
+  // Dashboard quando a checagem administrativa falha. Somente /admin exige admin.
   if (
-    (page === "admin" || page === "plantao")
+    page === "admin"
     && acessoAdmin !== true
   ) {
     window.location.replace(
