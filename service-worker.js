@@ -1,4 +1,4 @@
-const CACHE_VERSION = "luria-pwa-v120-plantao-phone-separate-mode";
+const CACHE_VERSION = "luria-pwa-v119-phone-screen";
 const PLANTAO_IMAGE_CACHE = "luria-plantao-images-v1";
 const PLANTAO_IMAGE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const STATIC_CACHE = CACHE_VERSION + "-static";
