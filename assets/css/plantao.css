@@ -484,3 +484,10 @@ body.plantao-monitor-open{overflow:hidden}
   .plantao-filters select{min-width:0;width:100%}
   .plantao-filters .button{grid-column:1/-1;width:100%}
 }
+
+/* v4.5 — hierarquia dos relógios durante o caso */
+.plantao-sim-top .plantao-clock{font-size:.68rem;gap:2px;padding:3px 7px;min-width:0}
+.plantao-sim-top .plantao-clock span{font-size:.58rem;line-height:1}
+.plantao-sim-top .plantao-clock strong{font-size:.78rem;line-height:1.05}
+.plantao-action-rail>.plantao-score-live{font-size:40px!important;line-height:1;font-weight:900;letter-spacing:-.04em;padding:12px 2px!important;text-align:center;font-variant-numeric:tabular-nums}
+@media(max-width:680px){.plantao-action-rail>.plantao-score-live{font-size:40px!important;padding:10px 0!important}.plantao-sim-top .plantao-clock strong{font-size:.72rem}}
