@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>LURIA · Question Factory Bridge</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--text:#10233f;--muted:#66758c;--accent:#184888;--border:#dbe4ef;--ok:#177245;--danger:#a22}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.wrap{width:min(1180px,calc(100% - 28px));margin:28px auto 64px}.top{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:18px}
+h1{font-size:28px;margin:0 0 7px}.sub{margin:0;color:var(--muted);line-height:1.5}.pill{padding:7px 10px;border:1px solid var(--border);border-radius:999px;background:#fff;font-size:12px;font-weight:800}
+.grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px}.card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:0 10px 30px rgba(16,35,63,.06)}
+.sidebar{padding:16px;position:sticky;top:16px;align-self:start}.sidebar h2,.main h2{font-size:15px;margin:0 0 12px}
+.blocks{display:grid;gap:8px}.blocks a{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;border:1px solid var(--border);border-radius:12px;text-decoration:none;color:var(--text);font-weight:800;background:#fff}
+.blocks a.active{border-color:var(--accent);background:#eef4fc;color:var(--accent)}.help{margin-top:14px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);line-height:1.55}
+.main{display:grid;gap:18px}.panel{padding:18px}.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:end}.field{display:grid;gap:5px}.field label{font-size:11px;font-weight:800;color:var(--muted)}
+select,input,textarea,button{font:inherit}select,input{min-height:40px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--text)}
+button{min-height:40px;padding:8px 12px;border:0;border-radius:10px;background:var(--accent);color:#fff;font-weight:800;cursor:pointer}.secondary{background:#eef3f8;color:var(--text);border:1px solid var(--border)}
+.status{font-size:12px;color:var(--muted);margin-top:10px}.status.ok{color:var(--ok)}.status.err{color:var(--danger)}
+pre{margin:0;white-space:pre-wrap;word-break:break-word;background:#0d1b2e;color:#e9f2ff;padding:16px;border-radius:14px;max-height:62vh;overflow:auto;font:12px/1.48 ui-monospace,SFMono-Regular,Menlo,monospace}
+textarea{width:100%;min-height:300px;padding:12px;border:1px solid var(--border);border-radius:12px;resize:vertical;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}
+.note{padding:12px 14px;border-radius:12px;background:#fff8e8;border:1px solid #ead6a5;color:#6e5520;font-size:12px;line-height:1.5}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+@media(max-width:820px){.grid{grid-template-columns:1fr}.sidebar{position:static}.top{display:block}.pill{display:inline-block;margin-top:10px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>LURIA · Question Factory Bridge</h1>
+      <p class="sub">Página pública temporária para leitura dos blocos L001 e envio de pareceres do Perplexity.</p>
+    </div>
+    <span class="pill">L001 · B01–B05</span>
+  </div>
+
+  <div class="grid">
+    <aside class="card sidebar">
+      <h2>Blocos publicados</h2>
+      <nav class="blocks" id="blocks"></nav>
+      <div class="help">
+        Abra o bloco pelo link específico. A página carrega as <strong>versões atuais</strong> direto do banco.<br><br>
+        Para auditoria, preserve <code>question_id</code> e <code>item_version</code>.
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="card panel">
+        <h2>Leitura do bloco</h2>
+        <div class="toolbar">
+          <div class="field"><label>Etapa</label><select id="stage"><option value="perplexity_initial">perplexity_initial</option><option value="perplexity_reaudit">perplexity_reaudit</option></select></div>
+          <div class="field"><label>Início</label><input id="start" type="number" min="1" max="200" value="1"></div>
+          <div class="field"><label>Fim</label><input id="end" type="number" min="1" max="200" value="200"></div>
+          <button id="load">Carregar bloco</button>
+          <button id="copy" class="secondary">Copiar JSON</button>
+        </div>
+        <div id="readStatus" class="status">Aguardando carregamento…</div>
+      </section>
+
+      <section class="card panel">
+        <div class="note">
+          <strong>Instrução para o Perplexity:</strong> trabalhe apenas no <span id="opCode">L001-B01</span>, use as versões exibidas abaixo e devolva o payload no formato do importador controlado, com <code>review_stage</code>, <code>batch_number</code>, <code>block_number</code> e <code>reviews[]</code>.
+        </div>
+      </section>
+
+      <section class="card panel">
+        <h2>Dados publicados do bloco</h2>
+        <pre id="viewer">Carregando…</pre>
+      </section>
+
+      <section class="card panel">
+        <h2>Enviar resultado</h2>
+        <p class="sub">Cole aqui o JSON completo devolvido pelo Perplexity. O envio vai para uma caixa de entrada isolada para validação antes de qualquer importação na fábrica.</p>
+        <textarea id="payload" spellcheck="false" placeholder='{"schema_version":"2.3","review_stage":"perplexity_initial","reviewer":"Perplexity","batch_number":1,"block_number":1,"reviews":[...]}'></textarea>
+        <div class="toolbar" style="margin-top:10px">
+          <button id="submit">Enviar parecer</button>
+          <button id="template" class="secondary">Inserir modelo</button>
+        </div>
+        <div id="submitStatus" class="status"></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL="https://sxdsfklllilhdyuamvvg.supabase.co";
+const ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4ZHNma2xsbGlsaGR5dWFtdnZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3MzMxOTcsImV4cCI6MjEwNTMwOTE5N30.SbeOYGT-h-l-9tUsZgCgTxqfA_0tkTGPllyu5RmX8KU";
+const ACCESS="r8K2mV7qL4x9P1cF";
+const BLOCKS=["L001-B01","L001-B02","L001-B03","L001-B04","L001-B05"];
+let currentBlock=(new URLSearchParams(location.search).get("block")||"L001-B01").toUpperCase();
+if(!BLOCKS.includes(currentBlock)) currentBlock="L001-B01";
+let currentData=null;
+
+function headers(){return {"Content-Type":"application/json","apikey":ANON,"Authorization":"Bearer "+ANON}}
+function blockNumber(){return Number(currentBlock.slice(-2))}
+function renderBlocks(){
+  const n=document.getElementById("blocks"); n.innerHTML="";
+  for(const b of BLOCKS){
+    const a=document.createElement("a"); a.href="?block="+encodeURIComponent(b);
+    a.textContent=b; if(b===currentBlock)a.classList.add("active");
+    const s=document.createElement("span");s.textContent="↗";a.appendChild(s);n.appendChild(a);
+  }
+  document.getElementById("opCode").textContent=currentBlock;
+}
+async function rpc(name,body){
+  const r=await fetch(SUPABASE_URL+"/rest/v1/rpc/"+name,{method:"POST",headers:headers(),body:JSON.stringify(body)});
+  const text=await r.text(); let data; try{data=JSON.parse(text)}catch{data=text}
+  if(!r.ok) throw new Error(typeof data==="string"?data:(data.message||data.error||"HTTP "+r.status));
+  return data;
+}
+async function load(){
+  const status=document.getElementById("readStatus"), viewer=document.getElementById("viewer");
+  status.className="status";status.textContent="Carregando "+currentBlock+"…";viewer.textContent="Carregando…";
+  try{
+    currentData=await rpc("qf_public_bridge_get_block",{
+      p_access_code:ACCESS,p_block_code:currentBlock,
+      p_start:Number(document.getElementById("start").value||1),
+      p_end:Number(document.getElementById("end").value||200),
+      p_stage:document.getElementById("stage").value
+    });
+    viewer.textContent=JSON.stringify(currentData,null,2);
+    status.className="status ok";
+    status.textContent=currentBlock+" carregado · "+(currentData?.range?.count??0)+" questões · "+document.getElementById("stage").value;
+  }catch(e){
+    status.className="status err";status.textContent="Falha: "+e.message;viewer.textContent="Falha ao carregar.";
+  }
+}
+document.getElementById("load").onclick=load;
+document.getElementById("copy").onclick=async()=>{if(!currentData)return;await navigator.clipboard.writeText(JSON.stringify(currentData,null,2));document.getElementById("readStatus").textContent="JSON copiado.";};
+document.getElementById("template").onclick=()=>{
+  document.getElementById("payload").value=JSON.stringify({
+    schema_version:"2.3",review_stage:document.getElementById("stage").value,reviewer:"Perplexity",
+    batch_number:1,block_number:blockNumber(),reviews:[]
+  },null,2);
+};
+document.getElementById("submit").onclick=async()=>{
+  const out=document.getElementById("submitStatus"); out.className="status"; out.textContent="Enviando…";
+  try{
+    const payload=JSON.parse(document.getElementById("payload").value);
+    const data=await rpc("qf_public_bridge_submit",{p_access_code:ACCESS,p_payload:payload});
+    out.className="status ok";out.textContent="Recebido com sucesso. Protocolo: "+data.receipt_id+" · "+data.received_reviews+" parecer(es).";
+  }catch(e){out.className="status err";out.textContent="Falha no envio: "+e.message;}
+};
+renderBlocks();load();
+</script>
+</body>
+</html>
