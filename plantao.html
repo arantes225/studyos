@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://sxdsfklllilhdyuamvvg.supabase.co; font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self' https://sxdsfklllilhdyuamvvg.supabase.co wss://sxdsfklllilhdyuamvvg.supabase.co https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; worker-src 'self' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; media-src 'self' data: blob: https://sxdsfklllilhdyuamvvg.supabase.co; frame-src 'self' blob:; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Plantão · LURIA</title>
+  <link rel="manifest" href="/manifest.webmanifest?v=4">
+  <link rel="apple-touch-icon" href="/assets/img/logos/logo-icone-original.png?v=pwa4">
+  <meta name="theme-color" content="#0A2342">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="LURIA">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="icon" type="image/png" href="/assets/img/logos/logo-icone-original.png?v=favicon2">
+  <link rel="stylesheet" href="assets/css/style.css?v=16.6">
+  <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
+  <link rel="stylesheet" href="assets/css/plantao.css?v=1.0">
+  <link rel="canonical" href="/plantao/">
+  <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
+  <script>(function(){try{if(location.pathname.endsWith("/plantao.html"))history.replaceState(null,"","/plantao/"+location.search+location.hash);}catch(e){}})();</script>
+</head>
+<body data-page="plantao">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar"></aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+    <main class="main">
+      <div class="page plantao-page">
+        <header class="topbar">
+          <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
+          <div class="page-heading"><span class="eyebrow" data-page-eyebrow></span><h1 data-page-title></h1></div>
+        </header>
+
+        <section id="plantao-library" class="plantao-library">
+          <article class="plantao-hero panel">
+            <div>
+              <span class="badge accent">Simulação clínica</span>
+              <h2>Entre no caso com informação limitada e decida o que fazer.</h2>
+              <p>Peça exames, explore a anamnese, examine o paciente, trate e reavalie. O tempo corre dentro do caso e algumas decisões mudam a evolução clínica.</p>
+            </div>
+            <div class="plantao-hero-meta">
+              <span><strong id="plantao-case-count">—</strong> casos ativos</span>
+              <span><strong id="plantao-session-count">—</strong> tentativas</span>
+            </div>
+          </article>
+          <div class="plantao-library-head"><div><h2>Sala de emergência</h2><p>Primeiro módulo do Plantão. Novos ambientes podem usar o mesmo motor.</p></div></div>
+          <div id="plantao-case-grid" class="plantao-case-grid" aria-live="polite"></div>
+          <div id="plantao-empty" class="placeholder" hidden>Nenhum caso clínico disponível.</div>
+        </section>
+
+        <section id="plantao-simulator" class="plantao-simulator" hidden>
+          <div class="plantao-sim-top">
+            <button id="plantao-back" class="button secondary" type="button">← Casos</button>
+            <div class="plantao-clock"><span>Tempo do caso</span><strong id="plantao-time">00:00</strong></div>
+            <button id="plantao-finish" class="button primary" type="button">Encerrar caso</button>
+          </div>
+
+          <article class="plantao-patient-card panel">
+            <div class="plantao-patient-main">
+              <span id="plantao-setting" class="badge accent">Sala de emergência</span>
+              <h2 id="plantao-case-title">Caso</h2>
+              <p id="plantao-opening"></p>
+              <div class="plantao-patient-meta"><span id="plantao-age"></span><span id="plantao-sex"></span><span id="plantao-chief"></span></div>
+            </div>
+            <div id="plantao-vitals" class="plantao-vitals"></div>
+          </article>
+
+          <div class="plantao-workspace">
+            <section class="plantao-actions-panel panel">
+              <div class="plantao-section-head"><div><span class="metric-label">Ações</span><h2>O que você quer fazer?</h2></div><span id="plantao-score-live" class="plantao-score-live">0 pts</span></div>
+              <div id="plantao-action-tabs" class="plantao-action-tabs"></div>
+              <div id="plantao-actions" class="plantao-actions"></div>
+            </section>
+            <aside class="plantao-feed panel">
+              <div class="plantao-section-head"><div><span class="metric-label">Evolução</span><h2>Prontuário em tempo real</h2></div></div>
+              <div id="plantao-feed" class="plantao-feed-list"></div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="plantao-debrief" class="plantao-debrief" hidden>
+          <div class="plantao-debrief-head panel">
+            <div><span class="badge accent">Debriefing</span><h2 id="plantao-debrief-title">Caso encerrado</h2><p id="plantao-diagnosis"></p></div>
+            <div class="plantao-final-score"><strong id="plantao-final-score">0</strong><span>/100</span></div>
+          </div>
+          <div class="plantao-debrief-grid">
+            <article class="panel"><span class="metric-label">Pulo do Gato</span><p id="plantao-pulo" class="plantao-pulo"></p></article>
+            <article class="panel"><span class="metric-label">Seu desempenho</span><div id="plantao-performance" class="plantao-performance"></div></article>
+            <article class="panel"><span class="metric-label">Condutas-chave</span><div id="plantao-key-actions" class="plantao-review-list"></div></article>
+            <article class="panel"><span class="metric-label">Erros de alto impacto</span><div id="plantao-danger-actions" class="plantao-review-list"></div></article>
+          </div>
+          <article class="panel plantao-sources"><span class="metric-label">Fontes do caso</span><div id="plantao-sources"></div></article>
+          <div class="plantao-debrief-actions"><button id="plantao-retry" class="button primary" type="button">Refazer este caso</button><button id="plantao-all-cases" class="button secondary" type="button">Voltar aos casos</button></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="/assets/vendor/supabase-2.110.6.js"></script>
+  <script src="assets/js/supabase.js"></script>
+  <script src="assets/js/app.js?v=17.4"></script>
+  <script src="assets/js/plantao.js?v=1.0"></script>
+  <script defer src="assets/js/pwa.js?v=3"></script>
+</body>
+</html>
