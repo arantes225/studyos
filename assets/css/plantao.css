@@ -161,3 +161,17 @@
 .plantao-debrief .plantao-explanation summary{font-size:.95rem}
 .plantao-debrief .plantao-explanation p{font-size:1rem;line-height:1.65}
 .plantao-debrief .plantao-sources a{font-size:.94rem;line-height:1.45}
+
+
+/* v3.8 — debriefing: maior legibilidade nos blocos de desempenho e segurança */
+.plantao-debrief .plantao-performance-row{font-size:1.12rem;line-height:1.55}
+.plantao-debrief .plantao-review-item{font-size:1.1rem;line-height:1.62}
+.plantao-debrief .plantao-sequence-item{font-size:1.1rem;line-height:1.62}
+.plantao-debrief .metric-label{font-size:.96rem}
+.plantao-debrief h2,.plantao-debrief h3{font-size:1.12em}
+@media(max-width:680px){
+ .plantao-debrief .plantao-performance-row,
+ .plantao-debrief .plantao-review-item,
+ .plantao-debrief .plantao-sequence-item{font-size:1.04rem;line-height:1.58}
+ .plantao-debrief .metric-label{font-size:.92rem}
+}
