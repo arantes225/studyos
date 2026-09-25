@@ -121,20 +121,18 @@
 
   function renderVitals() {
     const v=state.vitals || {};
-    window.PlantaoMonitor?.update(v);
+    window.PlantaoMonitor?.update(v, {slug:state.current?.slug});
     const items=[
       ["FC",v.hr,"bpm"],
-      ["PA",v.bp,"mmHg"],
-      ["FR",v.rr,"irpm"],
       ["SpO₂",v.spo2,"%"],
-      ["Temp",v.temp,"°C"],
-      ["Ritmo",v.rhythm,""],
-      ["Neurológico",v.mental,""]
+      ["FR",v.rr,"irpm"],
+      ["PA",v.bp,"mmHg"],
+      ["Temp",v.temp,"°C"]
     ];
     $("plantao-vitals").innerHTML=items.map(([label,val,unit],idx)=>`
-      <div class="plantao-vital ${idx>=5 ? "wide":""}">
+      <div class="plantao-vital">
         <span>${esc(label)}</span>
-        <strong>${esc(val ?? "—")}${unit && val!==undefined && val!=="—" ? " "+unit : ""}</strong>
+        <strong>${esc(val ?? "—")}${unit && val!=null && val!=="—" ? " <small>"+unit+"</small>" : ""}</strong>
       </div>
     `).join("");
   }

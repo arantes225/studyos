@@ -1,10 +1,79 @@
 (() => {
   'use strict';
-  let vitals = {}, frame = 0;
+  let vitals = {}, context = {}, frame = 0;
   const normalize = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const number = value => value === null || value === undefined || value === '' ? NaN : parseFloat(value);
+  // Educational rhythm strip: fixed time scale and durations in seconds, not a 12-lead ECG.
+  const AF_RR = Array.from({length:64},(_,i)=>0.6+(((Math.imul(i+17,1597334677)>>>0)%997)/997)*0.85);
+  const meanRR = AF_RR.reduce((a,b)=>a+b,0)/AF_RR.length;
+  const AF_EDGES = [0];
+  AF_RR.forEach(v=>AF_EDGES.push(AF_EDGES.at(-1)+v/meanRR));
+  function profile(v, context={}) {
+    const rhythm=normalize(v.rhythm);
+    let type='unknown';
+    if (/nao analisado|nao identificado|desconhecido/.test(rhythm)) type='unknown';
+    else if (/fibrilacao ventricular|\bfv\b/.test(rhythm)) type='vf';
+    else if (/assistolia/.test(rhythm)) type='asystole';
+    else if (/polimorfic|torsades/.test(rhythm)) type='unknown';
+    else if (/taquicardia ventricular|\btv\b/.test(rhythm)) type='vt';
+    else if (/fibrilacao atrial|\bfa\b/.test(rhythm) || (context.slug==='af-unstable-ed' && /irregular.*qrs estreito/.test(rhythm))) type='af';
+    else if (/sinusal/.test(rhythm)) type='sinus';
+    else if (/ritmo organizado/.test(rhythm)) type='organized';
+    return {type,hr:number(v.hr)};
+  }
+  function beatWindow(t,p) {
+    const period=60/p.hr;
+    if (!Number.isFinite(period)||period<=0) return [];
+    if(p.type!=='af') {
+      const beat=Math.floor(t/period)*period;
+      return [beat-period,beat,beat+period];
+    }
+    const block=64*period;
+    const start=Math.floor(t/block)*block;
+    const beats=[];
+    for(let cycle=-1;cycle<=1;cycle++) {
+      for(let j=0;j<64;j++) {
+        const beat=start+cycle*block+AF_EDGES[j]*period;
+        if(Math.abs(t-beat)<.8) beats.push(beat);
+      }
+    }
+    return beats;
+  }
+  const gaussian=(t,center,width)=>Math.exp(-Math.pow((t-center)/width,2));
+  function ecg(t,p) {
+    if(p.type==='unknown') return null;
+    if(p.type==='asystole') return 0;
+    if(p.type==='vf') return (0.7+.25*Math.sin(t*1.7))*(15*Math.sin(t*35+1.2*Math.sin(t*2.1))+8*Math.sin(t*51+.7*Math.sin(t*3.3))+5*Math.sin(t*73));
+    if(!Number.isFinite(p.hr)||p.hr<=0) return null;
+    let value=p.type==='af' ? 1.2*Math.sin(t*43+.8*Math.sin(t*2.3))+.6*Math.sin(t*67) : 0;
+    for(const beat of beatWindow(t,p)) {
+      const d=t-beat;
+      if(p.type==='vt') {
+        value+=25*gaussian(d,-.015,.046)-18*gaussian(d,.055,.04)-7*gaussian(d,.19,.065);
+      } else {
+        // AF has no discrete P wave. Organized post-ROSC does not assert sinus origin.
+        if(p.type==='sinus') value+=4*gaussian(d,-.16,.026);
+        value+=-5*gaussian(d,-.022,.009)+29*gaussian(d,0,.009)-8*gaussian(d,.025,.011);
+        value+=7*gaussian(d,Math.min(.26,60/p.hr*.43),.042);
+      }
+    }
+    return value;
+  }
+  function pleth(t,p,v) {
+    if(p.type==='vf'||p.type==='asystole'||v.pulse===false||/sem pulso/.test(normalize(v.rhythm)))return null;
+    if(!Number.isFinite(p.hr)||p.hr<=0||!(number(v.spo2)>0))return null;
+    let value=0;
+    for(const beat of beatWindow(t,p)) {
+      const d=t-beat-.16;
+      if(d>=0 && d<.55) value+=85*(1-Math.exp(-d/.045))*Math.exp(-d/.10);
+    }
+    return value;
+  }
+  window.PlantaoECG={profile,ecg,beatWindow,pleth};
+
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  function update(next) {
+  function update(next, caseContext={}) {
+    context=caseContext;
     vitals = {...next};
     const mental = normalize(vitals.mental);
     const unconscious = /inconsciente|desacordad|nao responsiv|nao responde|arresponsiv|coma|irresponsiv/.test(mental);
@@ -27,33 +96,26 @@
     ctx.clearRect(0,0,w,h);
     ctx.strokeStyle = '#143044';ctx.lineWidth = 1;
     for (let x=0;x<w;x+=25) {ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
-    const rhythm = normalize(vitals.rhythm);
-    const vf = /fibrilacao ventricular|\bfv\b/.test(rhythm);
-    const flat = /assistolia/.test(rhythm);
-    const vt = /taquicardia ventricular|\btv\b/.test(rhythm);
-    const af = /fibrilacao atrial|\bfa\b/.test(rhythm);
-    const hr = number(vitals.hr), rr = number(vitals.rr), spo = number(vitals.spo2);
-    const seconds = reduced.matches ? 0 : time / 1000;
-    const rows = [{label:'ECG',color:'#55ef93',rate:hr},{label:'PLET',color:'#50e5f4',rate:hr},{label:'RESP',color:'#f5da57',rate:rr}];
+    const p=profile(vitals,context);
+    const rr=number(vitals.rr);
+    const seconds=reduced.matches ? 6 : time/1000;
+    const rows=[
+      {label:'ECG · 6 s',color:'#55ef93',sample:t=>ecg(t,p)},
+      {label:'PLET',color:'#50e5f4',sample:t=>pleth(t,p,vitals)},
+      {label:'RESP',color:'#f5da57',sample:t=>Number.isFinite(rr)&&rr>=0 ? 15*Math.sin(t*rr/60*Math.PI*2) : null}
+    ];
     rows.forEach((row,i)=>{
       const base=42+i*72;
-      ctx.fillStyle=row.color;ctx.font='17px sans-serif';ctx.fillText(row.label,8,base-24);
-      ctx.beginPath();ctx.strokeStyle=row.color;ctx.lineWidth=2.8;
-      const valid=i===0 ? (flat||vf||Number.isFinite(hr)) : i===1 ? (Number.isFinite(hr)&&Number.isFinite(spo)&&spo>0&&!vf&&!flat) : Number.isFinite(rr);
-      if (!valid) {ctx.fillText('—',w/2,base);return;}
+      ctx.fillStyle=row.color;ctx.font='15px sans-serif';ctx.fillText(row.label,8,base-25);
+      ctx.beginPath();ctx.strokeStyle=row.color;ctx.lineWidth=2;
+      if(row.sample(seconds)===null) {
+        ctx.font='15px sans-serif';
+        ctx.fillText(i===0?'Traçado não disponível':'Sem sinal',150,base);
+        return;
+      }
       for(let x=0;x<w;x++) {
-        const t=seconds+x/110;
-        const rate=Math.max(0,Number.isFinite(row.rate)?row.rate:0);
-        const cycle=t*rate/60;
-        const p=((cycle+(af&&i===0?.14*Math.sin(t*3):0))%1+1)%1;
-        let value=0;
-        if(i===0&&!flat) {
-          if(vf) value=13*Math.sin(t*29)+7*Math.sin(t*47)+4*Math.sin(t*71);
-          else if(rate>0&&vt) value=24*Math.sin(p*Math.PI*2);
-          else if(rate>0) value=4*Math.exp(-Math.pow((p-.16)/.05,2))-6*Math.exp(-Math.pow((p-.34)/.018,2))+30*Math.exp(-Math.pow((p-.38)/.014,2))-10*Math.exp(-Math.pow((p-.42)/.02,2))+8*Math.exp(-Math.pow((p-.65)/.09,2));
-        } else if(i===1&&rate>0) value=19*Math.sin(Math.PI*p)**4;
-        else if(i===2&&rate>0) value=15*Math.sin(p*Math.PI*2);
-        const y=base-value;
+        const t=seconds-6+6*x/w;
+        const y=base-row.sample(t);
         if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
       }
       ctx.stroke();
