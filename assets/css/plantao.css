@@ -1742,3 +1742,81 @@ body.plantao-phone-mode .topbar{
     font-size:13px!important;
   }
 }
+
+
+/* v6.6 — Telefone centralizado, proporção mais larga e retorno acima do aparelho */
+body.plantao-phone-mode #plantao-library{
+  display:grid;
+  place-items:center;
+}
+#plantao-telefone.plantao-phone-preview{
+  grid-template-columns:1fr;
+  justify-items:center;
+  width:100%;
+}
+.plantao-phone-layout{
+  width:min(100%,455px);
+  display:grid;
+  grid-template-rows:auto auto;
+  gap:10px;
+  justify-items:stretch;
+  margin-inline:auto;
+}
+.plantao-phone-page-back{
+  appearance:none;
+  -webkit-appearance:none;
+  justify-self:start;
+  min-height:36px;
+  padding:0 13px;
+  border:1px solid var(--border);
+  border-radius:11px;
+  background:var(--surface);
+  color:var(--text);
+  font:inherit;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+  box-shadow:0 2px 8px color-mix(in srgb,var(--text) 8%,transparent);
+}
+.plantao-phone-page-back:hover{
+  border-color:var(--accent);
+  background:var(--accent-soft);
+  color:var(--accent);
+}
+.plantao-phone-page-back:focus-visible{
+  outline:3px solid color-mix(in srgb,var(--accent) 28%,transparent);
+  outline-offset:2px;
+}
+.plantao-phone-layout > .plantao-phone-station{
+  width:100%;
+  max-width:none;
+  justify-self:center;
+}
+body.plantao-phone-mode .plantao-phone-device{
+  width:100%;
+  max-width:455px;
+  aspect-ratio:10/18;
+}
+
+@media(max-width:680px){
+  .plantao-phone-layout{
+    width:100%;
+    min-height:100dvh;
+    gap:0;
+    position:relative;
+  }
+  .plantao-phone-page-back{
+    position:fixed;
+    top:max(10px,env(safe-area-inset-top));
+    left:max(10px,env(safe-area-inset-left));
+    z-index:30;
+    min-height:34px;
+    background:color-mix(in srgb,var(--surface) 92%,transparent);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+  }
+  .plantao-phone-layout > .plantao-phone-station{
+    width:100%;
+    height:100dvh;
+  }
+}
