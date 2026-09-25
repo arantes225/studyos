@@ -136,6 +136,18 @@
           </article>
         </section>
 
+        <div id="plantao-confirm-overlay" class="plantao-confirm-overlay" hidden aria-hidden="true">
+          <section class="plantao-confirm-modal panel" role="dialog" aria-modal="true" aria-labelledby="plantao-confirm-title">
+            <span class="badge accent">Finalizar atendimento</span>
+            <h2 id="plantao-confirm-title">Confirmar conduta final?</h2>
+            <p id="plantao-confirm-message">Esta decisão encerra o atendimento e abre a avaliação.</p>
+            <div class="plantao-confirm-actions">
+              <button id="plantao-confirm-cancel" class="button secondary" type="button">Cancelar</button>
+              <button id="plantao-confirm-ok" class="button primary" type="button">Confirmar e finalizar</button>
+            </div>
+          </section>
+        </div>
+
         <section id="plantao-simulator" class="plantao-simulator" hidden>
           <div class="plantao-sim-top">
             <button id="plantao-back" class="button secondary" type="button">← Casos</button>
