@@ -523,7 +523,8 @@ REGRA ANTI-FALSO-SUCESSO — PERPLEXITY INITIAL:
 REGRA DE SAÍDA:
 - Para cada faixa, só declarar sucesso quando 50/50 estiverem persistidos.
 - Depois da quarta faixa, só avançar para ChatGPT quando 200/200 perplexity_initial estiverem persistidos na versão atual.
-- Se houver needs_revision/rejected, o próximo passo é ChatGPT · julgar + corrigir após a etapa Perplexity Initial estar integralmente persistida.`  }
+- Se houver needs_revision/rejected, o próximo passo é ChatGPT · julgar + corrigir após a etapa Perplexity Initial estar integralmente persistida.`;
+  }
 
   function chatgptCorrectionCycle(item={},ctx={}) {
     return `FLUXO OPERACIONAL ÚNICO — CHATGPT · JULGAR PARECER + CORRIGIR
