@@ -19,7 +19,7 @@
 
   <link rel="stylesheet" href="assets/css/style.css?v=16.6">
   <link rel="stylesheet" href="assets/css/image-lightbox.css?v=1">
-  <link rel="stylesheet" href="assets/css/flashcards.css?v=14.7">
+  <link rel="stylesheet" href="assets/css/flashcards.css?v=14.8">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
   <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
   <link rel="canonical" href="/flashcards/">
@@ -750,31 +750,117 @@
                 placeholder="Buscar frente, verso, matéria ou tema..."
               >
 
-              <select id="library-area" data-luria-general-area-select data-blank-label="Todas as áreas">
-                <option value="">
-                  Todas as áreas
-                </option>
-              </select>
+              <div class="library-filter-picker" data-library-picker="library-area">
+                <button
+                  class="library-filter-toggle"
+                  type="button"
+                  data-library-picker-toggle="library-area"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                >
+                  <span data-library-picker-label="library-area">Todas as áreas</span>
+                  <span class="library-filter-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div
+                  class="library-filter-menu"
+                  data-library-picker-menu="library-area"
+                  role="listbox"
+                  hidden
+                ></div>
+                <select
+                  id="library-area"
+                  class="library-filter-native"
+                  data-luria-general-area-select
+                  data-blank-label="Todas as áreas"
+                  tabindex="-1"
+                  aria-hidden="true"
+                >
+                  <option value="">Todas as áreas</option>
+                </select>
+              </div>
 
-              <select id="library-materia">
-                <option value="">Todas as matérias</option>
-              </select>
+              <div class="library-filter-picker" data-library-picker="library-materia">
+                <button
+                  class="library-filter-toggle"
+                  type="button"
+                  data-library-picker-toggle="library-materia"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                >
+                  <span data-library-picker-label="library-materia">Todas as matérias</span>
+                  <span class="library-filter-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div
+                  class="library-filter-menu"
+                  data-library-picker-menu="library-materia"
+                  role="listbox"
+                  hidden
+                ></div>
+                <select
+                  id="library-materia"
+                  class="library-filter-native"
+                  tabindex="-1"
+                  aria-hidden="true"
+                >
+                  <option value="">Todas as matérias</option>
+                </select>
+              </div>
 
-              <select id="library-theme">
-                <option value="">Todos os temas</option>
-              </select>
+              <div class="library-filter-picker" data-library-picker="library-theme">
+                <button
+                  class="library-filter-toggle"
+                  type="button"
+                  data-library-picker-toggle="library-theme"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                >
+                  <span data-library-picker-label="library-theme">Todos os temas</span>
+                  <span class="library-filter-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div
+                  class="library-filter-menu"
+                  data-library-picker-menu="library-theme"
+                  role="listbox"
+                  hidden
+                ></div>
+                <select
+                  id="library-theme"
+                  class="library-filter-native"
+                  tabindex="-1"
+                  aria-hidden="true"
+                >
+                  <option value="">Todos os temas</option>
+                </select>
+              </div>
 
-              <select id="library-active">
-                <option value="active">
-                  Ativos
-                </option>
-                <option value="archived">
-                  Arquivados
-                </option>
-                <option value="all">
-                  Todos
-                </option>
-              </select>
+              <div class="library-filter-picker" data-library-picker="library-active">
+                <button
+                  class="library-filter-toggle"
+                  type="button"
+                  data-library-picker-toggle="library-active"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                >
+                  <span data-library-picker-label="library-active">Ativos</span>
+                  <span class="library-filter-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div
+                  class="library-filter-menu"
+                  data-library-picker-menu="library-active"
+                  role="listbox"
+                  hidden
+                ></div>
+                <select
+                  id="library-active"
+                  class="library-filter-native"
+                  tabindex="-1"
+                  aria-hidden="true"
+                >
+                  <option value="active">Ativos</option>
+                  <option value="archived">Arquivados</option>
+                  <option value="all">Todos</option>
+                </select>
+              </div>
 
             </div>
 
@@ -991,7 +1077,7 @@
   <script src="assets/js/app.js?v=17.3"></script>
   <script src="assets/js/study-mode.js?v=13.0"></script>
   <script src="assets/js/sharing.js?v=3"></script>
-  <script src="assets/js/flashcards.js?v=17.1"></script>
+  <script src="assets/js/flashcards.js?v=17.2"></script>
 
     <script src="assets/js/image-lightbox.js?v=1"></script>
 <script defer src="assets/js/pwa.js?v=3"></script>
