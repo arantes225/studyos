@@ -46,6 +46,7 @@
     clinicalEvents:[],
     category:null,
     examTab:"gerais",
+    arrestStartedAt:null,
     penalties:0, criticalElapsed:0, diagnosis:null, disposition:null, busy:false,
     phoneCases:[], phoneCase:null, phoneSession:null, phoneTurn:0, phoneMode:false, phoneUsedChoices:new Set(),
     filters:{specialty:"",difficulty:""}
@@ -2102,6 +2103,9 @@
     if(plan.outcome && !state.outcomes.includes(plan.outcome)) state.outcomes.push(plan.outcome);
 
     const pulseReturned=beforeVitals?.pulse===false && state.vitals?.pulse===true;
+    const pulseLost=beforeVitals?.pulse!==false && state.vitals?.pulse===false;
+    if(pulseLost && state.arrestStartedAt==null) state.arrestStartedAt=state.elapsed;
+    if(state.vitals?.pulse===true) state.arrestStartedAt=null;
     const type=actionId==="defibrillate" ? "defibrillation"
       : actionId==="sync_cardioversion" ? "cardioversion"
       : actionId==="transcutaneous_pacing" ? "pacing"
@@ -2434,8 +2438,11 @@
 
   function criticalWindow() {
     const t=normalizeLabel(state.current?.title||"");
-    if(state.vitals?.pulse===false || Number(state.vitals?.hr)===0)
-      return {actionIds:["cpr"],label:"Iniciar RCP",deadline:state.elapsed+.5,fatal:"O paciente permaneceu sem pulso e a RCP não foi iniciada em até 30 segundos."};
+    if(state.vitals?.pulse===false || Number(state.vitals?.hr)===0){
+      const arrestAt=state.arrestStartedAt==null ? state.elapsed : state.arrestStartedAt;
+      if(state.arrestStartedAt==null) state.arrestStartedAt=arrestAt;
+      return {actionIds:["cpr"],label:"Iniciar RCP",deadline:arrestAt+.5,fatal:"O paciente permaneceu sem pulso e a RCP não foi iniciada em até 30 segundos."};
+    }
     if(state.current?.slug==="vf-arrest-ed" || /pcr pediatrica em fibrilacao ventricular|parada cardiorrespiratoria/.test(t))
       return {actionIds:["cpr"],label:"Iniciar RCP",deadline:.5,fatal:"A parada cardiorrespiratória permaneceu sem RCP por mais de 30 segundos."};
     if(t.includes("pneumotorax hipertensivo"))
@@ -2524,6 +2531,7 @@
     $("plantao-death-overlay").hidden=true;
     $("plantao-simulator").classList.remove("patient-dead");
     state.category=null;
+    state.arrestStartedAt=null;
     state.penalties=0; state.criticalElapsed=0; state.diagnosis=null; state.disposition=null; state.busy=false;
     $("plantao-action-search").value="";
     $("plantao-action-drawer").hidden=true;
