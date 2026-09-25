@@ -39,18 +39,23 @@
     const selected=sanitizeExams(selectedExams);
     const record=resolveRecord(theme,area);
     if(!record||!selected.length) return {matched:Boolean(record),score:0,tier:"none",coverage:0,total:selected.length,canonicalTheme:record?.theme||null,area:record?.area||area||null,ranks:{}};
-    const values=[];
+    const weights=[0.50,0.30,0.20].slice(0,selected.length);
+    const weightTotal=weights.reduce((a,b)=>a+b,0)||1;
+    let weightedRelevance=0;
+    let coveredWeight=0;
     const ranks={};
-    selected.forEach((exam)=>{
+    selected.forEach((exam,index)=>{
       const rank=Number(record.ranks[exam]||0);
       ranks[exam]=rank||null;
       if(!rank)return;
       const max=Math.max(1,maxByExamArea[exam+"|"+normalize(record.area)]||rank);
       const relevance=max===1?1:1-((rank-1)/(max-1));
-      values.push(Math.max(0,Math.min(1,relevance)));
+      const weight=weights[index]||0;
+      weightedRelevance+=Math.max(0,Math.min(1,relevance))*weight;
+      coveredWeight+=weight;
     });
-    const coverage=values.length/selected.length;
-    const mean=values.length?values.reduce((a,b)=>a+b,0)/values.length:0;
+    const coverage=coveredWeight/weightTotal;
+    const mean=weightedRelevance/weightTotal;
     const score=(mean*0.72)+(coverage*0.28);
     const tier=score>=0.72?"high":score>=0.46?"medium":score>0?"low":"none";
     return {matched:true,score,tier,coverage:values.length,total:selected.length,canonicalTheme:record.theme,area:record.area,ranks};
