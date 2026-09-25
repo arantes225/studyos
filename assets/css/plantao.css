@@ -491,3 +491,30 @@ body.plantao-monitor-open{overflow:hidden}
 .plantao-sim-top .plantao-clock strong{font-size:.78rem;line-height:1.05}
 .plantao-action-rail>.plantao-score-live{font-size:40px!important;line-height:1;font-weight:900;letter-spacing:-.04em;padding:12px 2px!important;text-align:center;font-variant-numeric:tabular-nums}
 @media(max-width:680px){.plantao-action-rail>.plantao-score-live{font-size:40px!important;padding:10px 0!important}.plantao-sim-top .plantao-clock strong{font-size:.72rem}}
+
+
+/* v4.5 — prontuário em tempo real: tipografia dos callouts ampliada */
+.plantao-monitor-dock .plantao-section-head h2{
+  font-size:16px;
+}
+.plantao-monitor-dock .plantao-feed-item span{
+  font-size:11px;
+  line-height:1.3;
+  font-weight:800;
+}
+.plantao-monitor-dock .plantao-feed-item p{
+  font-size:15px;
+  line-height:1.5;
+}
+@media(max-width:680px){
+  .plantao-monitor-dock .plantao-section-head h2{
+    font-size:15px;
+  }
+  .plantao-monitor-dock .plantao-feed-item span{
+    font-size:11px;
+  }
+  .plantao-monitor-dock .plantao-feed-item p{
+    font-size:15px;
+    line-height:1.52;
+  }
+}
