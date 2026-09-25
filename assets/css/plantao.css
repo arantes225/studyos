@@ -1710,3 +1710,35 @@ body.plantao-phone-mode .topbar{
   border-radius:50%;
   background:currentColor;
 }
+
+
+/* v4.9 — topo do caso mais limpo */
+.plantao-sim-top{
+  grid-template-columns:auto 1fr auto;
+}
+.plantao-sim-top .plantao-clock{
+  padding:2px 5px;
+}
+.plantao-sim-top .plantao-clock span{
+  font-size:8px!important;
+  line-height:1!important;
+}
+.plantao-sim-top .plantao-clock strong{
+  margin-top:1px!important;
+  font-size:14px!important;
+  line-height:1!important;
+}
+#plantao-critical-window{
+  display:none!important;
+}
+@media(max-width:680px){
+  .plantao-sim-top{
+    grid-template-columns:1fr 1fr;
+  }
+  .plantao-sim-top .plantao-clock{
+    grid-column:span 2;
+  }
+  .plantao-sim-top .plantao-clock strong{
+    font-size:13px!important;
+  }
+}
