@@ -92,8 +92,8 @@
     state.sessions=sessionsRes.error ? [] : (sessionsRes.data || []);
     const specialties=[...new Set(state.cases.map(x=>x.specialty).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"pt-BR"));
     const difficulties=[...new Set(state.cases.map(x=>x.difficulty).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"pt-BR"));
-    $("plantao-filter-specialty").innerHTML='<option value="">Todas</option>'+specialties.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
-    $("plantao-filter-difficulty").innerHTML='<option value="">Todas</option>'+difficulties.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
+    if($("plantao-filter-specialty")) $("plantao-filter-specialty").innerHTML='<option value="">Todas</option>'+specialties.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
+    if($("plantao-filter-difficulty")) $("plantao-filter-difficulty").innerHTML='<option value="">Todas</option>'+difficulties.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
     renderLibrary();
   }
 
