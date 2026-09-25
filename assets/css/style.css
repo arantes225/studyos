@@ -1469,12 +1469,12 @@ body.sidebar-hidden
 .streak-mini {
   --sidebar-streak-main: #f59e0b;
   --sidebar-streak-core: #fde68a;
-  --sidebar-flame-size: 43px;
+  --sidebar-flame-size: 39px;
 
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 9px;
+  padding: 7px 9px;
   border: 1px solid color-mix(in srgb, var(--sidebar-streak-main) 16%, var(--border));
   border-radius: 11px;
   background: var(--surface);
@@ -1482,9 +1482,9 @@ body.sidebar-hidden
 }
 
 .streak-mini-icon {
-  width: 79px;
-  height: 82px;
-  flex: 0 0 79px;
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
   display: grid;
   place-items: center;
 }
