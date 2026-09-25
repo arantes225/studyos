@@ -42,6 +42,9 @@ create table if not exists public.clinical_case_sessions (
 create index if not exists clinical_case_sessions_user_started_idx
   on public.clinical_case_sessions(user_id, started_at desc);
 
+create index if not exists clinical_case_sessions_case_id_idx
+  on public.clinical_case_sessions(case_id);
+
 alter table public.clinical_cases enable row level security;
 alter table public.clinical_case_sessions enable row level security;
 
