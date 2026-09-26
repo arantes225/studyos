@@ -1,4 +1,4 @@
-const CACHE_VERSION = "luria-pwa-v125-plantao-startfix";
+const CACHE_VERSION = "luria-pwa-v126-plantao-patient-images";
 const PLANTAO_IMAGE_CACHE = "luria-plantao-images-v1";
 const PLANTAO_IMAGE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const STATIC_CACHE = CACHE_VERSION + "-static";
@@ -66,7 +66,7 @@ self.addEventListener("fetch", (event) => {
 
   // Imagens de pacientes do Plantão: cache-first por 7 dias.
   // Depois do primeiro uso, a mesma imagem volta do cache e evita novo download.
-  if (url.pathname.startsWith("/assets/img/plantao/")) {
+  if (url.pathname.startsWith("/assets/img/plantao/") || url.pathname.startsWith("/assets/img/plantao%20pwa/") || url.pathname.startsWith("/assets/img/plantao pwa/")) {
     event.respondWith((async () => {
       const cache = await caches.open(PLANTAO_IMAGE_CACHE);
       const cached = await cache.match(request);
