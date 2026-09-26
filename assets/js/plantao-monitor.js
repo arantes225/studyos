@@ -78,6 +78,7 @@
 
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   let patientBreathAnimation = null;
+  let webBaseBreathAnimation = null;
   function ensurePatientMotionLayer(){
     const motionImg=document.getElementById('plantao-patient-motion');
     const scene=document.querySelector('.plantao-scene');
@@ -115,8 +116,38 @@
 
   function syncPatientBreathing(vitalsState, unconscious){
     const motionImg=ensurePatientMotionLayer();
-    if(!motionImg || !patientBreathAnimation) return;
+    const baseImg=document.getElementById('plantao-patient-image');
+    const standalone=document.documentElement.classList.contains('pwa-standalone')
+      || document.documentElement.dataset.pwa==='standalone'
+      || window.matchMedia?.('(display-mode: standalone)')?.matches
+      || window.navigator.standalone===true;
     const rr=number(vitalsState?.rr);
+
+    // Desktop/web diagnostic version: animate the actually visible base image.
+    // This makes the movement unmistakable while we validate the concept.
+    if(!standalone && baseImg){
+      if(!webBaseBreathAnimation || webBaseBreathAnimation.playState==='idle'){
+        baseImg.style.transformOrigin='50% 60%';
+        baseImg.style.willChange='transform';
+        webBaseBreathAnimation=baseImg.animate([
+          {transform:'translateY(0) scale(1)'},
+          {transform:'translateY(-10px) scale(1.028)'},
+          {transform:'translateY(0) scale(1)'}
+        ],{
+          duration:3000,
+          iterations:Infinity,
+          easing:'ease-in-out'
+        });
+      }
+      if(unconscious || (Number.isFinite(rr) && rr<=0)){
+        webBaseBreathAnimation.pause();
+      }else{
+        webBaseBreathAnimation.playbackRate=Number.isFinite(rr) && rr>=25 ? 2.2 : (Number.isFinite(rr) && rr>0 && rr<=9 ? .58 : 1);
+        webBaseBreathAnimation.play();
+      }
+    }
+
+    if(!motionImg || !patientBreathAnimation) return;
     if(unconscious || (Number.isFinite(rr) && rr<=0)){
       patientBreathAnimation.pause();
       motionImg.style.transform='translateY(0) scaleY(1)';
