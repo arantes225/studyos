@@ -346,12 +346,10 @@
           </section>
         `;
       }).join("");
-      const areaCount=[...subjects.values()].reduce((sum,items)=>sum+items.length,0);
       return `
         <section class="plantao-area-group">
           <div class="plantao-area-head">
             <h2>${esc(area)}</h2>
-            <span>${areaCount} caso${areaCount===1?"":"s"}</span>
           </div>
           <div class="plantao-area-subjects">${subjectHtml}</div>
         </section>
