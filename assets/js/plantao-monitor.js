@@ -78,37 +78,70 @@
 
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   let patientBreathAnimation = null;
+  let patientMotionResizeObserver = null;
+
   function ensurePatientMotionLayer(){
     const motionImg=document.getElementById('plantao-patient-motion');
     const scene=document.querySelector('.plantao-scene');
     if(!motionImg || !scene) return null;
 
-    const mobile=window.matchMedia('(max-width:680px)').matches;
-    Object.assign(motionImg.style,{
-      display:'block',
+    let clip=document.getElementById('plantao-patient-motion-clip');
+    if(!clip){
+      clip=document.createElement('div');
+      clip.id='plantao-patient-motion-clip';
+      clip.setAttribute('aria-hidden','true');
+      motionImg.parentNode.insertBefore(clip,motionImg);
+      clip.appendChild(motionImg);
+    }
+
+    Object.assign(clip.style,{
       position:'absolute',
-      inset:'0',
-      width:'100%',
-      height:'100%',
-      objectFit:'cover',
-      objectPosition:mobile ? '50% 42%' : '42% center',
       zIndex:'1',
+      overflow:'hidden',
       pointerEvents:'none',
-      opacity:'1',
-      animation:'none',
-      transformOrigin:mobile ? '47% 57%' : '43% 57%',
-      WebkitMaskImage:mobile
-        ? 'radial-gradient(ellipse 19% 14% at 47% 57%, #000 0 42%, rgba(0,0,0,.9) 64%, rgba(0,0,0,.35) 82%, transparent 100%)'
-        : 'radial-gradient(ellipse 18% 13% at 43% 57%, #000 0 42%, rgba(0,0,0,.9) 64%, rgba(0,0,0,.35) 82%, transparent 100%)',
-      maskImage:mobile
-        ? 'radial-gradient(ellipse 19% 14% at 47% 57%, #000 0 42%, rgba(0,0,0,.9) 64%, rgba(0,0,0,.35) 82%, transparent 100%)'
-        : 'radial-gradient(ellipse 18% 13% at 43% 57%, #000 0 42%, rgba(0,0,0,.9) 64%, rgba(0,0,0,.35) 82%, transparent 100%)'
+      borderRadius:'45%',
+      // Fixed window over upper chest/upper blanket. The room itself never moves.
+      left:'19%',
+      top:'37%',
+      width:'45%',
+      height:'31%'
     });
+
+    const fitLayer=()=>{
+      const rect=scene.getBoundingClientRect();
+      const clipRect=clip.getBoundingClientRect();
+      if(!rect.width || !rect.height) return;
+      Object.assign(motionImg.style,{
+        display:'block',
+        position:'absolute',
+        width:rect.width+'px',
+        height:rect.height+'px',
+        maxWidth:'none',
+        maxHeight:'none',
+        left:(rect.left-clipRect.left)+'px',
+        top:(rect.top-clipRect.top)+'px',
+        objectFit:'cover',
+        objectPosition:window.matchMedia('(max-width:680px)').matches ? '50% 42%' : '42% center',
+        pointerEvents:'none',
+        opacity:'1',
+        zIndex:'1',
+        transformOrigin:'42% 54%',
+        WebkitMaskImage:'none',
+        maskImage:'none',
+        animation:'none'
+      });
+    };
+
+    fitLayer();
+    if(!patientMotionResizeObserver && 'ResizeObserver' in window){
+      patientMotionResizeObserver=new ResizeObserver(fitLayer);
+      patientMotionResizeObserver.observe(scene);
+    }
 
     if(!patientBreathAnimation || patientBreathAnimation.playState==='idle'){
       patientBreathAnimation=motionImg.animate([
         {transform:'translateY(0) scaleY(1)'},
-        {transform:'translateY(-2px) scaleY(1.018)'},
+        {transform:'translateY(-6px) scaleY(1.03)'},
         {transform:'translateY(0) scaleY(1)'}
       ],{
         duration:3200,
@@ -124,7 +157,6 @@
     const baseImg=document.getElementById('plantao-patient-image');
     const rr=number(vitalsState?.rr);
 
-    // The room/base image must stay completely still. Only the masked torso layer moves.
     if(baseImg){
       baseImg.getAnimations?.().forEach(animation=>animation.cancel());
       baseImg.style.transform='none';
