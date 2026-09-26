@@ -1,4 +1,4 @@
-const CACHE_VERSION = "luria-pwa-v131-desafio-fix";
+const CACHE_VERSION = "luria-pwa-v131-plantao-expanded-actions";
 const PLANTAO_IMAGE_CACHE = "luria-plantao-images-v1";
 const PLANTAO_IMAGE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const STATIC_CACHE = CACHE_VERSION + "-static";
@@ -20,6 +20,7 @@ const APP_SHELL = [
   "/configuracoes/",
   "/dashboard/",
   "/plantao/",
+  "/assets/js/plantao.js?v=8.2-expanded-actions",
   "/assets/css/style.css?v=16.6",
   "/assets/css/landing.css",
   "/assets/css/pwa-mobile.css?v=18",
