@@ -912,6 +912,21 @@
     {id:"thoracentesis",label:"Toracocentese",category:"procedimentos_terapeuticos",subgroup:"Tórax",time_min:1,points:0,result:"Toracocentese realizada."},
     {id:"central_line",label:"Acesso venoso central",category:"procedimentos_terapeuticos",subgroup:"Acessos",time_min:2,points:0,result:"Acesso venoso central obtido."},
     {id:"arterial_line_generic",label:"Cateter arterial",category:"procedimentos_terapeuticos",subgroup:"Acessos",time_min:2,points:0,result:"Cateter arterial instalado."},
+    {id:"jaw_thrust",label:"Jaw-thrust / tração da mandíbula",category:"procedimentos_terapeuticos",subgroup:"Manobras · Via aérea",time_min:.15,points:0,result:"Manobra de jaw-thrust realizada para abertura manual da via aérea."},
+    {id:"head_tilt_chin_lift",label:"Inclinação da cabeça + elevação do mento",category:"procedimentos_terapeuticos",subgroup:"Manobras · Via aérea",time_min:.15,points:0,result:"Manobra de inclinação da cabeça e elevação do mento realizada."},
+    {id:"burp_maneuver",label:"Manobra BURP na laringoscopia",category:"procedimentos_terapeuticos",subgroup:"Manobras · Via aérea",time_min:.15,points:0,result:"Pressão laríngea externa em direção posterior, superior e direita realizada para otimizar a visualização glótica."},
+    {id:"abdominal_thrusts",label:"Compressões abdominais (Heimlich)",category:"procedimentos_terapeuticos",subgroup:"Manobras · Obstrução de via aérea",time_min:.25,points:0,result:"Compressões abdominais realizadas para desobstrução de via aérea por corpo estranho.",repeatable:true},
+    {id:"back_blows",label:"Golpes interescapulares",category:"procedimentos_terapeuticos",subgroup:"Manobras · Obstrução de via aérea",time_min:.25,points:0,result:"Golpes interescapulares realizados para desobstrução de via aérea.",repeatable:true},
+    {id:"infant_chest_thrusts",label:"Compressões torácicas para engasgo em lactente",category:"procedimentos_terapeuticos",subgroup:"Manobras · Obstrução de via aérea",time_min:.25,points:0,result:"Compressões torácicas para desobstrução em lactente realizadas.",repeatable:true},
+    {id:"modified_valsalva",label:"Manobra de Valsalva modificada",category:"procedimentos_terapeuticos",subgroup:"Manobras · Cardiologia",time_min:.35,points:0,result:"Manobra de Valsalva modificada realizada com reavaliação imediata do ritmo."},
+    {id:"dix_hallpike",label:"Manobra de Dix-Hallpike",category:"procedimentos_terapeuticos",subgroup:"Manobras · Vestibular",time_min:.5,points:0,result:"Manobra de Dix-Hallpike realizada; observar vertigem e nistagmo provocados."},
+    {id:"epley",label:"Manobra de Epley",category:"procedimentos_terapeuticos",subgroup:"Manobras · Vestibular",time_min:1,points:0,result:"Manobra de reposicionamento de Epley realizada."},
+    {id:"mcroberts",label:"Manobra de McRoberts",category:"procedimentos_terapeuticos",subgroup:"Manobras · Obstetrícia",time_min:.25,points:0,result:"Manobra de McRoberts realizada para distocia de ombro."},
+    {id:"suprapubic_pressure",label:"Pressão suprapúbica",category:"procedimentos_terapeuticos",subgroup:"Manobras · Obstetrícia",time_min:.25,points:0,result:"Pressão suprapúbica realizada como manobra para distocia de ombro."},
+    {id:"rubin_ii",label:"Manobra de Rubin II",category:"procedimentos_terapeuticos",subgroup:"Manobras · Obstetrícia",time_min:.5,points:0,result:"Manobra de Rubin II realizada."},
+    {id:"woods_screw",label:"Manobra de Woods (parafuso)",category:"procedimentos_terapeuticos",subgroup:"Manobras · Obstetrícia",time_min:.5,points:0,result:"Manobra de Woods realizada para rotação dos ombros."},
+    {id:"gaskin",label:"Manobra de Gaskin (quatro apoios)",category:"procedimentos_terapeuticos",subgroup:"Manobras · Obstetrícia",time_min:.5,points:0,result:"Manobra de Gaskin realizada."},
+    {id:"uterine_massage",label:"Massagem uterina bimanual",category:"procedimentos_terapeuticos",subgroup:"Manobras · Hemorragia obstétrica",time_min:.5,points:0,result:"Massagem/compressão uterina bimanual realizada com reavaliação do sangramento."},
     {id:"epi_im",label:"Adrenalina IM",category:"tratamento",subgroup:"Medicamentos",time_min:.25,points:0,result:"Adrenalina IM administrada."},
     {id:"epi",label:"Adrenalina IV/IO",category:"tratamento",subgroup:"Medicamentos",time_min:.25,points:0,result:"Adrenalina IV/IO administrada."},
     {id:"amiodarone",label:"Amiodarona",category:"tratamento",subgroup:"Medicamentos",time_min:.25,points:0,result:"Amiodarona administrada."},
@@ -1319,6 +1334,49 @@
         changes.push(name+" "+beforeVitals[key]+" → "+after[key]+unit);
       }
     });
+    const t=clinicalContextText();
+    const maneuverResults={
+      jaw_thrust:/trauma|coluna cervical|rebaixamento|inconsciente|via aerea|obstrucao/.test(t)
+        ? "Jaw-thrust realizada com mínima movimentação cervical; via aérea reposicionada e ventilação reavaliada."
+        : "Jaw-thrust realizada; não havia indicação específica documentada para esta manobra neste caso.",
+      head_tilt_chin_lift:/trauma|coluna cervical/.test(t)
+        ? "Inclinação da cabeça e elevação do mento não são a primeira escolha quando há suspeita de lesão cervical; prefira jaw-thrust com estabilização."
+        : "Inclinação da cabeça e elevação do mento realizadas; patência da via aérea reavaliada.",
+      burp_maneuver:/intub|laringosc|via aerea dificil/.test(t)
+        ? "Manobra BURP aplicada durante laringoscopia para otimizar a visualização da glote."
+        : "Manobra BURP realizada sem necessidade clara de laringoscopia neste momento.",
+      abdominal_thrusts:/engasgo|corpo estranho|obstrucao de via aerea/.test(t)
+        ? "Compressões abdominais realizadas; reavaliar expulsão do corpo estranho, tosse eficaz e ventilação."
+        : "Compressões abdominais realizadas sem quadro típico de obstrução grave por corpo estranho.",
+      back_blows:/engasgo|corpo estranho|obstrucao de via aerea/.test(t)
+        ? "Golpes interescapulares realizados; reavaliar se houve expulsão do corpo estranho e retorno de ventilação eficaz."
+        : "Golpes interescapulares realizados sem indicação clara de obstrução por corpo estranho.",
+      infant_chest_thrusts:/lactente|bebe|beb[eê]|engasgo|corpo estranho/.test(t)
+        ? "Compressões torácicas para desobstrução em lactente realizadas; reavaliar via aérea e ventilação."
+        : "Compressões torácicas para engasgo em lactente realizadas fora do contexto típico.",
+      modified_valsalva:/taquicardia supraventricular|tsv|reentrada/.test(t)
+        ? "Valsalva modificada realizada; monitor mostra resposta vagal e o ritmo deve ser reavaliado imediatamente."
+        : "Valsalva modificada realizada; não há taquicardia supraventricular regular claramente documentada neste caso.",
+      dix_hallpike:/vertigem posicional|vppb|vertigem/.test(t)
+        ? "Dix-Hallpike realizada; a presença, direção e fatigabilidade do nistagmo devem ser correlacionadas ao lado testado e ao diagnóstico."
+        : "Dix-Hallpike realizada; o caso não apresenta indicação vestibular posicional evidente.",
+      epley:/vertigem posicional|vppb/.test(t)
+        ? "Manobra de Epley realizada para reposicionamento canalicular; sintomas e nistagmo são reavaliados após a sequência."
+        : "Manobra de Epley realizada sem diagnóstico posicional claramente estabelecido.",
+      mcroberts:/distocia de ombro/.test(t)
+        ? "McRoberts realizada como primeira linha para distocia de ombro, com reavaliação imediata do desprendimento."
+        : "McRoberts realizada sem distocia de ombro documentada.",
+      suprapubic_pressure:/distocia de ombro/.test(t)
+        ? "Pressão suprapúbica realizada em conjunto com manobras para reduzir o diâmetro biacromial fetal."
+        : "Pressão suprapúbica realizada sem distocia de ombro documentada.",
+      rubin_ii:/distocia de ombro/.test(t) ? "Rubin II realizada para adução/rotação do ombro fetal." : "Rubin II realizada sem distocia de ombro documentada.",
+      woods_screw:/distocia de ombro/.test(t) ? "Woods realizada para rotação dos ombros e liberação do ombro impactado." : "Woods realizada sem distocia de ombro documentada.",
+      gaskin:/distocia de ombro/.test(t) ? "Gaskin realizada com posicionamento em quatro apoios para facilitar a liberação dos ombros." : "Gaskin realizada sem distocia de ombro documentada.",
+      uterine_massage:/hemorragia pos-parto|hemorragia pós-parto|atonia uterina/.test(t)
+        ? "Massagem/compressão uterina bimanual realizada; tônus uterino e intensidade do sangramento devem ser reavaliados imediatamente."
+        : "Massagem uterina bimanual realizada sem atonia/hemorragia pós-parto documentada."
+    };
+    if(maneuverResults[action?.id]) return maneuverResults[action.id];
     const explicit=String(action?.result||"").trim();
     const generic=/^(?:.+ administrad[ao]|.+ realizad[ao]|.+ iniciad[ao]|.+ instalad[ao]|.+ obtid[ao]|.+ aplicad[ao]|.+ acionad[ao])\.?$/i.test(explicit);
     if(!generic && explicit) return contextual(explicit);
@@ -2516,7 +2574,33 @@
       case "cpr":
         reactionType="cpr";
         break;
-      case "defibrillate":
+      case "modified_valsalva":
+        if(/taquicardia supraventricular|\btsv\b|reentrada/.test(target) && tachy){
+          reactionType="maneuver";
+          setVitalIfNotExplicit(explicit,"hr",Math.max(75,Math.min(100,Math.round(Number(state.vitals.hr)*0.62))));
+          setVitalIfNotExplicit(explicit,"rhythm","Ritmo sinusal após manobra vagal");
+          changed=true;
+        }
+        break;
+      case "jaw_thrust":
+      case "head_tilt_chin_lift":
+        if(hypoxemic && /via aerea|obstrucao|rebaixamento|inconsciente|sedacao/.test(target)){
+          reactionType="airway";
+          upSpo2(3);
+          changed=true;
+        }
+        break;
+      case "abdominal_thrusts":
+      case "back_blows":
+      case "infant_chest_thrusts":
+        if(/engasgo|corpo estranho|obstrucao de via aerea/.test(target)){
+          reactionType="airway";
+          if(state.vitals?.spo2!=null) upSpo2(6);
+          if(state.vitals?.rr===0) setVitalIfNotExplicit(explicit,"rr",18);
+          changed=true;
+        }
+        break;
+            case "defibrillate":
         reactionType="defibrillation";
         /*
           PCR chocável: quando a desfibrilação é feita após RCP, o estado fisiológico
