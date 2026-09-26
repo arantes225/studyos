@@ -3170,7 +3170,6 @@
                       <div>
                         <div class="admin-qf-style-prompt-actions">
                           <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="qf-dashboard-${slug}-prompt_calibration">Copiar</button>
-                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="qf-dashboard-${slug}-prompt_calibration" data-ai-provider="chatgpt">Abrir ChatGPT</button>
                         </div>
                         <pre id="qf-dashboard-${slug}-prompt_calibration" class="admin-qf-prompt">${esc(buildBoardSegmentPrompt(item,"prompt_calibration"))}</pre>
                       </div>
@@ -3209,7 +3208,6 @@
                 </div>
                 <div class="admin-qf-board-actions">
                   <button class="button primary admin-qf-copy-board" type="button" data-style-copy-index="${index}">Copiar tudo desta banca</button>
-                  <button class="button secondary admin-qf-ai-open" type="button" data-style-ai-index="${index}" data-ai-provider="chatgpt">Abrir ChatGPT</button>
                   ${url ? `<a class="button secondary" href="${esc(url)}" target="_blank" rel="noopener">Fonte oficial</a>` : ""}
                 </div>
               </section>
@@ -3266,7 +3264,6 @@
                   </div>
                   <div class="admin-qf-master-actions">
                     <button class="button primary admin-qf-copy-board" type="button" data-style-copy-index="${index}">Copiar bloco inteiro</button>
-                    <button class="button secondary admin-qf-ai-open" type="button" data-style-ai-index="${index}" data-ai-provider="chatgpt">ChatGPT</button>
                   </div>
                 </div>
                 <pre class="admin-qf-board-master-text">${esc(buildBoardGenerationPrompt(item))}</pre>
@@ -4061,12 +4058,8 @@
         return;
       }
 
-      const blockAiButton = event.target.closest("[data-qf-block-ai]");
-      if (blockAiButton) {
-        const [batch, block] = blockAiButton.dataset.qfBlockAi.split(":");
-        await runQuestionFactoryBlockAction(batch, block, blockAiButton);
-        return;
-      }
+      const blockAiButton = null;
+      if (blockAiButton) return;
 
       const phasePromptButton = event.target.closest("[data-qf-copy-phase]");
       if (phasePromptButton) {
