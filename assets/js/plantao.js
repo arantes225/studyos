@@ -720,7 +720,26 @@
       if(option) setSiteFilter(kind,option.dataset.filterValue||"");
     });
   });
-  document.addEventListener("click",()=>closeSiteFilters());
+
+  const filterMenuToggle=$("plantao-filter-menu-toggle");
+  const filterMenu=$("plantao-emergency-filters");
+  filterMenuToggle?.addEventListener("click",event=>{
+    event.stopPropagation();
+    if(!filterMenu) return;
+    const willOpen=filterMenu.hidden;
+    filterMenu.hidden=!willOpen;
+    filterMenuToggle.setAttribute("aria-expanded",willOpen?"true":"false");
+    if(!willOpen) closeSiteFilters();
+  });
+  filterMenu?.addEventListener("click",event=>event.stopPropagation());
+
+  document.addEventListener("click",()=>{
+    closeSiteFilters();
+    if(filterMenu && !filterMenu.hidden){
+      filterMenu.hidden=true;
+      filterMenuToggle?.setAttribute("aria-expanded","false");
+    }
+  });
   document.addEventListener("keydown",event=>{if(event.key==="Escape") closeSiteFilters();});
   $("plantao-report-close")?.addEventListener("click",closeExamReport);
   $("plantao-report-ok")?.addEventListener("click",closeExamReport);
