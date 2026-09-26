@@ -2565,8 +2565,8 @@
     const isPerplexityStage = ["blind_resolution","perplexity_initial","perplexity_reaudit","lot_perplexity_final"].includes(inferredStage)
       || String(payload.reviewer || "").toLowerCase() === "perplexity";
     const reviewList = Array.isArray(payload.reviews) ? payload.reviews : null;
-    const reviewChunks = isPerplexityStage && reviewList?.length > 100
-      ? Array.from({ length: Math.ceil(reviewList.length / 100) }, (_, index) => reviewList.slice(index * 100, (index + 1) * 100))
+    const reviewChunks = isPerplexityStage && reviewList?.length > 50
+      ? Array.from({ length: Math.ceil(reviewList.length / 50) }, (_, index) => reviewList.slice(index * 50, (index + 1) * 50))
       : null;
 
     let routedData = null;
@@ -2592,7 +2592,7 @@
               }
             : payload.stage_metrics
         };
-        if (message) message.textContent = `Importando Perplexity em blocos de 100: parte ${index + 1}/${reviewChunks.length} (${chunk.length} reviews)...`;
+        if (message) message.textContent = `Importando Perplexity em blocos de 50: parte ${index + 1}/${reviewChunks.length} (${chunk.length} reviews)...`;
         const { data: chunkData, error: chunkError } = await sb.rpc(
           "admin_import_question_factory_stage",
           { p_payload: chunkPayload }
