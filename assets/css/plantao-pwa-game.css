@@ -439,3 +439,69 @@
     }
   }
 }
+
+
+/* v3 — Abas laterais compactas no PWA, mantendo monitor atual */
+@media (max-width:680px){
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tabs{
+    inset:64px 0 128px!important;
+    grid-template-columns:72px minmax(0,1fr) 72px!important;
+    grid-template-rows:repeat(5,minmax(48px,1fr))!important;
+    gap:7px 0!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab{
+    width:72px!important;
+    min-width:72px!important;
+    max-height:82px!important;
+    padding:6px 4px!important;
+    border-radius:0!important;
+    font-size:9px!important;
+    line-height:1.08!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab>span:first-child{
+    font-size:19px!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="anamnese"]{
+    grid-column:1!important;grid-row:1!important;border-radius:0 12px 12px 0!important;
+  }
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="fisico"]{
+    grid-column:1!important;grid-row:2!important;border-radius:0 12px 12px 0!important;
+  }
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="iniciais"]{
+    grid-column:1!important;grid-row:3!important;border-radius:0 12px 12px 0!important;
+  }
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="exames"]{
+    grid-column:1!important;grid-row:4!important;border-radius:0 12px 12px 0!important;
+  }
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="hipoteses"]{
+    grid-column:1!important;grid-row:5!important;border-radius:0 12px 12px 0!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="intervir"]{
+    grid-column:3!important;grid-row:1!important;border-radius:12px 0 0 12px!important;
+  }
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="conduta"]{
+    grid-column:3!important;grid-row:2!important;border-radius:12px 0 0 12px!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab.active{
+    background:var(--accent)!important;
+    color:#fff!important;
+    border-color:rgba(255,255,255,.5)!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-drawer .plantao-intervention-tabs{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:5px!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-drawer .plantao-intervention-tabs button{
+    min-width:0!important;
+    padding-inline:6px!important;
+    font-size:10px!important;
+  }
+}
