@@ -2562,17 +2562,67 @@
       return;
     }
 
-    const { data: routedData, error } = await sb.rpc(
-      "admin_import_question_factory_stage",
-      { p_payload: payload }
-    );
-    if (error) {
-      if (message) message.textContent = error.message || "Não foi possível importar esta etapa.";
-      return;
+    const isPerplexityStage = ["blind_resolution","perplexity_initial","perplexity_reaudit","lot_perplexity_final"].includes(inferredStage)
+      || String(payload.reviewer || "").toLowerCase() === "perplexity";
+    const reviewList = Array.isArray(payload.reviews) ? payload.reviews : null;
+    const reviewChunks = isPerplexityStage && reviewList?.length > 100
+      ? Array.from({ length: Math.ceil(reviewList.length / 100) }, (_, index) => reviewList.slice(index * 100, (index + 1) * 100))
+      : null;
+
+    let routedData = null;
+    let telemetryStored = false;
+    if (reviewChunks) {
+      const totals = { imported:0, approved:0, needs_revision:0, rejected:0 };
+      for (let index = 0; index < reviewChunks.length; index += 1) {
+        const chunk = reviewChunks[index];
+        const chunkPayload = {
+          ...payload,
+          reviews: chunk,
+          stage_metrics: payload.stage_metrics && typeof payload.stage_metrics === "object"
+            ? {
+                ...payload.stage_metrics,
+                run_label: `${payload.stage_metrics.run_label || inferredStage || "perplexity"}-parte-${index + 1}-de-${reviewChunks.length}`,
+                total_count: chunk.length,
+                approved_count: chunk.filter(item => item?.status === "approved").length,
+                needs_revision_count: chunk.filter(item => item?.status === "needs_revision").length,
+                rejected_count: chunk.filter(item => item?.status === "rejected").length,
+                hard_reject_count: chunk.filter(item => item?.hard_fail === true).length,
+                agreement_count: chunk.filter(item => item?.answer_agreement === "agree").length,
+                status: index === reviewChunks.length - 1 ? payload.stage_metrics.status : "partial"
+              }
+            : payload.stage_metrics
+        };
+        if (message) message.textContent = `Importando Perplexity em blocos de 100: parte ${index + 1}/${reviewChunks.length} (${chunk.length} reviews)...`;
+        const { data: chunkData, error: chunkError } = await sb.rpc(
+          "admin_import_question_factory_stage",
+          { p_payload: chunkPayload }
+        );
+        if (chunkError) {
+          if (message) message.textContent = `Parte ${index + 1}/${reviewChunks.length} falhou: ${chunkError.message || "erro de importação"}. As partes anteriores permanecem importadas.`;
+          return;
+        }
+        const result = chunkData?.result || {};
+        totals.imported += Number(result.imported || 0);
+        totals.approved += Number(result.approved || 0);
+        totals.needs_revision += Number(result.needs_revision || 0);
+        totals.rejected += Number(result.rejected || 0);
+        telemetryStored = telemetryStored || chunkData?.stage_metrics?.stored === true;
+        routedData = { ...(chunkData || {}), result:{ ...result, ...totals } };
+      }
+    } else {
+      const { data, error } = await sb.rpc(
+        "admin_import_question_factory_stage",
+        { p_payload: payload }
+      );
+      if (error) {
+        if (message) message.textContent = error.message || "Não foi possível importar esta etapa.";
+        return;
+      }
+      routedData = data;
+      telemetryStored = data?.stage_metrics?.stored === true;
     }
 
     const data = routedData?.result || {};
-    const telemetryStored = routedData?.stage_metrics?.stored === true;
 
     if (
       payload.style_score != null
