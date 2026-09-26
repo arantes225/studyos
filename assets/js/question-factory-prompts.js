@@ -362,8 +362,28 @@ FINAL_PROMPT_SCORE usa rubrica própria: fidelidade 40, distratores 20, dificuld
 ${stringify({schema_version:SCHEMA_VERSION,review_stage:'prompt_calibration',exam_style:item.exam_style||null,profile_version:VERSION,FINAL_PROMPT_SCORE:null,prompt_component_scores:{fidelity:null,distractors:null,difficulty:null,diversity:null,clarity:null},hard_fail_count:0,sample_size:0,primary_style_evidence:[],decision:'NEEDS_MORE_PRIMARY_STYLE_DATA',findings:[]})}`;
     if(stage==='blind_resolution')return `${rules}
 ${operationalAccess(ctx,'blind_resolution')}
-RESOLUÇÃO CEGA INDEPENDENTE — CHATGPT. IGNORE COMPLETAMENTE A MEMÓRIA, o histórico da conversa, revisões, scores e conclusões anteriores. Trabalhe como se cada item fosse visto pela primeira vez. Leia SOMENTE comando + alternativas da versão atual, sem gabarito, explicações, fontes da resposta ou pareceres prévios. A memória do modelo não é fonte. Resolver todos os IDs recebidos; não inventar uma letra quando não houver resposta única. Persistir este registro antes da auditoria completa.
-${stringify({...context(item,ctx),review_stage:'blind_resolution',reviewer:'ChatGPT',reviews:[{question_id:'ID_IMUTAVEL',item_version:1,independent_answer:null,ambiguity:false,single_best_answer:false,reason:'Registrar raciocínio e dado decisivo; null se irresolúvel.'}],stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage:'blind_resolution',provider:'ChatGPT',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}})}`;
+RESOLUÇÃO CEGA INDEPENDENTE — CHATGPT. IGNORE COMPLETAMENTE A MEMÓRIA, o histórico da conversa, revisões, scores e conclusões anteriores. Trabalhe como se cada item fosse visto pela primeira vez. Leia SOMENTE comando + alternativas da versão atual, sem gabarito, explicações, fontes da resposta ou pareceres prévios. A memória do modelo não é fonte.
+
+ENTRADA OBRIGATÓRIA:
+- Este prompt operacional deve vir acompanhado, ao final, de um bloco chamado INPUT_JSON_CEGO.
+- INPUT_JSON_CEGO é a ÚNICA fonte de verdade desta execução.
+- Cada item real estará em questions[] com question_id, version, enunciado e alternativas A-D.
+- O pacote da etapa cega NÃO deve conter gabarito, explicações, fontes, pareceres ou respostas anteriores.
+- Resolva TODOS e SOMENTE os itens presentes em questions[].
+- Use question_id exatamente como recebido e copie version para item_version.
+- Se questions[] estiver ausente ou vazio, devolva JSON_INPUT_INVALID; não use exemplos, memória, Admin, Supabase, arquivos antigos ou histórico para completar.
+
+SAÍDA OBRIGATÓRIA:
+- Devolva UM ÚNICO JSON válido, pronto para “Colar JSON de resposta”.
+- reviews[] deve conter exatamente um review para cada questão recebida, sem ID extra e sem omissão.
+- independent_answer deve ser A, B, C, D ou null se realmente não houver resposta única.
+- ambiguity e single_best_answer devem refletir a resolução independente.
+- reason deve registrar de forma curta o raciocínio e o dado decisivo.
+- stage_metrics.total_count deve ser igual ao número real de reviews desta resposta; não deixe contagens do modelo abaixo em zero.
+- Não tente persistir nada fora do JSON devolvido.
+
+MODELO DE SAÍDA — APENAS ESQUEMA, NÃO É ENTRADA E NÃO CONTÉM QUESTÃO REAL:
+${stringify({...context(item,ctx),review_stage:'blind_resolution',reviewer:'ChatGPT',reviews:[],stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,batch_code:ctx.batch_code||null,block_number:ctx.block_number??null,block_code:ctx.block_code||null,stage:'blind_resolution',provider:'ChatGPT',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}})}`;
     if(['chatgpt_initial','perplexity_initial','perplexity_reaudit'].includes(stage))return `${common}
 ${rubricText}
 TAREFA: ${stage==='chatgpt_initial'?'REVISÃO ADVERSARIAL + AUTOCORREÇÃO IMEDIATA do bloco. Não aceite autoavaliação do gerador. Para CADA questão: (1) audite a versão recebida; (2) se APROVADA, mantenha-a; (3) se REVISAR ou REJEITADA, corrija/regenerate imediatamente APENAS os campos necessários, preservando o ID; (4) incremente a versão proposta em +1; (5) faça NOVA revisão adversarial completa da versão corrigida; (6) só marque final_status=approved se a versão corrigida passar todos os gates. Não envie ao revisor independente uma questão que você mesmo ainda considera ruim. Preserve obrigatoriamente o histórico v1→v2, com status e motivo de cada tentativa. Primeiro faça o passe formal ignorando os dados clínicos da vinheta: tente prever a chave por comando + alternativas e registre surface_guess_without_vignette e confiança. Depois leia a vinheta, identifique o melhor distrator, explique por que é plausível e forneça uma mudança contrafactual concreta que o tornaria correto/mais defensável. Avalie assimetria lexical, dependência real da vinheta, single-best-answer e dificuldade observada.':'REVISÃO CEGA E INDEPENDENTE de TODOS os itens. IGNORE COMPLETAMENTE memória, contexto, pareceres, notas, status e conclusões de etapas anteriores. Avalie a versão atual como inédita. Antes de confrontar o gabarito, preserve a independent_answer da resolução cega; não altere essa resposta para coincidir com o gabarito. A memória do modelo não é fonte. Para dúvida científica ou conteúdo atualizável, verificar fonte aberta nesta etapa, priorizando Ministério da Saúde/CONITEC/PCDT, ANVISA quando pertinente e sociedades brasileiras da especialidade (FEBRASGO, SBP, SBC, CBC, AMB etc.).'}
