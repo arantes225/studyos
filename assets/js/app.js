@@ -269,6 +269,7 @@ const PAGE_INFO = {
   erros: { title: "Caderno de erros", eyebrow: "Estudar" },
   questoes: { title: "Questões e Simulados", eyebrow: "Estudar" },
   plantao: { title: "Plantão", eyebrow: "Casos Clínicos" },
+  desafio: { title: "Desafio Diário", eyebrow: "Caso do dia" },
   estatisticas: { title: "Estatísticas", eyebrow: "Desempenho" },
   editais: { title: "Editais / Provas", eyebrow: "Planejamento" },
   amigos: { title: "Amigos", eyebrow: "Compartilhar" },
@@ -446,6 +447,10 @@ function sidebarMarkup(user, profile = null, isAdmin = false) {
           <a class="nav-sublink ${page === "plantao" ? "active" : ""}" href="/plantao/">Plantão</a>
         </div>
       </div>
+
+      <a class="nav-link ${page === "desafio" ? "active" : ""}" href="/desafio-diario/">
+        <span class="nav-icon">✦</span><span>Desafio Diário</span>
+      </a>
 
       <a class="nav-link ${page === "estatisticas" ? "active" : ""}" href="/estatisticas/">
         <span class="nav-icon">▥</span><span>Estatísticas</span>
