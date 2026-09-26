@@ -2571,3 +2571,27 @@ body[data-page="plantao"] .plantao-phone-resume-button:focus-visible{
 :root[data-theme="leila-mood"] .plantao-phone-compose-form button,
 :root[data-theme="pink-mood"] .plantao-phone-compose-form button,
 :root[data-theme="pink"] .plantao-phone-compose-form button{background:#e7357d}
+
+
+/* LuriaZap — legibilidade do celular */
+body[data-page="plantao"] .plantao-phone-inbox-toolbar strong,
+body[data-page="plantao"] .plantao-phone-conversation-title,
+body[data-page="plantao"] .plantao-phone-conversation-top strong,
+body[data-page="plantao"] .plantao-phone-contact-copy strong,
+body[data-page="plantao"] .plantao-phone-bubble,
+body[data-page="plantao"] .plantao-phone-choice-group button{
+  font-size:calc(1em + 1px);
+}
+body[data-page="plantao"] .plantao-phone-inbox-toolbar small,
+body[data-page="plantao"] .plantao-phone-conversation-preview,
+body[data-page="plantao"] .plantao-phone-conversation-top small,
+body[data-page="plantao"] .plantao-phone-contact-copy small{
+  font-size:calc(1em + 1px);
+}
+body[data-page="plantao"] .plantao-phone-search-wrap input,
+body[data-page="plantao"] .plantao-phone-compose-form input{
+  font-size:14px;
+}
+body[data-page="plantao"] .plantao-phone-brand-name{
+  font-size:19px!important;
+}
