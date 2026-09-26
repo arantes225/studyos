@@ -1,62 +1,9 @@
-# Auditoria automática Perplexity — Fábrica de Questões
+# Documento legado — fluxo Perplexity desativado
 
-## Objetivo
-Executar a auditoria clínica/editorial LURIA 3.4 de forma retomável e idempotente, persistindo um parecer individual por questão e versão atual.
+Este documento é mantido apenas para rastreabilidade histórica. O Perplexity não faz mais parte do pipeline obrigatório da Fábrica de Questões.
 
-## Fluxo
-1. O Admin divide o bloco em faixas Q001–Q050, Q051–Q100, Q101–Q150 e Q151–Q200.
-2. Para cada questão, a Edge Function `question-factory-perplexity-audit` busca a versão atual.
-3. Para cada questão, executa uma resolução cega em memória com apenas enunciado + alternativas, sem gabarito, explicações ou fonte.
-4. Ainda na mesma execução, usa essa resposta independente para a auditoria completa com pesquisa web e verificação de fontes.
-5. O JSON é normalizado e validado pelo banco.
-6. Somente o parecer final `perplexity_initial` é persistido, diretamente por `admin_import_question_factory_perplexity_initial`; a resolução cega intermediária não cria linha no banco.
-7. A cobertura é relida por `admin_question_factory_review_coverage`.
-8. Métricas cumulativas são registradas por `admin_import_question_factory_stage_metrics`.
-9. A faixa só é concluída quando todos os itens da versão atual possuem review persistido.
+O fluxo vigente usa ChatGPT em revisões independentes e cegas, com regra obrigatória de ignorar memória, histórico, pareceres, scores e conclusões anteriores. A memória do modelo não é fonte.
 
-## Idempotência
-A chave lógica das etapas Perplexity é:
+Para ver o fluxo atual, consulte `docs/question-factory-manual.md` e `assets/js/question-factory-prompts.js`.
 
-`item_id + item_version + review_stage + reviewer`
-
-O índice parcial `question_factory_reviews_perplexity_logical_uq` impede duplicação lógica de `perplexity_initial` e `perplexity_reaudit` para a mesma versão; reviews históricos de `blind_resolution`, quando existirem, permanecem apenas como legado.
-
-## Validação LURIA 3.4
-O validador `private.qf_assert_perplexity_review_v34` exige, entre outros:
-- resposta independente e concordância;
-- single-best-answer, ambiguidade e hard fails;
-- surface guess sem vinheta;
-- assimetria lexical e dependência da vinheta;
-- melhor distrator e contrafactual;
-- dois functional killers distintos;
-- avaliação A–D das explicações;
-- validação da mensagem-chave;
-- fontes verificadas;
-- proposed_change estruturado;
-- problemas científicos, de fonte, redação, estilo e dificuldade.
-
-Campos adicionais permanecem estruturados dentro de `raw_payload`, enquanto os campos centrais também são persistidos nas colunas próprias de `question_factory_reviews`.
-
-## Verificação de fontes
-A Edge Function não aceita apenas a URL declarada pela questão/modelo como prova. Uma fonte marcada como VERIFIED precisa:
-- estar acessível;
-- aparecer nas evidências retornadas pelo mecanismo de busca/fetch do Perplexity;
-- ter título/ano/seção confirmados;
-- sustentar a resposta.
-
-Se isso não puder ser confirmado, o parecer recebe `SOURCE_VERIFICATION_PENDING` ou `SOURCE_VERIFICATION_FAILED` e não pode ser aprovado.
-
-## Reauditoria
-Quando o ChatGPT corrige uma questão e incrementa a versão, a reauditoria faz uma nova resolução cega em memória antes de `perplexity_reaudit`. A cobertura de reauditoria conta apenas versões efetivamente corrigidas/eligíveis, e não exige 50 pareceres quando somente um subconjunto da faixa mudou.
-
-## Segredo do provedor
-A Edge Function espera `PERPLEXITY_API_KEY` nos Secrets das Edge Functions do Supabase. A chave nunca deve ser colocada no JavaScript do cliente, em payload de review ou commitada no GitHub.
-
-## Critério de conclusão
-Exemplo Q001–Q050:
-- `range.expected = 50`
-- `persisted = 50`
-- `pending_ids = []`
-- `complete = true`
-
-O bloco inicial Q001–Q200 só avança quando a cobertura atual do Perplexity atingir 200/200.
+Os nomes técnicos de algumas etapas ainda contêm `perplexity_*` por compatibilidade do banco, mas o executor operacional é ChatGPT.
