@@ -1961,9 +1961,69 @@
     return genderText(filled);
   }
 
+  const PWA_PATIENT_IMAGES = {
+    baby:{awake:"assets/img/plantao pwa/15-bebe-acordado.webp",closed:"assets/img/plantao pwa/01-bebe-dormindo.webp"},
+    girl:{awake:"assets/img/plantao pwa/10-menina-acordada.webp",closed:"assets/img/plantao pwa/08-menina-olhos-fechados.webp"},
+    boy:{awake:"assets/img/plantao pwa/13-menino-acordado.webp",closed:"assets/img/plantao pwa/09-menino-olhos-fechados.webp"},
+    pregnant:{awake:"assets/img/plantao pwa/14-gestante-acordada.webp",closed:"assets/img/plantao pwa/02-gestante-olhos-fechados.webp"},
+    woman:{awake:"assets/img/plantao pwa/05-mulher-adulta-negra-acordada.webp",closed:"assets/img/plantao pwa/04-mulher-adulta-negra-olhos-fechados.webp"},
+    man:{awake:"assets/img/plantao pwa/03-homem-adulto-acordado.webp",closed:"assets/img/plantao pwa/06-homem-adulto-olhos-fechados.webp"},
+    elderlyWoman:{awake:"assets/img/plantao pwa/16-mulher-idosa-acordada.webp",closed:"assets/img/plantao pwa/07-mulher-idosa-olhos-fechados.webp"},
+    elderlyMan:{awake:"assets/img/plantao pwa/11-homem-idoso-acordado.webp",closed:"assets/img/plantao pwa/12-homem-idoso-olhos-fechados.webp"}
+  };
+
+  function isStandalonePwa(){
+    return document.documentElement.classList.contains("pwa-standalone")
+      || document.documentElement.dataset.pwa==="standalone"
+      || window.matchMedia?.("(display-mode: standalone)")?.matches
+      || window.navigator.standalone===true;
+  }
+
+  function patientAgeYears(item=state.current){
+    const raw=String(item?.presentation?.age||"").trim();
+    if(!raw) return null;
+    const normalized=normalizeLabel(raw).replace(",",".");
+    const n=parseFloat(normalized.replace(/[^0-9.]/g,""));
+    if(!Number.isFinite(n)) return null;
+    if(/mes/.test(normalized)) return n/12;
+    if(/dia/.test(normalized)) return n/365;
+    return n;
+  }
+
+  function pwaPatientImagePair(item=state.current){
+    if(!isStandalonePwa() || !item) return null;
+    const sexRaw=normalizeLabel(item.presentation?.sex||"");
+    const female=sexRaw==="f" || sexRaw.startsWith("fem");
+    const age=patientAgeYears(item);
+    const text=normalizeLabel([
+      item.title,
+      item.summary,
+      item.presentation?.opening,
+      item.presentation?.chief_complaint
+    ].filter(Boolean).join(" "));
+    const pregnant=female && /gravidez|gestante|gestacao|eclampsia|pre-eclampsia|trabalho de parto/.test(text)
+      && !/pos-parto|puerper/.test(text);
+
+    if(Number.isFinite(age) && age<2) return PWA_PATIENT_IMAGES.baby;
+    if(Number.isFinite(age) && age<13) return female ? PWA_PATIENT_IMAGES.girl : PWA_PATIENT_IMAGES.boy;
+    if(pregnant) return PWA_PATIENT_IMAGES.pregnant;
+    if(Number.isFinite(age) && age>=65) return female ? PWA_PATIENT_IMAGES.elderlyWoman : PWA_PATIENT_IMAGES.elderlyMan;
+    return female ? PWA_PATIENT_IMAGES.woman : PWA_PATIENT_IMAGES.man;
+  }
+
+  function patientImagesForCurrentCase(){
+    const pwaPair=pwaPatientImagePair();
+    if(pwaPair) return {patient_image:pwaPair.awake,unconscious_image:pwaPair.closed};
+    return {
+      patient_image:state.current?.presentation?.patient_image,
+      unconscious_image:state.current?.presentation?.unconscious_image
+    };
+  }
+
   function renderVitals() {
     const v=state.vitals || {};
-    window.PlantaoMonitor?.update(v, {slug:state.current?.slug,enabled:state.monitorOn,patient_image:state.current?.presentation?.patient_image,unconscious_image:state.current?.presentation?.unconscious_image});
+    const patientImages=patientImagesForCurrentCase();
+    window.PlantaoMonitor?.update(v, {slug:state.current?.slug,enabled:state.monitorOn,...patientImages});
     const items=[
       ["FC",v.hr,"bpm"],
       ["SpO₂",v.spo2,"%"],
