@@ -490,9 +490,9 @@ PASSO A PASSO:
 14. Ao terminar, DEVOLVA O JSON COMPLETO diretamente na resposta para que o usuário use o botão “Colar JSON de resposta” no Admin.
 15. NÃO gere bridge_write, receipt_id ou qualquer afirmação de persistência.
 16. coverage.complete só pode refletir o que foi realmente processado nesta resposta; não use esse campo para afirmar estado do banco.
-17. PROCESSE E DEVOLVA NO MÁXIMO 100 REVIEWS POR RESPOSTA. Se o JSON de entrada tiver mais de 100 questões, trabalhe em partes: PARTE 1 = as primeiras 100 questões ainda não processadas; PARTE 2 = as próximas 100. Nunca misture, pule ou repita question_id entre as partes.
-18. Cada resposta deve conter até 100 reviews distintos, um por question_id + item_version/version processado. Para um bloco de 200, a cobertura completa será formada por duas importações de 100 reviews.
-19. Em stage_metrics, total_count deve refletir somente a parte atual (normalmente 100), e run_label deve identificar "parte-1-de-2" ou "parte-2-de-2".
+17. PROCESSE E DEVOLVA NO MÁXIMO 50 REVIEWS POR RESPOSTA. Se o JSON de entrada tiver mais de 50 questões, trabalhe em partes: PARTE 1 = Q001–Q050; PARTE 2 = Q051–Q100; PARTE 3 = Q101–Q150; PARTE 4 = Q151–Q200. Nunca misture, pule ou repita question_id entre as partes.
+18. Cada resposta deve conter até 50 reviews distintos, um por question_id + item_version/version processado. Para um bloco de 200, a cobertura completa será formada por quatro importações de 50 reviews.
+19. Em stage_metrics, total_count deve refletir somente a parte atual (normalmente 50), e run_label deve identificar "parte-1-de-4", "parte-2-de-4", "parte-3-de-4" ou "parte-4-de-4".
 
 REGRAS DE ESCOPO:
 - Nunca trabalhar em outro bloco além de ${blockCode || 'NÃO VINCULADO'}.
@@ -510,7 +510,7 @@ TRAVA CONTRA RESPOSTA ERRADA:
 - A fonte operacional desta etapa é exatamente o JSON completo que acompanha este prompt.
 
 SAÍDA:
-1. Primeiro, devolva o JSON completo e válido da PARTE ATUAL, com no máximo 100 reviews.
+1. Primeiro, devolva o JSON completo e válido da PARTE ATUAL, com no máximo 50 reviews.
 2. Se ainda existirem questões não processadas no JSON de entrada, indique depois do JSON que existe uma próxima parte; não inclua os reviews dela nesta resposta.
 3. Depois do JSON, pode incluir um relatório humano curto questão por questão se isso couber sem truncar o JSON.
 4. O JSON tem prioridade absoluta: nunca sacrifique, resuma ou corte reviews para caber um relatório textual.
