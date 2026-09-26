@@ -1330,10 +1330,29 @@
   function caseActions(){ return Array.isArray(state.current?.actions) ? state.current.actions : []; }
   function normalizeLabel(value){ return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase(); }
 
+  function isGenericStoredClinicalText(value) {
+    const t=normalizeLabel(value);
+    if(!t) return true;
+    return [
+      "interpretado especificamente",
+      "interpretada especificamente",
+      "deve ser interpretado",
+      "deve ser interpretada",
+      "sem usar laudo neutro",
+      "procurando alteracoes que expliquem",
+      "pode alterar diagnostico",
+      "e coerente com a queixa",
+      "atencao objetiva a perfusao",
+      "avaliados quando relevantes",
+      "documenta nivel de consciencia",
+      "parte de fr "
+    ].some(fragment=>t.includes(fragment));
+  }
+
   function physicalExamResult(action) {
     if(!action || action.category!=="exame") return action?.result || "";
     const custom=state.current?.presentation?.physical_exam;
-    if(custom && typeof custom==="object" && custom[action.id]) return String(custom[action.id]);
+    if(custom && typeof custom==="object" && custom[action.id] && !isGenericStoredClinicalText(custom[action.id])) return String(custom[action.id]);
 
     const title=normalizeLabel(state.current?.title);
     const opening=normalizeLabel([state.current?.presentation?.opening,state.current?.presentation?.chief_complaint].filter(Boolean).join(" "));
@@ -1590,6 +1609,43 @@
         : "Massagem uterina bimanual realizada sem atonia/hemorragia pós-parto documentada."
     };
     if(maneuverResults[action?.id]) return maneuverResults[action.id];
+    const procedureResults={
+      niv:/edema agudo|insuficiencia respiratoria|dpoc|asma|broncoespasmo/.test(t)
+        ? "Ventilação não invasiva iniciada; trabalho respiratório, frequência respiratória e oxigenação são reavaliados imediatamente."
+        : "Ventilação não invasiva iniciada; não havia indicação respiratória forte documentada neste caso.",
+      high_flow_nasal_cannula:/hipox|insuficiencia respiratoria|pneumonia|bronquiolite/.test(t)
+        ? "Cânula nasal de alto fluxo iniciada; fluxo e FiO₂ titulados conforme esforço respiratório e saturação."
+        : "Cânula nasal de alto fluxo iniciada sem hipoxemia importante documentada.",
+      lumbar_puncture:/meningite|encefalite|hemorragia subaracnoidea/.test(t)
+        ? "Punção lombar realizada após checagem de contraindicações; pressão de abertura e aspecto do líquor são registrados e a amostra segue para análise."
+        : "Punção lombar realizada; a indicação e contraindicações devem ser reavaliadas neste contexto.",
+      paracentesis:/ascite|peritonite bacteriana espontanea|cirrose/.test(t)
+        ? "Paracentese realizada; líquido ascítico coletado para celularidade, albumina/proteína e cultura conforme indicação."
+        : "Paracentese realizada sem ascite clinicamente relevante documentada.",
+      arthrocentesis:/artrite septica|gota|derrame articular/.test(t)
+        ? "Artrocentese realizada; líquido sinovial enviado para celularidade, cristais, Gram e cultura conforme hipótese."
+        : "Artrocentese realizada sem derrame articular claramente documentado.",
+      abscess_drainage:/abscesso/.test(t)
+        ? "Incisão e drenagem realizadas, com evacuação do conteúdo e avaliação de necessidade de curativo, cultura e antimicrobiano."
+        : "Incisão e drenagem realizadas sem coleção claramente documentada.",
+      closed_reduction:/fratura|luxacao/.test(t)
+        ? "Redução fechada realizada; alinhamento, dor, perfusão, sensibilidade e pulsos distais são reavaliados antes da imobilização."
+        : "Redução fechada realizada sem fratura/luxação claramente documentada.",
+      nasal_packing_anterior:/epistaxe/.test(t)
+        ? "Tamponamento nasal anterior realizado; sangramento ativo e estabilidade hemodinâmica são reavaliados."
+        : "Tamponamento nasal realizado sem epistaxe ativa claramente documentada.",
+      uterine_balloon:/hemorragia pos-parto|atonia uterina/.test(t)
+        ? "Balão intrauterino inserido para tamponamento; sangramento, tônus uterino e estabilidade hemodinâmica são reavaliados continuamente."
+        : "Balão intrauterino inserido sem hemorragia pós-parto/atonia claramente documentada.",
+      emergency_hemodialysis:/hipercalemia|edema pulmonar|uremia|intoxicacao dializavel/.test(t)
+        ? "Hemodiálise de urgência iniciada para tratar a indicação presente; eletrólitos, volume, ritmo e estabilidade são monitorizados durante o procedimento."
+        : "Hemodiálise de urgência iniciada; a indicação dialítica deve ser confirmada neste caso.",
+      lateral_canthotomy:/sindrome compartimental orbital|hematoma retrobulbar/.test(t)
+        ? "Cantotomia/cantólise lateral realizada para descompressão orbitária; pressão intraocular, pupila e acuidade visual são reavaliadas."
+        : "Cantotomia/cantólise realizada sem síndrome compartimental orbital claramente documentada."
+    };
+    if(procedureResults[action?.id]) return procedureResults[action.id];
+
     const explicit=String(action?.result||"").trim();
     const generic=/^(?:.+ administrad[ao]|.+ realizad[ao]|.+ iniciad[ao]|.+ instalad[ao]|.+ obtid[ao]|.+ aplicad[ao]|.+ acionad[ao])\.?$/i.test(explicit);
     if(!generic && explicit) return contextual(explicit);
@@ -1687,7 +1743,7 @@
   function diagnosticTestResult(action){
     if(!action) return "";
     const custom=state.current?.presentation?.test_results;
-    if(custom && typeof custom==="object" && custom[action.id]) return String(custom[action.id]);
+    if(custom && typeof custom==="object" && custom[action.id] && !isGenericStoredClinicalText(custom[action.id])) return String(custom[action.id]);
 
     const t=clinicalContextText();
     const v=state.vitals||state.current?.initial_vitals||{};
@@ -2745,6 +2801,14 @@
     const plan=state.current?.monitor?.[actionId];
     if(!plan || typeof plan!=="object") return false;
 
+    const planEffect=String(plan.effect||"");
+    const hasExplicitPlan=Boolean(
+      (plan.vitals && typeof plan.vitals==="object" && Object.keys(plan.vitals).length)
+      || plan.outcome
+      || plan.note
+    );
+    if(planEffect==="no_immediate_change" && !hasExplicitPlan) return false;
+
     const before={...state.vitals};
     if(plan.vitals && typeof plan.vitals==="object"){
       state.vitals={...state.vitals,...plan.vitals};
@@ -2930,6 +2994,35 @@
         if(/tamponamento|derrame pericardico/.test(target)){
           adjustBP(explicit,18,10);
           adjustVital(explicit,"hr",-10,0,220);
+        }
+        break;
+      case "niv":
+        reactionType="ventilation";
+        if(/edema agudo|insuficiencia respiratoria|dpoc|asma|broncoespasmo/.test(target) || hypoxemic){
+          upSpo2(6);
+          downRR(4);
+        }
+        break;
+      case "high_flow_nasal_cannula":
+        reactionType="oxygen";
+        if(hypoxemic || /insuficiencia respiratoria|pneumonia|bronquiolite/.test(target)){
+          upSpo2(5);
+          downRR(2);
+        }
+        break;
+      case "endoscopic_hemostasis":
+      case "sengstaken_blakemore":
+        if(/hemorragia digestiva|varizes|hematemese|melena/.test(target)){
+          if(hypotensive) adjustBP(explicit,8,4);
+          adjustVital(explicit,"hr",-6,0,220);
+        }
+        break;
+      case "uterine_balloon":
+      case "manual_placenta_removal":
+      case "uterine_exploration":
+        if(/hemorragia pos-parto|atonia uterina|retencao placentaria|sangramento puerperal/.test(target)){
+          if(hypotensive) adjustBP(explicit,10,6);
+          adjustVital(explicit,"hr",-8,0,220);
         }
         break;
       case "pelvic_binder":
