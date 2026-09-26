@@ -84,15 +84,37 @@
     const mental = normalize(vitals.mental);
     const unconscious = /inconsciente|desacordad|nao responsiv|nao responde|arresponsiv|coma|irresponsiv/.test(mental);
     const img = document.getElementById('plantao-patient-image');
+    const motionImg = document.getElementById('plantao-patient-motion');
+    const scene = document.querySelector('.plantao-scene');
     const src = unconscious ? caseContext.unconscious_image : caseContext.patient_image;
     if (img && src && img.getAttribute('src') !== src) img.src = src;
+    if (motionImg && src && motionImg.getAttribute('src') !== src) motionImg.src = src;
     if (img) img.alt = `Ilustração do paciente ${unconscious ? 'desacordado' : 'acordado'} no leito`;
+    if(scene){
+      const rr=number(vitals.rr);
+      scene.classList.toggle('patient-unconscious',unconscious);
+      scene.classList.toggle('patient-apnea',Number.isFinite(rr) && rr<=0);
+      scene.classList.toggle('patient-tachypnea',!unconscious && Number.isFinite(rr) && rr>=25);
+      scene.classList.toggle('patient-bradypnea',!unconscious && Number.isFinite(rr) && rr>0 && rr<=9);
+    }
     const badge = document.getElementById('plantao-consciousness');
     if (badge) badge.textContent = vitals.mental || 'Estado neurológico não informado';
     if (!frame) frame = requestAnimationFrame(draw);
   }
 
   function react(type, details={}) {
+    const scene=document.querySelector('.plantao-scene');
+    if(scene){
+      if(type==='defibrillation' || type==='cardioversion'){
+        scene.classList.remove('patient-shock');
+        void scene.offsetWidth;
+        scene.classList.add('patient-shock');
+        setTimeout(()=>scene.classList.remove('patient-shock'),520);
+      }else if(type==='cpr'){
+        scene.classList.add('patient-cpr');
+        setTimeout(()=>scene.classList.remove('patient-cpr'),1500);
+      }
+    }
     const durationByType = {
       defibrillation: 1150,
       cardioversion: 900,
