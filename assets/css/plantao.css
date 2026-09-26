@@ -3130,3 +3130,73 @@ body[data-page="plantao"] .plantao-phone-new-chat-fab:active{transform:scale(.96
     width:min(360px,calc(100% - 224px));
   }
 }
+
+
+/* Web patient motion prototype */
+@media (min-width:681px){
+  html:not(.pwa-standalone) #plantao-simulator:not([hidden]) .plantao-scene{
+    position:relative;
+  }
+
+  html:not(.pwa-standalone) #plantao-simulator:not([hidden]) #plantao-patient-image{
+    position:relative;
+    z-index:0;
+  }
+
+  html:not(.pwa-standalone) #plantao-simulator:not([hidden]) #plantao-patient-motion{
+    display:block;
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    object-position:42% center;
+    z-index:1;
+    pointer-events:none;
+    opacity:1;
+    transform-origin:50% 60%;
+    -webkit-mask-image:radial-gradient(ellipse 36% 44% at 50% 58%,#000 0 54%,rgba(0,0,0,.96) 67%,rgba(0,0,0,.45) 82%,transparent 100%);
+    mask-image:radial-gradient(ellipse 36% 44% at 50% 58%,#000 0 54%,rgba(0,0,0,.96) 67%,rgba(0,0,0,.45) 82%,transparent 100%);
+    animation:plantaoPatientBreathWeb 3.4s ease-in-out infinite;
+    will-change:transform;
+  }
+
+  html:not(.pwa-standalone) #plantao-simulator:not([hidden]) .plantao-scene.patient-tachypnea #plantao-patient-motion{
+    animation-duration:1.45s;
+  }
+
+  html:not(.pwa-standalone) #plantao-simulator:not([hidden]) .plantao-scene.patient-bradypnea #plantao-patient-motion{
+    animation-duration:5.8s;
+  }
+
+  html:not(.pwa-standalone) #plantao-simulator:not([hidden]) .plantao-scene.patient-apnea #plantao-patient-motion,
+  html:not(.pwa-standalone) #plantao-simulator:not([hidden]) .plantao-scene.patient-unconscious #plantao-patient-motion{
+    animation:none;
+    transform:none;
+  }
+
+  html:not(.pwa-standalone) #plantao-simulator:not([hidden]) .plantao-scene.patient-shock #plantao-patient-motion{
+    animation:plantaoPatientShockWeb .46s cubic-bezier(.2,.75,.25,1);
+  }
+
+  html:not(.pwa-standalone) #plantao-simulator:not([hidden]) .plantao-scene.patient-cpr #plantao-patient-motion{
+    animation:plantaoPatientCprWeb .48s ease-in-out infinite;
+  }
+}
+
+@keyframes plantaoPatientBreathWeb{
+  0%,100%{transform:translateY(0) scaleY(1)}
+  50%{transform:translateY(-3px) scaleY(1.022)}
+}
+
+@keyframes plantaoPatientShockWeb{
+  0%,100%{transform:translate(0,0) rotate(0)}
+  20%{transform:translateY(-9px) rotate(-.45deg)}
+  42%{transform:translateY(3px) rotate(.28deg)}
+  68%{transform:translateY(-2px) rotate(-.12deg)}
+}
+
+@keyframes plantaoPatientCprWeb{
+  0%,100%{transform:translateY(0) scaleY(1)}
+  50%{transform:translateY(5px) scaleY(.982)}
+}
