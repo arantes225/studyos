@@ -2231,7 +2231,7 @@
                   <button class="button primary" type="button" data-qf-copy-block-stage="${Number(batch.batch_number)}:${n}">2 · Copiar prompt</button>
                   <button class="button secondary" type="button" data-qf-paste-stage-json="${Number(batch.batch_number)}:${n}">3 · Colar JSON de resposta</button>
                 </div>
-                <small class="admin-qf-perplexity-manual-help">Envie ao Perplexity 50 questões por vez: Q001–Q050, Q051–Q100, Q101–Q150 e Q151–Q200. Cada resposta deve conter exatamente 50 reviews.</small>
+                <small class="admin-qf-perplexity-manual-help">Se precisar usar importação manual, processe no ChatGPT em partes de 50: Q001–Q050, Q051–Q100, Q101–Q150 e Q151–Q200. Cada resposta deve conter exatamente 50 reviews.</small>
               ` : blockAction.provider ? `
                 <button class="button primary" type="button" data-qf-copy-block-stage="${Number(batch.batch_number)}:${n}">Copiar prompt da etapa</button>
                 <button class="button secondary" type="button" data-qf-block-ai="${Number(batch.batch_number)}:${n}">${esc("Copiar + abrir " + blockAction.providerLabel)}</button>
@@ -2564,10 +2564,9 @@
       return;
     }
 
-    const isPerplexityStage = ["blind_resolution","perplexity_initial","perplexity_reaudit","lot_perplexity_final"].includes(inferredStage)
-      || String(payload.reviewer || "").toLowerCase() === "perplexity";
+    const isIndependentReviewStage = ["blind_resolution","perplexity_initial","perplexity_reaudit","lot_perplexity_final"].includes(inferredStage);
     const reviewList = Array.isArray(payload.reviews) ? payload.reviews : null;
-    const reviewChunks = isPerplexityStage && reviewList?.length > 50
+    const reviewChunks = isIndependentReviewStage && reviewList?.length > 50
       ? Array.from({ length: Math.ceil(reviewList.length / 50) }, (_, index) => reviewList.slice(index * 50, (index + 1) * 50))
       : null;
 
@@ -2710,13 +2709,12 @@
 
 
   async function maybeAutoRunQuestionFactoryPerplexity(root) {
-    // Desativado de propósito: o Perplexity é executado na conta pessoal do usuário,
-    // com acesso autenticado ao Supabase. O Admin nunca chama a API do Perplexity.
+    // Legado desativado: a revisão independente agora é ChatGPT com cegamento explícito.
     return;
   }
 
   async function autoRunPerplexityInitialFromTrackerRows(rows) {
-    // Compatibilidade interna apenas. Nenhum worker/Edge Function do Perplexity é disparado.
+    // Compatibilidade interna apenas; nenhum revisor externo é disparado.
     return;
   }
 
@@ -2736,7 +2734,7 @@
     }
 
     if (!prompt) {
-      window.alert("Não foi possível gerar o prompt deste bloco. Recarregue o Admin; o botão permanece disponível nas etapas do Perplexity.");
+      window.alert("Não foi possível gerar o prompt deste bloco. Recarregue o Admin e tente novamente.");
       return;
     }
 
@@ -2753,9 +2751,9 @@
         prompt,
         "",
         "============================================================",
-        "MODO DE EXECUÇÃO — CONTA PESSOAL DO PERPLEXITY",
+        "MODO DE EXECUÇÃO — CHATGPT · REVISÃO INDEPENDENTE",
         "============================================================",
-        "Este fluxo NÃO usa PERPLEXITY_API_KEY e NÃO usa Edge Function para gerar pareceres.",
+        "Este fluxo usa ChatGPT com acesso autorizado ao Supabase e não depende de API externa de auditor.",
         "Use a sua conexão autenticada ao Supabase da LURIA/Studyos.",
         "Endereço obrigatório: " + blockCode + ".",
         "Antes de qualquer auditoria, releia o Supabase e confirme batch_code, block_code, question_id e item_version atuais.",
