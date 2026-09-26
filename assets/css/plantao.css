@@ -2778,3 +2778,86 @@ body[data-page="plantao"] .plantao-phone-new-chat-fab:active{transform:scale(.96
     z-index:30;
   }
 }
+
+
+/* Sala de emergência · filtros compactos no cabeçalho */
+.plantao-library-title-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+.plantao-library-title-row h2{
+  margin:0;
+}
+.plantao-filter-menu{
+  position:relative;
+  display:flex;
+  align-items:center;
+}
+.plantao-filter-menu-toggle{
+  appearance:none;
+  -webkit-appearance:none;
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--surface);
+  color:var(--text);
+  cursor:pointer;
+  font:inherit;
+  font-size:20px;
+  line-height:1;
+}
+.plantao-filter-menu-toggle:hover,
+.plantao-filter-menu-toggle[aria-expanded="true"]{
+  border-color:var(--accent);
+  background:var(--accent-soft);
+  color:var(--accent);
+}
+.plantao-filter-popover{
+  position:absolute;
+  top:calc(100% + 8px);
+  left:0;
+  z-index:50;
+  width:min(320px,calc(100vw - 32px));
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:var(--surface);
+  box-shadow:0 18px 42px color-mix(in srgb,var(--text) 14%,transparent);
+}
+.plantao-filter-popover[hidden]{
+  display:none!important;
+}
+.plantao-filter-popover .plantao-site-filter{
+  min-width:0;
+}
+.plantao-filter-popover .plantao-site-select-trigger,
+.plantao-filter-popover #plantao-filter-clear{
+  width:100%;
+}
+@media(max-width:680px){
+  .plantao-library-head{
+    align-items:center;
+  }
+  .plantao-library-title-row{
+    gap:6px;
+  }
+  .plantao-filter-menu-toggle{
+    width:32px;
+    height:32px;
+    border-radius:9px;
+    font-size:18px;
+  }
+  .plantao-filter-popover{
+    left:auto;
+    right:0;
+  }
+}
