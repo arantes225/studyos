@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="assets/css/style.css?v=16.6">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
   <link rel="stylesheet" href="assets/css/plantao.css?v=5.6">
+  <link rel="stylesheet" href="assets/css/plantao-pwa-game.css?v=2">
   <link rel="canonical" href="/plantao/">
   <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
   <script>(function(){try{if(location.pathname.endsWith("/plantao.html"))history.replaceState(null,"","/plantao/"+location.search+location.hash);}catch(e){}})();</script>
@@ -57,7 +58,7 @@
             <button id="plantao-phone-mode-card" class="plantao-mode-card" type="button" hidden>
               <span class="plantao-mode-icon" aria-hidden="true"><img class="plantao-mode-logo plantao-mode-logo-light" src="assets/img/plantao/logo-luriazap-light.webp?v=2" alt=""><img class="plantao-mode-logo plantao-mode-logo-dark" src="assets/img/plantao/logo-luriazap-dark.webp?v=2" alt=""><img class="plantao-mode-logo plantao-mode-logo-pink" src="assets/img/plantao/logo-luriazap-pink.webp?v=2" alt=""></span>
               <span class="plantao-mode-copy">
-                <strong>Telefone</strong>
+                <strong>LuriaZap</strong>
                 <small>OSCE conversacional: receba o caso e desenvolva perguntas, raciocínio clínico e orientação.</small>
               </span>
               <span class="plantao-mode-status">Piloto disponível</span>
@@ -168,7 +169,7 @@
           <div class="plantao-sim-top">
             <button id="plantao-back" class="button secondary" type="button">← Casos</button>
             <div class="plantao-clock"><span>Tempo do caso</span><strong id="plantao-time">00:00</strong></div>
-            <button id="plantao-finish" class="button primary" type="button" hidden aria-hidden="true" tabindex="-1">Definir destino</button>
+            <button id="plantao-finish" class="button primary plantao-top-finish" type="button" hidden>Finalizar</button>
           </div>
 
           <article class="plantao-patient-card panel">
@@ -186,7 +187,7 @@
               <div id="plantao-score-live" class="plantao-score-live" aria-live="polite">0/100</div>
               <nav id="plantao-action-tabs" class="plantao-action-tabs" aria-label="Grupos de ações"></nav>
               <section id="plantao-action-drawer" class="plantao-action-drawer" hidden aria-labelledby="plantao-action-title">
-                <div class="plantao-drawer-head"><button id="plantao-action-close" class="button secondary" type="button">← Voltar</button><h2 id="plantao-action-title">Ações</h2></div>
+                <div class="plantao-drawer-head"><button id="plantao-action-close" class="button secondary" type="button">← Voltar</button><h2 id="plantao-action-title">Ações</h2><button id="plantao-conduta-finish" class="button primary plantao-conduta-finish" type="button" hidden>Finalizar</button></div>
                 <label class="plantao-search-label" for="plantao-action-search">Buscar nesta lista</label>
                 <input id="plantao-action-search" class="plantao-action-search" type="search" placeholder="Medicamento, exame ou conduta…">
                 <div id="plantao-actions" class="plantao-actions"></div>
@@ -194,11 +195,13 @@
             </aside>
           <section class="plantao-scene" aria-label="Leito e monitor do paciente">
             <img id="plantao-patient-image" src="assets/img/plantao/awake.webp" alt="Ilustração do paciente acordado no leito" width="1536" height="1024">
+            <span id="plantao-consciousness" class="plantao-consciousness"></span>
             <div class="plantao-monitor-dock">
-            <div class="plantao-monitor" aria-label="Monitor de sinais vitais. Toque para ampliar." role="button" tabindex="0" aria-expanded="false">
+            <div class="plantao-monitor" aria-label="Monitor de sinais vitais">
               <div class="plantao-monitor-heading">MONITOR <span>● AO VIVO</span></div>
               <canvas id="plantao-waveforms" width="600" height="220" aria-label="Traçados ilustrativos de ECG, pulso e respiração"></canvas>
               <div id="plantao-vitals" class="plantao-vitals" aria-live="polite"></div>
+              <small>Simulação de ritmo • janela de 6 segundos</small>
             </div>
             <aside class="plantao-feed panel">
               <div class="plantao-section-head"><div><span class="metric-label">Evolução</span><h2>Prontuário em tempo real</h2></div></div>
@@ -207,16 +210,8 @@
             </div>
           </section>
           </div>
-          <div id="plantao-death-overlay" class="plantao-death-overlay" hidden>
-            <div class="plantao-death-card">
-              <span>ATENDIMENTO ENCERRADO</span>
-              <h2>VOCÊ MATOU O PACIENTE</h2>
-              <p id="plantao-death-reason"></p>
-              <button id="plantao-death-review" class="button primary" type="button">Ver onde errei</button>
-            </div>
-          </div>
-        </section>
 
+        </section>
 
         <div id="plantao-report-overlay" class="plantao-report-overlay" hidden aria-hidden="true">
           <article class="plantao-report-board" role="dialog" aria-modal="true" aria-labelledby="plantao-report-exam">
@@ -252,12 +247,10 @@
             <div class="plantao-final-score"><strong id="plantao-final-score">0</strong><span>/100</span></div>
           </div>
           <div class="plantao-debrief-grid">
-            <article class="panel plantao-pulo-panel"><span class="metric-label">Pulo do Gato</span><p id="plantao-pulo" class="plantao-pulo"></p><details class="plantao-explanation"><summary>Entenda o caso</summary><p id="plantao-case-explanation"></p></details></article>
+            <article class="panel"><span class="metric-label">Pulo do Gato</span><p id="plantao-pulo" class="plantao-pulo"></p></article>
             <article class="panel"><span class="metric-label">Seu desempenho</span><div id="plantao-performance" class="plantao-performance"></div></article>
-            <article class="panel plantao-wide"><span class="metric-label">Condutas-chave</span><div id="plantao-key-actions" class="plantao-review-list"></div></article>
-            <article class="panel plantao-wide"><span class="metric-label">Condutas erradas</span><div id="plantao-wrong-actions" class="plantao-review-list"></div></article>
+            <article class="panel"><span class="metric-label">Condutas-chave</span><div id="plantao-key-actions" class="plantao-review-list"></div></article>
             <article class="panel"><span class="metric-label">Erros de alto impacto</span><div id="plantao-danger-actions" class="plantao-review-list"></div></article>
-            <article class="panel"><span class="metric-label">Erros de sequência</span><div id="plantao-sequence-errors" class="plantao-review-list"></div></article>
           </div>
           <article class="panel plantao-sources"><span class="metric-label">Fontes do caso</span><div id="plantao-sources"></div></article>
           <div class="plantao-debrief-actions"><button id="plantao-retry" class="button primary" type="button">Refazer este caso</button><button id="plantao-all-cases" class="button secondary" type="button">Voltar aos casos</button></div>
@@ -269,8 +262,8 @@
   <script src="/assets/vendor/supabase-2.110.6.js"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/app.js?v=17.8-streak"></script>
-  <script src="assets/js/plantao-monitor.js?v=2.5"></script>
-  <script src="assets/js/plantao-engine.js?v=3.0"></script>
+  <script src="assets/js/plantao-monitor.js?v=2.3"></script>
+  <script src="assets/js/plantao-engine.js?v=3.1"></script>
   <script src="assets/js/plantao.js?v=6.9"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
