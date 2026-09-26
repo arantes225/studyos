@@ -456,62 +456,64 @@ Após as três aprovações da versão atual, aguardar aprovação humana final 
     const batchNumber = ctx.batch_number ?? null;
     const batchCode = ctx.batch_code || (batchNumber == null ? null : 'L'+String(Number(batchNumber)).padStart(3,'0'));
     const blockCode = ctx.block_code || (batchCode && blockNumber != null ? batchCode+'-B'+String(Number(blockNumber)).padStart(2,'0') : null);
-    const bridgeBase = 'https://raw.githubusercontent.com/arantes225/studyos/main/qf-r8K2mV7qL4x9P1cF/';
-    const bridgeUrl = blockCode ? bridgeBase + blockCode + '.json' : bridgeBase;
-    const bridgeSubmitBase = 'https://www.resibulando.online/qf-r8K2mV7qL4x9P1cF/';
-    const bridgeSubmitUrl = blockCode ? bridgeSubmitBase + '?block=' + encodeURIComponent(blockCode) : bridgeSubmitBase;
     const stage = isReaudit ? 'perplexity_reaudit' : 'perplexity_initial';
 
     return `FLUXO OPERACIONAL — PERPLEXITY · ${isReaudit ? 'REAUDITORIA' : 'AUDITORIA INDEPENDENTE'}
-NÃO USE SUPABASE, SQL, RPC, ADMIN, CONNECTOR OU API KEY PARA OBTER AS QUESTÕES.
-USE SOMENTE A PÁGINA PÚBLICA TEMPORÁRIA DA LURIA.
 
-URL EXATA:
-${bridgeUrl}
+FONTE DE VERDADE — OBRIGATÓRIA:
+O usuário enviará junto deste prompt um JSON COMPLETO do bloco.
+USE EXCLUSIVAMENTE ESSE JSON COLADO PELO USUÁRIO.
 
-ENDEREÇO ESPERADO:
+NÃO abra URL, página pública, GitHub RAW, bridge, Admin, Supabase, SQL, RPC, connector ou API para obter as questões.
+NÃO use arquivos antigos, snippets, memória da conversa, pasted_text anterior ou exportações de outra execução.
+Se o JSON atual não estiver presente, estiver truncado ou não puder ser interpretado integralmente, pare e responda JSON_INPUT_INVALID com o problema concreto.
+
+ENDEREÇO ESPERADO NO PRÓPRIO JSON:
 batch_code=${batchCode || 'NÃO VINCULADO'}
 block_code=${blockCode || 'NÃO VINCULADO'}
 review_stage=${stage}
 
 PASSO A PASSO:
-1. Abra a URL exata acima no navegador. Ela é um endereço raw.githubusercontent.com e termina em .json; deve abrir diretamente o conteúdo bruto do bloco, sem login e sem JavaScript. NÃO troque esse URL por www.resibulando.online para a leitura.
-2. Confirme dentro do JSON que block_code=${blockCode || 'esperado'}. Se não coincidir, PARE e retorne ADDRESS_MISMATCH.
-3. NÃO use arquivo anexado, pasted_text, export, PDF, texto colado ou memória da conversa. Mesmo que exista um anexo, ignore-o para execução.
-4. NÃO peça runner autenticado, sessão Supabase, connector, RPC signature ou acesso ao banco. Nesta etapa, o JSON público é deliberadamente a fonte operacional fornecida pela LURIA.
-5. Use EXCLUSIVAMENTE os itens presentes nesse JSON público.
-6. Para cada questão, preserve exatamente question_id e item_version.
-7. ${isReaudit ? 'Reavalie a versão atual exibida. Se a pendência veio de discordância sem patch, mantenha a mesma item_version; não crie versão artificial.' : 'Antes de confrontar o gabarito, resolva independentemente o item usando enunciado + alternativas e registre independent_answer no próprio review.'}
+1. Leia integralmente o JSON completo fornecido pelo usuário nesta mesma mensagem/conversa.
+2. Confirme dentro do próprio JSON batch_code e block_code. Se não corresponderem ao esperado, pare e retorne ADDRESS_MISMATCH.
+3. Confirme a identidade de cada item por question_id + item_version/version. question_code e sequence_no são auxiliares de conferência.
+4. Se dois trechos parecerem conflitantes, só trate como conflito real quando o MESMO question_id + item_version/version tiver conteúdo incompatível. Não confunda a fronteira entre objetos JSON consecutivos.
+5. Use EXCLUSIVAMENTE os itens presentes no JSON colado nesta execução.
+6. Preserve exatamente question_id e item_version/version de cada questão.
+7. ${isReaudit ? 'Reavalie a versão atual recebida. Se a pendência veio de discordância sem patch, mantenha a mesma item_version/version; não crie versão artificial.' : 'Antes de confrontar o gabarito, resolva independentemente o item usando enunciado + alternativas e registre independent_answer no próprio review.'}
 8. Faça a auditoria completa: ciência; gabarito; SBA; ambiguidade; dependência da vinheta; surface_guess_without_vignette; surface_guess_confidence; lexical_asymmetry; melhor distrator; best_distractor_rationale; counterfactual_change; functional_killer_1/2; qualidade dos distratores; explicações A-D; Pulo do Gato; dificuldade; estilo; fontes e proposed_change.
 9. Fonte só pode ser VERIFIED se realmente checada. Caso contrário use SOURCE_VERIFICATION_PENDING ou SOURCE_VERIFICATION_FAILED.
 10. Status por item: approved | needs_revision | rejected.
-11. Monte um JSON válido com schema_version, review_stage="${stage}", reviewer="Perplexity", batch_number, block_number, reviews[] e stage_metrics.
+11. Monte um ÚNICO JSON válido com schema_version, review_stage="${stage}", reviewer="Perplexity", batch_number, batch_code, block_number, block_code, reviews[] e stage_metrics.
 12. Não altere a questão principal. proposed_change é recomendação, não edição.
-13. Abra a página de envio: ${bridgeSubmitUrl}
-14. No formulário "Enviar resultado", cole o JSON completo e clique em "Enviar parecer".
-15. Se a página retornar protocolo/receipt_id, registre bridge_write={attempted:true,received:true,receipt_id:"..."}.
-16. Se o envio falhar, registre bridge_write={attempted:true,received:false,error:"ERRO REAL"} e devolva também o JSON completo no chat.
-17. NÃO declare "persistido no Supabase", "coverage completo", "200/200 no banco" ou "etapa finalizada" apenas porque recebeu receipt_id. O formulário é uma caixa de entrada isolada para validação/importação posterior.
+13. NÃO tente enviar, persistir ou importar nada. NÃO use formulário, bridge, RPC ou Supabase.
+14. Ao terminar, DEVOLVA O JSON COMPLETO diretamente na resposta para que o usuário use o botão “Colar JSON de resposta” no Admin.
+15. NÃO gere bridge_write, receipt_id ou qualquer afirmação de persistência.
+16. coverage.complete só pode refletir o que foi realmente processado nesta resposta; não use esse campo para afirmar estado do banco.
+17. Se o JSON contiver 200 questões e todas forem realmente auditadas, o resultado deve conter exatamente 200 reviews distintos, um por question_id da item_version/version recebida.
 
 REGRAS DE ESCOPO:
 - Nunca trabalhar em outro bloco além de ${blockCode || 'NÃO VINCULADO'}.
 - Nunca misturar versões antigas.
-- Nunca inventar receipt_id.
+- Nunca inventar IDs, versões, fontes verificadas ou métricas.
 - Nunca pedir credenciais/chaves.
-- Pode enviar 1 questão ou qualquer quantidade conveniente por formulário; todos os reviews do envio devem pertencer ao mesmo bloco e à mesma etapa.
+- Não procurar uma “versão mais recente” fora do JSON fornecido. Para esta execução, o JSON colado é a versão operacional autoritativa.
 
 ${segment(item,stage,ctx)}
 
 TRAVA CONTRA RESPOSTA ERRADA:
-- É INCORRETO responder SOURCE_NOT_AUTHORITATIVE_FOR_EXECUTION apenas porque existe um arquivo/anexo no chat.
-- É INCORRETO exigir leitura direta do Supabase, sessão autenticada, runner ou confirmação de RPC para iniciar esta etapa.
-- A fonte operacional desta etapa é exatamente o JSON RAW público em ${bridgeUrl}. Se o domínio resibulando.online falhar, isso NÃO bloqueia a leitura: use este raw.githubusercontent.com como origem canônica de leitura.
-- Se esse URL abrir e o block_code estiver correto, execute a auditoria normalmente.
+- É INCORRETO tentar abrir raw.githubusercontent.com, resibulando.online ou qualquer outra página para buscar o bloco.
+- É INCORRETO exigir leitura direta do Supabase, sessão autenticada, runner, connector ou confirmação de RPC.
+- É INCORRETO ignorar o JSON enviado pelo usuário por existir outro arquivo/URL mencionado no histórico.
+- A fonte operacional desta etapa é exatamente o JSON completo que acompanha este prompt.
 
-SAÍDA HUMANA OBRIGATÓRIA:
-Além do JSON, produza relatório questão por questão: "ID — APROVADA/REVISAR/REJEITADA — motivo: ...".
-Ao final, informe somente o estado real do bridge: ENVIADO AO BRIDGE + receipt_id, ou ENVIO FALHOU + erro.`;
+SAÍDA:
+1. Primeiro, devolva o JSON completo e válido da etapa.
+2. Depois do JSON, pode incluir um relatório humano curto questão por questão se isso couber sem truncar o JSON.
+3. O JSON tem prioridade absoluta: nunca sacrifique, resuma ou corte reviews para caber um relatório textual.
+4. Não escreva “ENVIADO AO BRIDGE”, “persistido no Supabase” ou equivalente.`;
   }
+
   function chatgptCorrectionCycle(item={},ctx={}) {
     return `FLUXO OPERACIONAL ÚNICO — CHATGPT · JULGAR PARECER + CORRIGIR
 Este é UM envio operacional. Execute adjudicação e correção em sequência no MESMO bloco. Não obrigue o usuário a abrir dois prompts separados.
