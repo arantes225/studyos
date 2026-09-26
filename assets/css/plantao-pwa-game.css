@@ -1,0 +1,441 @@
+/* Plantão PWA — game-like bedside layout
+   Scoped to installed PWA + mobile so web/desktop remain unchanged. */
+@media (max-width:680px){
+  .pwa-standalone body:has(#plantao-simulator:not([hidden])){
+    overflow:hidden;
+    overscroll-behavior:none;
+    background:#06182d;
+  }
+
+  .pwa-standalone body:has(#plantao-simulator:not([hidden])) .sidebar,
+  .pwa-standalone body:has(#plantao-simulator:not([hidden])) .sidebar-backdrop,
+  .pwa-standalone body:has(#plantao-simulator:not([hidden])) .topbar,
+  .pwa-standalone body:has(#plantao-simulator:not([hidden])) .plantao-patient-card{
+    display:none!important;
+  }
+
+  .pwa-standalone body:has(#plantao-simulator:not([hidden])) .app-shell,
+  .pwa-standalone body:has(#plantao-simulator:not([hidden])) .main,
+  .pwa-standalone body:has(#plantao-simulator:not([hidden])) .page.plantao-page{
+    width:100%!important;
+    max-width:none!important;
+    min-height:100dvh!important;
+    margin:0!important;
+    padding:0!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]){
+    display:grid!important;
+    grid-template-rows:auto minmax(0,1fr);
+    gap:0!important;
+    width:100%;
+    height:100dvh;
+    min-height:100dvh;
+    overflow:hidden;
+    background:#071a30;
+  }
+
+  /* Compact HUD, closer to a simulation game than a dashboard. */
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-sim-top{
+    position:relative;
+    z-index:30;
+    grid-template-columns:54px minmax(0,1fr) 54px!important;
+    grid-auto-rows:minmax(48px,auto);
+    align-items:center;
+    gap:6px!important;
+    min-height:calc(54px + env(safe-area-inset-top));
+    padding:
+      max(7px,env(safe-area-inset-top))
+      max(8px,env(safe-area-inset-right))
+      7px
+      max(8px,env(safe-area-inset-left));
+    background:linear-gradient(180deg,#0b2748 0%,#071a30 100%);
+    border-bottom:1px solid rgba(255,255,255,.10);
+    box-shadow:0 5px 18px rgba(0,0,0,.22);
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-sim-top .button{
+    width:44px!important;
+    min-width:44px;
+    min-height:40px;
+    padding:0!important;
+    overflow:hidden;
+    white-space:nowrap;
+    text-indent:-9999px;
+    border-radius:13px;
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.10);
+    color:#fff;
+    box-shadow:none;
+  }
+
+  .pwa-standalone #plantao-back::after{
+    content:"‹";
+    display:grid;
+    place-items:center;
+    width:100%;
+    height:100%;
+    text-indent:0;
+    font-size:32px;
+    line-height:1;
+    font-weight:500;
+  }
+
+  .pwa-standalone #plantao-finish:not([hidden])::after{
+    content:"✓";
+    display:grid;
+    place-items:center;
+    width:100%;
+    height:100%;
+    text-indent:0;
+    font-size:22px;
+    line-height:1;
+    font-weight:900;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-clock{
+    grid-column:2!important;
+    grid-row:1!important;
+    display:flex;
+    justify-content:center;
+    align-items:baseline;
+    gap:7px;
+    min-width:0;
+    color:#fff;
+    text-align:center;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-clock span{
+    display:none!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-clock::before{
+    content:"◷";
+    font-size:19px;
+    color:#b9d8f3;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-clock strong{
+    margin:0!important;
+    font-size:28px!important;
+    line-height:1;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:-.03em;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-critical-window{
+    grid-column:1/-1!important;
+    grid-row:2!important;
+    min-height:28px!important;
+    margin-top:-2px;
+    padding:4px 9px!important;
+    border-radius:9px!important;
+    font-size:9px!important;
+    line-height:1.15;
+  }
+
+  /* Patient is the center of the interface. */
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-bedside{
+    position:relative!important;
+    display:block!important;
+    min-width:0;
+    min-height:0;
+    height:100%;
+    overflow:hidden;
+    background:#071a30;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-scene{
+    position:absolute!important;
+    inset:0!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    border:0!important;
+    border-radius:0!important;
+    background:#0b2947!important;
+    overflow:hidden!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-scene>img{
+    position:absolute;
+    inset:0;
+    width:100%!important;
+    height:100%!important;
+    aspect-ratio:auto!important;
+    object-fit:cover!important;
+    object-position:50% 42%!important;
+    filter:saturate(.98) contrast(1.02);
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-scene::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:1;
+    pointer-events:none;
+    background:
+      linear-gradient(90deg,rgba(4,22,42,.48) 0%,rgba(4,22,42,.06) 22%,transparent 38%,transparent 62%,rgba(4,22,42,.06) 78%,rgba(4,22,42,.48) 100%),
+      linear-gradient(180deg,rgba(4,22,42,.18),transparent 24%,transparent 67%,rgba(4,22,42,.60));
+  }
+
+  .pwa-standalone #plantao-consciousness{
+    display:none!important;
+  }
+
+  /* Six clinical controls around the patient: three left, three right. */
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-rail{
+    position:absolute!important;
+    inset:0!important;
+    z-index:12!important;
+    width:auto!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+    pointer-events:none;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-rail>.plantao-score-live{
+    position:absolute;
+    top:8px;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:2;
+    min-width:64px;
+    margin:0!important;
+    padding:5px 9px!important;
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:999px;
+    background:rgba(5,24,45,.74);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    color:#fff;
+    font-size:10px!important;
+    box-shadow:0 4px 14px rgba(0,0,0,.18);
+    pointer-events:none;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tabs{
+    position:absolute!important;
+    inset:56px 8px 120px!important;
+    z-index:3;
+    display:grid!important;
+    grid-template-columns:82px minmax(0,1fr) 82px!important;
+    grid-template-rows:repeat(3,1fr)!important;
+    gap:10px 0!important;
+    padding:0!important;
+    margin:0!important;
+    background:transparent!important;
+    pointer-events:none;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab{
+    width:82px!important;
+    min-width:82px!important;
+    min-height:0!important;
+    height:100%!important;
+    max-height:104px;
+    align-self:center;
+    display:flex!important;
+    flex-direction:column!important;
+    justify-content:center!important;
+    gap:4px!important;
+    padding:7px 5px!important;
+    border:1px solid rgba(169,204,232,.88)!important;
+    border-radius:14px!important;
+    background:rgba(245,251,255,.93)!important;
+    backdrop-filter:blur(7px);
+    -webkit-backdrop-filter:blur(7px);
+    color:#184888!important;
+    text-align:center!important;
+    font-size:10px!important;
+    font-weight:850!important;
+    line-height:1.12!important;
+    box-shadow:0 5px 16px rgba(4,31,58,.22)!important;
+    pointer-events:auto;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab>span:first-child{
+    width:auto!important;
+    font-size:21px!important;
+    line-height:1!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab.active{
+    background:var(--accent)!important;
+    border-color:rgba(255,255,255,.45)!important;
+    color:#fff!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab:nth-child(1){grid-column:1;grid-row:1}
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab:nth-child(2){grid-column:1;grid-row:2}
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab:nth-child(3){grid-column:1;grid-row:3}
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab:nth-child(4){grid-column:3;grid-row:1}
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab:nth-child(5){grid-column:3;grid-row:2}
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab:nth-child(6){grid-column:3;grid-row:3}
+
+  /* Monitor floats above the patient; chart/feed stays compact at the bottom. */
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-monitor-dock{
+    display:contents!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-monitor-dock .plantao-monitor{
+    position:absolute!important;
+    top:8px!important;
+    right:94px!important;
+    z-index:7!important;
+    width:38%!important;
+    min-width:132px;
+    max-width:176px;
+    padding:5px!important;
+    border-width:3px!important;
+    border-radius:11px!important;
+    grid-template-columns:minmax(0,1fr) 40px!important;
+    grid-template-rows:auto repeat(3,28px) 20px 9px!important;
+    gap:1px!important;
+    background:rgba(3,16,28,.94)!important;
+    box-shadow:0 6px 18px rgba(0,0,0,.28)!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-monitor-heading{
+    font-size:6px!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-monitor-dock .plantao-vital strong{
+    font-size:14px!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-monitor-dock .plantao-vital:nth-child(5) strong{
+    font-size:10px!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-monitor-dock .plantao-vital span,
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-monitor-dock .plantao-vital strong small{
+    font-size:6px!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-monitor-dock .plantao-monitor>small{
+    display:none!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-monitor-dock>.plantao-feed{
+    position:absolute!important;
+    left:94px!important;
+    right:94px!important;
+    bottom:max(8px,env(safe-area-inset-bottom))!important;
+    z-index:6!important;
+    width:auto!important;
+    height:108px!important;
+    min-height:108px!important;
+    max-height:108px!important;
+    padding:8px!important;
+    border:1px solid rgba(255,255,255,.15)!important;
+    border-radius:14px!important;
+    background:rgba(6,26,48,.88)!important;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    color:#fff!important;
+    box-shadow:0 7px 18px rgba(0,0,0,.22)!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-monitor-dock>.plantao-feed .plantao-section-head h2{
+    color:#fff!important;
+    font-size:10px!important;
+    margin:0!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-feed-list{
+    margin-top:5px!important;
+    gap:4px!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-feed-item{
+    padding:5px 6px!important;
+    background:rgba(255,255,255,.08)!important;
+    color:#fff!important;
+    border-radius:7px!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-feed-item span{
+    color:#b7cbe0!important;
+    font-size:7px!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-feed-item p{
+    color:#fff!important;
+    margin-top:2px!important;
+    font-size:8px!important;
+    line-height:1.25!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-feed-report-button{
+    min-height:24px!important;
+    margin-top:5px!important;
+    padding:3px 7px!important;
+    font-size:8px!important;
+  }
+
+  /* Selected action opens as a bottom sheet, not a panel covering the patient. */
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-drawer{
+    position:fixed!important;
+    inset:auto 0 0 0!important;
+    z-index:100!important;
+    width:100%!important;
+    max-width:none!important;
+    height:min(58dvh,520px)!important;
+    padding:14px 14px calc(14px + env(safe-area-inset-bottom))!important;
+    border:1px solid var(--border)!important;
+    border-bottom:0!important;
+    border-radius:24px 24px 0 0!important;
+    background:var(--surface)!important;
+    box-shadow:0 -14px 38px rgba(0,0,0,.30)!important;
+    pointer-events:auto;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-drawer::before{
+    content:"";
+    width:42px;
+    height:4px;
+    border-radius:999px;
+    background:var(--border);
+    margin:-5px auto 8px;
+    flex:none;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-drawer-head h2{
+    font-size:16px!important;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-drawer .plantao-actions{
+    padding-bottom:6px;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-group .plantao-action{
+    min-height:54px!important;
+    border-radius:12px!important;
+  }
+
+  /* Smaller phones keep the patient visible by shrinking side controls slightly. */
+  @media (max-width:390px){
+    .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tabs{
+      inset-left:5px!important;
+      inset-right:5px!important;
+      grid-template-columns:76px minmax(0,1fr) 76px!important;
+    }
+    .pwa-standalone #plantao-simulator:not([hidden]) .plantao-action-tab{
+      width:76px!important;
+      min-width:76px!important;
+      font-size:9px!important;
+    }
+    .pwa-standalone #plantao-simulator:not([hidden]) .plantao-monitor-dock .plantao-monitor{
+      right:86px!important;
+      max-width:160px;
+    }
+    .pwa-standalone #plantao-simulator:not([hidden]) .plantao-monitor-dock>.plantao-feed{
+      left:86px!important;
+      right:86px!important;
+    }
+  }
+}
