@@ -2788,7 +2788,7 @@
     if (!button) return;
     window.alert(
       "Fluxo revisão independente ChatGPT ativo. Não existe mais execução automática por API key.\n\n" +
-      "Use o botão “Copiar prompt para revisão independente” ou “Abrir ChatGPT”, execute a etapa na sua conta pessoal conectada ao Supabase e deixe o ChatGPT persistir os reviews pelos RPCs controlados, em qualquer quantidade conveniente por chamada.\n\n" +
+      "Use somente o prompt da etapa. Abertura de provedor foi removida da interface.\n\n" +
       "Depois volte ao Admin: a cobertura é lida diretamente do Supabase."
     );
   }
@@ -2917,9 +2917,7 @@
           <div class="admin-qf-tracker-next">
             <span>Próximo prompt</span>
             <div class="admin-qf-tracker-prompt-actions">
-              ${prompt ? `<button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">${esc(meta.label)} · copiar</button>` : ""}
-              
-              ${provider && prompt ? `<button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${esc(provider)}">Abrir ${provider === "gemini" ? "Gemini" : "ChatGPT"}</button>` : ""}
+              ${prompt ? `<button class="button primary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Prompt</button>` : ""}
             </div>
             ${prompt ? `<pre id="${esc(pid)}" class="admin-qf-prompt admin-qf-tracker-hidden-prompt">${esc(prompt)}</pre>` : ""}
             ${!prompt && !["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(String(block.next_stage || "")) ? '<strong class="admin-qf-tracker-no-prompt">Sem prompt automático nesta fase</strong>' : ""}
@@ -3122,8 +3120,7 @@
                       <summary><b>${esc(num)}</b><span>${esc(label)}</span></summary>
                       <div>
                         <div class="admin-qf-style-prompt-actions">
-                          <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Copiar</button>
-                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "gemini" ? "Gemini" : "ChatGPT"}</button>
+                          <button class="button primary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Prompt</button>
                         </div>
                         <pre id="${esc(pid)}" class="admin-qf-prompt">${esc(promptText)}</pre>
                       </div>
@@ -3150,8 +3147,7 @@
                           <summary><b>${esc(num)}</b><span>${esc(label)}</span></summary>
                           <div>
                             <div class="admin-qf-style-prompt-actions">
-                              <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Copiar</button>
-                              <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "gemini" ? "Gemini" : "ChatGPT"}</button>
+                              <button class="button primary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Prompt</button>
                             </div>
                             <pre id="${esc(pid)}" class="admin-qf-prompt">${esc(promptText)}</pre>
                           </div>
@@ -3296,8 +3292,7 @@
                       <summary><span>${num}</span><strong>${esc(label)}</strong></summary>
                       <div class="admin-qf-segment-card-body">
                         <div class="admin-qf-segment-actions">
-                          <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Copiar</button>
-                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "gemini" ? "Gemini" : "ChatGPT"}</button>
+                          <button class="button primary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Prompt</button>
                         </div>
                         <pre id="${esc(pid)}" class="admin-qf-prompt">${esc(buildBoardSegmentPrompt(item,stage))}</pre>
                       </div>
@@ -3322,8 +3317,7 @@
                       <summary><span>${num}</span><strong>${esc(label)}</strong></summary>
                       <div class="admin-qf-segment-card-body">
                         <div class="admin-qf-segment-actions">
-                          <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Copiar</button>
-                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "gemini" ? "Gemini" : "ChatGPT"}</button>
+                          <button class="button primary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Prompt</button>
                         </div>
                         <pre id="${esc(pid)}" class="admin-qf-prompt">${esc(buildBoardSegmentPrompt(item,stage))}</pre>
                       </div>
@@ -3858,7 +3852,6 @@
   }
 
   function enhancePromptLaunchButtons() {
-    // A Fábrica exibe somente o botão Prompt. Abertura de provedor foi removida.
     return;
   }
 
@@ -4051,32 +4044,8 @@
           if (target) await copyAdminPrompt(copy.dataset.inlinePrompt, copy);
           return;
         }
-        const ai = event.target.closest("[data-inline-prompt].admin-qf-ai-inline");
-        if (ai) {
-          const target = $(ai.dataset.inlinePrompt);
-          if (target) await copyAndOpenAI(target.textContent || "", ai.dataset.aiProvider, ai);
-        }
-      });
-    });
-
-    $("admin-qf-bad-open")?.addEventListener("click", async () => {
-      await loadBadQuestionFolder(0);
-      $("admin-qf-bad-dialog")?.showModal();
-    });
-    $("admin-qf-bad-close")?.addEventListener("click", () => $("admin-qf-bad-dialog")?.close());
-    $("admin-qf-bad-prev")?.addEventListener("click", () => loadBadQuestionFolder(Math.max(0,state.qfBadOffset-state.qfBadPageSize)));
-    $("admin-qf-bad-next")?.addEventListener("click", () => loadBadQuestionFolder(state.qfBadOffset+state.qfBadPageSize));
-
-    $("admin-qf-import-calibration")?.addEventListener("click", () => openReviewImportDialog(null, null, "calibration"));
-    $("admin-qf-import-stage-metrics")?.addEventListener("click", () => openReviewImportDialog(null, null, "metrics"));
-    $("admin-qf-start-lot")?.addEventListener("click", startQuestionFactoryLot);
-    $("admin-qf-batches")?.addEventListener("click", async event => {
-      const jsonPartButton = event.target.closest("[data-qf-copy-json-part]");
-      if (jsonPartButton) {
-        const [batch, block, part] = jsonPartButton.dataset.qfCopyJsonPart.split(":");
-        await copyQuestionFactoryJsonPart(batch, block, part, jsonPartButton);
-        return;
-      }
+        const ai = null;
+        if (ai) return;
 
       const pasteStageJsonButton = event.target.closest("[data-qf-paste-stage-json]");
       if (pasteStageJsonButton) {
