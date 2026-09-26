@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://sxdsfklllilhdyuamvvg.supabase.co; font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self' https://sxdsfklllilhdyuamvvg.supabase.co wss://sxdsfklllilhdyuamvvg.supabase.co https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; worker-src 'self' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; media-src 'self' data: blob: https://sxdsfklllilhdyuamvvg.supabase.co; frame-src 'self' blob:; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Desafio Diário · LURIA</title>
+  <meta name="theme-color" content="#184888">
+  <link rel="manifest" href="/manifest.webmanifest?v=5">
+  <link rel="apple-touch-icon" href="/assets/img/logos/pwa-icon-180.png?v=pwa5">
+  <link rel="icon" type="image/png" href="/assets/img/logos/logo-icone-original.png?v=favicon2">
+  <link rel="stylesheet" href="/assets/css/style.css?v=16.6">
+  <link rel="stylesheet" href="/assets/css/pwa-mobile.css?v=13">
+  <link rel="stylesheet" href="/assets/css/desafio-diario.css?v=1">
+  <link rel="stylesheet" href="/assets/css/luria-brand-v5.css?v=10">
+  <script defer src="/assets/js/luria-brand-v5.js?v=12"></script>
+  <link rel="canonical" href="/desafio-diario/">
+</head>
+<body data-page="desafio">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar"></aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <main class="main">
+      <div class="page daily-page">
+        <header class="topbar daily-topbar">
+          <button id="menu-open" class="menu-open" type="button" aria-label="Abrir menu">☰</button>
+          <div class="page-heading">
+            <span class="eyebrow" data-page-eyebrow></span>
+            <h1 data-page-title></h1>
+          </div>
+        </header>
+
+        <section class="daily-shell" aria-live="polite">
+          <div class="daily-intro">
+            <div>
+              <span class="daily-kicker">UM CASO. CINCO PISTAS.</span>
+              <h2>Qual é o diagnóstico?</h2>
+              <p>Errou? A próxima pista aparece automaticamente. Quanto antes acertar, maior a pontuação.</p>
+            </div>
+            <div class="daily-score-scale" aria-label="Pontuação por tentativa">
+              <span><strong>100</strong><small>1ª</small></span>
+              <span><strong>80</strong><small>2ª</small></span>
+              <span><strong>60</strong><small>3ª</small></span>
+              <span><strong>40</strong><small>4ª</small></span>
+              <span><strong>20</strong><small>5ª</small></span>
+            </div>
+          </div>
+
+          <div id="daily-loading" class="daily-state-card">
+            <div class="daily-loader" aria-hidden="true"></div>
+            <strong>Carregando o desafio de hoje…</strong>
+          </div>
+
+          <div id="daily-unavailable" class="daily-state-card" hidden>
+            <span class="daily-state-icon">○</span>
+            <strong>Desafio indisponível hoje</strong>
+            <p>Não encontramos um desafio ativo para esta data.</p>
+          </div>
+
+          <article id="daily-card" class="daily-card" hidden>
+            <div class="daily-card-head">
+              <div>
+                <div class="daily-meta-row">
+                  <span id="daily-area" class="daily-area"></span>
+                  <span id="daily-number" class="daily-number"></span>
+                </div>
+                <div id="daily-date" class="daily-date"></div>
+              </div>
+
+              <div class="daily-progress-copy">
+                <strong id="daily-progress-label">Pista 1 de 5</strong>
+                <span id="daily-points-live">Vale 100 pontos</span>
+              </div>
+            </div>
+
+            <div id="daily-progress-dots" class="daily-progress-dots" aria-label="Progresso das pistas">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+
+            <div id="daily-clues" class="daily-clues"></div>
+
+            <div id="daily-feedback" class="daily-feedback" hidden></div>
+
+            <form id="daily-form" class="daily-form" autocomplete="off">
+              <label for="daily-answer">Qual é o diagnóstico?</label>
+              <div class="daily-answer-row">
+                <input
+                  id="daily-answer"
+                  name="answer"
+                  type="text"
+                  maxlength="180"
+                  placeholder="Digite sua resposta…"
+                  autocomplete="off"
+                  autocapitalize="sentences"
+                  enterkeyhint="send"
+                  required
+                >
+                <button id="daily-submit" type="submit">Confirmar</button>
+              </div>
+              <small>Não precisa escrever classificações ou subtipos desnecessários.</small>
+            </form>
+
+            <section id="daily-result" class="daily-result" hidden>
+              <div id="daily-result-icon" class="daily-result-icon"></div>
+              <div class="daily-result-copy">
+                <span id="daily-result-kicker"></span>
+                <h3 id="daily-diagnosis"></h3>
+                <p id="daily-explanation"></p>
+                <div class="daily-result-stats">
+                  <span><strong id="daily-final-score">0</strong> pontos</span>
+                  <span><strong id="daily-final-attempts">0</strong> tentativa(s)</span>
+                </div>
+              </div>
+            </section>
+          </article>
+
+          <section class="daily-rules">
+            <article>
+              <strong>Pista 1</strong>
+              <span>Mais difícil</span>
+            </article>
+            <div class="daily-rule-line"></div>
+            <article>
+              <strong>Pista 3</strong>
+              <span>Direciona</span>
+            </article>
+            <div class="daily-rule-line"></div>
+            <article>
+              <strong>Pista 5</strong>
+              <span>Quase entrega</span>
+            </article>
+          </section>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="/assets/vendor/supabase-2.110.6.js"></script>
+  <script src="/assets/js/supabase.js"></script>
+  <script src="/assets/js/app.js?v=17.9-daily"></script>
+  <script src="/assets/js/desafio-diario.js?v=1"></script>
+  <script defer src="/assets/js/pwa.js?v=3"></script>
+</body>
+</html>
