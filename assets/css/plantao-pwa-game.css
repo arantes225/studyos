@@ -172,7 +172,7 @@
     content:"";
     position:absolute;
     inset:0;
-    z-index:1;
+    z-index:2;
     pointer-events:none;
     background:
       linear-gradient(90deg,rgba(4,22,42,.48) 0%,rgba(4,22,42,.06) 22%,transparent 38%,transparent 62%,rgba(4,22,42,.06) 78%,rgba(4,22,42,.48) 100%),
@@ -186,13 +186,14 @@
   }
 
   .pwa-standalone #plantao-simulator:not([hidden]) #plantao-patient-motion{
-    z-index:.2;
+    display:block!important;
+    z-index:1!important;
     pointer-events:none;
-    opacity:.96;
-    transform-origin:50% 58%;
-    -webkit-mask-image:radial-gradient(ellipse 34% 42% at 50% 58%,#000 0 58%,rgba(0,0,0,.88) 70%,transparent 100%);
-    mask-image:radial-gradient(ellipse 34% 42% at 50% 58%,#000 0 58%,rgba(0,0,0,.88) 70%,transparent 100%);
-    animation:plantaoPatientBreath 3.8s ease-in-out infinite;
+    opacity:1;
+    transform-origin:50% 60%;
+    -webkit-mask-image:radial-gradient(ellipse 36% 44% at 50% 58%,#000 0 54%,rgba(0,0,0,.96) 67%,rgba(0,0,0,.45) 82%,transparent 100%);
+    mask-image:radial-gradient(ellipse 36% 44% at 50% 58%,#000 0 54%,rgba(0,0,0,.96) 67%,rgba(0,0,0,.45) 82%,transparent 100%);
+    animation:plantaoPatientBreath 3.4s ease-in-out infinite;
     will-change:transform;
   }
 
@@ -220,7 +221,7 @@
 
   @keyframes plantaoPatientBreath{
     0%,100%{transform:translateY(0) scaleY(1)}
-    50%{transform:translateY(-1px) scaleY(1.008)}
+    50%{transform:translateY(-3px) scaleY(1.022)}
   }
 
   @keyframes plantaoPatientShock{
@@ -232,11 +233,15 @@
 
   @keyframes plantaoPatientCpr{
     0%,100%{transform:translateY(0) scaleY(1)}
-    50%{transform:translateY(2px) scaleY(.994)}
+    50%{transform:translateY(5px) scaleY(.982)}
   }
 
   @media (prefers-reduced-motion:reduce){
     .pwa-standalone #plantao-simulator:not([hidden]) #plantao-patient-motion{
+      animation-duration:6s!important;
+    }
+    .pwa-standalone #plantao-simulator:not([hidden]) .plantao-scene.patient-shock #plantao-patient-motion,
+    .pwa-standalone #plantao-simulator:not([hidden]) .plantao-scene.patient-cpr #plantao-patient-motion{
       animation:none!important;
       transform:none!important;
     }
