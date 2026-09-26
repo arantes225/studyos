@@ -161,7 +161,7 @@
 
     if(phoneAllowed){
       const phoneCasesRes=await sb.from("interconsultation_cases")
-        .select("id,slug,title,specialty,difficulty,requester_role,opening_message,known_by_requester")
+        .select("id,slug,title,specialty,difficulty,requester_role,opening_message,known_by_requester,ai_context,debrief")
         .eq("active",true)
         .order("created_at",{ascending:true});
       state.phoneCases=phoneCasesRes.error ? [] : (phoneCasesRes.data||[]);
@@ -333,8 +333,9 @@
     state.phoneCase=item;
     state.phoneTurn=0;
     state.phoneUsedChoices=new Set();
+    const lessonMode=Array.isArray(item.ai_context?.lesson_flow) && item.ai_context.lesson_flow.length>0;
     const {data:session,error}=await sb.from("interconsultation_sessions")
-      .insert({user_id:state.user.id,case_id:item.id,status:"in_progress",turn_count:0,state:{mode:"scripted_pilot"}})
+      .insert({user_id:state.user.id,case_id:item.id,status:"in_progress",turn_count:0,state:{mode:lessonMode?"lesson_flow":"scripted_pilot"}})
       .select("*").single();
     if(error){console.error("Telefone: não foi possível iniciar a sessão",error);return;}
     state.phoneSession=session;
@@ -357,7 +358,26 @@
     el.textContent=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
   }
 
+  function phoneLessonFlow(){
+    const flow=state.phoneCase?.ai_context?.lesson_flow;
+    return Array.isArray(flow) ? flow : [];
+  }
+
   function phoneChoiceOptions(){
+    const flow=phoneLessonFlow();
+    if(flow.length){
+      const step=flow[state.phoneTurn];
+      if(!step) return [];
+      return (Array.isArray(step.options)?step.options:[]).map((opt,index)=>({
+        id:String(opt.id||`option_${index+1}`),
+        group:"Sua resposta",
+        label:String(opt.label||opt.text||"Opção"),
+        text:String(opt.label||opt.text||"Opção"),
+        correct:opt.correct===true,
+        explanation:String(step.explanation||""),
+        stepId:String(step.id||`step_${state.phoneTurn+1}`)
+      }));
+    }
     return [
       {id:"meds",group:"Perguntar",label:"Quais medicamentos ele usa?",text:"Quais medicamentos o paciente usa atualmente?"},
       {id:"renal",group:"Perguntar",label:"Como está a função renal?",text:"Como estão creatinina, ureia, potássio e função renal?"},
@@ -375,7 +395,10 @@
     if(!host) return;
     const available=phoneChoiceOptions().filter(opt=>!state.phoneUsedChoices.has(opt.id));
     if(!available.length){
-      host.innerHTML='<div class="plantao-phone-choice-done">Sem outras opções neste caso piloto.</div>';
+      const lessonDone=phoneLessonFlow().length>0 && state.phoneTurn>=phoneLessonFlow().length;
+      host.innerHTML=lessonDone
+        ? '<div class="plantao-phone-choice-done">Aula concluída.</div><button class="plantao-phone-resume-button" type="button" data-phone-finish-lesson>Voltar às aulas</button>'
+        : '<div class="plantao-phone-choice-done">Sem outras opções neste caso.</div>';
       return;
     }
     const grouped={};
@@ -392,10 +415,68 @@
 
   async function choosePhoneOption(choiceId){
     const opt=phoneChoiceOptions().find(item=>item.id===choiceId);
-    if(!opt || state.phoneUsedChoices.has(choiceId)) return;
+    if(!opt) return;
+    if(phoneLessonFlow().length){
+      await sendPhoneLessonChoice(opt);
+      return;
+    }
+    if(state.phoneUsedChoices.has(choiceId)) return;
     state.phoneUsedChoices.add(choiceId);
     renderPhoneChoices();
     await sendPhoneMessage(opt.text,{choiceId:opt.id,choiceGroup:opt.group});
+  }
+
+  async function sendPhoneLessonChoice(opt){
+    if(!state.phoneSession||!state.phoneCase) return;
+    const flow=phoneLessonFlow();
+    const step=flow[state.phoneTurn];
+    if(!step) return;
+
+    const answeredTurn=state.phoneTurn+1;
+    const specialistIndex=answeredTurn*2-1;
+    const requesterIndex=answeredTurn*2;
+    const verdict=opt.correct ? "Correto." : "Não é a melhor resposta.";
+    const explanation=String(step.explanation||"").trim();
+    const nextStep=flow[answeredTurn];
+    const debrief=state.phoneCase?.debrief||{};
+    let reply=[verdict,explanation].filter(Boolean).join(" ");
+    if(nextStep?.prompt){
+      reply += `\n\n${nextStep.prompt}`;
+    }else{
+      const summary=String(debrief.summary||"Boa. Você concluiu esta aula.").trim();
+      const sourceName=String(debrief.source_name||"").trim();
+      const sourceUrl=String(debrief.source_url||"").trim();
+      reply += `\n\n${summary}`;
+      if(sourceName) reply += `\n\nFonte brasileira: ${sourceName}`;
+      if(sourceUrl) reply += `\n${sourceUrl}`;
+    }
+
+    state.phoneTurn=answeredTurn;
+    state.phoneUsedChoices.add(`${step.id||answeredTurn}:${opt.id}`);
+    const messages=[...currentPhoneMessages(),{sender:"specialist",content:opt.text},{sender:"requester",content:reply}];
+    renderPhoneMessages(messages);
+    renderPhoneChoices();
+
+    await sb.from("interconsultation_messages").insert([
+      {session_id:state.phoneSession.id,user_id:state.user.id,turn_index:specialistIndex,sender:"specialist",content:opt.text,metadata:{lesson:true,step_id:step.id||answeredTurn,choice_id:opt.id,correct:opt.correct}},
+      {session_id:state.phoneSession.id,user_id:state.user.id,turn_index:requesterIndex,sender:"requester",content:reply,metadata:{lesson:true,step_id:step.id||answeredTurn}}
+    ]);
+
+    const completed=state.phoneTurn>=flow.length;
+    await sb.from("interconsultation_sessions").update({
+      quota_counted_at:state.phoneSession.quota_counted_at||new Date().toISOString(),
+      turn_count:state.phoneTurn,
+      status:completed?"completed":"in_progress",
+      completed_at:completed?new Date().toISOString():null,
+      state:{mode:"lesson_flow",step:state.phoneTurn,total_steps:flow.length,last_choice:opt.id}
+    }).eq("id",state.phoneSession.id);
+
+    if(completed){
+      clearPhoneDraft();
+      state.phoneSession={...state.phoneSession,status:"completed"};
+    }else{
+      persistPhoneDraft();
+    }
   }
 
   function phoneReplyFor(text){
@@ -467,6 +548,15 @@
     if(btn) startPhoneCase(btn.dataset.startPhoneCase);
   });
   $("plantao-phone-choices")?.addEventListener("click",event=>{
+    const finish=event.target.closest("[data-phone-finish-lesson]");
+    if(finish){
+      clearPhoneDraft();
+      state.phoneSession=null; state.phoneCase=null; state.phoneTurn=0; state.phoneUsedChoices=new Set();
+      $("plantao-phone-station").hidden=true;
+      $("plantao-phone-inbox").hidden=false;
+      renderPhoneCases();
+      return;
+    }
     const btn=event.target.closest("[data-phone-choice]");
     if(btn) choosePhoneOption(btn.dataset.phoneChoice);
   });
