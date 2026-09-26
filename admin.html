@@ -323,7 +323,7 @@
           <div class="admin-factory-summary" aria-label="Resumo da fábrica de questões">
             <article><span>Em produção</span><strong id="admin-qf-total">0</strong><small>Questões</small></article>
             <article><span>Blocos</span><strong id="admin-qf-blocks">0</strong><small>200 questões cada</small></article>
-            <article><span>Perplexity</span><strong id="admin-qf-block-review">0</strong><small>Blocos em revisão</small></article>
+            <article><span>Revisão independente</span><strong id="admin-qf-block-review">0</strong><small>Blocos em revisão</small></article>
             <article><span>Lotes completos</span><strong id="admin-qf-lots-ready">0</strong><small>5 blocos aprovados</small></article>
             <article><span>Prontas</span><strong id="admin-qf-ready">0</strong><small>Após revisão final</small></article>
             <article><span>Publicadas</span><strong id="admin-qf-published">0</strong><small>Banco definitivo</small></article>
@@ -361,7 +361,7 @@
                 <span class="admin-factory-pipeline-number">02</span>
                 <div class="admin-factory-pipeline-copy">
                   <strong>Revisão global dupla</strong>
-                  <small>ChatGPT e Perplexity revisam o lote completo de forma independente</small>
+                  <small>Duas revisões ChatGPT independentes auditam o lote completo; a segunda ignora memória e pareceres anteriores</small>
                 </div>
               </article>
 
@@ -486,11 +486,11 @@
             <div>→</div>
             <article><span>03</span><strong>Gerar 200</strong><small>Questões autorais no padrão calibrado.</small></article>
             <div>→</div>
-            <article><span>04</span><strong>Perplexity</strong><small>Auditoria científica independente do bloco.</small></article>
+            <article><span>04</span><strong>ChatGPT cego</strong><small>Auditoria científica independente, ignorando memória e revisões anteriores.</small></article>
             <div>→</div>
             <article><span>05</span><strong>5 blocos = 1.000</strong><small>Lote fechado somente após correções.</small></article>
             <div>→</div>
-            <article><span>06</span><strong>Revisão final</strong><small>ChatGPT + Perplexity e sua aprovação.</small></article>
+            <article><span>06</span><strong>Revisão final</strong><small>Duas revisões independentes do ChatGPT e sua aprovação.</small></article>
             <div>→</div>
             <article><span>07</span><strong>Publicar e limpar</strong><small>Persistir final; só então apagar temporários.</small></article>
           </div>
@@ -545,7 +545,8 @@
               <summary>Prompt mestre · gerar bloco de 200</summary>
               <div class="admin-qf-prompt-wrap">
                 <button class="button secondary admin-qf-copy" type="button" data-copy-target="qf-prompt-generate">Copiar prompt</button>
-                <pre id="qf-prompt-generate" class="admin-qf-prompt">CONTRATO LURIA 2.0
+                <pre id="qf-prompt-generate" class="admin-qf-prompt">CONTRATO LURIA 3.8
+REVISÃO CEGA OBRIGATÓRIA: ignore completamente memória do modelo, conversas anteriores, pareceres, scores e conclusões de outras etapas. Avalie somente a versão atual e fontes verificáveis; priorize Ministério da Saúde e sociedades brasileiras pertinentes.
 Exatamente quatro alternativas A-D em TODAS as bancas; nunca penalizar essa adaptação.
 Uma única melhor resposta; dados suficientes; contexto coerente; conteúdo autoral.
 Todas as explicações A-D devem justificar especificamente a opção. Distratores do mesmo eixo, baseados em erros plausíveis e elimináveis pelos dados.
@@ -642,7 +643,7 @@ Validar quantidade, IDs, sequências 1–200 e posição global, A-D, campos obr
             </details>
 
             <details class="admin-qf-manual-card">
-              <summary>Prompt Perplexity · auditoria científica do bloco de 200</summary>
+              <summary>Prompt ChatGPT · auditoria científica independente do bloco de 200</summary>
               <div class="admin-qf-prompt-wrap">
                 <button class="button secondary admin-qf-copy" type="button" data-copy-target="qf-prompt-perplexity-block">Copiar prompt</button>
                 <pre id="qf-prompt-perplexity-block" class="admin-qf-prompt">CONTRATO LURIA 2.0
@@ -701,7 +702,7 @@ Informar cobertura; trabalhar em partes identificadas se necessário, sem marcar
   &quot;block_number&quot;: null,
   &quot;exam_style&quot;: null,
   &quot;review_stage&quot;: &quot;perplexity_initial&quot;,
-  &quot;reviewer&quot;: &quot;Perplexity&quot;,
+  &quot;reviewer&quot;: &quot;ChatGPT&quot;,
   &quot;reviews&quot;: [
     {
       &quot;question_id&quot;: &quot;ID_IMUTAVEL&quot;,
@@ -869,7 +870,7 @@ Após as três aprovações da versão atual, aguardar aprovação humana final 
             </details>
 
             <details class="admin-qf-manual-card">
-              <summary>Prompt Perplexity · revisão final do lote de 1.000</summary>
+              <summary>Prompt ChatGPT · segunda revisão final independente do lote de 1.000</summary>
               <div class="admin-qf-prompt-wrap">
                 <button class="button secondary admin-qf-copy" type="button" data-copy-target="qf-prompt-perplexity-final">Copiar prompt</button>
                 <pre id="qf-prompt-perplexity-final" class="admin-qf-prompt">CONTRATO LURIA 2.0
@@ -911,7 +912,7 @@ Copiar integralmente version_manifest do pacote. Se qualquer versão mudar, toda
   &quot;block_number&quot;: null,
   &quot;exam_style&quot;: null,
   &quot;review_stage&quot;: &quot;lot_perplexity_final&quot;,
-  &quot;reviewer&quot;: &quot;Perplexity&quot;,
+  &quot;reviewer&quot;: &quot;ChatGPT&quot;,
   &quot;lote_status&quot;: &quot;needs_revision&quot;,
   &quot;version_manifest&quot;: [],
   &quot;coverage&quot;: {
@@ -933,8 +934,8 @@ Após as três aprovações da versão atual, aguardar aprovação humana final 
             <details class="admin-qf-manual-card">
               <summary>Revisão final dupla · regra de consenso</summary>
               <div class="admin-qf-double-rule">
-                <p><strong>Revisões independentes ChatGPT + Perplexity.</strong></p>
-                <p>ChatGPT e Perplexity aprovam a mesma versão → aguardar aprovação humana final. Qualquer um marca <code>needs_revision</code> → volta para correção. Divergência em item específico → bloquear a questão e conferir fonte primária. Consenso entre IAs nunca substitui evidência documental.</p>
+                <p><strong>Duas revisões independentes do ChatGPT.</strong></p>
+                <p>Revisão A e revisão cega B aprovam a mesma versão → aguardar aprovação humana final. Qualquer uma marca <code>needs_revision</code> → volta para correção. Divergência em item específico → bloquear a questão e conferir fonte primária. Consenso entre IAs nunca substitui evidência documental.</p>
               </div>
             </details>
           </div>
