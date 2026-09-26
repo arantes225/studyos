@@ -44,18 +44,18 @@ Usar fonte atual aplicável à pergunta e ao cenário brasileiro. Fonte internac
 CALIBRAÇÃO DO PROMPT: FINAL_PROMPT_SCORE >=84/100 na saída bruta inédita, antes de correções; não confundir com style_score.
 QUESTÃO FINAL: quality_score >=97/100, style >=9.7/10, rubrica completa, fontes verificadas, sem hard fail, sem ambiguidade e com única melhor resposta. Nota alta não compensa falha eliminatória.
 Feedback sobre distratores, clareza e segurança pode melhorar regras gerais; só alterar a identidade da banca com evidência primária documentada.
-PERSISTÊNCIA FLEXÍVEL E INCREMENTAL — RESULTADO DA ETAPA:
-- Para perplexity_initial e perplexity_reaudit, a FONTE DE VERDADE DE LEITURA é a página pública temporária da Fábrica de Questões informada no ENDEREÇO OPERACIONAL do prompt. O Perplexity deve abrir esse endereço no navegador, selecionar o bloco correto e trabalhar somente sobre as versões exibidas ali.
-- O Perplexity NÃO deve depender de conector Supabase, SQL, RPC, API key, service_role, anon key, JWT ou acesso ao Admin para executar essas duas etapas.
-- O resultado deve ser enviado pelo FORMULÁRIO "Enviar resultado" da própria página pública, em JSON completo, preservando question_id + item_version. O formulário registra o pacote em uma caixa de entrada isolada para validação posterior; ele NÃO altera diretamente a questão principal.
-- Não existe tamanho obrigatório de lote por envio: pode enviar 1 questão, pequenos grupos ou um grupo maior, desde que reviews[] esteja completo e todos os itens pertençam ao mesmo bloco/etapa.
-- Se um envio falhar, mantenha o JSON localmente, corrija apenas o problema apontado e reenvie. Nunca invente confirmação.
-- stage_metrics, totais agregados e relatório textual NÃO substituem reviews individuais.
-- Para etapas executadas pelo ChatGPT dentro do ambiente administrativo, permanecem válidos os importadores/RPCs controlados já definidos para a etapa.
-CONFIRMAÇÃO APÓS ENVIO DO PERPLEXITY:
-- Só declarar "ENVIADO AO BRIDGE" quando a própria página retornar protocolo/receipt_id.
-- Esse protocolo confirma RECEBIMENTO no bridge, não importação definitiva na Fábrica. Nunca declarar "persistido no Supabase", "coverage completo" ou "etapa concluída no banco" com base apenas no formulário.
-- A validação/importação definitiva é feita depois pelo fluxo administrativo da LURIA.
+FLUXO MANUAL DAS ETAPAS PERPLEXITY — JSON COLADO:
+- Nas etapas executadas pelo Perplexity, a FONTE DE VERDADE é EXCLUSIVAMENTE o JSON COMPLETO colado pelo usuário junto deste prompt.
+- NÃO abrir página da Fábrica, bridge, GitHub RAW, Admin, Supabase, URL operacional ou arquivo externo para obter as questões.
+- NÃO usar snippets, anexos antigos, histórico da conversa, arquivos anteriores ou memória como substituto do JSON colado nesta execução.
+- Antes de auditar, leia e valide o JSON colado por inteiro: batch_code, block_code, question_id, question_code, sequence_no e item_version/version.
+- Preserve exatamente question_id + item_version/version recebidos no JSON.
+- Se o JSON colado não contiver os itens necessários, estiver truncado ou estruturalmente inválido, informe JSON_INPUT_INVALID com o problema concreto; NÃO tente completar buscando dados em outro lugar.
+- O resultado desta etapa deve ser DEVOLVIDO como um único JSON completo, pronto para o usuário colar no botão “Colar JSON de resposta” do Admin.
+- NÃO tente persistir, enviar ao bridge, chamar RPC, SQL, formulário, API ou Supabase.
+- NÃO declare persistência, receipt_id, coverage no banco ou conclusão administrativa. A importação será feita pelo usuário no Admin após esta resposta.
+- stage_metrics, totais agregados e relatório textual NÃO substituem reviews individuais exigidos pela etapa.
+- Para etapas executadas pelo ChatGPT dentro do ambiente administrativo, permanecem válidos os importadores/RPCs controlados definidos no fluxo interno.
 TELEMETRIA OBRIGATÓRIA POR ETAPA: toda saída JSON deve incluir um objeto top-level stage_metrics. Ele é lido pelo Admin e persistido no Supabase para atualizar o dashboard automaticamente. Preencher com dados REAIS da etapa; nunca estimar contagens. Estrutura obrigatória:
 stage_metrics = {
   exam_style: banca atual,
@@ -78,9 +78,10 @@ stage_metrics = {
   notes: resumo operacional curto
 }.
 TELEMETRIA / DESTINO:
-- Se provider=Perplexity e stage for perplexity_initial ou perplexity_reaudit, NÃO tentar gravar stage_metrics diretamente no Supabase. Incluir stage_metrics no MESMO JSON enviado pelo formulário público. Registrar bridge_write={attempted:true,received:true,receipt_id:<protocolo>} somente se a página confirmar o protocolo; se falhar, bridge_write={attempted:true,received:false,error:<erro real>}.
+- Se provider=Perplexity, incluir stage_metrics no MESMO JSON final devolvido ao usuário.
+- Para Perplexity, NÃO tentar gravar stage_metrics nem reviews no Supabase e NÃO gerar bridge_write/receipt_id. A resposta deve ser apenas o JSON completo pronto para colar no Admin.
 - Se provider=ChatGPT e o ambiente administrativo tiver acesso autorizado ao Supabase, a telemetria pode continuar usando SOMENTE a função controlada private.qf_record_stage_metrics(...), conforme o fluxo interno.
-- Nunca fazer INSERT/UPDATE/DELETE direto para telemetria ou reviews.
+- Nunca fazer INSERT/UPDATE/DELETE direto para telemetria ou reviews fora dos importadores administrativos autorizados.
 - Nunca pedir, imprimir, armazenar ou inventar service_role, senha, token, anon key, publishable key, JWT ou chave do Supabase.
 JSON válido é o contrato máquina-a-máquina. Não preencher aprovações, fontes verificadas ou notas sem executar a avaliação. IDs são imutáveis; toda revisão informa item_version e toda correção informa expected_version.`;
   const rubricText = `RUBRICA FINAL (pesos máximos; soma exata = quality_score):\n${stringify(rubric)}
@@ -125,60 +126,55 @@ Somente perfis ainda não aprovados devem registrar edição, URL oficial, IDs/p
     const batchCode = ctx.batch_code || (batchNumber == null ? null : 'L'+String(Number(batchNumber)).padStart(3,'0'));
     const blockCode = ctx.block_code || (batchCode && blockNumber != null ? batchCode+'-B'+String(Number(blockNumber)).padStart(2,'0') : null);
     const operationalAddress = blockCode || batchCode || null;
-    const isPerplexityBridgeStage = ['perplexity_initial','perplexity_reaudit'].includes(stage);
-    const bridgeBase = 'https://raw.githubusercontent.com/arantes225/studyos/main/qf-r8K2mV7qL4x9P1cF/';
-    const bridgeUrl = blockCode ? bridgeBase + blockCode + '.json' : bridgeBase;
-    const bridgeSubmitBase = 'https://www.resibulando.online/qf-r8K2mV7qL4x9P1cF/';
-    const bridgeSubmitUrl = blockCode ? bridgeSubmitBase + '?block=' + encodeURIComponent(blockCode) : bridgeSubmitBase;
-    const workspace = ctx.prompt_workspace_url || ctx.workspace_url || (isPerplexityBridgeStage ? bridgeUrl : 'https://www.resibulando.online/admin/');
-    const source = ctx.prompt_source_instruction || (isPerplexityBridgeStage
-      ? (blockCode
-          ? `Abra EXATAMENTE ${bridgeUrl}. Esse endereço é o arquivo RAW público do GitHub e retorna JSON direto do bloco ${blockCode}, sem depender de JavaScript, login, GitHub UI ou sessão autenticada. Use EXCLUSIVAMENTE esse JSON como fonte de leitura. NÃO use anexos, arquivos enviados no chat, pasted_text, exportações anteriores ou histórico da conversa como substituto.`
-          : 'Este prompt do Perplexity está sem block_code concreto. NÃO executar até receber um bloco L001-B01 a L001-B05.')
-      : (blockCode
+    const isPerplexityStage = ['blind_resolution','perplexity_initial','perplexity_reaudit','lot_perplexity_final'].includes(stage);
+    const workspace = isPerplexityStage
+      ? 'JSON COMPLETO COLADO PELO USUÁRIO NESTA CONVERSA'
+      : (ctx.prompt_workspace_url || ctx.workspace_url || 'https://www.resibulando.online/admin/');
+    const source = isPerplexityStage
+      ? `Use EXCLUSIVAMENTE o JSON completo colado pelo usuário junto deste prompt como fonte de leitura para ${blockCode || batchCode || 'esta etapa'}. Não abra URLs, página pública, GitHub RAW, bridge, Admin ou Supabase. Não use arquivos antigos nem histórico como substituto. Valide os IDs e versões dentro do próprio JSON antes de começar.`
+      : (ctx.prompt_source_instruction || (blockCode
           ? `Entre no Admin da LURIA/Resibulando → Fábrica de questões → Produção em tempo real → lote ${batchCode} → bloco ${blockCode}. Leia exclusivamente as questões e versões atuais desse bloco.`
           : batchCode
             ? `Entre no Admin da LURIA/Resibulando → Fábrica de questões → Produção em tempo real → lote ${batchCode}. Trabalhe exclusivamente nesse lote.`
             : 'Este é um prompt-modelo sem lote/bloco vinculado. NÃO executar nem persistir até receber um endereço operacional concreto.'));
-    const destination = ctx.prompt_return_instruction || (isPerplexityBridgeStage
-      ? (blockCode
-          ? `Depois de auditar a partir de ${bridgeUrl}, abra EXATAMENTE ${bridgeSubmitUrl} e use o formulário "Enviar resultado". Cole o JSON completo desta etapa e clique em "Enviar parecer". Só considere recebido se a página retornar um protocolo/receipt_id. O formulário é uma caixa de entrada isolada e NÃO modifica diretamente a questão principal.`
-          : 'Sem bloco concreto: não enviar nada.')
-      : (blockCode
+    const destination = isPerplexityStage
+      ? 'DEVOLVA SOMENTE o JSON completo da etapa nesta conversa, pronto para o usuário colar no botão “Colar JSON de resposta” do Admin. Não envie para bridge, página, formulário, RPC ou Supabase.'
+      : (ctx.prompt_return_instruction || (blockCode
           ? `Grave o resultado exclusivamente no lote ${batchCode}, bloco ${blockCode}, na etapa indicada. Nunca escrever em outro bloco.`
           : batchCode
             ? `Grave o resultado exclusivamente no lote ${batchCode}, na etapa indicada. Nunca escrever em outro lote.`
             : 'Sem destino operacional: não gravar nada.'));
 
     const stagePersistence = {
-      blind_resolution: `PERSISTÊNCIA DESTA ETAPA — PERPLEXITY / RESOLUÇÃO CEGA:
-- Gravar SOMENTE o registro de resolução cega/parecer separado associado a question_id + item_version + ${blockCode || 'bloco atual'}.
+      blind_resolution: `SAÍDA DESTA ETAPA — PERPLEXITY / RESOLUÇÃO CEGA:
+- Trabalhe somente com o JSON completo colado pelo usuário nesta execução.
+- Gere SOMENTE o registro de resolução cega/parecer separado associado a question_id + item_version + ${blockCode || 'bloco atual'}.
 - PROIBIDO alterar enunciado, alternativas, gabarito, explicações, mensagem_chave, fontes ou version da questão principal.
-- A resolução cega deve permanecer isolada para ser confrontada posteriormente com o gabarito.`,
-      perplexity_initial: `DESTINO DESTA ETAPA — PERPLEXITY / AUDITORIA:
-- Ler o bloco exclusivamente pela página pública temporária indicada acima.
-- NÃO usar conector Supabase, SQL, RPC, Admin ou API do Perplexity para obter as questões.
-- Para cada item, preservar exatamente question_id e item_version mostrados na página.
-- Gerar reviews[] completos da etapa perplexity_initial.
+- A resolução cega deve permanecer isolada para ser confrontada posteriormente com o gabarito.
+- Ao final, devolva um único JSON completo pronto para colar no Admin.`,
+      perplexity_initial: `SAÍDA DESTA ETAPA — PERPLEXITY / AUDITORIA:
+- Leia EXCLUSIVAMENTE o JSON completo colado pelo usuário junto deste prompt.
+- NÃO abra página pública, GitHub RAW, bridge, Admin, Supabase, SQL, RPC ou outra fonte para obter as questões.
+- Para cada item, preserve exatamente question_id e item_version/version recebidos no JSON.
+- Gere reviews[] completos da etapa perplexity_initial.
 - PROIBIDO aplicar proposed_change diretamente na questão principal ou inventar nova version.
 - proposed_change.exact_replacement é apenas RECOMENDAÇÃO para adjudicação posterior pelo ChatGPT.
-- Enviar o JSON pelo formulário "Enviar resultado" da MESMA página.
-- Pode enviar 1 questão ou qualquer grupo conveniente; cada envio deve conter somente itens deste bloco e desta etapa.
-- Só afirmar "ENVIADO AO BRIDGE" quando a página retornar receipt_id. Esse recibo NÃO significa importação final no banco.
-- O parecer deve permanecer separado da questão principal para evitar contaminação.`,
-      perplexity_reaudit: `DESTINO DESTA ETAPA — PERPLEXITY / REAUDITORIA:
-- Reabrir a página pública temporária indicada acima e recarregar o bloco antes de começar, para obter a versão ATUAL.
-- NÃO usar conector Supabase, SQL, RPC ou cópia antiga como fonte da questão.
-- Reauditar somente question_id + item_version atuais recebidos na página.
+- Ao final, devolva um único JSON completo pronto para colar no Admin.
+- NÃO envie nada para bridge/formulário e NÃO declare persistência.`,
+      perplexity_reaudit: `SAÍDA DESTA ETAPA — PERPLEXITY / REAUDITORIA:
+- Reaudite EXCLUSIVAMENTE as versões presentes no JSON completo colado pelo usuário nesta execução.
+- NÃO abra página pública, GitHub RAW, bridge, Admin, Supabase, SQL, RPC ou cópia antiga para obter a questão.
+- Reaudite somente question_id + item_version/version atuais recebidos no JSON.
 - PROIBIDO modificar a questão principal, inclusive quando ainda houver erro.
 - Se houver nova falha, registrar needs_revision/rejected no parecer; a correção continua sendo responsabilidade do ChatGPT em etapa posterior.
-- Se a reauditoria responder a uma discordância sem patch, mantenha a MESMA item_version exibida na página.
-- Enviar o JSON pelo formulário "Enviar resultado" da própria página e guardar o receipt_id.
-- O recibo confirma apenas recebimento no bridge; não declarar coverage completo nem importação definitiva.`,
-      lot_perplexity_final: `PERSISTÊNCIA DESTA ETAPA — PERPLEXITY / REVISÃO FINAL DO LOTE:
-- Gravar a auditoria final do Perplexity em registro separado do lote, preservando version_manifest e findings.
-- PROIBIDO alterar diretamente qualquer uma das 1.000 questões.
-- Achados do Perplexity são parecer independente; qualquer mudança na questão exige adjudicação/correção posterior pelo ChatGPT e nova validação.`,
+- Se a reauditoria responder a uma discordância sem patch, mantenha a MESMA item_version recebida no JSON.
+- Ao final, devolva um único JSON completo pronto para colar no Admin.
+- NÃO envie nada para bridge/formulário e NÃO declare persistência.`,
+      lot_perplexity_final: `SAÍDA DESTA ETAPA — PERPLEXITY / REVISÃO FINAL DO LOTE:
+- Use exclusivamente o JSON completo colado pelo usuário.
+- Produza a auditoria final do Perplexity em registro separado do lote, preservando version_manifest e findings.
+- PROIBIDO alterar diretamente qualquer questão.
+- Ao final, devolva um único JSON completo pronto para colar no Admin; não tente persistir.`,
       chatgpt_adjudication: `PERSISTÊNCIA DESTA ETAPA — CHATGPT / ADJUDICAÇÃO:
 - Ler a questão principal na versão atual E o parecer separado mais recente do Perplexity para a MESMA question_id + item_version.
 - Decidir item por item: agree | partially_agree | disagree.
@@ -207,36 +203,12 @@ Etapa: ${stage || 'NÃO INFORMADA'}
 
 TRAVA DE ESCOPO:
 - Você está autorizado a atuar EXCLUSIVAMENTE no endereço operacional acima.
-- Antes de ler, resolver, revisar, corrigir ou gravar qualquer item, confira no sistema que batch_code=${batchCode || 'NÃO VINCULADO'}${blockCode ? ` e block_code=${blockCode}` : ''}.
-- Se o endereço aberto no sistema não coincidir exatamente, PARE e retorne ADDRESS_MISMATCH; não use nem grave dados.
-- Nunca inferir outro lote/bloco pelo histórico da conversa, pelo último item acessado ou por exemplos do prompt.
-- Toda saída estruturada desta execução deve repetir batch_number, batch_code, block_number, block_code e operational_address.
-- Se este prompt estiver sem batch_code/endereço operacional concreto, ele é apenas MODELO e não pode executar nem persistir nenhuma etapa.
+- ${source}
+- ${destination}
+- IDs, lote, bloco e versões presentes no JSON/ambiente atual prevalecem sobre exemplos do prompt.
+- Nunca invente leitura, gravação, versão, receipt_id ou confirmação.
 
-ONDE BUSCAR / LER:
-${source}
-
-ONDE DEVOLVER:
-${destination}
-
-${stagePersistence}
-
-REGRA DE ACESSO E PERSISTÊNCIA:
-${isPerplexityBridgeStage ? `- PERPLEXITY: use o NAVEGADOR para abrir o JSON público exato acima. Ele é a única fonte operacional desta etapa.
-- Confirme dentro do próprio JSON block_code=${blockCode || 'NÃO VINCULADO'}.
-- NÃO use anexos, pasted_text, arquivos recebidos, exportações, PDFs, histórico da conversa ou cópias locais como fonte de execução.
-- NÃO exija sessão autenticada, runner, conector Supabase, RPC signature ou leitura direta do banco. Para esta etapa, o JSON público foi criado justamente para substituir essa dependência operacional.
-- Não tente acessar /admin/, Supabase, SQL, RPC, connector, API key ou secrets para obter os itens.
-- Depois de produzir o JSON, abra a página de envio indicada em ONDE DEVOLVER e use o formulário.
-- Só marque bridge_write.received=true se a página retornar receipt_id; copie o receipt_id para a saída final.
-- receipt_id = recebimento no bridge, NÃO importação definitiva, NÃO coverage e NÃO aprovação da etapa.
-- Se o navegador não conseguir abrir a página ou o formulário falhar, responda ACCESS_REQUIRED ou WRITE_FAILED com o erro real e devolva o JSON completo no chat para contingência.` : `- Use o site/admin e os conectores autorizados definidos para esta etapa interna.
-- Nunca use INSERT/UPDATE/DELETE direto para contornar importadores controlados.
-- Após qualquer escrita administrativa, releia o mesmo endereço operacional e confirme os identificadores e versões.`}
-- Não use questões de outro lote, bloco, arquivo antigo ou contexto de conversa como substituto silencioso.
-- Nunca alegue que leu, alterou, enviou, importou ou gravou questões se isso não aconteceu.
-- IDs, batch_code, block_code e versões lidos no sistema prevalecem sobre qualquer exemplo do prompt.
-- NUNCA pedir ao usuário PERPLEXITY_API_KEY, service_role, anon key, publishable key, JWT, senha ou token.`;
+${stagePersistence}`;
   }
 
   function generation(item={},ctx={}) {
