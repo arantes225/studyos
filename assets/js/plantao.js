@@ -3084,7 +3084,7 @@
       updateScore();renderVitals();
       const saved=await persistSession();
       if(!saved)feed("Não foi possível salvar agora. Mantenha esta tela aberta; a próxima ação tentará novamente.","warning");
-      if(action.role==='disposition'&&state.disposition)await finishCase();
+      if(action.role==='disposition'&&state.disposition)await finishCase({forceDebrief:true});
     } finally {
       state.busy=false;renderActions();
       $("plantao-finish").disabled=false;$("plantao-back").disabled=false;
@@ -3094,8 +3094,9 @@
   function hasAnySuccessOutcome() {return E.success(state.current,state);}
   function finalScore() {return E.score(state.current,state).total;}
 
-  async function finishCase() {
+  async function finishCase(options={}) {
     if (!state.current || !state.session) return;
+    const forceDebrief=options.forceDebrief===true;
     const rules=state.current.completion_rules || {};
     const required=E.requiredActions ? E.requiredActions(state.current) : (rules.required_actions || []);
     const recommended=rules.recommended_actions || [];
@@ -3124,10 +3125,18 @@
       result
     });
 
-    if(!saved){feed("Não foi possível salvar o encerramento. Tente novamente em Definir destino.","warning");return;}
-    state.sessions.unshift({id:state.session.id,case_id:state.current.id,status:"completed",score,result,started_at:state.session.started_at,completed_at:new Date().toISOString()});
-    state.session.status="completed";
-    await pruneCaseHistory(state.current.id);
+    if(!saved){
+      console.warn("Plantão: encerramento não persistido; abrindo debrief localmente.");
+      if(!forceDebrief){
+        feed("Não foi possível salvar o encerramento agora. O debrief será exibido mesmo assim.","warning");
+      }
+    }else{
+      state.sessions.unshift({id:state.session.id,case_id:state.current.id,status:"completed",score,result,started_at:state.session.started_at,completed_at:new Date().toISOString()});
+      state.session.status="completed";
+      await pruneCaseHistory(state.current.id);
+    }
+    $("plantao-action-drawer").hidden=true;
+    $("plantao-action-tabs").inert=false;
     renderDebrief(score,missingRequired,missingRecommended);
     show("plantao-debrief");
   }
