@@ -64,27 +64,37 @@
             </button>
           </nav>
           <div id="plantao-emergency-panel">
-          <div id="plantao-emergencia" class="plantao-library-head"><div><h2>Sala de emergência</h2><p>Primeiro módulo do Plantão. Novos ambientes podem usar o mesmo motor.</p></div><button id="plantao-random-case" class="button primary plantao-random-case" type="button">Iniciar aleatório</button></div>
-          <div id="plantao-emergency-filters" class="plantao-filters" aria-label="Filtros dos casos">
-            <div class="plantao-site-filter">
-              <span class="plantao-filter-label">Especialidade</span>
-              <div class="plantao-site-select" data-plantao-filter="specialty">
-                <button id="plantao-filter-specialty-button" class="plantao-site-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
-                  <span id="plantao-filter-specialty-label">Todas</span><span aria-hidden="true">⌄</span>
+          <div id="plantao-emergencia" class="plantao-library-head">
+            <div class="plantao-library-title-row">
+              <h2>Sala de emergência</h2>
+              <div class="plantao-filter-menu">
+                <button id="plantao-filter-menu-toggle" class="plantao-filter-menu-toggle" type="button" aria-label="Filtrar casos" aria-expanded="false" aria-controls="plantao-emergency-filters">
+                  <span aria-hidden="true">⌁</span>
                 </button>
-                <div id="plantao-filter-specialty-list" class="plantao-site-select-list" role="listbox" hidden></div>
+                <div id="plantao-emergency-filters" class="plantao-filters plantao-filter-popover" aria-label="Filtros dos casos" hidden>
+                  <div class="plantao-site-filter">
+                    <span class="plantao-filter-label">Especialidade</span>
+                    <div class="plantao-site-select" data-plantao-filter="specialty">
+                      <button id="plantao-filter-specialty-button" class="plantao-site-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                        <span id="plantao-filter-specialty-label">Todas</span><span aria-hidden="true">⌄</span>
+                      </button>
+                      <div id="plantao-filter-specialty-list" class="plantao-site-select-list" role="listbox" hidden></div>
+                    </div>
+                  </div>
+                  <div class="plantao-site-filter">
+                    <span class="plantao-filter-label">Dificuldade</span>
+                    <div class="plantao-site-select" data-plantao-filter="difficulty">
+                      <button id="plantao-filter-difficulty-button" class="plantao-site-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                        <span id="plantao-filter-difficulty-label">Todas</span><span aria-hidden="true">⌄</span>
+                      </button>
+                      <div id="plantao-filter-difficulty-list" class="plantao-site-select-list" role="listbox" hidden></div>
+                    </div>
+                  </div>
+                  <button id="plantao-filter-clear" class="button secondary" type="button">Limpar filtros</button>
+                </div>
               </div>
             </div>
-            <div class="plantao-site-filter">
-              <span class="plantao-filter-label">Dificuldade</span>
-              <div class="plantao-site-select" data-plantao-filter="difficulty">
-                <button id="plantao-filter-difficulty-button" class="plantao-site-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
-                  <span id="plantao-filter-difficulty-label">Todas</span><span aria-hidden="true">⌄</span>
-                </button>
-                <div id="plantao-filter-difficulty-list" class="plantao-site-select-list" role="listbox" hidden></div>
-              </div>
-            </div>
-            <button id="plantao-filter-clear" class="button secondary" type="button">Limpar filtros</button>
+            <button id="plantao-random-case" class="button primary plantao-random-case" type="button">Iniciar aleatório</button>
           </div>
           <div id="plantao-case-grid" class="plantao-case-grid" aria-live="polite"></div>
           <div id="plantao-empty" class="placeholder" hidden>Nenhum caso clínico disponível.</div>
