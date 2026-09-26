@@ -1,7 +1,7 @@
 /* Contrato único da fábrica. Não inserir resultados históricos como identidade editorial. */
 (function (root) {
   'use strict';
-  const VERSION = '3.7';
+  const VERSION = '3.8';
   const SCHEMA_VERSION = '2.0';
   const rubric = { scientific:25, answer_key:20, answer_source:15, distractors:10, explanations:10, style:10, writing:5, difficulty:5 };
   const editable = ['enunciado','alternativa_a','alternativa_b','alternativa_c','alternativa_d','gabarito','explicacao_a','explicacao_b','explicacao_c','explicacao_d','mensagem_chave','area','tema','subtema','dificuldade','fonte_instituicao','fonte_documento','fonte_ano','fonte_url','answer_source_institution','answer_source_document','answer_source_year','answer_source_url','answer_source_section','answer_source_note'];
@@ -44,8 +44,8 @@ Usar fonte atual aplicável à pergunta e ao cenário brasileiro. Fonte internac
 CALIBRAÇÃO DO PROMPT: FINAL_PROMPT_SCORE >=84/100 na saída bruta inédita, antes de correções; não confundir com style_score.
 QUESTÃO FINAL: quality_score >=97/100, style >=9.7/10, rubrica completa, fontes verificadas, sem hard fail, sem ambiguidade e com única melhor resposta. Nota alta não compensa falha eliminatória.
 Feedback sobre distratores, clareza e segurança pode melhorar regras gerais; só alterar a identidade da banca com evidência primária documentada.
-FLUXO MANUAL DAS ETAPAS PERPLEXITY — JSON COLADO:
-- Nas etapas executadas pelo Perplexity, a FONTE DE VERDADE é EXCLUSIVAMENTE o JSON COMPLETO colado pelo usuário junto deste prompt.
+FLUXO MANUAL DAS ETAPAS CHATGPT — JSON COLADO:
+- Nas etapas executadas pelo revisor independente, a FONTE DE VERDADE é EXCLUSIVAMENTE o JSON COMPLETO colado pelo usuário junto deste prompt.
 - NÃO abrir página da Fábrica, bridge, GitHub RAW, Admin, Supabase, URL operacional ou arquivo externo para obter as questões.
 - NÃO usar snippets, anexos antigos, histórico da conversa, arquivos anteriores ou memória como substituto do JSON colado nesta execução.
 - Antes de auditar, leia e valide o JSON colado por inteiro: batch_code, block_code, question_id, question_code, sequence_no e item_version/version.
@@ -64,7 +64,7 @@ stage_metrics = {
   block_number: bloco atual ou null,
   block_code: ID humano do bloco no formato L001-B01 quando houver bloco,
   stage: nome exato da etapa,
-  provider: ChatGPT | Perplexity | Human,
+  provider: ChatGPT | revisor independente | Human,
   run_label: identificador curto opcional da rodada/parte,
   total_count: quantidade realmente processada nesta resposta,
   approved_count: quantidade aprovada nesta etapa,
@@ -78,8 +78,8 @@ stage_metrics = {
   notes: resumo operacional curto
 }.
 TELEMETRIA / DESTINO:
-- Se provider=Perplexity, incluir stage_metrics no MESMO JSON final devolvido ao usuário.
-- Para Perplexity, NÃO tentar gravar stage_metrics nem reviews no Supabase e NÃO gerar bridge_write/receipt_id. A resposta deve ser apenas o JSON completo pronto para colar no Admin.
+- Se provider=revisor independente, incluir stage_metrics no MESMO JSON final devolvido ao usuário.
+- Para revisor independente, NÃO tentar gravar stage_metrics nem reviews no Supabase e NÃO gerar bridge_write/receipt_id. A resposta deve ser apenas o JSON completo pronto para colar no Admin.
 - Se provider=ChatGPT e o ambiente administrativo tiver acesso autorizado ao Supabase, a telemetria pode continuar usando SOMENTE a função controlada private.qf_record_stage_metrics(...), conforme o fluxo interno.
 - Nunca fazer INSERT/UPDATE/DELETE direto para telemetria ou reviews fora dos importadores administrativos autorizados.
 - Nunca pedir, imprimir, armazenar ou inventar service_role, senha, token, anon key, publishable key, JWT ou chave do Supabase.
@@ -89,6 +89,7 @@ scientific: exatidão e atualização; answer_key: gabarito e univocidade; answe
 Cada perda precisa de motivo observável; respeitar os tetos. Sem corpus suficiente, style=null, quality_score=null e status=needs_revision; registrar a pendência sem inventar nota baixa de fidelidade.
 Hard fail: gabarito errado, múltiplas respostas defensáveis, dado essencial ausente, conduta insegura, dose/cutoff incorreto, recomendação desatualizada, fonte falsa ou incompatível, explicação contraditória, erro matemático relevante, cópia reconhecível.
 Fonte ampla ou temporariamente inacessível bloqueia aprovação, mas não é automaticamente fonte falsa.
+HIERARQUIA DE FONTE NO CONTEXTO BRASILEIRO: priorizar Ministério da Saúde/CONITEC/PCDT, ANVISA quando pertinente e sociedades brasileiras reconhecidas da área. Para conteúdo não coberto ou quando necessário para atualização/contraste, usar diretrizes internacionais e literatura primária de alta qualidade. A memória do modelo nunca conta como fonte.
 Requisitos finais adicionais: distractor_quality GOOD ou EXCELLENT (pelo menos dois distratores competitivos, sem opção caricata); alternative_granularity PASS (opções respondem ao mesmo comando e nível de decisão); difficulty_alignment PASS (classificação sustentada pela tarefa e corpus).`;
   function profile(item={}) {
     return `BANCA: ${item.exam_style || 'INFORMAR BANCA CADASTRADA'}
@@ -126,57 +127,47 @@ Somente perfis ainda não aprovados devem registrar edição, URL oficial, IDs/p
     const batchCode = ctx.batch_code || (batchNumber == null ? null : 'L'+String(Number(batchNumber)).padStart(3,'0'));
     const blockCode = ctx.block_code || (batchCode && blockNumber != null ? batchCode+'-B'+String(Number(blockNumber)).padStart(2,'0') : null);
     const operationalAddress = blockCode || batchCode || null;
-    const isPerplexityStage = ['blind_resolution','perplexity_initial','perplexity_reaudit','lot_perplexity_final'].includes(stage);
-    const workspace = isPerplexityStage
-      ? 'JSON COMPLETO COLADO PELO USUÁRIO NESTA CONVERSA'
-      : (ctx.prompt_workspace_url || ctx.workspace_url || 'https://www.resibulando.online/admin/');
-    const source = isPerplexityStage
-      ? `Use EXCLUSIVAMENTE o JSON completo colado pelo usuário junto deste prompt como fonte de leitura para ${blockCode || batchCode || 'esta etapa'}. Não abra URLs, página pública, GitHub RAW, bridge, Admin ou Supabase. Não use arquivos antigos nem histórico como substituto. Valide os IDs e versões dentro do próprio JSON antes de começar.`
-      : (ctx.prompt_source_instruction || (blockCode
-          ? `Entre no Admin da LURIA/Resibulando → Fábrica de questões → Produção em tempo real → lote ${batchCode} → bloco ${blockCode}. Leia exclusivamente as questões e versões atuais desse bloco.`
-          : batchCode
-            ? `Entre no Admin da LURIA/Resibulando → Fábrica de questões → Produção em tempo real → lote ${batchCode}. Trabalhe exclusivamente nesse lote.`
-            : 'Este é um prompt-modelo sem lote/bloco vinculado. NÃO executar nem persistir até receber um endereço operacional concreto.'));
-    const destination = isPerplexityStage
-      ? 'DEVOLVA SOMENTE o JSON completo da etapa nesta conversa, pronto para o usuário colar no botão “Colar JSON de resposta” do Admin. Não envie para bridge, página, formulário, RPC ou Supabase.'
-      : (ctx.prompt_return_instruction || (blockCode
-          ? `Grave o resultado exclusivamente no lote ${batchCode}, bloco ${blockCode}, na etapa indicada. Nunca escrever em outro bloco.`
-          : batchCode
-            ? `Grave o resultado exclusivamente no lote ${batchCode}, na etapa indicada. Nunca escrever em outro lote.`
-            : 'Sem destino operacional: não gravar nada.'));
+    const isIndependentChatGPTStage = ['blind_resolution','perplexity_initial','perplexity_reaudit','lot_perplexity_final'].includes(stage);
+    const workspace = ctx.prompt_workspace_url || ctx.workspace_url || 'https://www.resibulando.online/admin/';
+    const source = ctx.prompt_source_instruction || (blockCode
+      ? `Entre no Admin da LURIA → Fábrica de questões → lote ${batchCode} → bloco ${blockCode}. Leia somente as questões e versões atuais necessárias à etapa. Em revisão independente, ignore memória e qualquer parecer/conclusão anterior.`
+      : batchCode
+        ? `Entre no Admin da LURIA → Fábrica de questões → lote ${batchCode}. Trabalhe exclusivamente nesse lote e nas versões atuais.`
+        : 'Prompt-modelo sem lote/bloco vinculado: não executar nem persistir até receber endereço operacional concreto.');
+    const destination = ctx.prompt_return_instruction || (blockCode
+      ? `Grave o resultado exclusivamente no lote ${batchCode}, bloco ${blockCode}, na etapa indicada, usando apenas o importador/RPC controlado da Fábrica.`
+      : batchCode
+        ? `Grave o resultado exclusivamente no lote ${batchCode}, na etapa indicada.`
+        : 'Sem destino operacional: não gravar nada.');
 
     const stagePersistence = {
-      blind_resolution: `SAÍDA DESTA ETAPA — PERPLEXITY / RESOLUÇÃO CEGA:
-- Trabalhe somente com o JSON completo colado pelo usuário nesta execução.
-- Gere SOMENTE o registro de resolução cega/parecer separado associado a question_id + item_version + ${blockCode || 'bloco atual'}.
-- PROIBIDO alterar enunciado, alternativas, gabarito, explicações, mensagem_chave, fontes ou version da questão principal.
-- A resolução cega deve permanecer isolada para ser confrontada posteriormente com o gabarito.
-- Ao final, devolva um único JSON completo pronto para colar no Admin.`,
-      perplexity_initial: `SAÍDA DESTA ETAPA — PERPLEXITY / AUDITORIA:
-- Leia EXCLUSIVAMENTE o JSON completo colado pelo usuário junto deste prompt.
-- NÃO abra página pública, GitHub RAW, bridge, Admin, Supabase, SQL, RPC ou outra fonte para obter as questões.
-- Para cada item, preserve exatamente question_id e item_version/version recebidos no JSON.
-- Gere reviews[] completos da etapa perplexity_initial.
-- PROIBIDO aplicar proposed_change diretamente na questão principal ou inventar nova version.
-- proposed_change.exact_replacement é apenas RECOMENDAÇÃO para adjudicação posterior pelo ChatGPT.
-- Ao final, devolva um único JSON completo pronto para colar no Admin.
-- NÃO envie nada para bridge/formulário e NÃO declare persistência.`,
-      perplexity_reaudit: `SAÍDA DESTA ETAPA — PERPLEXITY / REAUDITORIA:
-- Reaudite EXCLUSIVAMENTE as versões presentes no JSON completo colado pelo usuário nesta execução.
-- NÃO abra página pública, GitHub RAW, bridge, Admin, Supabase, SQL, RPC ou cópia antiga para obter a questão.
-- Reaudite somente question_id + item_version/version atuais recebidos no JSON.
-- PROIBIDO modificar a questão principal, inclusive quando ainda houver erro.
-- Se houver nova falha, registrar needs_revision/rejected no parecer; a correção continua sendo responsabilidade do ChatGPT em etapa posterior.
-- Se a reauditoria responder a uma discordância sem patch, mantenha a MESMA item_version recebida no JSON.
-- Ao final, devolva um único JSON completo pronto para colar no Admin.
-- NÃO envie nada para bridge/formulário e NÃO declare persistência.`,
-      lot_perplexity_final: `SAÍDA DESTA ETAPA — PERPLEXITY / REVISÃO FINAL DO LOTE:
-- Use exclusivamente o JSON completo colado pelo usuário.
-- Produza a auditoria final do Perplexity em registro separado do lote, preservando version_manifest e findings.
-- PROIBIDO alterar diretamente qualquer questão.
-- Ao final, devolva um único JSON completo pronto para colar no Admin; não tente persistir.`,
+      blind_resolution: `PERSISTÊNCIA DESTA ETAPA — CHATGPT / RESOLUÇÃO CEGA INDEPENDENTE:
+- IGNORE MEMÓRIA e qualquer contexto/revisão anterior.
+- Leia apenas comando + alternativas da versão atual; não consulte gabarito, explicações ou pareceres antes de registrar independent_answer.
+- Grave SOMENTE o registro de resolução cega separado para question_id + item_version.
+- PROIBIDO alterar a questão principal.
+- Depois de registrada, a resposta cega é imutável para a mesma versão.`,
+      perplexity_initial: `PERSISTÊNCIA DESTA ETAPA — CHATGPT / REVISÃO INDEPENDENTE 2:
+- IGNORE MEMÓRIA, parecer da revisão 1, scores, status e correções anteriores.
+- Trabalhe na versão atual e confronte o gabarito somente DEPOIS de preservar a resposta cega.
+- Audite ciência, SBA, distratores, explicações, Pulo do Gato, estilo e fontes.
+- Priorize fontes brasileiras oficiais/sociedades; use busca externa em itens sinalizados ou sensíveis a atualização.
+- proposed_change é apenas recomendação; não altere a questão principal nesta etapa.
+- Grave o parecer separado na etapa técnica perplexity_initial (nome legado interno do banco).`,
+      perplexity_reaudit: `PERSISTÊNCIA DESTA ETAPA — CHATGPT / CONFIRMAÇÃO CEGA APÓS CORREÇÃO:
+- IGNORE MEMÓRIA e todas as conclusões anteriores.
+- Reavalie somente a versão atual corrigida como questão inédita.
+- Faça nova resolução independente antes de confrontar o gabarito e reexecute todos os hard rejects.
+- Faça checagem científica externa quando houver risco, dose/cutoff, divergência ou conteúdo atualizado, priorizando fontes brasileiras.
+- PROIBIDO corrigir silenciosamente nesta etapa; se houver falha, registre needs_revision/rejected.
+- Grave o parecer separado na etapa técnica perplexity_reaudit (nome legado interno do banco).`,
+      lot_perplexity_final: `PERSISTÊNCIA DESTA ETAPA — CHATGPT / REVISÃO FINAL INDEPENDENTE B:
+- IGNORE MEMÓRIA e o resultado da revisão final A.
+- Reavalie o lote atual de modo independente, usando o version_manifest atual.
+- Não altere diretamente questões; registre achados separados.
+- O nome técnico lot_perplexity_final é legado interno do banco; o revisor operacional é ChatGPT.`,
       chatgpt_adjudication: `PERSISTÊNCIA DESTA ETAPA — CHATGPT / ADJUDICAÇÃO:
-- Ler a questão principal na versão atual E o parecer separado mais recente do Perplexity para a MESMA question_id + item_version.
+- Ler a questão principal na versão atual E o parecer separado mais recente do revisor independente para a MESMA question_id + item_version.
 - Decidir item por item: agree | partially_agree | disagree.
 - Gravar a DECISÃO DE ADJUDICAÇÃO separadamente, sempre preservando o review_id do parecer julgado.
 - Nesta etapa, PROIBIDO alterar a questão principal.
@@ -295,7 +286,7 @@ ${stringify({schema_version:SCHEMA_VERSION,batch:{...context(item,ctx),question_
 Validar quantidade, IDs, sequências 1–200 e posição global, A-D, campos obrigatórios, fontes, coerência e duplicatas. Nunca preencher status approved/published. Excel apenas quando solicitado para revisão humana.`;
   }
   function reviewExample(item,stage,ctx) {
-    return {...context(item,ctx),review_stage:stage,reviewer:stage==='chatgpt_initial'?'ChatGPT':'Perplexity',reviews:[{
+    return {...context(item,ctx),review_stage:stage,reviewer:'ChatGPT',reviews:[{
       question_id:'ID_IMUTAVEL',
       item_version:1,
       quality_score:null,
@@ -358,7 +349,7 @@ Validar quantidade, IDs, sequências 1–200 e posição global, A-D, campos obr
       difficulty_issue:null,
       suggested_correction:null,
       proposed_change:{change_required:false,exact_replacement:{},reason:''}
-    }],coverage:{reviewed_ids:[],pending_ids:[],complete:false},stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage,provider:stage==='chatgpt_initial'?'ChatGPT':'Perplexity',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}};
+    }],coverage:{reviewed_ids:[],pending_ids:[],complete:false},stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage,provider:'ChatGPT',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}};
   }
   function segment(item={},stage,ctx={}) {
     if(stage==='perplexity_cycle') return perplexityCycle(item,ctx,false);
@@ -371,12 +362,12 @@ FINAL_PROMPT_SCORE usa rubrica própria: fidelidade 40, distratores 20, dificuld
 ${stringify({schema_version:SCHEMA_VERSION,review_stage:'prompt_calibration',exam_style:item.exam_style||null,profile_version:VERSION,FINAL_PROMPT_SCORE:null,prompt_component_scores:{fidelity:null,distractors:null,difficulty:null,diversity:null,clarity:null},hard_fail_count:0,sample_size:0,primary_style_evidence:[],decision:'NEEDS_MORE_PRIMARY_STYLE_DATA',findings:[]})}`;
     if(stage==='blind_resolution')return `${rules}
 ${operationalAccess(ctx,'blind_resolution')}
-RESOLUÇÃO CEGA. Abrir SOMENTE prova-cega.json, sem gabaritos, explicações, fontes da resposta ou pareceres prévios. Se esses dados foram expostos na conversa, iniciar nova conversa limpa. Resolver todos os IDs recebidos; não inventar uma letra quando não houver resposta única. Importar este registro antes de abrir o pacote completo.
-${stringify({...context(item,ctx),review_stage:'blind_resolution',reviewer:'Perplexity',reviews:[{question_id:'ID_IMUTAVEL',item_version:1,independent_answer:null,ambiguity:false,single_best_answer:false,reason:'Registrar raciocínio e dado decisivo; null se irresolúvel.'}],stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage:'blind_resolution',provider:'Perplexity',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}})}`;
+RESOLUÇÃO CEGA INDEPENDENTE — CHATGPT. IGNORE COMPLETAMENTE A MEMÓRIA, o histórico da conversa, revisões, scores e conclusões anteriores. Trabalhe como se cada item fosse visto pela primeira vez. Leia SOMENTE comando + alternativas da versão atual, sem gabarito, explicações, fontes da resposta ou pareceres prévios. A memória do modelo não é fonte. Resolver todos os IDs recebidos; não inventar uma letra quando não houver resposta única. Persistir este registro antes da auditoria completa.
+${stringify({...context(item,ctx),review_stage:'blind_resolution',reviewer:'ChatGPT',reviews:[{question_id:'ID_IMUTAVEL',item_version:1,independent_answer:null,ambiguity:false,single_best_answer:false,reason:'Registrar raciocínio e dado decisivo; null se irresolúvel.'}],stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage:'blind_resolution',provider:'ChatGPT',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}})}`;
     if(['chatgpt_initial','perplexity_initial','perplexity_reaudit'].includes(stage))return `${common}
 ${rubricText}
-TAREFA: ${stage==='chatgpt_initial'?'REVISÃO ADVERSARIAL + AUTOCORREÇÃO IMEDIATA do bloco. Não aceite autoavaliação do gerador. Para CADA questão: (1) audite a versão recebida; (2) se APROVADA, mantenha-a; (3) se REVISAR ou REJEITADA, corrija/regenerate imediatamente APENAS os campos necessários, preservando o ID; (4) incremente a versão proposta em +1; (5) faça NOVA revisão adversarial completa da versão corrigida; (6) só marque final_status=approved se a versão corrigida passar todos os gates. Não envie ao Perplexity uma questão que você mesmo ainda considera ruim. Preserve obrigatoriamente o histórico v1→v2, com status e motivo de cada tentativa. Primeiro faça o passe formal ignorando os dados clínicos da vinheta: tente prever a chave por comando + alternativas e registre surface_guess_without_vignette e confiança. Depois leia a vinheta, identifique o melhor distrator, explique por que é plausível e forneça uma mudança contrafactual concreta que o tornaria correto/mais defensável. Avalie assimetria lexical, dependência real da vinheta, single-best-answer e dificuldade observada.':'Auditoria científica e editorial independente de TODOS os itens recebidos. Antes de confrontar o gabarito, resolver cada item de forma independente e registrar independent_answer no MESMO review; não alterar essa resposta para coincidir com o gabarito.'}
-${stage==='perplexity_reaudit'?'Rever as versões corrigidas ou pendentes. Não atribuir nota global ao bloco usando apenas este subconjunto. Notas globais são agregadas pelo sistema a partir de todas as versões atuais.':''}
+TAREFA: ${stage==='chatgpt_initial'?'REVISÃO ADVERSARIAL + AUTOCORREÇÃO IMEDIATA do bloco. Não aceite autoavaliação do gerador. Para CADA questão: (1) audite a versão recebida; (2) se APROVADA, mantenha-a; (3) se REVISAR ou REJEITADA, corrija/regenerate imediatamente APENAS os campos necessários, preservando o ID; (4) incremente a versão proposta em +1; (5) faça NOVA revisão adversarial completa da versão corrigida; (6) só marque final_status=approved se a versão corrigida passar todos os gates. Não envie ao revisor independente uma questão que você mesmo ainda considera ruim. Preserve obrigatoriamente o histórico v1→v2, com status e motivo de cada tentativa. Primeiro faça o passe formal ignorando os dados clínicos da vinheta: tente prever a chave por comando + alternativas e registre surface_guess_without_vignette e confiança. Depois leia a vinheta, identifique o melhor distrator, explique por que é plausível e forneça uma mudança contrafactual concreta que o tornaria correto/mais defensável. Avalie assimetria lexical, dependência real da vinheta, single-best-answer e dificuldade observada.':'REVISÃO CEGA E INDEPENDENTE de TODOS os itens. IGNORE COMPLETAMENTE memória, contexto, pareceres, notas, status e conclusões de etapas anteriores. Avalie a versão atual como inédita. Antes de confrontar o gabarito, preserve a independent_answer da resolução cega; não altere essa resposta para coincidir com o gabarito. A memória do modelo não é fonte. Para dúvida científica ou conteúdo atualizável, verificar fonte aberta nesta etapa, priorizando Ministério da Saúde/CONITEC/PCDT, ANVISA quando pertinente e sociedades brasileiras da especialidade (FEBRASGO, SBP, SBC, CBC, AMB etc.).'}
+${stage==='perplexity_reaudit'?'CONFIRMAÇÃO PÓS-CORREÇÃO: ignore memória e qualquer justificativa anterior; trate a versão corrigida como inédita. Não atribuir nota global ao bloco usando apenas este subconjunto.':''}
 Abrir fontes e comparar a recomendação exata. verified_sources exige institution, document, year, url e section/note quando disponíveis. Relatar falha de acesso como pendência.
 Antes de aprovar cada item, validar também:
 1. mensagem_chave realmente funciona como Pulo do Gato: se o aluno a tivesse acabado de ouvir, teria informação suficiente para reconhecer a resposta correta;
@@ -434,9 +425,9 @@ ${stage==='chatgpt_initial' ? stringify({
   }
 }) : stringify(reviewExample(item,stage,ctx))}`;
     if(stage==='chatgpt_adjudication')return `${common}
-JULGAR parecer mais recente e versão atual. Resolver e conferir fontes. Classificar agree, partially_agree ou disagree, com justificativa. Não corrigir nesta etapa.
-Para agree/partially_agree: approved_patch contém EXATAMENTE campos e textos autorizados; mudanças na fonte, gabarito e explicações devem ser coerentes. Só estes valores poderão ser aplicados. Para disagree: approved_patch={} e rebuttal_to_perplexity obrigatório. Incerteza sem evidência não autoriza alteração; registrar pendência.
-${stringify({...context(item,ctx),review_stage:stage,decisions:[{question_id:'ID_IMUTAVEL',item_version:1,review_id:'UUID_DO_PARECER_EXPORTADO',agreement_status:'disagree',agreement_reason:'',approved_patch:{},rebuttal_to_perplexity:'Fundamentar discordância e pedir reavaliação.'}],stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage:'chatgpt_adjudication',provider:'ChatGPT',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}})}`;
+JULGAR o parecer independente mais recente e a versão atual. Resolver e conferir fontes do zero, IGNORANDO MEMÓRIA e sem assumir que o parecer anterior está certo. Classificar agree, partially_agree ou disagree, com justificativa. Não corrigir nesta etapa.
+Para agree/partially_agree: approved_patch contém EXATAMENTE campos e textos autorizados; mudanças na fonte, gabarito e explicações devem ser coerentes. Só estes valores poderão ser aplicados. Para disagree: approved_patch={} e rebuttal_to_reviewer obrigatório. Incerteza sem evidência não autoriza alteração; registrar pendência.
+${stringify({...context(item,ctx),review_stage:stage,decisions:[{question_id:'ID_IMUTAVEL',item_version:1,review_id:'UUID_DO_PARECER_EXPORTADO',agreement_status:'disagree',agreement_reason:'',approved_patch:{},rebuttal_to_reviewer:'Fundamentar discordância e pedir reavaliação.'}],stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:ctx.block_number??null,stage:'chatgpt_adjudication',provider:'ChatGPT',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}})}`;
     if(stage==='chatgpt_correction')return `${common}
 Aplicar somente approved_patch da adjudicação da MESMA versão e review_id. agree/partially_agree autorizam apenas os valores explícitos. disagree ou ausência de adjudicação impedem alteração. Não modificar itens publicados.
 Preservar ID/banca; expected_version deve corresponder à versão recebida. O backend incrementa versão, limpa aprovações e exige nova resolução cega e reauditoria. Não aumentar versão manualmente. Campos não alterados não entram no patch.
@@ -444,10 +435,10 @@ ${stringify({...context(item,ctx),review_stage:'chatgpt_correction_review',quest
     if(['lot_chatgpt_final','lot_perplexity_final'].includes(stage))return `${common}
 AUDITORIA GLOBAL DAS 1.000. Revisar todas para duplicação semântica, padrão de letras, concentração temática, pistas formais, cobertura da prova-alvo e consistência editorial. Não presumir sete áreas universais.
 Rechecagem científica: todos os itens com version>1, todas as questões antes sinalizadas, todas as doses/cutoffs/alto risco e uma amostra adicional de pelo menos 20% das restantes, estratificada por bloco, área e dificuldade, com semente/método registrados. Se não houver classificação de risco confiável, reexaminar todos. Registrar IDs rechecados e cobertura; nunca apresentar amostragem como revisão científica integral.
-Revisão independente: não receber conclusão do outro revisor como autoridade.
+Revisão independente: IGNORE MEMÓRIA, histórico, notas e conclusão da outra passada. Avalie como se o lote fosse novo. A memória do modelo não é fonte.
 Copiar integralmente version_manifest do pacote. Se qualquer versão mudar, todas as revisões finais e aprovação humana precisam ser renovadas. Cada questão sinalizada deve identificar ID/versão e motivo; mudanças seguem adjudicação, correção e reauditoria. Arrays de achados não podem coexistir com approved.
 Além dos agregados, produzir relatório humano questão por questão para TODOS os itens efetivamente revisados, no formato “ID — APROVADA/REVISAR/REJEITADA — motivo: ...”. Nenhum item revisado pode desaparecer no resumo.
-${stringify({...context(item,ctx),review_stage:stage,reviewer:stage==='lot_chatgpt_final'?'ChatGPT':'Perplexity',lote_status:'needs_revision',version_manifest:[],coverage:{global_reviewed_ids:[],scientific_rechecked_ids:[],sampling_method:'',all_high_risk_rechecked:false},questions_flagged:[],duplicate_clusters:[],answer_source_problems:[],coverage_gaps:[],comments:[],stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:null,stage,provider:stage==='lot_chatgpt_final'?'ChatGPT':'Perplexity',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}})}
+${stringify({...context(item,ctx),review_stage:stage,reviewer:'ChatGPT',lote_status:'needs_revision',version_manifest:[],coverage:{global_reviewed_ids:[],scientific_rechecked_ids:[],sampling_method:'',all_high_risk_rechecked:false},questions_flagged:[],duplicate_clusters:[],answer_source_problems:[],coverage_gaps:[],comments:[],stage_metrics:{exam_style:item.exam_style||null,batch_number:ctx.batch_number??null,block_number:null,stage,provider:'ChatGPT',run_label:null,total_count:0,approved_count:0,needs_revision_count:0,rejected_count:0,hard_reject_count:0,agreement_count:0,score:null,status:'completed',metrics:{},notes:''}})}
 Após as três aprovações da versão atual, aguardar aprovação humana final no admin. Não publicar.`;
     throw new Error('Etapa desconhecida: '+stage);
   }
@@ -458,15 +449,15 @@ Após as três aprovações da versão atual, aguardar aprovação humana final 
     const blockCode = ctx.block_code || (batchCode && blockNumber != null ? batchCode+'-B'+String(Number(blockNumber)).padStart(2,'0') : null);
     const stage = isReaudit ? 'perplexity_reaudit' : 'perplexity_initial';
 
-    return `FLUXO OPERACIONAL — PERPLEXITY · ${isReaudit ? 'REAUDITORIA' : 'AUDITORIA INDEPENDENTE'}
+    return `FLUXO OPERACIONAL — CHATGPT · ${isReaudit ? 'CONFIRMAÇÃO CEGA PÓS-CORREÇÃO' : 'REVISÃO CEGA INDEPENDENTE 2'}
 
-FONTE DE VERDADE — OBRIGATÓRIA:
-O usuário enviará junto deste prompt um JSON COMPLETO do bloco.
-USE EXCLUSIVAMENTE ESSE JSON COLADO PELO USUÁRIO.
-
-NÃO abra URL, página pública, GitHub RAW, bridge, Admin, Supabase, SQL, RPC, connector ou API para obter as questões.
-NÃO use arquivos antigos, snippets, memória da conversa, pasted_text anterior ou exportações de outra execução.
-Se o JSON atual não estiver presente, estiver truncado ou não puder ser interpretado integralmente, pare e responda JSON_INPUT_INVALID com o problema concreto.
+REGRA DE INDEPENDÊNCIA — OBRIGATÓRIA:
+IGNORE COMPLETAMENTE memória, contexto anterior, pareceres, scores, status, correções e conclusões de outras etapas.
+Consulte apenas as versões ATUAIS do bloco no Admin/Supabase autorizado e as fontes científicas abertas NESTA etapa.
+A memória do modelo NÃO é fonte.
+Não tente confirmar deliberadamente a revisão anterior.
+Priorize fontes brasileiras oficiais e sociedades da especialidade; use fontes internacionais de alta qualidade somente quando necessário.
+Se não conseguir confirmar a versão atual ou a fonte necessária, registre a pendência real; não invente.
 
 ENDEREÇO ESPERADO NO PRÓPRIO JSON:
 batch_code=${batchCode || 'NÃO VINCULADO'}
@@ -484,7 +475,7 @@ PASSO A PASSO:
 8. Faça a auditoria completa: ciência; gabarito; SBA; ambiguidade; dependência da vinheta; surface_guess_without_vignette; surface_guess_confidence; lexical_asymmetry; melhor distrator; best_distractor_rationale; counterfactual_change; functional_killer_1/2; qualidade dos distratores; explicações A-D; Pulo do Gato; dificuldade; estilo; fontes e proposed_change.
 9. Fonte só pode ser VERIFIED se realmente checada. Caso contrário use SOURCE_VERIFICATION_PENDING ou SOURCE_VERIFICATION_FAILED.
 10. Status por item: approved | needs_revision | rejected.
-11. Monte um ÚNICO JSON válido com schema_version, review_stage="${stage}", reviewer="Perplexity", batch_number, batch_code, block_number, block_code, reviews[] e stage_metrics.
+11. Monte um ÚNICO JSON válido com schema_version, review_stage="${stage}", reviewer="revisor independente", batch_number, batch_code, block_number, block_code, reviews[] e stage_metrics.
 12. Não altere a questão principal. proposed_change é recomendação, não edição.
 13. NÃO tente enviar, persistir ou importar nada. NÃO use formulário, bridge, RPC ou Supabase.
 14. Ao terminar, DEVOLVA O JSON COMPLETO diretamente na resposta para que o usuário use o botão “Colar JSON de resposta” no Admin.
@@ -521,8 +512,8 @@ SAÍDA:
     return `FLUXO OPERACIONAL ÚNICO — CHATGPT · JULGAR PARECER + CORRIGIR
 Este é UM envio operacional. Execute adjudicação e correção em sequência no MESMO bloco. Não obrigue o usuário a abrir dois prompts separados.
 
-SUBETAPA 4A — JULGAR O PARECER DO PERPLEXITY
-1. Leia a questão atual e o parecer Perplexity mais recente da MESMA question_id + item_version.
+SUBETAPA 4A — JULGAR O PARECER DO CHATGPT
+1. Leia a questão atual e o parecer independente mais recente da MESMA question_id + item_version.
 2. Classifique agree | partially_agree | disagree com justificativa.
 3. Persista a adjudicação antes de qualquer alteração.
 
@@ -541,8 +532,8 @@ Somente após a adjudicação estar persistida:
 ${segment(item,'chatgpt_correction',ctx)}
 
 REGRA DE SAÍDA:
-- Depois de qualquer correção, o próximo passo obrigatório é Perplexity · confirmar correções.
-- Se o Perplexity ainda apontar erro, este MESMO ciclo deve ser executado novamente apenas nas pendências atuais.
+- Depois de qualquer correção, o próximo passo obrigatório é ChatGPT · confirmar correções.
+- Se o revisor independente ainda apontar erro, este MESMO ciclo deve ser executado novamente apenas nas pendências atuais.
 - Nunca liberar aprovação humana enquanto houver questão pendente.`;
   }
 
