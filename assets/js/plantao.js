@@ -212,6 +212,67 @@
     return values.length ? Math.max(...values) : null;
   }
 
+  function caseMateria(item){
+    const text=normalizeLabel([item.title,item.summary,item.presentation?.chief_complaint].filter(Boolean).join(" "));
+    const area=String(item.specialty||"");
+
+    const has=(...terms)=>terms.some(term=>text.includes(normalizeLabel(term)));
+
+    if(area==="Clínica Médica"){
+      if(has("iam","coronar","fibrilacao atrial","taquicardia","bradicardia","torsades","pericardite","estenose aortica","choque cardiogenico","edema agudo de pulmao","sindrome aortica","hipertensiva","hipertensao grave","sincope")) return "Cardiologia";
+      if(has("asma","dpoc","pneumonia","embolia pulmonar","tep","derrame pleural","hemoptise","insuficiencia respiratoria","bronquite","tosse","pleurite","pneumotorax")) return "Pneumologia";
+      if(has("avc","hemorragia subaracnoidea","cefaleia","enxaqueca","epilept","convuls","miasten","guillain","vertigem","meningoencefalite","meningite","coma")) return "Neurologia";
+      if(has("cetoacidose","hiperosmolar","hipoglicemia","hiperglicemia","tireotoxic","adrenal","addison","feocromocitoma")) return "Endocrinologia";
+      if(has("renal","hipercalemia","hipocalemia","hiponatremia","colica renal","pielonefrite","dialit","drc","uremica","sobrecarga volemica")) return "Nefrologia";
+      if(has("cirrose","hepat","hemorragia digestiva","refluxo","gastrite","dispepsia","gastroenterite","diarreia","constipacao","peritonite bacteriana","intolerancia alimentar")) return "Gastroenterologia";
+      if(has("anemia","leucostase","transfusional","lise tumoral","falciforme","hematologica")) return "Hematologia";
+      if(has("intoxicacao","abstinencia","alcool","metanol","salicilato","cafeina","simpaticomimetica","serotoninergica","neuroléptica","neuroleptica","hipertermica","golpe de calor","exaustao pelo calor")) return "Toxicologia";
+      if(has("anafilaxia","angioedema","urticaria","rinite alergica","alergeno")) return "Alergia e Imunologia";
+      if(has("blefarite","ceratite","conjuntivite","hordeolo")) return "Oftalmologia";
+      if(has("cerume","otite","faringite","rinossinusite","labirintite")) return "Otorrinolaringologia";
+      if(has("dermatite","celulite","erisipela","escabiose","herpes-zoster","intertrigo","foliculite","tinea","picada","reacao medicamentosa cutanea")) return "Dermatologia";
+      if(has("artrite","gotosa","epicondilite","fascite plantar","cervicalgia","lombalgia","costocondrite","tendinite","torcicolo")) return "Reumatologia e Musculoesquelético";
+      if(has("sepse","choque septico","meningococcemia","cateter")) return "Infectologia";
+      return "Outros";
+    }
+
+    if(area==="Cirurgia Geral"){
+      if(has("trauma","fratura","hemotorax","pneumotorax","hematoma epidural","hematoma subdural","hemorragia","queimadura","ferimento","escoriacao","contusao","luxacao","entorse","sindrome compartimental","cauda equina","tamponamento traumatico")) return "Trauma";
+      if(has("apendicite","colecist","colelitiase","colangite","diverticulite","pancreatite","obstrucao intestinal","aderencias","perfuracao","hernia","isquemia mesenterica")) return "Abdome Agudo";
+      if(has("aneurisma","isquemia aguda de membro","lesao vascular","hemorragia arterial")) return "Cirurgia Vascular";
+      if(has("abscesso perianal","fissura anal","hemorroid","proctalgia","prolapso retal","fecaloma","cisto pilonidal")) return "Coloproctologia";
+      if(has("balanopostite","epididimite","fimose","parafimose","hidrocele","orquite","retencao urinaria","varicocele")) return "Urologia";
+      if(has("abscesso cutaneo","paroniquia","onicocriptose","fasceite necrosante","sitio cirurgico")) return "Infecções Cirúrgicas";
+      return "Cirurgia Geral";
+    }
+
+    if(area==="Pediatria"){
+      if(has("asma","bronquiolite","pneumonia","crupe","laringite","epiglotite","coqueluche","aspiracao de corpo estranho","sindrome toracica")) return "Pneumologia Pediátrica";
+      if(has("convulsao","meningite","tce")) return "Neurologia Pediátrica";
+      if(has("cetoacidose","hipoglicemia")) return "Endocrinologia Pediátrica";
+      if(has("invaginacao","apendicite","volvulo","obstrucao intestinal","refluxo","constipacao","gastroenterite","colica do lactente")) return "Gastroenterologia Pediátrica";
+      if(has("taquicardia supraventricular","crise hipercianotica","pcr pediatrica")) return "Cardiologia Pediátrica";
+      if(has("ictericia neonatal","sepse neonatal","lactente","erupcao dentaria")) return "Neonatologia";
+      if(has("dermatite","impetigo","molusco","pediculose","urticaria","varicela","eritema infeccioso","exantema","mao-pe-boca")) return "Dermatologia Pediátrica";
+      if(has("otite","sinusite","corpo estranho em ouvido","corpo estranho nasal","faringoamigdalite")) return "Otorrinolaringologia Pediátrica";
+      if(has("intoxicacao")) return "Toxicologia Pediátrica";
+      if(has("sepse","meningococcemia","neutropenia febril","escarlatina","herpangina","gengivoestomatite")) return "Infectologia Pediátrica";
+      return "Pediatria Geral";
+    }
+
+    if(area==="Ginecologia e Obstetrícia"){
+      if(has("eclampsia","pre-eclampsia","hipertensao gestacional","descolamento","placenta previa","rotura prematura","trabalho de parto","hemorragia pos-parto","gravidez ectopica","abortamento","sangramento do primeiro trimestre","hiperemese","dor ligamentar","prurido gestacional")) return "Obstetrícia";
+      if(has("mastite","abscesso mamario","fibroadenoma","mastalgia","fissura mamilar","lactacao","galactorreia")) return "Mastologia";
+      if(has("candidiase","vaginose","tricomon","cervicite","herpes genital","sifilis","vulvovaginite","barthol","doenca inflamatoria pelvica")) return "Infecções Ginecológicas";
+      if(has("endometriose","dismenorreia","miomatose","sangramento uterino","polipo endometrial","cisto ovariano","torcao anexial","mittelschmerz")) return "Ginecologia";
+      if(has("incontinencia","prolapso genital","atrofia urogenital")) return "Uroginecologia";
+      if(has("contracepcao","amenorreia")) return "Planejamento Reprodutivo";
+      return "Ginecologia Geral";
+    }
+
+    return "Outros";
+  }
+
   function renderLibrary() {
     const specialty=state.filters.specialty || "";
     const difficulty=state.filters.difficulty || "";
@@ -228,25 +289,72 @@
       return;
     }
     empty.hidden=true;
-    grid.innerHTML=visibleCases.map(item=>{
-      const best=bestScore(item.id);
-      const attempts=state.sessions.find(x=>x.case_id===item.id && x.status==="completed")?.attempt_count || (best==null ? 0 : 1);
-      return `
-        <article class="plantao-case-card">
-          <div class="plantao-case-card-head">
-            <div>
-              <h3>${esc(item.presentation?.chief_complaint || item.presentation?.display_title || item.summary || "Queixa não informada")}</h3>
-              <div class="plantao-case-tags">
-                <span>${esc(item.specialty)}</span>
-                <span>${esc(item.difficulty)}</span>
-                <span>${esc(item.setting)}</span>
+
+    const grouped=new Map();
+    visibleCases.forEach(item=>{
+      const area=item.specialty||"Outros";
+      const materia=caseMateria(item);
+      if(!grouped.has(area)) grouped.set(area,new Map());
+      const subjects=grouped.get(area);
+      if(!subjects.has(materia)) subjects.set(materia,[]);
+      subjects.get(materia).push(item);
+    });
+
+    const areaOrder=["Clínica Médica","Cirurgia Geral","Pediatria","Ginecologia e Obstetrícia"];
+    const sortedAreas=[...grouped.keys()].sort((a,b)=>{
+      const ia=areaOrder.indexOf(a), ib=areaOrder.indexOf(b);
+      if(ia!==-1||ib!==-1) return (ia===-1?999:ia)-(ib===-1?999:ib);
+      return String(a).localeCompare(String(b),"pt-BR");
+    });
+
+    grid.innerHTML=sortedAreas.map(area=>{
+      const subjects=grouped.get(area);
+      const subjectNames=[...subjects.keys()].sort((a,b)=>{
+        if(a==="Outros") return 1;
+        if(b==="Outros") return -1;
+        return String(a).localeCompare(String(b),"pt-BR");
+      });
+      const subjectHtml=subjectNames.map(materia=>{
+        const items=subjects.get(materia);
+        const cards=items.map(item=>{
+          const best=bestScore(item.id);
+          const attempts=state.sessions.find(x=>x.case_id===item.id && x.status==="completed")?.attempt_count || (best==null ? 0 : 1);
+          return `
+            <article class="plantao-case-card">
+              <div class="plantao-case-card-head">
+                <div>
+                  <h3>${esc(item.presentation?.chief_complaint || item.presentation?.display_title || item.summary || "Queixa não informada")}</h3>
+                  <div class="plantao-case-tags">
+                    <span>${esc(item.difficulty)}</span>
+                    <span>${esc(item.setting)}</span>
+                  </div>
+                </div>
+                ${best==null ? "" : `<span class="badge accent">Melhor: ${Math.round(best)}/100 · ${attempts} tentativa${attempts===1?"":"s"}</span>`}
               </div>
+              <p>Paciente aguardando avaliação. O diagnóstico será revelado somente após a conclusão do caso.</p>
+              <button class="button primary" type="button" data-start-case="${esc(item.id)}">Iniciar caso</button>
+            </article>
+          `;
+        }).join("");
+        return `
+          <section class="plantao-subject-group">
+            <div class="plantao-subject-head">
+              <h3>${esc(materia)}</h3>
+              <span>${items.length} caso${items.length===1?"":"s"}</span>
             </div>
-            ${best==null ? "" : `<span class="badge accent">Melhor: ${Math.round(best)}/100 · ${attempts} tentativa${attempts===1?"":"s"}</span>`}
+            <div class="plantao-subject-cases">${cards}</div>
+          </section>
+        `;
+      }).join("");
+      const areaCount=[...subjects.values()].reduce((sum,items)=>sum+items.length,0);
+      return `
+        <section class="plantao-area-group">
+          <div class="plantao-area-head">
+            <h2>${esc(area)}</h2>
+            <span>${areaCount} caso${areaCount===1?"":"s"}</span>
           </div>
-          <p>Paciente aguardando avaliação. O diagnóstico será revelado somente após a conclusão do caso.</p>
-          <button class="button primary" type="button" data-start-case="${esc(item.id)}">Iniciar caso</button>
-        </article>
+          <div class="plantao-area-subjects">${subjectHtml}</div>
+        </section>
       `;
     }).join("");
   }
