@@ -4813,3 +4813,31 @@ body.admin-unlocked #admin-app {
     grid-template-columns:1fr;
   }
 }
+
+
+/* Fábrica — fluxo manual das etapas Perplexity */
+.admin-qf-block-ai-action.is-perplexity-manual{
+  gap:8px;
+}
+.admin-qf-perplexity-manual-actions{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:6px;
+}
+.admin-qf-perplexity-manual-actions .button{
+  min-height:38px;
+  white-space:normal;
+  line-height:1.25;
+}
+.admin-qf-perplexity-manual-help{
+  display:block;
+  padding:1px 2px 0;
+  color:var(--muted);
+  font-size:8px!important;
+  line-height:1.4!important;
+}
+@media(max-width:720px){
+  .admin-qf-perplexity-manual-actions{
+    grid-template-columns:1fr;
+  }
+}
