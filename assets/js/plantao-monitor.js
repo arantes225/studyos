@@ -77,6 +77,55 @@
   window.PlantaoECG={profile,ecg,beatWindow,pleth};
 
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  let patientBreathAnimation = null;
+  function ensurePatientMotionLayer(){
+    const motionImg=document.getElementById('plantao-patient-motion');
+    const scene=document.querySelector('.plantao-scene');
+    if(!motionImg || !scene) return null;
+
+    Object.assign(motionImg.style,{
+      display:'block',
+      position:'absolute',
+      inset:'0',
+      width:'100%',
+      height:'100%',
+      objectFit:'cover',
+      objectPosition:window.matchMedia('(max-width:680px)').matches ? '50% 42%' : '42% center',
+      zIndex:'1',
+      pointerEvents:'none',
+      opacity:'1',
+      transformOrigin:'50% 60%',
+      WebkitMaskImage:'radial-gradient(ellipse 38% 46% at 50% 58%, #000 0 56%, rgba(0,0,0,.96) 70%, rgba(0,0,0,.45) 84%, transparent 100%)',
+      maskImage:'radial-gradient(ellipse 38% 46% at 50% 58%, #000 0 56%, rgba(0,0,0,.96) 70%, rgba(0,0,0,.45) 84%, transparent 100%)'
+    });
+
+    if(!patientBreathAnimation || patientBreathAnimation.playState==='idle'){
+      patientBreathAnimation=motionImg.animate([
+        {transform:'translateY(0) scaleY(1)'},
+        {transform:'translateY(-6px) scaleY(1.035)'},
+        {transform:'translateY(0) scaleY(1)'}
+      ],{
+        duration:3200,
+        iterations:Infinity,
+        easing:'ease-in-out'
+      });
+    }
+    return motionImg;
+  }
+
+  function syncPatientBreathing(vitalsState, unconscious){
+    const motionImg=ensurePatientMotionLayer();
+    if(!motionImg || !patientBreathAnimation) return;
+    const rr=number(vitalsState?.rr);
+    if(unconscious || (Number.isFinite(rr) && rr<=0)){
+      patientBreathAnimation.pause();
+      motionImg.style.transform='translateY(0) scaleY(1)';
+      return;
+    }
+    patientBreathAnimation.playbackRate = Number.isFinite(rr) && rr>=25 ? 2.15 : (Number.isFinite(rr) && rr>0 && rr<=9 ? .58 : 1);
+    patientBreathAnimation.play();
+  }
+
   function update(next, caseContext={}) {
     context=caseContext;
     enabled=caseContext.enabled===true;
@@ -90,6 +139,7 @@
     if (img && src && img.getAttribute('src') !== src) img.src = src;
     if (motionImg && src && motionImg.getAttribute('src') !== src) motionImg.src = src;
     if (img) img.alt = `Ilustração do paciente ${unconscious ? 'desacordado' : 'acordado'} no leito`;
+    syncPatientBreathing(vitals, unconscious);
     if(scene){
       const rr=number(vitals.rr);
       scene.classList.toggle('patient-unconscious',unconscious);
