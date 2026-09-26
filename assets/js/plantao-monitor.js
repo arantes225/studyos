@@ -78,12 +78,12 @@
 
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   let patientBreathAnimation = null;
-  let webBaseBreathAnimation = null;
   function ensurePatientMotionLayer(){
     const motionImg=document.getElementById('plantao-patient-motion');
     const scene=document.querySelector('.plantao-scene');
     if(!motionImg || !scene) return null;
 
+    const mobile=window.matchMedia('(max-width:680px)').matches;
     Object.assign(motionImg.style,{
       display:'block',
       position:'absolute',
@@ -91,19 +91,24 @@
       width:'100%',
       height:'100%',
       objectFit:'cover',
-      objectPosition:window.matchMedia('(max-width:680px)').matches ? '50% 42%' : '42% center',
+      objectPosition:mobile ? '50% 42%' : '42% center',
       zIndex:'1',
       pointerEvents:'none',
       opacity:'1',
-      transformOrigin:'50% 60%',
-      WebkitMaskImage:'radial-gradient(ellipse 38% 46% at 50% 58%, #000 0 56%, rgba(0,0,0,.96) 70%, rgba(0,0,0,.45) 84%, transparent 100%)',
-      maskImage:'radial-gradient(ellipse 38% 46% at 50% 58%, #000 0 56%, rgba(0,0,0,.96) 70%, rgba(0,0,0,.45) 84%, transparent 100%)'
+      animation:'none',
+      transformOrigin:mobile ? '47% 57%' : '43% 57%',
+      WebkitMaskImage:mobile
+        ? 'radial-gradient(ellipse 19% 14% at 47% 57%, #000 0 42%, rgba(0,0,0,.9) 64%, rgba(0,0,0,.35) 82%, transparent 100%)'
+        : 'radial-gradient(ellipse 18% 13% at 43% 57%, #000 0 42%, rgba(0,0,0,.9) 64%, rgba(0,0,0,.35) 82%, transparent 100%)',
+      maskImage:mobile
+        ? 'radial-gradient(ellipse 19% 14% at 47% 57%, #000 0 42%, rgba(0,0,0,.9) 64%, rgba(0,0,0,.35) 82%, transparent 100%)'
+        : 'radial-gradient(ellipse 18% 13% at 43% 57%, #000 0 42%, rgba(0,0,0,.9) 64%, rgba(0,0,0,.35) 82%, transparent 100%)'
     });
 
     if(!patientBreathAnimation || patientBreathAnimation.playState==='idle'){
       patientBreathAnimation=motionImg.animate([
         {transform:'translateY(0) scaleY(1)'},
-        {transform:'translateY(-6px) scaleY(1.035)'},
+        {transform:'translateY(-2px) scaleY(1.018)'},
         {transform:'translateY(0) scaleY(1)'}
       ],{
         duration:3200,
@@ -117,34 +122,13 @@
   function syncPatientBreathing(vitalsState, unconscious){
     const motionImg=ensurePatientMotionLayer();
     const baseImg=document.getElementById('plantao-patient-image');
-    const standalone=document.documentElement.classList.contains('pwa-standalone')
-      || document.documentElement.dataset.pwa==='standalone'
-      || window.matchMedia?.('(display-mode: standalone)')?.matches
-      || window.navigator.standalone===true;
     const rr=number(vitalsState?.rr);
 
-    // Desktop/web diagnostic version: animate the actually visible base image.
-    // This makes the movement unmistakable while we validate the concept.
-    if(!standalone && baseImg){
-      if(!webBaseBreathAnimation || webBaseBreathAnimation.playState==='idle'){
-        baseImg.style.transformOrigin='50% 60%';
-        baseImg.style.willChange='transform';
-        webBaseBreathAnimation=baseImg.animate([
-          {transform:'translateY(0) scale(1)'},
-          {transform:'translateY(-10px) scale(1.028)'},
-          {transform:'translateY(0) scale(1)'}
-        ],{
-          duration:3000,
-          iterations:Infinity,
-          easing:'ease-in-out'
-        });
-      }
-      if(unconscious || (Number.isFinite(rr) && rr<=0)){
-        webBaseBreathAnimation.pause();
-      }else{
-        webBaseBreathAnimation.playbackRate=Number.isFinite(rr) && rr>=25 ? 2.2 : (Number.isFinite(rr) && rr>0 && rr<=9 ? .58 : 1);
-        webBaseBreathAnimation.play();
-      }
+    // The room/base image must stay completely still. Only the masked torso layer moves.
+    if(baseImg){
+      baseImg.getAnimations?.().forEach(animation=>animation.cancel());
+      baseImg.style.transform='none';
+      baseImg.style.willChange='auto';
     }
 
     if(!motionImg || !patientBreathAnimation) return;
