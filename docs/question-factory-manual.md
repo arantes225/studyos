@@ -69,9 +69,9 @@ Fonte específica: instituição, documento, ano, URL e seção/nota quando veri
 
 ## Fluxo do bloco
 
-1. Geração e checagem ChatGPT.
-2. Exportar prova cega pelo admin. O arquivo contém somente ID, versão, enunciado e alternativas.
-3. Perplexity resolve em conversa limpa e retorna `blind_resolution`, com `independent_answer`, `item_version` e `reason`. Se irresolúvel, resposta null. Importar antes de revelar as respostas. Registro cego não é sobrescrito na mesma versão.
+1. Geração + revisão adversarial ChatGPT, com autocorreção controlada.
+2. Executar resolução cega ChatGPT em contexto independente, com regra explícita para ignorar memória, revisões, scores e conclusões anteriores. O arquivo contém somente ID, versão, enunciado e alternativas.
+3. ChatGPT independente resolve em execução cega, com instrução explícita para ignorar memória e retorna `blind_resolution`, com `independent_answer`, `item_version` e `reason`. Se irresolúvel, resposta null. Importar antes de revelar as respostas. Registro cego não é sobrescrito na mesma versão.
 4. Exportar pacote completo e auditar fontes, ciência, explicações e estilo. Preservar resposta cega; divergência impede aprovação.
 5. Itens pendentes seguem para adjudicação ChatGPT. Informar `review_id`, `item_version`, `agreement_status`, justificativa e `approved_patch` exato.
 6. `agree/partially_agree` autorizam exclusivamente os valores aprovados. `disagree` exige rebuttal e impede correção; retornar ao auditor. O importador verifica parecer e versão.
@@ -79,7 +79,7 @@ Fonte específica: instituição, documento, ano, URL e seção/nota quando veri
 8. Nova resolução cega da versão corrigida e reauditoria completa desses itens. Reauditoria é autocontida, com mesma rubrica. Não estimar estilo global usando apenas os corrigidos.
 9. Somente 200 versões atuais machine-approved e perfil editorial calibrado >=84 permitem aprovação humana do bloco.
 
-Não existe garantia técnica de que um auditor não viu o gabarito fora do sistema. A separação de arquivos e registro anterior reduz contaminação; a operação precisa usar conversa limpa.
+Não existe garantia técnica de que um auditor não viu o gabarito fora do sistema. A separação de arquivos e registro anterior reduz contaminação; a operação precisa usar execução cega, com instrução explícita para ignorar memória.
 
 ## Rubrica final da questão
 
@@ -93,7 +93,7 @@ Sem corpus suficiente, style=null/quality_score=null e needs_revision, sem inven
 
 ## Revisão global e publicação
 
-ChatGPT e Perplexity revisam independentemente o lote atual. Os revisores sinalizam problemas; não editam silenciosamente.
+Duas revisões ChatGPT independentes revisam o lote atual: revisão A e revisão cega B. A revisão B deve ignorar completamente memória, histórico e parecer da revisão A. Os revisores sinalizam problemas; não editam silenciosamente.
 
 Todos conferem o conjunto quanto a duplicatas, cobertura, pistas e consistência. O contrato descreve rechecagem de todos os itens de risco/corrigidos e amostra estratificada de pelo menos 20% dos demais. Enquanto não existir classificação estruturada confiável de risco no banco, a implementação exige rechecagem científica das 1.000 questões, explicitamente registrada em coverage.
 
@@ -107,7 +107,7 @@ Toda saída de IA da fábrica deve incluir o objeto top-level `stage_metrics`. E
 
 ### Persistência automática
 
-Quando ChatGPT ou Perplexity estiverem rodando em um ambiente com conector Supabase autorizado e execução SQL disponível, a própria IA deve persistir `stage_metrics` ao terminar a etapa usando **somente**:
+Quando ChatGPT ou ChatGPT independente estiverem rodando em um ambiente com conector Supabase autorizado e execução SQL disponível, a própria IA deve persistir `stage_metrics` ao terminar a etapa usando **somente**:
 
 `select private.qf_record_stage_metrics('<STAGE_METRICS_JSON>'::jsonb);`
 
@@ -129,3 +129,12 @@ O Supabase continua sendo a fonte de verdade; planilhas/CSV são apenas exporta�
 Endpoints exigem administrador e sessão PIN válida; acesso anônimo é revogado. Exports e imports conferem lote/bloco sem reatribuir IDs silenciosamente. Não aceitar JSON de versão antiga como aprovação 2.0.
 
 Executar `node --test tests/question-factory.test.cjs`. Testes SQL de contrato em `tests/question-factory.sql` devem rodar em transação com rollback. Atualizações de prompts e funções devem permanecer versionadas no Git.
+
+
+## Regra de independência e memória
+
+Toda etapa cega/independente deve começar com a instrução: **ignore completamente memória do modelo, memória da conta, conversas anteriores, pareceres, scores, correções, status e conclusões de outras etapas**. Avalie a versão atual como inédita. A memória do modelo não é fonte.
+
+Quando houver dúvida factual, dose, cutoff, guideline, recomendação recente ou divergência de gabarito, verificar fonte externa. Prioridade no contexto brasileiro: Ministério da Saúde, CONITEC/PCDT, ANVISA e sociedades brasileiras pertinentes (FEBRASGO, SBP, SBC, CBC, AMB etc.). Fontes internacionais de alta qualidade entram quando necessário ou quando não houver documento nacional aplicável.
+
+Os identificadores técnicos `perplexity_initial`, `perplexity_reaudit` e `lot_perplexity_final` permanecem temporariamente no banco por compatibilidade histórica; operacionalmente essas etapas são executadas pelo ChatGPT independente.
