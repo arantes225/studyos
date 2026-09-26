@@ -2618,3 +2618,32 @@ body[data-page="plantao"] .plantao-phone-inbox-toolbar strong{
 body[data-page="plantao"] .plantao-phone-inbox-toolbar small{
   font-size:10px!important;
 }
+
+
+/* LuriaZap — ação flutuante de nova conversa */
+body[data-page="plantao"] .plantao-phone-inbox-actions #plantao-phone-new-chat{display:none!important}
+body[data-page="plantao"] .plantao-phone-new-chat-fab{
+  position:absolute;
+  right:16px;
+  bottom:18px;
+  z-index:12;
+  width:48px;
+  height:48px;
+  border:0;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--primary);
+  color:#fff;
+  font-size:30px;
+  font-weight:400;
+  line-height:1;
+  box-shadow:0 7px 18px rgba(15,40,70,.24);
+  cursor:pointer;
+}
+body[data-page="plantao"] .plantao-phone-new-chat-fab:active{transform:scale(.96)}
+:root[data-theme="dark"] body[data-page="plantao"] .plantao-phone-new-chat-fab{background:var(--primary);color:#fff}
+:root[data-theme="leila-mood"] body[data-page="plantao"] .plantao-phone-new-chat-fab,
+:root[data-theme="pink-mood"] body[data-page="plantao"] .plantao-phone-new-chat-fab,
+:root[data-theme="pink"] body[data-page="plantao"] .plantao-phone-new-chat-fab{background:#e7357d;color:#fff}
