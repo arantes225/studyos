@@ -219,6 +219,8 @@
     $("plantao-session-count").textContent=state.sessions.length;
     const grid=$("plantao-case-grid");
     const empty=$("plantao-empty");
+    const randomButton=$("plantao-random-case");
+    if(randomButton) randomButton.disabled=!visibleCases.length;
     if (!visibleCases.length) {
       grid.innerHTML="";
       empty.hidden=false;
@@ -650,6 +652,16 @@
   });
   document.addEventListener("keydown",event=>{
     if(event.key==="Escape" && !$("plantao-report-overlay")?.hidden) closeExamReport();
+  });
+
+  $("plantao-random-case")?.addEventListener("click",()=>{
+    if(state.busy) return;
+    const specialty=state.filters.specialty || "";
+    const difficulty=state.filters.difficulty || "";
+    const pool=state.cases.filter(item=>(!specialty || item.specialty===specialty) && (!difficulty || item.difficulty===difficulty));
+    if(!pool.length) return;
+    const item=pool[Math.floor(Math.random()*pool.length)];
+    startCase(item.id);
   });
 
   $("plantao-filter-clear")?.addEventListener("click",()=>{

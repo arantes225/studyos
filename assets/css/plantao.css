@@ -2515,3 +2515,8 @@ body[data-page="plantao"] .plantao-phone-resume-button:focus-visible{
     width:100%;
   }
 }
+
+
+/* Random emergency case launcher */
+.plantao-random-case{flex:none;white-space:nowrap}
+@media(max-width:680px){.plantao-library-head{align-items:stretch;flex-direction:column}.plantao-random-case{width:100%}}
