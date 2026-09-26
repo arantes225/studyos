@@ -2949,3 +2949,14 @@ body[data-page="plantao"] .plantao-phone-new-chat-fab:active{transform:scale(.96
     grid-template-columns:1fr;
   }
 }
+
+
+/* Sala de emergência · ícone correto do filtro */
+.plantao-filter-icon{
+  width:18px;
+  height:18px;
+  display:block;
+}
+@media(max-width:680px){
+  .plantao-filter-icon{width:17px;height:17px}
+}
