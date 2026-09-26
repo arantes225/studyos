@@ -120,8 +120,17 @@
 
   async function load() {
     try {
+      if (!sb) throw new Error("Cliente Supabase não inicializado.");
       const { data: authData, error: authError } = await sb.auth.getUser();
-      if (authError || !authData?.user) return;
+      if (authError || !authData?.user) {
+        els.loading.hidden = true;
+        els.unavailable.hidden = false;
+        const title = els.unavailable.querySelector("strong");
+        const p = els.unavailable.querySelector("p");
+        if (title) title.textContent = "Sessão não encontrada";
+        if (p) p.textContent = "Entre novamente para abrir o Desafio Diário.";
+        return;
+      }
       user = authData.user;
 
       const today = saoPauloDateISO();
