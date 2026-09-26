@@ -2771,7 +2771,7 @@
       button.textContent = "Prompt operacional copiado ✓";
       window.setTimeout(() => { button.textContent = old; }, 3000);
     } catch (error) {
-      console.error("Falha ao copiar prompt Perplexity pessoal:", error);
+      console.error("Falha ao copiar prompt revisão independente ChatGPT:", error);
       button.textContent = "Erro ao copiar";
       window.alert(error?.message || String(error));
       window.setTimeout(() => { button.textContent = old; }, 3000);
@@ -2782,51 +2782,15 @@
   }
 
   function enhanceQuestionFactoryPerplexityAutomation(root) {
-    if (!root) return;
-    root.querySelectorAll(".admin-qf-tracker-row[data-qf-auto-stage]").forEach(row => {
-      const stage = String(row.dataset.qfAutoStage || "");
-      if (!["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(stage)) return;
-      if (row.querySelector("[data-qf-personal-perplexity]")) return;
-
-      const batch = Number(row.dataset.qfAutoBatch);
-      const block = Number(row.dataset.qfAutoBlock);
-      if (!Number.isInteger(batch) || !Number.isInteger(block)) return;
-
-      const host = row.querySelector(".admin-qf-tracker-next");
-      if (!host) return;
-
-      const wrap = document.createElement("div");
-      wrap.className = "admin-qf-auto-ranges";
-
-      const label = document.createElement("small");
-      label.className = "admin-qf-auto-label";
-      label.textContent = "Conta pessoal · Perplexity acessa o Supabase diretamente; sem API key";
-      wrap.appendChild(label);
-
-      const buttons = document.createElement("div");
-      buttons.className = "admin-qf-auto-range-buttons";
-
-      const copyPackage = document.createElement("button");
-      copyPackage.className = "button primary admin-qf-copy-perplexity-package";
-      copyPackage.type = "button";
-      copyPackage.dataset.qfAutoBatch = String(batch);
-      copyPackage.dataset.qfAutoBlock = String(block);
-      copyPackage.textContent = "Copiar prompt para Perplexity pessoal";
-      copyPackage.addEventListener("click", () => copyPerplexityManualPackage(copyPackage));
-      buttons.appendChild(copyPackage);
-
-      wrap.appendChild(buttons);
-      host.appendChild(wrap);
-    });
-
-    // Fluxo Perplexity manual: nenhuma chamada de API é disparada ao renderizar.
+    // Fluxo legado desativado: todas as revisões independentes agora são executadas pelo ChatGPT.
+    return;
   }
 
   async function runQuestionFactoryPerplexityRange(button) {
     if (!button) return;
     window.alert(
-      "Fluxo Perplexity pessoal ativo. Não existe mais execução automática por API key.\n\n" +
-      "Use o botão “Copiar prompt para Perplexity pessoal” ou “Abrir Perplexity”, execute a etapa na sua conta pessoal conectada ao Supabase e deixe o próprio Perplexity persistir os reviews pelos RPCs controlados, em qualquer quantidade conveniente por chamada.\n\n" +
+      "Fluxo revisão independente ChatGPT ativo. Não existe mais execução automática por API key.\n\n" +
+      "Use o botão “Copiar prompt para revisão independente” ou “Abrir ChatGPT”, execute a etapa na sua conta pessoal conectada ao Supabase e deixe o ChatGPT persistir os reviews pelos RPCs controlados, em qualquer quantidade conveniente por chamada.\n\n" +
       "Depois volte ao Admin: a cobertura é lida diretamente do Supabase."
     );
   }
@@ -2845,8 +2809,8 @@
     const batchCode = saved.batch_code || ("L"+String(batch).padStart(3,"0"));
     return {
       prompt_workspace_url: saved.workspace_url || defaultQuestionFactoryWorkspaceUrl(),
-      prompt_source_instruction: saved.source_instruction || `Na sua conta pessoal do Perplexity, use a conexão autenticada ao Supabase da LURIA/Studyos. Localize o lote ${batchCode}, abra exatamente o block_code indicado no prompt e leia diretamente do banco somente as questões e item_version atuais necessárias para a etapa. Não use cópia colada, cache ou versões antigas como fonte de verdade.`,
-      prompt_return_instruction: saved.return_instruction || `Grave automaticamente o resultado no mesmo lote ${batchCode}, associado ao block_code e à etapa exatos, usando a conexão Supabase da conta pessoal e SOMENTE o RPC/importador controlado da etapa. Depois confirme a persistência com review_coverage e block_tracker. Nunca peça PERPLEXITY_API_KEY. Só devolva JSON manual se a escrita realmente falhar, com o erro real.`
+      prompt_source_instruction: saved.source_instruction || `Use a conexão autenticada ao Supabase da LURIA/Studyos. Localize o lote ${batchCode}, abra exatamente o block_code indicado e leia somente as questões e item_version atuais necessárias para a etapa. Em revisão independente, ignore memória, histórico e conclusões anteriores.`,
+      prompt_return_instruction: saved.return_instruction || `Grave o resultado no mesmo lote ${batchCode}, associado ao block_code e à etapa exatos, usando SOMENTE o RPC/importador controlado da etapa. Depois confirme a persistência com review_coverage e block_tracker. Não invente sucesso se a escrita falhar.`
     };
   }
 
@@ -2893,11 +2857,16 @@
       return buildBoardGenerationPrompt(style, ctx);
     }
 
-    if (["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(block.next_stage)
-        && window.LuriaQuestionPrompts.perplexityCycle) {
+    if (["perplexity_initial","perplexity_reaudit"].includes(block.next_stage)
+        && (window.LuriaQuestionPrompts.independentReviewCycle || window.LuriaQuestionPrompts.perplexityCycle)) {
       const afterCorrection = block.next_stage === "perplexity_reaudit"
         || String(block.latest_review_stage || "") === "chatgpt_correction_review";
-      return window.LuriaQuestionPrompts.perplexityCycle(style, ctx, afterCorrection);
+      const fn = window.LuriaQuestionPrompts.independentReviewCycle || window.LuriaQuestionPrompts.perplexityCycle;
+      return fn(style, ctx, afterCorrection);
+    }
+
+    if (block.next_stage === "blind_resolution") {
+      return buildBoardSegmentPrompt(style, "blind_resolution", ctx);
     }
 
     if (block.next_stage === "chatgpt_adjudication" && window.LuriaQuestionPrompts.chatgptCorrectionCycle) {
@@ -2933,7 +2902,9 @@
       const styleScore = block.style_score == null
         ? "—"
         : `${Number(block.style_score).toLocaleString("pt-BR",{maximumFractionDigits:1})}/10`;
-      const provider = block.next_provider || meta.provider;
+      const provider = ["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(String(block.next_stage || ""))
+        ? "chatgpt"
+        : (block.next_provider || meta.provider);
 
       return `
         <article class="admin-qf-tracker-row" data-qf-auto-batch="${Number(block.batch_number||0)}" data-qf-auto-block="${Number(block.block_number||0)}" data-qf-auto-stage="${esc(block.next_stage || "")}" data-qf-auto-target-stage="${esc(block.blind_target_stage || "")}" data-qf-auto-mode="${esc(block.automation_mode || "")}">
@@ -2949,15 +2920,7 @@
             <span>Próximo prompt</span>
             <div class="admin-qf-tracker-prompt-actions">
               ${prompt ? `<button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">${esc(meta.label)} · copiar</button>` : ""}
-              ${["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(String(block.next_stage || "")) ? `
-                <button
-                  class="button primary admin-qf-copy-perplexity-package"
-                  type="button"
-                  data-qf-personal-perplexity="1"
-                  data-qf-auto-batch="${Number(block.batch_number||0)}"
-                  data-qf-auto-block="${Number(block.block_number||0)}"
-                >Copiar prompt para Perplexity pessoal</button>
-              ` : ""}
+              
               ${provider && prompt ? `<button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${esc(provider)}">Abrir ${provider === "gemini" ? "Gemini" : provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>` : ""}
             </div>
             ${prompt ? `<pre id="${esc(pid)}" class="admin-qf-prompt admin-qf-tracker-hidden-prompt">${esc(prompt)}</pre>` : ""}
@@ -2966,7 +2929,6 @@
         </article>
       `;
     }).join("");
-    enhanceQuestionFactoryPerplexityAutomation(wrap);
   }
 
   async function loadQuestionFactoryBlockTracker() {
@@ -2988,8 +2950,7 @@
     renderQuestionFactoryBlockTracker(trackerRows);
     if (state.questionFactory) renderQuestionFactory(state.questionFactory);
 
-    // Perplexity Initial é manual: copiar pacote (prompt + 200 questões) e executar no Perplexity.
-    // Não chamar Edge Function/API automaticamente.
+    // Revisões independentes agora são executadas pelo ChatGPT com regra explícita de cegamento/memória.
   }
 
   function renderQuestionFactoryStyles(styles) {
@@ -3097,7 +3058,7 @@
               </span>
               <span class="admin-qf-style-stage">
                 <b>${formatNumber(item.perplexity_seen)}</b>
-                <small>Vistas pelo Perplexity</small>
+                <small>Revisadas na passada independente</small>
               </span>
               <span class="admin-qf-style-stage correction">
                 <b>${formatNumber(item.in_correction)}</b>
@@ -3752,7 +3713,11 @@
       return;
     }
 
-    await copyAndOpenAI(prompt, next.next_provider || "chatgpt", button);
+    await copyAndOpenAI(
+      prompt,
+      ["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(String(next.next_stage || "")) ? "chatgpt" : (next.next_provider || "chatgpt"),
+      button
+    );
   }
 
   function renderQuestionFactoryBatch(data) {
@@ -3871,7 +3836,7 @@
 
   async function copyAndOpenAI(text, provider, button) {
     const popup = openAIProvider(provider);
-    const original = button?.textContent || (provider === "perplexity" ? "Abrir Perplexity" : "Abrir ChatGPT");
+    const original = button?.textContent || (provider === "perplexity" ? "Abrir ChatGPT" : "Abrir ChatGPT");
 
     try {
       await writePromptClipboard(text);
