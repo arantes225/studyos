@@ -2295,7 +2295,7 @@
           <details class="admin-qf-route-editor">
             <summary>
               <strong>Rota dos prompts</strong>
-              <small>Editar onde ChatGPT/Perplexity devem buscar as questões e onde devolver o resultado.</small>
+              <small>Editar onde as revisões ChatGPT devem buscar as questões e onde devolver o resultado.</small>
             </summary>
             <div class="admin-qf-route-editor-body" data-qf-route-root="${Number(batch.batch_number)}">
               <label>
@@ -2921,7 +2921,7 @@
             <div class="admin-qf-tracker-prompt-actions">
               ${prompt ? `<button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">${esc(meta.label)} · copiar</button>` : ""}
               
-              ${provider && prompt ? `<button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${esc(provider)}">Abrir ${provider === "gemini" ? "Gemini" : provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>` : ""}
+              ${provider && prompt ? `<button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${esc(provider)}">Abrir ${provider === "gemini" ? "Gemini" : "ChatGPT"}</button>` : ""}
             </div>
             ${prompt ? `<pre id="${esc(pid)}" class="admin-qf-prompt admin-qf-tracker-hidden-prompt">${esc(prompt)}</pre>` : ""}
             ${!prompt && !["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(String(block.next_stage || "")) ? '<strong class="admin-qf-tracker-no-prompt">Sem prompt automático nesta fase</strong>' : ""}
@@ -3125,7 +3125,7 @@
                       <div>
                         <div class="admin-qf-style-prompt-actions">
                           <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Copiar</button>
-                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "gemini" ? "Gemini" : provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>
+                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "gemini" ? "Gemini" : "ChatGPT"}</button>
                         </div>
                         <pre id="${esc(pid)}" class="admin-qf-prompt">${esc(promptText)}</pre>
                       </div>
@@ -3153,7 +3153,7 @@
                           <div>
                             <div class="admin-qf-style-prompt-actions">
                               <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Copiar</button>
-                              <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "gemini" ? "Gemini" : provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>
+                              <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "gemini" ? "Gemini" : "ChatGPT"}</button>
                             </div>
                             <pre id="${esc(pid)}" class="admin-qf-prompt">${esc(promptText)}</pre>
                           </div>
@@ -3299,7 +3299,7 @@
                       <div class="admin-qf-segment-card-body">
                         <div class="admin-qf-segment-actions">
                           <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Copiar</button>
-                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "gemini" ? "Gemini" : provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>
+                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "gemini" ? "Gemini" : "ChatGPT"}</button>
                         </div>
                         <pre id="${esc(pid)}" class="admin-qf-prompt">${esc(buildBoardSegmentPrompt(item,stage))}</pre>
                       </div>
@@ -3325,7 +3325,7 @@
                       <div class="admin-qf-segment-card-body">
                         <div class="admin-qf-segment-actions">
                           <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Copiar</button>
-                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "gemini" ? "Gemini" : provider === "perplexity" ? "Perplexity" : "ChatGPT"}</button>
+                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="${esc(pid)}" data-ai-provider="${provider}">Abrir ${provider === "gemini" ? "Gemini" : "ChatGPT"}</button>
                         </div>
                         <pre id="${esc(pid)}" class="admin-qf-prompt">${esc(buildBoardSegmentPrompt(item,stage))}</pre>
                       </div>
@@ -3828,15 +3828,13 @@
   }
 
   function openAIProvider(provider) {
-    const url = provider === "gemini" ? "https://gemini.google.com/app" : provider === "perplexity"
-      ? "https://www.perplexity.ai/"
-      : "https://chatgpt.com/";
+    const url = provider === "gemini" ? "https://gemini.google.com/app" : "https://chatgpt.com/";
     return window.open(url, "_blank", "noopener,noreferrer");
   }
 
   async function copyAndOpenAI(text, provider, button) {
     const popup = openAIProvider(provider);
-    const original = button?.textContent || (provider === "perplexity" ? "Abrir ChatGPT" : "Abrir ChatGPT");
+    const original = button?.textContent || "Abrir ChatGPT";
 
     try {
       await writePromptClipboard(text);
@@ -3857,9 +3855,7 @@
     }
 
     if (!popup) {
-      window.location.href = provider === "gemini" ? "https://gemini.google.com/app" : provider === "perplexity"
-        ? "https://www.perplexity.ai/"
-        : "https://chatgpt.com/";
+      window.location.href = provider === "gemini" ? "https://gemini.google.com/app" : "https://chatgpt.com/";
     }
   }
 
@@ -3873,7 +3869,6 @@
       actions.className = "admin-qf-ai-actions";
       actions.innerHTML = `
         <button class="button secondary admin-qf-ai-prompt" type="button" data-ai-provider="chatgpt" data-ai-target="${esc(prompt.id)}">ChatGPT</button>
-        <button class="button secondary admin-qf-ai-prompt" type="button" data-ai-provider="perplexity" data-ai-target="${esc(prompt.id)}">Perplexity</button>
       `;
       wrap.appendChild(actions);
     });
