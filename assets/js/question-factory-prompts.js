@@ -451,62 +451,40 @@ Após as três aprovações da versão atual, aguardar aprovação humana final 
 
     return `FLUXO OPERACIONAL — CHATGPT · ${isReaudit ? 'CONFIRMAÇÃO CEGA PÓS-CORREÇÃO' : 'REVISÃO CEGA INDEPENDENTE 2'}
 
-REGRA DE INDEPENDÊNCIA — OBRIGATÓRIA:
-IGNORE COMPLETAMENTE memória, contexto anterior, pareceres, scores, status, correções e conclusões de outras etapas.
-Consulte apenas as versões ATUAIS do bloco no Admin/Supabase autorizado e as fontes científicas abertas NESTA etapa.
-A memória do modelo NÃO é fonte.
-Não tente confirmar deliberadamente a revisão anterior.
-Priorize fontes brasileiras oficiais e sociedades da especialidade; use fontes internacionais de alta qualidade somente quando necessário.
-Se não conseguir confirmar a versão atual ou a fonte necessária, registre a pendência real; não invente.
+REGRA MÁXIMA — REVISÃO CEGA:
+- IGNORE COMPLETAMENTE memória, histórico da conversa, avaliações anteriores, scores, status, patches, justificativas e conclusões de outras etapas.
+- Trate cada versão atual como se estivesse vendo-a pela primeira vez.
+- A memória do modelo NÃO é fonte.
+- Não tente confirmar nem contradizer deliberadamente o parecer anterior.
+- Use somente a versão atual consultada nesta execução, o Contrato LURIA e fontes verificáveis abertas nesta execução.
 
-ENDEREÇO ESPERADO NO PRÓPRIO JSON:
-batch_code=${batchCode || 'NÃO VINCULADO'}
-block_code=${blockCode || 'NÃO VINCULADO'}
-review_stage=${stage}
+ENDEREÇO:
+- Lote: ${batchCode || 'NÃO VINCULADO'}
+- Bloco: ${blockCode || 'NÃO VINCULADO'}
+- Etapa técnica interna: ${stage} (nome legado do banco; o revisor operacional é ChatGPT).
 
-PASSO A PASSO:
-1. Leia integralmente o JSON completo fornecido pelo usuário nesta mesma mensagem/conversa.
-2. Confirme dentro do próprio JSON batch_code e block_code. Se não corresponderem ao esperado, pare e retorne ADDRESS_MISMATCH.
-3. Confirme a identidade de cada item por question_id + item_version/version. question_code e sequence_no são auxiliares de conferência.
-4. Se dois trechos parecerem conflitantes, só trate como conflito real quando o MESMO question_id + item_version/version tiver conteúdo incompatível. Não confunda a fronteira entre objetos JSON consecutivos.
-5. Use EXCLUSIVAMENTE os itens presentes no JSON colado nesta execução.
-6. Preserve exatamente question_id e item_version/version de cada questão.
-7. ${isReaudit ? 'Reavalie a versão atual recebida. Se a pendência veio de discordância sem patch, mantenha a mesma item_version/version; não crie versão artificial.' : 'Antes de confrontar o gabarito, resolva independentemente o item usando enunciado + alternativas e registre independent_answer no próprio review.'}
-8. Faça a auditoria completa: ciência; gabarito; SBA; ambiguidade; dependência da vinheta; surface_guess_without_vignette; surface_guess_confidence; lexical_asymmetry; melhor distrator; best_distractor_rationale; counterfactual_change; functional_killer_1/2; qualidade dos distratores; explicações A-D; Pulo do Gato; dificuldade; estilo; fontes e proposed_change.
-9. Fonte só pode ser VERIFIED se realmente checada. Caso contrário use SOURCE_VERIFICATION_PENDING ou SOURCE_VERIFICATION_FAILED.
-10. Status por item: approved | needs_revision | rejected.
-11. Monte um ÚNICO JSON válido com schema_version, review_stage="${stage}", reviewer="revisor independente", batch_number, batch_code, block_number, block_code, reviews[] e stage_metrics.
-12. Não altere a questão principal. proposed_change é recomendação, não edição.
-13. NÃO tente enviar, persistir ou importar nada. NÃO use formulário, bridge, RPC ou Supabase.
-14. Ao terminar, DEVOLVA O JSON COMPLETO diretamente na resposta para que o usuário use o botão “Colar JSON de resposta” no Admin.
-15. NÃO gere bridge_write, receipt_id ou qualquer afirmação de persistência.
-16. coverage.complete só pode refletir o que foi realmente processado nesta resposta; não use esse campo para afirmar estado do banco.
-17. PROCESSE E DEVOLVA NO MÁXIMO 50 REVIEWS POR RESPOSTA. Se o JSON de entrada tiver mais de 50 questões, trabalhe em partes: PARTE 1 = Q001–Q050; PARTE 2 = Q051–Q100; PARTE 3 = Q101–Q150; PARTE 4 = Q151–Q200. Nunca misture, pule ou repita question_id entre as partes.
-18. Cada resposta deve conter até 50 reviews distintos, um por question_id + item_version/version processado. Para um bloco de 200, a cobertura completa será formada por quatro importações de 50 reviews.
-19. Em stage_metrics, total_count deve refletir somente a parte atual (normalmente 50), e run_label deve identificar "parte-1-de-4", "parte-2-de-4", "parte-3-de-4" ou "parte-4-de-4".
-
-REGRAS DE ESCOPO:
-- Nunca trabalhar em outro bloco além de ${blockCode || 'NÃO VINCULADO'}.
-- Nunca misturar versões antigas.
-- Nunca inventar IDs, versões, fontes verificadas ou métricas.
-- Nunca pedir credenciais/chaves.
-- Não procurar uma “versão mais recente” fora do JSON fornecido. Para esta execução, o JSON colado é a versão operacional autoritativa.
+EXECUÇÃO:
+1. Acesse o Admin/Supabase autorizado e confirme batch_code, block_code, question_id e item_version atuais.
+2. Trabalhe SOMENTE nas versões atuais do bloco.
+3. Preserve a resolução cega já registrada da mesma versão; se a etapa exigir nova resolução após correção, resolva antes de confrontar o gabarito.
+4. Audite ciência, gabarito, SBA, ambiguidade, dependência da vinheta, surface guess, assimetria lexical, dois melhores distratores, functional_killer_1/2, contrafactual, explicações A-D, Pulo do Gato, dificuldade, estilo e fontes.
+5. Para ciência: priorize Ministério da Saúde, CONITEC/PCDT, ANVISA quando pertinente, FEBRASGO, SBP, SBC, CBC, AMB e sociedades brasileiras reconhecidas. Use diretriz/literatura internacional de alta qualidade quando a fonte brasileira não resolver a decisão exata.
+6. Faça busca externa aprofundada sobretudo em itens sinalizados, doses, cutoffs, contraindicações, alto risco, divergência de gabarito ou conteúdo potencialmente atualizado.
+7. Fonte só pode ser VERIFIED se realmente checada nesta execução.
+8. Não altere a questão principal nesta etapa. proposed_change é parecer separado.
+9. Persista o resultado exclusivamente pelo importador/RPC controlado da Fábrica. Nunca faça INSERT/UPDATE direto em questão/review.
+10. Só marque approved se todos os hard gates passarem.
 
 ${segment(item,stage,ctx)}
 
-TRAVA CONTRA RESPOSTA ERRADA:
-- É INCORRETO tentar abrir raw.githubusercontent.com, resibulando.online ou qualquer outra página para buscar o bloco.
-- É INCORRETO exigir leitura direta do Supabase, sessão autenticada, runner, connector ou confirmação de RPC.
-- É INCORRETO ignorar o JSON enviado pelo usuário por existir outro arquivo/URL mencionado no histórico.
-- A fonte operacional desta etapa é exatamente o JSON completo que acompanha este prompt.
-
-SAÍDA:
-1. Primeiro, devolva o JSON completo e válido da PARTE ATUAL, com no máximo 50 reviews.
-2. Se ainda existirem questões não processadas no JSON de entrada, indique depois do JSON que existe uma próxima parte; não inclua os reviews dela nesta resposta.
-3. Depois do JSON, pode incluir um relatório humano curto questão por questão se isso couber sem truncar o JSON.
-4. O JSON tem prioridade absoluta: nunca sacrifique, resuma ou corte reviews para caber um relatório textual.
-5. Não escreva “ENVIADO AO BRIDGE”, “persistido no Supabase” ou equivalente.`;
+SAÍDA OPERACIONAL:
+- Confirme quantos itens foram processados e persistidos.
+- Não declare cobertura completa sem verificar o tracker após a persistência.
+- Se a execução precisar ser dividida, use partes determinísticas de até 50 questões e não repita nem pule question_id.
+- Se acesso/fonte estiver indisponível, registre a pendência real; não invente sucesso.`;
   }
+
+  const independentReviewCycle = perplexityCycle;
 
   function chatgptCorrectionCycle(item={},ctx={}) {
     return `FLUXO OPERACIONAL ÚNICO — CHATGPT · JULGAR PARECER + CORRIGIR
@@ -542,7 +520,7 @@ REGRA DE SAÍDA:
     return questions.map(q=>Object.fromEntries(fields.map(k=>[k,q[k]])));
   }
   const globalContract=()=>rules;
-  const api={VERSION,rubric,editable,generation,segment,perplexityCycle,chatgptCorrectionCycle,blind,globalContract};
+  const api={VERSION,rubric,editable,generation,segment,perplexityCycle,independentReviewCycle,chatgptCorrectionCycle,blind,globalContract};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   root.LuriaQuestionPrompts=api;
 })(typeof window!=='undefined'?window:globalThis);
