@@ -3200,3 +3200,355 @@ body[data-page="plantao"] .plantao-phone-new-chat-fab:active{transform:scale(.96
   0%,100%{transform:translateY(0) scaleY(1)}
   50%{transform:translateY(5px) scaleY(.982)}
 }
+
+
+/* v8.1 — Web alinhado ao layout de referência do simulador */
+@media(min-width:681px){
+  #plantao-simulator:not([hidden]){
+    position:relative;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-patient-card{
+    display:none!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-sim-top{
+    display:grid!important;
+    grid-template-columns:58px minmax(0,1fr) auto auto!important;
+    align-items:center!important;
+    gap:10px!important;
+    min-height:76px;
+    padding:12px 18px!important;
+    border-radius:0 0 22px 22px;
+    background:linear-gradient(180deg,#0b2748 0%,#071a30 100%);
+    color:#fff;
+    box-shadow:0 6px 18px rgba(0,0,0,.18);
+  }
+
+  #plantao-simulator:not([hidden]) #plantao-back{
+    width:48px;
+    min-width:48px;
+    min-height:46px;
+    padding:0!important;
+    overflow:hidden;
+    text-indent:-9999px;
+    border-radius:13px;
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.10);
+    color:#fff;
+  }
+
+  #plantao-simulator:not([hidden]) #plantao-back::after{
+    content:"‹";
+    display:grid;
+    place-items:center;
+    width:100%;
+    height:100%;
+    text-indent:0;
+    font-size:32px;
+    line-height:1;
+    font-weight:500;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-pwa-case-summary{
+    display:grid!important;
+    gap:2px;
+    min-width:0;
+    color:#fff;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-pwa-case-summary span{
+    color:#9fb9d0;
+    font-size:11px;
+    font-weight:750;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-pwa-case-summary strong{
+    display:block;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:20px;
+    line-height:1.2;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-clock{
+    display:flex!important;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    min-width:104px;
+    padding:9px 14px!important;
+    border:1px solid rgba(176,213,243,.42);
+    border-radius:999px;
+    background:rgba(2,20,38,.24);
+    color:#fff;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-clock span{
+    display:none!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-clock::before{
+    content:"◷";
+    color:#c6d9eb;
+    font-size:15px;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-clock strong{
+    margin:0!important;
+    font-size:19px!important;
+    line-height:1!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-pwa-live{
+    display:block!important;
+    color:#48e58a;
+    font-size:11px;
+    font-weight:850;
+    white-space:nowrap;
+  }
+
+  #plantao-simulator:not([hidden]) #plantao-finish{
+    display:none!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-bedside{
+    position:relative!important;
+    display:block!important;
+    min-height:650px;
+    padding:0!important;
+    overflow:hidden!important;
+    border-radius:22px;
+    background:#071a30;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-scene{
+    position:absolute!important;
+    inset:0!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    border-radius:22px!important;
+    overflow:hidden!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-scene>img{
+    position:absolute;
+    inset:0;
+    width:100%!important;
+    height:100%!important;
+    object-fit:cover!important;
+    object-position:50% 48%!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-action-rail{
+    position:absolute!important;
+    inset:0!important;
+    z-index:12!important;
+    width:auto!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+    pointer-events:none;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-action-rail>.plantao-score-live{
+    display:none!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-pwa-patient-tab{
+    position:absolute;
+    top:52px;
+    left:0;
+    z-index:4;
+    width:126px;
+    height:94px;
+    display:flex!important;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    border:1px solid rgba(169,204,232,.95);
+    border-left:0;
+    border-radius:0 16px 16px 0;
+    background:rgba(14,64,123,.96);
+    color:#fff;
+    box-shadow:0 6px 18px rgba(4,31,58,.24);
+    pointer-events:none;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-pwa-patient-tab span{
+    font-size:25px;
+    line-height:1;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-pwa-patient-tab strong{
+    font-size:12px;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-action-tabs{
+    position:absolute!important;
+    inset:0!important;
+    display:block!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:visible!important;
+    background:transparent!important;
+    pointer-events:none!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-action-tab{
+    position:absolute!important;
+    width:126px!important;
+    min-width:126px!important;
+    height:94px!important;
+    min-height:94px!important;
+    max-height:none!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:6px!important;
+    padding:9px 8px!important;
+    border:1px solid rgba(169,204,232,.95)!important;
+    background:rgba(248,252,255,.96)!important;
+    color:#184888!important;
+    font-size:12px!important;
+    font-weight:850!important;
+    line-height:1.12!important;
+    text-align:center!important;
+    box-shadow:0 6px 18px rgba(4,31,58,.18)!important;
+    pointer-events:auto!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-action-tab>span:first-child{
+    font-size:24px!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="anamnese"]{
+    left:0!important; top:158px!important; border-left:0!important; border-radius:0 16px 16px 0!important;
+  }
+  #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="fisico"]{
+    left:0!important; top:260px!important; border-left:0!important; border-radius:0 16px 16px 0!important;
+  }
+  #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="hipoteses"]{
+    left:0!important; top:362px!important; border-left:0!important; border-radius:0 16px 16px 0!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="exames"]{
+    right:0!important; top:52px!important; border-right:0!important; border-radius:16px 0 0 16px!important;
+  }
+  #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="intervir"]{
+    right:0!important; top:154px!important; border-right:0!important; border-radius:16px 0 0 16px!important;
+  }
+  #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="iniciais"]{
+    right:0!important; top:256px!important; border-right:0!important; border-radius:16px 0 0 16px!important;
+  }
+  #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="conduta"]{
+    right:0!important; top:358px!important; border-right:0!important; border-radius:16px 0 0 16px!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-action-tab.active{
+    background:var(--accent)!important;
+    color:#fff!important;
+    border-color:rgba(255,255,255,.48)!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-monitor-dock{
+    display:contents!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-monitor-dock .plantao-monitor{
+    position:absolute!important;
+    top:24px!important;
+    left:50%!important;
+    right:auto!important;
+    transform:translateX(-50%)!important;
+    z-index:7!important;
+    width:34%!important;
+    min-width:330px!important;
+    max-width:460px!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-monitor-dock>.plantao-feed{
+    position:absolute!important;
+    left:15%!important;
+    right:15%!important;
+    bottom:18px!important;
+    z-index:7!important;
+    width:auto!important;
+    min-height:150px!important;
+    max-height:190px!important;
+    padding:14px 16px!important;
+    border:1px solid rgba(70,131,188,.45)!important;
+    border-radius:20px!important;
+    background:rgba(7,31,59,.94)!important;
+    color:#fff!important;
+    box-shadow:0 10px 26px rgba(0,0,0,.24)!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-monitor-dock>.plantao-feed .plantao-section-head h2{
+    color:#fff!important;
+    font-size:16px!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-feed-list{
+    margin-top:10px!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-feed-item{
+    padding:10px!important;
+    border-left:2px solid #2f98ff!important;
+    background:rgba(255,255,255,.05)!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-feed-item p{
+    color:#fff!important;
+    font-size:12px!important;
+    line-height:1.4!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-action-drawer{
+    position:absolute!important;
+    top:22px!important;
+    bottom:22px!important;
+    left:138px!important;
+    width:390px!important;
+    max-width:calc(100% - 276px)!important;
+    height:auto!important;
+    border-radius:18px!important;
+    pointer-events:auto!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-action-drawer .plantao-intervention-tabs{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:6px!important;
+  }
+}
+
+@media(max-width:1050px) and (min-width:681px){
+  #plantao-simulator:not([hidden]) .plantao-pwa-patient-tab,
+  #plantao-simulator:not([hidden]) .plantao-action-tab{
+    width:104px!important;
+    min-width:104px!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-monitor-dock .plantao-monitor{
+    width:38%!important;
+    min-width:280px!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-monitor-dock>.plantao-feed{
+    left:13%!important;
+    right:13%!important;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-action-drawer{
+    left:114px!important;
+    width:350px!important;
+  }
+}
