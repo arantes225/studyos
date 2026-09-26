@@ -2207,6 +2207,9 @@
         const flow = Array.isArray(state.qfBlockFlow)
           ? state.qfBlockFlow.find(x => Number(x.batch_number) === Number(batch.batch_number) && Number(x.block_number) === n)
           : null;
+        const independentChunkStage = ["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(
+          String(blockAction?.next?.next_stage || "")
+        );
 
         return `
           <article class="admin-qf-block-mini admin-qf-block-workflow" data-block-status="${esc(status)}">
@@ -2220,18 +2223,16 @@
             <button class="button secondary admin-qf-view-block-wide" type="button" data-qf-view-block="${Number(batch.batch_number)}:${n}">${needs || rejected ? "Ver pendências" : "Ver bloco"}</button>
             ${blockAction.provider === "perplexity" ? "" : `<button class="button secondary admin-qf-import-stage-wide" type="button" data-qf-import-stage="${Number(batch.batch_number)}:${n}">Importar etapa</button>`}
 
-            <div class="admin-qf-block-ai-action ${blockAction.provider === "perplexity" ? "is-perplexity-manual" : ""}">
+            <div class="admin-qf-block-ai-action ${independentChunkStage ? "is-perplexity-manual" : ""}">
               <small>${esc(blockAction.phase || "Etapa atual")}</small>
-              ${blockAction.provider === "perplexity" ? `
+              ${independentChunkStage ? `
                 <div class="admin-qf-perplexity-manual-actions">
-                  <button class="button secondary" type="button" data-qf-copy-json-part="${Number(batch.batch_number)}:${n}:1">1A · JSON Q001–Q050</button>
-                  <button class="button secondary" type="button" data-qf-copy-json-part="${Number(batch.batch_number)}:${n}:2">1B · JSON Q051–Q100</button>
-                  <button class="button secondary" type="button" data-qf-copy-json-part="${Number(batch.batch_number)}:${n}:3">1C · JSON Q101–Q150</button>
-                  <button class="button secondary" type="button" data-qf-copy-json-part="${Number(batch.batch_number)}:${n}:4">1D · JSON Q151–Q200</button>
-                  <button class="button primary" type="button" data-qf-copy-block-stage="${Number(batch.batch_number)}:${n}">2 · Copiar prompt</button>
-                  <button class="button secondary" type="button" data-qf-paste-stage-json="${Number(batch.batch_number)}:${n}">3 · Colar JSON de resposta</button>
+                  <button class="button primary" type="button" data-qf-copy-json-part="${Number(batch.batch_number)}:${n}:next">1 · Copiar próxima parte · até 50</button>
+                  <button class="button secondary" type="button" data-qf-paste-stage-json="${Number(batch.batch_number)}:${n}">2 · Colar JSON de resposta</button>
                 </div>
-                <small class="admin-qf-perplexity-manual-help">Se precisar usar importação manual, processe no ChatGPT em partes de 50: Q001–Q050, Q051–Q100, Q101–Q150 e Q151–Q200. Cada resposta deve conter exatamente 50 reviews.</small>
+                <small class="admin-qf-perplexity-manual-help">${blockAction?.next?.next_stage === "blind_resolution"
+                  ? "O botão busca somente versões ainda sem resolução cega e copia prompt + JSON cegado. Gabarito, explicações, fontes e pareceres são removidos antes de ir para a área de transferência."
+                  : "O botão busca somente itens ainda pendentes desta etapa e copia, em um único pacote, o prompt + até 50 questões atuais. Depois de importar a resposta, clique novamente para receber a próxima parte."}</small>
               ` : blockAction.provider ? `
                 <button class="button primary" type="button" data-qf-copy-block-stage="${Number(batch.batch_number)}:${n}">Prompt</button>
                 <button class="button secondary" type="button" data-qf-block-ai="${Number(batch.batch_number)}:${n}">${esc("Copiar + abrir " + blockAction.providerLabel)}</button>
@@ -2917,9 +2918,13 @@
           <div class="admin-qf-tracker-next">
             <span>Próximo prompt</span>
             <div class="admin-qf-tracker-prompt-actions">
-              ${prompt ? `<button class="button primary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Prompt</button>` : ""}
+              ${["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(String(block.next_stage || ""))
+                ? `<button class="button primary" type="button" data-qf-copy-block-stage="${Number(block.batch_number||0)}:${Number(block.block_number||0)}">Próxima parte · até 50</button>`
+                : (prompt ? `<button class="button primary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(pid)}">Prompt</button>` : "")}
             </div>
-            ${prompt ? `<pre id="${esc(pid)}" class="admin-qf-prompt admin-qf-tracker-hidden-prompt">${esc(prompt)}</pre>` : ""}
+            ${prompt && !["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(String(block.next_stage || ""))
+              ? `<pre id="${esc(pid)}" class="admin-qf-prompt admin-qf-tracker-hidden-prompt">${esc(prompt)}</pre>`
+              : ""}
             ${!prompt && !["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(String(block.next_stage || "")) ? '<strong class="admin-qf-tracker-no-prompt">Sem prompt automático nesta fase</strong>' : ""}
           </div>
         </article>
@@ -3459,6 +3464,11 @@
       return;
     }
 
+    if (questionFactoryIndependentChunkStage(next.next_stage)) {
+      await copyQuestionFactoryJsonPart(batchNumber, blockNumber, "next", button);
+      return;
+    }
+
     const prompt = questionFactoryBlockPrompt(next);
     if (!prompt) {
       window.alert("Não foi possível montar o prompt deste bloco.");
@@ -3479,6 +3489,11 @@
 
     if (!action.provider) {
       window.alert(action.label);
+      return;
+    }
+
+    if (questionFactoryIndependentChunkStage(next.next_stage)) {
+      await copyQuestionFactoryJsonPart(batchNumber, blockNumber, "next", button);
       return;
     }
 
@@ -3510,18 +3525,41 @@
     }
   }
 
+  function questionFactoryIndependentChunkStage(stage) {
+    return ["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(String(stage || ""));
+  }
+
+  function questionFactoryPendingForStage(question, stage) {
+    const currentStage = String(stage || "");
+    if (currentStage === "blind_resolution") {
+      return !(question?.blind_resolution && typeof question.blind_resolution === "object");
+    }
+    const latestStage = String(question?.latest_review?.review_stage || "");
+    if (currentStage === "perplexity_initial") return latestStage !== "perplexity_initial";
+    if (currentStage === "perplexity_reaudit") return latestStage !== "perplexity_reaudit";
+    return true;
+  }
+
   async function copyQuestionFactoryJsonPart(batchNumber, blockNumber, partNumber, button) {
-    const part = Math.min(4, Math.max(1, Number(partNumber) || 1));
-    const first = ((part - 1) * 50) + 1;
-    const last = part * 50;
-    const original = button?.textContent || `Copiar JSON Q${String(first).padStart(3,"0")}–Q${String(last).padStart(3,"0")}`;
+    const action = questionFactoryBlockAction(batchNumber, blockNumber);
+    const next = action.next;
+    const stage = String(next?.next_stage || "");
+    const original = button?.textContent || "Copiar próxima parte · até 50";
+
+    if (!next || !questionFactoryIndependentChunkStage(stage)) {
+      window.alert("Esta etapa não usa o pacote independente em partes de até 50.");
+      return;
+    }
 
     if (button) {
       button.disabled = true;
-      button.textContent = "Preparando 50 questões...";
+      button.textContent = "Buscando pendências atuais...";
     }
 
     try {
+      // Exporta internamente a versão completa para descobrir, com segurança, quais
+      // question_id + version ainda estão pendentes. Nada disso vai para o clipboard
+      // na etapa cega: a whitelist LuriaQuestionPrompts.blind() é aplicada depois.
       const { data, error } = await sb.rpc("admin_export_question_factory", {
         p_batch_number: Number(batchNumber),
         p_block_number: Number(blockNumber),
@@ -3536,46 +3574,78 @@
       const ordered = [...data[questionKey]].sort((a,b) =>
         Number(a.block_sequence_no ?? a.sequence_no ?? 0) - Number(b.block_sequence_no ?? b.sequence_no ?? 0)
       );
-      const selected = ordered.slice(first - 1, last);
-      if (selected.length !== 50) {
-        throw new Error(`Esperava 50 questões na parte ${part}, mas encontrei ${selected.length}.`);
+      const pending = ordered.filter(question => questionFactoryPendingForStage(question, stage));
+      const selected = pending.slice(0, 50);
+
+      if (!selected.length) {
+        if (button) button.textContent = "Sem pendências nesta etapa";
+        window.alert("Não há questões pendentes desta etapa na versão atual. Atualize o fluxo do bloco.");
+        await loadQuestionFactoryBlockTracker();
+        return;
       }
+
+      const selectedIds = new Set(selected.map(question => String(question.question_id || "")));
+      const selectedManifest = Array.isArray(data.version_manifest)
+        ? data.version_manifest.filter(item => selectedIds.has(String(item?.question_id || "")))
+        : selected.map(question => ({
+            question_id: question.question_id,
+            item_version: Number(question.version || 1)
+          }));
+
+      const copiedQuestions = stage === "blind_resolution"
+        ? window.LuriaQuestionPrompts.blind(selected)
+        : selected;
 
       const payload = {
-        ...data,
-        [questionKey]: selected,
-        perplexity_chunk: {
-          part,
-          total_parts: 4,
-          range_start: first,
-          range_end: last,
-          expected_question_count: 50,
-          expected_review_count: 50
+        schema_version: data.schema_version || "2.0",
+        batch_number: Number(batchNumber),
+        batch_code: next.batch_code || ("L" + String(Number(batchNumber)).padStart(3,"0")),
+        block_number: Number(blockNumber),
+        block_code: next.block_code || ("L" + String(Number(batchNumber)).padStart(3,"0") + "-B" + String(Number(blockNumber)).padStart(2,"0")),
+        operational_address: next.block_code || ("L" + String(Number(batchNumber)).padStart(3,"0") + "-B" + String(Number(blockNumber)).padStart(2,"0")),
+        exam_style: next.exam_style || null,
+        input_stage: stage,
+        blind: stage === "blind_resolution",
+        version_manifest: selectedManifest,
+        questions: copiedQuestions,
+        question_count: copiedQuestions.length,
+        input_chunk: {
+          mode: "next_pending",
+          requested_max: 50,
+          delivered_count: copiedQuestions.length,
+          pending_before_copy: pending.length,
+          pending_after_this_chunk_if_imported: Math.max(0, pending.length - copiedQuestions.length),
+          expected_review_count: copiedQuestions.length
         }
       };
-      if ("question_count" in payload) payload.question_count = 50;
-      if (payload.coverage && typeof payload.coverage === "object") {
-        payload.coverage = {
-          ...payload.coverage,
-          expected_count: 50,
-          delivered_count: 50,
-          complete: true,
-          chunk_scope: `Q${String(first).padStart(3,"0")}-Q${String(last).padStart(3,"0")}`
-        };
-      }
 
-      await writePromptClipboard(JSON.stringify(payload, null, 2));
+      const prompt = String(questionFactoryBlockPrompt(next) || "").trim();
+      if (!prompt) throw new Error("Não foi possível montar o prompt desta etapa.");
+
+      const inputLabel = stage === "blind_resolution" ? "INPUT_JSON_CEGO" : "INPUT_JSON_ATUAL";
+      const combined = [
+        prompt,
+        "",
+        "============================================================",
+        inputLabel + " — FONTE DE VERDADE DESTA EXECUÇÃO",
+        "============================================================",
+        "Processe TODOS e SOMENTE os itens de questions[] abaixo.",
+        "Devolva um único JSON da etapa com exatamente " + copiedQuestions.length + " reviews, um por question_id + version recebido.",
+        JSON.stringify(payload, null, 2)
+      ].join("\n");
+
+      await writePromptClipboard(combined);
       if (button) {
-        button.textContent = `Q${String(first).padStart(3,"0")}–Q${String(last).padStart(3,"0")} copiado`;
+        button.textContent = copiedQuestions.length + " questões + prompt copiados";
         button.classList.add("success");
         setTimeout(() => {
           button.textContent = original;
           button.classList.remove("success");
-        }, 1800);
+        }, 2200);
       }
     } catch (error) {
-      console.warn("Falha ao copiar parte do JSON:", error);
-      window.alert(error?.message || "Não foi possível copiar as 50 questões.");
+      console.warn("Falha ao preparar pacote da etapa:", error);
+      window.alert(error?.message || "Não foi possível preparar a próxima parte da etapa.");
       if (button) button.textContent = "Falha ao copiar";
       setTimeout(() => { if (button) button.textContent = original; }, 1800);
     } finally {
@@ -3696,6 +3766,11 @@
       return;
     }
 
+    if (questionFactoryIndependentChunkStage(next.next_stage)) {
+      await copyQuestionFactoryJsonPart(next.batch_number, next.block_number, "next", button);
+      return;
+    }
+
     const prompt = questionFactoryBlockPrompt(next);
     if (!prompt) {
       window.alert("Não há prompt automático disponível para a próxima etapa.");
@@ -3704,7 +3779,7 @@
 
     await copyAndOpenAI(
       prompt,
-      ["blind_resolution","perplexity_initial","perplexity_reaudit"].includes(String(next.next_stage || "")) ? "chatgpt" : (next.next_provider || "chatgpt"),
+      next.next_provider || "chatgpt",
       button
     );
   }
@@ -4032,6 +4107,13 @@
         const autoRange = event.target.closest("[data-qf-perplexity-range]");
         if (autoRange) {
           await runQuestionFactoryPerplexityRange(autoRange);
+          return;
+        }
+
+        const blockStagePrompt = event.target.closest("[data-qf-copy-block-stage]");
+        if (blockStagePrompt) {
+          const [batch, block] = blockStagePrompt.dataset.qfCopyBlockStage.split(":");
+          await copyQuestionFactoryBlockStagePrompt(batch, block, blockStagePrompt);
           return;
         }
 
