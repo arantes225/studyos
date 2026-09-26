@@ -4041,8 +4041,28 @@
           if (target) await copyAdminPrompt(copy.dataset.inlinePrompt, copy);
           return;
         }
-        const ai = null;
-        if (ai) return;
+        // Interface prompt-only: não há ação de abrir provedor aqui.
+      });
+    });
+
+    $("admin-qf-bad-open")?.addEventListener("click", async () => {
+      await loadBadQuestionFolder(0);
+      $("admin-qf-bad-dialog")?.showModal();
+    });
+    $("admin-qf-bad-close")?.addEventListener("click", () => $("admin-qf-bad-dialog")?.close());
+    $("admin-qf-bad-prev")?.addEventListener("click", () => loadBadQuestionFolder(Math.max(0,state.qfBadOffset-state.qfBadPageSize)));
+    $("admin-qf-bad-next")?.addEventListener("click", () => loadBadQuestionFolder(state.qfBadOffset+state.qfBadPageSize));
+
+    $("admin-qf-import-calibration")?.addEventListener("click", () => openReviewImportDialog(null, null, "calibration"));
+    $("admin-qf-import-stage-metrics")?.addEventListener("click", () => openReviewImportDialog(null, null, "metrics"));
+    $("admin-qf-start-lot")?.addEventListener("click", startQuestionFactoryLot);
+    $("admin-qf-batches")?.addEventListener("click", async event => {
+      const jsonPartButton = event.target.closest("[data-qf-copy-json-part]");
+      if (jsonPartButton) {
+        const [batch, block, part] = jsonPartButton.dataset.qfCopyJsonPart.split(":");
+        await copyQuestionFactoryJsonPart(batch, block, part, jsonPartButton);
+        return;
+      }
 
       const pasteStageJsonButton = event.target.closest("[data-qf-paste-stage-json]");
       if (pasteStageJsonButton) {
