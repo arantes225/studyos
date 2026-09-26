@@ -2057,7 +2057,7 @@
   function qfStatusLabel(value) {
     const labels = {
       building: "Construindo",
-      perplexity_review: "Perplexity",
+      perplexity_review: "Revisão independente",
       needs_revision: "Correção",
       approved: "Aprovado",
       merged: "No lote",
@@ -2084,10 +2084,10 @@
       generation: "Geração",
       chatgpt_initial: "Revisão ChatGPT",
       blind_resolution: "Resolução cega",
-      perplexity_initial: "Auditoria Perplexity",
+      perplexity_initial: "Revisão independente B",
       chatgpt_adjudication: "Julgamento ChatGPT",
       chatgpt_correction: "Correção ChatGPT",
-      perplexity_reaudit: "Reauditoria Perplexity",
+      perplexity_reaudit: "Reauditoria cega",
       human_review: "Aprovação humana"
     };
     return labels[active.next_stage] || active.phase || qfStatusLabel(status);
@@ -2134,9 +2134,9 @@
     const steps = [
       { n:1, title:"Gerar 200", owner:"ChatGPT", stats:`${generated}/200 geradas` },
       { n:2, title:"Revisão adversarial + autocorreção", owner:"ChatGPT", stats:`${initialAudited} auditadas · ${initialFlagged} sinalizadas · ${versioned} com nova versão` },
-      { n:3, title:"Auditoria Perplexity", owner:"Perplexity", stats:`${perplexityAudited} auditadas · ${perplexityFlagged} com achados` },
+      { n:3, title:"Revisão cega independente", owner:"ChatGPT", stats:`${perplexityAudited} auditadas · ${perplexityFlagged} com achados` },
       { n:4, title:"Julgar parecer + corrigir", owner:"ChatGPT", stats:`${adjudicated} julgadas · ${corrected} corrigidas` },
-      { n:5, title:"Reauditar correções", owner:"Perplexity", stats:`${reaudited} reavaliadas · ${pending} pendentes` },
+      { n:5, title:"Reauditar correções do zero", owner:"ChatGPT", stats:`${reaudited} reavaliadas · ${pending} pendentes` },
       { n:6, title:"Aceitar para o lote", owner:"Você", stats: humanStatus === "approved" ? "Aprovado e enviado ao lote" : `${approved}/200 aprovadas pela máquina` }
     ];
 
@@ -2161,7 +2161,7 @@
           `;
         }).join("")}
       </div>
-      ${hadReaudit && currentStep === 4 ? '<div class="admin-qf-flow-loop-note">↺ Ainda há pendências: voltou ao ChatGPT. Depois da correção, retorna ao Perplexity automaticamente.</div>' : ""}
+      ${hadReaudit && currentStep === 4 ? '<div class="admin-qf-flow-loop-note">↺ Ainda há pendências: voltou ao ChatGPT. Depois da correção, retorna para uma nova revisão cega do ChatGPT, ignorando memória e pareceres anteriores.</div>' : ""}
     `;
   }
 
@@ -2285,10 +2285,10 @@
           <div class="admin-qf-block-grid">${blockCards}</div>
           <div class="admin-qf-final-review ${lotInFinalReview ? "active" : ""}">
             <span>${lotInFinalReview ? "Revisão final das 1.000" : "Revisão final"}</span>
-            <strong>${lotInFinalReview ? "Agora o trabalho passa do bloco para o lote completo" : "ChatGPT + Perplexity"}</strong>
+            <strong>${lotInFinalReview ? "Agora o trabalho passa do bloco para o lote completo" : "ChatGPT · revisão A + revisão cega B"}</strong>
             <div>
               ${qfReviewPill("ChatGPT", batch.final_review_chatgpt_status)}
-              ${qfReviewPill("Perplexity", batch.final_review_perplexity_status)}
+              ${qfReviewPill("Revisão cega B", batch.final_review_perplexity_status)}
               ${qfReviewPill("Você", batch.final_human_review_status)}
             </div>
           </div>
@@ -2402,8 +2402,8 @@
             </div>
             <div class="admin-qf-quality-bars">
               <div><small>Step 1 · Auditoria própria após gerar</small><span><i style="width:${Math.max(0,Math.min(100,initial))}%"></i></span><b>${(b.step1_quality ?? b.initial_quality) == null ? "—" : pct(b.step1_quality ?? b.initial_quality)}</b></div>
-              <div><small>Step 2 · Perplexity</small><span><i style="width:${Math.max(0,Math.min(100,perplexityInitial))}%"></i></span><b>${b.step2_quality == null ? "—" : pct(b.step2_quality)}</b></div>
-              <div><small>Step 3 · Perplexity após correções</small><span><i style="width:${Math.max(0,Math.min(100,reaudited))}%"></i></span><b>${b.step3_quality == null ? "—" : pct(b.step3_quality)}</b></div>
+              <div><small>Step 2 · ChatGPT independente</small><span><i style="width:${Math.max(0,Math.min(100,perplexityInitial))}%"></i></span><b>${b.step2_quality == null ? "—" : pct(b.step2_quality)}</b></div>
+              <div><small>Step 3 · ChatGPT cego após correções</small><span><i style="width:${Math.max(0,Math.min(100,reaudited))}%"></i></span><b>${b.step3_quality == null ? "—" : pct(b.step3_quality)}</b></div>
             </div>
             <div class="admin-qf-quality-row-meta">
               <span>${formatNumber(b.approved_count)} aprovadas</span>
@@ -2502,7 +2502,7 @@
       $("admin-qf-review-import-meta").textContent = mode === "metrics"
         ? "Cole qualquer JSON da fábrica que contenha stage_metrics. Esta opção atualiza apenas a telemetria operacional."
         : mode === "calibration" ? "Cole a auditoria bruta do prompt com FINAL_PROMPT_SCORE, componentes e evidências primárias." : mode === "lot"
-        ? `Lote ${String(Number(batchNumber)).padStart(3,"0")} · cole o JSON da etapa final. O sistema identifica ChatGPT ou Perplexity automaticamente.`
+        ? `Lote ${String(Number(batchNumber)).padStart(3,"0")} · cole o JSON da etapa final. O sistema identifica a etapa automaticamente.`
         : `Lote ${String(Number(batchNumber)).padStart(3,"0")} · Bloco ${blockNumber} · cole o JSON da etapa atual (geração, resolução cega, revisão, adjudicação, correção ou reauditoria).`;
     }
     if ($("admin-qf-review-import-json")) $("admin-qf-review-import-json").value = "";
@@ -2594,7 +2594,7 @@
               }
             : payload.stage_metrics
         };
-        if (message) message.textContent = `Importando Perplexity em blocos de 50: parte ${index + 1}/${reviewChunks.length} (${chunk.length} reviews)...`;
+        if (message) message.textContent = `Importando revisão independente em blocos de 50: parte ${index + 1}/${reviewChunks.length} (${chunk.length} reviews)...`;
         const { data: chunkData, error: chunkError } = await sb.rpc(
           "admin_import_question_factory_stage",
           { p_payload: chunkPayload }
@@ -2697,11 +2697,11 @@
     const map = {
       generation: { label: "1 · Gerar 200 questões", provider: "chatgpt" },
       chatgpt_initial: { label: "2 · ChatGPT · revisão adversarial + autocorreção", provider: "chatgpt" },
-      blind_resolution: { label: "3 · Perplexity · auditoria pessoal", provider: "perplexity" },
-      perplexity_initial: { label: "3 · Perplexity · concluir auditoria", provider: "perplexity" },
+      blind_resolution: { label: "3A · ChatGPT · resolução cega sem memória", provider: "chatgpt" },
+      perplexity_initial: { label: "3B · ChatGPT · revisão independente sem memória", provider: "chatgpt" },
       chatgpt_adjudication: { label: "4 · ChatGPT · julgar + corrigir", provider: "chatgpt" },
       chatgpt_correction: { label: "4 · ChatGPT · aplicar correções", provider: "chatgpt" },
-      perplexity_reaudit: { label: "5 · Perplexity · confirmar correções", provider: "perplexity" },
+      perplexity_reaudit: { label: "5 · ChatGPT · reauditoria cega sem memória", provider: "chatgpt" },
       human_review: { label: "6 · Sua aprovação para o lote", provider: null },
       block_complete: { label: "Bloco concluído", provider: null }
     };
@@ -3055,13 +3055,13 @@
         const promptStages = [
           ["01","Gerar 200 questões",null,"chatgpt"],
           ["02","ChatGPT · revisão adversarial + autocorreção","chatgpt_initial","chatgpt"],
-          ["03","Perplexity · auditoria independente","perplexity_cycle","perplexity"],
+          ["03","ChatGPT · auditoria independente sem memória","perplexity_cycle","chatgpt"],
           ["04","ChatGPT · julgar + corrigir","chatgpt_correction_cycle","chatgpt"],
-          ["05","Perplexity · confirmar correções","perplexity_reaudit","perplexity"]
+          ["05","ChatGPT · confirmar correções em revisão cega","perplexity_reaudit","chatgpt"]
         ];
         const finalLotStages = [
           ["09A","ChatGPT · revisão global das 1.000","lot_chatgpt_final","chatgpt"],
-          ["09B","Perplexity · auditoria final das 1.000","lot_perplexity_final","perplexity"]
+          ["09B","ChatGPT · revisão final independente B","lot_perplexity_final","chatgpt"]
         ];
         return `
           <article class="admin-qf-style-card">
@@ -3215,7 +3215,7 @@
                       <div>
                         <div class="admin-qf-style-prompt-actions">
                           <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="qf-dashboard-${slug}-prompt_calibration">Copiar</button>
-                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="qf-dashboard-${slug}-prompt_calibration" data-ai-provider="perplexity">Abrir Perplexity</button>
+                          <button class="button primary admin-qf-ai-inline" type="button" data-inline-prompt="qf-dashboard-${slug}-prompt_calibration" data-ai-provider="chatgpt">Abrir ChatGPT</button>
                         </div>
                         <pre id="qf-dashboard-${slug}-prompt_calibration" class="admin-qf-prompt">${esc(buildBoardSegmentPrompt(item,"prompt_calibration"))}</pre>
                       </div>
@@ -3255,7 +3255,6 @@
                 <div class="admin-qf-board-actions">
                   <button class="button primary admin-qf-copy-board" type="button" data-style-copy-index="${index}">Copiar tudo desta banca</button>
                   <button class="button secondary admin-qf-ai-open" type="button" data-style-ai-index="${index}" data-ai-provider="chatgpt">Abrir ChatGPT</button>
-                  <button class="button secondary admin-qf-ai-open" type="button" data-style-ai-index="${index}" data-ai-provider="perplexity">Abrir Perplexity</button>
                   ${url ? `<a class="button secondary" href="${esc(url)}" target="_blank" rel="noopener">Fonte oficial</a>` : ""}
                 </div>
               </section>
@@ -3313,7 +3312,6 @@
                   <div class="admin-qf-master-actions">
                     <button class="button primary admin-qf-copy-board" type="button" data-style-copy-index="${index}">Copiar bloco inteiro</button>
                     <button class="button secondary admin-qf-ai-open" type="button" data-style-ai-index="${index}" data-ai-provider="chatgpt">ChatGPT</button>
-                    <button class="button secondary admin-qf-ai-open" type="button" data-style-ai-index="${index}" data-ai-provider="perplexity">Perplexity</button>
                   </div>
                 </div>
                 <pre class="admin-qf-board-master-text">${esc(buildBoardGenerationPrompt(item))}</pre>
@@ -3327,11 +3325,11 @@
                 </div>
                 ${[
                   ["01","ChatGPT · checagem inicial","chatgpt_initial","chatgpt"],
-                  ["01B","Perplexity · resolução cega","blind_resolution","perplexity"],
-                  ["02","Perplexity · auditoria","perplexity_initial","perplexity"],
+                  ["01B","ChatGPT · resolução cega sem memória","blind_resolution","chatgpt"],
+                  ["02","ChatGPT · auditoria independente sem memória","perplexity_initial","chatgpt"],
                   ["03","ChatGPT · julgar parecer","chatgpt_adjudication","chatgpt"],
                   ["04","ChatGPT · corrigir consenso","chatgpt_correction","chatgpt"],
-                  ["05","Perplexity · reauditoria","perplexity_reaudit","perplexity"]
+                  ["05","ChatGPT · reauditoria cega sem memória","perplexity_reaudit","chatgpt"]
                 ].map(([num,label,stage,provider]) => {
                   const pid=`qf-${String(item.exam_style||"style").replace(/[^a-z0-9]/gi,"-").toLowerCase()}-${stage}`;
                   return `
@@ -3357,7 +3355,7 @@
                 </div>
                 ${[
                   ["07A","ChatGPT · revisão global das 1.000","lot_chatgpt_final","chatgpt"],
-                  ["07B","Perplexity · auditoria final das 1.000","lot_perplexity_final","perplexity"]
+                  ["07B","ChatGPT · revisão final independente B","lot_perplexity_final","chatgpt"]
                 ].map(([num,label,stage,provider]) => {
                   const pid=`qf-${String(item.exam_style||"style").replace(/[^a-z0-9]/gi,"-").toLowerCase()}-${stage}`;
                   return `
@@ -3478,17 +3476,20 @@
       return { next, provider:null, label:"Bloco concluído", phase:"Concluído" };
     }
 
-    const provider = next.next_provider || "chatgpt";
-    const providerLabel = provider === "perplexity" ? "Perplexity" : provider === "gemini" ? "Gemini" : "ChatGPT";
+    const independentLegacyStages = ["blind_resolution","perplexity_initial","perplexity_reaudit","lot_perplexity_final"];
+    const provider = independentLegacyStages.includes(String(next.next_stage || ""))
+      ? "chatgpt"
+      : (next.next_provider || "chatgpt");
+    const providerLabel = provider === "gemini" ? "Gemini" : "ChatGPT";
     const afterCorrection = next.next_stage === "blind_resolution" && String(next.latest_review_stage || "") === "chatgpt_correction_review";
     const phaseLabels = {
       generation:"1 · Gerar 200 questões",
       chatgpt_initial:"2 · ChatGPT · revisão adversarial + autocorreção",
-      blind_resolution:afterCorrection ? "5 · Perplexity · confirmar correções" : "3 · Perplexity · resolução cega + auditoria",
-      perplexity_initial:"3 · Perplexity · concluir auditoria",
+      blind_resolution:afterCorrection ? "5 · ChatGPT · nova resolução cega sem memória" : "3A · ChatGPT · resolução cega sem memória",
+      perplexity_initial:"3B · ChatGPT · auditoria independente sem memória",
       chatgpt_adjudication:"4 · ChatGPT · julgar + corrigir",
       chatgpt_correction:"4 · ChatGPT · aplicar correções",
-      perplexity_reaudit:"5 · Perplexity · confirmar correções"
+      perplexity_reaudit:"5 · ChatGPT · reauditoria cega sem memória"
     };
     const phase = phaseLabels[next.next_stage] || next.phase || "Próxima fase";
     return { next, provider, providerLabel, phase, label:`${phase} · abrir ${providerLabel}` };
@@ -3686,7 +3687,7 @@
     if (!next) return { next:null, label:"Revisão final do lote", provider:null };
     if (next.next_stage === "human_review") return { next, label:"Aguardando sua aprovação", provider:null };
     const provider = next.next_provider || "chatgpt";
-    const providerLabel = provider === "perplexity" ? "Perplexity" : provider === "gemini" ? "Gemini" : "ChatGPT";
+    const providerLabel = provider === "gemini" ? "Gemini" : "ChatGPT";
     return { next, provider, label:`Copiar prompt + abrir ${providerLabel}` };
   }
 
@@ -3780,9 +3781,9 @@
                 <small>${esc(block)} · ${esc(q.area || "—")} · ${esc(q.tema || "—")}</small>
               </div>
               <div class="admin-qf-review-pills">
-                ${qfReviewPill("Perplexity bloco", q.block_review_status)}
+                ${qfReviewPill("Revisão independente bloco", q.block_review_status)}
                 ${qfReviewPill("ChatGPT lote", q.lot_review_chatgpt_status)}
-                ${qfReviewPill("Perplexity lote", q.lot_review_perplexity_status)}
+                ${qfReviewPill("Revisão independente lote", q.lot_review_perplexity_status)}
               </div>
             </summary>
             <div class="admin-qf-question-body">
@@ -3794,9 +3795,9 @@
                 }).join("")}
               </div>
               <div class="admin-qf-review-notes">
-                <article><strong>Revisão do bloco · Perplexity</strong><small>${esc(q.block_review_notes || "Ainda sem parecer.")}</small></article>
+                <article><strong>Revisão do bloco · ChatGPT independente</strong><small>${esc(q.block_review_notes || "Ainda sem parecer.")}</small></article>
                 <article><strong>Revisão final · ChatGPT</strong><small>${esc(q.lot_review_chatgpt_notes || "Ainda sem parecer.")}</small></article>
-                <article><strong>Revisão final · Perplexity</strong><small>${esc(q.lot_review_perplexity_notes || "Ainda sem parecer.")}</small></article>
+                <article><strong>Revisão final · ChatGPT independente B</strong><small>${esc(q.lot_review_perplexity_notes || "Ainda sem parecer.")}</small></article>
               </div>
               <div class="admin-qf-source">
                 <strong>Fonte geral</strong>
@@ -4182,7 +4183,7 @@
       }
       const finalButton = event.target.closest("[data-qf-final-approve]");
       if (finalButton) {
-        if (!window.confirm("Confirmar aprovação humana final deste lote, após ChatGPT e Perplexity?")) return;
+        if (!window.confirm("Confirmar aprovação humana final deste lote, após as duas revisões independentes do ChatGPT?")) return;
         const {error} = await sb.rpc("admin_approve_question_factory_lot",{p_batch_number:Number(finalButton.dataset.qfFinalApprove)});
         if(error)window.alert(error.message); else await loadQuestionFactory();
         return;
