@@ -2935,3 +2935,17 @@ body[data-page="plantao"] .plantao-phone-new-chat-fab:active{transform:scale(.96
     font-size:14px;
   }
 }
+
+
+/* Simulador · ocultar somente o tempo no topo do caso */
+.plantao-sim-top .plantao-clock{
+  display:none!important;
+}
+.plantao-sim-top{
+  grid-template-columns:auto 1fr;
+}
+@media(max-width:680px){
+  .plantao-sim-top{
+    grid-template-columns:1fr;
+  }
+}
