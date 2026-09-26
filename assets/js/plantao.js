@@ -887,7 +887,7 @@
   const GROUPS = {
     anamnese:{label:"Anamnese",icon:"◉",categories:["anamnese"]},
     fisico:{label:"Exame físico",icon:"✚",categories:["exame"]},
-    iniciais:{label:"Procedimentos iniciais / emergência",icon:"ϟ",categories:["iniciais","monitorizacao"]},
+    iniciais:{label:"Procedimentos iniciais",icon:"ϟ",categories:["iniciais","monitorizacao"]},
     exames:{label:"Exames",icon:"▤",categories:["exames","laboratorio","imagem"]},
     intervir:{label:"Intervenções",icon:"✚",categories:["tratamento","procedimentos","procedimentos_terapeuticos"]},
     hipoteses:{label:"Hipóteses",icon:"◎",categories:["hipoteses","raciocinio"]},
@@ -2071,7 +2071,9 @@
   }
 
   function interventionSection(action){
-    return action.category==="tratamento" ? "medicamentos" : "gerais";
+    if(action.category==="tratamento") return "medicamentos";
+    if(action.category==="procedimentos" || action.category==="procedimentos_terapeuticos") return "procedimentos";
+    return "gerais";
   }
   function examSection(action){
     if(action.category==="imagem") return "imagem";
@@ -2202,7 +2204,7 @@
     let available=actions.filter(a=>groupOf(a.category)===state.category && (!search||(a.label+" "+(a.subgroup||"")+" "+medicationDoseHint(a)).toLocaleLowerCase('pt-BR').includes(search)));
     if(state.category==="intervir"){
       state.interventionTab=state.interventionTab||"gerais";
-      const tabHtml='<div class="plantao-intervention-tabs"><button type="button" data-intervention-tab="gerais" class="'+(state.interventionTab==="gerais"?"active":"")+'">Gerais</button><button type="button" data-intervention-tab="medicamentos" class="'+(state.interventionTab==="medicamentos"?"active":"")+'">Medicamentos</button></div>';
+      const tabHtml='<div class="plantao-intervention-tabs"><button type="button" data-intervention-tab="gerais" class="'+(state.interventionTab==="gerais"?"active":"")+'">Gerais</button><button type="button" data-intervention-tab="medicamentos" class="'+(state.interventionTab==="medicamentos"?"active":"")+'">Medicamentos</button><button type="button" data-intervention-tab="procedimentos" class="'+(state.interventionTab==="procedimentos"?"active":"")+'">Procedimentos</button></div>';
       available=available.filter(a=>interventionSection(a)===state.interventionTab);
       $("plantao-actions").dataset.tabs=tabHtml;
     } else if(state.category==="exames"){
