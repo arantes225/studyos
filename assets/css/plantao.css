@@ -2960,3 +2960,25 @@ body[data-page="plantao"] .plantao-phone-new-chat-fab:active{transform:scale(.96
 @media(max-width:680px){
   .plantao-filter-icon{width:17px;height:17px}
 }
+
+
+/* v7.4 — cabeçalho da Sala de Emergência compacto no celular */
+@media(max-width:680px){
+  #plantao-emergencia.plantao-library-head{
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:10px!important;
+  }
+  #plantao-emergencia .plantao-library-title-row{
+    flex:1 1 auto;
+    min-width:0;
+  }
+  #plantao-emergencia .plantao-random-case{
+    flex:0 0 auto;
+    width:auto!important;
+    min-height:38px;
+    padding-inline:12px;
+  }
+}
