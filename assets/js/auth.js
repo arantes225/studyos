@@ -7,6 +7,7 @@ const entrarButton = document.getElementById("entrar");
 const criarButton = document.getElementById("criar-conta");
 const passkeyButton = document.getElementById("passkey-login");
 const mensagem = document.getElementById("mensagem");
+const lembrarInput = document.getElementById("lembrar");
 
 const AUTH_STORAGE_KEY = "sb-sxdsfklllilhdyuamvvg-auth-token";
 
@@ -49,6 +50,8 @@ async function tentarLogin(email, password) {
 async function entrar(event) {
   event.preventDefault();
 
+  window.LuriaAuthStorage?.setRememberMe(lembrarInput?.checked !== false);
+
   const email = emailInput.value.trim();
   const password = senhaInput.value;
 
@@ -84,6 +87,8 @@ async function entrar(event) {
 }
 
 async function entrarComPasskey() {
+  window.LuriaAuthStorage?.setRememberMe(lembrarInput?.checked !== false);
+
   if (!passkeyButton || !window.PublicKeyCredential || !sb?.auth?.signInWithPasskey) {
     mostrarMensagem("Este dispositivo ou navegador não oferece suporte a Passkeys.", "error");
     return;
