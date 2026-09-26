@@ -179,6 +179,69 @@
       linear-gradient(180deg,rgba(4,22,42,.18),transparent 24%,transparent 67%,rgba(4,22,42,.60));
   }
 
+  /* Patient micro-animation prototype: lightweight, PWA-only.
+     A masked duplicate moves over the static room so the background stays visually stable. */
+  .pwa-standalone #plantao-simulator:not([hidden]) #plantao-patient-image{
+    z-index:0;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) #plantao-patient-motion{
+    z-index:.2;
+    pointer-events:none;
+    opacity:.96;
+    transform-origin:50% 58%;
+    -webkit-mask-image:radial-gradient(ellipse 34% 42% at 50% 58%,#000 0 58%,rgba(0,0,0,.88) 70%,transparent 100%);
+    mask-image:radial-gradient(ellipse 34% 42% at 50% 58%,#000 0 58%,rgba(0,0,0,.88) 70%,transparent 100%);
+    animation:plantaoPatientBreath 3.8s ease-in-out infinite;
+    will-change:transform;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-scene.patient-tachypnea #plantao-patient-motion{
+    animation-duration:1.45s;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-scene.patient-bradypnea #plantao-patient-motion{
+    animation-duration:5.8s;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-scene.patient-apnea #plantao-patient-motion,
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-scene.patient-unconscious #plantao-patient-motion{
+    animation:none;
+    transform:none;
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-scene.patient-shock #plantao-patient-motion{
+    animation:plantaoPatientShock .46s cubic-bezier(.2,.75,.25,1);
+  }
+
+  .pwa-standalone #plantao-simulator:not([hidden]) .plantao-scene.patient-cpr #plantao-patient-motion{
+    animation:plantaoPatientCpr .48s ease-in-out infinite;
+  }
+
+  @keyframes plantaoPatientBreath{
+    0%,100%{transform:translateY(0) scaleY(1)}
+    50%{transform:translateY(-1px) scaleY(1.008)}
+  }
+
+  @keyframes plantaoPatientShock{
+    0%,100%{transform:translate(0,0) rotate(0)}
+    20%{transform:translateY(-9px) rotate(-.45deg)}
+    42%{transform:translateY(3px) rotate(.28deg)}
+    68%{transform:translateY(-2px) rotate(-.12deg)}
+  }
+
+  @keyframes plantaoPatientCpr{
+    0%,100%{transform:translateY(0) scaleY(1)}
+    50%{transform:translateY(2px) scaleY(.994)}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .pwa-standalone #plantao-simulator:not([hidden]) #plantao-patient-motion{
+      animation:none!important;
+      transform:none!important;
+    }
+  }
+
   .pwa-standalone #plantao-consciousness{
     display:none!important;
   }
