@@ -1818,6 +1818,12 @@ body.plantao-phone-mode .plantao-phone-device{
   }
 }
 
+@media(display-mode:standalone){
+  .plantao-phone-page-back{
+    display:none!important;
+  }
+}
+
 
 /* v5.0 — laudos de exames acessíveis pelo prontuário */
 .plantao-feed-report-button{
