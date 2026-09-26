@@ -216,7 +216,7 @@
     const specialty=state.filters.specialty || "";
     const difficulty=state.filters.difficulty || "";
     const visibleCases=state.cases.filter(item=>(!specialty || item.specialty===specialty) && (!difficulty || item.difficulty===difficulty));
-    $("plantao-case-count").textContent=visibleCases.length;
+    $("plantao-case-count").textContent=state.cases.length;
     $("plantao-session-count").textContent=state.sessions.length;
     const grid=$("plantao-case-grid");
     const empty=$("plantao-empty");
