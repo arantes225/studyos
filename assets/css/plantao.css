@@ -2601,3 +2601,20 @@ body[data-page="plantao"] .plantao-phone-compose-form input{
 body[data-page="plantao"] .plantao-phone-brand-name{
   font-size:19px!important;
 }
+
+
+/* LuriaZap — conversas mais compactas */
+body[data-page="plantao"] .plantao-phone-conversation-title,
+body[data-page="plantao"] .plantao-phone-conversation-top strong{
+  font-size:13px!important;
+}
+body[data-page="plantao"] .plantao-phone-conversation-preview,
+body[data-page="plantao"] .plantao-phone-conversation-top small{
+  font-size:10px!important;
+}
+body[data-page="plantao"] .plantao-phone-inbox-toolbar strong{
+  font-size:12px!important;
+}
+body[data-page="plantao"] .plantao-phone-inbox-toolbar small{
+  font-size:10px!important;
+}
