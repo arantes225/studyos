@@ -2224,11 +2224,12 @@
               <small>${esc(blockAction.phase || "Etapa atual")}</small>
               ${blockAction.provider === "perplexity" ? `
                 <div class="admin-qf-perplexity-manual-actions">
-                  <button class="button secondary" type="button" data-qf-copy-full-json="${Number(batch.batch_number)}:${n}">1 · Copiar JSON completo</button>
+                  <button class="button secondary" type="button" data-qf-copy-json-part="${Number(batch.batch_number)}:${n}:1">1A · Copiar JSON Q001–Q100</button>
+                  <button class="button secondary" type="button" data-qf-copy-json-part="${Number(batch.batch_number)}:${n}:2">1B · Copiar JSON Q101–Q200</button>
                   <button class="button primary" type="button" data-qf-copy-block-stage="${Number(batch.batch_number)}:${n}">2 · Copiar prompt</button>
                   <button class="button secondary" type="button" data-qf-paste-stage-json="${Number(batch.batch_number)}:${n}">3 · Colar JSON de resposta</button>
                 </div>
-                <small class="admin-qf-perplexity-manual-help">Use o JSON completo do bloco junto com o prompt. Depois cole aqui o JSON devolvido pelo Perplexity.</small>
+                <small class="admin-qf-perplexity-manual-help">Envie ao Perplexity uma metade por vez: primeiro 100 questões e depois as 100 restantes. Cada resposta deve conter exatamente 100 reviews.</small>
               ` : blockAction.provider ? `
                 <button class="button primary" type="button" data-qf-copy-block-stage="${Number(batch.batch_number)}:${n}">Copiar prompt da etapa</button>
                 <button class="button secondary" type="button" data-qf-block-ai="${Number(batch.batch_number)}:${n}">${esc("Copiar + abrir " + blockAction.providerLabel)}</button>
@@ -3506,11 +3507,15 @@
     }
   }
 
-  async function copyQuestionFactoryFullBlockJson(batchNumber, blockNumber, button) {
-    const original = button?.textContent || "Copiar JSON completo";
+  async function copyQuestionFactoryJsonPart(batchNumber, blockNumber, partNumber, button) {
+    const part = Number(partNumber) === 2 ? 2 : 1;
+    const first = part === 1 ? 1 : 101;
+    const last = part === 1 ? 100 : 200;
+    const original = button?.textContent || `Copiar JSON Q${String(first).padStart(3,"0")}–Q${String(last).padStart(3,"0")}`;
+
     if (button) {
       button.disabled = true;
-      button.textContent = "Preparando JSON...";
+      button.textContent = "Preparando 100 questões...";
     }
 
     try {
@@ -3520,13 +3525,45 @@
         p_blind: false
       });
       if (error) throw error;
-      if (!data || typeof data !== "object") {
-        throw new Error("O exportador não retornou um JSON válido.");
+      if (!data || typeof data !== "object") throw new Error("O exportador não retornou um JSON válido.");
+
+      const questionKey = ["questions","items","questoes"].find(key => Array.isArray(data[key]));
+      if (!questionKey) throw new Error("Não encontrei a lista de questões no JSON exportado.");
+
+      const ordered = [...data[questionKey]].sort((a,b) =>
+        Number(a.block_sequence_no ?? a.sequence_no ?? 0) - Number(b.block_sequence_no ?? b.sequence_no ?? 0)
+      );
+      const selected = ordered.slice(first - 1, last);
+      if (selected.length !== 100) {
+        throw new Error(`Esperava 100 questões na parte ${part}, mas encontrei ${selected.length}.`);
       }
 
-      await writePromptClipboard(JSON.stringify(data, null, 2));
+      const payload = {
+        ...data,
+        [questionKey]: selected,
+        perplexity_chunk: {
+          part,
+          total_parts: 2,
+          range_start: first,
+          range_end: last,
+          expected_question_count: 100,
+          expected_review_count: 100
+        }
+      };
+      if ("question_count" in payload) payload.question_count = 100;
+      if (payload.coverage && typeof payload.coverage === "object") {
+        payload.coverage = {
+          ...payload.coverage,
+          expected_count: 100,
+          delivered_count: 100,
+          complete: true,
+          chunk_scope: `Q${String(first).padStart(3,"0")}-Q${String(last).padStart(3,"0")}`
+        };
+      }
+
+      await writePromptClipboard(JSON.stringify(payload, null, 2));
       if (button) {
-        button.textContent = "JSON completo copiado";
+        button.textContent = `Q${String(first).padStart(3,"0")}–Q${String(last).padStart(3,"0")} copiado`;
         button.classList.add("success");
         setTimeout(() => {
           button.textContent = original;
@@ -3534,12 +3571,10 @@
         }, 1800);
       }
     } catch (error) {
-      console.warn("Falha ao copiar JSON completo do bloco:", error);
-      window.alert(error?.message || "Não foi possível copiar o JSON completo.");
-      if (button) button.textContent = "Falha ao copiar JSON";
-      setTimeout(() => {
-        if (button) button.textContent = original;
-      }, 1800);
+      console.warn("Falha ao copiar parte do JSON:", error);
+      window.alert(error?.message || "Não foi possível copiar as 100 questões.");
+      if (button) button.textContent = "Falha ao copiar";
+      setTimeout(() => { if (button) button.textContent = original; }, 1800);
     } finally {
       if (button) button.disabled = false;
     }
@@ -4035,10 +4070,10 @@
     $("admin-qf-import-stage-metrics")?.addEventListener("click", () => openReviewImportDialog(null, null, "metrics"));
     $("admin-qf-start-lot")?.addEventListener("click", startQuestionFactoryLot);
     $("admin-qf-batches")?.addEventListener("click", async event => {
-      const fullJsonButton = event.target.closest("[data-qf-copy-full-json]");
-      if (fullJsonButton) {
-        const [batch, block] = fullJsonButton.dataset.qfCopyFullJson.split(":");
-        await copyQuestionFactoryFullBlockJson(batch, block, fullJsonButton);
+      const jsonPartButton = event.target.closest("[data-qf-copy-json-part]");
+      if (jsonPartButton) {
+        const [batch, block, part] = jsonPartButton.dataset.qfCopyJsonPart.split(":");
+        await copyQuestionFactoryJsonPart(batch, block, part, jsonPartButton);
         return;
       }
 
