@@ -2233,7 +2233,7 @@
                 </div>
                 <small class="admin-qf-perplexity-manual-help">Se precisar usar importação manual, processe no ChatGPT em partes de 50: Q001–Q050, Q051–Q100, Q101–Q150 e Q151–Q200. Cada resposta deve conter exatamente 50 reviews.</small>
               ` : blockAction.provider ? `
-                <button class="button primary" type="button" data-qf-copy-block-stage="${Number(batch.batch_number)}:${n}">Copiar prompt da etapa</button>
+                <button class="button primary" type="button" data-qf-copy-block-stage="${Number(batch.batch_number)}:${n}">Prompt</button>
                 <button class="button secondary" type="button" data-qf-block-ai="${Number(batch.batch_number)}:${n}">${esc("Copiar + abrir " + blockAction.providerLabel)}</button>
               ` : blockAction?.next?.next_stage === "human_review" ? `
                 <button class="button secondary" type="button" disabled>Etapa sem prompt · aprovação humana</button>
@@ -3088,7 +3088,7 @@
             <details class="admin-qf-style-prompts">
               <summary>
                 <span>Prompts da banca</span>
-                <small>Abrir geração, auditorias e revisões</small>
+                <small>Prompts de geração, auditorias e revisões</small>
               </summary>
               <div class="admin-qf-style-prompts-body">
                 <details class="admin-qf-style-prompt-item admin-qf-global-contract-item">
@@ -3099,7 +3099,7 @@
                   </summary>
                   <div>
                     <div class="admin-qf-style-prompt-actions">
-                      <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(globalPromptId)}">Copiar contrato</button>
+                      <button class="button secondary admin-qf-copy-inline" type="button" data-inline-prompt="${esc(globalPromptId)}">Prompt</button>
                     </div>
                     <pre id="${esc(globalPromptId)}" class="admin-qf-prompt">${esc(globalPromptText)}</pre>
                   </div>
@@ -3497,7 +3497,7 @@
       return;
     }
 
-    const original = button?.textContent || "Copiar prompt da etapa";
+    const original = button?.textContent || "Prompt";
     try {
       await writePromptClipboard(prompt);
       if (button) {
@@ -3858,18 +3858,8 @@
   }
 
   function enhancePromptLaunchButtons() {
-    document.querySelectorAll(".admin-qf-prompt-wrap").forEach(wrap => {
-      if (wrap.querySelector(".admin-qf-ai-actions")) return;
-      const prompt = wrap.querySelector(".admin-qf-prompt");
-      if (!prompt?.id) return;
-
-      const actions = document.createElement("div");
-      actions.className = "admin-qf-ai-actions";
-      actions.innerHTML = `
-        <button class="button secondary admin-qf-ai-prompt" type="button" data-ai-provider="chatgpt" data-ai-target="${esc(prompt.id)}">ChatGPT</button>
-      `;
-      wrap.appendChild(actions);
-    });
+    // A Fábrica exibe somente o botão Prompt. Abertura de provedor foi removida.
+    return;
   }
 
   function renderBadQuestionFolder(data) {
