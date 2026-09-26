@@ -3155,6 +3155,8 @@
     const safeOpening=item.presentation?.opening || item.presentation?.chief_complaint || "Paciente admitido para avaliação na sala de emergência.";
     $("plantao-setting").textContent=item.setting || "Sala de emergência";
     $("plantao-case-title").textContent=item.presentation?.chief_complaint || item.presentation?.display_title || "Caso em avaliação";
+    const pwaCaseTitle=$("plantao-pwa-case-title");
+    if(pwaCaseTitle) pwaCaseTitle.textContent=item.presentation?.chief_complaint || item.presentation?.display_title || item.title || "Caso em andamento";
     $("plantao-opening").textContent=safeOpening;
     const rawAge=String(item.presentation?.age||"").trim();
     const ageNumber=Number(rawAge);
