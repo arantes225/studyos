@@ -837,13 +837,14 @@ body.plantao-phone-mode .plantao-mode-menu{
 body.plantao-phone-mode #plantao-library{
   min-height:calc(100vh - 24px);
   display:grid;
-  place-items:center;
+  place-items:start center;
+  align-content:start;
 }
 #plantao-telefone.plantao-phone-preview{
   width:100%;
-  padding:18px 0 28px;
+  padding:0 0 28px;
   display:grid;
-  place-items:center;
+  place-items:start center;
   background:transparent;
   border:0;
   box-shadow:none;
@@ -1747,7 +1748,8 @@ body.plantao-phone-mode .topbar{
 /* v6.6 — Telefone centralizado, proporção mais larga e retorno lateral */
 body.plantao-phone-mode #plantao-library{
   display:grid;
-  place-items:center;
+  place-items:start center;
+  align-content:start;
 }
 #plantao-telefone.plantao-phone-preview{
   grid-template-columns:1fr;
@@ -1768,8 +1770,8 @@ body.plantao-phone-mode #plantao-library{
   appearance:none;
   -webkit-appearance:none;
   position:absolute;
-  top:28px;
-  right:calc(100% + 12px);
+  top:0;
+  right:calc(100% + 8px);
   z-index:20;
   min-height:36px;
   padding:0 13px;
@@ -1822,6 +1824,13 @@ body.plantao-phone-mode .plantao-phone-device{
   .plantao-phone-page-back{
     display:none!important;
   }
+}
+
+body.plantao-phone-mode .plantao-page{
+  align-content:start;
+}
+body.plantao-phone-mode #plantao-telefone{
+  margin-top:0!important;
 }
 
 
