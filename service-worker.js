@@ -1,4 +1,4 @@
-const CACHE_VERSION = "luria-pwa-v130-auth-sessions";
+const CACHE_VERSION = "luria-pwa-v131-desafio-fix";
 const PLANTAO_IMAGE_CACHE = "luria-plantao-images-v1";
 const PLANTAO_IMAGE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const STATIC_CACHE = CACHE_VERSION + "-static";
@@ -12,8 +12,8 @@ const APP_SHELL = [
   "/index.html",
   "/manifest.webmanifest?v=5",
   "/desafio-diario/",
-  "/assets/css/desafio-diario.css?v=1",
-  "/assets/js/desafio-diario.js?v=1",
+  "/assets/css/desafio-diario.css?v=2",
+  "/assets/js/desafio-diario.js?v=2",
   "/assets/img/logos/pwa-icon-180.png?v=pwa5",
   "/assets/img/logos/pwa-icon-512.png?v=pwa5",
   "/login/",
