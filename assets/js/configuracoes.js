@@ -1132,6 +1132,45 @@ function wirePasskeySettings() {
   button.addEventListener("click", registerPasskey);
 }
 
+function setOtherSessionsStatus(text, type = "") {
+  const element = document.getElementById("other-sessions-status");
+  if (!element) return;
+  element.textContent = text;
+  element.className = `settings-save-status ${type}`.trim();
+}
+
+async function signOutOtherBrowsers() {
+  const button = document.getElementById("signout-other-browsers");
+  if (!button) return;
+
+  const confirmed = window.confirm(
+    "Encerrar as outras sessões da sua conta? Este navegador continuará conectado."
+  );
+  if (!confirmed) return;
+
+  button.disabled = true;
+  setOtherSessionsStatus("Encerrando outras sessões...");
+
+  try {
+    const { error } = await settingsSb.auth.signOut({ scope: "others" });
+
+    if (error) throw error;
+
+    setOtherSessionsStatus(
+      "Outros navegadores foram desconectados.",
+      "success"
+    );
+  } catch (error) {
+    console.error(error);
+    setOtherSessionsStatus(
+      `Não foi possível encerrar as outras sessões: ${error?.message || error}`,
+      "error"
+    );
+  } finally {
+    button.disabled = false;
+  }
+}
+
 async function savePassword() {
   const currentPassword =
     document
@@ -1703,6 +1742,9 @@ async function initStudySettings() {
 
   loadAccountSecurity();
   wirePasskeySettings();
+
+  document.getElementById("signout-other-browsers")
+    ?.addEventListener("click", signOutOtherBrowsers);
 
   await Promise.all([
     loadProfileSettings(),
