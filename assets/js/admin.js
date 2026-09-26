@@ -2224,12 +2224,14 @@
               <small>${esc(blockAction.phase || "Etapa atual")}</small>
               ${blockAction.provider === "perplexity" ? `
                 <div class="admin-qf-perplexity-manual-actions">
-                  <button class="button secondary" type="button" data-qf-copy-json-part="${Number(batch.batch_number)}:${n}:1">1A · Copiar JSON Q001–Q100</button>
-                  <button class="button secondary" type="button" data-qf-copy-json-part="${Number(batch.batch_number)}:${n}:2">1B · Copiar JSON Q101–Q200</button>
+                  <button class="button secondary" type="button" data-qf-copy-json-part="${Number(batch.batch_number)}:${n}:1">1A · JSON Q001–Q050</button>
+                  <button class="button secondary" type="button" data-qf-copy-json-part="${Number(batch.batch_number)}:${n}:2">1B · JSON Q051–Q100</button>
+                  <button class="button secondary" type="button" data-qf-copy-json-part="${Number(batch.batch_number)}:${n}:3">1C · JSON Q101–Q150</button>
+                  <button class="button secondary" type="button" data-qf-copy-json-part="${Number(batch.batch_number)}:${n}:4">1D · JSON Q151–Q200</button>
                   <button class="button primary" type="button" data-qf-copy-block-stage="${Number(batch.batch_number)}:${n}">2 · Copiar prompt</button>
                   <button class="button secondary" type="button" data-qf-paste-stage-json="${Number(batch.batch_number)}:${n}">3 · Colar JSON de resposta</button>
                 </div>
-                <small class="admin-qf-perplexity-manual-help">Envie ao Perplexity uma metade por vez: primeiro 100 questões e depois as 100 restantes. Cada resposta deve conter exatamente 100 reviews.</small>
+                <small class="admin-qf-perplexity-manual-help">Envie ao Perplexity 50 questões por vez: Q001–Q050, Q051–Q100, Q101–Q150 e Q151–Q200. Cada resposta deve conter exatamente 50 reviews.</small>
               ` : blockAction.provider ? `
                 <button class="button primary" type="button" data-qf-copy-block-stage="${Number(batch.batch_number)}:${n}">Copiar prompt da etapa</button>
                 <button class="button secondary" type="button" data-qf-block-ai="${Number(batch.batch_number)}:${n}">${esc("Copiar + abrir " + blockAction.providerLabel)}</button>
@@ -3558,14 +3560,14 @@
   }
 
   async function copyQuestionFactoryJsonPart(batchNumber, blockNumber, partNumber, button) {
-    const part = Number(partNumber) === 2 ? 2 : 1;
-    const first = part === 1 ? 1 : 101;
-    const last = part === 1 ? 100 : 200;
+    const part = Math.min(4, Math.max(1, Number(partNumber) || 1));
+    const first = ((part - 1) * 50) + 1;
+    const last = part * 50;
     const original = button?.textContent || `Copiar JSON Q${String(first).padStart(3,"0")}–Q${String(last).padStart(3,"0")}`;
 
     if (button) {
       button.disabled = true;
-      button.textContent = "Preparando 100 questões...";
+      button.textContent = "Preparando 50 questões...";
     }
 
     try {
@@ -3584,8 +3586,8 @@
         Number(a.block_sequence_no ?? a.sequence_no ?? 0) - Number(b.block_sequence_no ?? b.sequence_no ?? 0)
       );
       const selected = ordered.slice(first - 1, last);
-      if (selected.length !== 100) {
-        throw new Error(`Esperava 100 questões na parte ${part}, mas encontrei ${selected.length}.`);
+      if (selected.length !== 50) {
+        throw new Error(`Esperava 50 questões na parte ${part}, mas encontrei ${selected.length}.`);
       }
 
       const payload = {
@@ -3593,19 +3595,19 @@
         [questionKey]: selected,
         perplexity_chunk: {
           part,
-          total_parts: 2,
+          total_parts: 4,
           range_start: first,
           range_end: last,
-          expected_question_count: 100,
-          expected_review_count: 100
+          expected_question_count: 50,
+          expected_review_count: 50
         }
       };
-      if ("question_count" in payload) payload.question_count = 100;
+      if ("question_count" in payload) payload.question_count = 50;
       if (payload.coverage && typeof payload.coverage === "object") {
         payload.coverage = {
           ...payload.coverage,
-          expected_count: 100,
-          delivered_count: 100,
+          expected_count: 50,
+          delivered_count: 50,
           complete: true,
           chunk_scope: `Q${String(first).padStart(3,"0")}-Q${String(last).padStart(3,"0")}`
         };
@@ -3622,7 +3624,7 @@
       }
     } catch (error) {
       console.warn("Falha ao copiar parte do JSON:", error);
-      window.alert(error?.message || "Não foi possível copiar as 100 questões.");
+      window.alert(error?.message || "Não foi possível copiar as 50 questões.");
       if (button) button.textContent = "Falha ao copiar";
       setTimeout(() => { if (button) button.textContent = original; }, 1800);
     } finally {
