@@ -2218,11 +2218,18 @@
             ${renderQuestionFactoryOperationalFlow(batch.batch_number, n, flow, blockAction, human)}
 
             <button class="button secondary admin-qf-view-block-wide" type="button" data-qf-view-block="${Number(batch.batch_number)}:${n}">${needs || rejected ? "Ver pendências" : "Ver bloco"}</button>
-            <button class="button secondary admin-qf-import-stage-wide" type="button" data-qf-import-stage="${Number(batch.batch_number)}:${n}">Importar etapa</button>
+            ${blockAction.provider === "perplexity" ? "" : `<button class="button secondary admin-qf-import-stage-wide" type="button" data-qf-import-stage="${Number(batch.batch_number)}:${n}">Importar etapa</button>`}
 
-            <div class="admin-qf-block-ai-action">
+            <div class="admin-qf-block-ai-action ${blockAction.provider === "perplexity" ? "is-perplexity-manual" : ""}">
               <small>${esc(blockAction.phase || "Etapa atual")}</small>
-              ${blockAction.provider ? `
+              ${blockAction.provider === "perplexity" ? `
+                <div class="admin-qf-perplexity-manual-actions">
+                  <button class="button secondary" type="button" data-qf-copy-full-json="${Number(batch.batch_number)}:${n}">1 · Copiar JSON completo</button>
+                  <button class="button primary" type="button" data-qf-copy-block-stage="${Number(batch.batch_number)}:${n}">2 · Copiar prompt</button>
+                  <button class="button secondary" type="button" data-qf-paste-stage-json="${Number(batch.batch_number)}:${n}">3 · Colar JSON de resposta</button>
+                </div>
+                <small class="admin-qf-perplexity-manual-help">Use o JSON completo do bloco junto com o prompt. Depois cole aqui o JSON devolvido pelo Perplexity.</small>
+              ` : blockAction.provider ? `
                 <button class="button primary" type="button" data-qf-copy-block-stage="${Number(batch.batch_number)}:${n}">Copiar prompt da etapa</button>
                 <button class="button secondary" type="button" data-qf-block-ai="${Number(batch.batch_number)}:${n}">${esc("Copiar + abrir " + blockAction.providerLabel)}</button>
               ` : blockAction?.next?.next_stage === "human_review" ? `
@@ -3499,6 +3506,90 @@
     }
   }
 
+  async function copyQuestionFactoryFullBlockJson(batchNumber, blockNumber, button) {
+    const original = button?.textContent || "Copiar JSON completo";
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Preparando JSON...";
+    }
+
+    try {
+      const { data, error } = await sb.rpc("admin_export_question_factory", {
+        p_batch_number: Number(batchNumber),
+        p_block_number: Number(blockNumber),
+        p_blind: false
+      });
+      if (error) throw error;
+      if (!data || typeof data !== "object") {
+        throw new Error("O exportador não retornou um JSON válido.");
+      }
+
+      await writePromptClipboard(JSON.stringify(data, null, 2));
+      if (button) {
+        button.textContent = "JSON completo copiado";
+        button.classList.add("success");
+        setTimeout(() => {
+          button.textContent = original;
+          button.classList.remove("success");
+        }, 1800);
+      }
+    } catch (error) {
+      console.warn("Falha ao copiar JSON completo do bloco:", error);
+      window.alert(error?.message || "Não foi possível copiar o JSON completo.");
+      if (button) button.textContent = "Falha ao copiar JSON";
+      setTimeout(() => {
+        if (button) button.textContent = original;
+      }, 1800);
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }
+
+  async function pasteQuestionFactoryStageJson(batchNumber, blockNumber, button) {
+    openReviewImportDialog(batchNumber, blockNumber, "stage");
+    const box = $("admin-qf-review-import-json");
+    const message = $("admin-qf-review-import-message");
+    const original = button?.textContent || "Colar JSON de resposta";
+
+    try {
+      if (!navigator.clipboard?.readText) {
+        if (message) message.textContent = "Cole o JSON de resposta no campo abaixo.";
+        box?.focus();
+        return;
+      }
+
+      const clipboardText = await navigator.clipboard.readText();
+      if (!clipboardText?.trim()) {
+        if (message) message.textContent = "A área de transferência está vazia. Cole o JSON no campo abaixo.";
+        box?.focus();
+        return;
+      }
+
+      if (box) box.value = clipboardText.trim();
+
+      try {
+        const parsed = JSON.parse(clipboardText);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Formato inválido");
+        if (message) message.textContent = "JSON colado. Revise e toque em “Importar para o Supabase”.";
+        if (button) {
+          button.textContent = "JSON colado";
+          button.classList.add("success");
+          setTimeout(() => {
+            button.textContent = original;
+            button.classList.remove("success");
+          }, 1600);
+        }
+      } catch {
+        if (message) message.textContent = "O conteúdo foi colado, mas ainda não é um JSON válido.";
+      }
+      box?.focus();
+    } catch (error) {
+      console.warn("Leitura automática da área de transferência indisponível:", error);
+      if (message) message.textContent = "O navegador bloqueou a leitura automática. Cole o JSON manualmente no campo abaixo.";
+      box?.focus();
+    }
+  }
+
   function questionFactoryNextAction(batchNumber) {
     const batch = Number(batchNumber);
     const rows = (state.qfBlockTracker || [])
@@ -3944,6 +4035,20 @@
     $("admin-qf-import-stage-metrics")?.addEventListener("click", () => openReviewImportDialog(null, null, "metrics"));
     $("admin-qf-start-lot")?.addEventListener("click", startQuestionFactoryLot);
     $("admin-qf-batches")?.addEventListener("click", async event => {
+      const fullJsonButton = event.target.closest("[data-qf-copy-full-json]");
+      if (fullJsonButton) {
+        const [batch, block] = fullJsonButton.dataset.qfCopyFullJson.split(":");
+        await copyQuestionFactoryFullBlockJson(batch, block, fullJsonButton);
+        return;
+      }
+
+      const pasteStageJsonButton = event.target.closest("[data-qf-paste-stage-json]");
+      if (pasteStageJsonButton) {
+        const [batch, block] = pasteStageJsonButton.dataset.qfPasteStageJson.split(":");
+        await pasteQuestionFactoryStageJson(batch, block, pasteStageJsonButton);
+        return;
+      }
+
       const blockStagePromptButton = event.target.closest("[data-qf-copy-block-stage]");
       if (blockStagePromptButton) {
         const [batch, block] = blockStagePromptButton.dataset.qfCopyBlockStage.split(":");
