@@ -2816,10 +2816,23 @@
 
   async function startCase(caseId) {
     if(state.busy)return;
-    const summaryItem=state.cases.find(x=>x.id===caseId);
-    if(!summaryItem)return;
+    const normalizedCaseId=String(caseId??"");
+    const summaryItem=state.cases.find(x=>String(x.id)===normalizedCaseId);
+    if(!summaryItem){
+      console.error("Plantão: caso não encontrado no índice",caseId);
+      window.alert("Não foi possível localizar este caso.");
+      return;
+    }
     state.busy=true;
-    const caseRes=await sb.rpc("get_active_clinical_case",{p_case_id:caseId});
+    let caseRes;
+    try{
+      caseRes=await sb.rpc("get_active_clinical_case",{p_case_id:summaryItem.id});
+    }catch(error){
+      state.busy=false;
+      console.error("Plantão: erro inesperado ao baixar o caso",error);
+      window.alert("Não foi possível carregar este caso.");
+      return;
+    }
     if(caseRes.error || !caseRes.data?.length){
       state.busy=false;
       console.error("Plantão: falha ao baixar o caso",caseRes.error);
@@ -3243,7 +3256,18 @@
     }
 
     const start=event.target.closest("[data-start-case]");
-    if (start) return startCase(start.dataset.startCase);
+    if (start) {
+      event.preventDefault();
+      event.stopPropagation();
+      try{
+        await startCase(start.dataset.startCase);
+      }catch(error){
+        state.busy=false;
+        console.error("Plantão: falha inesperada ao iniciar caso",error);
+        window.alert("Não foi possível iniciar o caso.");
+      }
+      return;
+    }
 
     const tab=event.target.closest("[data-case-category]");
     if (tab) {
