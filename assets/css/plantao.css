@@ -2982,3 +2982,151 @@ body[data-page="plantao"] .plantao-phone-new-chat-fab:active{transform:scale(.96
     padding-inline:12px;
   }
 }
+
+
+/* v8.0 — Simulador web com abas laterais, preservando monitor atual */
+@media(min-width:681px){
+  #plantao-simulator:not([hidden]) .plantao-bedside{
+    display:block;
+    position:relative;
+    min-height:560px;
+    padding:0 152px;
+    overflow:visible;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-scene{
+    position:relative;
+    width:100%;
+    min-width:0;
+    min-height:560px;
+    border-radius:22px;
+    overflow:hidden;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-action-rail{
+    position:absolute;
+    inset:0;
+    z-index:12;
+    width:auto;
+    min-width:0;
+    padding:0;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+    pointer-events:none;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-action-rail>.plantao-score-live{
+    position:absolute;
+    top:10px;
+    left:10px;
+    z-index:2;
+    margin:0;
+    min-width:112px;
+    padding:7px 10px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:color-mix(in srgb,var(--surface) 92%,transparent);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    pointer-events:none;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-action-tabs{
+    position:absolute;
+    inset:56px 0 18px;
+    display:grid;
+    grid-template-columns:136px minmax(0,1fr) 136px;
+    grid-template-rows:repeat(5,minmax(58px,1fr));
+    gap:9px 0;
+    margin:0;
+    padding:0;
+    overflow:visible;
+    background:transparent;
+    pointer-events:none;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-action-tab{
+    width:136px;
+    min-width:136px;
+    min-height:58px;
+    height:100%;
+    max-height:88px;
+    align-self:center;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    gap:5px;
+    padding:9px 8px;
+    border:1px solid var(--border);
+    background:color-mix(in srgb,var(--surface) 96%,transparent);
+    color:var(--text);
+    font-size:12px;
+    line-height:1.15;
+    font-weight:850;
+    text-align:center;
+    white-space:normal;
+    box-shadow:0 5px 16px color-mix(in srgb,var(--text) 12%,transparent);
+    pointer-events:auto;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-action-tab>span:first-child{
+    width:auto;
+    font-size:22px;
+    line-height:1;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="anamnese"]{grid-column:1;grid-row:1;border-radius:0 14px 14px 0}
+  #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="fisico"]{grid-column:1;grid-row:2;border-radius:0 14px 14px 0}
+  #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="iniciais"]{grid-column:1;grid-row:3;border-radius:0 14px 14px 0}
+  #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="exames"]{grid-column:1;grid-row:4;border-radius:0 14px 14px 0}
+  #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="hipoteses"]{grid-column:1;grid-row:5;border-radius:0 14px 14px 0}
+
+  #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="intervir"]{grid-column:3;grid-row:1;border-radius:14px 0 0 14px}
+  #plantao-simulator:not([hidden]) .plantao-action-tab[data-case-category="conduta"]{grid-column:3;grid-row:2;border-radius:14px 0 0 14px}
+
+  #plantao-simulator:not([hidden]) .plantao-action-tab.active{
+    border-color:var(--accent);
+    background:var(--accent);
+    color:#fff;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-action-drawer{
+    position:absolute;
+    top:14px;
+    bottom:14px;
+    left:152px;
+    width:min(390px,calc(100% - 304px));
+    max-width:390px;
+    height:auto;
+    border-radius:18px;
+    pointer-events:auto;
+  }
+
+  #plantao-simulator:not([hidden]) .plantao-intervention-tabs{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:6px;
+  }
+}
+
+@media(max-width:1050px) and (min-width:681px){
+  #plantao-simulator:not([hidden]) .plantao-bedside{
+    padding-inline:112px;
+  }
+  #plantao-simulator:not([hidden]) .plantao-action-tabs{
+    grid-template-columns:102px minmax(0,1fr) 102px;
+  }
+  #plantao-simulator:not([hidden]) .plantao-action-tab{
+    width:102px;
+    min-width:102px;
+    padding:7px 5px;
+    font-size:10px;
+  }
+  #plantao-simulator:not([hidden]) .plantao-action-drawer{
+    left:112px;
+    width:min(360px,calc(100% - 224px));
+  }
+}
