@@ -18,8 +18,12 @@
     const configured=Array.isArray(item.completion_rules?.required_actions)?item.completion_rules.required_actions.filter(Boolean):[];
     if(configured.length) return [...new Set(configured)];
     const t=String([item.title,item.debrief?.diagnosis,item.summary,item.presentation?.opening].filter(Boolean).join(" ")).normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase();
-    const ids=["abcde","monitor"];
+    const ids=[];
     const add=(...xs)=>ids.push(...xs);
+    const trauma=/trauma|fratura|luxacao|contusao|ferimento|queda|queimadura|mordedura|escoriacao/.test(t);
+    const unstable=/choque|instavel|parada cardiorrespiratoria|pcr|insuficiencia respiratoria grave|edema agudo de pulmao|hemorragia importante/.test(t);
+    if(trauma) add("abcde");
+    if(unstable) add("monitor");
     if(/anafilax/.test(t)) add("epi_im");
     if(/pneumotorax hipertensivo/.test(t)) add("needle_decompression");
     if(/estado de mal|convulsao.*prolong/.test(t)) add("midazolam");
