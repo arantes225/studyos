@@ -50,7 +50,8 @@
     arrestStartedAt:null,
     penalties:0, criticalElapsed:0, diagnosis:null, disposition:null, busy:false,
     phoneCases:[], phoneCase:null, phoneSession:null, phoneTurn:0, phoneMode:false, phoneUsedChoices:new Set(),
-    filters:{specialty:"",difficulty:""}
+    filters:{specialty:"",difficulty:""},
+    phoneSearch:"", phoneNewChat:false
   };
 
   const PHONE_DRAFT_TTL_MS = 6 * 60 * 60 * 1000;
@@ -297,12 +298,19 @@
   function renderPhoneCases(){
     const host=$("plantao-phone-case-list");
     if(!host) return;
-    if(!state.phoneCases.length){
-      host.innerHTML='<div class="plantao-phone-empty">Nenhuma interconsulta disponível.</div>';
+    const query=normalizeLabel(state.phoneSearch||"");
+    const filteredCases=state.phoneCases.filter(item=>{
+      if(!query) return true;
+      return normalizeLabel([
+        item.title,item.specialty,item.difficulty,item.requester_role,item.opening_message
+      ].filter(Boolean).join(" ")).includes(query);
+    });
+    if(!filteredCases.length){
+      host.innerHTML='<div class="plantao-phone-empty">'+(query?'Nenhuma conversa encontrada.':'Nenhuma interconsulta disponível.')+'</div>';
       return;
     }
     const draft=getPhoneDraft();
-    const draftCase=draft ? state.phoneCases.find(x=>String(x.id)===String(draft.caseId)) : null;
+    const draftCase=!query && draft ? state.phoneCases.find(x=>String(x.id)===String(draft.caseId)) : null;
     const resumeCard=draftCase ? `
       <section class="plantao-phone-resume-card" aria-label="Caso em andamento">
         <div class="plantao-phone-resume-copy">
@@ -313,7 +321,7 @@
         <button class="plantao-phone-resume-button" type="button" data-resume-phone-case>Continuar caso</button>
       </section>
     ` : "";
-    host.innerHTML=resumeCard+state.phoneCases.map(item=>`
+    host.innerHTML=resumeCard+filteredCases.map(item=>`
       <button class="plantao-phone-conversation" type="button" data-start-phone-case="${esc(item.id)}">
         <span class="plantao-phone-conversation-avatar" aria-hidden="true">✚</span>
         <span class="plantao-phone-conversation-main">
@@ -329,7 +337,40 @@
     `).join("");
   }
 
+  function setPhoneComposeState(enabled,placeholder="Mensagem"){
+    const input=$("plantao-phone-compose-input");
+    const send=$("plantao-phone-compose-send");
+    if(input){
+      input.disabled=false;
+      input.placeholder=placeholder;
+      input.value="";
+    }
+    if(send) send.disabled=!enabled;
+  }
+
+  function openPhoneNewConversation(){
+    state.phoneNewChat=true;
+    state.phoneCase=null;
+    state.phoneSession=null;
+    state.phoneTurn=0;
+    state.phoneUsedChoices=new Set();
+    $("plantao-phone-inbox").hidden=true;
+    $("plantao-phone-station").hidden=false;
+    $("plantao-phone-requester").textContent="Nova conversa";
+    $("plantao-phone-context").textContent="Luria IA";
+    const body=$("plantao-phone-chat-body");
+    if(body){
+      body.innerHTML='<div class="plantao-phone-new-chat-empty"><strong>Nova conversa</strong><span>Digite uma mensagem para deixar esta tela pronta para a integração com IA.</span></div>';
+      body.dataset.messages="[]";
+    }
+    const choices=$("plantao-phone-choices");
+    if(choices){choices.innerHTML="";choices.hidden=true;}
+    setPhoneComposeState(false,"Digite uma mensagem");
+    requestAnimationFrame(()=>$("plantao-phone-compose-input")?.focus());
+  }
+
   async function startPhoneCase(caseId){
+    state.phoneNewChat=false;
     const item=state.phoneCases.find(x=>x.id===caseId);
     if(!item) return;
     state.phoneCase=item;
@@ -350,7 +391,10 @@
     $("plantao-phone-requester").textContent=item.requester_role||"R1 de Clínica Médica";
     $("plantao-phone-context").textContent=item.title||item.specialty||"Caso clínico";
     renderPhoneMessages([{sender:"requester",content:item.opening_message}]);
+    const choices=$("plantao-phone-choices");
+    if(choices) choices.hidden=false;
     renderPhoneChoices();
+    setPhoneComposeState(true,"Mensagem");
     persistPhoneDraft();
   }
 
@@ -536,6 +580,42 @@
     persistPhoneDraft();
   }
 
+  $("plantao-phone-search-toggle")?.addEventListener("click",()=>{
+    const wrap=$("plantao-phone-search-wrap");
+    const button=$("plantao-phone-search-toggle");
+    if(!wrap) return;
+    const opening=wrap.hidden;
+    wrap.hidden=!opening;
+    button?.setAttribute("aria-expanded",opening?"true":"false");
+    if(opening) requestAnimationFrame(()=>$("plantao-phone-search")?.focus());
+  });
+  $("plantao-phone-search-close")?.addEventListener("click",()=>{
+    const wrap=$("plantao-phone-search-wrap");
+    if(wrap) wrap.hidden=true;
+    $("plantao-phone-search-toggle")?.setAttribute("aria-expanded","false");
+    const input=$("plantao-phone-search");
+    if(input) input.value="";
+    state.phoneSearch="";
+    renderPhoneCases();
+  });
+  $("plantao-phone-search")?.addEventListener("input",event=>{
+    state.phoneSearch=event.currentTarget.value||"";
+    renderPhoneCases();
+  });
+  $("plantao-phone-new-chat")?.addEventListener("click",openPhoneNewConversation);
+  $("plantao-phone-compose-form")?.addEventListener("submit",async event=>{
+    event.preventDefault();
+    const input=$("plantao-phone-compose-input");
+    const text=String(input?.value||"").trim();
+    if(!text) return;
+    if(state.phoneNewChat || !state.phoneCase || !state.phoneSession){
+      return;
+    }
+    input.value="";
+    await sendPhoneMessage(text,{typed:true});
+    input.focus();
+  });
+
   $("plantao-emergency-mode-card")?.addEventListener("click",()=>setPlantaoMode("emergency"));
   $("plantao-phone-mode-card")?.addEventListener("click",event=>{
     event.preventDefault(); setPlantaoMode("phone");
@@ -567,9 +647,12 @@
       await sb.from("interconsultation_sessions").update({status:"abandoned",completed_at:new Date().toISOString()}).eq("id",state.phoneSession.id);
     }
     clearPhoneDraft();
+    state.phoneNewChat=false;
     state.phoneSession=null; state.phoneCase=null; state.phoneTurn=0; state.phoneUsedChoices=new Set();
     $("plantao-phone-station").hidden=true;
     $("plantao-phone-inbox").hidden=false;
+    const choices=$("plantao-phone-choices");
+    if(choices) choices.hidden=false;
     renderPhoneCases();
   });
 

@@ -17,7 +17,7 @@
   <link rel="icon" type="image/png" href="/assets/img/logos/logo-icone-original.png?v=favicon2">
   <link rel="stylesheet" href="assets/css/style.css?v=16.6">
   <link rel="stylesheet" href="assets/css/luria-brand-v5.css?v=9">
-  <link rel="stylesheet" href="assets/css/plantao.css?v=5.5">\n  <link rel="stylesheet" href="assets/css/plantao-pwa-game.css?v=1">
+  <link rel="stylesheet" href="assets/css/plantao.css?v=5.6">\n  <link rel="stylesheet" href="assets/css/plantao-pwa-game.css?v=1">
   <link rel="canonical" href="/plantao/">
   <script defer src="assets/js/luria-brand-v5.js?v=12"></script>
   <script>(function(){try{if(location.pathname.endsWith("/plantao.html"))history.replaceState(null,"","/plantao/"+location.search+location.hash);}catch(e){}})();</script>
@@ -115,8 +115,16 @@
                         </span>
                         <strong id="plantao-phone-title" class="plantao-phone-brand-name">LuriaZap</strong>
                       </div>
-                      <span aria-hidden="true">•••</span>
+                      <div class="plantao-phone-inbox-actions">
+                        <button id="plantao-phone-search-toggle" type="button" aria-label="Pesquisar conversas" aria-expanded="false">⌕</button>
+                        <button id="plantao-phone-new-chat" type="button" aria-label="Nova conversa">+</button>
+                      </div>
                     </header>
+                    <div id="plantao-phone-search-wrap" class="plantao-phone-search-wrap" hidden>
+                      <span aria-hidden="true">⌕</span>
+                      <input id="plantao-phone-search" type="search" placeholder="Pesquisar conversas" autocomplete="off" aria-label="Pesquisar conversas">
+                      <button id="plantao-phone-search-close" type="button" aria-label="Fechar pesquisa">×</button>
+                    </div>
                     <div class="plantao-phone-inbox-toolbar">
                       <strong>Conversas</strong>
                       <small>Escolha uma interconsulta para atender</small>
@@ -132,6 +140,10 @@
                     </header>
                     <div id="plantao-phone-chat-body" class="plantao-phone-chat-body" aria-live="polite"></div>
                     <div id="plantao-phone-choices" class="plantao-phone-choices" aria-label="Opções de resposta"></div>
+                    <form id="plantao-phone-compose-form" class="plantao-phone-compose-form" autocomplete="off">
+                      <input id="plantao-phone-compose-input" type="text" placeholder="Mensagem" aria-label="Digite uma mensagem">
+                      <button id="plantao-phone-compose-send" type="submit" aria-label="Enviar mensagem">➤</button>
+                    </form>
                   </section>
                 </div>
               </div>
@@ -251,7 +263,7 @@
   <script src="assets/js/app.js?v=17.8-streak"></script>
   <script src="assets/js/plantao-monitor.js?v=2.3"></script>
   <script src="assets/js/plantao-engine.js?v=3.1"></script>
-  <script src="assets/js/plantao.js?v=6.8"></script>
+  <script src="assets/js/plantao.js?v=6.9"></script>
   <script defer src="assets/js/pwa.js?v=3"></script>
 </body>
 </html>
